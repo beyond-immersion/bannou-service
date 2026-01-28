@@ -130,6 +130,7 @@ Tenets are organized into three categories based on when they're needed:
 | Unused configuration property | T21 | Wire up in service or remove from schema |
 | Hardcoded magic number for tunable | T21 | Define in configuration schema, use config |
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
+| Secondary fallback for defaulted config property | T21 | Remove fallback; if null, throw (infrastructure failure) |
 | Non-async Task-returning method | T23 | Add async keyword and await |
 | `Task.FromResult` without async | T23 | Use async method with await |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |

@@ -81,10 +81,11 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         _client = dockerConfig.CreateClient();
 
         // Read configuration from injected configuration class (IMPLEMENTATION TENETS compliant)
-        _configuredDockerNetwork = config.DockerNetwork ?? "bannou_default";
-        _certificatesHostPath = config.CertificatesHostPath ?? "/app/provisioning/certificates";
-        _presetsHostPath = config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
-        _logsVolumeName = config.LogsVolumeName ?? "logs-data";
+        // Central validation ensures non-nullable strings are not empty
+        _configuredDockerNetwork = config.DockerNetwork;
+        _certificatesHostPath = config.CertificatesHostPath;
+        _presetsHostPath = config.PresetsHostPath;
+        _logsVolumeName = config.LogsVolumeName;
 
         _logger.LogDebug(
             "DockerComposeOrchestrator configured: Network={Network}, Certificates={Certs}, Presets={Presets}",
@@ -676,7 +677,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             // 2. Connecting to the correct Docker network
             // 3. Starting the container
 
-            var imageName = _configuration.DockerImageName ?? "bannou:latest";
+            var imageName = _configuration.DockerImageName;
             var containerName = $"bannou-{appId}";
 
             // Validate that the bannou image is present locally

@@ -119,7 +119,7 @@ public partial class OrchestratorService : IOrchestratorService
         _httpClientFactory = httpClientFactory;
 
         // Create preset loader with configured presets directory
-        var presetsPath = configuration.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
+        var presetsPath = configuration.PresetsHostPath;
         _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath);
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)

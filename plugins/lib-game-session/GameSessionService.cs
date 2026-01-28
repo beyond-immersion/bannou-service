@@ -154,15 +154,11 @@ public partial class GameSessionService : IGameSessionService
         _lockProvider = lockProvider;
 
         // Initialize supported game services from configuration
-        var configuredServices = configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        _supportedGameServices = new HashSet<string>(configuredServices ?? new[] { "system" }, StringComparer.OrdinalIgnoreCase);
+        // Central validation in PluginLoader ensures non-nullable strings are not empty
+        var configuredServices = configuration.SupportedGameServices.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        _supportedGameServices = new HashSet<string>(configuredServices, StringComparer.OrdinalIgnoreCase);
 
-        // Server salt from configuration - REQUIRED (fail-fast for production safety)
-        if (string.IsNullOrEmpty(configuration.ServerSalt))
-        {
-            throw new InvalidOperationException(
-                "GAME_SESSION_SERVER_SALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
-        }
+        // Server salt from configuration - all instances must share the same salt
         _serverSalt = configuration.ServerSalt;
 
         // Register event handlers via partial class (GameSessionServiceEvents.cs)

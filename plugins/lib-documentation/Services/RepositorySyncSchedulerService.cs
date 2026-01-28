@@ -228,7 +228,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     /// </summary>
     private async Task CleanupStaleRepositoriesAsync(CancellationToken cancellationToken)
     {
-        var storagePath = _configuration.GitStoragePath ?? "/tmp/bannou-git-repos";
+        var storagePath = _configuration.GitStoragePath;
         if (!Directory.Exists(storagePath))
         {
             return;

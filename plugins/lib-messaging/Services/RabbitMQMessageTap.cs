@@ -58,7 +58,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     {
 
         var tapId = Guid.NewGuid();
-        var effectiveSourceExchange = sourceExchange ?? _configuration.DefaultExchange ?? AppConstants.DEFAULT_APP_NAME;
+        var effectiveSourceExchange = sourceExchange ?? _configuration.DefaultExchange;
         var createdAt = DateTimeOffset.UtcNow;
 
         // Create a unique queue name for this tap's source subscription

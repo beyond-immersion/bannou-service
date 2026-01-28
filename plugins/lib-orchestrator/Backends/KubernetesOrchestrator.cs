@@ -68,7 +68,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         _client = new Kubernetes(config);
 
         // Get namespace from config or default
-        _namespace = configuration.KubernetesNamespace ?? "default";
+        _namespace = configuration.KubernetesNamespace;
     }
 
     /// <inheritdoc />
@@ -404,7 +404,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
         try
         {
-            var imageName = _configuration.DockerImageName ?? "bannou:latest";
+            var imageName = _configuration.DockerImageName;
 
             // Prepare environment variables
             var envVars = new List<V1EnvVar>

@@ -145,8 +145,8 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     {
         // For now, we use a single RTPEngine instance
         // In production, this would select from a pool based on load
-        var rtpHost = _configuration.RtpEngineHost ?? "localhost";
-        var rtpPort = _configuration.RtpEnginePort > 0 ? _configuration.RtpEnginePort : 22222;
+        var rtpHost = _configuration.RtpEngineHost;
+        var rtpPort = _configuration.RtpEnginePort;
 
         // Verify RTPEngine is healthy
         var isHealthy = await _rtpEngineClient.IsHealthyAsync(cancellationToken);

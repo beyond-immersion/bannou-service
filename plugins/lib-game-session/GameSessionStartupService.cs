@@ -61,8 +61,8 @@ public class GameSessionStartupService : BackgroundService
     /// </summary>
     private async Task InitializeSubscriptionCachesAsync(CancellationToken cancellationToken)
     {
-        var supportedGameServices = _configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            ?? new[] { "system" };
+        // Central validation in PluginLoader ensures non-nullable strings are not empty
+        var supportedGameServices = _configuration.SupportedGameServices.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         foreach (var stubName in supportedGameServices)
         {

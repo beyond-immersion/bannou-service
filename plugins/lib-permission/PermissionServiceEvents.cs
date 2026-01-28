@@ -131,7 +131,7 @@ public partial class PermissionService
             var servicePermissionMatrix = new ServicePermissionMatrix
             {
                 ServiceId = evt.ServiceName,
-                Version = evt.Version ?? "",
+                Version = evt.Version,
                 Permissions = permissionMatrix
             };
 

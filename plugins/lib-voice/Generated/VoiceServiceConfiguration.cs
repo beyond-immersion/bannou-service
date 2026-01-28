@@ -75,12 +75,14 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// Maximum participants in P2P voice sessions
     /// Environment variable: VOICE_P2P_MAX_PARTICIPANTS
     /// </summary>
+    [ConfigRange(Minimum = 2, Maximum = 16)]
     public int P2PMaxParticipants { get; set; } = 8;
 
     /// <summary>
     /// Maximum participants in scaled tier voice sessions
     /// Environment variable: VOICE_SCALED_MAX_PARTICIPANTS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 500)]
     public int ScaledMaxParticipants { get; set; } = 100;
 
     /// <summary>
@@ -129,12 +131,14 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// RTPEngine control port
     /// Environment variable: VOICE_RTPENGINE_PORT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
     public int RtpEnginePort { get; set; } = 22222;
 
     /// <summary>
     /// Timeout in seconds for Kamailio service requests
     /// Environment variable: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int KamailioRequestTimeoutSeconds { get; set; } = 5;
 
     /// <summary>

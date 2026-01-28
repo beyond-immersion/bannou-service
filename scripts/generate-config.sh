@@ -109,6 +109,12 @@ try:
             prop_enum = prop_info.get('enum', None)
             prop_ref = prop_info.get('\$ref', None)
 
+            # OpenAPI 3.0 range validation keywords
+            prop_minimum = prop_info.get('minimum', None)
+            prop_maximum = prop_info.get('maximum', None)
+            prop_exclusive_min = prop_info.get('exclusiveMinimum', False)
+            prop_exclusive_max = prop_info.get('exclusiveMaximum', False)
+
             # Check if this is a $ref to an external enum type
             if prop_ref:
                 # Extract type name from $ref path (e.g., 'contract-api.yaml#/components/schemas/EnforcementMode' -> 'EnforcementMode')
@@ -192,7 +198,11 @@ try:
                 'default': default_value,
                 'description': prop_description,
                 'env_var': prop_env_var,
-                'is_required': is_required
+                'is_required': is_required,
+                'minimum': prop_minimum,
+                'maximum': prop_maximum,
+                'exclusive_min': prop_exclusive_min,
+                'exclusive_max': prop_exclusive_max
             })
 
     # Generate the configuration class
@@ -273,11 +283,31 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 
     for prop in config_properties:
         required_attr = '    [Required(AllowEmptyStrings = false)]\n' if prop.get('is_required', False) else ''
+
+        # Generate ConfigRange attribute if minimum or maximum is specified
+        range_attr = ''
+        has_min = prop.get('minimum') is not None
+        has_max = prop.get('maximum') is not None
+        has_exclusive_min = prop.get('exclusive_min', False)
+        has_exclusive_max = prop.get('exclusive_max', False)
+
+        if has_min or has_max:
+            range_parts = []
+            if has_min:
+                range_parts.append('Minimum = ' + str(prop['minimum']))
+            if has_max:
+                range_parts.append('Maximum = ' + str(prop['maximum']))
+            if has_exclusive_min:
+                range_parts.append('ExclusiveMinimum = true')
+            if has_exclusive_max:
+                range_parts.append('ExclusiveMaximum = true')
+            range_attr = '    [ConfigRange(' + ', '.join(range_parts) + ')]\\n'
+
         print(f'''    /// <summary>
     /// {prop['description']}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-{required_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+{required_attr}{range_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
 
     print('}')

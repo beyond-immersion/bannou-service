@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using DotNetEnv;
 using System.IO;
 using System.Reflection;
@@ -52,6 +53,132 @@ public interface IServiceConfiguration
                     t.Item1.PropertyType != typeof(string) ||
                     !string.IsNullOrWhiteSpace((string)propValue));
             });
+    }
+
+    /// <summary>
+    /// Performs all configuration validation checks.
+    /// Calls <see cref="ValidateNonNullableStrings"/> and <see cref="ValidateNumericRanges"/>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any validation check fails.</exception>
+    public void Validate()
+    {
+        ValidateNonNullableStrings();
+        ValidateNumericRanges();
+    }
+
+    /// <summary>
+    /// Validates that all non-nullable string properties have non-empty values.
+    /// IMPLEMENTATION TENETS: Non-nullable strings with schema defaults must not be empty.
+    /// If an env var sets a non-nullable string to empty, that's a configuration error - schema
+    /// provides the default, so the only way to get empty is explicit override to empty string.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any non-nullable string property is empty or whitespace.</exception>
+    public void ValidateNonNullableStrings()
+    {
+        var nullabilityContext = new NullabilityInfoContext();
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            // Only check string properties
+            if (property.PropertyType != typeof(string))
+                continue;
+
+            // Check nullability - if the property is nullable (string?), skip validation
+            var nullabilityInfo = nullabilityContext.Create(property);
+            if (nullabilityInfo.WriteState == NullabilityState.Nullable)
+                continue;
+
+            // Non-nullable string - check if empty
+            var value = property.GetValue(this) as string;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                invalidProperties.Add(property.Name);
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"Non-nullable string properties cannot be empty. " +
+                $"The following properties have empty values: {string.Join(", ", invalidProperties)}. " +
+                $"These properties have schema-defined defaults - if they are empty, it means an explicit " +
+                $"override to empty string was set (e.g., {envPrefix}{invalidProperties[0].ToUpperInvariant()}=\"\"). " +
+                $"Either remove the override to use the schema default, or provide a valid non-empty value.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all numeric properties with <see cref="ConfigRangeAttribute"/> are within their allowed ranges.
+    /// IMPLEMENTATION TENETS: Numeric configuration values must satisfy schema-defined constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any numeric property is outside its allowed range.</exception>
+    public void ValidateNumericRanges()
+    {
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var rangeAttr = property.GetCustomAttribute<ConfigRangeAttribute>();
+            if (rangeAttr == null)
+                continue;
+
+            // Get the value and convert to double for comparison
+            var rawValue = property.GetValue(this);
+            if (rawValue == null)
+                continue; // Nullable numeric with null value - skip (handled by other validation if needed)
+
+            double value;
+            try
+            {
+                value = Convert.ToDouble(rawValue);
+            }
+            catch (InvalidCastException)
+            {
+                // Property type doesn't convert to double - skip
+                continue;
+            }
+
+            if (!rangeAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                invalidProperties.Add(
+                    $"{property.Name}={value} (must be in range {rangeAttr.GetRangeDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"Numeric properties outside allowed range. " +
+                $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Converts a PascalCase property name to UPPER_SNAKE_CASE for environment variable display.
+    /// </summary>
+    private static string ToUpperSnakeCase(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return propertyName;
+
+        var result = new System.Text.StringBuilder();
+        for (int i = 0; i < propertyName.Length; i++)
+        {
+            var c = propertyName[i];
+            if (i > 0 && char.IsUpper(c))
+                result.Append('_');
+            result.Append(char.ToUpperInvariant(c));
+        }
+        return result.ToString();
     }
 
     /// <summary>

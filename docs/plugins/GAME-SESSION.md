@@ -9,7 +9,7 @@
 
 ## Overview
 
-Hybrid lobby/matchmade game session management with subscription-driven shortcut publishing, voice integration, and real-time chat. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission service for `in_game` state tracking, Voice service for room lifecycle, and Subscription service for account eligibility. Features distributed subscriber session tracking via ETag-based optimistic concurrency, and publishes WebSocket shortcuts to connected clients enabling one-click game join.
+Hybrid lobby/matchmade game session management with subscription-driven shortcut publishing, voice integration, and real-time chat. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission service for `in_game` state tracking, Voice service for room lifecycle, and Subscription service for account eligibility. Features distributed subscriber session tracking via ETag-based optimistic concurrency, publishes WebSocket shortcuts to connected clients enabling one-click game join, **per-game horizontal scaling** via `SupportedGameServices` partitioning, and **generic lobbies** for open catch-all entry points without subscription requirements.
 
 ---
 
@@ -91,8 +91,115 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | `CleanupServiceStartupDelaySeconds` | `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | `10` | Delay before cleanup service starts |
 | `StartupServiceDelaySeconds` | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | `2` | Delay before subscription cache warmup |
 | `SubscriberSessionRetryMaxAttempts` | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | `3` | Max retries for ETag-based optimistic concurrency |
-| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Comma-separated game service stub names |
+| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Comma-separated game service stub names (see Horizontal Scaling) |
+| `GenericLobbiesEnabled` | `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | `false` | Auto-publish generic shortcuts without subscription (see Generic Lobbies) |
 | `LockTimeoutSeconds` | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | `60` | Timeout in seconds for distributed session locks |
+
+---
+
+## Horizontal Scaling by Game
+
+The `SupportedGameServices` configuration enables **per-game horizontal scaling** by partitioning which game-session instances handle which games. This is a comma-delimited list (CDL) that filters which `subscription.updated` events the instance processes.
+
+### How It Works
+
+```
+Deployment Topology (example)
+==============================
+
+Node A (main)                    Node B (arcadia)              Node C (fantasia)
+─────────────────────────────    ─────────────────────────     ─────────────────────────
+SUPPORTED_GAME_SERVICES=generic  SUPPORTED_GAME_SERVICES=      SUPPORTED_GAME_SERVICES=
+                                   arcadia                       fantasia
+
+Handles:                         Handles:                      Handles:
+ • Generic catch-all lobbies      • Arcadia game lobbies        • Fantasia game lobbies
+ • Unknown/new games              • Arcadia subscriptions       • Fantasia subscriptions
+
+
+subscription.updated event (stubName="arcadia") published
+    │
+    ├─► Node A: IsOurService("arcadia") → false → ignores
+    ├─► Node B: IsOurService("arcadia") → true  → processes, publishes shortcut
+    └─► Node C: IsOurService("arcadia") → false → ignores
+```
+
+### Configuration
+
+```bash
+# Main node - handles generic/catch-all (default)
+GAME_SESSION_SUPPORTED_GAME_SERVICES=generic
+
+# Dedicated game nodes
+GAME_SESSION_SUPPORTED_GAME_SERVICES=arcadia
+GAME_SESSION_SUPPORTED_GAME_SERVICES=fantasia
+
+# Multi-game node
+GAME_SESSION_SUPPORTED_GAME_SERVICES=arcadia,fantasia
+```
+
+### Why This Works Transparently
+
+Because **all game-session endpoints are accessed via prebound shortcuts** (not direct API calls), clients never need to know which node handles which game. When a subscription is created:
+
+1. The `subscription.updated` event is published to all game-session instances
+2. Only the instance configured to handle that game's `stubName` processes the event
+3. That instance publishes the join shortcut to the player's WebSocket session
+4. The shortcut routes to the correct node automatically via the mesh
+
+This enables games to be moved between nodes, scaled independently, or consolidated without any client-side changes.
+
+---
+
+## Generic Lobbies
+
+When `GenericLobbiesEnabled` is `true` AND `"generic"` is in `SupportedGameServices`, the service publishes a generic lobby shortcut to **all authenticated sessions** immediately on connect—without requiring a subscription.
+
+### Use Cases
+
+- **Open catch-all lobbies**: Players can join a general lobby without subscribing to any specific game
+- **Testing/development**: Simplifies integration testing without subscription setup
+- **Free-to-play entry points**: Let players experience multiplayer before committing to a game subscription
+
+### Behavior
+
+| GenericLobbiesEnabled | "generic" in SupportedGameServices | Result |
+|-----------------------|------------------------------------|--------|
+| `false` (default) | Yes | Generic shortcuts require subscription to "generic" service |
+| `true` | Yes | Generic shortcuts auto-published to all authenticated sessions |
+| `true` | No | No effect (instance doesn't handle generic) |
+| `false` | No | No effect (instance doesn't handle generic) |
+
+### Configuration
+
+```bash
+# Enable generic lobbies on the main node
+GAME_SESSION_SUPPORTED_GAME_SERVICES=generic
+GAME_SESSION_GENERIC_LOBBIES_ENABLED=true
+```
+
+### Flow Comparison
+
+```
+WITHOUT GenericLobbiesEnabled (subscription required):
+──────────────────────────────────────────────────────
+User connects → session.connected event
+    │
+    ├── Check subscriptions for "generic"
+    │   └── Not subscribed? → No shortcut published
+    │
+    └── User must subscribe to "generic" first
+
+
+WITH GenericLobbiesEnabled:
+───────────────────────────
+User connects → session.connected event
+    │
+    ├── GenericLobbiesEnabled=true && IsOurService("generic")
+    │   └── Immediately publish generic lobby shortcut
+    │
+    └── User can join generic lobby without any subscription
+```
 
 ---
 
@@ -101,7 +208,7 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<GameSessionService>` | Scoped | Structured logging |
-| `GameSessionServiceConfiguration` | Singleton | All 11 config properties |
+| `GameSessionServiceConfiguration` | Singleton | All 12 config properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |

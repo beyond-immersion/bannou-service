@@ -643,7 +643,11 @@ public class PluginLoader
         {
             services.AddSingleton<AppConfiguration>(serviceProvider =>
             {
-                return IServiceConfiguration.BuildConfiguration<AppConfiguration>(null);
+                var config = IServiceConfiguration.BuildConfiguration<AppConfiguration>(null);
+                // IMPLEMENTATION TENETS: Validate configuration properties at startup.
+                // Cast to interface to access default interface method
+                ((IServiceConfiguration)config).Validate();
+                return config;
             });
             _logger.LogInformation("Registered global configuration: AppConfiguration (Singleton with BuildConfiguration factory)");
         }
@@ -669,8 +673,16 @@ public class PluginLoader
                     Type.DefaultBinder,
                     new Type[] { typeof(string[]) }, // string[]? args = null overload
                     null)?.MakeGenericMethod(configurationType)) ?? throw new InvalidOperationException($"Could not find BuildConfiguration<T>(string[]?) method for type {configurationType.Name}");
-                var configInstance = buildMethod.Invoke(null, new object?[] { null }); // Pass null for args parameter
-                return configInstance ?? throw new InvalidOperationException($"BuildConfiguration returned null for type {configurationType.Name}");
+                var configInstance = buildMethod.Invoke(null, new object?[] { null }) ?? throw new InvalidOperationException($"BuildConfiguration returned null for type {configurationType.Name}"); // Pass null for args parameter
+
+                // IMPLEMENTATION TENETS: Validate configuration properties at startup.
+                // Schema provides defaults - invalid values mean explicit overrides with bad data.
+                if (configInstance is IServiceConfiguration serviceConfig)
+                {
+                    serviceConfig.Validate();
+                }
+
+                return configInstance;
             });
             _logger.LogInformation("Registered configuration: {ConfigType} (Singleton with BuildConfiguration factory)",
                 configurationType.Name);

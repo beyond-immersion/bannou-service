@@ -36,7 +36,7 @@ public class SmartRestartManager : ISmartRestartManager
     {
         try
         {
-            var dockerHost = _configuration.DockerHost ?? "unix:///var/run/docker.sock";
+            var dockerHost = _configuration.DockerHost;
             _logger.LogDebug("Initializing Docker client with host: {DockerHost}", dockerHost);
 
             using var config = new DockerClientConfiguration(new Uri(dockerHost));

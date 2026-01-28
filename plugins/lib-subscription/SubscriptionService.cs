@@ -51,7 +51,7 @@ public partial class SubscriptionService : ISubscriptionService
     }
 
     private static string StateStoreName => StateStoreDefinitions.Subscription;
-    private string AuthorizationSuffix => _configuration.AuthorizationSuffix ?? "authorized";
+    private string AuthorizationSuffix => _configuration.AuthorizationSuffix;
 
     /// <summary>
     /// Get all subscriptions for an account with optional filtering.

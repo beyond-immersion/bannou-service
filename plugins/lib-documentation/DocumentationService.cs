@@ -2780,7 +2780,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private string GetLocalRepositoryPath(Guid bindingId)
     {
-        return Path.Combine(_configuration.GitStoragePath ?? "/tmp/bannou-git-repos", bindingId.ToString());
+        return Path.Combine(_configuration.GitStoragePath, bindingId.ToString());
     }
 
     /// <summary>

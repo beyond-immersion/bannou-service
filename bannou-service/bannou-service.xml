@@ -3652,6 +3652,109 @@
             Easy base type for custom attributes.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute">
+            <summary>
+            Specifies numeric range constraints for a configuration property.
+            Matches OpenAPI 3.0 validation keywords: minimum, maximum, exclusiveMinimum, exclusiveMaximum.
+            </summary>
+            <remarks>
+            <para>
+            This attribute is generated from OpenAPI schema validation keywords and validated
+            at startup by <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>.
+            </para>
+            <para>
+            Unlike <see cref="T:System.ComponentModel.DataAnnotations.RangeAttribute"/>, this attribute
+            supports exclusive bounds (value must be strictly greater/less than the bound).
+            </para>
+            <para>
+            Use <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMinimum"/> and <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMaximum"/> sentinel values to indicate
+            unbounded ranges, as C# doesn't allow nullable types in attribute parameters.
+            </para>
+            </remarks>
+            <example>
+            Schema:
+            <code>
+            RtpEnginePort:
+              type: integer
+              minimum: 1
+              maximum: 65535
+            </code>
+            Generated:
+            <code>
+            [ConfigRange(Minimum = 1, Maximum = 65535)]
+            public int RtpEnginePort { get; set; } = 22222;
+            </code>
+            </example>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMinimum">
+            <summary>
+            Sentinel value indicating no minimum bound. Use in attribute: <c>Minimum = ConfigRangeAttribute.NoMinimum</c>
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMaximum">
+            <summary>
+            Sentinel value indicating no maximum bound. Use in attribute: <c>Maximum = ConfigRangeAttribute.NoMaximum</c>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.Minimum">
+            <summary>
+            The minimum allowed value (inclusive unless <see cref="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.ExclusiveMinimum"/> is true).
+            Use <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMinimum"/> (double.NegativeInfinity) for no lower bound.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.Maximum">
+            <summary>
+            The maximum allowed value (inclusive unless <see cref="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.ExclusiveMaximum"/> is true).
+            Use <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMaximum"/> (double.PositiveInfinity) for no upper bound.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.ExclusiveMinimum">
+            <summary>
+            If true, the value must be strictly greater than <see cref="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.Minimum"/> (not equal).
+            Matches OpenAPI 3.0 exclusiveMinimum: true behavior.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.ExclusiveMaximum">
+            <summary>
+            If true, the value must be strictly less than <see cref="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.Maximum"/> (not equal).
+            Matches OpenAPI 3.0 exclusiveMaximum: true behavior.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.#ctor">
+            <summary>
+            Creates a range constraint with no bounds (use named properties to set bounds).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.#ctor(System.Double,System.Double)">
+            <summary>
+            Creates a range constraint with inclusive minimum and maximum bounds.
+            </summary>
+            <param name="minimum">The minimum allowed value (inclusive).</param>
+            <param name="maximum">The maximum allowed value (inclusive).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.HasMinimum">
+            <summary>
+            Returns true if a minimum bound is defined (not equal to <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMinimum"/>).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.HasMaximum">
+            <summary>
+            Returns true if a maximum bound is defined (not equal to <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.NoMaximum"/>).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.IsValid(System.Double)">
+            <summary>
+            Validates whether the given value satisfies this range constraint.
+            </summary>
+            <param name="value">The value to validate.</param>
+            <returns>True if the value is within the allowed range; otherwise, false.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute.GetRangeDescription">
+            <summary>
+            Gets a human-readable description of this range constraint.
+            </summary>
+            <returns>A string describing the allowed range.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.ConfigRequiredAttribute">
             <summary>
             The configuration property is required for the service to function.
@@ -9184,6 +9287,34 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.HasRequired">
             <summary>
             Returns whether this configuration has values set for all required properties.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.Validate">
+            <summary>
+            Performs all configuration validation checks.
+            Calls <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings"/> and <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown when any validation check fails.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings">
+            <summary>
+            Validates that all non-nullable string properties have non-empty values.
+            IMPLEMENTATION TENETS: Non-nullable strings with schema defaults must not be empty.
+            If an env var sets a non-nullable string to empty, that's a configuration error - schema
+            provides the default, so the only way to get empty is explicit override to empty string.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown when any non-nullable string property is empty or whitespace.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges">
+            <summary>
+            Validates that all numeric properties with <see cref="T:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute"/> are within their allowed ranges.
+            IMPLEMENTATION TENETS: Numeric configuration values must satisfy schema-defined constraints.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown when any numeric property is outside its allowed range.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ToUpperSnakeCase(System.String)">
+            <summary>
+            Converts a PascalCase property name to UPPER_SNAKE_CASE for environment variable display.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.HasRequiredForType``1">

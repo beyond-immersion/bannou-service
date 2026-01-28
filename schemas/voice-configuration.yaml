@@ -34,11 +34,15 @@ x-service-configuration:
       description: Maximum participants in P2P voice sessions
       env: VOICE_P2P_MAX_PARTICIPANTS
       default: 8
+      minimum: 2
+      maximum: 16
     ScaledMaxParticipants:
       type: integer
       description: Maximum participants in scaled tier voice sessions
       env: VOICE_SCALED_MAX_PARTICIPANTS
       default: 100
+      minimum: 1
+      maximum: 500
 
     # STUN/TURN Servers (comma-separated)
     StunServers:
@@ -88,6 +92,8 @@ x-service-configuration:
       description: RTPEngine control port
       env: VOICE_RTPENGINE_PORT
       default: 22222
+      minimum: 1
+      maximum: 65535
 
     # Request Timeout Configuration
     KamailioRequestTimeoutSeconds:
@@ -95,6 +101,8 @@ x-service-configuration:
       description: Timeout in seconds for Kamailio service requests
       env: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
       default: 5
+      minimum: 1
+      maximum: 300
 
     # SIP Credential Configuration
     SipCredentialExpirationHours:

@@ -508,6 +508,11 @@ All serialization via `BannouJson` uses these settings:
 6. **No Dead Configuration**: Every defined config property MUST be referenced in service code
 7. **No Hardcoded Tunables**: Any tunable value (limits, timeouts, thresholds, capacities) MUST be a configuration property. A hardcoded tunable is a sign you need to create a new config property.
 8. **Use Defined Infrastructure**: If a cache/ephemeral state store is defined for the service in `schemas/state-stores.yaml`, the service MUST implement cache read-through/write-through using that store
+9. **NEVER Add Secondary Fallbacks for Schema-Defaulted Properties**: If a configuration property has a default value in the schema (which compiles into the C# property initializer), service code MUST NOT add a null-coalescing fallback. This is absolutely forbidden because:
+   - **Redundant**: The default already exists in the generated class
+   - **Dangerous**: If the fallback differs from the schema default, it creates silent behavioral differences
+   - **Bug-masking**: If configuration loading fails catastrophically enough that a defaulted property becomes null, that's a critical infrastructure failure we NEED to know about via exception
+   - **Confusing**: Developers read the schema default and expect that behavior; a hidden code fallback violates that expectation
 
 ### Configuration Completeness (MANDATORY)
 
@@ -1064,6 +1069,7 @@ If multiple services need the same type, define it in `common-events.yaml` or cr
 | Unused configuration property | T21 | Wire up in service or remove from schema |
 | Hardcoded magic number for tunable | T21 | Define in configuration schema |
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
+| Secondary fallback for schema-defaulted property | T21 | Remove fallback; throw exception if null (indicates infrastructure failure) |
 | Non-async Task-returning method | T23 | Add async keyword and await |
 | `Task.FromResult` without async | T23 | Use async method with await |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
