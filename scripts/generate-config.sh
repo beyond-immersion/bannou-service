@@ -109,11 +109,15 @@ try:
             prop_enum = prop_info.get('enum', None)
             prop_ref = prop_info.get('\$ref', None)
 
-            # OpenAPI 3.0 range validation keywords
+            # OpenAPI 3.0 range validation keywords (numeric)
             prop_minimum = prop_info.get('minimum', None)
             prop_maximum = prop_info.get('maximum', None)
             prop_exclusive_min = prop_info.get('exclusiveMinimum', False)
             prop_exclusive_max = prop_info.get('exclusiveMaximum', False)
+
+            # OpenAPI 3.0 string length validation keywords
+            prop_min_length = prop_info.get('minLength', None)
+            prop_max_length = prop_info.get('maxLength', None)
 
             # Check if this is a $ref to an external enum type
             if prop_ref:
@@ -202,7 +206,9 @@ try:
                 'minimum': prop_minimum,
                 'maximum': prop_maximum,
                 'exclusive_min': prop_exclusive_min,
-                'exclusive_max': prop_exclusive_max
+                'exclusive_max': prop_exclusive_max,
+                'min_length': prop_min_length,
+                'max_length': prop_max_length
             })
 
     # Generate the configuration class
@@ -303,11 +309,24 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
                 range_parts.append('ExclusiveMaximum = true')
             range_attr = '    [ConfigRange(' + ', '.join(range_parts) + ')]\\n'
 
+        # Generate ConfigStringLength attribute if minLength or maxLength is specified
+        string_length_attr = ''
+        has_min_length = prop.get('min_length') is not None
+        has_max_length = prop.get('max_length') is not None
+
+        if has_min_length or has_max_length:
+            length_parts = []
+            if has_min_length:
+                length_parts.append('MinLength = ' + str(prop['min_length']))
+            if has_max_length:
+                length_parts.append('MaxLength = ' + str(prop['max_length']))
+            string_length_attr = '    [ConfigStringLength(' + ', '.join(length_parts) + ')]\\n'
+
         print(f'''    /// <summary>
     /// {prop['description']}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-{required_attr}{range_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+{required_attr}{range_attr}{string_length_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
 
     print('}')

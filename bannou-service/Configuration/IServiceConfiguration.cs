@@ -57,13 +57,14 @@ public interface IServiceConfiguration
 
     /// <summary>
     /// Performs all configuration validation checks.
-    /// Calls <see cref="ValidateNonNullableStrings"/> and <see cref="ValidateNumericRanges"/>.
+    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, and <see cref="ValidateStringLengths"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when any validation check fails.</exception>
     public void Validate()
     {
         ValidateNonNullableStrings();
         ValidateNumericRanges();
+        ValidateStringLengths();
     }
 
     /// <summary>
@@ -158,6 +159,57 @@ public interface IServiceConfiguration
                 $"Configuration validation failed for {configTypeName}: " +
                 $"Numeric properties outside allowed range. " +
                 $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all string properties with <see cref="ConfigStringLengthAttribute"/> meet their length constraints.
+    /// IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined length constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any string property is outside its allowed length range.</exception>
+    public void ValidateStringLengths()
+    {
+        var nullabilityContext = new NullabilityInfoContext();
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var lengthAttr = property.GetCustomAttribute<ConfigStringLengthAttribute>();
+            if (lengthAttr == null)
+                continue;
+
+            // Only validate string properties
+            if (property.PropertyType != typeof(string))
+                continue;
+
+            var value = property.GetValue(this) as string;
+
+            // Skip validation for null values on nullable properties
+            if (value == null)
+            {
+                var nullabilityInfo = nullabilityContext.Create(property);
+                if (nullabilityInfo.WriteState == NullabilityState.Nullable)
+                    continue;
+            }
+
+            if (!lengthAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                var actualLength = value?.Length ?? 0;
+                invalidProperties.Add(
+                    $"{property.Name} (length={actualLength}, must be {lengthAttr.GetLengthDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"String properties outside allowed length range. " +
+                $"The following properties have invalid lengths: {string.Join("; ", invalidProperties)}. " +
                 $"Check environment variable values or remove overrides to use schema defaults.");
         }
     }

@@ -3760,6 +3760,99 @@
             The configuration property is required for the service to function.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute">
+            <summary>
+            Specifies string length constraints for a configuration property.
+            Matches OpenAPI 3.0 validation keywords: minLength, maxLength.
+            </summary>
+            <remarks>
+            <para>
+            This attribute is generated from OpenAPI schema validation keywords and validated
+            at startup by <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateStringLengths"/>.
+            </para>
+            <para>
+            Use this for ensuring configuration strings meet length requirements, such as:
+            - JWT secrets (minimum 32 characters for security)
+            - Salt values (minimum length for cryptographic strength)
+            - Names and codes (maximum length for database constraints)
+            </para>
+            <para>
+            Use <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMinLength"/> and <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMaxLength"/> sentinel values to indicate
+            unbounded lengths, as C# doesn't allow nullable types in attribute parameters.
+            </para>
+            </remarks>
+            <example>
+            Schema:
+            <code>
+            JwtSecret:
+              type: string
+              minLength: 32
+              maxLength: 512
+            </code>
+            Generated:
+            <code>
+            [ConfigStringLength(MinLength = 32, MaxLength = 512)]
+            public string JwtSecret { get; set; } = "default-dev-secret-key-32-chars!";
+            </code>
+            </example>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMinLength">
+            <summary>
+            Sentinel value indicating no minimum length. Use in attribute: <c>MinLength = ConfigStringLengthAttribute.NoMinLength</c>
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMaxLength">
+            <summary>
+            Sentinel value indicating no maximum length. Use in attribute: <c>MaxLength = ConfigStringLengthAttribute.NoMaxLength</c>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.MinLength">
+            <summary>
+            The minimum allowed string length (inclusive).
+            Use <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMinLength"/> (-1) for no lower bound.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.MaxLength">
+            <summary>
+            The maximum allowed string length (inclusive).
+            Use <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMaxLength"/> (-1) for no upper bound.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.#ctor">
+            <summary>
+            Creates a string length constraint with no bounds (use named properties to set bounds).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Creates a string length constraint with minimum and maximum bounds.
+            </summary>
+            <param name="minLength">The minimum allowed string length (inclusive).</param>
+            <param name="maxLength">The maximum allowed string length (inclusive).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.HasMinLength">
+            <summary>
+            Returns true if a minimum length is defined (not equal to <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMinLength"/>).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.HasMaxLength">
+            <summary>
+            Returns true if a maximum length is defined (not equal to <see cref="F:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.NoMaxLength"/>).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.IsValid(System.String)">
+            <summary>
+            Validates whether the given string satisfies this length constraint.
+            </summary>
+            <param name="value">The string value to validate. Null values are considered invalid if MinLength > 0.</param>
+            <returns>True if the string length is within the allowed range; otherwise, false.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute.GetLengthDescription">
+            <summary>
+            Gets a human-readable description of this length constraint.
+            </summary>
+            <returns>A string describing the allowed length range.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.HeaderArrayAttribute">
             <summary>
             Attribute to propagate common headers through mesh requests.
@@ -9292,7 +9385,7 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.Validate">
             <summary>
             Performs all configuration validation checks.
-            Calls <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings"/> and <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>.
+            Calls <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>, and <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateStringLengths"/>.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when any validation check fails.</exception>
         </member>
@@ -9311,6 +9404,13 @@
             IMPLEMENTATION TENETS: Numeric configuration values must satisfy schema-defined constraints.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when any numeric property is outside its allowed range.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateStringLengths">
+            <summary>
+            Validates that all string properties with <see cref="T:BeyondImmersion.BannouService.Attributes.ConfigStringLengthAttribute"/> meet their length constraints.
+            IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined length constraints.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown when any string property is outside its allowed length range.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ToUpperSnakeCase(System.String)">
             <summary>
