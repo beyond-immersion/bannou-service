@@ -680,11 +680,12 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             return false;
         }
 
+        Guid? gameServiceId = null;
         try
         {
             var createServiceResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/game-service/create",
+                "/game-service/services/create",
                 new
                 {
                     stubName = "test-game",
@@ -695,22 +696,45 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (createServiceResponse.IsSuccess)
             {
-                Console.WriteLine("   Created game service 'test-game'");
+                if (createServiceResponse.Result.TryGetProperty("serviceId", out var serviceIdProp))
+                {
+                    gameServiceId = serviceIdProp.GetGuid();
+                }
+                Console.WriteLine($"   Created game service 'test-game': {gameServiceId}");
             }
             else if (createServiceResponse.Error?.ResponseCode == 409)
             {
-                Console.WriteLine("   Game service 'test-game' already exists (OK)");
+                Console.WriteLine("   Game service 'test-game' already exists - fetching ID...");
+                // Fetch the existing service by stub name
+                var getServiceResponse = await adminClient.InvokeAsync<object, JsonElement>(
+                    "POST",
+                    "/game-service/services/get",
+                    new { stubName = "test-game" },
+                    timeout: TimeSpan.FromSeconds(10));
+
+                if (getServiceResponse.IsSuccess)
+                {
+                    if (getServiceResponse.Result.TryGetProperty("serviceId", out var serviceIdProp))
+                    {
+                        gameServiceId = serviceIdProp.GetGuid();
+                    }
+                    Console.WriteLine($"   Found existing game service: {gameServiceId}");
+                }
             }
             else
             {
-                Console.WriteLine($"   Warning: game-service/create returned {createServiceResponse.Error?.ResponseCode}");
-                // Continue anyway - service may exist from previous test
+                Console.WriteLine($"   Warning: game-service/services/create returned {createServiceResponse.Error?.ResponseCode}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Warning: Failed to create game service: {ex.Message}");
-            // Continue - service may already exist
+            Console.WriteLine($"   Warning: Failed to create/get game service: {ex.Message}");
+        }
+
+        if (gameServiceId == null)
+        {
+            Console.WriteLine("   Could not create or find game service 'test-game' - test cannot proceed");
+            return false;
         }
 
         // Step 2: Create test account
@@ -770,7 +794,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 new
                 {
                     accountId = accountId.Value,
-                    stubName = "test-game"
+                    serviceId = gameServiceId.Value
                 },
                 timeout: TimeSpan.FromSeconds(10));
 
