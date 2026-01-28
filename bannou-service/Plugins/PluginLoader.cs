@@ -272,25 +272,18 @@ public class PluginLoader
         _validEnvironmentPrefixes.Add("BANNOU_");
 
         // Add prefix for each discovered plugin
-        // e.g., "auth" → "AUTH_", "game-session" → "GAMESESSION_" and "GAME_SESSION_"
+        // e.g., "auth" → "AUTH_", "game-session" → "GAME_SESSION_"
+        // Hyphens are always converted to underscores to match schema env: conventions
         foreach (var plugin in _allPlugins)
         {
             var pluginName = plugin.PluginName;
             if (string.IsNullOrWhiteSpace(pluginName))
                 continue;
 
-            // Primary prefix: uppercase with underscores replaced for hyphens, plus trailing underscore
-            // e.g., "game-session" → "GAME_SESSION_"
-            var primaryPrefix = pluginName.ToUpperInvariant().Replace('-', '_') + "_";
-            _validEnvironmentPrefixes.Add(primaryPrefix);
-
-            // Secondary prefix: hyphens removed (no underscore replacement)
-            // e.g., "game-session" → "GAMESESSION_"
-            var secondaryPrefix = pluginName.ToUpperInvariant().Replace("-", "") + "_";
-            if (primaryPrefix != secondaryPrefix)
-            {
-                _validEnvironmentPrefixes.Add(secondaryPrefix);
-            }
+            // Convert plugin name to env prefix: "game-session" → "GAME_SESSION_"
+            // Hyphens are converted to underscores to match schema env: conventions
+            var prefix = pluginName.ToUpperInvariant().Replace('-', '_') + "_";
+            _validEnvironmentPrefixes.Add(prefix);
         }
 
         _logger.LogInformation(

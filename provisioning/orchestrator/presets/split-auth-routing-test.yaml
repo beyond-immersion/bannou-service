@@ -22,7 +22,7 @@
 # The ServiceAppMappingResolver receives these events and routes accordingly.
 #
 # Game Session Partitioning:
-# The bannou-auth node runs game-session with SUPPORTEDGAMESERVICES=test-game,
+# The bannou-auth node runs game-session with GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game,
 # meaning it only processes subscription.updated events for the "test-game" stub.
 # The main node's game-session (default "generic") ignores "test-game" events.
 # This tests the per-game horizontal scaling pattern where different nodes

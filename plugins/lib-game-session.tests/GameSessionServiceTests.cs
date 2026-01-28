@@ -1553,9 +1553,9 @@ public class GameSessionConfigurationTests
     [Fact]
     public void Configuration_ShouldBindFromEnvironmentVariables()
     {
-        // Arrange - Use GAMESESSION_ prefix (derived from BannouService("game-session"))
-        Environment.SetEnvironmentVariable("GAMESESSION_MAXPLAYERSPERSESSION", "8");
-        Environment.SetEnvironmentVariable("GAMESESSION_DEFAULTSESSIONTIMEOUTSECONDS", "3600");
+        // Arrange - Use GAME_SESSION_ prefix (hyphens converted to underscores per schema conventions)
+        Environment.SetEnvironmentVariable("GAME_SESSION_MAX_PLAYERS_PER_SESSION", "8");
+        Environment.SetEnvironmentVariable("GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS", "3600");
 
         // Act
         var config = IServiceConfiguration.BuildConfiguration<GameSessionServiceConfiguration>();
@@ -1564,7 +1564,7 @@ public class GameSessionConfigurationTests
         Assert.NotNull(config);
 
         // Cleanup
-        Environment.SetEnvironmentVariable("GAMESESSION_MAXPLAYERSPERSESSION", null);
-        Environment.SetEnvironmentVariable("GAMESESSION_DEFAULTSESSIONTIMEOUTSECONDS", null);
+        Environment.SetEnvironmentVariable("GAME_SESSION_MAX_PLAYERS_PER_SESSION", null);
+        Environment.SetEnvironmentVariable("GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS", null);
     }
 }

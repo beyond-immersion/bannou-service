@@ -91,7 +91,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             new ServiceTest(TestConnectStillOnMainNode, "SplitRouting - Connect on Main", "Routing",
                 "Verify connect service still on bannou-main node"),
             new ServiceTest(TestGameSessionShortcutOnSplitNode, "SplitRouting - GameSession Shortcut", "GameSession",
-                "Test subscription-based shortcut flow via game-session on bannou-auth (SUPPORTEDGAMESERVICES=test-game)"),
+                "Test subscription-based shortcut flow via game-session on bannou-auth (GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game)"),
 
             // Phase 2: Deploy relayed-connect and test peer-to-peer routing
             new ServiceTest(TestDeployRelayedConnect, "RelayedConnect - Deploy", "Orchestrator",
@@ -618,7 +618,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test game-session shortcut flow when running on bannou-auth with SUPPORTEDGAMESERVICES=test-game.
+    /// Test game-session shortcut flow when running on bannou-auth with GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game.
     /// This validates the per-game horizontal scaling pattern where different nodes handle different games.
     ///
     /// Flow:
@@ -631,7 +631,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     private void TestGameSessionShortcutOnSplitNode(string[] args)
     {
         Console.WriteLine("=== GameSession Shortcut on Split Node Test ===");
-        Console.WriteLine("Testing subscription -> shortcut flow with SUPPORTEDGAMESERVICES=test-game on bannou-auth");
+        Console.WriteLine("Testing subscription -> shortcut flow with GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game on bannou-auth");
 
         if (!RequiresSplitDeployment("GameSession shortcut test"))
             return;
