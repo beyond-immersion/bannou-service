@@ -9,7 +9,7 @@ info:
     - Lifecycle events (auto-generated): contract-template.created/updated/deleted, contract-instance.created/updated/deleted
     - Contract flow events: proposed, consent-received, accepted, activated, milestone events, breach events, fulfillment, termination
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Contract service is reactive - no external event subscriptions for v1
@@ -93,7 +93,7 @@ x-lifecycle:
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID if template is realm-specific" }
       minParties: { type: integer, required: true, description: "Minimum number of parties required" }
       maxParties: { type: integer, required: true, description: "Maximum number of parties allowed" }
-      defaultEnforcementMode: { $ref: '../contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
+      defaultEnforcementMode: { $ref: 'contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
       transferable: { type: boolean, required: true, description: "Whether contracts can be transferred" }
       isActive: { type: boolean, required: true, description: "Whether template is active" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the template was created" }
@@ -104,7 +104,7 @@ x-lifecycle:
       contractId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the contract instance" }
       templateId: { type: string, format: uuid, required: true, description: "Reference to the source template" }
       templateCode: { type: string, required: true, description: "Template code for reference" }
-      status: { $ref: '../contract-api.yaml#/components/schemas/ContractStatus', required: true, description: "Current contract status" }
+      status: { $ref: 'contract-api.yaml#/components/schemas/ContractStatus', required: true, description: "Current contract status" }
       proposedAt: { type: string, format: date-time, nullable: true, description: "When contract was proposed to parties" }
       acceptedAt: { type: string, format: date-time, nullable: true, description: "When all parties consented" }
       effectiveFrom: { type: string, format: date-time, nullable: true, description: "When contract became active" }
@@ -187,7 +187,7 @@ components:
           format: uuid
           description: Entity that consented
         consentingEntityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -382,10 +382,10 @@ components:
           format: uuid
           description: Entity that breached
         breachingEntityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         breachType:
-          $ref: '../contract-api.yaml#/components/schemas/BreachType'
+          $ref: 'contract-api.yaml#/components/schemas/BreachType'
           description: Type of breach
         breachedTermOrMilestone:
           type: string
@@ -491,7 +491,7 @@ components:
           format: uuid
           description: Entity that requested termination
         terminatedByEntityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         reason:
           type: string
@@ -675,7 +675,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string

@@ -334,10 +334,10 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
         pattern_attr = ''
         prop_pattern = prop.get('pattern')
         if prop_pattern:
-            # Escape the pattern for C# verbatim string (@"...")
+            # Escape the pattern for C# verbatim string (@\\\"...\\\")
             # Double any quotes in the pattern
-            escaped_pattern = prop_pattern.replace('"', '""')
-            pattern_attr = '    [ConfigPattern(@\"' + escaped_pattern + '\")]\\n'
+            escaped_pattern = prop_pattern.replace('\\\"', '\\\"\\\"')
+            pattern_attr = '    [ConfigPattern(@\\\"' + escaped_pattern + '\\\")]\\n'
 
         # Generate ConfigMultipleOf attribute if multipleOf is specified
         multiple_of_attr = ''

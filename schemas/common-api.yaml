@@ -5,6 +5,9 @@ info:
     Shared type definitions used across multiple Bannou services.
     These types are not owned by any specific plugin and provide
     system-wide consistency for cross-service concepts.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
   version: 1.0.0
 
 # No paths - this schema only defines shared types

@@ -1,3 +1,14 @@
+openapi: 3.0.3
+info:
+  title: Save-Load Service Configuration
+  version: 1.0.0
+  description: |
+    Configuration schema for Save-Load service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
+paths: {}
 x-service-configuration:
   properties:
     MaxSaveSizeBytes:

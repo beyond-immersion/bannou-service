@@ -8,6 +8,9 @@ info:
 
     **Topic Naming**: Uses kebab-case for multi-word entities (inventory-container, inventory-item).
 
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
+
   x-event-subscriptions: []
 
   x-event-publications:
@@ -54,7 +57,7 @@ x-lifecycle:
     model:
       containerId: { type: string, format: uuid, primary: true, required: true, description: "Container unique identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
-      ownerType: { $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType', required: true, description: "Owner type (character, account, location, etc.)" }
+      ownerType: { $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType', required: true, description: "Owner type (character, account, location, etc.)" }
       containerType: { type: string, required: true, description: "Game-defined container type" }
       constraintModel: { type: string, required: true, description: "Capacity constraint model" }
       isEquipmentSlot: { type: boolean, required: true, description: "Whether this is an equipment slot" }
@@ -102,7 +105,7 @@ components:
           format: uuid
           description: Container owner ID
         ownerType:
-          $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
           description: Container owner type
         quantity:
           type: number
@@ -158,7 +161,7 @@ components:
           format: uuid
           description: Container owner ID
         ownerType:
-          $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
           description: Container owner type
         reason:
           type: string
@@ -279,7 +282,7 @@ components:
           format: uuid
           description: Previous owner ID
         sourceOwnerType:
-          $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
           description: Previous owner type
         targetContainerId:
           type: string
@@ -290,7 +293,7 @@ components:
           format: uuid
           description: New owner ID
         targetOwnerType:
-          $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
           description: New owner type
         quantityTransferred:
           type: number
@@ -418,11 +421,11 @@ components:
           format: uuid
           description: Container owner ID
         ownerType:
-          $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
           description: Container owner type
         containerType:
           type: string
           description: Container type
         constraintType:
-          $ref: '../inventory-api.yaml#/components/schemas/ConstraintLimitType'
+          $ref: 'inventory-api.yaml#/components/schemas/ConstraintLimitType'
           description: Which constraint was reached (slots, weight, volume)

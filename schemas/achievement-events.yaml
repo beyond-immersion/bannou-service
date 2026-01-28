@@ -9,7 +9,7 @@ info:
     - Subscribes to analytics.milestone.reached for milestone achievements
     - Publishes achievement.unlocked for client notifications and other services
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -94,7 +94,7 @@ components:
           format: uuid
           description: ID of the entity that unlocked it
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         points:
           type: integer
@@ -153,7 +153,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         previousProgress:
           type: integer
@@ -203,10 +203,10 @@ components:
           format: uuid
           description: ID of the entity (account for platform sync)
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         platform:
-          $ref: '../achievement-api.yaml#/components/schemas/Platform'
+          $ref: 'achievement-api.yaml#/components/schemas/Platform'
           description: Platform that was synced to
         platformAchievementId:
           type: string
@@ -259,7 +259,7 @@ components:
           nullable: true
           description: Detailed description of how to earn the achievement
         achievementType:
-          $ref: '../achievement-api.yaml#/components/schemas/AchievementType'
+          $ref: 'achievement-api.yaml#/components/schemas/AchievementType'
           description: Type of achievement
         points:
           type: integer
@@ -271,7 +271,7 @@ components:
         platforms:
           type: array
           items:
-            $ref: '../achievement-api.yaml#/components/schemas/Platform'
+            $ref: 'achievement-api.yaml#/components/schemas/Platform'
           description: Platforms where this achievement is available
 
     AchievementDefinitionUpdatedEvent:

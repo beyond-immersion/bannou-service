@@ -14,7 +14,7 @@ info:
     - Lifecycle events (auto-generated): definition.created/updated, wallet.created/frozen/unfrozen/closed
     - Hold events: hold.created, hold.captured, hold.released, hold.expired
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []
@@ -95,8 +95,8 @@ x-lifecycle:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the currency definition" }
       code: { type: string, required: true, description: "Unique currency code" }
       name: { type: string, required: true, description: "Human-readable currency name" }
-      scope: { $ref: '../currency-api.yaml#/components/schemas/CurrencyScope', required: true, description: "Currency scope" }
-      precision: { $ref: '../currency-api.yaml#/components/schemas/CurrencyPrecision', required: true, description: "Currency precision type" }
+      scope: { $ref: 'currency-api.yaml#/components/schemas/CurrencyScope', required: true, description: "Currency scope" }
+      precision: { $ref: 'currency-api.yaml#/components/schemas/CurrencyPrecision', required: true, description: "Currency precision type" }
       isActive: { type: boolean, required: true, description: "Whether the definition is active" }
       createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the definition was last modified" }
@@ -105,9 +105,9 @@ x-lifecycle:
     model:
       walletId: { type: string, format: uuid, primary: true, required: true, description: "Unique wallet identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
-      ownerType: { $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType', required: true, description: "Owner entity type" }
+      ownerType: { $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType', required: true, description: "Owner entity type" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID for realm-scoped wallets" }
-      status: { $ref: '../currency-api.yaml#/components/schemas/WalletStatus', required: true, description: "Wallet status" }
+      status: { $ref: 'currency-api.yaml#/components/schemas/WalletStatus', required: true, description: "Wallet status" }
       createdAt: { type: string, format: date-time, required: true, description: "When the wallet was created" }
 
 paths: {}
@@ -158,7 +158,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string
@@ -172,7 +172,7 @@ components:
           format: double
           description: Amount credited
         transactionType:
-          $ref: '../currency-api.yaml#/components/schemas/TransactionType'
+          $ref: 'currency-api.yaml#/components/schemas/TransactionType'
           description: Transaction type (faucet classification)
         newBalance:
           type: number
@@ -232,7 +232,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string
@@ -246,7 +246,7 @@ components:
           format: double
           description: Amount debited
         transactionType:
-          $ref: '../currency-api.yaml#/components/schemas/TransactionType'
+          $ref: 'currency-api.yaml#/components/schemas/TransactionType'
           description: Transaction type (sink classification)
         newBalance:
           type: number
@@ -302,7 +302,7 @@ components:
           format: uuid
           description: Source wallet owner ID
         sourceOwnerType:
-          $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Source wallet owner type
         targetWalletId:
           type: string
@@ -313,7 +313,7 @@ components:
           format: uuid
           description: Target wallet owner ID
         targetOwnerType:
-          $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Target wallet owner type
         currencyDefinitionId:
           type: string
@@ -327,7 +327,7 @@ components:
           format: double
           description: Amount transferred
         transactionType:
-          $ref: '../currency-api.yaml#/components/schemas/TransactionType'
+          $ref: 'currency-api.yaml#/components/schemas/TransactionType'
           description: Transaction type (transfer, trade, gift)
 
     # =========================================================================
@@ -372,7 +372,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string
@@ -397,7 +397,7 @@ components:
           format: double
           description: Balance after autogain
         autogainMode:
-          $ref: '../currency-api.yaml#/components/schemas/AutogainMode'
+          $ref: 'currency-api.yaml#/components/schemas/AutogainMode'
           description: Autogain mode (simple or compound)
         calculatedAt:
           type: string
@@ -456,7 +456,7 @@ components:
           type: string
           description: Currency code
         capType:
-          $ref: '../currency-api.yaml#/components/schemas/EarnCapType'
+          $ref: 'currency-api.yaml#/components/schemas/EarnCapType'
           description: Cap type (daily or weekly)
         capAmount:
           type: number
@@ -514,7 +514,7 @@ components:
           format: double
           description: The wallet cap
         overflowBehavior:
-          $ref: '../currency-api.yaml#/components/schemas/CapOverflowBehavior'
+          $ref: 'currency-api.yaml#/components/schemas/CapOverflowBehavior'
           description: How overflow was handled (reject, cap_and_lose, cap_and_return)
         amountLost:
           type: number
@@ -572,7 +572,7 @@ components:
           format: double
           description: Amount that expired
         expirationPolicy:
-          $ref: '../currency-api.yaml#/components/schemas/ExpirationPolicy'
+          $ref: 'currency-api.yaml#/components/schemas/ExpirationPolicy'
           description: Expiration policy type
 
     # =========================================================================

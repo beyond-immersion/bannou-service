@@ -7,7 +7,7 @@ info:
     The Scene service publishes lifecycle events for scene documents and
     operational events for instantiation and checkout workflows.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 
@@ -66,7 +66,7 @@ x-lifecycle:
     model:
       sceneId: { type: string, format: uuid, primary: true, required: true, description: "Unique scene identifier" }
       gameId: { type: string, required: true, description: "Game service identifier for partitioning" }
-      sceneType: { $ref: '../scene-api.yaml#/components/schemas/SceneType', required: true, description: "Scene classification (region, building, etc.)" }
+      sceneType: { $ref: 'scene-api.yaml#/components/schemas/SceneType', required: true, description: "Scene classification (region, building, etc.)" }
       name: { type: string, required: true, description: "Human-readable scene name" }
       description: { type: string, nullable: true, description: "Optional scene description" }
       version: { type: string, required: true, description: "Semantic version (MAJOR.MINOR.PATCH)" }
@@ -119,7 +119,7 @@ components:
           type: string
           description: Game ID from the scene
         sceneType:
-          $ref: '../scene-api.yaml#/components/schemas/SceneType'
+          $ref: 'scene-api.yaml#/components/schemas/SceneType'
           description: Scene type from the scene
         regionId:
           type: string
@@ -319,7 +319,7 @@ components:
           type: string
           description: Game ID for the rules
         sceneType:
-          $ref: '../scene-api.yaml#/components/schemas/SceneType'
+          $ref: 'scene-api.yaml#/components/schemas/SceneType'
           description: Scene type for the rules
         ruleCount:
           type: integer

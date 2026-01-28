@@ -5,6 +5,9 @@ info:
   description: |
     Generic save/load system for game state persistence.
     Supports polymorphic ownership, versioned saves, and schema migration.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
 servers:
 - url: http://localhost:5012
 tags:

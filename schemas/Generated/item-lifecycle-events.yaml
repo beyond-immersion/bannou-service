@@ -46,16 +46,16 @@ components:
           type: string
           description: "Human-readable display name"
         category: &id005
-          $ref: '../item-api.yaml#/components/schemas/ItemCategory'
+          $ref: ../item-api.yaml#/components/schemas/ItemCategory
           description: "Item classification category"
         rarity: &id006
-          $ref: '../item-api.yaml#/components/schemas/ItemRarity'
+          $ref: ../item-api.yaml#/components/schemas/ItemRarity
           description: "Item rarity tier"
         quantityModel: &id007
-          $ref: '../item-api.yaml#/components/schemas/QuantityModel'
+          $ref: ../item-api.yaml#/components/schemas/QuantityModel
           description: "How quantities are tracked"
         scope: &id008
-          $ref: '../item-api.yaml#/components/schemas/ItemScope'
+          $ref: ../item-api.yaml#/components/schemas/ItemScope
           description: "Realm availability scope"
         isActive: &id009
           type: boolean
@@ -194,7 +194,7 @@ components:
           format: double
           description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)"
         originType: &id017
-          $ref: '../item-api.yaml#/components/schemas/ItemOriginType'
+          $ref: ../item-api.yaml#/components/schemas/ItemOriginType
           description: "How this item instance was created"
         createdAt: &id018
           type: string

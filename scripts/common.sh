@@ -202,8 +202,9 @@ extract_api_refs() {
     #   $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
     #   $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
     #   $ref: "actor-api.yaml#/components/schemas/ActorStatus"
-    local api_refs=$(grep -oE "\\\$ref: ['\"]\.{0,3}/?${service_name}-api\.yaml#/components/schemas/[^'\"]+['\"]" "$schema_file" 2>/dev/null | \
-        sed -E "s/.*\/schemas\/([^'\"]+)['\"].*/\1/" | \
+    #   $ref: ../actor-api.yaml#/components/schemas/ActorStatus (unquoted)
+    local api_refs=$(grep -oE "\\\$ref: ['\"]?\.{0,3}/?${service_name}-api\.yaml#/components/schemas/[^'\" ]+" "$schema_file" 2>/dev/null | \
+        sed -E "s/.*\/schemas\/([^'\" ]+).*/\1/" | \
         sort -u | \
         tr '\n' ',' | \
         sed 's/,$//')
@@ -224,8 +225,9 @@ extract_common_api_refs() {
     #   $ref: 'common-api.yaml#/components/schemas/EntityType'
     #   $ref: '../common-api.yaml#/components/schemas/EntityType'
     #   $ref: "common-api.yaml#/components/schemas/EntityType"
-    local common_refs=$(grep -oE "\\\$ref: ['\"]\.{0,3}/?common-api\.yaml#/components/schemas/[^'\"]+['\"]" "$schema_file" 2>/dev/null | \
-        sed -E "s/.*\/schemas\/([^'\"]+)['\"].*/\1/" | \
+    #   $ref: ../common-api.yaml#/components/schemas/EntityType (unquoted)
+    local common_refs=$(grep -oE "\\\$ref: ['\"]?\.{0,3}/?common-api\.yaml#/components/schemas/[^'\" ]+" "$schema_file" 2>/dev/null | \
+        sed -E "s/.*\/schemas\/([^'\" ]+).*/\1/" | \
         sort -u | \
         tr '\n' ',' | \
         sed 's/,$//')

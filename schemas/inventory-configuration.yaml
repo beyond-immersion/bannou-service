@@ -2,7 +2,11 @@ openapi: 3.0.0
 info:
   title: Inventory Service Configuration
   version: 1.0.0
-  description: Configuration schema for the Inventory service.
+  description: |
+    Configuration schema for the Inventory service.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
 
 x-service-configuration:
   properties:

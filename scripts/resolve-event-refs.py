@@ -67,9 +67,12 @@ def find_cross_file_refs(obj: Any, refs: Set[str] = None) -> Set[str]:
     if isinstance(obj, dict):
         if '$ref' in obj:
             ref = obj['$ref']
-            # Match cross-file refs like '../actor-api.yaml#/components/schemas/TypeName'
-            # or './actor-api.yaml#/components/schemas/TypeName'
-            match = re.match(r"['\"]?\.\.?/?([^#'\"]+)#/components/schemas/([^'\"]+)['\"]?", ref)
+            # Match cross-file refs in any of these formats:
+            # - '../actor-api.yaml#/components/schemas/TypeName' (legacy, with ../)
+            # - './actor-api.yaml#/components/schemas/TypeName' (explicit same-dir)
+            # - 'actor-api.yaml#/components/schemas/TypeName' (sibling-relative, preferred)
+            # But NOT local refs like '#/components/schemas/TypeName'
+            match = re.match(r"['\"]?(?:\.\.?/)?([a-zA-Z][^#'\"]+)#/components/schemas/([^'\"]+)['\"]?", ref)
             if match:
                 refs.add((match.group(1), match.group(2)))
         for value in obj.values():
@@ -175,9 +178,10 @@ def convert_refs_to_local(obj: Any, inlined_types: Set[str]) -> Any:
         if '$ref' in obj:
             ref = obj['$ref']
             # Check if this is a cross-file ref to an inlined type
-            match = re.match(r"['\"]?\.\.?/?[^#]+#/components/schemas/([^'\"]+)['\"]?", ref)
-            if match and match.group(1) in inlined_types:
-                obj['$ref'] = f"#/components/schemas/{match.group(1)}"
+            # Matches: '../file.yaml#/...', './file.yaml#/...', 'file.yaml#/...'
+            match = re.match(r"['\"]?(?:\.\.?/)?([a-zA-Z][^#'\"]+)#/components/schemas/([^'\"]+)['\"]?", ref)
+            if match and match.group(2) in inlined_types:
+                obj['$ref'] = f"#/components/schemas/{match.group(2)}"
             else:
                 # Also fix self-qualified local refs (./#/... -> #/...)
                 match = re.match(r"['\"]?\./?#/components/schemas/([^'\"]+)['\"]?", ref)
@@ -196,17 +200,23 @@ def fix_relative_paths_for_generated(obj: Any) -> Any:
     """
     Fix relative paths in refs when the output file is in Generated/ subdirectory.
 
-    Refs like 'common-events.yaml#/...' need to become '../common-events.yaml#/...'
-    because the resolved file is in schemas/Generated/, one level deeper.
+    All cross-file refs need '../' prefix because the output is in schemas/Generated/.
+    This function normalizes refs - whether they already have '../' or not - to ensure
+    consistent '../filename.yaml#/...' format in the output.
+
+    Schema authors should write sibling-relative refs (e.g., 'actor-api.yaml#/...').
+    This function adds the '../' needed for the Generated/ output location.
     """
     if isinstance(obj, dict):
         if '$ref' in obj:
             ref = obj['$ref']
-            # Match refs to sibling files (no ../ prefix, not a local #/ ref)
-            # Examples: 'common-events.yaml#/...' or 'actor-api.yaml#/...'
-            match = re.match(r"['\"]?([a-zA-Z][a-zA-Z0-9_-]*\.yaml)#(.+)['\"]?", ref)
+            # Match refs to sibling files - with or without existing ../ prefix
+            # Pattern 1: '../filename.yaml#/...' (already has ../)
+            # Pattern 2: 'filename.yaml#/...' (no ../)
+            # Pattern 3: './filename.yaml#/...' (explicit same-dir)
+            match = re.match(r"['\"]?(?:\.\.?/)?([a-zA-Z][a-zA-Z0-9_-]*\.yaml)#(.+)['\"]?", ref)
             if match:
-                # Add ../ prefix to go up from Generated/ to schemas/
+                # Normalize to ../ prefix for Generated/ output location
                 obj['$ref'] = f"../{match.group(1)}#{match.group(2)}"
         for key, value in obj.items():
             obj[key] = fix_relative_paths_for_generated(value)

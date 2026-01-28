@@ -20,7 +20,7 @@ info:
     - Asset search by type, tags, realm
     - Processing pipeline for textures, models, audio, behaviors
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint

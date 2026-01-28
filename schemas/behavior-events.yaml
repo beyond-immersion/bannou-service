@@ -10,7 +10,7 @@ info:
     - Existing behaviors are recompiled/updated (BehaviorUpdatedEvent)
     - Behaviors are deleted/invalidated (BehaviorDeletedEvent)
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Behavior service doesn't subscribe to external events

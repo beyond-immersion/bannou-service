@@ -6,7 +6,7 @@ info:
     Contains asset-specific service-to-service events for upload tracking,
     processing coordination, and asset lifecycle management.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -97,10 +97,10 @@ components:
           type: string
           description: MIME content type
         assetType:
-          $ref: '../asset-api.yaml#/components/schemas/AssetType'
+          $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of asset being uploaded
         realm:
-          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         isMultipart:
           type: boolean
@@ -268,10 +268,10 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
         assetType:
-          $ref: '../asset-api.yaml#/components/schemas/AssetType'
+          $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of the asset
         realm:
-          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
 
     # ==========================================================================
@@ -312,7 +312,7 @@ components:
           type: integer
           description: Number of assets in the bundle
         compression:
-          $ref: '../asset-api.yaml#/components/schemas/CompressionType'
+          $ref: 'asset-api.yaml#/components/schemas/CompressionType'
           description: Compression algorithm used for the bundle
         owner:
           type: string
@@ -344,7 +344,7 @@ components:
           type: string
           description: Metabundle version string
         realm:
-          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm for this metabundle
         sourceBundleCount:
           type: integer
@@ -416,7 +416,7 @@ components:
           type: string
           description: Account ID or service name that performed the update
         realm:
-          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleDeletedEvent:
@@ -449,7 +449,7 @@ components:
           type: string
           description: Account ID or service name that performed the deletion
         realm:
-          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleRestoredEvent:
@@ -477,7 +477,7 @@ components:
           type: string
           description: Account ID or service name that performed the restoration
         realm:
-          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     # ==========================================================================

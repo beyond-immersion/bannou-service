@@ -6,7 +6,7 @@ info:
     Events published and subscribed to by the Actor service.
     Includes lifecycle events for templates and instances, plus event subscriptions.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
 
   x-event-subscriptions:
@@ -85,7 +85,7 @@ x-lifecycle:
         nullable: true  # NRT: Optional property MUST be nullable
         description: Pool node running this actor
       status:
-        $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+        $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
         required: true
         description: Current actor lifecycle state
       startedAt:
@@ -256,10 +256,10 @@ components:
           type: string
           description: Pool node where the actor is running
         previousStatus:
-          $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
           description: Actor status before the change
         newStatus:
-          $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
           description: Actor status after the change
         reason:
           type: string
@@ -613,5 +613,5 @@ components:
           type: string
           description: App-id of game server (for routing state updates back)
         perception:
-          $ref: '../actor-api.yaml#/components/schemas/PerceptionData'
+          $ref: 'actor-api.yaml#/components/schemas/PerceptionData'
           description: The perception data to deliver to the actor

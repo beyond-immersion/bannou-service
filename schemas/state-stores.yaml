@@ -3,6 +3,9 @@
 # This file defines all state stores used by Bannou services.
 # Generated code provides typed constants and configuration.
 #
+# Schema Rules: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+# modifying this schema.
+#
 # Schema: x-state-stores defines each store with:
 #   - backend: redis | mysql | memory
 #   - prefix: Redis key prefix (redis only)

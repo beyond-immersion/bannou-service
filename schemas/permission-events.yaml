@@ -5,7 +5,7 @@ info:
     Event models for Permission service RabbitMQ pub/sub via MassTransit.
     Handles session state management and capability compilation.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:

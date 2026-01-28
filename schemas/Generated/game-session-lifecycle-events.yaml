@@ -38,7 +38,7 @@ components:
           nullable: true
           description: "Human-readable name for the session"
         status: &id004
-          $ref: '../game-session-api.yaml#/components/schemas/SessionStatus'
+          $ref: ../game-session-api.yaml#/components/schemas/SessionStatus
           description: "Current status of the game session"
         maxPlayers: &id005
           type: integer

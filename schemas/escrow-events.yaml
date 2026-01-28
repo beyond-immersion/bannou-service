@@ -12,7 +12,7 @@ info:
     - Timeout events: escrow.expired, escrow.cancelled
     - Validation events: escrow.validation.failed, escrow.validation.reaffirmed
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -111,10 +111,10 @@ components:
           format: uuid
           description: Escrow agreement ID
         escrowType:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowType'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowType'
           description: Type of escrow
         trustMode:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowTrustMode'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowTrustMode'
           description: Trust mode
         parties:
           type: array
@@ -181,7 +181,7 @@ components:
           format: uuid
           description: Party who deposited
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the depositing party
         depositId:
           type: string
@@ -271,10 +271,10 @@ components:
           format: uuid
           description: Party who consented
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the consenting party
         consentType:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowConsentType'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowConsentType'
           description: Type of consent
         consentsReceived:
           type: integer
@@ -357,7 +357,7 @@ components:
             $ref: '#/components/schemas/RecipientInfo'
           description: Recipients and what they received
         resolution:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowResolution'
           description: How the escrow was resolved
         completedAt:
           type: string
@@ -398,7 +398,7 @@ components:
           nullable: true
           description: Reason for refund
         resolution:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowResolution'
           description: How the escrow was resolved
         completedAt:
           type: string
@@ -439,7 +439,7 @@ components:
           format: uuid
           description: Party who raised the dispute
         disputedByType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the disputing party
         reason:
           type: string
@@ -479,10 +479,10 @@ components:
           format: uuid
           description: Arbiter ID
         arbiterType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Arbiter type
         resolution:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowResolution'
           description: Resolution decision by arbiter
         notes:
           type: string
@@ -522,7 +522,7 @@ components:
           format: uuid
           description: Escrow agreement ID
         status:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowStatus'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowStatus'
           description: Status when expiration occurred
         autoRefunded:
           type: boolean
@@ -561,7 +561,7 @@ components:
           nullable: true
           description: Entity that cancelled
         cancelledByType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of cancelling entity
         reason:
@@ -643,7 +643,7 @@ components:
           format: uuid
           description: Party who reaffirmed
         reaffirmedByType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of reaffirming party
         allReaffirmed:
           type: boolean
@@ -671,10 +671,10 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Party type
         role:
-          $ref: '../escrow-api.yaml#/components/schemas/EscrowPartyRole'
+          $ref: 'escrow-api.yaml#/components/schemas/EscrowPartyRole'
           description: Role of the party in the escrow
 
     RecipientInfo:
@@ -691,7 +691,7 @@ components:
           format: uuid
           description: Recipient party ID
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Recipient party type
         assetSummary:
           type: string
@@ -711,7 +711,7 @@ components:
           format: uuid
           description: Depositor party ID
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Depositor party type
         assetSummary:
           type: string
@@ -727,10 +727,10 @@ components:
       - affectedPartyId
       properties:
         assetType:
-          $ref: '../escrow-api.yaml#/components/schemas/AssetType'
+          $ref: 'escrow-api.yaml#/components/schemas/AssetType'
           description: Type of asset that failed validation
         failureType:
-          $ref: '../escrow-api.yaml#/components/schemas/ValidationFailureType'
+          $ref: 'escrow-api.yaml#/components/schemas/ValidationFailureType'
           description: Type of validation failure
         affectedPartyId:
           type: string

@@ -10,6 +10,9 @@ info:
     The client sees a shortcut GUID in their capability manifest and invokes it like any other API,
     but Connect intercepts the call, swaps the GUID for the target capability GUID, and injects
     the pre-bound payload before forwarding to the target service.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
   version: 1.0.0
   contact:
     name: Bannou Development Team

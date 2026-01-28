@@ -7,7 +7,7 @@ info:
     and other long-running behavior loops. Actors output behavioral state (feelings,
     goals, memories) to characters - NOT physics data.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
 servers:
 - url: http://localhost:5012
 paths:

@@ -40,10 +40,10 @@ components:
           type: string
           description: "Human-readable currency name"
         scope: &id004
-          $ref: '../currency-api.yaml#/components/schemas/CurrencyScope'
+          $ref: ../currency-api.yaml#/components/schemas/CurrencyScope
           description: "Currency scope"
         precision: &id005
-          $ref: '../currency-api.yaml#/components/schemas/CurrencyPrecision'
+          $ref: ../currency-api.yaml#/components/schemas/CurrencyPrecision
           description: "Currency precision type"
         isActive: &id006
           type: boolean
@@ -156,7 +156,7 @@ components:
           format: uuid
           description: "Owner entity ID"
         ownerType: &id011
-          $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: ../currency-api.yaml#/components/schemas/WalletOwnerType
           description: "Owner entity type"
         realmId: &id012
           type: string
@@ -164,7 +164,7 @@ components:
           nullable: true
           description: "Realm ID for realm-scoped wallets"
         status: &id013
-          $ref: '../currency-api.yaml#/components/schemas/WalletStatus'
+          $ref: ../currency-api.yaml#/components/schemas/WalletStatus
           description: "Wallet status"
         createdAt: &id014
           type: string

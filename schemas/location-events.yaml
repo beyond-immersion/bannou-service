@@ -5,7 +5,7 @@ info:
     Event models for Location service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Location service doesn't subscribe to external events
@@ -31,7 +31,7 @@ x-lifecycle:
       code: { type: string, required: true, description: "Unique code identifier for the location within its realm" }
       name: { type: string, required: true, description: "Human-readable name of the location" }
       description: { type: string, nullable: true, description: "Detailed description of the location" }
-      locationType: { $ref: '../location-api.yaml#/components/schemas/LocationType', required: true, description: "Type classification of the location" }
+      locationType: { $ref: 'location-api.yaml#/components/schemas/LocationType', required: true, description: "Type classification of the location" }
       parentLocationId: { type: string, format: uuid, description: "ID of the parent location for hierarchical structures" }
       depth: { type: integer, required: true, description: "Depth level in the location hierarchy (0 for root locations)" }
       isDeprecated: { type: boolean, required: true, description: "Whether this location has been marked as deprecated" }

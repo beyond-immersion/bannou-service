@@ -132,7 +132,7 @@ components:
           nullable: true
           description: Pool node running this actor
         status: &id009
-          $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+          $ref: ../actor-api.yaml#/components/schemas/ActorStatus
           description: Current actor lifecycle state
         startedAt: &id010
           type: string

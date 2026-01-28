@@ -10,7 +10,7 @@ info:
     - Service events: RabbitMQ pub/sub between services via MassTransit
     - Client events: Services → RabbitMQ → Connect service → WebSocket → Client
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:

@@ -50,6 +50,38 @@ def to_kebab_case(name: str) -> str:
     return re.sub('([a-z0-9])([A-Z])', r'\1-\2', s1).lower()
 
 
+def fix_relative_paths_for_generated(obj: Any) -> Any:
+    """
+    Fix relative paths in refs when the output file is in Generated/ subdirectory.
+
+    All cross-file refs need '../' prefix because the output is in schemas/Generated/.
+    This function normalizes refs - whether they already have '../' or not - to ensure
+    consistent '../filename.yaml#/...' format in the output.
+
+    Schema authors should write sibling-relative refs (e.g., 'actor-api.yaml#/...').
+    This function adds the '../' needed for the Generated/ output location.
+    """
+    if isinstance(obj, dict):
+        if '$ref' in obj:
+            ref = obj['$ref']
+            # Match refs to sibling files - with or without existing ../ prefix
+            # Pattern 1: '../filename.yaml#/...' (already has ../)
+            # Pattern 2: 'filename.yaml#/...' (no ../)
+            # Pattern 3: './filename.yaml#/...' (explicit same-dir)
+            # But NOT local refs like '#/components/schemas/TypeName'
+            match = re.match(r"['\"]?(?:\.\.?/)?([a-zA-Z][a-zA-Z0-9_-]*\.yaml)#(.+)['\"]?", ref)
+            if match:
+                # Normalize to ../ prefix for Generated/ output location
+                obj['$ref'] = f"../{match.group(1)}#{match.group(2)}"
+        for key, value in obj.items():
+            obj[key] = fix_relative_paths_for_generated(value)
+    elif isinstance(obj, list):
+        for i, item in enumerate(obj):
+            obj[i] = fix_relative_paths_for_generated(item)
+
+    return obj
+
+
 def extract_service_name(events_file: Path) -> str:
     """Extract service name from events file path (e.g., 'account' from 'account-events.yaml')."""
     return events_file.stem.replace('-events', '')
@@ -248,6 +280,9 @@ def generate_lifecycle_events_file(
             'schemas': all_schemas
         }
     }
+
+    # Fix relative paths for Generated/ output location
+    doc = fix_relative_paths_for_generated(doc)
 
     # Write the file (completely overwriting)
     with open(output_path, 'w') as f:

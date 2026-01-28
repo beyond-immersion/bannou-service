@@ -5,7 +5,7 @@ info:
     Event models for Realm History service RabbitMQ pub/sub via MassTransit.
     These events are published when historical participation or lore data changes.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Realm History doesn't subscribe to external events
@@ -66,7 +66,7 @@ components:
           format: uuid
           description: ID of the participation record
         role:
-          $ref: '../realm-history-api.yaml#/components/schemas/RealmEventRole'
+          $ref: 'realm-history-api.yaml#/components/schemas/RealmEventRole'
           description: Role the realm played in the event
 
     RealmParticipationDeletedEvent:

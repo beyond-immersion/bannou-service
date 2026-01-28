@@ -37,7 +37,7 @@ components:
           format: uuid
           description: "Owner entity ID"
         ownerType: &id003
-          $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          $ref: ../inventory-api.yaml#/components/schemas/ContainerOwnerType
           description: "Owner type (character, account, location, etc.)"
         containerType: &id004
           type: string

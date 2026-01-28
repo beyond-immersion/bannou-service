@@ -6,7 +6,7 @@ info:
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
     Custom events (PlayerJoined, PlayerLeft) are manually defined.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -57,7 +57,7 @@ x-lifecycle:
       sessionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the game session" }
       gameType: { type: string, required: true, description: "Game service stub name for this session" }
       sessionName: { type: string, nullable: true, description: "Human-readable name for the session" }
-      status: { $ref: '../game-session-api.yaml#/components/schemas/SessionStatus', required: true, description: "Current status of the game session" }
+      status: { $ref: 'game-session-api.yaml#/components/schemas/SessionStatus', required: true, description: "Current status of the game session" }
       maxPlayers: { type: integer, nullable: true, description: "Maximum number of players allowed in the session" }  # NRT: Optional property MUST be nullable
       currentPlayers: { type: integer, nullable: true, description: "Current number of players in the session" }  # NRT: Optional property MUST be nullable
       isPrivate: { type: boolean, nullable: true, description: "Whether the session is private (invite-only)" }  # NRT: Optional property MUST be nullable
@@ -164,7 +164,7 @@ components:
           format: uuid
           description: Unique identifier for the action
         actionType:
-          $ref: '../game-session-api.yaml#/components/schemas/GameActionType'
+          $ref: 'game-session-api.yaml#/components/schemas/GameActionType'
           description: Type of action performed
         targetId:
           type: string

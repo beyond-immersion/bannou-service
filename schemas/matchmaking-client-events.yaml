@@ -9,7 +9,7 @@ info:
     All events inherit from BaseClientEvent (common-client-events.yaml) and use
     the "matchmaking.{event_type}" naming convention.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
@@ -239,7 +239,7 @@ components:
           type: string
           description: Queue the ticket was in
         reason:
-          $ref: '../matchmaking-api.yaml#/components/schemas/CancelReason'
+          $ref: 'matchmaking-api.yaml#/components/schemas/CancelReason'
           description: Reason for cancellation
         reasonDetail:
           type: string

@@ -5,7 +5,7 @@ info:
     Event models for Auth service RabbitMQ pub/sub via MassTransit.
     Contains auth-specific events and subscription/publication declarations.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -249,7 +249,7 @@ components:
           format: uuid
           description: ID of the account that logged in
         provider:
-          $ref: '../auth-api.yaml#/components/schemas/Provider'
+          $ref: 'auth-api.yaml#/components/schemas/Provider'
           description: OAuth provider name
         providerUserId:
           type: string
