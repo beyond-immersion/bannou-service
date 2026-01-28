@@ -163,12 +163,13 @@ NSwag processes each schema file independently. When multiple schemas define the
 
 ### Reference Rules
 
+All `$ref` paths are sibling-relative (same directory). Never use `../` prefixes.
+
 | Source Schema | Can Reference | Path Format |
 |--------------|---------------|-------------|
 | `*-api.yaml` | `common-api.yaml` | `common-api.yaml#/...` |
-| `*-events.yaml` | Same service's `-api.yaml`, `common-api.yaml`, `common-events.yaml` | `../{service}-api.yaml#/...` (needs `../` prefix) |
+| `*-events.yaml` | Same service's `-api.yaml`, `common-api.yaml`, `common-events.yaml` | `{service}-api.yaml#/...` |
 | `*-configuration.yaml` | Same service's `-api.yaml`, `common-api.yaml` | `{service}-api.yaml#/...` |
-| `*-lifecycle-events.yaml` | Same service's `-api.yaml`, `common-api.yaml` | `../{service}-api.yaml#/...` (needs `../` prefix - preprocessed into Generated/) |
 
 ### Common Shared Files
 
@@ -187,18 +188,14 @@ DefaultCompressionType:
   description: Default compression algorithm
 ```
 
-### Example: Events Referencing API Type (with ../ prefix)
+### Example: Events Referencing API Type
 
 ```yaml
-# In actor-events.yaml (events are processed differently, need ../ prefix)
+# In actor-events.yaml
 properties:
   status:
-    $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+    $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
 ```
-
-### Why `../` Prefix for Events?
-
-Lifecycle events and some event schemas are preprocessed into the `Generated/` directory. From that location, the relative path back to the main schemas directory requires `../`.
 
 ---
 
@@ -553,17 +550,7 @@ Status:
 # In my-service-events.yaml
 properties:
   status:
-    $ref: '../my-service-api.yaml#/components/schemas/Status'
-```
-
-### Wrong $ref Path for Events
-
-```yaml
-# BAD: Missing ../ prefix in events schema
-$ref: 'my-service-api.yaml#/components/schemas/MyType'
-
-# GOOD: Events need ../ prefix (processed from Generated/ directory)
-$ref: '../my-service-api.yaml#/components/schemas/MyType'
+    $ref: 'my-service-api.yaml#/components/schemas/Status'
 ```
 
 ---
@@ -597,11 +584,12 @@ $ref: '../my-service-api.yaml#/components/schemas/MyType'
 
 ### $ref Path Quick Reference
 
+All paths are sibling-relative (same directory). Never use `../` prefixes.
+
 | From Schema | To Schema | Path Format |
 |-------------|-----------|-------------|
 | `*-api.yaml` | `common-api.yaml` | `common-api.yaml#/...` |
-| `*-events.yaml` | `*-api.yaml` | `../{service}-api.yaml#/...` |
-| `*-events.yaml` | `common-api.yaml` | `../common-api.yaml#/...` |
+| `*-events.yaml` | `*-api.yaml` | `{service}-api.yaml#/...` |
 | `*-events.yaml` | `common-events.yaml` | `common-events.yaml#/...` |
 | `*-configuration.yaml` | `*-api.yaml` | `{service}-api.yaml#/...` |
 
@@ -630,8 +618,7 @@ Before submitting schema changes, verify:
 
 ### Type References
 - [ ] Shared types defined in `*-api.yaml`, not duplicated across schemas
-- [ ] Events use `../` prefix when referencing API schemas
-- [ ] Configuration uses direct path (no `../`) when referencing API schemas
+- [ ] All `$ref` paths are sibling-relative (no `../` prefix)
 
 ### Final Steps
 - [ ] Run `scripts/generate-all-services.sh` and verify build passes
