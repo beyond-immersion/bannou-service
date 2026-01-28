@@ -57,7 +57,7 @@ public interface IServiceConfiguration
 
     /// <summary>
     /// Performs all configuration validation checks.
-    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, <see cref="ValidateStringLengths"/>, and <see cref="ValidatePatterns"/>.
+    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, <see cref="ValidateStringLengths"/>, <see cref="ValidatePatterns"/>, and <see cref="ValidateMultipleOf"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when any validation check fails.</exception>
     public void Validate()
@@ -66,6 +66,7 @@ public interface IServiceConfiguration
         ValidateNumericRanges();
         ValidateStringLengths();
         ValidatePatterns();
+        ValidateMultipleOf();
     }
 
     /// <summary>
@@ -260,6 +261,57 @@ public interface IServiceConfiguration
             throw new InvalidOperationException(
                 $"Configuration validation failed for {configTypeName}: " +
                 $"String properties do not match required patterns. " +
+                $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all numeric properties with <see cref="ConfigMultipleOfAttribute"/> are multiples of their required factor.
+    /// IMPLEMENTATION TENETS: Numeric configuration values must satisfy schema-defined multipleOf constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any numeric property is not a multiple of its required factor.</exception>
+    public void ValidateMultipleOf()
+    {
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var multipleOfAttr = property.GetCustomAttribute<ConfigMultipleOfAttribute>();
+            if (multipleOfAttr == null)
+                continue;
+
+            // Get the value and convert to double for comparison
+            var rawValue = property.GetValue(this);
+            if (rawValue == null)
+                continue; // Nullable numeric with null value - skip
+
+            double value;
+            try
+            {
+                value = Convert.ToDouble(rawValue);
+            }
+            catch (InvalidCastException)
+            {
+                // Property type doesn't convert to double - skip
+                continue;
+            }
+
+            if (!multipleOfAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                invalidProperties.Add(
+                    $"{property.Name}={value} ({multipleOfAttr.GetMultipleOfDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"Numeric properties are not multiples of their required factors. " +
                 $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
                 $"Check environment variable values or remove overrides to use schema defaults.");
         }

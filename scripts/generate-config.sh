@@ -122,6 +122,9 @@ try:
             # OpenAPI 3.0 pattern validation keyword
             prop_pattern = prop_info.get('pattern', None)
 
+            # OpenAPI 3.0 multipleOf validation keyword
+            prop_multiple_of = prop_info.get('multipleOf', None)
+
             # Check if this is a $ref to an external enum type
             if prop_ref:
                 # Extract type name from $ref path (e.g., 'contract-api.yaml#/components/schemas/EnforcementMode' -> 'EnforcementMode')
@@ -212,7 +215,8 @@ try:
                 'exclusive_max': prop_exclusive_max,
                 'min_length': prop_min_length,
                 'max_length': prop_max_length,
-                'pattern': prop_pattern
+                'pattern': prop_pattern,
+                'multiple_of': prop_multiple_of
             })
 
     # Generate the configuration class
@@ -335,11 +339,17 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
             escaped_pattern = prop_pattern.replace('"', '""')
             pattern_attr = '    [ConfigPattern(@\"' + escaped_pattern + '\")]\\n'
 
+        # Generate ConfigMultipleOf attribute if multipleOf is specified
+        multiple_of_attr = ''
+        prop_multiple_of = prop.get('multiple_of')
+        if prop_multiple_of is not None:
+            multiple_of_attr = '    [ConfigMultipleOf(' + str(prop_multiple_of) + ')]\\n'
+
         print(f'''    /// <summary>
     /// {prop['description']}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-{required_attr}{range_attr}{string_length_attr}{pattern_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+{required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
 
     print('}')

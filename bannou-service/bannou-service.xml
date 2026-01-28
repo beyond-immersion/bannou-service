@@ -3652,6 +3652,77 @@
             Easy base type for custom attributes.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute">
+            <summary>
+            Specifies that a numeric configuration property must be a multiple of a given value.
+            Matches OpenAPI 3.0 validation keyword: multipleOf.
+            </summary>
+            <remarks>
+            <para>
+            This attribute is generated from OpenAPI schema validation keywords and validated
+            at startup by <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateMultipleOf"/>.
+            </para>
+            <para>
+            Use this for ensuring configuration values follow required increments, such as:
+            - Timeouts in milliseconds (multiple of 1000 for whole seconds)
+            - Percentage steps (multiple of 5 for 0%, 5%, 10%, etc.)
+            - Currency precision (multiple of 0.01 for cents)
+            - Buffer sizes (multiple of 1024 for KB boundaries)
+            </para>
+            <para>
+            For floating point values, a small tolerance is used to handle precision issues.
+            </para>
+            </remarks>
+            <example>
+            Schema:
+            <code>
+            TimeoutMs:
+              type: integer
+              multipleOf: 1000
+              default: 5000
+            </code>
+            Generated:
+            <code>
+            [ConfigMultipleOf(1000)]
+            public int TimeoutMs { get; set; } = 5000;
+            </code>
+            </example>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute.DefaultTolerance">
+            <summary>
+            Default tolerance for floating point comparison.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute.Factor">
+            <summary>
+            The value that the property must be a multiple of.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute.Tolerance">
+            <summary>
+            Tolerance for floating point comparison. Defaults to 1e-9.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute.#ctor(System.Double)">
+            <summary>
+            Creates a multipleOf constraint with the specified factor.
+            </summary>
+            <param name="factor">The value that the property must be a multiple of. Must be positive and non-zero.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when factor is zero or negative.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute.IsValid(System.Double)">
+            <summary>
+            Validates whether the given value is a multiple of <see cref="P:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute.Factor"/>.
+            </summary>
+            <param name="value">The value to validate.</param>
+            <returns>True if the value is a multiple of the factor; otherwise, false.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute.GetMultipleOfDescription">
+            <summary>
+            Gets a human-readable description of this constraint.
+            </summary>
+            <returns>A string describing the required multiple.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute">
             <summary>
             Specifies a regex pattern constraint for a configuration property.
@@ -9463,7 +9534,7 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.Validate">
             <summary>
             Performs all configuration validation checks.
-            Calls <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateStringLengths"/>, and <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidatePatterns"/>.
+            Calls <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateStringLengths"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidatePatterns"/>, and <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateMultipleOf"/>.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when any validation check fails.</exception>
         </member>
@@ -9496,6 +9567,13 @@
             IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined pattern constraints.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when any string property does not match its required pattern.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateMultipleOf">
+            <summary>
+            Validates that all numeric properties with <see cref="T:BeyondImmersion.BannouService.Attributes.ConfigMultipleOfAttribute"/> are multiples of their required factor.
+            IMPLEMENTATION TENETS: Numeric configuration values must satisfy schema-defined multipleOf constraints.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown when any numeric property is not a multiple of its required factor.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.TruncateForDisplay(System.String,System.Int32)">
             <summary>
