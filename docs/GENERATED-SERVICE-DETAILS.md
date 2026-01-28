@@ -206,7 +206,7 @@ The Game Service is a minimal registry that maintains a catalog of available gam
 
 **Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Deep Dive**: [docs/plugins/GAME-SESSION.md](plugins/GAME-SESSION.md)
 
-Hybrid lobby/matchmade game session management with subscription-driven shortcut publishing, voice integration, and real-time chat. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission service for `in_game` state tracking, Voice service for room lifecycle, and Subscription service for account eligibility. Features distributed subscriber session tracking via ETag-based optimistic concurrency, and publishes WebSocket shortcuts to connected clients enabling one-click game join.
+Hybrid lobby/matchmade game session management with subscription-driven shortcut publishing, voice integration, and real-time chat. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission service for `in_game` state tracking, Voice service for room lifecycle, and Subscription service for account eligibility. Features distributed subscriber session tracking via ETag-based optimistic concurrency, publishes WebSocket shortcuts to connected clients enabling one-click game join, **per-game horizontal scaling** via `SupportedGameServices` partitioning, and **generic lobbies** for open catch-all entry points without subscription requirements.
 
 ---
 

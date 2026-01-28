@@ -171,12 +171,14 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     /// Brotli compression level (0-11, higher = better compression, slower)
     /// Environment variable: SAVE_LOAD_BROTLI_COMPRESSION_LEVEL
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 11)]
     public int BrotliCompressionLevel { get; set; } = 6;
 
     /// <summary>
     /// GZIP compression level (1-9, higher = better compression, slower)
     /// Environment variable: SAVE_LOAD_GZIP_COMPRESSION_LEVEL
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 9)]
     public int GzipCompressionLevel { get; set; } = 6;
 
     /// <summary>
