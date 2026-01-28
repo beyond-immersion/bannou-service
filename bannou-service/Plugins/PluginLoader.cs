@@ -232,7 +232,8 @@ public class PluginLoader
             string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
         // Get service name from BannouServiceAttribute for ENV prefix
-        var serviceNameUpper = serviceName.ToUpper();
+        // Hyphens replaced with underscores to match orchestrator and configuration conventions
+        var serviceNameUpper = serviceName.ToUpper().Replace("-", "_");
 
         if (globalServicesEnabled)
         {
