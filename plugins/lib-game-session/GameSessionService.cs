@@ -1626,6 +1626,8 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Handles session.connected event from Connect service.
     /// Tracks the session and publishes join shortcuts for subscribed accounts.
+    /// If GenericLobbiesEnabled is true and this instance handles "generic", publishes
+    /// a generic lobby shortcut to ALL authenticated sessions without requiring subscription.
     /// Called internally by GameSessionEventsController.
     /// </summary>
     /// <param name="sessionId">WebSocket session ID that connected.</param>
@@ -1650,6 +1652,22 @@ public partial class GameSessionService : IGameSessionService
             return;
         }
 
+        // Track if we've already published generic shortcut to avoid duplication
+        var genericPublished = false;
+
+        // GENERIC LOBBIES: If enabled and we handle "generic", publish shortcut immediately
+        // to ALL authenticated sessions - no subscription required
+        if (_configuration.GenericLobbiesEnabled && IsOurService("generic"))
+        {
+            await StoreSubscriberSessionAsync(accountGuid, sessionGuid);
+            await PublishJoinShortcutAsync(sessionGuid, accountGuid, "generic");
+            genericPublished = true;
+            _logger.LogDebug("Published generic lobby shortcut to authenticated session {SessionId} (GenericLobbiesEnabled)", sessionId);
+        }
+
+        // SUBSCRIPTION-BASED SHORTCUTS: Check subscriptions for non-generic services
+        // (or for generic if GenericLobbiesEnabled is false)
+
         // Check if account is in our local subscription cache (fast filter)
         if (!_accountSubscriptions.ContainsKey(accountGuid))
         {
@@ -1659,14 +1677,22 @@ public partial class GameSessionService : IGameSessionService
         // Publish shortcuts for subscribed game services
         if (_accountSubscriptions.TryGetValue(accountGuid, out var stubNames))
         {
-            var ourServices = stubNames.Where(IsOurService).ToList();
+            // Filter to our services, excluding generic if already published
+            var ourServices = stubNames
+                .Where(IsOurService)
+                .Where(stub => !(genericPublished && string.Equals(stub, "generic", StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
             if (ourServices.Count > 0)
             {
                 _logger.LogDebug("Account {AccountId} has {Count} subscriptions matching our services: {Services}",
                     accountId, ourServices.Count, string.Join(", ", ourServices));
 
-                // Store subscriber session in lib-state (distributed tracking)
-                await StoreSubscriberSessionAsync(accountGuid, sessionGuid);
+                // Store subscriber session in lib-state (distributed tracking) if not already stored
+                if (!genericPublished)
+                {
+                    await StoreSubscriberSessionAsync(accountGuid, sessionGuid);
+                }
 
                 foreach (var stubName in ourServices)
                 {
@@ -1678,7 +1704,7 @@ public partial class GameSessionService : IGameSessionService
                 _logger.LogDebug("Account {AccountId} has no subscriptions matching our services", accountId);
             }
         }
-        else
+        else if (!genericPublished)
         {
             _logger.LogDebug("No subscriptions found for account {AccountId}", accountId);
         }

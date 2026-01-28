@@ -90,6 +90,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "Verify account API calls route to bannou-auth node"),
             new ServiceTest(TestConnectStillOnMainNode, "SplitRouting - Connect on Main", "Routing",
                 "Verify connect service still on bannou-main node"),
+            new ServiceTest(TestGameSessionShortcutOnSplitNode, "SplitRouting - GameSession Shortcut", "GameSession",
+                "Test subscription-based shortcut flow via game-session on bannou-auth (SUPPORTEDGAMESERVICES=test-game)"),
 
             // Phase 2: Deploy relayed-connect and test peer-to-peer routing
             new ServiceTest(TestDeployRelayedConnect, "RelayedConnect - Deploy", "Orchestrator",
@@ -613,6 +615,349 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         Console.WriteLine($"   Available APIs: {client.AvailableApis.Count}");
 
         Console.WriteLine("✅ Connect on main node test PASSED - WebSocket still connected");
+    }
+
+    /// <summary>
+    /// Test game-session shortcut flow when running on bannou-auth with SUPPORTEDGAMESERVICES=test-game.
+    /// This validates the per-game horizontal scaling pattern where different nodes handle different games.
+    ///
+    /// Flow:
+    /// 1. Create game service "test-game" (via admin on main node)
+    /// 2. Create test account and subscribe to "test-game"
+    /// 3. Connect via WebSocket
+    /// 4. Wait for shortcut join_game_test-game to appear (published by game-session on bannou-auth)
+    /// 5. Invoke shortcut to join lobby
+    /// </summary>
+    private void TestGameSessionShortcutOnSplitNode(string[] args)
+    {
+        Console.WriteLine("=== GameSession Shortcut on Split Node Test ===");
+        Console.WriteLine("Testing subscription -> shortcut flow with SUPPORTEDGAMESERVICES=test-game on bannou-auth");
+
+        if (!RequiresSplitDeployment("GameSession shortcut test"))
+            return;
+
+        try
+        {
+            var result = Task.Run(async () => await PerformGameSessionShortcutTestAsync()).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ GameSession shortcut test PASSED - shortcut received from bannou-auth");
+            }
+            else
+            {
+                Console.WriteLine("❌ GameSession shortcut test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ GameSession shortcut test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private async Task<bool> PerformGameSessionShortcutTestAsync()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return false;
+        }
+
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
+        var uniqueCode = Guid.NewGuid().ToString("N")[..8];
+
+        // Step 1: Ensure game service "test-game" exists (create if not)
+        Console.WriteLine("   Step 1: Ensuring game service 'test-game' exists...");
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("   Admin client not connected - cannot create game service");
+            return false;
+        }
+
+        try
+        {
+            var createServiceResponse = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/game-service/create",
+                new
+                {
+                    stubName = "test-game",
+                    displayName = "Test Game (Split Routing)",
+                    description = "Test game service for split routing shortcut validation"
+                },
+                timeout: TimeSpan.FromSeconds(10));
+
+            if (createServiceResponse.IsSuccess)
+            {
+                Console.WriteLine("   Created game service 'test-game'");
+            }
+            else if (createServiceResponse.Error?.ResponseCode == 409)
+            {
+                Console.WriteLine("   Game service 'test-game' already exists (OK)");
+            }
+            else
+            {
+                Console.WriteLine($"   Warning: game-service/create returned {createServiceResponse.Error?.ResponseCode}");
+                // Continue anyway - service may exist from previous test
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Warning: Failed to create game service: {ex.Message}");
+            // Continue - service may already exist
+        }
+
+        // Step 2: Create test account
+        Console.WriteLine("   Step 2: Creating test account...");
+        var testEmail = $"gamesession_split_{uniqueCode}@test.local";
+        var testPassword = "TestPass123!";
+        var testUsername = $"gamesession_split_{uniqueCode}";
+
+        string? accessToken = null;
+        Guid? accountId = null;
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = testUsername, email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                BannouJson.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"   Failed to create account: {registerResponse.StatusCode} - {responseBody}");
+                return false;
+            }
+
+            var responseObj = JsonDocument.Parse(responseBody);
+            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+            accountId = responseObj.RootElement.GetProperty("accountId").GetGuid();
+
+            Console.WriteLine($"   Created account: {accountId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(accessToken) || accountId == null)
+        {
+            Console.WriteLine("   Missing accessToken or accountId");
+            return false;
+        }
+
+        // Step 3: Create subscription to "test-game"
+        Console.WriteLine("   Step 3: Creating subscription to 'test-game'...");
+        try
+        {
+            var subscribeResponse = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/subscription/create",
+                new
+                {
+                    accountId = accountId.Value,
+                    stubName = "test-game"
+                },
+                timeout: TimeSpan.FromSeconds(10));
+
+            if (subscribeResponse.IsSuccess)
+            {
+                Console.WriteLine("   Subscription created successfully");
+            }
+            else
+            {
+                Console.WriteLine($"   Subscription creation returned: {subscribeResponse.Error?.ResponseCode}");
+                // May already exist - continue
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Warning: Failed to create subscription: {ex.Message}");
+            // Continue - subscription may already exist
+        }
+
+        // Step 4: Connect via WebSocket with the new account's token
+        Console.WriteLine("   Step 4: Connecting via WebSocket...");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
+        ClientWebSocket? webSocket = null;
+
+        try
+        {
+            webSocket = new ClientWebSocket();
+            webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+            await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+
+            if (webSocket.State != WebSocketState.Open)
+            {
+                Console.WriteLine($"   WebSocket in unexpected state: {webSocket.State}");
+                return false;
+            }
+
+            Console.WriteLine("   WebSocket connected");
+
+            // Receive capability manifest
+            var buffer = new ArraySegment<byte>(new byte[65536]);
+            using var manifestCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var manifestResult = await webSocket.ReceiveAsync(buffer, manifestCts.Token);
+
+            if (manifestResult.Count < BinaryMessage.HeaderSize)
+            {
+                Console.WriteLine("   Invalid capability manifest received");
+                return false;
+            }
+
+            var payloadBytes = buffer.Array![(BinaryMessage.HeaderSize)..manifestResult.Count];
+            var payloadJson = Encoding.UTF8.GetString(payloadBytes);
+            Console.WriteLine($"   Received capability manifest ({payloadJson.Length} bytes)");
+
+            // Step 5: Wait for shortcut to appear
+            Console.WriteLine("   Step 5: Waiting for join_game_test-game shortcut...");
+            var shortcutDeadline = DateTime.UtcNow.AddSeconds(15);
+            string? shortcutGuidStr = null;
+
+            // Parse initial manifest for shortcuts
+            var manifestObj = JsonNode.Parse(payloadJson)?.AsObject();
+            var shortcuts = manifestObj?["shortcuts"]?.AsArray();
+            if (shortcuts != null)
+            {
+                foreach (var shortcut in shortcuts)
+                {
+                    var name = shortcut?["metadata"]?["name"]?.GetValue<string>();
+                    if (name == "join_game_test-game")
+                    {
+                        shortcutGuidStr = shortcut?["routeGuid"]?.GetValue<string>();
+                        Console.WriteLine($"   Found shortcut in initial manifest: {shortcutGuidStr}");
+                        break;
+                    }
+                }
+            }
+
+            // If not in initial manifest, wait for shortcut_published event
+            while (shortcutGuidStr == null && DateTime.UtcNow < shortcutDeadline)
+            {
+                using var eventCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                try
+                {
+                    var eventResult = await webSocket.ReceiveAsync(buffer, eventCts.Token);
+                    if (eventResult.Count > BinaryMessage.HeaderSize)
+                    {
+                        var eventPayload = buffer.Array![(BinaryMessage.HeaderSize)..eventResult.Count];
+                        var eventJson = Encoding.UTF8.GetString(eventPayload);
+                        var eventObj = JsonNode.Parse(eventJson)?.AsObject();
+
+                        var eventName = eventObj?["eventName"]?.GetValue<string>();
+                        if (eventName == "shortcut_published")
+                        {
+                            var shortcutName = eventObj?["shortcut"]?["metadata"]?["name"]?.GetValue<string>();
+                            if (shortcutName == "join_game_test-game")
+                            {
+                                shortcutGuidStr = eventObj?["shortcut"]?["routeGuid"]?.GetValue<string>();
+                                Console.WriteLine($"   Received shortcut_published event: {shortcutGuidStr}");
+                            }
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Timeout on receive - keep waiting
+                }
+            }
+
+            if (string.IsNullOrEmpty(shortcutGuidStr))
+            {
+                Console.WriteLine("   Shortcut not received within timeout");
+                Console.WriteLine("   This likely means game-session on bannou-auth didn't process the subscription.updated event");
+                Console.WriteLine("   Check that GAMESESSION_SUPPORTEDGAMESERVICES=test-game is set on bannou-auth");
+                return false;
+            }
+
+            Console.WriteLine($"   Shortcut received: join_game_test-game -> {shortcutGuidStr}");
+
+            // Step 6: Invoke shortcut (optional - validates end-to-end flow)
+            Console.WriteLine("   Step 6: Invoking shortcut to join lobby...");
+
+            // Build binary message to invoke shortcut
+            if (!Guid.TryParse(shortcutGuidStr, out var shortcutGuid))
+            {
+                Console.WriteLine("   Failed to parse shortcut GUID");
+                return false;
+            }
+
+            var invokeMessage = BinaryMessage.FromJson(
+                channel: 0,
+                sequenceNumber: 1,
+                serviceGuid: shortcutGuid,
+                messageId: 1,
+                jsonPayload: "{}");  // Empty payload - server injects bound data
+
+            await webSocket.SendAsync(new ArraySegment<byte>(invokeMessage.ToByteArray()), WebSocketMessageType.Binary, true, CancellationToken.None);
+
+            // Wait for response
+            using var responseCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var responseResult = await webSocket.ReceiveAsync(buffer, responseCts.Token);
+
+            if (responseResult.Count < BinaryMessage.ResponseHeaderSize)
+            {
+                Console.WriteLine($"   FAILED: Response too short ({responseResult.Count} bytes)");
+                return false;
+            }
+
+            // Check response code in header (byte 15 in response header)
+            var responseCode = buffer.Array![15];
+            if (responseCode != 0)
+            {
+                Console.WriteLine($"   FAILED: Join returned error code {responseCode}");
+                return false;
+            }
+
+            var responsePayload = buffer.Array![(BinaryMessage.ResponseHeaderSize)..responseResult.Count];
+            var responseJson = Encoding.UTF8.GetString(responsePayload);
+            Console.WriteLine($"   Join response: {responseJson[..Math.Min(300, responseJson.Length)]}");
+
+            // STRICT: Must have sessionId in response - no weak "appeared successful" fallbacks
+            var joinResponse = JsonNode.Parse(responseJson)?.AsObject();
+            if (joinResponse == null)
+            {
+                Console.WriteLine("   FAILED: Could not parse join response as JSON");
+                return false;
+            }
+
+            var sessionIdStr = joinResponse["sessionId"]?.GetValue<string>();
+            if (string.IsNullOrEmpty(sessionIdStr))
+            {
+                Console.WriteLine("   FAILED: No sessionId in join response");
+                Console.WriteLine($"   Response keys: {string.Join(", ", joinResponse.Select(kvp => kvp.Key))}");
+                return false;
+            }
+
+            if (!Guid.TryParse(sessionIdStr, out var lobbySessionId) || lobbySessionId == Guid.Empty)
+            {
+                Console.WriteLine($"   FAILED: Invalid sessionId format: {sessionIdStr}");
+                return false;
+            }
+
+            Console.WriteLine($"   Successfully joined lobby: {lobbySessionId}");
+            Console.WriteLine("   Game-session partitioning validated: shortcut received AND join succeeded");
+            return true;
+        }
+        finally
+        {
+            await CloseWebSocketSafely(webSocket);
+        }
     }
 
     /// <summary>

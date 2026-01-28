@@ -7547,25 +7547,25 @@ export interface components {
        */
       syncIntervalMinutes: number;
       /**
-       * @description Glob patterns for files to include
+       * @description Glob patterns for files to include (defaults to all markdown files if not provided)
        * @default [
        *       "**\/*.md"
        *     ]
        */
-      filePatterns: string[];
+      filePatterns: string[] | null;
       /**
-       * @description Glob patterns for files to exclude
+       * @description Glob patterns for files to exclude (defaults to common non-content directories if not provided)
        * @default [
        *       ".git/**",
        *       ".obsidian/**",
        *       "node_modules/**"
        *     ]
        */
-      excludePatterns: string[];
-      /** @description Map directory prefixes to categories */
+      excludePatterns: string[] | null;
+      /** @description Map directory prefixes to categories (empty mapping if not provided) */
       categoryMapping?: {
         [key: string]: string;
-      };
+      } | null;
       /** @description Default category for documents without mapping */
       defaultCategory?: components['schemas']['DocumentCategory'];
       /**

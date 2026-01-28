@@ -63,6 +63,11 @@ x-service-configuration:
       env: GAME_SESSION_LOCK_TIMEOUT_SECONDS
     SupportedGameServices:
       type: string
-      description: Comma-separated list of supported game service stub names
+      description: Comma-separated list of supported game service stub names (e.g. "generic" or "arcadia,fantasia"). Only subscription.updated events for these services trigger shortcut publishing. Use "generic" for catch-all lobbies.
       default: "generic"
       env: GAME_SESSION_SUPPORTED_GAME_SERVICES
+    GenericLobbiesEnabled:
+      type: boolean
+      description: When true AND "generic" is in SupportedGameServices, auto-publish generic lobby shortcut to ALL authenticated sessions on connect without requiring subscription. Enables open catch-all lobbies.
+      default: false
+      env: GAME_SESSION_GENERIC_LOBBIES_ENABLED

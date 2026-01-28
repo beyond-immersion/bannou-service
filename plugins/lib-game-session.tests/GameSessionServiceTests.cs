@@ -1267,6 +1267,191 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
     #endregion
 
+    #region GenericLobbiesEnabled Tests
+
+    [Fact]
+    public async Task HandleSessionConnectedInternal_WithGenericLobbiesEnabled_ShouldPublishWithoutSubscription()
+    {
+        // Arrange - Create service with GenericLobbiesEnabled = true
+        var config = new GameSessionServiceConfiguration
+        {
+            ServerSalt = TEST_SERVER_SALT,
+            SupportedGameServices = "generic",
+            GenericLobbiesEnabled = true
+        };
+
+        var service = new GameSessionService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            config,
+            _mockEventConsumer.Object,
+            _mockClientEventPublisher.Object,
+            _mockVoiceClient.Object,
+            _mockPermissionClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockLockProvider.Object);
+
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Setup subscriber session store
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetWithETagAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((SubscriberSessionsModel?)null, (string?)null));
+        _mockSubscriberSessionsStore
+            .Setup(s => s.TrySaveAsync(
+                SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
+                It.IsAny<SubscriberSessionsModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag1");
+
+        // Setup lobby creation
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + "generic", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                sessionId.ToString(),
+                It.IsAny<ShortcutPublishedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act - NO subscription exists for this account, but GenericLobbiesEnabled is true
+        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+
+        // Assert - shortcut was published even without subscription
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            sessionId.ToString(),
+            It.Is<ShortcutPublishedEvent>(e =>
+                e.SessionId == sessionId &&
+                e.Shortcut.Metadata.Name == "join_game_generic"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedInternal_WithGenericLobbiesDisabled_ShouldRequireSubscription()
+    {
+        // Arrange - Create service with GenericLobbiesEnabled = false (default)
+        var config = new GameSessionServiceConfiguration
+        {
+            ServerSalt = TEST_SERVER_SALT,
+            SupportedGameServices = "generic",
+            GenericLobbiesEnabled = false  // Explicitly disabled
+        };
+
+        var service = new GameSessionService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            config,
+            _mockEventConsumer.Object,
+            _mockClientEventPublisher.Object,
+            _mockVoiceClient.Object,
+            _mockPermissionClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockLockProvider.Object);
+
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Setup subscription client to return NO subscriptions
+        _mockSubscriptionClient
+            .Setup(c => c.QueryCurrentSubscriptionsAsync(
+                It.IsAny<BeyondImmersion.BannouService.Subscription.QueryCurrentSubscriptionsRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Subscription.QuerySubscriptionsResponse
+            {
+                Subscriptions = new List<BeyondImmersion.BannouService.Subscription.SubscriptionInfo>(),
+                TotalCount = 0
+            });
+
+        // Act - No subscription, GenericLobbiesEnabled = false
+        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+
+        // Assert - NO shortcut published because no subscription and GenericLobbiesEnabled is false
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<ShortcutPublishedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedInternal_WithGenericLobbiesEnabled_ShouldNotDuplicateForSubscribedUser()
+    {
+        // Arrange - User IS subscribed to generic, but GenericLobbiesEnabled should publish first
+        var config = new GameSessionServiceConfiguration
+        {
+            ServerSalt = TEST_SERVER_SALT,
+            SupportedGameServices = "generic",
+            GenericLobbiesEnabled = true
+        };
+
+        var service = new GameSessionService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            config,
+            _mockEventConsumer.Object,
+            _mockClientEventPublisher.Object,
+            _mockVoiceClient.Object,
+            _mockPermissionClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockLockProvider.Object);
+
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Pre-populate cache with "generic" subscription
+        GameSessionService.AddAccountSubscription(accountId, "generic");
+
+        // Setup subscriber session store
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetWithETagAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((SubscriberSessionsModel?)null, (string?)null));
+        _mockSubscriberSessionsStore
+            .Setup(s => s.TrySaveAsync(
+                SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
+                It.IsAny<SubscriberSessionsModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag1");
+
+        // Setup lobby creation
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + "generic", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                sessionId.ToString(),
+                It.IsAny<ShortcutPublishedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+
+        // Assert - shortcut published exactly ONCE (not twice - once from GenericLobbiesEnabled, once from subscription)
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            sessionId.ToString(),
+            It.Is<ShortcutPublishedEvent>(e => e.Shortcut.Metadata.Name == "join_game_generic"),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cleanup
+        GameSessionService.RemoveAccountSubscription(accountId, "generic");
+    }
+
+    #endregion
+
     #region FetchAndCacheSubscriptions Tests
 
     [Fact]

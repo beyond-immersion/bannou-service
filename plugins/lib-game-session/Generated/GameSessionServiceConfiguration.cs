@@ -114,9 +114,15 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     public int LockTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
-    /// Comma-separated list of supported game service stub names
+    /// Comma-separated list of supported game service stub names (e.g. "generic" or "arcadia,fantasia"). Only subscription.updated events for these services trigger shortcut publishing. Use "generic" for catch-all lobbies.
     /// Environment variable: GAME_SESSION_SUPPORTED_GAME_SERVICES
     /// </summary>
     public string SupportedGameServices { get; set; } = "generic";
+
+    /// <summary>
+    /// When true AND "generic" is in SupportedGameServices, auto-publish generic lobby shortcut to ALL authenticated sessions on connect without requiring subscription. Enables open catch-all lobbies.
+    /// Environment variable: GAME_SESSION_GENERIC_LOBBIES_ENABLED
+    /// </summary>
+    public bool GenericLobbiesEnabled { get; set; } = false;
 
 }

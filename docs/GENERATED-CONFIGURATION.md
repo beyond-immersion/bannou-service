@@ -432,12 +432,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
 | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `0` | Default session timeout in seconds (0 = no timeout) |
+| `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | bool | `false` | When true AND "generic" is in SupportedGameServices, auto-pu... |
 | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for distributed session locks |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
 | `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
 | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for optimistic concurrency on subscri... |
-| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `generic` | Comma-separated list of supported game service stub names |
+| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `generic` | Comma-separated list of supported game service stub names (e... |
 
 ### Inventory
 
@@ -763,9 +764,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 584
+- **Total properties**: 585
 - **Required (no default)**: 39
-- **Optional (has default)**: 545
+- **Optional (has default)**: 546
 
 ## Environment Variable Naming Convention
 

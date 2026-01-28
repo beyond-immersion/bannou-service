@@ -12,22 +12,34 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// WebSocket-based test handler for game session service API endpoints.
 /// Tests the game session service APIs through the Connect service WebSocket binary protocol.
 ///
-/// IMPORTANT: These tests create dedicated test accounts with their own BannouClient instances.
-/// This avoids interfering with Program.Client or Program.AdminClient, and properly tests
-/// the user experience from account creation through API usage.
+/// IMPORTANT: Game session shortcut tests require specific configuration:
+///
+/// 1. SUBSCRIPTION-BASED FLOW (SplitServiceRoutingTestHandler):
+///    - Requires "test-game" in GAMESESSION_SUPPORTEDGAMESERVICES
+///    - Tested during split-auth deployment window in SplitServiceRoutingTestHandler
+///    - User must have active subscription to the game service
+///
+/// 2. GENERIC LOBBIES FLOW (requires configuration):
+///    - Requires GAMESESSION_GENERIC_LOBBIES_ENABLED=true
+///    - Requires "generic" in GAMESESSION_SUPPORTEDGAMESERVICES (default)
+///    - Publishes shortcut to ALL authenticated users without subscription
+///
+/// The standalone subscription test here is DISABLED because it requires the split-auth
+/// deployment to configure GAMESESSION_SUPPORTEDGAMESERVICES=test-game on bannou-auth.
+/// See SplitServiceRoutingTestHandler.TestGameSessionShortcutOnSplitNode for the active test.
 /// </summary>
 public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
 {
     public override ServiceTest[] GetServiceTests()
     {
-        // Note: Direct game session endpoints (create/list/join) are now shortcut-only.
-        // Users access these through session shortcuts pushed by the game-session service
-        // when they have an active subscription. Only the subscription-based test is valid.
-        return new ServiceTest[]
-        {
-            new ServiceTest(TestSubscriptionBasedJoinViaShortcut, "GameSession - Subscription Shortcut Join (WebSocket)", "WebSocket",
-                "Test subscription-based join flow: create subscription -> connect -> receive shortcut -> invoke shortcut"),
-        };
+        // DISABLED: Subscription-based shortcut test requires split-auth deployment
+        // with GAMESESSION_SUPPORTEDGAMESERVICES=test-game on the bannou-auth node.
+        // The test lives in SplitServiceRoutingTestHandler.TestGameSessionShortcutOnSplitNode
+        // where it runs during the split deployment window with correct configuration.
+        //
+        // Generic lobby test would require GAMESESSION_GENERIC_LOBBIES_ENABLED=true,
+        // which is not enabled by default.
+        return Array.Empty<ServiceTest>();
     }
 
     #region Helper Methods for Test Account Creation
