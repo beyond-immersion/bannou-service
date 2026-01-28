@@ -1,20 +1,173 @@
 # Bannou Schema Rules
 
-> **MANDATORY**: AI agents MUST review this document before creating or modifying ANY OpenAPI schema file (`*-api.yaml`, `*-events.yaml`, `*-configuration.yaml`).
+> **MANDATORY**: AI agents and developers MUST review this document before creating or modifying ANY OpenAPI schema file. This rule is inviolable - see TENETS.md Tenet 1.
 
-This document covers all schema authoring rules for Bannou, including NRT compliance, validation keywords, type references, and common pitfalls.
+This is the authoritative reference for all schema authoring in Bannou. It covers schema file types, generation pipeline, extension attributes, NRT compliance, validation keywords, type references, and common pitfalls.
 
 ---
 
 ## Table of Contents
 
-1. [NRT (Nullable Reference Types) Rules](#nrt-nullable-reference-types-rules)
-2. [Schema Reference Hierarchy ($ref)](#schema-reference-hierarchy-ref)
-3. [Validation Keywords](#validation-keywords)
-4. [Configuration Schema Rules](#configuration-schema-rules)
-5. [Common Anti-Patterns](#common-anti-patterns)
-6. [Quick Reference Tables](#quick-reference-tables)
-7. [Validation Checklist](#validation-checklist)
+1. [Schema File Types](#schema-file-types)
+2. [Generation Pipeline](#generation-pipeline)
+3. [Extension Attributes (x-*)](#extension-attributes-x-)
+4. [NRT (Nullable Reference Types) Rules](#nrt-nullable-reference-types-rules)
+5. [Schema Reference Hierarchy ($ref)](#schema-reference-hierarchy-ref)
+6. [Validation Keywords](#validation-keywords)
+7. [Configuration Schema Rules](#configuration-schema-rules)
+8. [API Schema Rules](#api-schema-rules)
+9. [Event Schema Rules](#event-schema-rules)
+10. [Common Anti-Patterns](#common-anti-patterns)
+11. [Quick Reference Tables](#quick-reference-tables)
+12. [Validation Checklist](#validation-checklist)
+
+---
+
+## Schema File Types
+
+Each service can have up to 4 schema files in `/schemas/`:
+
+| File Pattern | Purpose | Generated Output |
+|--------------|---------|------------------|
+| `{service}-api.yaml` | API endpoints, request/response models | Controllers, models, clients, interfaces |
+| `{service}-events.yaml` | Service-to-service pub/sub events | Event models in `bannou-service/Generated/Events/` |
+| `{service}-configuration.yaml` | Service configuration properties | `{Service}ServiceConfiguration.cs` |
+| `{service}-client-events.yaml` | Server→client WebSocket push events | Client event models in plugin `Generated/` |
+
+**Common schemas** (shared across services):
+- `common-api.yaml` - System-wide types (EntityType, etc.)
+- `common-events.yaml` - Base event schemas (BaseServiceEvent)
+- `common-client-events.yaml` - Base client event schemas (BaseClientEvent)
+- `state-stores.yaml` - State store definitions → `StateStoreDefinitions.cs`
+
+---
+
+## Generation Pipeline
+
+Run `make generate` or `scripts/generate-all-services.sh` to execute the full pipeline:
+
+| Step | Source | Generated Output |
+|------|--------|------------------|
+| 1. State Stores | `state-stores.yaml` | `lib-state/Generated/StateStoreDefinitions.cs` |
+| 2. Lifecycle Events | `x-lifecycle` in events.yaml | `schemas/Generated/{service}-lifecycle-events.yaml` |
+| 3. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
+| 4. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
+| 5. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
+| 6. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
+| 7. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
+| 8. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
+| 9. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
+| 10. Event Subscriptions | `x-event-subscriptions` | `{Service}EventsController.cs` |
+
+**Order matters**: State stores and events must be generated before service APIs.
+
+### What Is Safe to Edit
+
+| File Pattern | Safe to Edit? | Notes |
+|--------------|---------------|-------|
+| `lib-{service}/{Service}Service.cs` | Yes | Main business logic |
+| `lib-{service}/Services/*.cs` | Yes | Helper services |
+| `lib-{service}/{Service}ServiceEvents.cs` | Yes | Generated once, then manual |
+| `lib-{service}/Generated/*.cs` | **Never** | Regenerated on `make generate` |
+| `bannou-service/Generated/*.cs` | **Never** | All generated directories |
+| `schemas/*.yaml` | Yes | Edit schemas, regenerate code |
+| `schemas/Generated/*.yaml` | **Never** | Generated lifecycle events + meta schemas |
+
+---
+
+## Extension Attributes (x-*)
+
+Bannou uses custom OpenAPI extensions to drive code generation.
+
+### x-permissions (Required on ALL API Endpoints)
+
+Declares role and state requirements for WebSocket client access. **All endpoints MUST have x-permissions, even if empty.**
+
+```yaml
+paths:
+  /account/get:
+    post:
+      x-permissions:
+        - role: user  # Requires user role
+      # ...
+  /admin/delete:
+    post:
+      x-permissions:
+        - role: admin  # Requires admin role
+      # ...
+  /health:
+    post:
+      x-permissions: []  # Explicitly public (rare)
+```
+
+**Role hierarchy**: `anonymous` → `user` → `developer` → `admin`
+
+**With state requirements**:
+```yaml
+x-permissions:
+  - role: user
+    states:
+      game-session: in_lobby  # Must be user AND in_lobby state
+```
+
+### x-lifecycle (Lifecycle Event Generation)
+
+Defined in `{service}-events.yaml`, generates CRUD lifecycle events automatically.
+
+```yaml
+x-lifecycle:
+  EntityName:
+    model:
+      entityId: { type: string, format: uuid, primary: true, required: true }
+      name: { type: string, required: true }
+      createdAt: { type: string, format: date-time, required: true }
+    sensitive: [passwordHash, secretKey]  # Fields excluded from events
+```
+
+**Generated output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
+- `EntityNameCreatedEvent` - Full entity data on creation
+- `EntityNameUpdatedEvent` - Full entity data + `changedFields` array
+- `EntityNameDeletedEvent` - Entity ID + `deletedReason`
+
+**NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** - use `x-lifecycle` instead.
+
+### x-event-subscriptions (Event Handler Generation)
+
+Defined in `{service}-events.yaml`, generates event subscription handlers.
+
+```yaml
+info:
+  x-event-subscriptions:
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+```
+
+**Field definitions**:
+- `topic`: RabbitMQ routing key
+- `event`: Event model class name
+- `handler`: Handler method name (without `Async` suffix)
+
+**Generated output**: `{Service}EventsController.cs` (handlers) and `{Service}ServiceEvents.cs` (registration template).
+
+### x-service-configuration (Configuration Properties)
+
+Defined in `{service}-configuration.yaml`, defines service configuration.
+
+```yaml
+x-service-configuration:
+  properties:
+    MaxConnections:
+      type: integer
+      env: MY_SERVICE_MAX_CONNECTIONS
+      default: 100
+      description: Maximum concurrent connections
+```
+
+See [Configuration Schema Rules](#configuration-schema-rules) for detailed requirements.
 
 ---
 
@@ -465,6 +618,116 @@ DefaultCompression:
 
 ---
 
+## API Schema Rules
+
+### POST-Only Pattern (MANDATORY)
+
+All internal service APIs use POST requests exclusively. This enables zero-copy WebSocket message routing.
+
+```yaml
+# CORRECT: POST-only with body parameters
+paths:
+  /account/get:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountRequest'
+
+# WRONG: Path parameters prevent static GUID mapping
+paths:
+  /account/{accountId}:
+    get:  # NO!
+```
+
+**Why POST-only?** WebSocket binary routing uses static 16-byte GUIDs per endpoint. Path parameters (e.g., `/account/{id}`) would require different GUIDs per parameter value, breaking zero-copy routing.
+
+**Exceptions** (browser-facing only):
+- Website service (`/website/*`) - SEO, bookmarkable URLs
+- OAuth callbacks (`/auth/oauth/{provider}/callback`)
+- WebSocket upgrade (`/connect` GET)
+
+### Property Description Requirement (MANDATORY)
+
+**ALL schema properties MUST have `description` fields.** NSwag generates XML documentation from these. Missing descriptions cause CS1591 compiler warnings.
+
+```yaml
+# CORRECT: Property has description
+properties:
+  accountId:
+    type: string
+    format: uuid
+    description: Unique identifier for the account
+
+# WRONG: Missing description causes CS1591 warning
+properties:
+  accountId:
+    type: string
+    format: uuid
+```
+
+### Servers URL (MANDATORY)
+
+All API schemas MUST use the base endpoint format:
+
+```yaml
+servers:
+  - url: http://localhost:5012
+```
+
+NSwag generates controller route prefixes from this URL.
+
+---
+
+## Event Schema Rules
+
+### Canonical Definitions Only
+
+Each `{service}-events.yaml` file MUST contain ONLY canonical definitions for events that service PUBLISHES. **No `$ref` references to other service event files.**
+
+```yaml
+# CORRECT: Canonical definition
+components:
+  schemas:
+    SessionInvalidatedEvent:
+      type: object
+      required: [sessionIds, reason]
+      properties:
+        sessionIds:
+          type: array
+          items: { type: string }
+
+# WRONG: $ref to another service's events (causes duplicate types)
+components:
+  schemas:
+    AccountDeletedEvent:
+      $ref: './account-events.yaml#/components/schemas/AccountDeletedEvent'
+```
+
+### Topic Naming Convention
+
+**Pattern**: `{entity}.{action}` (kebab-case entity, lowercase action)
+
+| Topic | Description |
+|-------|-------------|
+| `account.created` | Account lifecycle event |
+| `session.invalidated` | Session state change |
+| `game-session.player-joined` | Game session event |
+
+**Infrastructure events** use `bannou-` prefix: `bannou.full-service-mappings`
+
+### Client Events vs Service Events
+
+| Type | File | Purpose | Publishing |
+|------|------|---------|------------|
+| Service Events | `{service}-events.yaml` | Service-to-service | `IMessageBus.PublishAsync` |
+| Client Events | `{service}-client-events.yaml` | Server→WebSocket client | `IClientEventPublisher.PublishToSessionAsync` |
+
+**Never use `IMessageBus` for client events** - it uses the wrong RabbitMQ exchange.
+
+---
+
 ## Common Anti-Patterns
 
 ### Optional String Without Nullable
@@ -599,6 +862,12 @@ All paths are sibling-relative (same directory). Never use `../` prefixes.
 
 Before submitting schema changes, verify:
 
+### API Schemas
+- [ ] All endpoints use POST method (except documented browser-facing exceptions)
+- [ ] All endpoints have `x-permissions` (even if empty array)
+- [ ] All properties have `description` fields
+- [ ] `servers` URL uses base endpoint format (`http://localhost:5012`)
+
 ### NRT Compliance
 - [ ] All optional reference types (string, object, array) have `nullable: true`
 - [ ] All properties the server always sets are in the `required` array
@@ -609,6 +878,11 @@ Before submitting schema changes, verify:
 - [ ] No `type: object` properties (use string with documented format)
 - [ ] Optional properties have `nullable: true`
 - [ ] Enum types use `$ref` to API schema
+
+### Event Schemas
+- [ ] Only canonical event definitions (no `$ref` to other service events)
+- [ ] Lifecycle events use `x-lifecycle`, not manual definitions
+- [ ] Event subscriptions use `x-event-subscriptions` in `info` section
 
 ### Validation Keywords
 - [ ] Numeric bounds use `minimum`/`maximum` (with `exclusive*` if needed)
