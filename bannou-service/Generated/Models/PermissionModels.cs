@@ -100,7 +100,7 @@ public partial class CapabilityResponse
 }
 
 /// <summary>
-/// Request to validate whether a session has access to a specific API method
+/// Request to validate whether a session has access to a specific API endpoint
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidationRequest
@@ -123,12 +123,12 @@ public partial class ValidationRequest
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Method name being accessed
+    /// Endpoint path being accessed (e.g., "/account/get")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Method { get; set; } = default!;
+    public string Endpoint { get; set; } = default!;
 
 }
 

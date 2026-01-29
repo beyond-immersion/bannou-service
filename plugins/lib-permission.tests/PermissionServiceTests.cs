@@ -1027,7 +1027,7 @@ public class PermissionServiceTests : IAsyncLifetime
         {
             SessionId = sessionId,
             ServiceId = "orchestrator",
-            Method = "/orchestrator/health"
+            Endpoint = "/orchestrator/health"
         };
 
         // Act
@@ -1065,7 +1065,7 @@ public class PermissionServiceTests : IAsyncLifetime
         {
             SessionId = sessionId,
             ServiceId = "orchestrator",
-            Method = "/orchestrator/deploy"
+            Endpoint = "/orchestrator/deploy"
         };
 
         // Act

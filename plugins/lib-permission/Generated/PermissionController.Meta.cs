@@ -151,13 +151,13 @@ public partial class PermissionController
     "$ref": "#/$defs/ValidationRequest",
     "$defs": {
         "ValidationRequest": {
-            "description": "Request to validate whether a session has access to a specific API method",
+            "description": "Request to validate whether a session has access to a specific API endpoint",
             "type": "object",
             "additionalProperties": false,
             "required": [
                 "sessionId",
                 "serviceId",
-                "method"
+                "endpoint"
             ],
             "properties": {
                 "sessionId": {
@@ -169,9 +169,9 @@ public partial class PermissionController
                     "type": "string",
                     "description": "Target service ID"
                 },
-                "method": {
+                "endpoint": {
                     "type": "string",
-                    "description": "Method name being accessed"
+                    "description": "Endpoint path being accessed (e.g., \"/account/get\")"
                 }
             }
         }

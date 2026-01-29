@@ -63025,7 +63025,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Permission.ValidationRequest">
             <summary>
-            Request to validate whether a session has access to a specific API method
+            Request to validate whether a session has access to a specific API endpoint
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permission.ValidationRequest.SessionId">
@@ -63038,9 +63038,9 @@
             Target service ID
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Permission.ValidationRequest.Method">
+        <member name="P:BeyondImmersion.BannouService.Permission.ValidationRequest.Endpoint">
             <summary>
-            Method name being accessed
+            Endpoint path being accessed (e.g., "/account/get")
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Permission.ValidationResponse">

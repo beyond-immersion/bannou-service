@@ -205,8 +205,8 @@ public partial class PermissionService : IPermissionService
     {
         try
         {
-            _logger.LogDebug("Validating API access for session {SessionId}, service {ServiceId}, method {Method}",
-                body.SessionId, body.ServiceId, body.Method);
+            _logger.LogDebug("Validating API access for session {SessionId}, service {ServiceId}, endpoint {Endpoint}",
+                body.SessionId, body.ServiceId, body.Endpoint);
 
             // Get session permissions from state store
             var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
@@ -227,7 +227,7 @@ public partial class PermissionService : IPermissionService
             // Parse allowed endpoints
             var jsonElement = (JsonElement)permissionsData[body.ServiceId];
             var allowedEndpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
-            var allowed = allowedEndpoints?.Contains(body.Method) ?? false;
+            var allowed = allowedEndpoints?.Contains(body.Endpoint) ?? false;
 
             _logger.LogDebug("API access validation result for session {SessionId}: {Allowed}",
                 body.SessionId, allowed);
@@ -246,7 +246,7 @@ public partial class PermissionService : IPermissionService
                 "dependency_failure",
                 ex.Message,
                 dependency: "state",
-                details: new { body.SessionId, body.ServiceId, body.Method });
+                details: new { body.SessionId, body.ServiceId, body.Endpoint });
             return (StatusCodes.InternalServerError, null);
         }
     }
