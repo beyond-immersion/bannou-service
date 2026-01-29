@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
@@ -34,6 +35,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
     private readonly Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IConnectClient> _mockConnectClient;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -58,6 +60,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
         _mockSubscriptionClient = new Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockConnectClient = new Mock<IConnectClient>();
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -96,7 +99,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockVoiceClient.Object,
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockConnectClient.Object);
     }
 
     /// <summary>
@@ -840,6 +844,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
     private readonly Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IConnectClient> _mockConnectClient;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -863,6 +868,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
         _mockSubscriptionClient = new Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockConnectClient = new Mock<IConnectClient>();
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -901,7 +907,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockVoiceClient.Object,
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockConnectClient.Object);
     }
 
     #region HandleSessionConnectedInternal Tests
@@ -1290,7 +1297,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockVoiceClient.Object,
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockConnectClient.Object);
 
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
@@ -1355,7 +1363,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockVoiceClient.Object,
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockConnectClient.Object);
 
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
@@ -1402,7 +1411,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockVoiceClient.Object,
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockConnectClient.Object);
 
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();

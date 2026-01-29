@@ -53260,7 +53260,7 @@
             <returns>Theme updated</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.GetSubscriptionAsync(System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.GetAccountSubscriptionAsync(System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
             Get subscription status
@@ -53481,7 +53481,7 @@
             <returns>Theme updated</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.GetSubscriptionAsync(System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.GetAccountSubscriptionAsync(System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
             Get subscription status
@@ -74519,7 +74519,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetSubscriptionAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetAccountSubscriptionAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Get subscription status
             </summary>

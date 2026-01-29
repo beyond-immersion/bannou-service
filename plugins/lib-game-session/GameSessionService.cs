@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Protocol;
@@ -39,6 +40,7 @@ public partial class GameSessionService : IGameSessionService
     private readonly ISubscriptionClient _subscriptionClient;
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IConnectClient _connectClient;
 
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
@@ -131,6 +133,7 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="voiceClient">Voice client for voice room coordination.</param>
     /// <param name="permissionClient">Permission client for setting game-session:in_game state.</param>
     /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
+    /// <param name="connectClient">Connect client for querying connected sessions per account.</param>
     public GameSessionService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -141,7 +144,8 @@ public partial class GameSessionService : IGameSessionService
         IVoiceClient voiceClient,
         IPermissionClient permissionClient,
         ISubscriptionClient subscriptionClient,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        IConnectClient connectClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -152,6 +156,7 @@ public partial class GameSessionService : IGameSessionService
         _permissionClient = permissionClient;
         _subscriptionClient = subscriptionClient;
         _lockProvider = lockProvider;
+        _connectClient = connectClient;
 
         // Initialize supported game services from configuration
         // Central validation in PluginLoader ensures non-nullable strings are not empty
@@ -1789,8 +1794,42 @@ public partial class GameSessionService : IGameSessionService
             return;
         }
 
-        // Get sessions from lib-state (distributed subscriber tracking)
-        var connectedSessionsForAccount = await GetSubscriberSessionsAsync(accountId);
+        // Query Connect service for ALL connected sessions for this account
+        // This finds sessions that connected BEFORE the subscription was created,
+        // not just those already in our subscriber-sessions store
+        List<Guid> connectedSessionsForAccount;
+        try
+        {
+            var connectResponse = await _connectClient.GetAccountSessionsAsync(
+                new GetAccountSessionsRequest { AccountId = accountId });
+
+            // Convert string session IDs to Guids
+            connectedSessionsForAccount = new List<Guid>();
+            foreach (var sessionIdStr in connectResponse.SessionIds)
+            {
+                if (Guid.TryParse(sessionIdStr, out var sessionGuid))
+                {
+                    connectedSessionsForAccount.Add(sessionGuid);
+                }
+                else
+                {
+                    _logger.LogWarning("Invalid session ID format from Connect service: {SessionId}", sessionIdStr);
+                }
+            }
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Connect service error getting sessions for account {AccountId}: {StatusCode}",
+                accountId, ex.StatusCode);
+            // Fall back to local subscriber-sessions store
+            connectedSessionsForAccount = await GetSubscriberSessionsAsync(accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get connected sessions from Connect for account {AccountId}", accountId);
+            // Fall back to local subscriber-sessions store
+            connectedSessionsForAccount = await GetSubscriberSessionsAsync(accountId);
+        }
 
         _logger.LogDebug("Found {Count} connected sessions for account {AccountId}", connectedSessionsForAccount.Count, accountId);
 
@@ -1798,6 +1837,8 @@ public partial class GameSessionService : IGameSessionService
         {
             if (isActive)
             {
+                // Store in subscriber-sessions so join validation works
+                await StoreSubscriberSessionAsync(accountId, sessionId);
                 await PublishJoinShortcutAsync(sessionId, accountId, stubName);
             }
             else

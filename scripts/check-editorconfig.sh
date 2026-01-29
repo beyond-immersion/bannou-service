@@ -10,7 +10,7 @@ errors=0
 # Check for files with CRLF line endings (should be LF) - only source files
 echo "📋 Checking line endings (should be LF)..."
 crlf_files=$(find . -type f \( -name "*.cs" -o -name "*.md" -o -name "*.sh" -o -name "*.txt" -o -name "*.yml" -o -name "*.yaml" \) \
-   -not -path "./bin/*" -not -path "./obj/*" -not -path "./.git/*" -not -path "./node_modules/*" \
+   -not -path "./bin/*" -not -path "./obj/*" -not -path "./.git/*" -not -path "*/node_modules/*" \
    -not -path "./**/Generated/*" -not -path "./sdks/*" \
    -not -path "./**/obj/*" -not -path "./**/bin/*" \
    -exec grep -l $'\r' {} \; 2>/dev/null | head -5)
@@ -24,7 +24,7 @@ fi
 # Check for files missing final newline - only source files (exclude generated JSON)
 echo "📋 Checking final newlines..."
 missing_newline_files=$(find . -type f \( -name "*.cs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.sh" \) \
-   -not -path "./bin/*" -not -path "./obj/*" -not -path "./.git/*" -not -path "./node_modules/*" \
+   -not -path "./bin/*" -not -path "./obj/*" -not -path "./.git/*" -not -path "*/node_modules/*" \
    -not -path "./**/Generated/*" -not -path "./sdks/*" \
    -not -path "./**/obj/*" -not -path "./**/bin/*" \
    -exec sh -c 'test "$(tail -c1 "$1")" && echo "$1"' _ {} \; 2>/dev/null | head -5)
