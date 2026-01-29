@@ -517,8 +517,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             );
 
             Console.WriteLine($"📤 Sending internal API proxy request:");
-            Console.WriteLine($"   Method: {apiMethod}");
-            Console.WriteLine($"   Path: {apiPath}");
+            Console.WriteLine($"   Endpoint: {apiEndpoint}");
             Console.WriteLine($"   ServiceGuid: {serviceGuid}");
 
             // Send the API proxy request

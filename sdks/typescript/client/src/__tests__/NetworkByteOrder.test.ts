@@ -137,28 +137,31 @@ describe('NetworkByteOrder', () => {
   });
 
   describe('GUID', () => {
-    it('should write and read GUID with RFC 4122 byte ordering', () => {
+    it('should write and read GUID with network byte ordering', () => {
       const buffer = new ArrayBuffer(16);
       const view = new DataView(buffer);
 
       const testGuid = '12345678-1234-5678-9abc-def012345678';
       writeGuid(view, 0, testGuid);
 
-      // Verify RFC 4122 byte transformation:
-      // Time-low (bytes 0-3): reversed from 12345678 to 78563412
+      // Verify network byte order (big-endian, matching C# NetworkByteOrder.WriteGuid):
+      // The GUID string is parsed and written directly in display order.
+      // This matches C# which reverses .NET's little-endian ToByteArray() to big-endian.
       const bytes = new Uint8Array(buffer);
-      expect(bytes[0]).toBe(0x78);
-      expect(bytes[1]).toBe(0x56);
-      expect(bytes[2]).toBe(0x34);
-      expect(bytes[3]).toBe(0x12);
 
-      // Time-mid (bytes 4-5): reversed from 1234 to 3412
-      expect(bytes[4]).toBe(0x34);
-      expect(bytes[5]).toBe(0x12);
+      // Time-low (bytes 0-3): big-endian 0x12345678
+      expect(bytes[0]).toBe(0x12);
+      expect(bytes[1]).toBe(0x34);
+      expect(bytes[2]).toBe(0x56);
+      expect(bytes[3]).toBe(0x78);
 
-      // Time-high (bytes 6-7): reversed from 5678 to 7856
-      expect(bytes[6]).toBe(0x78);
-      expect(bytes[7]).toBe(0x56);
+      // Time-mid (bytes 4-5): big-endian 0x1234
+      expect(bytes[4]).toBe(0x12);
+      expect(bytes[5]).toBe(0x34);
+
+      // Time-high (bytes 6-7): big-endian 0x5678
+      expect(bytes[6]).toBe(0x56);
+      expect(bytes[7]).toBe(0x78);
 
       // Clock-seq and node (bytes 8-15): unchanged
       expect(bytes[8]).toBe(0x9a);
