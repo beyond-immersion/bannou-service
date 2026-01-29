@@ -102,6 +102,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "Verify connect service still on bannou-main node"),
             new ServiceTest(TestGameSessionShortcutOnSplitNode, "SplitRouting - GameSession Shortcut", "GameSession",
                 "Test subscription-based shortcut flow via game-session on bannou-auth (GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game)"),
+            new ServiceTest(TestCapabilityChangeEventsOnSubscription, "SplitRouting - Capability Events", "WebSocket",
+                "Test OnCapabilitiesAdded/Removed events fire when subscribing/unsubscribing (requires GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game)"),
 
             // Phase 2: Deploy relayed-connect and test peer-to-peer routing
             new ServiceTest(TestDeployRelayedConnect, "RelayedConnect - Deploy", "Orchestrator",
@@ -926,6 +928,345 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         finally
         {
             await CloseWebSocketSafely(webSocket);
+        }
+    }
+
+    /// <summary>
+    /// Test that OnCapabilitiesAdded and OnCapabilitiesRemoved events fire correctly
+    /// when subscribing and unsubscribing from a game service.
+    /// This test runs during split deployment when GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game is configured.
+    /// </summary>
+    private void TestCapabilityChangeEventsOnSubscription(string[] args)
+    {
+        Console.WriteLine("=== Capability Change Events on Subscription Test ===");
+        Console.WriteLine("Testing OnCapabilitiesAdded/Removed events during subscription lifecycle...");
+
+        if (!RequiresSplitDeployment("Capability change events test"))
+            return;
+
+        try
+        {
+            var result = Task.Run(async () => await PerformCapabilityChangeEventsTestAsync()).Result;
+
+            if (result)
+            {
+                Console.WriteLine("PASSED: Capability change events test succeeded");
+            }
+            else
+            {
+                Console.WriteLine("FAILED: Capability change events test failed");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED: Capability change events test failed with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private async Task<bool> PerformCapabilityChangeEventsTestAsync()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return false;
+        }
+
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("   Admin client not connected - required for subscription management");
+            return false;
+        }
+
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
+        var uniqueCode = Guid.NewGuid().ToString("N")[..8];
+
+        // Step 1: Get or create test-game service (should already exist from previous test)
+        Console.WriteLine("   Step 1: Getting test-game service...");
+        Guid? gameServiceId = null;
+
+        try
+        {
+            var getResponse = await adminClient.GameService.GetServiceAsync(
+                new GetServiceRequest { StubName = "test-game" },
+                timeout: TimeSpan.FromSeconds(10));
+
+            if (getResponse.IsSuccess && getResponse.Result is not null)
+            {
+                gameServiceId = getResponse.Result.ServiceId;
+                Console.WriteLine($"   Found game service: {gameServiceId}");
+            }
+            else
+            {
+                // Create it if doesn't exist
+                var createResponse = await adminClient.GameService.CreateServiceAsync(
+                    new CreateServiceRequest
+                    {
+                        StubName = "test-game",
+                        DisplayName = "Test Game (Capability Events)",
+                        Description = "Test game service for capability change events"
+                    },
+                    timeout: TimeSpan.FromSeconds(10));
+
+                if (createResponse.IsSuccess && createResponse.Result is not null)
+                {
+                    gameServiceId = createResponse.Result.ServiceId;
+                    Console.WriteLine($"   Created game service: {gameServiceId}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Warning: Failed to get/create game service: {ex.Message}");
+        }
+
+        if (gameServiceId == null)
+        {
+            Console.WriteLine("   Could not find or create game service 'test-game'");
+            return false;
+        }
+
+        // Step 2: Create test account
+        Console.WriteLine("   Step 2: Creating test account...");
+        var testEmail = $"cap_events_{uniqueCode}@test.local";
+        var testPassword = "TestPass123!";
+        var testUsername = $"cap_events_{uniqueCode}";
+
+        string? accessToken = null;
+        string? connectUrl = null;
+        Guid? accountId = null;
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new RegisterRequest { Username = testUsername, Email = testEmail, Password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                BannouJson.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"   Failed to create account: {registerResponse.StatusCode} - {responseBody}");
+                return false;
+            }
+
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            accessToken = registerResult?.AccessToken;
+            accountId = registerResult?.AccountId;
+            connectUrl = registerResult?.ConnectUrl;
+
+            Console.WriteLine($"   Created account: {accountId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(accessToken) || accountId == null || string.IsNullOrEmpty(connectUrl))
+        {
+            Console.WriteLine("   Missing accessToken, accountId, or connectUrl");
+            return false;
+        }
+
+        // Step 3: Connect using BannouClient BEFORE creating subscription
+        Console.WriteLine("   Step 3: Connecting via BannouClient (before subscription)...");
+
+        var initialCapabilitiesReceived = new TaskCompletionSource<IReadOnlyList<ClientCapabilityEntry>>();
+        var addedCapabilities = new TaskCompletionSource<IReadOnlyList<ClientCapabilityEntry>>();
+        var removedCapabilities = new TaskCompletionSource<IReadOnlyList<ClientCapabilityEntry>>();
+        var initialReceived = false;
+
+        await using var client = new BannouClient();
+
+        client.OnCapabilitiesAdded += capabilities =>
+        {
+            Console.WriteLine($"   OnCapabilitiesAdded fired with {capabilities.Count} capabilities");
+            if (!initialReceived)
+            {
+                initialReceived = true;
+                initialCapabilitiesReceived.TrySetResult(capabilities);
+            }
+            else
+            {
+                // Subsequent add events (e.g., from subscription)
+                addedCapabilities.TrySetResult(capabilities);
+            }
+        };
+
+        client.OnCapabilitiesRemoved += capabilities =>
+        {
+            Console.WriteLine($"   OnCapabilitiesRemoved fired with {capabilities.Count} capabilities");
+            removedCapabilities.TrySetResult(capabilities);
+        };
+
+        var connected = await client.ConnectWithTokenAsync(connectUrl, accessToken);
+        if (!connected || !client.IsConnected)
+        {
+            Console.WriteLine("   BannouClient failed to connect");
+            return false;
+        }
+
+        Console.WriteLine($"   Connected, session: {client.SessionId}");
+
+        // Wait for initial capabilities
+        using var initCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try
+        {
+            var initialCaps = await initialCapabilitiesReceived.Task.WaitAsync(initCts.Token);
+            Console.WriteLine($"   Initial capabilities received: {initialCaps.Count} entries");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("   Timeout waiting for initial capabilities");
+            return false;
+        }
+
+        // Step 4: Create subscription - should trigger OnCapabilitiesAdded with shortcut
+        Console.WriteLine("   Step 4: Creating subscription to 'test-game'...");
+        Guid? subscriptionId = null;
+
+        try
+        {
+            var subscribeResponse = await adminClient.Subscription.CreateSubscriptionAsync(
+                new CreateSubscriptionRequest
+                {
+                    AccountId = accountId.Value,
+                    ServiceId = gameServiceId.Value
+                },
+                timeout: TimeSpan.FromSeconds(10));
+
+            if (subscribeResponse.IsSuccess && subscribeResponse.Result is not null)
+            {
+                subscriptionId = subscribeResponse.Result.SubscriptionId;
+                Console.WriteLine($"   Subscription created: {subscriptionId}");
+            }
+            else
+            {
+                Console.WriteLine($"   Subscription creation returned: {subscribeResponse.Error?.ResponseCode}");
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create subscription: {ex.Message}");
+            return false;
+        }
+
+        // Step 5: Wait for OnCapabilitiesAdded with shortcut
+        Console.WriteLine("   Step 5: Waiting for OnCapabilitiesAdded with shortcut...");
+
+        using var addCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        IReadOnlyList<ClientCapabilityEntry>? added;
+        try
+        {
+            added = await addedCapabilities.Task.WaitAsync(addCts.Token);
+            Console.WriteLine($"   OnCapabilitiesAdded fired with {added.Count} new capabilities:");
+            foreach (var cap in added)
+            {
+                Console.WriteLine($"     + {cap.Endpoint} (service: {cap.Service})");
+            }
+
+            // Verify we got a shortcut for test-game
+            var hasShortcut = added.Any(c => c.Service == "shortcut" && c.Endpoint.Contains("test-game"));
+            if (!hasShortcut)
+            {
+                Console.WriteLine("   FAILED: Expected shortcut for test-game not found in added capabilities");
+                return false;
+            }
+
+            Console.WriteLine("   Shortcut capability confirmed in OnCapabilitiesAdded");
+
+            // Also verify the shortcut is now in client.AvailableApis
+            var shortcutGuid = client.GetServiceGuid("join_game_test-game");
+            if (!shortcutGuid.HasValue)
+            {
+                Console.WriteLine("   FAILED: Shortcut not found in client.AvailableApis after OnCapabilitiesAdded");
+                return false;
+            }
+            Console.WriteLine($"   Shortcut verified in AvailableApis: join_game_test-game -> {shortcutGuid}");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("   Timeout waiting for OnCapabilitiesAdded after subscription");
+            Console.WriteLine("   This indicates game-session may not be publishing shortcuts for test-game");
+            return false;
+        }
+
+        // Step 6: Delete subscription - should trigger OnCapabilitiesRemoved
+        Console.WriteLine("   Step 6: Deleting subscription...");
+
+        try
+        {
+            var deleteResponse = await adminClient.Subscription.DeleteSubscriptionAsync(
+                new DeleteSubscriptionRequest { SubscriptionId = subscriptionId!.Value },
+                timeout: TimeSpan.FromSeconds(10));
+
+            if (!deleteResponse.IsSuccess)
+            {
+                Console.WriteLine($"   FAILED: Subscription deletion returned error: {deleteResponse.Error?.ResponseCode} - {deleteResponse.Error?.Message}");
+                return false;
+            }
+
+            Console.WriteLine("   Subscription deleted");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   FAILED: Exception deleting subscription: {ex.Message}");
+            return false;
+        }
+
+        // Step 7: Wait for OnCapabilitiesRemoved with shortcut
+        Console.WriteLine("   Step 7: Waiting for OnCapabilitiesRemoved...");
+
+        using var remCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        try
+        {
+            var removed = await removedCapabilities.Task.WaitAsync(remCts.Token);
+            Console.WriteLine($"   OnCapabilitiesRemoved fired with {removed.Count} removed capabilities:");
+            foreach (var cap in removed)
+            {
+                Console.WriteLine($"     - {cap.Endpoint} (service: {cap.Service})");
+            }
+
+            // Verify the shortcut was removed
+            var hadShortcut = removed.Any(c => c.Service == "shortcut" && c.Endpoint.Contains("test-game"));
+            if (!hadShortcut)
+            {
+                Console.WriteLine("   FAILED: Expected shortcut for test-game not found in removed capabilities");
+                return false;
+            }
+
+            Console.WriteLine("   Shortcut removal confirmed in OnCapabilitiesRemoved");
+
+            // Also verify the shortcut is no longer in client.AvailableApis
+            var shortcutGuidAfter = client.GetServiceGuid("join_game_test-game");
+            if (shortcutGuidAfter.HasValue)
+            {
+                Console.WriteLine("   FAILED: Shortcut still in client.AvailableApis after OnCapabilitiesRemoved");
+                return false;
+            }
+            Console.WriteLine("   Shortcut verified removed from AvailableApis");
+
+            Console.WriteLine("   Capability change events working correctly");
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("   Timeout waiting for OnCapabilitiesRemoved after unsubscription");
+            Console.WriteLine("   OnCapabilitiesAdded worked but OnCapabilitiesRemoved did not fire");
+            return false;
         }
     }
 
