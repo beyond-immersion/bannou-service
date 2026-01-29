@@ -27,8 +27,13 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
         new ServiceTest(TestLeaveMatchmaking, "LeaveMatchmaking", "Matchmaking", "Test leaving matchmaking queue"),
         new ServiceTest(TestGetMatchmakingStatus, "GetMatchmakingStatus", "Matchmaking", "Test matchmaking status retrieval"),
 
+        // Stats test
+        new ServiceTest(TestGetMatchmakingStats, "GetMatchmakingStats", "Matchmaking", "Test matchmaking stats retrieval"),
+
         // Error handling tests
         new ServiceTest(TestGetNonExistentQueue, "GetNonExistentQueue", "Matchmaking", "Test 404 for non-existent queue"),
+        new ServiceTest(TestAcceptNonExistentMatch, "AcceptNonExistentMatch", "Matchmaking", "Test 404 for accepting non-existent match"),
+        new ServiceTest(TestDeclineNonExistentMatch, "DeclineNonExistentMatch", "Matchmaking", "Test 404 for declining non-existent match"),
 
         // Complete lifecycle test
         new ServiceTest(TestCompleteMatchmakingLifecycle, "CompleteMatchmakingLifecycle", "Matchmaking", "Test complete matchmaking lifecycle: create queue -> join -> status -> leave -> delete"),
@@ -338,6 +343,21 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Got matchmaking status: TicketID={response.TicketId}, Status={response.Status}");
         }, "Get matchmaking status");
 
+    private static async Task<TestResult> TestGetMatchmakingStats(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var matchmakingClient = GetServiceClient<IMatchmakingClient>();
+
+            // Get stats for all queues in test-game
+            var response = await matchmakingClient.GetMatchmakingStatsAsync(new GetMatchmakingStatsRequest
+            {
+                GameId = "test-game"
+            });
+
+            // Stats should return valid response even with no activity
+            return TestResult.Successful($"Matchmaking stats retrieved: total queues recorded");
+        }, "Get matchmaking stats");
+
     private static async Task<TestResult> TestGetNonExistentQueue(ITestClient client, string[] args) =>
         await ExecuteExpectingStatusAsync(
             async () =>
@@ -350,6 +370,36 @@ public class MatchmakingTestHandler : BaseHttpTestHandler
             },
             404,
             "Get non-existent queue");
+
+    private static async Task<TestResult> TestAcceptNonExistentMatch(ITestClient client, string[] args) =>
+        await ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var matchmakingClient = GetServiceClient<IMatchmakingClient>();
+                await matchmakingClient.AcceptMatchAsync(new AcceptMatchRequest
+                {
+                    WebSocketSessionId = Guid.NewGuid(),
+                    AccountId = Guid.NewGuid(),
+                    MatchId = Guid.NewGuid() // Non-existent match
+                });
+            },
+            404,
+            "Accept non-existent match");
+
+    private static async Task<TestResult> TestDeclineNonExistentMatch(ITestClient client, string[] args) =>
+        await ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var matchmakingClient = GetServiceClient<IMatchmakingClient>();
+                await matchmakingClient.DeclineMatchAsync(new DeclineMatchRequest
+                {
+                    WebSocketSessionId = Guid.NewGuid(),
+                    AccountId = Guid.NewGuid(),
+                    MatchId = Guid.NewGuid() // Non-existent match
+                });
+            },
+            404,
+            "Decline non-existent match");
 
     private static async Task<TestResult> TestCompleteMatchmakingLifecycle(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>

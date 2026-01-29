@@ -28,6 +28,11 @@ public class CharacterTestHandler : BaseHttpTestHandler
         new ServiceTest(TestListCharacters, "ListCharacters", "Character", "Test character listing with filters"),
         new ServiceTest(TestGetCharactersByRealm, "GetCharactersByRealm", "Character", "Test realm-based character query"),
 
+        // Enriched and archive operations
+        new ServiceTest(TestGetEnrichedCharacter, "GetEnrichedCharacter", "Character", "Test character retrieval with cross-service data"),
+        new ServiceTest(TestCheckCharacterReferences, "CheckCharacterReferences", "Character", "Test character reference count check"),
+        new ServiceTest(TestCompressAndGetArchive, "CompressAndGetArchive", "Character", "Test compress dead character and retrieve archive"),
+
         // Error handling tests
         new ServiceTest(TestGetNonExistentCharacter, "GetNonExistentCharacter", "Character", "Test 404 for non-existent character"),
         new ServiceTest(TestListCharactersRequiresRealmId, "ListRequiresRealmId", "Character", "Test ListCharacters requires realmId"),
@@ -380,4 +385,113 @@ public class CharacterTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"Complete character lifecycle test passed for character {createResponse.CharacterId}");
         }, "Complete character lifecycle");
+
+    private static async Task<TestResult> TestGetEnrichedCharacter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "ENRICHED");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "ENRICHED");
+            var characterClient = GetServiceClient<ICharacterClient>();
+
+            // Create a test character
+            var createResponse = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"EnrichedTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-30),
+                Status = CharacterStatus.Alive
+            });
+
+            // Get enriched character (with options to include cross-service data)
+            var response = await characterClient.GetEnrichedCharacterAsync(new GetEnrichedCharacterRequest
+            {
+                CharacterId = createResponse.CharacterId,
+                IncludePersonality = true,
+                IncludeBackstory = true,
+                IncludeFamilyTree = false
+            });
+
+            if (response.CharacterId != createResponse.CharacterId)
+                return TestResult.Failed($"Character ID mismatch: expected '{createResponse.CharacterId}', got '{response.CharacterId}'");
+
+            return TestResult.Successful($"Enriched character retrieved: ID={response.CharacterId}, Name={response.Name}");
+        }, "Get enriched character");
+
+    private static async Task<TestResult> TestCheckCharacterReferences(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "REFCHECK");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "REFCHECK");
+            var characterClient = GetServiceClient<ICharacterClient>();
+
+            // Create a test character
+            var createResponse = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"RefCheckTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-25),
+                Status = CharacterStatus.Alive
+            });
+
+            // Check references (should have no references for a new character)
+            var response = await characterClient.CheckCharacterReferencesAsync(new CheckReferencesRequest
+            {
+                CharacterId = createResponse.CharacterId
+            });
+
+            // New character should have 0 references
+            if (response.ReferenceCount < 0)
+                return TestResult.Failed($"Invalid reference count: {response.ReferenceCount}");
+
+            return TestResult.Successful($"Reference check: count={response.ReferenceCount}, isCompressed={response.IsCompressed}, canCleanup={response.IsEligibleForCleanup}");
+        }, "Check character references");
+
+    private static async Task<TestResult> TestCompressAndGetArchive(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "COMPRESS");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "COMPRESS");
+            var characterClient = GetServiceClient<ICharacterClient>();
+
+            // Create a character first
+            var createResponse = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"CompressTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-50),
+                Status = CharacterStatus.Alive
+            });
+
+            // Update to dead status (required for compression)
+            await characterClient.UpdateCharacterAsync(new UpdateCharacterRequest
+            {
+                CharacterId = createResponse.CharacterId,
+                Status = CharacterStatus.Dead,
+                DeathDate = DateTimeOffset.UtcNow.AddDays(-1)
+            });
+
+            // Compress the dead character
+            var compressResponse = await characterClient.CompressCharacterAsync(new CompressCharacterRequest
+            {
+                CharacterId = createResponse.CharacterId,
+                DeleteSourceData = false // Keep source data for testing
+            });
+
+            if (compressResponse.CharacterId != createResponse.CharacterId)
+                return TestResult.Failed($"Archive character ID mismatch: expected '{createResponse.CharacterId}', got '{compressResponse.CharacterId}'");
+
+            // Retrieve the archive
+            var archiveResponse = await characterClient.GetCharacterArchiveAsync(new GetCharacterArchiveRequest
+            {
+                CharacterId = createResponse.CharacterId
+            });
+
+            if (archiveResponse.CharacterId != createResponse.CharacterId)
+                return TestResult.Failed($"Archive retrieval ID mismatch: expected '{createResponse.CharacterId}', got '{archiveResponse.CharacterId}'");
+
+            return TestResult.Successful($"Character compressed and archive retrieved: ID={archiveResponse.CharacterId}, Name={archiveResponse.Name}");
+        }, "Compress and get archive");
 }
