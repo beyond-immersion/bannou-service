@@ -619,6 +619,54 @@ components:
         perception:
           $ref: '#/components/schemas/PerceptionData'
           description: The perception data to deliver to the actor
+    HazardInfo:
+      type: object
+      additionalProperties: true
+      description: Information about a hazard in range
+      properties:
+        hazardType:
+          type: string
+          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance to hazard edge
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Hazard severity (0-1)
+        direction:
+          type: string
+          nullable: true
+          description: Direction to hazard center
+
+    NearbyObject:
+      type: object
+      additionalProperties: true
+      description: Information about a nearby object perceived by the character
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier of the object
+        objectType:
+          type: string
+          description: Type of object (boulder_cluster, tree, building, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance from character in game units
+        direction:
+          type: string
+          description: Relative direction (north, south, east, west, above, below, etc.)
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          nullable: true
+          description: Optional absolute position
+
     PerceptionData:
       type: object
       additionalProperties: false
@@ -685,6 +733,28 @@ components:
       - service
       - system
 
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: 3D position in world coordinates
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate (typically vertical)
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+
     SpatialContext:
       type: object
       additionalProperties: true
@@ -731,74 +801,4 @@ components:
           type: boolean
           nullable: true
           description: Whether character is currently indoors/under roof
-
-    HazardInfo:
-      type: object
-      additionalProperties: true
-      description: Information about a hazard in range
-      properties:
-        hazardType:
-          type: string
-          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
-        distance:
-          type: number
-          format: float
-          description: Distance to hazard edge
-        severity:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Hazard severity (0-1)
-        direction:
-          type: string
-          nullable: true
-          description: Direction to hazard center
-
-    NearbyObject:
-      type: object
-      additionalProperties: true
-      description: Information about a nearby object perceived by the character
-      properties:
-        objectId:
-          type: string
-          format: uuid
-          description: Unique identifier of the object
-        objectType:
-          type: string
-          description: Type of object (boulder_cluster, tree, building, etc.)
-        distance:
-          type: number
-          format: float
-          description: Distance from character in game units
-        direction:
-          type: string
-          description: Relative direction (north, south, east, west, above, below, etc.)
-        position:
-          allOf:
-          - $ref: '#/components/schemas/Position3D'
-          nullable: true
-          description: Optional absolute position
-
-    Position3D:
-      type: object
-      additionalProperties: false
-      description: 3D position in world coordinates
-      required:
-      - x
-      - y
-      - z
-      properties:
-        x:
-          type: number
-          format: float
-          description: X coordinate
-        y:
-          type: number
-          format: float
-          description: Y coordinate (typically vertical)
-        z:
-          type: number
-          format: float
-          description: Z coordinate
 

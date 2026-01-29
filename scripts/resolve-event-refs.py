@@ -159,9 +159,9 @@ def get_type_with_dependencies(
     type_def = deepcopy(source_schemas[type_name])
     collected[type_name] = type_def
 
-    # Find and collect all local refs in this type
+    # Find and collect all local refs in this type (sorted for deterministic order)
     local_refs = find_local_refs(type_def)
-    for ref_name in local_refs:
+    for ref_name in sorted(local_refs):
         if ref_name not in collected:
             get_type_with_dependencies(ref_name, source_schemas, collected)
 
@@ -298,8 +298,8 @@ def resolve_event_schema(events_path: Path, schema_dir: Path) -> Optional[Path]:
     if 'schemas' not in resolved['components']:
         resolved['components']['schemas'] = {}
 
-    # Add inlined types to the schema
-    for type_name, type_def in types_to_inline.items():
+    # Add inlined types to the schema (sorted for deterministic output)
+    for type_name, type_def in sorted(types_to_inline.items()):
         # Convert any self-qualified refs in the inlined type to local refs
         type_def = convert_refs_to_local(type_def, set(types_to_inline.keys()))
         resolved['components']['schemas'][type_name] = type_def

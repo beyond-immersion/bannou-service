@@ -170,7 +170,8 @@ public class ClientEventTestHandler : IServiceTestHandler
             // Wait for initial capability manifest to get session ID
             Console.WriteLine("Waiting for capability manifest to get session ID...");
             var receiveBuffer = new byte[65536];
-            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            // Use 15-second timeout to match CI latency (BannouClient SDK uses 30 seconds)
+            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts1.Token);
             if (result.Count == 0)
@@ -348,8 +349,8 @@ public class ClientEventTestHandler : IServiceTestHandler
             await webSocket1.ConnectAsync(serverUri, CancellationToken.None);
             Console.WriteLine("OK Initial WebSocket connected");
 
-            // Get capability manifest with session ID
-            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            // Get capability manifest with session ID (15s timeout for CI latency)
+            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             var result = await webSocket1.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts1.Token);
 
             if (result.Count > 0)
@@ -440,8 +441,8 @@ public class ClientEventTestHandler : IServiceTestHandler
             await webSocket2.ConnectAsync(serverUri, CancellationToken.None);
             Console.WriteLine("OK Reconnection WebSocket connected");
 
-            // Wait for capability manifest first, then check for queued events
-            using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            // Wait for capability manifest first, then check for queued events (15s timeout for CI latency)
+            using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             bool receivedCapabilityManifest = false;
             bool receivedQueuedEvent = false;
 

@@ -203,7 +203,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             Console.WriteLine("📥 Waiting for capability manifest to be pushed by server...");
 
             var receiveBuffer = new byte[65536]; // Large buffer for capability manifest
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            // Use 15-second timeout to match CI latency (BannouClient SDK uses 30 seconds)
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
             try
             {
@@ -577,10 +578,10 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
             Console.WriteLine("✅ WebSocket connected for state-based capability test");
 
-            // Wait for initial capability manifest
+            // Wait for initial capability manifest (15s timeout for CI latency)
             Console.WriteLine("📥 Waiting for initial capability manifest...");
             var receiveBuffer = new byte[65536];
-            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts1.Token);
             Console.WriteLine($"📥 Received {result.Count} bytes");
