@@ -215,7 +215,7 @@ public class PermissionServiceTests : IAsyncLifetime
                 {
                     ["user"] = new System.Collections.ObjectModel.Collection<string>
                     {
-                        "GET:/test/endpoint"
+                        "/test/endpoint"
                     }
                 }
             }
@@ -281,8 +281,8 @@ public class PermissionServiceTests : IAsyncLifetime
                 {
                     ["admin"] = new System.Collections.ObjectModel.Collection<string>
                     {
-                        "GET:/orchestrator/health",
-                        "POST:/orchestrator/deploy"
+                        "/orchestrator/health",
+                        "/orchestrator/deploy"
                     }
                 }
             }
@@ -387,11 +387,11 @@ public class PermissionServiceTests : IAsyncLifetime
         // Permission matrix lookups per role (developer should inherit user)
         _mockHashSetStore
             .Setup(s => s.GetAsync(It.Is<string>(key => key.Contains("permissions:svc:default:user")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "GET:/user" });
+            .ReturnsAsync(new HashSet<string> { "/user" });
 
         _mockHashSetStore
             .Setup(s => s.GetAsync(It.Is<string>(key => key.Contains("permissions:svc:default:developer")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "GET:/dev" });
+            .ReturnsAsync(new HashSet<string> { "/dev" });
 
         _mockHashSetStore
             .Setup(s => s.GetAsync(It.Is<string>(key => key.Contains("permissions:svc:default:anonymous")), It.IsAny<CancellationToken>()))
@@ -423,8 +423,8 @@ public class PermissionServiceTests : IAsyncLifetime
         Assert.True(savedPermissions!.TryGetValue("svc", out var endpointsObj));
         var endpoints = endpointsObj as IEnumerable<string>;
         Assert.NotNull(endpoints);
-        Assert.Contains("GET:/user", endpoints!);
-        Assert.Contains("GET:/dev", endpoints!);
+        Assert.Contains("/user", endpoints!);
+        Assert.Contains("/dev", endpoints!);
     }
 
     [Fact]
@@ -465,7 +465,7 @@ public class PermissionServiceTests : IAsyncLifetime
             .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("permissions:svc:game-session:in_game:user")),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "POST:/secure" });
+            .ReturnsAsync(new HashSet<string> { "/secure" });
 
         // No default endpoints
         _mockHashSetStore
@@ -499,7 +499,7 @@ public class PermissionServiceTests : IAsyncLifetime
         Assert.True(saved!.TryGetValue("svc", out var endpointsObj));
         var endpoints = endpointsObj as IEnumerable<string>;
         Assert.NotNull(endpoints);
-        Assert.Contains("POST:/secure", endpoints!);
+        Assert.Contains("/secure", endpoints!);
     }
 
     /// <summary>
@@ -553,7 +553,7 @@ public class PermissionServiceTests : IAsyncLifetime
             .Setup(s => s.GetAsync(
                 It.Is<string>(k => k == "permissions:voice:ringing:user"),  // Same-service: just state value
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "POST:/voice/peer/answer" });
+            .ReturnsAsync(new HashSet<string> { "/voice/peer/answer" });
 
         // Default endpoints (no state required)
         _mockHashSetStore
@@ -588,7 +588,7 @@ public class PermissionServiceTests : IAsyncLifetime
             "Session should have voice service permissions when voice:ringing state is set");
         var endpoints = endpointsObj as IEnumerable<string>;
         Assert.NotNull(endpoints);
-        Assert.Contains("POST:/voice/peer/answer", endpoints!);
+        Assert.Contains("/voice/peer/answer", endpoints!);
     }
 
     /// <summary>
@@ -634,7 +634,7 @@ public class PermissionServiceTests : IAsyncLifetime
             .Setup(s => s.GetAsync(
                 It.Is<string>(k => k == "permissions:game-session:voice:ringing:user"),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "POST:/sessions/voice-enabled-action" });
+            .ReturnsAsync(new HashSet<string> { "/sessions/voice-enabled-action" });
 
         _mockHashSetStore
             .Setup(s => s.GetAsync(
@@ -667,7 +667,7 @@ public class PermissionServiceTests : IAsyncLifetime
         Assert.True(saved!.TryGetValue("game-session", out var endpointsObj));
         var endpoints = endpointsObj as IEnumerable<string>;
         Assert.NotNull(endpoints);
-        Assert.Contains("POST:/sessions/voice-enabled-action", endpoints!);
+        Assert.Contains("/sessions/voice-enabled-action", endpoints!);
     }
 
     /// <summary>
@@ -715,9 +715,9 @@ public class PermissionServiceTests : IAsyncLifetime
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>
             {
-                "POST:/sessions/leave",
-                "POST:/sessions/chat",
-                "POST:/sessions/actions"
+                "/sessions/leave",
+                "/sessions/chat",
+                "/sessions/actions"
             });
 
         _mockHashSetStore
@@ -726,10 +726,10 @@ public class PermissionServiceTests : IAsyncLifetime
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>
             {
-                "GET:/sessions/list",
-                "POST:/sessions/create",
-                "POST:/sessions/get",
-                "POST:/sessions/join"
+                "/sessions/list",
+                "/sessions/create",
+                "/sessions/get",
+                "/sessions/join"
             });
 
         Dictionary<string, object>? saved = null;
@@ -759,11 +759,11 @@ public class PermissionServiceTests : IAsyncLifetime
         Assert.NotNull(endpoints);
 
         // Should have both default and in_game state endpoints
-        Assert.Contains("GET:/sessions/list", endpoints!);
-        Assert.Contains("POST:/sessions/join", endpoints!);
-        Assert.Contains("POST:/sessions/leave", endpoints!);  // Requires in_game state
-        Assert.Contains("POST:/sessions/chat", endpoints!);   // Requires in_game state
-        Assert.Contains("POST:/sessions/actions", endpoints!); // Requires in_game state
+        Assert.Contains("/sessions/list", endpoints!);
+        Assert.Contains("/sessions/join", endpoints!);
+        Assert.Contains("/sessions/leave", endpoints!);  // Requires in_game state
+        Assert.Contains("/sessions/chat", endpoints!);   // Requires in_game state
+        Assert.Contains("/sessions/actions", endpoints!); // Requires in_game state
     }
 
     [Fact]
@@ -781,7 +781,7 @@ public class PermissionServiceTests : IAsyncLifetime
             .ReturnsAsync(registeredServices);
 
         // Pre-populate permission matrix: permissions:orchestrator:default:admin
-        var adminEndpoints = new HashSet<string> { "GET:/orchestrator/health", "POST:/orchestrator/deploy" };
+        var adminEndpoints = new HashSet<string> { "/orchestrator/health", "/orchestrator/deploy" };
         var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "admin");
         _mockHashSetStore
             .Setup(s => s.GetAsync(adminMatrixKey, It.IsAny<CancellationToken>()))
@@ -843,8 +843,8 @@ public class PermissionServiceTests : IAsyncLifetime
             ["generated_at"] = DateTimeOffset.UtcNow.ToString(),
             ["orchestrator"] = BannouJson.SerializeToElement(new List<string>
             {
-                "GET:/orchestrator/health",
-                "POST:/orchestrator/deploy"
+                "/orchestrator/health",
+                "/orchestrator/deploy"
             })
         };
 
@@ -866,7 +866,7 @@ public class PermissionServiceTests : IAsyncLifetime
         Assert.Equal(sessionId, response.SessionId);
         Assert.NotNull(response.Permissions);
         Assert.True(response.Permissions.ContainsKey("orchestrator"));
-        Assert.Contains("GET:/orchestrator/health", response.Permissions["orchestrator"]);
+        Assert.Contains("/orchestrator/health", response.Permissions["orchestrator"]);
     }
 
     [Fact]
@@ -912,7 +912,7 @@ public class PermissionServiceTests : IAsyncLifetime
             .ReturnsAsync(registeredServices);
 
         // Admin-only endpoints at permissions:orchestrator:default:admin
-        var adminEndpoints = new HashSet<string> { "GET:/orchestrator/health", "POST:/orchestrator/deploy" };
+        var adminEndpoints = new HashSet<string> { "/orchestrator/health", "/orchestrator/deploy" };
         var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "admin");
         _mockHashSetStore
             .Setup(s => s.GetAsync(adminMatrixKey, It.IsAny<CancellationToken>()))
@@ -1014,8 +1014,8 @@ public class PermissionServiceTests : IAsyncLifetime
         {
             ["orchestrator"] = BannouJson.SerializeToElement(new List<string>
             {
-                "GET:/orchestrator/health",
-                "POST:/orchestrator/deploy"
+                "/orchestrator/health",
+                "/orchestrator/deploy"
             })
         };
 
@@ -1027,7 +1027,7 @@ public class PermissionServiceTests : IAsyncLifetime
         {
             SessionId = sessionId,
             ServiceId = "orchestrator",
-            Method = "GET:/orchestrator/health"
+            Method = "/orchestrator/health"
         };
 
         // Act
@@ -1053,7 +1053,7 @@ public class PermissionServiceTests : IAsyncLifetime
         {
             ["account"] = BannouJson.SerializeToElement(new List<string>
             {
-                "GET:/account/profile"
+                "/account/profile"
             })
         };
 
@@ -1065,7 +1065,7 @@ public class PermissionServiceTests : IAsyncLifetime
         {
             SessionId = sessionId,
             ServiceId = "orchestrator",
-            Method = "POST:/orchestrator/deploy"
+            Method = "/orchestrator/deploy"
         };
 
         // Act
@@ -1900,7 +1900,7 @@ public class PermissionServiceTests : IAsyncLifetime
             {
                 ["default"] = new StatePermissions
                 {
-                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "GET:/test" }
+                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "/test" }
                 }
             }
         };
@@ -1974,7 +1974,7 @@ public class PermissionServiceTests : IAsyncLifetime
             {
                 ["default"] = new StatePermissions
                 {
-                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "GET:/test" }
+                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "/test" }
                 }
             }
         };

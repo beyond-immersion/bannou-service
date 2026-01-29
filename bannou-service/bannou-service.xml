@@ -79114,11 +79114,6 @@
             Values: "endpoint-info", "request-schema", "response-schema", "full-schema"
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Meta.MetaResponse.EndpointKey">
-            <summary>
-            Endpoint key in format "METHOD:/path" (e.g., "POST:/account/get")
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Meta.MetaResponse.ServiceName">
             <summary>
             Service name that owns this endpoint (e.g., "Account")
