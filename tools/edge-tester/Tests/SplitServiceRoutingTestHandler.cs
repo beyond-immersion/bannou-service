@@ -188,13 +188,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 deployRequest,
                 timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
-            if (!response.IsSuccess)
+            if (!response.IsSuccess || response.Result is null)
             {
-                Console.WriteLine($"   Deploy API returned error: {response.Error?.ResponseCode} - {response.Error?.Message}");
+                Console.WriteLine($"   Deploy API returned error or null result: {response.Error?.ResponseCode} - {response.Error?.Message}");
                 return false;
             }
 
-            var result = response.Result!;
+            var result = response.Result;
             Console.WriteLine($"   Success: {result.Success}");
             Console.WriteLine($"   DeploymentId: {result.DeploymentId}");
             Console.WriteLine($"   Message: {result.Message}");
@@ -328,13 +328,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 new GetServiceRoutingRequest(),
                 timeout: TimeSpan.FromSeconds(10));
 
-            if (!response.IsSuccess)
+            if (!response.IsSuccess || response.Result is null)
             {
-                Console.WriteLine($"   service-routing API returned error: {response.Error?.ResponseCode}");
+                Console.WriteLine($"   service-routing API returned error or null result: {response.Error?.ResponseCode}");
                 return false;
             }
 
-            var routingInfo = response.Result!;
+            var routingInfo = response.Result;
             Console.WriteLine($"   Default app-id: {routingInfo.DefaultAppId}");
 
             if (routingInfo.Mappings == null || routingInfo.Mappings.Count == 0)
@@ -507,13 +507,14 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 new ListAccountsRequest { PageSize = 1 },
                 timeout: TimeSpan.FromSeconds(5));
 
-            if (!response.IsSuccess)
+            if (!response.IsSuccess || response.Result is null)
             {
-                Console.WriteLine($"   Account API returned error: {response.Error?.ResponseCode}");
+                Console.WriteLine($"   Account API returned error or null result: {response.Error?.ResponseCode}");
                 return false;
             }
 
-            Console.WriteLine($"   Account API response: TotalCount={response.Result.TotalCount}, PageSize={response.Result.PageSize}");
+            var accountResult = response.Result;
+            Console.WriteLine($"   Account API response: TotalCount={accountResult.TotalCount}, PageSize={accountResult.PageSize}");
 
             // If we got a response, routing is working
             Console.WriteLine("   Account API call succeeded - routing to bannou-auth node works");
@@ -634,7 +635,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 },
                 timeout: TimeSpan.FromSeconds(10));
 
-            if (createResponse.IsSuccess)
+            if (createResponse.IsSuccess && createResponse.Result is not null)
             {
                 gameServiceId = createResponse.Result.ServiceId;
                 Console.WriteLine($"   Created game service 'test-game': {gameServiceId}");
@@ -647,7 +648,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                     new GetServiceRequest { StubName = "test-game" },
                     timeout: TimeSpan.FromSeconds(10));
 
-                if (getResponse.IsSuccess)
+                if (getResponse.IsSuccess && getResponse.Result is not null)
                 {
                     gameServiceId = getResponse.Result.ServiceId;
                     Console.WriteLine($"   Found existing game service: {gameServiceId}");
@@ -1029,13 +1030,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 deployRequest,
                 timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
-            if (!response.IsSuccess)
+            if (!response.IsSuccess || response.Result is null)
             {
-                Console.WriteLine($"   Deploy API returned error: {response.Error?.ResponseCode} - {response.Error?.Message}");
+                Console.WriteLine($"   Deploy API returned error or null result: {response.Error?.ResponseCode} - {response.Error?.Message}");
                 return false;
             }
 
-            var result = response.Result!;
+            var result = response.Result;
             Console.WriteLine($"   Success: {result.Success}");
             Console.WriteLine($"   Message: {result.Message}");
 
@@ -1090,13 +1091,14 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 cleanRequest,
                 timeout: TimeSpan.FromSeconds(10));
 
-            if (!response.IsSuccess)
+            if (!response.IsSuccess || response.Result is null)
             {
-                Console.WriteLine($"   Clean API returned error: {response.Error?.ResponseCode}");
+                Console.WriteLine($"   Clean API returned error or null result: {response.Error?.ResponseCode}");
                 return false;
             }
 
-            Console.WriteLine($"   Clean response: Success={response.Result.Success}");
+            var cleanResult = response.Result;
+            Console.WriteLine($"   Clean response: Success={cleanResult.Success}");
 
             // Wait for mapping events to propagate
             await Task.Delay(2000);
@@ -1176,13 +1178,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 deployRequest,
                 timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
-            if (!response.IsSuccess)
+            if (!response.IsSuccess || response.Result is null)
             {
-                Console.WriteLine($"   Deploy API returned error: {response.Error?.ResponseCode} - {response.Error?.Message}");
+                Console.WriteLine($"   Deploy API returned error or null result: {response.Error?.ResponseCode} - {response.Error?.Message}");
                 return false;
             }
 
-            var result = response.Result!;
+            var result = response.Result;
             Console.WriteLine($"   Success: {result.Success}");
             Console.WriteLine($"   Message: {result.Message}");
 
