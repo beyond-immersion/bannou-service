@@ -4,7 +4,6 @@ using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Subscription;
 using System.Text;
-using System.Text.Json;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 

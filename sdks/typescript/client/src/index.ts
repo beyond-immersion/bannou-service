@@ -52,6 +52,7 @@ export type {
   EndpointInfoData,
   JsonSchemaData,
   FullSchemaData,
+  ClientCapabilityEntry,
 } from './IBannouClient.js';
 export { DisconnectReason, MetaType } from './IBannouClient.js';
 export { ConnectionState, type PendingMessageInfo } from './ConnectionState.js';

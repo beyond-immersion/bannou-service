@@ -16,6 +16,7 @@ import type {
   EndpointInfoData,
   JsonSchemaData,
   FullSchemaData,
+  ClientCapabilityEntry,
 } from './IBannouClient.js';
 import { DisconnectReason, MetaType } from './IBannouClient.js';
 import { ConnectionState } from './ConnectionState.js';
@@ -78,6 +79,7 @@ export class BannouClient implements IBannouClient {
   private readonly pendingRequests = new Map<string, PendingRequest>();
   private readonly apiMappings = new Map<string, string>();
   private readonly eventHandlers = new Map<string, EventHandler[]>();
+  private readonly previousCapabilities = new Map<string, ClientCapabilityEntry>();
 
   private _accessToken: string | undefined;
   private _refreshToken: string | undefined;
@@ -94,6 +96,10 @@ export class BannouClient implements IBannouClient {
   private tokenRefreshedCallback:
     | ((accessToken: string, refreshToken: string | undefined) => void)
     | null = null;
+  private capabilitiesAddedCallback: ((capabilities: ClientCapabilityEntry[]) => void) | null =
+    null;
+  private capabilitiesRemovedCallback: ((capabilities: ClientCapabilityEntry[]) => void) | null =
+    null;
   private pendingReconnectionToken: string | undefined;
   private lastDisconnectInfo: DisconnectInfo | undefined;
 
@@ -167,6 +173,22 @@ export class BannouClient implements IBannouClient {
     callback: ((accessToken: string, refreshToken: string | undefined) => void) | null
   ) {
     this.tokenRefreshedCallback = callback;
+  }
+
+  /**
+   * Set a callback for when new capabilities are added to the session.
+   * Fires once per capability manifest update with all newly added capabilities.
+   */
+  set onCapabilitiesAdded(callback: ((capabilities: ClientCapabilityEntry[]) => void) | null) {
+    this.capabilitiesAddedCallback = callback;
+  }
+
+  /**
+   * Set a callback for when capabilities are removed from the session.
+   * Fires once per capability manifest update with all removed capabilities.
+   */
+  set onCapabilitiesRemoved(callback: ((capabilities: ClientCapabilityEntry[]) => void) | null) {
+    this.capabilitiesRemovedCallback = callback;
   }
 
   /**
@@ -644,6 +666,7 @@ export class BannouClient implements IBannouClient {
     this._refreshToken = undefined;
     this.serviceToken = undefined;
     this.apiMappings.clear();
+    this.previousCapabilities.clear();
   }
 
   // Private methods
@@ -1058,15 +1081,60 @@ export class BannouClient implements IBannouClient {
         this._sessionId = manifest.sessionId;
       }
 
-      // Extract available APIs - new schema format: { serviceId, endpoint, service, description }
+      // Parse all capabilities into typed entries
+      const currentCapabilities = new Map<string, ClientCapabilityEntry>();
+
       if (Array.isArray(manifest.availableApis)) {
         for (const api of manifest.availableApis) {
-          // endpoint is now the lookup key (e.g., "/account/get")
-          if (api.endpoint && api.serviceId) {
+          if (api.endpoint && api.serviceId && api.service) {
+            const entry: ClientCapabilityEntry = {
+              serviceId: api.serviceId,
+              endpoint: api.endpoint,
+              service: api.service,
+              description: api.description,
+            };
+
+            currentCapabilities.set(api.endpoint, entry);
+
+            // Update API mappings for invokeAsync lookups
             this.apiMappings.set(api.endpoint, api.serviceId);
             this.connectionState?.addServiceMapping(api.endpoint, api.serviceId);
           }
         }
+      }
+
+      // Diff: find added capabilities (in current but not in previous)
+      const added: ClientCapabilityEntry[] = [];
+      for (const [key, value] of currentCapabilities) {
+        if (!this.previousCapabilities.has(key)) {
+          added.push(value);
+        }
+      }
+
+      // Diff: find removed capabilities (in previous but not in current)
+      const removed: ClientCapabilityEntry[] = [];
+      for (const [key, value] of this.previousCapabilities) {
+        if (!currentCapabilities.has(key)) {
+          removed.push(value);
+
+          // Remove from API mappings
+          this.apiMappings.delete(key);
+        }
+      }
+
+      // Update previous state for next diff
+      this.previousCapabilities.clear();
+      for (const [key, value] of currentCapabilities) {
+        this.previousCapabilities.set(key, value);
+      }
+
+      // Fire callbacks if there were changes
+      if (added.length > 0 && this.capabilitiesAddedCallback) {
+        this.capabilitiesAddedCallback(added);
+      }
+
+      if (removed.length > 0 && this.capabilitiesRemovedCallback) {
+        this.capabilitiesRemovedCallback(removed);
       }
 
       // Signal that capabilities are received

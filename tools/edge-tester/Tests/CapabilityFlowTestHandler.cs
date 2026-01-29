@@ -1,11 +1,9 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Permission;
-using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -213,14 +211,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Payload preview: {responseText[..Math.Min(500, responseText.Length)]}");
 
                     // Check if this is a capability manifest
-                    var responseObj = JsonNode.Parse(responseText)?.AsObject();
+                    var manifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
 
                     // Capability manifest should have eventName="connect.capability_manifest" and availableApis
-                    var messageType = responseObj?["eventName"]?.GetValue<string>();
-                    if (messageType == "connect.capability_manifest")
+                    if (manifest?.EventName == "connect.capability_manifest")
                     {
-                        var availableApis = responseObj?["availableApis"]?.AsArray();
-                        var apiCount = availableApis?.Count ?? 0;
+                        var apiCount = manifest.AvailableApis?.Count ?? 0;
                         Console.WriteLine($"✅ Received capability manifest with {apiCount} available APIs");
 
                         // Verify we have flags indicating this is an Event (push message)
@@ -240,7 +236,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     }
                     else
                     {
-                        Console.WriteLine($"❌ Expected capability_manifest but received '{messageType}'");
+                        Console.WriteLine($"❌ Expected capability_manifest but received '{manifest?.EventName}'");
                         return false;
                     }
                 }
@@ -588,18 +584,16 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-            var initialManifest = JsonNode.Parse(responseText)?.AsObject();
+            var initialManifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
 
-            var messageType = initialManifest?["eventName"]?.GetValue<string>();
-            if (messageType != "connect.capability_manifest")
+            if (initialManifest?.EventName != "connect.capability_manifest")
             {
-                Console.WriteLine($"❌ Expected connect.capability_manifest but received '{messageType}'");
+                Console.WriteLine($"❌ Expected connect.capability_manifest but received '{initialManifest?.EventName}'");
                 return false;
             }
 
-            var sessionId = initialManifest?["sessionId"]?.GetValue<string>();
-            var initialApis = initialManifest?["availableApis"]?.AsArray();
-            var initialApiCount = initialApis?.Count ?? 0;
+            var sessionId = initialManifest.SessionId;
+            var initialApiCount = initialManifest.AvailableApis?.Count ?? 0;
             Console.WriteLine($"✅ Initial capability manifest: {initialApiCount} APIs, sessionId: {sessionId}");
 
             // Now we need to set the game-session:in_game state via admin WebSocket
@@ -614,7 +608,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 return false;
             }
 
-            if (string.IsNullOrEmpty(sessionId) || !Guid.TryParse(sessionId, out var sessionGuid))
+            if (sessionId == Guid.Empty)
             {
                 Console.WriteLine($"❌ Invalid sessionId from capability manifest: {sessionId}");
                 return false;
@@ -625,7 +619,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 var response = await adminClient.Permission.UpdateSessionStateAsync(
                     new SessionStateUpdate
                     {
-                        SessionId = sessionGuid,
+                        SessionId = sessionId,
                         ServiceId = "game-session",
                         NewState = "in_game"
                     },
@@ -658,13 +652,11 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
                 receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-                var updatedManifest = JsonNode.Parse(responseText)?.AsObject();
+                var updatedManifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
 
-                var updatedType = updatedManifest?["eventName"]?.GetValue<string>();
-                if (updatedType == "connect.capability_manifest")
+                if (updatedManifest?.EventName == "connect.capability_manifest")
                 {
-                    var updatedApis = updatedManifest?["availableApis"]?.AsArray();
-                    var updatedApiCount = updatedApis?.Count ?? 0;
+                    var updatedApiCount = updatedManifest.AvailableApis?.Count ?? 0;
 
                     Console.WriteLine($"✅ Updated capability manifest: {updatedApiCount} APIs");
 
@@ -684,7 +676,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 else
                 {
                     // QUALITY TENETS: We expected capability_manifest, not something else
-                    Console.WriteLine($"❌ Expected capability_manifest but received: {updatedType}");
+                    Console.WriteLine($"❌ Expected capability_manifest but received: {updatedManifest?.EventName}");
                     return false;
                 }
             }

@@ -1,9 +1,9 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -57,8 +57,8 @@ public class PeerRoutingTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
 
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -131,9 +131,9 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
             var payloadBytes = buffer.Array![(BinaryMessage.HeaderSize)..result.Count];
             var payloadJson = Encoding.UTF8.GetString(payloadBytes);
-            var manifestObj = JsonNode.Parse(payloadJson)?.AsObject();
+            var manifest = BannouJson.Deserialize<CapabilityManifestEvent>(payloadJson);
 
-            if (manifestObj == null)
+            if (manifest == null)
             {
                 Console.WriteLine($"   [{connectionName}] Failed to parse manifest JSON");
                 var resultWs3 = webSocket;
@@ -141,17 +141,15 @@ public class PeerRoutingTestHandler : IServiceTestHandler
                 return (resultWs3, null);
             }
 
-            var eventName = manifestObj["eventName"]?.GetValue<string>();
-            if (eventName != "connect.capability_manifest")
+            if (manifest.EventName != "connect.capability_manifest")
             {
-                Console.WriteLine($"   [{connectionName}] Unexpected event type: {eventName}");
+                Console.WriteLine($"   [{connectionName}] Unexpected event type: {manifest.EventName}");
                 var resultWs4 = webSocket;
                 webSocket = null;
                 return (resultWs4, null);
             }
 
-            var peerGuidStr = manifestObj["peerGuid"]?.GetValue<string>();
-            if (string.IsNullOrEmpty(peerGuidStr) || !Guid.TryParse(peerGuidStr, out var peerGuid))
+            if (manifest.PeerGuid is not { } peerGuid || peerGuid == Guid.Empty)
             {
                 Console.WriteLine($"   [{connectionName}] No peerGuid in capability manifest (External mode)");
                 var resultWs5 = webSocket;

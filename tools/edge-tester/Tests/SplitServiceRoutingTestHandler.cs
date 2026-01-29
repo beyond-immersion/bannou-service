@@ -7,8 +7,6 @@ using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Subscription;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 

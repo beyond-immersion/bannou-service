@@ -70,6 +70,18 @@
             exceptions that could disrupt the event dispatch loop.
             </summary>
         </member>
+        <member name="E:BeyondImmersion.Bannou.Client.BannouClient.OnCapabilitiesAdded">
+            <summary>
+            Event raised when new capabilities are added to the session.
+            Fires once per capability manifest update with all newly added capabilities.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.BannouClient.OnCapabilitiesRemoved">
+            <summary>
+            Event raised when capabilities are removed from the session.
+            Fires once per capability manifest update with all removed capabilities.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.BannouClient.ConnectAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
             <summary>
             Connects to a Bannou server using username/password authentication.
@@ -9852,6 +9864,18 @@
             <summary>
             All available API endpoints with their client-salted GUIDs.
             Key format: "/path" (e.g., "/species/get")
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.IBannouClient.OnCapabilitiesAdded">
+            <summary>
+            Event raised when new capabilities are added to the session.
+            Fires once per capability manifest update with all newly added capabilities.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.IBannouClient.OnCapabilitiesRemoved">
+            <summary>
+            Event raised when capabilities are removed from the session.
+            Fires once per capability manifest update with all removed capabilities.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.AccessToken">

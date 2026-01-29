@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.ClientEvents;
 
 namespace BeyondImmersion.Bannou.Client;
 
@@ -23,6 +24,18 @@ public interface IBannouClient : IAsyncDisposable
     /// Key format: "/path" (e.g., "/species/get")
     /// </summary>
     IReadOnlyDictionary<string, Guid> AvailableApis { get; }
+
+    /// <summary>
+    /// Event raised when new capabilities are added to the session.
+    /// Fires once per capability manifest update with all newly added capabilities.
+    /// </summary>
+    event Action<IReadOnlyList<ClientCapabilityEntry>>? OnCapabilitiesAdded;
+
+    /// <summary>
+    /// Event raised when capabilities are removed from the session.
+    /// Fires once per capability manifest update with all removed capabilities.
+    /// </summary>
+    event Action<IReadOnlyList<ClientCapabilityEntry>>? OnCapabilitiesRemoved;
 
     /// <summary>
     /// Current access token (JWT).

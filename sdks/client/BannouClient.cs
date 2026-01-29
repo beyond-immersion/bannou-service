@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Client.Events;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System;
 using System.Collections.Concurrent;
@@ -27,6 +28,7 @@ public partial class BannouClient : IBannouClient
     private readonly ConcurrentDictionary<string, Action<string>> _eventHandlers = new();
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, Delegate>> _typedEventHandlers = new();
     private readonly ConcurrentDictionary<Type, string> _eventTypeToNameCache = new();
+    private readonly Dictionary<string, ClientCapabilityEntry> _previousCapabilities = new();
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
     private CancellationTokenSource? _receiveLoopCts;
@@ -105,6 +107,18 @@ public partial class BannouClient : IBannouClient
     /// exceptions that could disrupt the event dispatch loop.
     /// </summary>
     public event Action<Exception>? EventHandlerFailed;
+
+    /// <summary>
+    /// Event raised when new capabilities are added to the session.
+    /// Fires once per capability manifest update with all newly added capabilities.
+    /// </summary>
+    public event Action<IReadOnlyList<ClientCapabilityEntry>>? OnCapabilitiesAdded;
+
+    /// <summary>
+    /// Event raised when capabilities are removed from the session.
+    /// Fires once per capability manifest update with all removed capabilities.
+    /// </summary>
+    public event Action<IReadOnlyList<ClientCapabilityEntry>>? OnCapabilitiesRemoved;
 
     /// <summary>
     /// Connects to a Bannou server using username/password authentication.
@@ -697,6 +711,7 @@ public partial class BannouClient : IBannouClient
         _refreshToken = null;
         _serviceToken = null;
         _apiMappings.Clear();
+        _previousCapabilities.Clear();
     }
 
     /// <summary>
@@ -995,13 +1010,14 @@ public partial class BannouClient : IBannouClient
                 _sessionId = sessionIdElement.GetString();
             }
 
-            // Extract available APIs - new schema format: { serviceId, endpoint, service, description }
+            // Parse all capabilities into typed entries
+            var currentCapabilities = new Dictionary<string, ClientCapabilityEntry>();
+
             if (manifest.TryGetProperty("availableApis", out var apisElement) &&
                 apisElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var api in apisElement.EnumerateArray())
                 {
-                    // New schema: endpoint is the lookup key (e.g., "/account/get")
                     var endpoint = api.TryGetProperty("endpoint", out var endpointElement)
                         ? endpointElement.GetString()
                         : null;
@@ -1010,16 +1026,77 @@ public partial class BannouClient : IBannouClient
                         ? idElement.GetString()
                         : null;
 
+                    var service = api.TryGetProperty("service", out var serviceElement)
+                        ? serviceElement.GetString()
+                        : null;
+
+                    var description = api.TryGetProperty("description", out var descElement)
+                        ? descElement.GetString()
+                        : null;
+
                     if (!string.IsNullOrEmpty(endpoint) &&
                         !string.IsNullOrEmpty(serviceIdStr) &&
+                        !string.IsNullOrEmpty(service) &&
                         Guid.TryParse(serviceIdStr, out var serviceGuid))
                     {
+                        var entry = new ClientCapabilityEntry
+                        {
+                            ServiceId = serviceGuid,
+                            Endpoint = endpoint,
+                            Service = service,
+                            Description = description
+                        };
+
+                        currentCapabilities[endpoint] = entry;
+
+                        // Update API mappings for InvokeAsync lookups
                         _apiMappings[endpoint] = serviceGuid;
 
                         // Also add to connection state for backwards compatibility
                         _connectionState?.AddServiceMapping(endpoint, serviceGuid);
                     }
                 }
+            }
+
+            // Diff: find added capabilities (in current but not in previous)
+            var added = new List<ClientCapabilityEntry>();
+            foreach (var kvp in currentCapabilities)
+            {
+                if (!_previousCapabilities.ContainsKey(kvp.Key))
+                {
+                    added.Add(kvp.Value);
+                }
+            }
+
+            // Diff: find removed capabilities (in previous but not in current)
+            var removed = new List<ClientCapabilityEntry>();
+            foreach (var kvp in _previousCapabilities)
+            {
+                if (!currentCapabilities.ContainsKey(kvp.Key))
+                {
+                    removed.Add(kvp.Value);
+
+                    // Remove from API mappings
+                    _apiMappings.TryRemove(kvp.Key, out _);
+                }
+            }
+
+            // Update previous state for next diff
+            _previousCapabilities.Clear();
+            foreach (var kvp in currentCapabilities)
+            {
+                _previousCapabilities[kvp.Key] = kvp.Value;
+            }
+
+            // Fire events if there were changes
+            if (added.Count > 0)
+            {
+                OnCapabilitiesAdded?.Invoke(added);
+            }
+
+            if (removed.Count > 0)
+            {
+                OnCapabilitiesRemoved?.Invoke(removed);
             }
 
             // Signal that capabilities are received

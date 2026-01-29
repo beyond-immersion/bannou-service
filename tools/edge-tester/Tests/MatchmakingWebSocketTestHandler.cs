@@ -2,7 +2,6 @@ using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Matchmaking;
 using System.Text;
-using System.Text.Json;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 

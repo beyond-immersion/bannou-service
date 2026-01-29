@@ -90,6 +90,20 @@ export interface MetaResponse<T> {
 }
 
 /**
+ * Capability entry from the capability manifest.
+ */
+export interface ClientCapabilityEntry {
+  /** Client-salted GUID for binary header routing */
+  serviceId: string;
+  /** API path (e.g., "/account/get") - used as lookup key */
+  endpoint: string;
+  /** Service name (e.g., "account") */
+  service: string;
+  /** Human-readable description */
+  description?: string;
+}
+
+/**
  * Interface for the Bannou WebSocket client.
  */
 export interface IBannouClient {
@@ -245,6 +259,18 @@ export interface IBannouClient {
    * Set callback for when event handlers throw exceptions.
    */
   set onEventHandlerFailed(callback: ((error: Error) => void) | null);
+
+  /**
+   * Set callback for when new capabilities are added to the session.
+   * Fires once per capability manifest update with all newly added capabilities.
+   */
+  set onCapabilitiesAdded(callback: ((capabilities: ClientCapabilityEntry[]) => void) | null);
+
+  /**
+   * Set callback for when capabilities are removed from the session.
+   * Fires once per capability manifest update with all removed capabilities.
+   */
+  set onCapabilitiesRemoved(callback: ((capabilities: ClientCapabilityEntry[]) => void) | null);
 
   // Meta requests
 

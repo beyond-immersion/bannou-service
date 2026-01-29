@@ -1,9 +1,10 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Voice.ClientEvents;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Voice;
 using System.Text;
-using System.Text.Json;
 using GameSessionVoiceTier = BeyondImmersion.BannouService.GameSession.VoiceTier;
 
 namespace BeyondImmersion.EdgeTester.Tests;
@@ -103,9 +104,9 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
-            var connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
+            var connectUrl = registerResult?.ConnectUrl;
 
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -358,26 +359,14 @@ a=rtpmap:111 opus/48000/2";
 
                 // Set up event listener on client 1 for peer joined event
                 var peerJoinedReceived = new TaskCompletionSource<bool>();
-                string? receivedPeerSessionId = null;
+                Guid receivedPeerSessionId = Guid.Empty;
 
-                client1.OnEvent("voice.peer_joined", (json) =>
+                client1.OnEvent<VoicePeerJoinedEvent>((evt) =>
                 {
                     Console.WriteLine($"   Client 1 received voice.peer_joined event");
-                    try
-                    {
-                        var eventData = JsonDocument.Parse(json).RootElement;
-                        if (eventData.TryGetProperty("peer", out var peerProp) &&
-                            peerProp.TryGetProperty("peerSessionId", out var peerIdProp))
-                        {
-                            receivedPeerSessionId = peerIdProp.GetString();
-                            Console.WriteLine($"   Received VoicePeerJoinedEvent for peer: {receivedPeerSessionId}");
-                            peerJoinedReceived.TrySetResult(true);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"   Failed to parse event: {ex.Message}");
-                    }
+                    receivedPeerSessionId = evt.Peer.PeerSessionId;
+                    Console.WriteLine($"   Received VoicePeerJoinedEvent for peer: {receivedPeerSessionId}");
+                    peerJoinedReceived.TrySetResult(true);
                 });
 
                 // Client 2 joins the same session using typed proxy
@@ -404,7 +393,8 @@ a=rtpmap:111 opus/48000/2";
                 }
 
                 // Verify the peer session ID matches client 2
-                if (receivedPeerSessionId == client2.SessionId)
+                var client2SessionGuid = Guid.TryParse(client2.SessionId, out var c2Guid) ? c2Guid : Guid.Empty;
+                if (receivedPeerSessionId == client2SessionGuid)
                 {
                     Console.WriteLine($"   Verified: peer session ID matches client 2");
                     return true;
@@ -512,24 +502,12 @@ a=rtpmap:111 opus/48000/2";
                 var peerUpdatedReceived = new TaskCompletionSource<bool>();
                 string? receivedSdpAnswer = null;
 
-                client1.OnEvent("voice.peer_updated", (json) =>
+                client1.OnEvent<VoicePeerUpdatedEvent>((evt) =>
                 {
                     Console.WriteLine($"   Client 1 received voice.peer_updated event");
-                    try
-                    {
-                        var eventData = JsonDocument.Parse(json).RootElement;
-                        if (eventData.TryGetProperty("peer", out var peerProp) &&
-                            peerProp.TryGetProperty("sdpOffer", out var sdpProp))
-                        {
-                            receivedSdpAnswer = sdpProp.GetString();
-                            Console.WriteLine($"   Received VoicePeerUpdatedEvent with SDP");
-                            peerUpdatedReceived.TrySetResult(true);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"   Failed to parse event: {ex.Message}");
-                    }
+                    receivedSdpAnswer = evt.Peer.SdpOffer;
+                    Console.WriteLine($"   Received VoicePeerUpdatedEvent with SDP");
+                    peerUpdatedReceived.TrySetResult(true);
                 });
 
                 // Client 2 sends SDP answer to Client 1 using typed proxy
@@ -671,30 +649,18 @@ a=rtpmap:111 opus/48000/2";
 
                 void SetupTierUpgradeListener(BannouClient client, TaskCompletionSource<bool> tcs, string clientName)
                 {
-                    client.OnEvent("voice.tier_upgrade", (json) =>
+                    client.OnEvent<VoiceTierUpgradeEvent>((evt) =>
                     {
                         Console.WriteLine($"   {clientName} received voice.tier_upgrade event");
-                        try
-                        {
-                            var eventData = JsonDocument.Parse(json).RootElement;
-                            if (eventData.TryGetProperty("previousTier", out var prevTier) &&
-                                eventData.TryGetProperty("newTier", out var newTier))
-                            {
-                                Console.WriteLine($"   {clientName} tier upgrade: {prevTier.GetString()} -> {newTier.GetString()}");
+                        Console.WriteLine($"   {clientName} tier upgrade: {evt.PreviousTier} -> {evt.NewTier}");
 
-                                if (eventData.TryGetProperty("rtpServerUri", out var rtpUri))
-                                {
-                                    rtpServerUri = rtpUri.GetString();
-                                    Console.WriteLine($"   RTP server URI: {rtpServerUri}");
-                                }
-
-                                tcs.TrySetResult(true);
-                            }
-                        }
-                        catch (Exception ex)
+                        if (!string.IsNullOrEmpty(evt.RtpServerUri))
                         {
-                            Console.WriteLine($"   {clientName} failed to parse tier upgrade event: {ex.Message}");
+                            rtpServerUri = evt.RtpServerUri;
+                            Console.WriteLine($"   RTP server URI: {rtpServerUri}");
                         }
+
+                        tcs.TrySetResult(true);
                     });
                 }
 
@@ -909,8 +875,8 @@ a=rtpmap:111 opus/48000/2";
                 // Set up tier upgrade listeners
                 var tierUpgrade1 = new TaskCompletionSource<bool>();
                 var tierUpgrade2 = new TaskCompletionSource<bool>();
-                client1.OnEvent("voice.tier_upgrade", (_) => tierUpgrade1.TrySetResult(true));
-                client2.OnEvent("voice.tier_upgrade", (_) => tierUpgrade2.TrySetResult(true));
+                client1.OnEvent<VoiceTierUpgradeEvent>((_) => tierUpgrade1.TrySetResult(true));
+                client2.OnEvent<VoiceTierUpgradeEvent>((_) => tierUpgrade2.TrySetResult(true));
 
                 // Client 3 joins (triggers upgrade) using typed proxy
                 var join3Response = await client3.GameSession.JoinGameSessionAsync(
