@@ -36,9 +36,10 @@ export class SessionsProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GameSessionResponse']>> {
-    return this.client.invokeAsync<Schemas['GetGameSessionRequest'], Schemas['GameSessionResponse']>(
-      '/sessions/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetGameSessionRequest'],
+      Schemas['GameSessionResponse']
+    >('/sessions/get', request, channel, timeout);
   }
 
   /**
@@ -52,7 +53,9 @@ export class SessionsProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['LeaveGameSessionRequest']>(
-      '/sessions/leave', request, channel
+      '/sessions/leave',
+      request,
+      channel
     );
   }
 
@@ -67,7 +70,9 @@ export class SessionsProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['ChatMessageRequest']>(
-      '/sessions/chat', request, channel
+      '/sessions/chat',
+      request,
+      channel
     );
   }
 
@@ -84,7 +89,10 @@ export class SessionsProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GameActionResponse']>> {
     return this.client.invokeAsync<Schemas['GameActionRequest'], Schemas['GameActionResponse']>(
-      '/sessions/actions', request, channel, timeout
+      '/sessions/actions',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -99,7 +107,9 @@ export class SessionsProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['LeaveGameSessionByIdRequest']>(
-      '/sessions/leave-session', request, channel
+      '/sessions/leave-session',
+      request,
+      channel
     );
   }
 }

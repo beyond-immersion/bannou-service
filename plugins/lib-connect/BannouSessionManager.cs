@@ -176,7 +176,7 @@ public class BannouSessionManager : ISessionManager
     #region Heartbeat
 
     /// <inheritdoc />
-    public async Task UpdateSessionHeartbeatAsync(string sessionId, string instanceId)
+    public async Task UpdateSessionHeartbeatAsync(string sessionId, Guid instanceId)
     {
         try
         {
@@ -184,7 +184,7 @@ public class BannouSessionManager : ISessionManager
             var heartbeatData = new SessionHeartbeat
             {
                 SessionId = Guid.Parse(sessionId),
-                InstanceId = Guid.Parse(instanceId),
+                InstanceId = instanceId,
                 LastSeen = DateTimeOffset.UtcNow,
                 ConnectionCount = 1
             };

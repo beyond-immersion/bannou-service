@@ -1613,7 +1613,7 @@ Public-facing website service for registration, information, and account managem
 |--------|---------|----------|---------|
 | `GetAccountprofileAsync` | - | `AccountProfile` | Get account profile for logged-in user |
 | `GetAccountcharactersAsync` | - | `CharacterListResponse` | Get character list for logged-in user |
-| `GetSubscriptionAsync` | - | `SubscriptionResponse` | Get subscription status |
+| `GetAccountsubscriptionAsync` | - | `SubscriptionResponse` | Get subscription status |
 
 ### CMS
 

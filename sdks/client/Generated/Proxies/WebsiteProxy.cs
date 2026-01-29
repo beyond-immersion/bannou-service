@@ -265,7 +265,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SubscriptionResponse on success.</returns>
-    public Task<ApiResponse<SubscriptionResponse>> GetSubscriptionAsync(
+    public Task<ApiResponse<SubscriptionResponse>> GetAccountSubscriptionAsync(
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)

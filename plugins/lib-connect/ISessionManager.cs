@@ -47,7 +47,7 @@ public interface ISessionManager
     /// Updates session heartbeat timestamp.
     /// Used for connection liveness tracking across distributed instances.
     /// </summary>
-    Task UpdateSessionHeartbeatAsync(string sessionId, string instanceId);
+    Task UpdateSessionHeartbeatAsync(string sessionId, Guid instanceId);
 
     #endregion
 

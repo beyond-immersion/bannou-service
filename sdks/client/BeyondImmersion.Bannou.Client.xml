@@ -9835,7 +9835,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetSubscriptionAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetAccountSubscriptionAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Get subscription status
             </summary>

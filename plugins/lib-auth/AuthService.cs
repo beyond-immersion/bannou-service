@@ -1162,7 +1162,11 @@ public partial class AuthService : IAuthService
 
             if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
+                // Format: "stubName:state" per IMPLEMENTATION TENETS
+                // Permission service parses this to update session authorization state
+                authorizations = subscriptionsResponse.Subscriptions
+                    .Select(s => $"{s.StubName}:authorized")
+                    .ToList();
             }
 
             var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);

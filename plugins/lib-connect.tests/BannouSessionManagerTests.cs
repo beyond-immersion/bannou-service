@@ -320,7 +320,7 @@ public class BannouSessionManagerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid().ToString();
-        var instanceId = Guid.NewGuid().ToString();
+        var instanceId = Guid.NewGuid();
 
         SessionHeartbeat? capturedHeartbeat = null;
         _mockHeartbeatStore
@@ -334,7 +334,7 @@ public class BannouSessionManagerTests
         // Assert
         Assert.NotNull(capturedHeartbeat);
         Assert.Equal(Guid.Parse(sessionId), capturedHeartbeat.SessionId);
-        Assert.Equal(Guid.Parse(instanceId), capturedHeartbeat.InstanceId);
+        Assert.Equal(instanceId, capturedHeartbeat.InstanceId);
         Assert.Equal(1, capturedHeartbeat.ConnectionCount);
     }
 
@@ -343,7 +343,7 @@ public class BannouSessionManagerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid().ToString();
-        var instanceId = Guid.NewGuid().ToString();
+        var instanceId = Guid.NewGuid();
 
         _mockHeartbeatStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -861,7 +861,7 @@ public class BannouSessionManagerTests
             _mockLogger.Object);
 
         var sessionId = Guid.NewGuid().ToString();
-        var instanceId = Guid.NewGuid().ToString();
+        var instanceId = Guid.NewGuid();
 
         // Act
         await sessionManager.UpdateSessionHeartbeatAsync(sessionId, instanceId);

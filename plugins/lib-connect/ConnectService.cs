@@ -78,7 +78,7 @@ public partial class ConnectService : IConnectService
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
-    private readonly string _instanceId;
+    private readonly Guid _instanceId;
 
     // Connection mode configuration
     private readonly ConnectionMode _connectionMode;
@@ -130,7 +130,7 @@ public partial class ConnectService : IConnectService
         _serverSalt = configuration.ServerSalt;
 
         // Generate unique instance ID for distributed deployment
-        _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
+        _instanceId = Guid.NewGuid();
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -724,8 +724,7 @@ public partial class ConnectService : IConnectService
                     AccountId = accountId ?? Guid.Empty,
                     Roles = userRoles?.ToList(),
                     Authorizations = authorizations?.ToList(),
-                    ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
-                        ? instanceGuid : (Guid?)null,
+                    ConnectInstanceId = _instanceId,
                     PeerGuid = connectionState.PeerGuid
                 };
                 await _messageBus.TryPublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
@@ -1173,8 +1172,8 @@ public partial class ConnectService : IConnectService
                 connectionState.AddPendingMessage(message.MessageId, endpointKey, DateTimeOffset.UtcNow, _configuration.PendingMessageTimeoutSeconds);
             }
 
-            // Parse endpoint key to extract service name and path
-            // Format: "serviceName:/path" (all WebSocket endpoints are POST)
+            // Parse endpoint key to extract service name, method, and path
+            // Format: "serviceName:/path" (defaults to POST) or "serviceName:METHOD:/path"
             var firstColon = endpointKey.IndexOf(':');
             if (firstColon <= 0)
             {
@@ -1182,8 +1181,38 @@ public partial class ConnectService : IConnectService
             }
 
             var serviceName = endpointKey[..firstColon];
-            var path = endpointKey[(firstColon + 1)..];
-            const string httpMethod = "POST"; // All WebSocket-routed endpoints are POST
+            var rest = endpointKey[(firstColon + 1)..];
+
+            // Check if rest starts with an HTTP method (GET, POST, PUT, DELETE, PATCH)
+            // If so, parse the three-part format: serviceName:METHOD:/path
+            var httpMethod = "POST"; // Default for WebSocket endpoints
+            var path = rest;
+
+            if (rest.StartsWith("GET:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "GET";
+                path = rest[4..]; // Skip "GET:"
+            }
+            else if (rest.StartsWith("POST:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "POST";
+                path = rest[5..]; // Skip "POST:"
+            }
+            else if (rest.StartsWith("PUT:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "PUT";
+                path = rest[4..]; // Skip "PUT:"
+            }
+            else if (rest.StartsWith("DELETE:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "DELETE";
+                path = rest[7..]; // Skip "DELETE:"
+            }
+            else if (rest.StartsWith("PATCH:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "PATCH";
+                path = rest[6..]; // Skip "PATCH:"
+            }
 
             _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path})",
                 serviceName, httpMethod, path);
@@ -2306,7 +2335,7 @@ public partial class ConnectService : IConnectService
                 sessionId = sessionId,
                 availableApis = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                timestamp = DateTimeOffset.UtcNow,
                 peerGuid = connectionState.PeerGuid.ToString()
             };
 
@@ -2441,7 +2470,7 @@ public partial class ConnectService : IConnectService
                 ["sessionId"] = sessionId,
                 ["availableApis"] = availableApis,
                 ["version"] = 1,
-                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["timestamp"] = DateTimeOffset.UtcNow,
                 ["reason"] = reason
             };
 
@@ -2883,7 +2912,7 @@ public partial class ConnectService : IConnectService
                 sessionId = sessionId,
                 availableApis = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                timestamp = DateTimeOffset.UtcNow,
                 peerGuid = connectionState.PeerGuid.ToString()
             };
 

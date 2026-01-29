@@ -462,5 +462,7 @@ public partial class WebsiteService : IWebsiteService
         await WebsitePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
+    public Task<(StatusCodes, SubscriptionResponse?)> GetAccountSubscriptionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
     #endregion
 }

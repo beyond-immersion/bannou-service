@@ -185,7 +185,7 @@ public partial interface IWebsiteClient
     /// </summary>
     /// <returns>Subscription information retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<SubscriptionResponse> GetAccountSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
 /// <summary>
@@ -1603,7 +1603,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// </summary>
     /// <returns>Subscription information retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<SubscriptionResponse> GetAccountSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();

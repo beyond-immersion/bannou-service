@@ -309,7 +309,7 @@ public static class WebsitePermissionRegistration
         {
             Path = "/website/account/subscription",
             Method = ServiceEndpointMethod.GET,
-            Description = "getSubscription",
+            Description = "getAccountSubscription",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

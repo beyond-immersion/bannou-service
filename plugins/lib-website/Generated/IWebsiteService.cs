@@ -110,8 +110,8 @@ public partial interface IWebsiteService : IBannouService
         Task<StatusCodes> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetSubscription operation
+        /// GetAccountSubscription operation
         /// </summary>
-        Task<(StatusCodes, SubscriptionResponse?)> GetSubscriptionAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, SubscriptionResponse?)> GetAccountSubscriptionAsync(CancellationToken cancellationToken = default(CancellationToken));
 
 }

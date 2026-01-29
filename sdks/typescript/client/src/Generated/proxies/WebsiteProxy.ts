@@ -35,7 +35,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusResponse']>> {
     return this.client.invokeAsync<object, Schemas['StatusResponse']>(
-      '/website/status', {}, channel, timeout
+      '/website/status',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -50,7 +53,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['PageContent']>> {
     return this.client.invokeAsync<object, Schemas['PageContent']>(
-      '/website/content/{slug}', {}, channel, timeout
+      '/website/content/{slug}',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -65,7 +71,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['NewsResponse']>> {
     return this.client.invokeAsync<object, Schemas['NewsResponse']>(
-      '/website/news', {}, channel, timeout
+      '/website/news',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -80,7 +89,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ServerStatusResponse']>> {
     return this.client.invokeAsync<object, Schemas['ServerStatusResponse']>(
-      '/website/server-status', {}, channel, timeout
+      '/website/server-status',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -95,7 +107,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DownloadsResponse']>> {
     return this.client.invokeAsync<object, Schemas['DownloadsResponse']>(
-      '/website/downloads', {}, channel, timeout
+      '/website/downloads',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -112,7 +127,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContactResponse']>> {
     return this.client.invokeAsync<Schemas['ContactRequest'], Schemas['ContactResponse']>(
-      '/website/contact', request, channel, timeout
+      '/website/contact',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -127,7 +145,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AccountProfile']>> {
     return this.client.invokeAsync<object, Schemas['AccountProfile']>(
-      '/website/account/profile', {}, channel, timeout
+      '/website/account/profile',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -142,7 +163,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterListResponse']>> {
     return this.client.invokeAsync<object, Schemas['CharacterListResponse']>(
-      '/website/account/characters', {}, channel, timeout
+      '/website/account/characters',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -159,7 +183,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['PageContent']>> {
     return this.client.invokeAsync<Schemas['PageContent'], Schemas['PageContent']>(
-      '/website/cms/pages', request, channel, timeout
+      '/website/cms/pages',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -176,7 +203,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['PageContent']>> {
     return this.client.invokeAsync<Schemas['PageContent'], Schemas['PageContent']>(
-      '/website/cms/pages/{slug}', request, channel, timeout
+      '/website/cms/pages/{slug}',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -191,7 +221,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SiteSettings']>> {
     return this.client.invokeAsync<object, Schemas['SiteSettings']>(
-      '/website/cms/site-settings', {}, channel, timeout
+      '/website/cms/site-settings',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -208,7 +241,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SiteSettings']>> {
     return this.client.invokeAsync<Schemas['SiteSettings'], Schemas['SiteSettings']>(
-      '/website/cms/site-settings', request, channel, timeout
+      '/website/cms/site-settings',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -223,7 +259,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ThemeConfig']>> {
     return this.client.invokeAsync<object, Schemas['ThemeConfig']>(
-      '/website/cms/theme', {}, channel, timeout
+      '/website/cms/theme',
+      {},
+      channel,
+      timeout
     );
   }
 
@@ -233,12 +272,11 @@ export class WebsiteProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async updateThemeEventAsync(
-    request: Schemas['ThemeConfig'],
-    channel: number = 0
-  ): Promise<void> {
+  async updateThemeEventAsync(request: Schemas['ThemeConfig'], channel: number = 0): Promise<void> {
     return this.client.sendEventAsync<Schemas['ThemeConfig']>(
-      '/website/cms/theme', request, channel
+      '/website/cms/theme',
+      request,
+      channel
     );
   }
 
@@ -253,7 +291,10 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SubscriptionResponse']>> {
     return this.client.invokeAsync<object, Schemas['SubscriptionResponse']>(
-      '/website/account/subscription', {}, channel, timeout
+      '/website/account/subscription',
+      {},
+      channel,
+      timeout
     );
   }
 }

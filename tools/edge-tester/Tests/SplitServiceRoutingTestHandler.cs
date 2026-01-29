@@ -790,16 +790,18 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             string? shortcutGuidStr = null;
 
             // Parse initial manifest for shortcuts
+            // Shortcuts are in availableApis with service="shortcut", endpoint=shortcut name, serviceId=GUID
             var manifestObj = JsonNode.Parse(payloadJson)?.AsObject();
-            var shortcuts = manifestObj?["shortcuts"]?.AsArray();
-            if (shortcuts != null)
+            var availableApis = manifestObj?["availableApis"]?.AsArray();
+            if (availableApis != null)
             {
-                foreach (var shortcut in shortcuts)
+                foreach (var api in availableApis)
                 {
-                    var name = shortcut?["metadata"]?["name"]?.GetValue<string>();
-                    if (name == "join_game_test-game")
+                    var service = api?["service"]?.GetValue<string>();
+                    var endpoint = api?["endpoint"]?.GetValue<string>();
+                    if (service == "shortcut" && endpoint == "join_game_test-game")
                     {
-                        shortcutGuidStr = shortcut?["routeGuid"]?.GetValue<string>();
+                        shortcutGuidStr = api?["serviceId"]?.GetValue<string>();
                         Console.WriteLine($"   Found shortcut in initial manifest: {shortcutGuidStr}");
                         break;
                     }
@@ -829,15 +831,17 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                         var updatedManifest = JsonNode.Parse(eventJson)?.AsObject();
 
                         // Check for updated capability manifest with shortcuts
-                        var updatedShortcuts = updatedManifest?["shortcuts"]?.AsArray();
-                        if (updatedShortcuts != null)
+                        // Shortcuts are in availableApis with service="shortcut"
+                        var updatedApis = updatedManifest?["availableApis"]?.AsArray();
+                        if (updatedApis != null)
                         {
-                            foreach (var shortcut in updatedShortcuts)
+                            foreach (var api in updatedApis)
                             {
-                                var name = shortcut?["metadata"]?["name"]?.GetValue<string>();
-                                if (name == "join_game_test-game")
+                                var service = api?["service"]?.GetValue<string>();
+                                var endpoint = api?["endpoint"]?.GetValue<string>();
+                                if (service == "shortcut" && endpoint == "join_game_test-game")
                                 {
-                                    shortcutGuidStr = shortcut?["routeGuid"]?.GetValue<string>();
+                                    shortcutGuidStr = api?["serviceId"]?.GetValue<string>();
                                     Console.WriteLine($"   Found shortcut in updated manifest: {shortcutGuidStr}");
                                     break;
                                 }

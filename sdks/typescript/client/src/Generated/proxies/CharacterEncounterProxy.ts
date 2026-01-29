@@ -36,9 +36,10 @@ export class CharacterEncounterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EncounterTypeResponse']>> {
-    return this.client.invokeAsync<Schemas['GetEncounterTypeRequest'], Schemas['EncounterTypeResponse']>(
-      '/character-encounter/type/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetEncounterTypeRequest'],
+      Schemas['EncounterTypeResponse']
+    >('/character-encounter/type/get', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class CharacterEncounterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EncounterTypeListResponse']>> {
-    return this.client.invokeAsync<Schemas['ListEncounterTypesRequest'], Schemas['EncounterTypeListResponse']>(
-      '/character-encounter/type/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListEncounterTypesRequest'],
+      Schemas['EncounterTypeListResponse']
+    >('/character-encounter/type/list', request, channel, timeout);
   }
 
   /**
@@ -70,9 +72,10 @@ export class CharacterEncounterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EncounterListResponse']>> {
-    return this.client.invokeAsync<Schemas['QueryByCharacterRequest'], Schemas['EncounterListResponse']>(
-      '/character-encounter/query/by-character', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['QueryByCharacterRequest'],
+      Schemas['EncounterListResponse']
+    >('/character-encounter/query/by-character', request, channel, timeout);
   }
 
   /**
@@ -87,9 +90,10 @@ export class CharacterEncounterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EncounterListResponse']>> {
-    return this.client.invokeAsync<Schemas['QueryBetweenRequest'], Schemas['EncounterListResponse']>(
-      '/character-encounter/query/between', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['QueryBetweenRequest'],
+      Schemas['EncounterListResponse']
+    >('/character-encounter/query/between', request, channel, timeout);
   }
 
   /**
@@ -104,9 +108,10 @@ export class CharacterEncounterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EncounterListResponse']>> {
-    return this.client.invokeAsync<Schemas['QueryByLocationRequest'], Schemas['EncounterListResponse']>(
-      '/character-encounter/query/by-location', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['QueryByLocationRequest'],
+      Schemas['EncounterListResponse']
+    >('/character-encounter/query/by-location', request, channel, timeout);
   }
 
   /**
@@ -122,7 +127,10 @@ export class CharacterEncounterProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HasMetResponse']>> {
     return this.client.invokeAsync<Schemas['HasMetRequest'], Schemas['HasMetResponse']>(
-      '/character-encounter/has-met', request, channel, timeout
+      '/character-encounter/has-met',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -139,7 +147,10 @@ export class CharacterEncounterProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SentimentResponse']>> {
     return this.client.invokeAsync<Schemas['GetSentimentRequest'], Schemas['SentimentResponse']>(
-      '/character-encounter/get-sentiment', request, channel, timeout
+      '/character-encounter/get-sentiment',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -155,8 +166,9 @@ export class CharacterEncounterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PerspectiveResponse']>> {
-    return this.client.invokeAsync<Schemas['GetPerspectiveRequest'], Schemas['PerspectiveResponse']>(
-      '/character-encounter/get-perspective', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetPerspectiveRequest'],
+      Schemas['PerspectiveResponse']
+    >('/character-encounter/get-perspective', request, channel, timeout);
   }
 }

@@ -1016,7 +1016,7 @@ paths:
   /website/account/subscription:
     get:
       summary: Get subscription status
-      operationId: getSubscription
+      operationId: getAccountSubscription
       tags:
       - Account
       x-permissions:
@@ -1057,7 +1057,7 @@ paths:
         \              },\n                    \"description\": \"List of benefits included in the subscription\"\n      \
         \          }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get subscription status\",\n    \"description\": \"\",\n    \"tags\": [\n\
-        \        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSubscription\"\n}"
+        \        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountSubscription\"\n}"
 components:
   securitySchemes:
     BearerAuth:
