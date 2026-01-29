@@ -133,9 +133,14 @@ components:
       type: object
       additionalProperties: false
       description: |
+        INTERNAL EVENT - NOT SENT TO WEBSOCKET CLIENTS.
+
         Published by services to create or update a session shortcut.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
-        Connect handles this event internally and does NOT forward to the client.
+
+        Connect consumes this event, updates its internal shortcut registry, and sends
+        an updated capability manifest to the client. The client never sees this event
+        directly - they only receive the updated manifest containing the new shortcut.
       required:
         - eventId
         - eventName
@@ -170,8 +175,15 @@ components:
       type: object
       additionalProperties: false
       description: |
+        INTERNAL EVENT - NOT SENT TO WEBSOCKET CLIENTS.
+
         Published by services to remove shortcuts.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+
+        Connect consumes this event, removes the shortcut from its internal registry,
+        and sends an updated capability manifest to the client. The client never sees
+        this event directly - they only receive the updated manifest without the revoked shortcut.
+
         Supports both single-shortcut revocation (by routeGuid) and
         bulk revocation (all shortcuts from a sourceService).
       required:

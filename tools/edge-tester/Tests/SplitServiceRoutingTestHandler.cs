@@ -870,9 +870,18 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 }
             }
 
-            // If not in initial manifest, wait for shortcut_published event
+            // If not in initial manifest, wait for updated capability manifest
+            // Note: Connect service consumes shortcut_published events internally and sends
+            // updated capability manifests to clients - clients never see the raw events
             while (shortcutGuidStr == null && DateTime.UtcNow < shortcutDeadline)
             {
+                // Check WebSocket state before attempting receive
+                if (webSocket.State != WebSocketState.Open)
+                {
+                    Console.WriteLine($"   WebSocket no longer open (state: {webSocket.State})");
+                    break;
+                }
+
                 using var eventCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
                 try
                 {
@@ -881,23 +890,33 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                     {
                         var eventPayload = buffer.Array![(BinaryMessage.HeaderSize)..eventResult.Count];
                         var eventJson = Encoding.UTF8.GetString(eventPayload);
-                        var eventObj = JsonNode.Parse(eventJson)?.AsObject();
+                        var updatedManifest = JsonNode.Parse(eventJson)?.AsObject();
 
-                        var eventName = eventObj?["eventName"]?.GetValue<string>();
-                        if (eventName == "shortcut_published")
+                        // Check for updated capability manifest with shortcuts
+                        var updatedShortcuts = updatedManifest?["shortcuts"]?.AsArray();
+                        if (updatedShortcuts != null)
                         {
-                            var shortcutName = eventObj?["shortcut"]?["metadata"]?["name"]?.GetValue<string>();
-                            if (shortcutName == "join_game_test-game")
+                            foreach (var shortcut in updatedShortcuts)
                             {
-                                shortcutGuidStr = eventObj?["shortcut"]?["routeGuid"]?.GetValue<string>();
-                                Console.WriteLine($"   Received shortcut_published event: {shortcutGuidStr}");
+                                var name = shortcut?["metadata"]?["name"]?.GetValue<string>();
+                                if (name == "join_game_test-game")
+                                {
+                                    shortcutGuidStr = shortcut?["routeGuid"]?.GetValue<string>();
+                                    Console.WriteLine($"   Found shortcut in updated manifest: {shortcutGuidStr}");
+                                    break;
+                                }
                             }
                         }
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    // Timeout on receive - keep waiting
+                    // Timeout on receive - check WebSocket state before continuing
+                    if (webSocket.State != WebSocketState.Open)
+                    {
+                        Console.WriteLine($"   WebSocket closed after timeout (state: {webSocket.State})");
+                        break;
+                    }
                 }
             }
 

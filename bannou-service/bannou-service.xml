@@ -8809,6 +8809,12 @@
             The Connect service subscribes to these topics and forwards events to the appropriate WebSocket.
             </para>
             <para>
+            <b>IMPORTANT - Connect-Internal Events:</b> Some events (ShortcutPublishedEvent, ShortcutRevokedEvent)
+            are consumed by Connect internally and NOT forwarded to the WebSocket client. Connect updates its
+            internal state and sends an updated capability manifest to the client instead. Clients never see
+            these raw events - they only see the resulting manifest changes.
+            </para>
+            <para>
             All events must have a valid eventName that exists in the ClientEventWhitelist.
             Events with invalid names will be rejected by the publisher.
             </para>
