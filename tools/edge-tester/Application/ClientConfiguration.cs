@@ -37,6 +37,13 @@ public sealed class ClientConfiguration
     public string? AdminPassword { get; set; }
 
     /// <summary>
+    /// When true, the edge-tester will exit immediately when a service error is received.
+    /// This prevents test results from being tainted by underlying service failures.
+    /// Default: false (log errors but continue running tests)
+    /// </summary>
+    public bool ExitOnServiceError { get; set; }
+
+    /// <summary>
     /// Checks if the minimum required configuration is present.
     /// Admin credentials are optional - they default to a pattern based on AdminEmailDomain.
     /// </summary>

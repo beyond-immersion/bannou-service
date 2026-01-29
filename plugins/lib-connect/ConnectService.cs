@@ -2873,6 +2873,17 @@ public partial class ConnectService : IConnectService
     {
         try
         {
+            // Check if ServiceMappings is populated - if empty, initial capabilities haven't arrived yet
+            // In that case, skip sending manifest now; the shortcut is already in connectionState
+            // and will be included when ProcessCapabilitiesAsync sends the full manifest
+            if (!connectionState.ServiceMappings.Any())
+            {
+                _logger.LogDebug(
+                    "Deferring shortcut manifest for session {SessionId} - awaiting initial capabilities",
+                    sessionId);
+                return;
+            }
+
             // Build the capability manifest with available APIs using helper
             var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings);
             var shortcutEntries = _manifestBuilder.BuildShortcutList(

@@ -89,9 +89,10 @@ public partial class ConnectService
         try
         {
             // Create a client event payload for admin notification
+            // Use eventName for consistency with the client event system (BannouClient routes on eventName)
             var adminNotification = new
             {
-                type = "service_error",
+                eventName = "service_error",
                 eventId = evt.EventId,
                 timestamp = evt.Timestamp,
                 serviceId = evt.ServiceId,

@@ -889,14 +889,31 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             await webSocket.SendAsync(new ArraySegment<byte>(invokeMessage.ToByteArray()), WebSocketMessageType.Binary, true, CancellationToken.None);
 
-            // Wait for response
+            // Wait for response - may receive events first, skip them
             using var responseCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            var responseResult = await webSocket.ReceiveAsync(buffer, responseCts.Token);
+            WebSocketReceiveResult responseResult;
+            string responseJson;
 
-            if (responseResult.Count < BinaryMessage.ResponseHeaderSize)
+            while (true)
             {
-                Console.WriteLine($"   FAILED: Response too short ({responseResult.Count} bytes)");
-                return false;
+                responseResult = await webSocket.ReceiveAsync(buffer, responseCts.Token);
+
+                if (responseResult.Count < BinaryMessage.ResponseHeaderSize)
+                {
+                    Console.WriteLine($"   FAILED: Message too short ({responseResult.Count} bytes)");
+                    return false;
+                }
+
+                // Check message flags to determine if it's a response or event
+                var flags = (MessageFlags)buffer.Array![0];
+                if (flags.HasFlag(MessageFlags.Response))
+                {
+                    // This is the response we're waiting for
+                    break;
+                }
+
+                // It's an event (like capability manifest) - skip it and keep waiting
+                Console.WriteLine($"   Skipping event message (flags: {flags})");
             }
 
             // Check response code in header (byte 15 in response header)
@@ -908,7 +925,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             }
 
             var responsePayload = buffer.Array![(BinaryMessage.ResponseHeaderSize)..responseResult.Count];
-            var responseJson = Encoding.UTF8.GetString(responsePayload);
+            responseJson = Encoding.UTF8.GetString(responsePayload);
             Console.WriteLine($"   Join response: {responseJson[..Math.Min(300, responseJson.Length)]}");
 
             // STRICT: Must have sessionId in response - no weak "appeared successful" fallbacks

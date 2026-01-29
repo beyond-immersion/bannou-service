@@ -1936,21 +1936,45 @@ public partial class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// Gets all subscriber sessions for an account from distributed state.
+    /// Gets all connected sessions for an account from Auth service's distributed index.
+    /// Uses account-sessions index in StateStoreDefinitions.Auth which tracks ALL connected sessions,
+    /// not just those that have already received shortcuts. This enables finding sessions that
+    /// connected BEFORE a subscription was created (subscription.updated event processing).
     /// </summary>
     private async Task<List<Guid>> GetSubscriberSessionsAsync(Guid accountId)
     {
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
-            var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
+            // Query Auth service's account-sessions index for ALL connected sessions
+            // This is stored as List<string> where each string is a Guid in "N" format
+            var authStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+            var indexKey = $"account-sessions:{accountId}";
 
-            var existing = await store.GetAsync(key);
-            return existing?.SessionIds.ToList() ?? new List<Guid>();
+            var sessionKeys = await authStore.GetAsync(indexKey);
+            if (sessionKeys == null || sessionKeys.Count == 0)
+            {
+                return new List<Guid>();
+            }
+
+            // Convert session keys (Guid "N" format strings) to Guids
+            var sessionIds = new List<Guid>();
+            foreach (var key in sessionKeys)
+            {
+                if (Guid.TryParse(key, out var sessionId))
+                {
+                    sessionIds.Add(sessionId);
+                }
+                else
+                {
+                    _logger.LogWarning("Invalid session key format in account-sessions index: {Key}", key);
+                }
+            }
+
+            return sessionIds;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get subscriber sessions for account {AccountId}", accountId);
+            _logger.LogWarning(ex, "Failed to get connected sessions for account {AccountId}", accountId);
             return new List<Guid>();
         }
     }

@@ -79,6 +79,9 @@ public class Program
     private static BannouClient? _client;
     private static BannouClient? _adminClient;
 
+    // Service error listener for monitoring backend errors during tests
+    private static ServiceErrorListener? _serviceErrorListener;
+
     /// <summary>
     /// Gets the BannouClient for regular user operations.
     /// </summary>
@@ -88,6 +91,11 @@ public class Program
     /// Gets the BannouClient for admin operations.
     /// </summary>
     public static BannouClient? AdminClient => _adminClient;
+
+    /// <summary>
+    /// Gets the service error listener for monitoring backend errors.
+    /// </summary>
+    public static ServiceErrorListener? ServiceErrorListener => _serviceErrorListener;
 
     // Legacy accessor for EstablishWebsocketAndSendMessage - tests should use Client.AccessToken
     private static string? sAccessToken => _client?.AccessToken;
@@ -486,6 +494,19 @@ public class Program
             {
                 throw new Exception("Admin authentication failed.");
             }
+
+            // Start service error listener on admin connection
+            // Admin connections receive service.error events forwarded by the Connect service
+            if (_adminClient != null)
+            {
+                _serviceErrorListener = new ServiceErrorListener(_adminClient, Configuration.ExitOnServiceError);
+                _serviceErrorListener.StartListening();
+
+                if (Configuration.ExitOnServiceError)
+                {
+                    Console.WriteLine("⚠️  EXIT_ON_SERVICE_ERROR is enabled - will terminate on first service error");
+                }
+            }
             Console.WriteLine();
 
             Console.WriteLine("🧪 Enhanced WebSocket Protocol Testing - Binary Protocol Validation");
@@ -573,6 +594,9 @@ public class Program
                 Console.WriteLine($"   Passed: {passedTests.Count}");
                 Console.WriteLine($"   Failed: {failedTests.Count}");
 
+                // Print service error summary before final result
+                _serviceErrorListener?.PrintSummary();
+
                 if (failedTests.Count > 0)
                 {
                     Console.WriteLine();
@@ -582,6 +606,14 @@ public class Program
                         Console.WriteLine($"   - {test}");
                     }
                     Environment.Exit(1);
+                }
+                else if (_serviceErrorListener?.ErrorCount > 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"⚠️ All tests passed but {_serviceErrorListener.ErrorCount} service error(s) occurred!");
+                    Console.WriteLine("   Review the error log above for details.");
+                    // Don't exit with error code - service errors are logged but don't fail the test suite
+                    // unless EXIT_ON_SERVICE_ERROR is enabled (which would have already exited)
                 }
                 else
                 {
@@ -600,6 +632,10 @@ public class Program
             ShutdownCancellationTokenSource.Cancel();
             Console.WriteLine($"❌ An exception has occurred: '{exc.Message}'");
             Console.WriteLine($"Stack trace: {exc.StackTrace}");
+
+            // Print service errors that may have contributed to the failure
+            _serviceErrorListener?.PrintSummary();
+            _serviceErrorListener?.Dispose();
 
             if (IsDaemonMode(args))
             {

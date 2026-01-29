@@ -83,7 +83,8 @@ public static class ConfigurationHelper
             { "--openresty-host", "OpenRestyHost" },
             { "--openresty-port", "OpenRestyPort" },
             { "--admin-username", "AdminUsername" },
-            { "--admin-password", "AdminPassword" }
+            { "--admin-password", "AdminPassword" },
+            { "--exit-on-service-error", "ExitOnServiceError" }
         };
     }
 
