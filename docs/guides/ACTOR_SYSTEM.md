@@ -302,6 +302,8 @@ flows:
           - set: current_plan = "${new_plan}"
 ```
 
+> **Implementation Note**: GOAP configuration exists (replan threshold, max depth, timeout) but full planning integration with the behavior loop is minimal. Planning triggers exist but action execution is delegated to ABML flows. See [ACTOR.md](../plugins/ACTOR.md) for details.
+
 ### 4.4 State Updates Flow to Behavior Stack
 
 How actor state updates eventually become character actions:

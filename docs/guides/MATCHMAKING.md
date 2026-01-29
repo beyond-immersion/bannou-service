@@ -513,9 +513,9 @@ tournamentIdRequired: true
 | `matchmaking.ticket-created` | `MatchmakingTicketCreatedEvent` | Ticket created |
 | `matchmaking.ticket-cancelled` | `MatchmakingTicketCancelledEvent` | Ticket cancelled (with reason) |
 | `matchmaking.match-formed` | `MatchmakingMatchFormedEvent` | Match successfully formed |
-| `matchmaking.match-confirmed` | `MatchmakingMatchConfirmedEvent` | All players accepted |
+| `matchmaking.match-accepted` | `MatchmakingMatchAcceptedEvent` | All players accepted |
 | `matchmaking.match-cancelled` | `MatchmakingMatchCancelledEvent` | Match cancelled (decline/timeout) |
-| `matchmaking.stats` | `MatchmakingStatsEvent` | Queue statistics |
+| `matchmaking.stats` | `MatchmakingStatsEvent` | Queue statistics (placeholder) |
 | `game-session.session-cancelled` | `SessionCancelledServerEvent` | Session cancelled |
 
 ### Client Events (WebSocket Push)

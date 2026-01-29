@@ -243,7 +243,8 @@ Published when scenes are placed/removed from game world:
 | `scene.checked_out` | Scene locked for editing |
 | `scene.committed` | Checkout changes saved |
 | `scene.checkout.discarded` | Lock released without saving |
-| `scene.checkout.expired` | Lock TTL exceeded |
+
+> **Note**: `scene.checkout.expired` is defined in the schema but not currently published. Expired checkouts are detected lazily when another editor attempts to checkout the scene (enabling takeover of expired locks).
 
 ### Validation Events
 
@@ -253,9 +254,7 @@ Published when scenes are placed/removed from game world:
 
 ### Reference Events
 
-| Topic | Description |
-|-------|-------------|
-| `scene.reference.broken` | Referenced scene became unavailable (edge case) |
+> **Note**: `scene.reference.broken` is defined in the schema but not currently published. Reference integrity is checked on load, not actively monitored.
 
 ---
 

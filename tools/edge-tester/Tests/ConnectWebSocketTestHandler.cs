@@ -1,5 +1,7 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.WebSockets;
 using System.Text;
@@ -33,7 +35,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"{testPrefix}_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -50,8 +52,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
 
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -640,11 +642,11 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         var testPassword = "WebSocketDeleteTest123!";
 
         var registerUrl = $"http://{Program.Configuration.OpenRestyHost}:{Program.Configuration.OpenRestyPort}/auth/register";
-        var registerContent = new JsonObject
+        var registerContent = new RegisterRequest
         {
-            ["username"] = testUsername,
-            ["email"] = testEmail,
-            ["password"] = testPassword
+            Username = testUsername,
+            Email = testEmail,
+            Password = testPassword
         };
 
         string userAccessToken;
@@ -664,9 +666,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var registerBody = await registerResponse.Content.ReadAsStringAsync();
-            var registerObj = JsonNode.Parse(registerBody)?.AsObject();
-            userAccessToken = registerObj?["accessToken"]?.GetValue<string>() ?? "";
-            var accountIdString = registerObj?["accountId"]?.GetValue<string>();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(registerBody);
+            userAccessToken = registerResult?.AccessToken ?? "";
+            var accountIdValue = registerResult?.AccountId;
 
             if (string.IsNullOrEmpty(userAccessToken))
             {
@@ -674,11 +676,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 return false;
             }
 
-            if (string.IsNullOrEmpty(accountIdString) || !Guid.TryParse(accountIdString, out accountId))
+            if (accountIdValue == null || accountIdValue == Guid.Empty)
             {
                 Console.WriteLine("❌ Registration response missing or invalid accountId");
                 return false;
             }
+
+            accountId = accountIdValue.Value;
 
             Console.WriteLine($"✅ Account created via registration: ID={accountId}");
         }
@@ -773,8 +777,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             Console.WriteLine($"📋 Step 4: Deleting account {accountId} via shared admin WebSocket...");
-            var deleteRequest = new { accountId = accountId.ToString() };
-            var response = await adminClient.InvokeAsync<object, JsonElement>(
+            var deleteRequest = new DeleteAccountRequest { AccountId = accountId };
+            var response = await adminClient.InvokeAsync<DeleteAccountRequest, JsonElement>(
                 "/account/delete",
                 deleteRequest,
                 timeout: TimeSpan.FromSeconds(10));
@@ -1185,7 +1189,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"subsume_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"subsume_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -1202,8 +1206,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
-            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            accessToken = registerResult?.AccessToken
                 ?? throw new InvalidOperationException("No accessToken in response");
             Console.WriteLine($"✅ Test account created: {testEmail}");
         }
@@ -1849,7 +1853,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"bannouclient_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"bannouclient_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -1866,10 +1870,10 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            accessToken = registerResult?.AccessToken
                 ?? throw new InvalidOperationException("No accessToken in response");
-            connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString()
+            connectUrl = registerResult?.ConnectUrl?.ToString()
                 ?? throw new InvalidOperationException("No connectUrl in response");
             Console.WriteLine($"   Test account created: {testEmail}");
             Console.WriteLine($"   Connect URL from auth: {connectUrl}");
@@ -2028,7 +2032,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"manifest_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"manifest_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -2045,8 +2049,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            accessToken = registerResult?.AccessToken
                 ?? throw new InvalidOperationException("No accessToken in response");
             Console.WriteLine($"   Test account created: {testEmail}");
         }

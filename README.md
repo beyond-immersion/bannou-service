@@ -44,6 +44,7 @@ curl http://localhost:8080/health
 |--------------|---------|
 | Understand the architecture | [Bannou Design](docs/BANNOU_DESIGN.md) |
 | Add or extend a plugin | [Plugin Development Guide](docs/guides/PLUGIN_DEVELOPMENT.md) |
+| Understand a specific service | [Plugin Deep-Dives](docs/plugins/) (41 services) |
 | Run and write tests | [Testing Guide](docs/guides/TESTING.md) |
 | Contribute code | [Development Rules](docs/reference/TENETS.md) |
 
@@ -85,6 +86,7 @@ make down-compose          # Stop and cleanup
 ## Technical Specifications
 
 - [WebSocket Protocol](docs/WEBSOCKET-PROTOCOL.md) - Binary protocol specification
+- [Schema Rules](docs/reference/SCHEMA-RULES.md) - OpenAPI schema authoring reference
 - [Permissions System](docs/X-PERMISSIONS-SPECIFICATION.md) - Role-based access control schema
 - [Service Details](docs/GENERATED-SERVICE-DETAILS.md) - Service descriptions and API endpoints
 - [Events Reference](docs/GENERATED-EVENTS.md) - Auto-generated event documentation
@@ -96,18 +98,23 @@ make down-compose          # Stop and cleanup
 ```
 bannou-service/
 ├── schemas/              # OpenAPI specifications (source of truth)
-├── plugins/lib-*/        # Service plugins (33 services)
+├── plugins/lib-*/        # Service plugins (41 services)
 ├── bannou-service/       # Main application and shared code
-├── sdks/                 # SDK packages
+├── sdks/                 # SDK packages (C#, TypeScript, Unreal)
 │   ├── core/             # Shared types (BannouJson, ApiException, base events)
 │   ├── server/           # Server SDK (mesh clients, behavior runtime)
-│   ├── client/           # Client SDK (WebSocket, behavior)
+│   ├── client/           # Client SDK (WebSocket, typed proxies, events)
 │   ├── client-voice/     # Voice communication SDK
-│   ├── protocol/         # UDP game state protocol
-│   ├── transport/        # LiteNetLib transport layer
-│   ├── scene-composer/   # Scene composition (engine-agnostic)
-│   ├── scene-composer-stride/  # Stride engine bridge
-│   └── scene-composer-godot/   # Godot engine bridge
+│   ├── bundle-format/    # .bannou archive format (LZ4 compression)
+│   ├── asset-*/          # Asset loading/bundling (client, server, Stride, Godot)
+│   ├── scene-composer-*/ # Scene composition (core, Stride, Godot)
+│   ├── music-*/          # Music generation (theory, storyteller)
+│   ├── typescript/       # TypeScript client SDK
+│   └── unreal/           # Unreal Engine integration
+├── tools/                # Testing and inspection tools
+│   ├── http-tester/      # HTTP integration test framework
+│   ├── edge-tester/      # WebSocket edge test framework
+│   └── bannou-inspect/   # Assembly inspection CLI
 ├── examples/             # Example projects and demos
 ├── docs/                 # Documentation
 ├── provisioning/         # Docker and deployment configs

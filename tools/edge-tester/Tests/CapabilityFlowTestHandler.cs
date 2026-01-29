@@ -37,7 +37,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"{testPrefix}_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -296,7 +296,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"guidtest1_{uniqueId1}", email = testEmail1, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"guidtest1_{uniqueId1}", Email = testEmail1, Password = testPassword };
 
             using var registerRequest1 = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest1.Content = new StringContent(
@@ -334,7 +334,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"guidtest2_{uniqueId2}", email = testEmail2, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"guidtest2_{uniqueId2}", Email = testEmail2, Password = testPassword };
 
             using var registerRequest2 = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest2.Content = new StringContent(

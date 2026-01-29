@@ -924,6 +924,15 @@ Use affordance queries instead - let lib-mapping do the heavy lifting.
 - **Cache affordance results**: They can be expensive
 - **Subscribe narrowly**: Avoid `map.*.*` wildcards
 
+### 12.6 Known Limitations
+
+For implementation details and known quirks, see [MAPPING.md](../plugins/MAPPING.md):
+
+- **Event aggregation**: Fire-and-forget with potential silent loss under high load
+- **Spatial index**: Stale entries accumulate indefinitely (no automatic cleanup)
+- **Index operations**: Non-atomic; race conditions possible under concurrent updates
+- **Snapshot events**: `MapSnapshotEvent` is defined but not currently published
+
 ---
 
 ## Appendix A: Payload Examples

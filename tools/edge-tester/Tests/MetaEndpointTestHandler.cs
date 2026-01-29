@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.WebSockets;
 using System.Text;
@@ -54,7 +55,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"{testPrefix}_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -71,8 +72,8 @@ public class MetaEndpointTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
 
             if (string.IsNullOrEmpty(accessToken))
             {

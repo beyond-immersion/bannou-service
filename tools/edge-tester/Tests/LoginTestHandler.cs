@@ -1,7 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Auth;
 using System.Text;
-using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -155,11 +154,11 @@ public class LoginTestHandler : IServiceTestHandler
         var registerUrl = $"http://{Program.Configuration.RegisterEndpoint}";
         Console.WriteLine($"📡 Testing registration at: {registerUrl}");
 
-        var content = new JsonObject
+        var content = new RegisterRequest
         {
-            ["username"] = testUsername,
-            ["email"] = testEmail, // Explicitly provide email for login consistency
-            ["password"] = testPassword
+            Username = testUsername,
+            Email = testEmail,
+            Password = testPassword
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, registerUrl);
@@ -208,10 +207,10 @@ public class LoginTestHandler : IServiceTestHandler
         var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
         Console.WriteLine($"📡 Testing login at: {loginUrl}");
 
-        var content = new JsonObject
+        var content = new LoginRequest
         {
-            ["email"] = Program.Configuration.ClientUsername,
-            ["password"] = Program.Configuration.ClientPassword
+            Email = Program.Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername not configured"),
+            Password = Program.Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword not configured")
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -267,10 +266,10 @@ public class LoginTestHandler : IServiceTestHandler
         // First login to get a refresh token
         var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
 
-        var loginContent = new JsonObject
+        var loginContent = new LoginRequest
         {
-            ["email"] = Program.Configuration.ClientUsername,
-            ["password"] = Program.Configuration.ClientPassword
+            Email = Program.Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername not configured"),
+            Password = Program.Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword not configured")
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -305,9 +304,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Refresh endpoint expects: Authorization header with JWT + body with refreshToken
-        var refreshContent = new JsonObject
+        var refreshContent = new RefreshRequest
         {
-            ["refreshToken"] = loginResult.RefreshToken
+            RefreshToken = loginResult.RefreshToken
         };
 
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, refreshUrl);
@@ -351,10 +350,10 @@ public class LoginTestHandler : IServiceTestHandler
         var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
         Console.WriteLine($"📡 Testing invalid login at: {loginUrl}");
 
-        var content = new JsonObject
+        var content = new LoginRequest
         {
-            ["email"] = "nonexistent-user-12345@invalid.test",
-            ["password"] = "WrongPassword123!"
+            Email = "nonexistent-user-12345@invalid.test",
+            Password = "WrongPassword123!"
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -418,10 +417,10 @@ public class LoginTestHandler : IServiceTestHandler
 
         // First login to get a valid token
         var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
-        var loginContent = new JsonObject
+        var loginContent = new LoginRequest
         {
-            ["email"] = Program.Configuration.ClientUsername,
-            ["password"] = Program.Configuration.ClientPassword
+            Email = Program.Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername not configured"),
+            Password = Program.Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword not configured")
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -507,10 +506,10 @@ public class LoginTestHandler : IServiceTestHandler
 
         // First login to get a valid token
         var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
-        var loginContent = new JsonObject
+        var loginContent = new LoginRequest
         {
-            ["email"] = Program.Configuration.ClientUsername,
-            ["password"] = Program.Configuration.ClientPassword
+            Email = Program.Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername not configured"),
+            Password = Program.Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword not configured")
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -603,10 +602,10 @@ public class LoginTestHandler : IServiceTestHandler
 
         // First login to get a valid token
         var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
-        var loginContent = new JsonObject
+        var loginContent = new LoginRequest
         {
-            ["email"] = Program.Configuration.ClientUsername,
-            ["password"] = Program.Configuration.ClientPassword
+            Email = Program.Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername not configured"),
+            Password = Program.Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword not configured")
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -634,7 +633,7 @@ public class LoginTestHandler : IServiceTestHandler
         var logoutUrl = $"http://{logoutLoginEndpoint.Replace("/auth/login", "/auth/logout")}";
         Console.WriteLine($"📡 Testing logout at: {logoutUrl}");
 
-        var logoutContent = new JsonObject { ["allSessions"] = false };
+        var logoutContent = new LogoutRequest { AllSessions = false };
 
         using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, logoutUrl);
         logoutRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult.AccessToken);
@@ -800,9 +799,9 @@ public class LoginTestHandler : IServiceTestHandler
         Console.WriteLine($"📡 Testing Steam verify at: {steamUrl}");
 
         // Send a mock Steam Session Ticket - this should fail validation but test the endpoint
-        var steamContent = new JsonObject
+        var steamContent = new SteamVerifyRequest
         {
-            ["ticket"] = "140000006A7B3C8E0123456789ABCDEF0123456789ABCDEF"
+            Ticket = "140000006A7B3C8E0123456789ABCDEF0123456789ABCDEF"
         };
 
         using var steamRequest = new HttpRequestMessage(HttpMethod.Post, steamUrl);

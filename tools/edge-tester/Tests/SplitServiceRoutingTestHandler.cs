@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Subscription;
 using System.Net.WebSockets;
@@ -438,8 +439,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (response.IsSuccessStatusCode)
             {
-                var responseObj = JsonNode.Parse(content);
-                var valid = responseObj?["valid"]?.GetValue<bool>() ?? false;
+                var validateResult = BannouJson.Deserialize<ValidateTokenResponse>(content);
+                var valid = validateResult?.Valid ?? false;
 
                 if (valid)
                 {
@@ -682,7 +683,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = testUsername, email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = testUsername, Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -904,24 +905,17 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             Console.WriteLine($"   Join response: {responseJson[..Math.Min(300, responseJson.Length)]}");
 
             // STRICT: Must have sessionId in response - no weak "appeared successful" fallbacks
-            var joinResponse = JsonNode.Parse(responseJson)?.AsObject();
+            var joinResponse = BannouJson.Deserialize<JoinGameSessionResponse>(responseJson);
             if (joinResponse == null)
             {
-                Console.WriteLine("   FAILED: Could not parse join response as JSON");
+                Console.WriteLine("   FAILED: Could not parse join response as JoinGameSessionResponse");
                 return false;
             }
 
-            var sessionIdStr = joinResponse["sessionId"]?.GetValue<string>();
-            if (string.IsNullOrEmpty(sessionIdStr))
+            var lobbySessionId = joinResponse.SessionId;
+            if (lobbySessionId == Guid.Empty)
             {
-                Console.WriteLine("   FAILED: No sessionId in join response");
-                Console.WriteLine($"   Response keys: {string.Join(", ", joinResponse.Select(kvp => kvp.Key))}");
-                return false;
-            }
-
-            if (!Guid.TryParse(sessionIdStr, out var lobbySessionId) || lobbySessionId == Guid.Empty)
-            {
-                Console.WriteLine($"   FAILED: Invalid sessionId format: {sessionIdStr}");
+                Console.WriteLine("   FAILED: SessionId is empty in join response");
                 return false;
             }
 
@@ -1412,7 +1406,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"{testPrefix}_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(

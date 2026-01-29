@@ -345,7 +345,7 @@ if (!response.Valid)
 
 ## Configuration
 
-Key configuration options (environment variables):
+Key configuration options (environment variables). For complete configuration reference with all 41 properties, see [SAVE-LOAD.md](../plugins/SAVE-LOAD.md#configuration).
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -365,6 +365,7 @@ The service publishes events for integration:
 | Event | When |
 |-------|------|
 | `SaveSlotCreatedEvent` | Slot created |
+| `SaveSlotUpdatedEvent` | Slot metadata updated |
 | `SaveSlotDeletedEvent` | Slot deleted |
 | `SaveCreatedEvent` | New version saved |
 | `SaveLoadedEvent` | Version loaded |

@@ -671,20 +671,6 @@ components:
             Provides structured information about terrain, nearby objects, hazards, etc.
             Alternative to using perceptionType="spatial" with schema-less data.
 
-    PerceptionSourceType:
-      type: string
-      description: Type of source generating a perception event
-      enum:
-      - character
-      - npc
-      - object
-      - environment
-      - coordinator
-      - scheduled
-      - message
-      - service
-      - system
-
     SpatialContext:
       type: object
       additionalProperties: true
@@ -801,4 +787,18 @@ components:
           type: string
           nullable: true
           description: Direction to hazard center
+
+    PerceptionSourceType:
+      type: string
+      description: Type of source generating a perception event
+      enum:
+      - character
+      - npc
+      - object
+      - environment
+      - coordinator
+      - scheduled
+      - message
+      - service
+      - system
 

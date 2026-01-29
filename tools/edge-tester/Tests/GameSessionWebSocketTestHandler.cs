@@ -3,10 +3,10 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Subscription;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -67,7 +67,7 @@ public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+            var registerContent = new RegisterRequest { Username = $"{testPrefix}_{uniqueId}", Email = testEmail, Password = testPassword };
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
@@ -298,9 +298,9 @@ public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
                     }
 
                     // Step 7: Invoke the shortcut with empty payload
-                    // Note: Shortcuts use raw InvokeAsync because they're dynamically created
+                    // Note: Shortcuts are dynamically created but return typed JoinGameSessionResponse
                     Console.WriteLine("   Step 7: Invoking shortcut with empty payload...");
-                    var joinResponse = await client.InvokeAsync<object, JsonElement>(
+                    var joinResponse = await client.InvokeAsync<object, JoinGameSessionResponse>(
                         "join_game_test-game",
                         new { }, // Empty payload - server injects the bound data
                         timeout: TimeSpan.FromSeconds(5));
@@ -312,12 +312,11 @@ public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
                         return false;
                     }
 
-                    var joinJson = System.Text.Json.Nodes.JsonNode.Parse(joinResponse.Result.GetRawText())?.AsObject();
-                    var sessionId = joinJson?["sessionId"]?.GetValue<string>();
+                    var sessionId = joinResponse.Result?.SessionId;
 
                     Console.WriteLine($"   Join result: sessionId={sessionId}");
 
-                    return !string.IsNullOrEmpty(sessionId);
+                    return sessionId != null && sessionId != Guid.Empty;
                 }
                 catch (Exception ex)
                 {

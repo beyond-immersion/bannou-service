@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.EdgeTester.Application;
 using System.Net.WebSockets;
@@ -776,7 +777,7 @@ public class Program
 
         // Register a new account to get a unique JWT
         var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-        var registerContent = new { username = $"binproto_{uniqueId}", email = testEmail, password = testPassword };
+        var registerContent = new RegisterRequest { Username = $"binproto_{uniqueId}", Email = testEmail, Password = testPassword };
 
         string testAccessToken;
         try
@@ -796,8 +797,8 @@ public class Program
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
-            testAccessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            testAccessToken = registerResult?.AccessToken
                 ?? throw new InvalidOperationException("No accessToken in response");
 
             Console.WriteLine($"✅ Test account created: {testEmail}");
