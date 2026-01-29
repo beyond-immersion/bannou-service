@@ -32,7 +32,7 @@ public interface ICapabilityManifestBuilder
 
     /// <summary>
     /// Parses an endpoint key into its component parts.
-    /// Format: "serviceName:METHOD:/path"
+    /// Format: "serviceName:/path"
     /// </summary>
     /// <param name="endpointKey">The endpoint key to parse.</param>
     /// <returns>Parsed endpoint info, or null if the format is invalid.</returns>
@@ -50,24 +50,19 @@ public sealed class ManifestApiEntry
     public required Guid ServiceGuid { get; init; }
 
     /// <summary>
-    /// HTTP method (typically "POST" for WebSocket-accessible endpoints).
-    /// </summary>
-    public required string Method { get; init; }
-
-    /// <summary>
-    /// API path without template parameters.
+    /// API path (e.g., "/account/get") - used as lookup key.
     /// </summary>
     public required string Path { get; init; }
 
     /// <summary>
-    /// Combined endpoint key for client use (format: "METHOD:/path").
-    /// </summary>
-    public required string EndpointKey { get; init; }
-
-    /// <summary>
-    /// Service name (informational only, not used for routing).
+    /// Service name (e.g., "account").
     /// </summary>
     public required string ServiceName { get; init; }
+
+    /// <summary>
+    /// Optional human-readable description.
+    /// </summary>
+    public string? Description { get; init; }
 }
 
 /// <summary>
@@ -112,12 +107,7 @@ public sealed class ParsedEndpoint
     public required string ServiceName { get; init; }
 
     /// <summary>
-    /// HTTP method (GET, POST, etc.).
-    /// </summary>
-    public required string Method { get; init; }
-
-    /// <summary>
-    /// API path.
+    /// API path (e.g., "/account/get").
     /// </summary>
     public required string Path { get; init; }
 
@@ -125,9 +115,4 @@ public sealed class ParsedEndpoint
     /// Whether this endpoint has template parameters (e.g., {id}).
     /// </summary>
     public bool HasTemplateParams => Path.Contains('{');
-
-    /// <summary>
-    /// Whether this is a POST endpoint (required for WebSocket binary protocol).
-    /// </summary>
-    public bool IsPost => Method == "POST";
 }

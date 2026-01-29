@@ -41,7 +41,7 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEndpointsRequest, GetEndpointsResponse>(
-            "POST", "/mesh/endpoints/get", request, channel, timeout, cancellationToken);
+            "/mesh/endpoints/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListEndpointsRequest, ListEndpointsResponse>(
-            "POST", "/mesh/endpoints/list", request, channel, timeout, cancellationToken);
+            "/mesh/endpoints/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RegisterEndpointRequest, RegisterEndpointResponse>(
-            "POST", "/mesh/register", request, channel, timeout, cancellationToken);
+            "/mesh/register", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeregisterEndpointRequest>(
-            "POST", "/mesh/deregister", request, channel, cancellationToken);
+            "/mesh/deregister", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<HeartbeatRequest, HeartbeatResponse>(
-            "POST", "/mesh/heartbeat", request, channel, timeout, cancellationToken);
+            "/mesh/heartbeat", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRouteRequest, GetRouteResponse>(
-            "POST", "/mesh/route", request, channel, timeout, cancellationToken);
+            "/mesh/route", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetMappingsRequest, GetMappingsResponse>(
-            "POST", "/mesh/mappings", request, channel, timeout, cancellationToken);
+            "/mesh/mappings", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,6 +165,6 @@ public sealed class MeshProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetHealthRequest, MeshHealthResponse>(
-            "POST", "/mesh/health", request, channel, timeout, cancellationToken);
+            "/mesh/health", request, channel, timeout, cancellationToken);
     }
 }

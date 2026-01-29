@@ -41,7 +41,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
-            "POST", "/currency/definition/create", request, channel, timeout, cancellationToken);
+            "/currency/definition/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
-            "POST", "/currency/definition/get", request, channel, timeout, cancellationToken);
+            "/currency/definition/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListCurrencyDefinitionsRequest, ListCurrencyDefinitionsResponse>(
-            "POST", "/currency/definition/list", request, channel, timeout, cancellationToken);
+            "/currency/definition/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
-            "POST", "/currency/definition/update", request, channel, timeout, cancellationToken);
+            "/currency/definition/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateWalletRequest, WalletResponse>(
-            "POST", "/currency/wallet/create", request, channel, timeout, cancellationToken);
+            "/currency/wallet/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetWalletRequest, WalletWithBalancesResponse>(
-            "POST", "/currency/wallet/get", request, channel, timeout, cancellationToken);
+            "/currency/wallet/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetOrCreateWalletRequest, GetOrCreateWalletResponse>(
-            "POST", "/currency/wallet/get-or-create", request, channel, timeout, cancellationToken);
+            "/currency/wallet/get-or-create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<FreezeWalletRequest, WalletResponse>(
-            "POST", "/currency/wallet/freeze", request, channel, timeout, cancellationToken);
+            "/currency/wallet/freeze", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UnfreezeWalletRequest, WalletResponse>(
-            "POST", "/currency/wallet/unfreeze", request, channel, timeout, cancellationToken);
+            "/currency/wallet/unfreeze", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CloseWalletRequest, CloseWalletResponse>(
-            "POST", "/currency/wallet/close", request, channel, timeout, cancellationToken);
+            "/currency/wallet/close", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetBalanceRequest, GetBalanceResponse>(
-            "POST", "/currency/balance/get", request, channel, timeout, cancellationToken);
+            "/currency/balance/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BatchGetBalancesRequest, BatchGetBalancesResponse>(
-            "POST", "/currency/balance/batch-get", request, channel, timeout, cancellationToken);
+            "/currency/balance/batch-get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreditCurrencyRequest, CreditCurrencyResponse>(
-            "POST", "/currency/credit", request, channel, timeout, cancellationToken);
+            "/currency/credit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DebitCurrencyRequest, DebitCurrencyResponse>(
-            "POST", "/currency/debit", request, channel, timeout, cancellationToken);
+            "/currency/debit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<TransferCurrencyRequest, TransferCurrencyResponse>(
-            "POST", "/currency/transfer", request, channel, timeout, cancellationToken);
+            "/currency/transfer", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BatchCreditRequest, BatchCreditResponse>(
-            "POST", "/currency/batch-credit", request, channel, timeout, cancellationToken);
+            "/currency/batch-credit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CalculateConversionRequest, CalculateConversionResponse>(
-            "POST", "/currency/convert/calculate", request, channel, timeout, cancellationToken);
+            "/currency/convert/calculate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ExecuteConversionRequest, ExecuteConversionResponse>(
-            "POST", "/currency/convert/execute", request, channel, timeout, cancellationToken);
+            "/currency/convert/execute", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -365,7 +365,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetExchangeRateRequest, GetExchangeRateResponse>(
-            "POST", "/currency/exchange-rate/get", request, channel, timeout, cancellationToken);
+            "/currency/exchange-rate/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -383,7 +383,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateExchangeRateRequest, UpdateExchangeRateResponse>(
-            "POST", "/currency/exchange-rate/update", request, channel, timeout, cancellationToken);
+            "/currency/exchange-rate/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -401,7 +401,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetTransactionRequest, TransactionResponse>(
-            "POST", "/currency/transaction/get", request, channel, timeout, cancellationToken);
+            "/currency/transaction/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -419,7 +419,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetTransactionHistoryRequest, GetTransactionHistoryResponse>(
-            "POST", "/currency/transaction/history", request, channel, timeout, cancellationToken);
+            "/currency/transaction/history", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -437,7 +437,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetTransactionsByReferenceRequest, GetTransactionsByReferenceResponse>(
-            "POST", "/currency/transaction/by-reference", request, channel, timeout, cancellationToken);
+            "/currency/transaction/by-reference", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -455,7 +455,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetGlobalSupplyRequest, GetGlobalSupplyResponse>(
-            "POST", "/currency/stats/global-supply", request, channel, timeout, cancellationToken);
+            "/currency/stats/global-supply", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -473,7 +473,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetWalletDistributionRequest, GetWalletDistributionResponse>(
-            "POST", "/currency/stats/wallet-distribution", request, channel, timeout, cancellationToken);
+            "/currency/stats/wallet-distribution", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -491,7 +491,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<EscrowDepositRequest, EscrowDepositResponse>(
-            "POST", "/currency/escrow/deposit", request, channel, timeout, cancellationToken);
+            "/currency/escrow/deposit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -509,7 +509,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<EscrowReleaseRequest, EscrowReleaseResponse>(
-            "POST", "/currency/escrow/release", request, channel, timeout, cancellationToken);
+            "/currency/escrow/release", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -527,7 +527,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<EscrowRefundRequest, EscrowRefundResponse>(
-            "POST", "/currency/escrow/refund", request, channel, timeout, cancellationToken);
+            "/currency/escrow/refund", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -545,7 +545,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateHoldRequest, HoldResponse>(
-            "POST", "/currency/hold/create", request, channel, timeout, cancellationToken);
+            "/currency/hold/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -563,7 +563,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CaptureHoldRequest, CaptureHoldResponse>(
-            "POST", "/currency/hold/capture", request, channel, timeout, cancellationToken);
+            "/currency/hold/capture", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -581,7 +581,7 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ReleaseHoldRequest, HoldResponse>(
-            "POST", "/currency/hold/release", request, channel, timeout, cancellationToken);
+            "/currency/hold/release", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -599,6 +599,6 @@ public sealed class CurrencyProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetHoldRequest, HoldResponse>(
-            "POST", "/currency/hold/get", request, channel, timeout, cancellationToken);
+            "/currency/hold/get", request, channel, timeout, cancellationToken);
     }
 }

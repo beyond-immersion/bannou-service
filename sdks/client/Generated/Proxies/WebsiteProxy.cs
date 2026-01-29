@@ -39,7 +39,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, StatusResponse>(
-            "GET", "/website/status", new {}, channel, timeout, cancellationToken);
+            "/website/status", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, PageContent>(
-            "GET", "/website/content/{slug}", new {}, channel, timeout, cancellationToken);
+            "/website/content/{slug}", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, NewsResponse>(
-            "GET", "/website/news", new {}, channel, timeout, cancellationToken);
+            "/website/news", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, ServerStatusResponse>(
-            "GET", "/website/server-status", new {}, channel, timeout, cancellationToken);
+            "/website/server-status", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, DownloadsResponse>(
-            "GET", "/website/downloads", new {}, channel, timeout, cancellationToken);
+            "/website/downloads", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ContactRequest, ContactResponse>(
-            "POST", "/website/contact", request, channel, timeout, cancellationToken);
+            "/website/contact", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -137,7 +137,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, AccountProfile>(
-            "GET", "/website/account/profile", new {}, channel, timeout, cancellationToken);
+            "/website/account/profile", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, CharacterListResponse>(
-            "GET", "/website/account/characters", new {}, channel, timeout, cancellationToken);
+            "/website/account/characters", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -171,7 +171,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PageContent, PageContent>(
-            "POST", "/website/cms/pages", request, channel, timeout, cancellationToken);
+            "/website/cms/pages", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -189,7 +189,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PageContent, PageContent>(
-            "PUT", "/website/cms/pages/{slug}", request, channel, timeout, cancellationToken);
+            "/website/cms/pages/{slug}", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -205,7 +205,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, SiteSettings>(
-            "GET", "/website/cms/site-settings", new {}, channel, timeout, cancellationToken);
+            "/website/cms/site-settings", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -223,7 +223,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SiteSettings, SiteSettings>(
-            "PUT", "/website/cms/site-settings", request, channel, timeout, cancellationToken);
+            "/website/cms/site-settings", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, ThemeConfig>(
-            "GET", "/website/cms/theme", new {}, channel, timeout, cancellationToken);
+            "/website/cms/theme", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -255,7 +255,7 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<ThemeConfig>(
-            "PUT", "/website/cms/theme", request, channel, cancellationToken);
+            "/website/cms/theme", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -271,6 +271,6 @@ public sealed class WebsiteProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, SubscriptionResponse>(
-            "GET", "/website/account/subscription", new {}, channel, timeout, cancellationToken);
+            "/website/account/subscription", new {}, channel, timeout, cancellationToken);
     }
 }

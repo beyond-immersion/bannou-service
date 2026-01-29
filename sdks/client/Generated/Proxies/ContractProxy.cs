@@ -41,7 +41,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateContractTemplateRequest, ContractTemplateResponse>(
-            "POST", "/contract/template/create", request, channel, timeout, cancellationToken);
+            "/contract/template/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetContractTemplateRequest, ContractTemplateResponse>(
-            "POST", "/contract/template/get", request, channel, timeout, cancellationToken);
+            "/contract/template/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListContractTemplatesRequest, ListContractTemplatesResponse>(
-            "POST", "/contract/template/list", request, channel, timeout, cancellationToken);
+            "/contract/template/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateContractTemplateRequest, ContractTemplateResponse>(
-            "POST", "/contract/template/update", request, channel, timeout, cancellationToken);
+            "/contract/template/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteContractTemplateRequest>(
-            "POST", "/contract/template/delete", request, channel, cancellationToken);
+            "/contract/template/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateContractInstanceRequest, ContractInstanceResponse>(
-            "POST", "/contract/instance/create", request, channel, timeout, cancellationToken);
+            "/contract/instance/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ProposeContractInstanceRequest, ContractInstanceResponse>(
-            "POST", "/contract/instance/propose", request, channel, timeout, cancellationToken);
+            "/contract/instance/propose", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ConsentToContractRequest, ContractInstanceResponse>(
-            "POST", "/contract/instance/consent", request, channel, timeout, cancellationToken);
+            "/contract/instance/consent", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetContractInstanceRequest, ContractInstanceResponse>(
-            "POST", "/contract/instance/get", request, channel, timeout, cancellationToken);
+            "/contract/instance/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryContractInstancesRequest, QueryContractInstancesResponse>(
-            "POST", "/contract/instance/query", request, channel, timeout, cancellationToken);
+            "/contract/instance/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<TerminateContractInstanceRequest, ContractInstanceResponse>(
-            "POST", "/contract/instance/terminate", request, channel, timeout, cancellationToken);
+            "/contract/instance/terminate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -237,7 +237,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetContractInstanceStatusRequest, ContractInstanceStatusResponse>(
-            "POST", "/contract/instance/get-status", request, channel, timeout, cancellationToken);
+            "/contract/instance/get-status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -255,7 +255,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CompleteMilestoneRequest, MilestoneResponse>(
-            "POST", "/contract/milestone/complete", request, channel, timeout, cancellationToken);
+            "/contract/milestone/complete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -273,7 +273,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<FailMilestoneRequest, MilestoneResponse>(
-            "POST", "/contract/milestone/fail", request, channel, timeout, cancellationToken);
+            "/contract/milestone/fail", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -291,7 +291,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetMilestoneRequest, MilestoneResponse>(
-            "POST", "/contract/milestone/get", request, channel, timeout, cancellationToken);
+            "/contract/milestone/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -309,7 +309,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ReportBreachRequest, BreachResponse>(
-            "POST", "/contract/breach/report", request, channel, timeout, cancellationToken);
+            "/contract/breach/report", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -327,7 +327,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CureBreachRequest, BreachResponse>(
-            "POST", "/contract/breach/cure", request, channel, timeout, cancellationToken);
+            "/contract/breach/cure", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -345,7 +345,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetBreachRequest, BreachResponse>(
-            "POST", "/contract/breach/get", request, channel, timeout, cancellationToken);
+            "/contract/breach/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -363,7 +363,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateContractMetadataRequest, ContractMetadataResponse>(
-            "POST", "/contract/metadata/update", request, channel, timeout, cancellationToken);
+            "/contract/metadata/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -381,7 +381,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetContractMetadataRequest, ContractMetadataResponse>(
-            "POST", "/contract/metadata/get", request, channel, timeout, cancellationToken);
+            "/contract/metadata/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -399,7 +399,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CheckConstraintRequest, CheckConstraintResponse>(
-            "POST", "/contract/check-constraint", request, channel, timeout, cancellationToken);
+            "/contract/check-constraint", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -417,7 +417,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryActiveContractsRequest, QueryActiveContractsResponse>(
-            "POST", "/contract/query-active", request, channel, timeout, cancellationToken);
+            "/contract/query-active", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -435,7 +435,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<LockContractRequest, LockContractResponse>(
-            "POST", "/contract/lock", request, channel, timeout, cancellationToken);
+            "/contract/lock", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -453,7 +453,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UnlockContractRequest, UnlockContractResponse>(
-            "POST", "/contract/unlock", request, channel, timeout, cancellationToken);
+            "/contract/unlock", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -471,7 +471,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<TransferContractPartyRequest, TransferContractPartyResponse>(
-            "POST", "/contract/transfer-party", request, channel, timeout, cancellationToken);
+            "/contract/transfer-party", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -489,7 +489,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RegisterClauseTypeRequest, RegisterClauseTypeResponse>(
-            "POST", "/contract/clause-type/register", request, channel, timeout, cancellationToken);
+            "/contract/clause-type/register", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -507,7 +507,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListClauseTypesRequest, ListClauseTypesResponse>(
-            "POST", "/contract/clause-type/list", request, channel, timeout, cancellationToken);
+            "/contract/clause-type/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -525,7 +525,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SetTemplateValuesRequest, SetTemplateValuesResponse>(
-            "POST", "/contract/instance/set-template-values", request, channel, timeout, cancellationToken);
+            "/contract/instance/set-template-values", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -543,7 +543,7 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CheckAssetRequirementsRequest, CheckAssetRequirementsResponse>(
-            "POST", "/contract/instance/check-asset-requirements", request, channel, timeout, cancellationToken);
+            "/contract/instance/check-asset-requirements", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -561,6 +561,6 @@ public sealed class ContractProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ExecuteContractRequest, ExecuteContractResponse>(
-            "POST", "/contract/instance/execute", request, channel, timeout, cancellationToken);
+            "/contract/instance/execute", request, channel, timeout, cancellationToken);
     }
 }

@@ -246,18 +246,18 @@ export class BannouClient implements IBannouClient {
 
   /**
    * Gets the service GUID for a specific API endpoint.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  getServiceGuid(method: string, path: string): string | undefined {
-    const key = `${method}:${path}`;
-    return this.apiMappings.get(key);
+  getServiceGuid(endpoint: string): string | undefined {
+    return this.apiMappings.get(endpoint);
   }
 
   /**
-   * Invokes a service method by specifying the HTTP method and path.
+   * Invokes a service method by specifying the API endpoint path.
+   * @param endpoint API path (e.g., "/account/get")
    */
   async invokeAsync<TRequest, TResponse>(
-    method: string,
-    path: string,
+    endpoint: string,
     request: TRequest,
     channel: number = 0,
     timeout: number = DEFAULT_TIMEOUT_MS
@@ -271,10 +271,10 @@ export class BannouClient implements IBannouClient {
     }
 
     // Get service GUID
-    const serviceGuid = this.getServiceGuid(method, path);
+    const serviceGuid = this.getServiceGuid(endpoint);
     if (!serviceGuid) {
       const available = Array.from(this.apiMappings.keys()).slice(0, 10).join(', ');
-      throw new Error(`Unknown endpoint: ${method} ${path}. Available: ${available}...`);
+      throw new Error(`Unknown endpoint: ${endpoint}. Available: ${available}...`);
     }
 
     // Serialize request to JSON
@@ -296,8 +296,8 @@ export class BannouClient implements IBannouClient {
     };
 
     // Set up response awaiter
-    const responsePromise = this.createResponsePromise(messageId, timeout, method, path);
-    this.connectionState.addPendingMessage(messageId, `${method}:${path}`, new Date());
+    const responsePromise = this.createResponsePromise(messageId, timeout, endpoint);
+    this.connectionState.addPendingMessage(messageId, endpoint, new Date());
 
     try {
       // Send message
@@ -310,7 +310,7 @@ export class BannouClient implements IBannouClient {
       // Check response code
       if (response.responseCode !== 0) {
         return ApiResponse.failure<TResponse>(
-          createErrorResponse(response.responseCode, messageId, method, path)
+          createErrorResponse(response.responseCode, messageId, endpoint)
         );
       }
 
@@ -323,7 +323,7 @@ export class BannouClient implements IBannouClient {
       const result = BannouJson.deserialize<TResponse>(responseJson);
       if (result === null) {
         return ApiResponse.failure<TResponse>(
-          createErrorResponse(60, messageId, method, path, 'Failed to deserialize response')
+          createErrorResponse(60, messageId, endpoint, 'Failed to deserialize response')
         );
       }
 
@@ -336,10 +336,10 @@ export class BannouClient implements IBannouClient {
 
   /**
    * Sends a fire-and-forget event (no response expected).
+   * @param endpoint API path (e.g., "/events/publish")
    */
   async sendEventAsync<TRequest>(
-    method: string,
-    path: string,
+    endpoint: string,
     request: TRequest,
     channel: number = 0
   ): Promise<void> {
@@ -352,9 +352,9 @@ export class BannouClient implements IBannouClient {
     }
 
     // Get service GUID
-    const serviceGuid = this.getServiceGuid(method, path);
+    const serviceGuid = this.getServiceGuid(endpoint);
     if (!serviceGuid) {
-      throw new Error(`Unknown endpoint: ${method} ${path}`);
+      throw new Error(`Unknown endpoint: ${endpoint}`);
     }
 
     // Serialize request to JSON
@@ -450,10 +450,10 @@ export class BannouClient implements IBannouClient {
   /**
    * Requests metadata about an endpoint instead of executing it.
    * Uses the Meta flag (0x80) which triggers route transformation at Connect service.
+   * @param endpoint API path (e.g., "/account/get")
    */
   async getEndpointMetaAsync<T>(
-    method: string,
-    path: string,
+    endpoint: string,
     metaType: MetaType = MetaType.FullSchema,
     timeout: number = 10_000
   ): Promise<MetaResponse<T>> {
@@ -466,10 +466,10 @@ export class BannouClient implements IBannouClient {
     }
 
     // Get service GUID (same as regular requests)
-    const serviceGuid = this.getServiceGuid(method, path);
+    const serviceGuid = this.getServiceGuid(endpoint);
     if (!serviceGuid) {
       const available = Array.from(this.apiMappings.keys()).slice(0, 10).join(', ');
-      throw new Error(`Unknown endpoint: ${method} ${path}. Available: ${available}...`);
+      throw new Error(`Unknown endpoint: ${endpoint}. Available: ${available}...`);
     }
 
     // Create meta message - meta type encoded in Channel field, payload is EMPTY
@@ -487,8 +487,8 @@ export class BannouClient implements IBannouClient {
     };
 
     // Set up response awaiter
-    const responsePromise = this.createResponsePromise(messageId, timeout, `META:${method}`, path);
-    this.connectionState.addPendingMessage(messageId, `META:${method}:${path}`, new Date());
+    const responsePromise = this.createResponsePromise(messageId, timeout, `META:${endpoint}`);
+    this.connectionState.addPendingMessage(messageId, `META:${endpoint}`, new Date());
 
     try {
       // Send message
@@ -519,36 +519,34 @@ export class BannouClient implements IBannouClient {
 
   /**
    * Gets human-readable endpoint information (summary, description, tags).
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getEndpointInfoAsync(
-    method: string,
-    path: string
-  ): Promise<MetaResponse<EndpointInfoData>> {
-    return this.getEndpointMetaAsync<EndpointInfoData>(method, path, MetaType.EndpointInfo);
+  async getEndpointInfoAsync(endpoint: string): Promise<MetaResponse<EndpointInfoData>> {
+    return this.getEndpointMetaAsync<EndpointInfoData>(endpoint, MetaType.EndpointInfo);
   }
 
   /**
    * Gets JSON Schema for the request body of an endpoint.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getRequestSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>> {
-    return this.getEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.RequestSchema);
+  async getRequestSchemaAsync(endpoint: string): Promise<MetaResponse<JsonSchemaData>> {
+    return this.getEndpointMetaAsync<JsonSchemaData>(endpoint, MetaType.RequestSchema);
   }
 
   /**
    * Gets JSON Schema for the response body of an endpoint.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getResponseSchemaAsync(
-    method: string,
-    path: string
-  ): Promise<MetaResponse<JsonSchemaData>> {
-    return this.getEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.ResponseSchema);
+  async getResponseSchemaAsync(endpoint: string): Promise<MetaResponse<JsonSchemaData>> {
+    return this.getEndpointMetaAsync<JsonSchemaData>(endpoint, MetaType.ResponseSchema);
   }
 
   /**
    * Gets full schema including info, request schema, and response schema.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getFullSchemaAsync(method: string, path: string): Promise<MetaResponse<FullSchemaData>> {
-    return this.getEndpointMetaAsync<FullSchemaData>(method, path, MetaType.FullSchema);
+  async getFullSchemaAsync(endpoint: string): Promise<MetaResponse<FullSchemaData>> {
+    return this.getEndpointMetaAsync<FullSchemaData>(endpoint, MetaType.FullSchema);
   }
 
   /**
@@ -1047,7 +1045,7 @@ export class BannouClient implements IBannouClient {
     try {
       const manifest = JSON.parse(json) as {
         sessionId?: string;
-        availableAPIs?: Array<{ endpointKey?: string; serviceGuid?: string }>;
+        availableApis?: Array<{ serviceId?: string; endpoint?: string; service?: string; description?: string }>;
       };
 
       // Extract session ID
@@ -1055,12 +1053,13 @@ export class BannouClient implements IBannouClient {
         this._sessionId = manifest.sessionId;
       }
 
-      // Extract available APIs
-      if (Array.isArray(manifest.availableAPIs)) {
-        for (const api of manifest.availableAPIs) {
-          if (api.endpointKey && api.serviceGuid) {
-            this.apiMappings.set(api.endpointKey, api.serviceGuid);
-            this.connectionState?.addServiceMapping(api.endpointKey, api.serviceGuid);
+      // Extract available APIs - new schema format: { serviceId, endpoint, service, description }
+      if (Array.isArray(manifest.availableApis)) {
+        for (const api of manifest.availableApis) {
+          // endpoint is now the lookup key (e.g., "/account/get")
+          if (api.endpoint && api.serviceId) {
+            this.apiMappings.set(api.endpoint, api.serviceId);
+            this.connectionState?.addServiceMapping(api.endpoint, api.serviceId);
           }
         }
       }
@@ -1128,13 +1127,12 @@ export class BannouClient implements IBannouClient {
   private createResponsePromise(
     messageId: bigint,
     timeout: number,
-    method: string,
-    path: string
+    endpoint: string
   ): Promise<BinaryMessage> {
     return new Promise<BinaryMessage>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         this.pendingRequests.delete(messageId.toString());
-        reject(new Error(`Request to ${method} ${path} timed out after ${timeout}ms`));
+        reject(new Error(`Request to ${endpoint} timed out after ${timeout}ms`));
       }, timeout);
 
       this.pendingRequests.set(messageId.toString(), {

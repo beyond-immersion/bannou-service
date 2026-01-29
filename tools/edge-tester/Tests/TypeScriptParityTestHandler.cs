@@ -158,7 +158,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // C# SDK call
             Console.WriteLine("   [C# SDK] Calling /realm/list...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/list", new { }, timeout: TimeSpan.FromSeconds(10));
+                "/realm/list", new { }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess)
             {
@@ -208,7 +208,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Create via C# SDK
             Console.WriteLine($"   [C# SDK] Creating realm {realmCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/create",
+                "/realm/create",
                 new { code = realmCode, name = $"Parity Test {uniqueCode}", description = "Parity test", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -228,7 +228,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Read via C# SDK
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/get", new { realmId }, timeout: TimeSpan.FromSeconds(10));
+                "/realm/get", new { realmId }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpReadResponse.IsSuccess)
             {
@@ -291,7 +291,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Create realm
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/create",
+                "/realm/create",
                 new { code = realmCode, name = $"Lifecycle Test {uniqueCode}", description = "Lifecycle parity test", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -312,7 +312,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Update via C# SDK
             Console.WriteLine("   [C# SDK] Updating realm...");
             var updateResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/update",
+                "/realm/update",
                 new { realmId, name = $"Updated Lifecycle {uniqueCode}" },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -338,7 +338,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Read and verify both see the TS update
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/get", new { realmId }, timeout: TimeSpan.FromSeconds(10));
+                "/realm/get", new { realmId }, timeout: TimeSpan.FromSeconds(10));
             var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/realm/get", new { realmId });
 
             var csharpName = GetStringProperty(ParseResponse(csharpReadResponse.Result), "name");
@@ -370,7 +370,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
         {
             Console.WriteLine("   [C# SDK] Calling /species/list...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/species/list", new { }, timeout: TimeSpan.FromSeconds(10));
+                "/species/list", new { }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess)
             {
@@ -414,7 +414,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var speciesCode = $"SP_PARITY_{uniqueCode}";
             Console.WriteLine($"   [C# SDK] Creating species {speciesCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/species/create",
+                "/species/create",
                 new { code = speciesCode, name = $"Parity Species {uniqueCode}", description = "Species parity test", category = "test", realmIds = new[] { realm.RealmId } },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -434,7 +434,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Read via both SDKs
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/species/get", new { speciesId }, timeout: TimeSpan.FromSeconds(10));
+                "/species/get", new { speciesId }, timeout: TimeSpan.FromSeconds(10));
 
             await using var tsHelper = await ConnectTsHelper();
             if (tsHelper == null) return false;
@@ -492,7 +492,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Query children via C# SDK
             Console.WriteLine("   [C# SDK] Querying location children...");
             var csharpChildrenResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/location/list-by-parent",
+                "/location/list-by-parent",
                 new { parentLocationId = parentLocation.LocationId },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -540,7 +540,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // C# SDK - expect failure
             Console.WriteLine($"   [C# SDK] Requesting non-existent realm {fakeRealmId}...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/get", new { realmId = fakeRealmId }, timeout: TimeSpan.FromSeconds(10));
+                "/realm/get", new { realmId = fakeRealmId }, timeout: TimeSpan.FromSeconds(10));
 
             if (csharpResponse.IsSuccess)
             {
@@ -593,7 +593,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Create realm first time - should succeed
             Console.WriteLine($"   Creating realm {realmCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/create",
+                "/realm/create",
                 new { code = realmCode, name = $"Conflict Test {uniqueCode}", description = "Conflict test", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -607,7 +607,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Try to create again via C# SDK - should fail with conflict
             Console.WriteLine("   [C# SDK] Attempting duplicate create...");
             var csharpDupeResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/create",
+                "/realm/create",
                 new { code = realmCode, name = $"Duplicate {uniqueCode}", description = "Should fail", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -650,7 +650,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
         {
             Console.WriteLine("   [C# SDK] Calling /relationship-type/list...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/relationship-type/list", new { }, timeout: TimeSpan.FromSeconds(10));
+                "/relationship-type/list", new { }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess)
             {
@@ -701,7 +701,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Create character via C# SDK
             Console.WriteLine($"   [C# SDK] Creating character...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/character/create",
+                "/character/create",
                 new
                 {
                     name = $"Parity Character {uniqueCode}",
@@ -728,7 +728,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Read via both SDKs
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/character/get", new { characterId }, timeout: TimeSpan.FromSeconds(10));
+                "/character/get", new { characterId }, timeout: TimeSpan.FromSeconds(10));
 
             await using var tsHelper = await ConnectTsHelper();
             if (tsHelper == null) return false;
@@ -779,7 +779,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Create a relationship type first
             Console.WriteLine("   Creating relationship type...");
             var typeResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/relationship-type/create",
+                "/relationship-type/create",
                 new
                 {
                     code = $"PARITY_REL_{uniqueCode}",
@@ -808,7 +808,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine($"   [C# SDK] Creating relationship...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/relationship/create",
+                "/relationship/create",
                 new
                 {
                     relationshipTypeId,
@@ -837,7 +837,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Read via both SDKs
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/relationship/get", new { relationshipId }, timeout: TimeSpan.FromSeconds(10));
+                "/relationship/get", new { relationshipId }, timeout: TimeSpan.FromSeconds(10));
 
             await using var tsHelper = await ConnectTsHelper();
             if (tsHelper == null) return false;
@@ -888,7 +888,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine("   [C# SDK] Calling /realm/list (typed)...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/realm/list", new { }, timeout: TimeSpan.FromSeconds(10));
+                "/realm/list", new { }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess)
             {
@@ -957,7 +957,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Create via C# SDK
             Console.WriteLine($"   [C# SDK] Creating relationship type {typeCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/relationship-type/create",
+                "/relationship-type/create",
                 new
                 {
                     code = typeCode,
@@ -983,7 +983,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Read via both SDKs
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/relationship-type/get", new { relationshipTypeId }, timeout: TimeSpan.FromSeconds(10));
+                "/relationship-type/get", new { relationshipTypeId }, timeout: TimeSpan.FromSeconds(10));
 
             await using var tsHelper = await ConnectTsHelper();
             if (tsHelper == null) return false;
@@ -1034,7 +1034,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine("   [C# SDK] Calling /auth/validate...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/auth/validate", new { }, timeout: TimeSpan.FromSeconds(10));
+                "/auth/validate", new { }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess)
             {
@@ -1087,7 +1087,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
         {
             Console.WriteLine("   [C# SDK] Calling /sessions/list...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/sessions/list", new { }, timeout: TimeSpan.FromSeconds(10));
+                "/sessions/list", new { }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess)
             {
@@ -1136,7 +1136,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var locationCode = $"LOC_PARITY_{uniqueCode}";
             Console.WriteLine($"   [C# SDK] Creating location {locationCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/location/create",
+                "/location/create",
                 new
                 {
                     code = locationCode,
@@ -1163,7 +1163,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Read via both SDKs
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/location/get", new { locationId }, timeout: TimeSpan.FromSeconds(10));
+                "/location/get", new { locationId }, timeout: TimeSpan.FromSeconds(10));
 
             await using var tsHelper = await ConnectTsHelper();
             if (tsHelper == null) return false;
@@ -1211,7 +1211,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
         {
             Console.WriteLine("   [C# SDK] Calling /permission/capabilities...");
             var csharpResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST", "/permission/capabilities", new { }, timeout: TimeSpan.FromSeconds(10));
+                "/permission/capabilities", new { }, timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess)
             {

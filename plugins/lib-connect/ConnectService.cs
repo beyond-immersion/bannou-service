@@ -170,7 +170,8 @@ public partial class ConnectService : IConnectService
 
             // Validate session has access to this API via local capability mappings
             // Session capabilities are pushed via SessionCapabilitiesEvent from Permission service
-            var endpointKey = $"{body.TargetService}:{body.Method}:{body.TargetEndpoint}";
+            // Key format: "serviceName:/path" (no HTTP method in key - all WebSocket endpoints are POST)
+            var endpointKey = $"{body.TargetService}:{body.TargetEndpoint}";
             var hasAccess = false;
 
             if (_sessionServiceMappings.TryGetValue(body.SessionId.ToString(), out var sessionMappings))
@@ -1172,17 +1173,17 @@ public partial class ConnectService : IConnectService
                 connectionState.AddPendingMessage(message.MessageId, endpointKey, DateTimeOffset.UtcNow, _configuration.PendingMessageTimeoutSeconds);
             }
 
-            // Parse endpoint key to extract service name, HTTP method, and path
-            // Format: "servicename:METHOD:/path"
-            var parts = endpointKey.Split(':', 3);
-            if (parts.Length < 3)
+            // Parse endpoint key to extract service name and path
+            // Format: "serviceName:/path" (all WebSocket endpoints are POST)
+            var firstColon = endpointKey.IndexOf(':');
+            if (firstColon <= 0)
             {
                 throw new InvalidOperationException($"Invalid endpoint key format: {endpointKey}");
             }
 
-            var serviceName = parts[0];
-            var httpMethod = parts[1].ToUpperInvariant();
-            var path = parts[2];
+            var serviceName = endpointKey[..firstColon];
+            var path = endpointKey[(firstColon + 1)..];
+            const string httpMethod = "POST"; // All WebSocket-routed endpoints are POST
 
             _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path})",
                 serviceName, httpMethod, path);
@@ -1296,9 +1297,9 @@ public partial class ConnectService : IConnectService
                 "HandleMetaRequestAsync called with null ServiceName - caller must validate");
         }
 
-        // Parse endpoint key: "serviceName:METHOD:/path"
-        var parts = routeInfo.ServiceName.Split(':', 3);
-        if (parts.Length < 3)
+        // Parse endpoint key: "serviceName:/path"
+        var firstColon = routeInfo.ServiceName.IndexOf(':');
+        if (firstColon <= 0)
         {
             _logger.LogWarning("Invalid endpoint key format for meta request: {EndpointKey}", routeInfo.ServiceName);
             var errorResponse = BinaryMessage.CreateResponse(message, ResponseCodes.RequestError);
@@ -1306,9 +1307,9 @@ public partial class ConnectService : IConnectService
             return;
         }
 
-        var serviceName = parts[0];
-        var httpMethod = parts[1];
-        var originalPath = parts[2];
+        var serviceName = routeInfo.ServiceName[..firstColon];
+        var originalPath = routeInfo.ServiceName[(firstColon + 1)..];
+        const string httpMethod = "POST"; // All WebSocket-routed endpoints are POST
 
         // Determine meta type from Channel field
         var metaType = (MetaType)message.Channel;
@@ -2272,32 +2273,29 @@ public partial class ConnectService : IConnectService
                 connectionState.GetAllShortcuts(),
                 expiredGuid => connectionState.RemoveShortcut(expiredGuid));
 
-            // Transform to WebSocket JSON format
+            // Transform to WebSocket JSON format using new ClientCapabilityEntry schema
             var availableApis = new List<object>();
 
             foreach (var api in apiEntries)
             {
                 availableApis.Add(new
                 {
-                    serviceGuid = api.ServiceGuid.ToString(),
-                    method = api.Method,
-                    path = api.Path,
-                    endpointKey = api.EndpointKey,
-                    // Informational only - not used for routing (routing uses serviceGuid)
-                    serviceName = api.ServiceName
+                    serviceId = api.ServiceGuid.ToString(),
+                    endpoint = api.Path,
+                    service = api.ServiceName,
+                    description = api.Description
                 });
             }
 
             // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
             foreach (var shortcut in shortcutEntries)
             {
-                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                // Shortcuts use new schema format with "shortcut" as service
                 availableApis.Add(new
                 {
-                    serviceGuid = shortcut.RouteGuid.ToString(),
-                    method = "SHORTCUT",
-                    path = shortcut.Name,
-                    endpointKey = $"SHORTCUT:{shortcut.Name}",
+                    serviceId = shortcut.RouteGuid.ToString(),
+                    endpoint = $"SHORTCUT:{shortcut.Name}",
+                    service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
@@ -2306,7 +2304,7 @@ public partial class ConnectService : IConnectService
             {
                 eventName = "connect.capability_manifest",
                 sessionId = sessionId,
-                availableAPIs = availableApis,
+                availableApis = availableApis,
                 version = 1,
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 peerGuid = connectionState.PeerGuid.ToString()
@@ -2370,11 +2368,12 @@ public partial class ConnectService : IConnectService
             foreach (var servicePermissions in permissions)
             {
                 var serviceName = servicePermissions.Key;
-                var methods = servicePermissions.Value;
+                var paths = servicePermissions.Value;
 
-                foreach (var method in methods)
+                foreach (var path in paths)
                 {
-                    var endpointKey = $"{serviceName}:{method}";
+                    // Key format: "serviceName:/path" (no HTTP method - all WebSocket endpoints are POST)
+                    var endpointKey = $"{serviceName}:{path}";
                     var guid = GuidGenerator.GenerateServiceGuid(endpointKey, sessionId, _serverSalt);
                     newMappings[endpointKey] = guid;
                 }
@@ -2384,12 +2383,12 @@ public partial class ConnectService : IConnectService
             connectionState.UpdateAllServiceMappings(newMappings);
 
             // Build and send updated capability manifest
-            // INTERNAL format: "serviceName:METHOD:/path" - used for server-side routing
-            // CLIENT format: "METHOD:/path" - exposed in capability manifest (no service name leak)
+            // INTERNAL format: "serviceName:/path" - used for server-side routing
+            // CLIENT format matches new ClientCapabilityEntry schema
             var availableApis = new List<object>();
             foreach (var mapping in newMappings)
             {
-                // Parse the internal endpoint key format
+                // Parse the internal endpoint key format: "serviceName:/path"
                 var endpointKey = mapping.Key;
                 var guid = mapping.Value;
 
@@ -2397,10 +2396,7 @@ public partial class ConnectService : IConnectService
                 if (firstColon <= 0) continue;
 
                 var serviceName = endpointKey[..firstColon];
-                var methodAndPath = endpointKey[(firstColon + 1)..];
-                var methodPathColon = methodAndPath.IndexOf(':');
-                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
-                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+                var path = endpointKey[(firstColon + 1)..];
 
                 // Skip endpoints with path templates - WebSocket requires POST with JSON body
                 if (path.Contains('{'))
@@ -2408,21 +2404,11 @@ public partial class ConnectService : IConnectService
                     continue;
                 }
 
-                // Only expose POST endpoints to WebSocket clients
-                // GET and other HTTP methods are not supported through WebSocket binary protocol
-                if (method != "POST")
-                {
-                    continue;
-                }
-
                 availableApis.Add(new
                 {
-                    serviceGuid = guid.ToString(),
-                    method = method,
-                    path = path,
-                    endpointKey = $"{method}:{path}",
-                    // Informational only - not used for routing (routing uses serviceGuid)
-                    serviceName = serviceName
+                    serviceId = guid.ToString(),
+                    endpoint = path,
+                    service = serviceName
                 });
             }
 
@@ -2436,13 +2422,12 @@ public partial class ConnectService : IConnectService
                     continue;
                 }
 
-                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                // Shortcuts use new schema format with "shortcut" as service
                 availableApis.Add(new
                 {
-                    serviceGuid = shortcut.RouteGuid.ToString(),
-                    method = "SHORTCUT",
-                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    serviceId = shortcut.RouteGuid.ToString(),
+                    endpoint = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
@@ -2454,7 +2439,7 @@ public partial class ConnectService : IConnectService
             {
                 ["eventName"] = "connect.capability_manifest",
                 ["sessionId"] = sessionId,
-                ["availableAPIs"] = availableApis,
+                ["availableApis"] = availableApis,
                 ["version"] = 1,
                 ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 ["reason"] = reason
@@ -2865,31 +2850,29 @@ public partial class ConnectService : IConnectService
                 connectionState.GetAllShortcuts(),
                 expiredGuid => connectionState.RemoveShortcut(expiredGuid));
 
-            // Transform to WebSocket JSON format
+            // Transform to WebSocket JSON format using new ClientCapabilityEntry schema
             var availableApis = new List<object>();
 
             foreach (var api in apiEntries)
             {
                 availableApis.Add(new
                 {
-                    serviceGuid = api.ServiceGuid.ToString(),
-                    method = api.Method,
-                    path = api.Path,
-                    endpointKey = api.EndpointKey,
-                    serviceName = api.ServiceName
+                    serviceId = api.ServiceGuid.ToString(),
+                    endpoint = api.Path,
+                    service = api.ServiceName,
+                    description = api.Description
                 });
             }
 
             // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
             foreach (var shortcut in shortcutEntries)
             {
-                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                // Shortcuts use new schema format with "shortcut" as service
                 availableApis.Add(new
                 {
-                    serviceGuid = shortcut.RouteGuid.ToString(),
-                    method = "SHORTCUT",
-                    path = shortcut.Name,
-                    endpointKey = $"SHORTCUT:{shortcut.Name}",
+                    serviceId = shortcut.RouteGuid.ToString(),
+                    endpoint = $"SHORTCUT:{shortcut.Name}",
+                    service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
@@ -2898,7 +2881,7 @@ public partial class ConnectService : IConnectService
             {
                 eventName = "connect.capability_manifest",
                 sessionId = sessionId,
-                availableAPIs = availableApis,
+                availableApis = availableApis,
                 version = 1,
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 peerGuid = connectionState.PeerGuid.ToString()

@@ -41,7 +41,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSpeciesRequest, SpeciesResponse>(
-            "POST", "/species/get", request, channel, timeout, cancellationToken);
+            "/species/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSpeciesByCodeRequest, SpeciesResponse>(
-            "POST", "/species/get-by-code", request, channel, timeout, cancellationToken);
+            "/species/get-by-code", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListSpeciesRequest, SpeciesListResponse>(
-            "POST", "/species/list", request, channel, timeout, cancellationToken);
+            "/species/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListSpeciesByRealmRequest, SpeciesListResponse>(
-            "POST", "/species/list-by-realm", request, channel, timeout, cancellationToken);
+            "/species/list-by-realm", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateSpeciesRequest, SpeciesResponse>(
-            "POST", "/species/create", request, channel, timeout, cancellationToken);
+            "/species/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateSpeciesRequest, SpeciesResponse>(
-            "POST", "/species/update", request, channel, timeout, cancellationToken);
+            "/species/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteSpeciesRequest>(
-            "POST", "/species/delete", request, channel, cancellationToken);
+            "/species/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeprecateSpeciesRequest, SpeciesResponse>(
-            "POST", "/species/deprecate", request, channel, timeout, cancellationToken);
+            "/species/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UndeprecateSpeciesRequest, SpeciesResponse>(
-            "POST", "/species/undeprecate", request, channel, timeout, cancellationToken);
+            "/species/undeprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<MergeSpeciesRequest, MergeSpeciesResponse>(
-            "POST", "/species/merge", request, channel, timeout, cancellationToken);
+            "/species/merge", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AddSpeciesToRealmRequest, SpeciesResponse>(
-            "POST", "/species/add-to-realm", request, channel, timeout, cancellationToken);
+            "/species/add-to-realm", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -237,7 +237,7 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RemoveSpeciesFromRealmRequest, SpeciesResponse>(
-            "POST", "/species/remove-from-realm", request, channel, timeout, cancellationToken);
+            "/species/remove-from-realm", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -255,6 +255,6 @@ public sealed class SpeciesProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SeedSpeciesRequest, SeedSpeciesResponse>(
-            "POST", "/species/seed", request, channel, timeout, cancellationToken);
+            "/species/seed", request, channel, timeout, cancellationToken);
     }
 }

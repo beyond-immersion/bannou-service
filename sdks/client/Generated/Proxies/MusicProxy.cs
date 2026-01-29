@@ -41,7 +41,7 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GenerateCompositionRequest, GenerateCompositionResponse>(
-            "POST", "/music/generate", request, channel, timeout, cancellationToken);
+            "/music/generate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ValidateMidiJsonRequest, ValidateMidiJsonResponse>(
-            "POST", "/music/validate", request, channel, timeout, cancellationToken);
+            "/music/validate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetStyleRequest, StyleDefinitionResponse>(
-            "POST", "/music/style/get", request, channel, timeout, cancellationToken);
+            "/music/style/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListStylesRequest, ListStylesResponse>(
-            "POST", "/music/style/list", request, channel, timeout, cancellationToken);
+            "/music/style/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateStyleRequest, StyleDefinitionResponse>(
-            "POST", "/music/style/create", request, channel, timeout, cancellationToken);
+            "/music/style/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GenerateProgressionRequest, GenerateProgressionResponse>(
-            "POST", "/music/theory/progression", request, channel, timeout, cancellationToken);
+            "/music/theory/progression", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GenerateMelodyRequest, GenerateMelodyResponse>(
-            "POST", "/music/theory/melody", request, channel, timeout, cancellationToken);
+            "/music/theory/melody", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,6 +167,6 @@ public sealed class MusicProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<VoiceLeadRequest, VoiceLeadResponse>(
-            "POST", "/music/theory/voice-lead", request, channel, timeout, cancellationToken);
+            "/music/theory/voice-lead", request, channel, timeout, cancellationToken);
     }
 }

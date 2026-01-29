@@ -41,7 +41,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateItemTemplateRequest, ItemTemplateResponse>(
-            "POST", "/item/template/create", request, channel, timeout, cancellationToken);
+            "/item/template/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetItemTemplateRequest, ItemTemplateResponse>(
-            "POST", "/item/template/get", request, channel, timeout, cancellationToken);
+            "/item/template/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListItemTemplatesRequest, ListItemTemplatesResponse>(
-            "POST", "/item/template/list", request, channel, timeout, cancellationToken);
+            "/item/template/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateItemTemplateRequest, ItemTemplateResponse>(
-            "POST", "/item/template/update", request, channel, timeout, cancellationToken);
+            "/item/template/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeprecateItemTemplateRequest, ItemTemplateResponse>(
-            "POST", "/item/template/deprecate", request, channel, timeout, cancellationToken);
+            "/item/template/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateItemInstanceRequest, ItemInstanceResponse>(
-            "POST", "/item/instance/create", request, channel, timeout, cancellationToken);
+            "/item/instance/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetItemInstanceRequest, ItemInstanceResponse>(
-            "POST", "/item/instance/get", request, channel, timeout, cancellationToken);
+            "/item/instance/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ModifyItemInstanceRequest, ItemInstanceResponse>(
-            "POST", "/item/instance/modify", request, channel, timeout, cancellationToken);
+            "/item/instance/modify", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BindItemInstanceRequest, ItemInstanceResponse>(
-            "POST", "/item/instance/bind", request, channel, timeout, cancellationToken);
+            "/item/instance/bind", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DestroyItemInstanceRequest, DestroyItemInstanceResponse>(
-            "POST", "/item/instance/destroy", request, channel, timeout, cancellationToken);
+            "/item/instance/destroy", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListItemsByContainerRequest, ListItemsResponse>(
-            "POST", "/item/instance/list-by-container", request, channel, timeout, cancellationToken);
+            "/item/instance/list-by-container", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListItemsByTemplateRequest, ListItemsResponse>(
-            "POST", "/item/instance/list-by-template", request, channel, timeout, cancellationToken);
+            "/item/instance/list-by-template", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,6 +257,6 @@ public sealed class ItemProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BatchGetItemInstancesRequest, BatchGetItemInstancesResponse>(
-            "POST", "/item/instance/batch-get", request, channel, timeout, cancellationToken);
+            "/item/instance/batch-get", request, channel, timeout, cancellationToken);
     }
 }

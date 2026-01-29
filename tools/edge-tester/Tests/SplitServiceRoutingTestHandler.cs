@@ -377,7 +377,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var result = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/orchestrator/service-routing",
                 new { },
                 timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
@@ -566,7 +565,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         {
             // List accounts requires admin role
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/account/list",
                 new { limit = 1 },
                 timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
@@ -684,7 +682,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var createServiceResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/game-service/services/create",
                 new
                 {
@@ -707,7 +704,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 Console.WriteLine("   Game service 'test-game' already exists - fetching ID...");
                 // Fetch the existing service by stub name
                 var getServiceResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
                     "/game-service/services/get",
                     new { stubName = "test-game" },
                     timeout: TimeSpan.FromSeconds(10));
@@ -789,7 +785,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var subscribeResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/subscription/create",
                 new
                 {
@@ -1021,7 +1016,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             // Use the shared admin WebSocket to invoke the orchestrator API
             var response = (await client.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/orchestrator/deploy",
                 requestObj,
                 timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
@@ -1133,7 +1127,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/orchestrator/deploy",
                 deployRequest,
                 timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
@@ -1195,7 +1188,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/orchestrator/clean",
                 cleanRequest,
                 timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
@@ -1278,7 +1270,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/orchestrator/deploy",
                 deployRequest,
                 timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();

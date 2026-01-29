@@ -41,7 +41,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateSceneRequest, SceneResponse>(
-            "POST", "/scene/create", request, channel, timeout, cancellationToken);
+            "/scene/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSceneRequest, GetSceneResponse>(
-            "POST", "/scene/get", request, channel, timeout, cancellationToken);
+            "/scene/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListScenesRequest, ListScenesResponse>(
-            "POST", "/scene/list", request, channel, timeout, cancellationToken);
+            "/scene/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateSceneRequest, SceneResponse>(
-            "POST", "/scene/update", request, channel, timeout, cancellationToken);
+            "/scene/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteSceneRequest, DeleteSceneResponse>(
-            "POST", "/scene/delete", request, channel, timeout, cancellationToken);
+            "/scene/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ValidateSceneRequest, ValidationResult>(
-            "POST", "/scene/validate", request, channel, timeout, cancellationToken);
+            "/scene/validate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<InstantiateSceneRequest, InstantiateSceneResponse>(
-            "POST", "/scene/instantiate", request, channel, timeout, cancellationToken);
+            "/scene/instantiate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DestroyInstanceRequest, DestroyInstanceResponse>(
-            "POST", "/scene/destroy-instance", request, channel, timeout, cancellationToken);
+            "/scene/destroy-instance", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CheckoutRequest, CheckoutResponse>(
-            "POST", "/scene/checkout", request, channel, timeout, cancellationToken);
+            "/scene/checkout", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CommitRequest, CommitResponse>(
-            "POST", "/scene/commit", request, channel, timeout, cancellationToken);
+            "/scene/commit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DiscardRequest, DiscardResponse>(
-            "POST", "/scene/discard", request, channel, timeout, cancellationToken);
+            "/scene/discard", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<HeartbeatRequest, HeartbeatResponse>(
-            "POST", "/scene/heartbeat", request, channel, timeout, cancellationToken);
+            "/scene/heartbeat", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<HistoryRequest, HistoryResponse>(
-            "POST", "/scene/history", request, channel, timeout, cancellationToken);
+            "/scene/history", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RegisterValidationRulesRequest, RegisterValidationRulesResponse>(
-            "POST", "/scene/register-validation-rules", request, channel, timeout, cancellationToken);
+            "/scene/register-validation-rules", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetValidationRulesRequest, GetValidationRulesResponse>(
-            "POST", "/scene/get-validation-rules", request, channel, timeout, cancellationToken);
+            "/scene/get-validation-rules", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SearchScenesRequest, SearchScenesResponse>(
-            "POST", "/scene/search", request, channel, timeout, cancellationToken);
+            "/scene/search", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<FindReferencesRequest, FindReferencesResponse>(
-            "POST", "/scene/find-references", request, channel, timeout, cancellationToken);
+            "/scene/find-references", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<FindAssetUsageRequest, FindAssetUsageResponse>(
-            "POST", "/scene/find-asset-usage", request, channel, timeout, cancellationToken);
+            "/scene/find-asset-usage", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -365,6 +365,6 @@ public sealed class SceneProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DuplicateSceneRequest, SceneResponse>(
-            "POST", "/scene/duplicate", request, channel, timeout, cancellationToken);
+            "/scene/duplicate", request, channel, timeout, cancellationToken);
     }
 }

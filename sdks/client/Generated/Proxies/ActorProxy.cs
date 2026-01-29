@@ -41,7 +41,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateActorTemplateRequest, ActorTemplateResponse>(
-            "POST", "/actor/template/create", request, channel, timeout, cancellationToken);
+            "/actor/template/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetActorTemplateRequest, ActorTemplateResponse>(
-            "POST", "/actor/template/get", request, channel, timeout, cancellationToken);
+            "/actor/template/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListActorTemplatesRequest, ListActorTemplatesResponse>(
-            "POST", "/actor/template/list", request, channel, timeout, cancellationToken);
+            "/actor/template/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateActorTemplateRequest, ActorTemplateResponse>(
-            "POST", "/actor/template/update", request, channel, timeout, cancellationToken);
+            "/actor/template/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteActorTemplateRequest, DeleteActorTemplateResponse>(
-            "POST", "/actor/template/delete", request, channel, timeout, cancellationToken);
+            "/actor/template/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SpawnActorRequest, ActorInstanceResponse>(
-            "POST", "/actor/spawn", request, channel, timeout, cancellationToken);
+            "/actor/spawn", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetActorRequest, ActorInstanceResponse>(
-            "POST", "/actor/get", request, channel, timeout, cancellationToken);
+            "/actor/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<StopActorRequest, StopActorResponse>(
-            "POST", "/actor/stop", request, channel, timeout, cancellationToken);
+            "/actor/stop", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListActorsRequest, ListActorsResponse>(
-            "POST", "/actor/list", request, channel, timeout, cancellationToken);
+            "/actor/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<InjectPerceptionRequest, InjectPerceptionResponse>(
-            "POST", "/actor/inject-perception", request, channel, timeout, cancellationToken);
+            "/actor/inject-perception", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryOptionsRequest, QueryOptionsResponse>(
-            "POST", "/actor/query-options", request, channel, timeout, cancellationToken);
+            "/actor/query-options", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -237,7 +237,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<StartEncounterRequest>(
-            "POST", "/actor/encounter/start", request, channel, cancellationToken);
+            "/actor/encounter/start", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -255,7 +255,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateEncounterPhaseRequest, UpdateEncounterPhaseResponse>(
-            "POST", "/actor/encounter/update-phase", request, channel, timeout, cancellationToken);
+            "/actor/encounter/update-phase", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -273,7 +273,7 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<EndEncounterRequest, EndEncounterResponse>(
-            "POST", "/actor/encounter/end", request, channel, timeout, cancellationToken);
+            "/actor/encounter/end", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -291,6 +291,6 @@ public sealed class ActorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEncounterRequest, GetEncounterResponse>(
-            "POST", "/actor/encounter/get", request, channel, timeout, cancellationToken);
+            "/actor/encounter/get", request, channel, timeout, cancellationToken);
     }
 }

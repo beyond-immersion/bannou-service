@@ -41,7 +41,7 @@ public sealed class GameServiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListServicesRequest, ListServicesResponse>(
-            "POST", "/game-service/services/list", request, channel, timeout, cancellationToken);
+            "/game-service/services/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class GameServiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetServiceRequest, ServiceInfo>(
-            "POST", "/game-service/services/get", request, channel, timeout, cancellationToken);
+            "/game-service/services/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class GameServiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateServiceRequest, ServiceInfo>(
-            "POST", "/game-service/services/create", request, channel, timeout, cancellationToken);
+            "/game-service/services/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class GameServiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateServiceRequest, ServiceInfo>(
-            "POST", "/game-service/services/update", request, channel, timeout, cancellationToken);
+            "/game-service/services/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,6 +111,6 @@ public sealed class GameServiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteServiceRequest>(
-            "POST", "/game-service/services/delete", request, channel, cancellationToken);
+            "/game-service/services/delete", request, channel, cancellationToken);
     }
 }

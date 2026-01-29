@@ -41,7 +41,7 @@ public sealed class MessagingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PublishEventRequest, PublishEventResponse>(
-            "POST", "/messaging/publish", request, channel, timeout, cancellationToken);
+            "/messaging/publish", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class MessagingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateSubscriptionRequest, CreateSubscriptionResponse>(
-            "POST", "/messaging/subscribe", request, channel, timeout, cancellationToken);
+            "/messaging/subscribe", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -75,7 +75,7 @@ public sealed class MessagingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<RemoveSubscriptionRequest>(
-            "POST", "/messaging/unsubscribe", request, channel, cancellationToken);
+            "/messaging/unsubscribe", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -93,6 +93,6 @@ public sealed class MessagingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListTopicsRequest, ListTopicsResponse>(
-            "POST", "/messaging/list-topics", request, channel, timeout, cancellationToken);
+            "/messaging/list-topics", request, channel, timeout, cancellationToken);
     }
 }

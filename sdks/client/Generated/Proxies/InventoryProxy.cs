@@ -41,7 +41,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateContainerRequest, ContainerResponse>(
-            "POST", "/inventory/container/create", request, channel, timeout, cancellationToken);
+            "/inventory/container/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetContainerRequest, ContainerWithContentsResponse>(
-            "POST", "/inventory/container/get", request, channel, timeout, cancellationToken);
+            "/inventory/container/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetOrCreateContainerRequest, ContainerResponse>(
-            "POST", "/inventory/container/get-or-create", request, channel, timeout, cancellationToken);
+            "/inventory/container/get-or-create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListContainersRequest, ListContainersResponse>(
-            "POST", "/inventory/container/list", request, channel, timeout, cancellationToken);
+            "/inventory/container/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateContainerRequest, ContainerResponse>(
-            "POST", "/inventory/container/update", request, channel, timeout, cancellationToken);
+            "/inventory/container/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteContainerRequest, DeleteContainerResponse>(
-            "POST", "/inventory/container/delete", request, channel, timeout, cancellationToken);
+            "/inventory/container/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AddItemRequest, AddItemResponse>(
-            "POST", "/inventory/add", request, channel, timeout, cancellationToken);
+            "/inventory/add", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RemoveItemRequest, RemoveItemResponse>(
-            "POST", "/inventory/remove", request, channel, timeout, cancellationToken);
+            "/inventory/remove", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<MoveItemRequest, MoveItemResponse>(
-            "POST", "/inventory/move", request, channel, timeout, cancellationToken);
+            "/inventory/move", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<TransferItemRequest, TransferItemResponse>(
-            "POST", "/inventory/transfer", request, channel, timeout, cancellationToken);
+            "/inventory/transfer", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SplitStackRequest, SplitStackResponse>(
-            "POST", "/inventory/split", request, channel, timeout, cancellationToken);
+            "/inventory/split", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<MergeStacksRequest, MergeStacksResponse>(
-            "POST", "/inventory/merge", request, channel, timeout, cancellationToken);
+            "/inventory/merge", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryItemsRequest, QueryItemsResponse>(
-            "POST", "/inventory/query", request, channel, timeout, cancellationToken);
+            "/inventory/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CountItemsRequest, CountItemsResponse>(
-            "POST", "/inventory/count", request, channel, timeout, cancellationToken);
+            "/inventory/count", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<HasItemsRequest, HasItemsResponse>(
-            "POST", "/inventory/has", request, channel, timeout, cancellationToken);
+            "/inventory/has", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,6 +311,6 @@ public sealed class InventoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<FindSpaceRequest, FindSpaceResponse>(
-            "POST", "/inventory/find-space", request, channel, timeout, cancellationToken);
+            "/inventory/find-space", request, channel, timeout, cancellationToken);
     }
 }

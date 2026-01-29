@@ -41,7 +41,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListAccountsRequest, AccountListResponse>(
-            "POST", "/account/list", request, channel, timeout, cancellationToken);
+            "/account/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateAccountRequest, AccountResponse>(
-            "POST", "/account/create", request, channel, timeout, cancellationToken);
+            "/account/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAccountRequest, AccountResponse>(
-            "POST", "/account/get", request, channel, timeout, cancellationToken);
+            "/account/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateAccountRequest, AccountResponse>(
-            "POST", "/account/update", request, channel, timeout, cancellationToken);
+            "/account/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteAccountRequest>(
-            "POST", "/account/delete", request, channel, cancellationToken);
+            "/account/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAccountByEmailRequest, AccountResponse>(
-            "POST", "/account/by-email", request, channel, timeout, cancellationToken);
+            "/account/by-email", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAuthMethodsRequest, AuthMethodsResponse>(
-            "POST", "/account/auth-methods/list", request, channel, timeout, cancellationToken);
+            "/account/auth-methods/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AddAuthMethodRequest, AuthMethodResponse>(
-            "POST", "/account/auth-methods/add", request, channel, timeout, cancellationToken);
+            "/account/auth-methods/add", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<RemoveAuthMethodRequest>(
-            "POST", "/account/auth-methods/remove", request, channel, cancellationToken);
+            "/account/auth-methods/remove", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAccountByProviderRequest, AccountResponse>(
-            "POST", "/account/by-provider", request, channel, timeout, cancellationToken);
+            "/account/by-provider", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -217,7 +217,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateProfileRequest, AccountResponse>(
-            "POST", "/account/profile/update", request, channel, timeout, cancellationToken);
+            "/account/profile/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -233,7 +233,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<UpdatePasswordRequest>(
-            "POST", "/account/password/update", request, channel, cancellationToken);
+            "/account/password/update", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -251,7 +251,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BatchGetAccountsRequest, BatchGetAccountsResponse>(
-            "POST", "/account/batch-get", request, channel, timeout, cancellationToken);
+            "/account/batch-get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -269,7 +269,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CountAccountsRequest, CountAccountsResponse>(
-            "POST", "/account/count", request, channel, timeout, cancellationToken);
+            "/account/count", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -287,7 +287,7 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BulkUpdateRolesRequest, BulkUpdateRolesResponse>(
-            "POST", "/account/roles/bulk-update", request, channel, timeout, cancellationToken);
+            "/account/roles/bulk-update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -303,6 +303,6 @@ public sealed class AccountProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<UpdateVerificationRequest>(
-            "POST", "/account/verification/update", request, channel, cancellationToken);
+            "/account/verification/update", request, channel, cancellationToken);
     }
 }

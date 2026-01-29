@@ -41,7 +41,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateAchievementDefinitionRequest, AchievementDefinitionResponse>(
-            "POST", "/achievement/definition/create", request, channel, timeout, cancellationToken);
+            "/achievement/definition/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAchievementDefinitionRequest, AchievementDefinitionResponse>(
-            "POST", "/achievement/definition/get", request, channel, timeout, cancellationToken);
+            "/achievement/definition/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListAchievementDefinitionsRequest, ListAchievementDefinitionsResponse>(
-            "POST", "/achievement/definition/list", request, channel, timeout, cancellationToken);
+            "/achievement/definition/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateAchievementDefinitionRequest, AchievementDefinitionResponse>(
-            "POST", "/achievement/definition/update", request, channel, timeout, cancellationToken);
+            "/achievement/definition/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteAchievementDefinitionRequest>(
-            "POST", "/achievement/definition/delete", request, channel, cancellationToken);
+            "/achievement/definition/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAchievementProgressRequest, AchievementProgressResponse>(
-            "POST", "/achievement/progress/get", request, channel, timeout, cancellationToken);
+            "/achievement/progress/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateAchievementProgressRequest, UpdateAchievementProgressResponse>(
-            "POST", "/achievement/progress/update", request, channel, timeout, cancellationToken);
+            "/achievement/progress/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UnlockAchievementRequest, UnlockAchievementResponse>(
-            "POST", "/achievement/unlock", request, channel, timeout, cancellationToken);
+            "/achievement/unlock", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListUnlockedAchievementsRequest, ListUnlockedAchievementsResponse>(
-            "POST", "/achievement/list-unlocked", request, channel, timeout, cancellationToken);
+            "/achievement/list-unlocked", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SyncPlatformAchievementsRequest, SyncPlatformAchievementsResponse>(
-            "POST", "/achievement/platform/sync", request, channel, timeout, cancellationToken);
+            "/achievement/platform/sync", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -219,6 +219,6 @@ public sealed class AchievementProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetPlatformSyncStatusRequest, PlatformSyncStatusResponse>(
-            "POST", "/achievement/platform/status", request, channel, timeout, cancellationToken);
+            "/achievement/platform/status", request, channel, timeout, cancellationToken);
     }
 }

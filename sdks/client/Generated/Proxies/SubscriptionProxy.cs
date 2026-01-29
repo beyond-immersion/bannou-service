@@ -41,7 +41,7 @@ public sealed class SubscriptionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAccountSubscriptionsRequest, SubscriptionListResponse>(
-            "POST", "/subscription/account/list", request, channel, timeout, cancellationToken);
+            "/subscription/account/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class SubscriptionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryCurrentSubscriptionsRequest, QuerySubscriptionsResponse>(
-            "POST", "/subscription/query", request, channel, timeout, cancellationToken);
+            "/subscription/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class SubscriptionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSubscriptionRequest, SubscriptionInfo>(
-            "POST", "/subscription/get", request, channel, timeout, cancellationToken);
+            "/subscription/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class SubscriptionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateSubscriptionRequest, SubscriptionInfo>(
-            "POST", "/subscription/create", request, channel, timeout, cancellationToken);
+            "/subscription/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class SubscriptionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateSubscriptionRequest, SubscriptionInfo>(
-            "POST", "/subscription/update", request, channel, timeout, cancellationToken);
+            "/subscription/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class SubscriptionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CancelSubscriptionRequest, SubscriptionInfo>(
-            "POST", "/subscription/cancel", request, channel, timeout, cancellationToken);
+            "/subscription/cancel", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,6 +149,6 @@ public sealed class SubscriptionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RenewSubscriptionRequest, SubscriptionInfo>(
-            "POST", "/subscription/renew", request, channel, timeout, cancellationToken);
+            "/subscription/renew", request, channel, timeout, cancellationToken);
     }
 }

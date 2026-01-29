@@ -41,7 +41,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateEscrowRequest, CreateEscrowResponse>(
-            "POST", "/escrow/create", request, channel, timeout, cancellationToken);
+            "/escrow/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEscrowRequest, GetEscrowResponse>(
-            "POST", "/escrow/get", request, channel, timeout, cancellationToken);
+            "/escrow/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListEscrowsRequest, ListEscrowsResponse>(
-            "POST", "/escrow/list", request, channel, timeout, cancellationToken);
+            "/escrow/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetMyTokenRequest, GetMyTokenResponse>(
-            "POST", "/escrow/get-my-token", request, channel, timeout, cancellationToken);
+            "/escrow/get-my-token", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DepositRequest, DepositResponse>(
-            "POST", "/escrow/deposit", request, channel, timeout, cancellationToken);
+            "/escrow/deposit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ValidateDepositRequest, ValidateDepositResponse>(
-            "POST", "/escrow/deposit/validate", request, channel, timeout, cancellationToken);
+            "/escrow/deposit/validate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetDepositStatusRequest, GetDepositStatusResponse>(
-            "POST", "/escrow/deposit/status", request, channel, timeout, cancellationToken);
+            "/escrow/deposit/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ConsentRequest, ConsentResponse>(
-            "POST", "/escrow/consent", request, channel, timeout, cancellationToken);
+            "/escrow/consent", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetConsentStatusRequest, GetConsentStatusResponse>(
-            "POST", "/escrow/consent/status", request, channel, timeout, cancellationToken);
+            "/escrow/consent/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ReleaseRequest, ReleaseResponse>(
-            "POST", "/escrow/release", request, channel, timeout, cancellationToken);
+            "/escrow/release", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RefundRequest, RefundResponse>(
-            "POST", "/escrow/refund", request, channel, timeout, cancellationToken);
+            "/escrow/refund", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CancelRequest, CancelResponse>(
-            "POST", "/escrow/cancel", request, channel, timeout, cancellationToken);
+            "/escrow/cancel", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DisputeRequest, DisputeResponse>(
-            "POST", "/escrow/dispute", request, channel, timeout, cancellationToken);
+            "/escrow/dispute", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ResolveRequest, ResolveResponse>(
-            "POST", "/escrow/resolve", request, channel, timeout, cancellationToken);
+            "/escrow/resolve", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<VerifyConditionRequest, VerifyConditionResponse>(
-            "POST", "/escrow/verify-condition", request, channel, timeout, cancellationToken);
+            "/escrow/verify-condition", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ValidateEscrowRequest, ValidateEscrowResponse>(
-            "POST", "/escrow/validate", request, channel, timeout, cancellationToken);
+            "/escrow/validate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ReaffirmRequest, ReaffirmResponse>(
-            "POST", "/escrow/reaffirm", request, channel, timeout, cancellationToken);
+            "/escrow/reaffirm", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RegisterHandlerRequest, RegisterHandlerResponse>(
-            "POST", "/escrow/handler/register", request, channel, timeout, cancellationToken);
+            "/escrow/handler/register", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -365,7 +365,7 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListHandlersRequest, ListHandlersResponse>(
-            "POST", "/escrow/handler/list", request, channel, timeout, cancellationToken);
+            "/escrow/handler/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -383,6 +383,6 @@ public sealed class EscrowProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeregisterHandlerRequest, DeregisterHandlerResponse>(
-            "POST", "/escrow/handler/deregister", request, channel, timeout, cancellationToken);
+            "/escrow/handler/deregister", request, channel, timeout, cancellationToken);
     }
 }

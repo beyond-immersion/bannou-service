@@ -41,7 +41,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RecordParticipationRequest, HistoricalParticipation>(
-            "POST", "/character-history/record-participation", request, channel, timeout, cancellationToken);
+            "/character-history/record-participation", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetParticipationRequest, ParticipationListResponse>(
-            "POST", "/character-history/get-participation", request, channel, timeout, cancellationToken);
+            "/character-history/get-participation", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEventParticipantsRequest, ParticipationListResponse>(
-            "POST", "/character-history/get-event-participants", request, channel, timeout, cancellationToken);
+            "/character-history/get-event-participants", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteParticipationRequest>(
-            "POST", "/character-history/delete-participation", request, channel, cancellationToken);
+            "/character-history/delete-participation", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetBackstoryRequest, BackstoryResponse>(
-            "POST", "/character-history/get-backstory", request, channel, timeout, cancellationToken);
+            "/character-history/get-backstory", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SetBackstoryRequest, BackstoryResponse>(
-            "POST", "/character-history/set-backstory", request, channel, timeout, cancellationToken);
+            "/character-history/set-backstory", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AddBackstoryElementRequest, BackstoryResponse>(
-            "POST", "/character-history/add-backstory-element", request, channel, timeout, cancellationToken);
+            "/character-history/add-backstory-element", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteBackstoryRequest>(
-            "POST", "/character-history/delete-backstory", request, channel, cancellationToken);
+            "/character-history/delete-backstory", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteAllHistoryRequest, DeleteAllHistoryResponse>(
-            "POST", "/character-history/delete-all", request, channel, timeout, cancellationToken);
+            "/character-history/delete-all", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -199,6 +199,6 @@ public sealed class CharacterHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SummarizeHistoryRequest, HistorySummaryResponse>(
-            "POST", "/character-history/summarize", request, channel, timeout, cancellationToken);
+            "/character-history/summarize", request, channel, timeout, cancellationToken);
     }
 }

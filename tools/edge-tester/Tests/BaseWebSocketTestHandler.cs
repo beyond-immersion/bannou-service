@@ -356,7 +356,6 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
         TimeSpan? timeout = null)
     {
         var response = (await adminClient.InvokeAsync<object, JsonElement>(
-            "POST",
             path,
             body ?? new { },
             timeout: timeout ?? TimeSpan.FromSeconds(10))).GetResultOrThrow();

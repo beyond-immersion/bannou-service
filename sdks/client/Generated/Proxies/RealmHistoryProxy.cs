@@ -41,7 +41,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RecordRealmParticipationRequest, RealmHistoricalParticipation>(
-            "POST", "/realm-history/record-participation", request, channel, timeout, cancellationToken);
+            "/realm-history/record-participation", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRealmParticipationRequest, RealmParticipationListResponse>(
-            "POST", "/realm-history/get-participation", request, channel, timeout, cancellationToken);
+            "/realm-history/get-participation", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRealmEventParticipantsRequest, RealmParticipationListResponse>(
-            "POST", "/realm-history/get-event-participants", request, channel, timeout, cancellationToken);
+            "/realm-history/get-event-participants", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteRealmParticipationRequest>(
-            "POST", "/realm-history/delete-participation", request, channel, cancellationToken);
+            "/realm-history/delete-participation", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRealmLoreRequest, RealmLoreResponse>(
-            "POST", "/realm-history/get-lore", request, channel, timeout, cancellationToken);
+            "/realm-history/get-lore", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SetRealmLoreRequest, RealmLoreResponse>(
-            "POST", "/realm-history/set-lore", request, channel, timeout, cancellationToken);
+            "/realm-history/set-lore", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AddRealmLoreElementRequest, RealmLoreResponse>(
-            "POST", "/realm-history/add-lore-element", request, channel, timeout, cancellationToken);
+            "/realm-history/add-lore-element", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteRealmLoreRequest>(
-            "POST", "/realm-history/delete-lore", request, channel, cancellationToken);
+            "/realm-history/delete-lore", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteAllRealmHistoryRequest, DeleteAllRealmHistoryResponse>(
-            "POST", "/realm-history/delete-all", request, channel, timeout, cancellationToken);
+            "/realm-history/delete-all", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -199,6 +199,6 @@ public sealed class RealmHistoryProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SummarizeRealmHistoryRequest, RealmHistorySummaryResponse>(
-            "POST", "/realm-history/summarize", request, channel, timeout, cancellationToken);
+            "/realm-history/summarize", request, channel, timeout, cancellationToken);
     }
 }

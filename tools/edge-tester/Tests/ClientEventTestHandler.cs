@@ -218,7 +218,6 @@ public class ClientEventTestHandler : IServiceTestHandler
             try
             {
                 var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
                     "/testing/publish-test-event",
                     publishRequest,
                     timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
@@ -412,7 +411,6 @@ public class ClientEventTestHandler : IServiceTestHandler
         try
         {
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/testing/publish-test-event",
                 publishRequest,
                 timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();

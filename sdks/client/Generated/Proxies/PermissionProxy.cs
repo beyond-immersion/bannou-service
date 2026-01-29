@@ -41,7 +41,7 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CapabilityRequest, CapabilityResponse>(
-            "POST", "/permission/capabilities", request, channel, timeout, cancellationToken);
+            "/permission/capabilities", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ValidationRequest, ValidationResponse>(
-            "POST", "/permission/validate", request, channel, timeout, cancellationToken);
+            "/permission/validate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ServicePermissionMatrix, RegistrationResponse>(
-            "POST", "/permission/register-service", request, channel, timeout, cancellationToken);
+            "/permission/register-service", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SessionStateUpdate, SessionUpdateResponse>(
-            "POST", "/permission/update-session-state", request, channel, timeout, cancellationToken);
+            "/permission/update-session-state", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SessionRoleUpdate, SessionUpdateResponse>(
-            "POST", "/permission/update-session-role", request, channel, timeout, cancellationToken);
+            "/permission/update-session-role", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ClearSessionStateRequest, SessionUpdateResponse>(
-            "POST", "/permission/clear-session-state", request, channel, timeout, cancellationToken);
+            "/permission/clear-session-state", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SessionInfoRequest, SessionInfo>(
-            "POST", "/permission/get-session-info", request, channel, timeout, cancellationToken);
+            "/permission/get-session-info", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,6 +167,6 @@ public sealed class PermissionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListServicesRequest, RegisteredServicesResponse>(
-            "POST", "/permission/services/list", request, channel, timeout, cancellationToken);
+            "/permission/services/list", request, channel, timeout, cancellationToken);
     }
 }

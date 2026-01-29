@@ -411,7 +411,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 if (messageType == "connect.capability_manifest")
                 {
-                    var availableApis = responseObj?["availableAPIs"]?.AsArray();
+                    var availableApis = responseObj?["availableApis"]?.AsArray();
                     var apiCount = availableApis?.Count ?? 0;
                     Console.WriteLine($"✅ Received capability manifest with {apiCount} available APIs");
 
@@ -756,7 +756,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
 
         // Check if the delete endpoint is available
-        var deleteGuid = adminClient.GetServiceGuid("POST", "/account/delete");
+        var deleteGuid = adminClient.GetServiceGuid("/account/delete");
         if (deleteGuid == null)
         {
             Console.WriteLine("❌ Admin client does not have /account/delete in available APIs");
@@ -775,7 +775,6 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine($"📋 Step 4: Deleting account {accountId} via shared admin WebSocket...");
             var deleteRequest = new { accountId = accountId.ToString() };
             var response = await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/account/delete",
                 deleteRequest,
                 timeout: TimeSpan.FromSeconds(10));
@@ -1435,14 +1434,14 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     if (payloadText.Contains("capability_manifest"))
                     {
                         var manifest = JsonNode.Parse(payloadText)?.AsObject();
-                        var availableAPIs = manifest?["availableAPIs"]?.AsArray();
+                        var availableApis = manifest?["availableApis"]?.AsArray();
 
-                        if (availableAPIs != null)
+                        if (availableApis != null)
                         {
-                            Console.WriteLine($"📥 Received capability manifest: {availableAPIs.Count} APIs available");
+                            Console.WriteLine($"📥 Received capability manifest: {availableApis.Count} APIs available");
 
                             // Look for POST:/account/delete
-                            foreach (var api in availableAPIs)
+                            foreach (var api in availableApis)
                             {
                                 var method = api?["method"]?.GetValue<string>();
                                 var path = api?["path"]?.GetValue<string>();
@@ -1514,7 +1513,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest") continue;
 
-                var availableApis = manifest?["availableAPIs"]?.AsArray();
+                var availableApis = manifest?["availableApis"]?.AsArray();
                 if (availableApis == null || availableApis.Count == 0)
                 {
                     Console.WriteLine("⚠️ Manifest has no available APIs");
@@ -1628,10 +1627,10 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 var reason = manifest?["reason"]?.GetValue<string>();
                 Console.WriteLine($"📥 Received capability manifest: {result.Count} bytes (reason: {reason ?? "initial"})");
 
-                var availableApis = manifest?["availableAPIs"]?.AsArray();
+                var availableApis = manifest?["availableApis"]?.AsArray();
                 if (availableApis == null)
                 {
-                    Console.WriteLine("⚠️ No availableAPIs in manifest, waiting for update...");
+                    Console.WriteLine("⚠️ No availableApis in manifest, waiting for update...");
                     continue;
                 }
 
@@ -1918,7 +1917,6 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             // The /testing/debug/path endpoint returns routing debug info
             // Only POST endpoints are exposed in capability manifest
             var response = (await client.InvokeAsync<object, JsonElement>(
-                "POST",
                 "/testing/debug/path",
                 new { }, // Empty body
                 timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
@@ -2198,7 +2196,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     continue;
                 }
 
-                var availableApis = manifest?["availableAPIs"]?.AsArray();
+                var availableApis = manifest?["availableApis"]?.AsArray();
                 if (availableApis == null)
                 {
                     continue;

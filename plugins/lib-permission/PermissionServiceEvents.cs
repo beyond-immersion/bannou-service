@@ -72,9 +72,8 @@ public partial class PermissionService
 
             foreach (var endpoint in evt.Endpoints)
             {
-                var path = endpoint.Path;
-                var method = endpoint.Method.ToString().ToUpperInvariant();
-                var methodSignature = $"{method}:{path}";
+                // Path is now the method signature (no HTTP method prefix)
+                var methodSignature = endpoint.Path;
 
                 // Process each permission requirement for this endpoint
                 foreach (var permission in endpoint.Permissions ?? new List<PermissionRequirement>())

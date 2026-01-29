@@ -41,7 +41,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListGameSessionsRequest, GameSessionListResponse>(
-            "POST", "/sessions/list", request, channel, timeout, cancellationToken);
+            "/sessions/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateGameSessionRequest, GameSessionResponse>(
-            "POST", "/sessions/create", request, channel, timeout, cancellationToken);
+            "/sessions/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetGameSessionRequest, GameSessionResponse>(
-            "POST", "/sessions/get", request, channel, timeout, cancellationToken);
+            "/sessions/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<JoinGameSessionRequest, JoinGameSessionResponse>(
-            "POST", "/sessions/join", request, channel, timeout, cancellationToken);
+            "/sessions/join", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<LeaveGameSessionRequest>(
-            "POST", "/sessions/leave", request, channel, cancellationToken);
+            "/sessions/leave", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -127,7 +127,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<KickPlayerRequest>(
-            "POST", "/sessions/kick", request, channel, cancellationToken);
+            "/sessions/kick", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<ChatMessageRequest>(
-            "POST", "/sessions/chat", request, channel, cancellationToken);
+            "/sessions/chat", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GameActionRequest, GameActionResponse>(
-            "POST", "/sessions/actions", request, channel, timeout, cancellationToken);
+            "/sessions/actions", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<JoinGameSessionByIdRequest, JoinGameSessionResponse>(
-            "POST", "/sessions/join-session", request, channel, timeout, cancellationToken);
+            "/sessions/join-session", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -195,7 +195,7 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<LeaveGameSessionByIdRequest>(
-            "POST", "/sessions/leave-session", request, channel, cancellationToken);
+            "/sessions/leave-session", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -213,6 +213,6 @@ public sealed class GameSessionProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PublishJoinShortcutRequest, PublishJoinShortcutResponse>(
-            "POST", "/sessions/publish-join-shortcut", request, channel, timeout, cancellationToken);
+            "/sessions/publish-join-shortcut", request, channel, timeout, cancellationToken);
     }
 }

@@ -274,7 +274,7 @@ def generate_proxy_class(service: ServiceInfo) -> str:
             lines.append("        CancellationToken cancellationToken = default)")
             lines.append("    {")
             lines.append(f"        return _client.InvokeAsync<{endpoint.request_type}, {endpoint.response_type}>(")
-            lines.append(f"            \"{endpoint.method}\", \"{endpoint.path}\", request, channel, timeout, cancellationToken);")
+            lines.append(f"            \"{endpoint.path}\", request, channel, timeout, cancellationToken);")
             lines.append("    }")
         elif endpoint.response_type:
             # No request body, but has response
@@ -288,7 +288,7 @@ def generate_proxy_class(service: ServiceInfo) -> str:
             lines.append("        CancellationToken cancellationToken = default)")
             lines.append("    {")
             lines.append(f"        return _client.InvokeAsync<object, {endpoint.response_type}>(")
-            lines.append(f"            \"{endpoint.method}\", \"{endpoint.path}\", new {{}}, channel, timeout, cancellationToken);")
+            lines.append(f"            \"{endpoint.path}\", new {{}}, channel, timeout, cancellationToken);")
             lines.append("    }")
         elif endpoint.request_type:
             # Has request body, but no response type (fire-and-forget style)
@@ -302,7 +302,7 @@ def generate_proxy_class(service: ServiceInfo) -> str:
             lines.append("        CancellationToken cancellationToken = default)")
             lines.append("    {")
             lines.append(f"        return _client.SendEventAsync<{endpoint.request_type}>(")
-            lines.append(f"            \"{endpoint.method}\", \"{endpoint.path}\", request, channel, cancellationToken);")
+            lines.append(f"            \"{endpoint.path}\", request, channel, cancellationToken);")
             lines.append("    }")
 
     lines.append("}")

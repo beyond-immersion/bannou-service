@@ -41,7 +41,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListQueuesRequest, ListQueuesResponse>(
-            "POST", "/matchmaking/queue/list", request, channel, timeout, cancellationToken);
+            "/matchmaking/queue/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetQueueRequest, QueueResponse>(
-            "POST", "/matchmaking/queue/get", request, channel, timeout, cancellationToken);
+            "/matchmaking/queue/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateQueueRequest, QueueResponse>(
-            "POST", "/matchmaking/queue/create", request, channel, timeout, cancellationToken);
+            "/matchmaking/queue/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateQueueRequest, QueueResponse>(
-            "POST", "/matchmaking/queue/update", request, channel, timeout, cancellationToken);
+            "/matchmaking/queue/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteQueueRequest>(
-            "POST", "/matchmaking/queue/delete", request, channel, cancellationToken);
+            "/matchmaking/queue/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<JoinMatchmakingRequest, JoinMatchmakingResponse>(
-            "POST", "/matchmaking/join", request, channel, timeout, cancellationToken);
+            "/matchmaking/join", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -145,7 +145,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<LeaveMatchmakingRequest>(
-            "POST", "/matchmaking/leave", request, channel, cancellationToken);
+            "/matchmaking/leave", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetMatchmakingStatusRequest, MatchmakingStatusResponse>(
-            "POST", "/matchmaking/status", request, channel, timeout, cancellationToken);
+            "/matchmaking/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AcceptMatchRequest, AcceptMatchResponse>(
-            "POST", "/matchmaking/accept", request, channel, timeout, cancellationToken);
+            "/matchmaking/accept", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -197,7 +197,7 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeclineMatchRequest>(
-            "POST", "/matchmaking/decline", request, channel, cancellationToken);
+            "/matchmaking/decline", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -215,6 +215,6 @@ public sealed class MatchmakingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetMatchmakingStatsRequest, MatchmakingStatsResponse>(
-            "POST", "/matchmaking/stats", request, channel, timeout, cancellationToken);
+            "/matchmaking/stats", request, channel, timeout, cancellationToken);
     }
 }

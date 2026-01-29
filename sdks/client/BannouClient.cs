@@ -74,7 +74,7 @@ public partial class BannouClient : IBannouClient
 
     /// <summary>
     /// All available API endpoints with their client-salted GUIDs.
-    /// Key format: "METHOD:/path" (e.g., "POST:/species/get")
+    /// Key format: "/path" (e.g., "/species/get")
     /// </summary>
     public IReadOnlyDictionary<string, Guid> AvailableApis => _apiMappings;
 
@@ -210,31 +210,26 @@ public partial class BannouClient : IBannouClient
     /// <summary>
     /// Gets the service GUID for a specific API endpoint.
     /// </summary>
-    /// <param name="method">HTTP method (GET, POST, etc.)</param>
-    /// <param name="path">API path (e.g., "/account/profile")</param>
+    /// <param name="endpoint">API path (e.g., "/account/get")</param>
     /// <returns>The client-salted GUID, or null if not found</returns>
-    public Guid? GetServiceGuid(string method, string path)
+    public Guid? GetServiceGuid(string endpoint)
     {
-        // Key format: "METHOD:/path" (e.g., "POST:/species/get")
-        var key = $"{method}:{path}";
-        return _apiMappings.TryGetValue(key, out var guid) ? guid : null;
+        return _apiMappings.TryGetValue(endpoint, out var guid) ? guid : null;
     }
 
     /// <summary>
-    /// Invokes a service method by specifying the HTTP method and path.
+    /// Invokes a service method by specifying the API endpoint path.
     /// </summary>
     /// <typeparam name="TRequest">Request model type</typeparam>
     /// <typeparam name="TResponse">Response model type</typeparam>
-    /// <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-    /// <param name="path">API path (e.g., "/account/profile")</param>
+    /// <param name="endpoint">API path (e.g., "/account/get")</param>
     /// <param name="request">Request payload</param>
     /// <param name="channel">Message channel for ordering (default 0)</param>
     /// <param name="timeout">Request timeout</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>ApiResponse containing either the success result or error details</returns>
     public async Task<ApiResponse<TResponse>> InvokeAsync<TRequest, TResponse>(
-        string method,
-        string path,
+        string endpoint,
         TRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -251,11 +246,11 @@ public partial class BannouClient : IBannouClient
         }
 
         // Get service GUID
-        var serviceGuid = GetServiceGuid(method, path);
+        var serviceGuid = GetServiceGuid(endpoint);
         if (serviceGuid == null)
         {
             var availableEndpoints = string.Join(", ", _apiMappings.Keys.Take(10));
-            throw new ArgumentException($"Unknown endpoint: {method} {path}. Available: {availableEndpoints}...");
+            throw new ArgumentException($"Unknown endpoint: {endpoint}. Available: {availableEndpoints}...");
         }
 
         // Serialize request to JSON
@@ -277,7 +272,7 @@ public partial class BannouClient : IBannouClient
         // Set up response awaiter
         var tcs = new TaskCompletionSource<BinaryMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[messageId] = tcs;
-        _connectionState.AddPendingMessage(messageId, $"{method}:{path}", DateTimeOffset.UtcNow);
+        _connectionState.AddPendingMessage(messageId, endpoint, DateTimeOffset.UtcNow);
 
         try
         {
@@ -309,8 +304,7 @@ public partial class BannouClient : IBannouClient
                         ErrorName = ErrorResponse.GetErrorName(response.ResponseCode),
                         Message = null, // No message in binary error responses
                         MessageId = messageId,
-                        Method = method,
-                        Path = path
+                        Endpoint = endpoint
                     });
                 }
 
@@ -332,8 +326,7 @@ public partial class BannouClient : IBannouClient
                         ErrorName = "DeserializationError",
                         Message = $"Failed to deserialize response as {typeof(TResponse).Name}",
                         MessageId = messageId,
-                        Method = method,
-                        Path = path
+                        Endpoint = endpoint
                     });
                 }
 
@@ -341,7 +334,7 @@ public partial class BannouClient : IBannouClient
             }
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
-                throw new TimeoutException($"Request to {method} {path} timed out after {effectiveTimeout.TotalSeconds} seconds");
+                throw new TimeoutException($"Request to {endpoint} timed out after {effectiveTimeout.TotalSeconds} seconds");
             }
         }
         finally
@@ -355,14 +348,12 @@ public partial class BannouClient : IBannouClient
     /// Sends a fire-and-forget event (no response expected).
     /// </summary>
     /// <typeparam name="TRequest">Request model type</typeparam>
-    /// <param name="method">HTTP method</param>
-    /// <param name="path">API path</param>
+    /// <param name="endpoint">API path (e.g., "/events/publish")</param>
     /// <param name="request">Request payload</param>
     /// <param name="channel">Message channel for ordering</param>
     /// <param name="cancellationToken">Cancellation token</param>
     public async Task SendEventAsync<TRequest>(
-        string method,
-        string path,
+        string endpoint,
         TRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -378,8 +369,8 @@ public partial class BannouClient : IBannouClient
         }
 
         // Get service GUID
-        var serviceGuid = GetServiceGuid(method, path)
-            ?? throw new ArgumentException($"Unknown endpoint: {method} {path}");
+        var serviceGuid = GetServiceGuid(endpoint)
+            ?? throw new ArgumentException($"Unknown endpoint: {endpoint}");
 
         // Serialize request to JSON
         var jsonPayload = BannouJson.Serialize(request);
@@ -412,15 +403,13 @@ public partial class BannouClient : IBannouClient
     /// Meta type is encoded in Channel field (Connect never reads payloads - zero-copy principle).
     /// </summary>
     /// <typeparam name="T">The expected data type for the meta response (e.g., JsonSchemaData, EndpointInfoData)</typeparam>
-    /// <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-    /// <param name="path">API path (e.g., "/account/get")</param>
+    /// <param name="endpoint">API path (e.g., "/account/get")</param>
     /// <param name="metaType">Type of metadata to request</param>
     /// <param name="timeout">Request timeout (default 10 seconds)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>MetaResponse containing the requested metadata</returns>
     public async Task<MetaResponse<T>> GetEndpointMetaAsync<T>(
-        string method,
-        string path,
+        string endpoint,
         MetaType metaType = MetaType.FullSchema,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
@@ -436,11 +425,11 @@ public partial class BannouClient : IBannouClient
         }
 
         // Get service GUID (same as regular requests)
-        var serviceGuid = GetServiceGuid(method, path);
+        var serviceGuid = GetServiceGuid(endpoint);
         if (serviceGuid == null)
         {
             var availableEndpoints = string.Join(", ", _apiMappings.Keys.Take(10));
-            throw new ArgumentException($"Unknown endpoint: {method} {path}. Available: {availableEndpoints}...");
+            throw new ArgumentException($"Unknown endpoint: {endpoint}. Available: {availableEndpoints}...");
         }
 
         // Create meta message - meta type encoded in Channel field, payload is EMPTY
@@ -458,7 +447,7 @@ public partial class BannouClient : IBannouClient
         // Set up response awaiter (same pattern as InvokeAsync)
         var tcs = new TaskCompletionSource<BinaryMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[messageId] = tcs;
-        _connectionState.AddPendingMessage(messageId, $"META:{method}:{path}", DateTimeOffset.UtcNow);
+        _connectionState.AddPendingMessage(messageId, $"META:{endpoint}", DateTimeOffset.UtcNow);
 
         try
         {
@@ -495,7 +484,7 @@ public partial class BannouClient : IBannouClient
             }
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
-                throw new TimeoutException($"Meta request for {method} {path} timed out after {effectiveTimeout.TotalSeconds} seconds");
+                throw new TimeoutException($"Meta request for {endpoint} timed out after {effectiveTimeout.TotalSeconds} seconds");
             }
         }
         finally
@@ -508,50 +497,42 @@ public partial class BannouClient : IBannouClient
     /// <summary>
     /// Gets human-readable endpoint information (summary, description, tags, deprecated status).
     /// </summary>
-    /// <param name="method">HTTP method</param>
-    /// <param name="path">API path</param>
+    /// <param name="endpoint">API path (e.g., "/account/get")</param>
     /// <param name="cancellationToken">Cancellation token</param>
     public Task<MetaResponse<EndpointInfoData>> GetEndpointInfoAsync(
-        string method,
-        string path,
+        string endpoint,
         CancellationToken cancellationToken = default)
-        => GetEndpointMetaAsync<EndpointInfoData>(method, path, MetaType.EndpointInfo, null, cancellationToken);
+        => GetEndpointMetaAsync<EndpointInfoData>(endpoint, MetaType.EndpointInfo, null, cancellationToken);
 
     /// <summary>
     /// Gets JSON Schema for the request body of an endpoint.
     /// </summary>
-    /// <param name="method">HTTP method</param>
-    /// <param name="path">API path</param>
+    /// <param name="endpoint">API path (e.g., "/account/get")</param>
     /// <param name="cancellationToken">Cancellation token</param>
     public Task<MetaResponse<JsonSchemaData>> GetRequestSchemaAsync(
-        string method,
-        string path,
+        string endpoint,
         CancellationToken cancellationToken = default)
-        => GetEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.RequestSchema, null, cancellationToken);
+        => GetEndpointMetaAsync<JsonSchemaData>(endpoint, MetaType.RequestSchema, null, cancellationToken);
 
     /// <summary>
     /// Gets JSON Schema for the response body of an endpoint.
     /// </summary>
-    /// <param name="method">HTTP method</param>
-    /// <param name="path">API path</param>
+    /// <param name="endpoint">API path (e.g., "/account/get")</param>
     /// <param name="cancellationToken">Cancellation token</param>
     public Task<MetaResponse<JsonSchemaData>> GetResponseSchemaAsync(
-        string method,
-        string path,
+        string endpoint,
         CancellationToken cancellationToken = default)
-        => GetEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.ResponseSchema, null, cancellationToken);
+        => GetEndpointMetaAsync<JsonSchemaData>(endpoint, MetaType.ResponseSchema, null, cancellationToken);
 
     /// <summary>
     /// Gets full schema including info, request schema, and response schema.
     /// </summary>
-    /// <param name="method">HTTP method</param>
-    /// <param name="path">API path</param>
+    /// <param name="endpoint">API path (e.g., "/account/get")</param>
     /// <param name="cancellationToken">Cancellation token</param>
     public Task<MetaResponse<FullSchemaData>> GetFullSchemaAsync(
-        string method,
-        string path,
+        string endpoint,
         CancellationToken cancellationToken = default)
-        => GetEndpointMetaAsync<FullSchemaData>(method, path, MetaType.FullSchema, null, cancellationToken);
+        => GetEndpointMetaAsync<FullSchemaData>(endpoint, MetaType.FullSchema, null, cancellationToken);
 
     /// <summary>
     /// Registers a handler for server-pushed events.
@@ -1014,28 +995,29 @@ public partial class BannouClient : IBannouClient
                 _sessionId = sessionIdElement.GetString();
             }
 
-            // Extract available APIs
-            if (manifest.TryGetProperty("availableAPIs", out var apisElement) &&
+            // Extract available APIs - new schema format: { serviceId, endpoint, service, description }
+            if (manifest.TryGetProperty("availableApis", out var apisElement) &&
                 apisElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var api in apisElement.EnumerateArray())
                 {
-                    var endpointKey = api.TryGetProperty("endpointKey", out var keyElement)
-                        ? keyElement.GetString()
+                    // New schema: endpoint is the lookup key (e.g., "/account/get")
+                    var endpoint = api.TryGetProperty("endpoint", out var endpointElement)
+                        ? endpointElement.GetString()
                         : null;
 
-                    var serviceGuidStr = api.TryGetProperty("serviceGuid", out var guidElement)
-                        ? guidElement.GetString()
+                    var serviceIdStr = api.TryGetProperty("serviceId", out var idElement)
+                        ? idElement.GetString()
                         : null;
 
-                    if (!string.IsNullOrEmpty(endpointKey) &&
-                        !string.IsNullOrEmpty(serviceGuidStr) &&
-                        Guid.TryParse(serviceGuidStr, out var serviceGuid))
+                    if (!string.IsNullOrEmpty(endpoint) &&
+                        !string.IsNullOrEmpty(serviceIdStr) &&
+                        Guid.TryParse(serviceIdStr, out var serviceGuid))
                     {
-                        _apiMappings[endpointKey] = serviceGuid;
+                        _apiMappings[endpoint] = serviceGuid;
 
                         // Also add to connection state for backwards compatibility
-                        _connectionState?.AddServiceMapping(endpointKey, serviceGuid);
+                        _connectionState?.AddServiceMapping(endpoint, serviceGuid);
                     }
                 }
             }
@@ -1126,14 +1108,9 @@ public class ErrorResponse
     public ulong MessageId { get; init; }
 
     /// <summary>
-    /// The HTTP method of the original request (e.g., "POST", "GET").
+    /// The endpoint path of the original request (e.g., "/subscription/create").
     /// </summary>
-    public string Method { get; init; } = string.Empty;
-
-    /// <summary>
-    /// The path of the original request (e.g., "/subscription/create").
-    /// </summary>
-    public string Path { get; init; } = string.Empty;
+    public string Endpoint { get; init; } = string.Empty;
 }
 
 /// <summary>

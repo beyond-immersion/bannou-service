@@ -41,7 +41,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetLocationRequest, LocationResponse>(
-            "POST", "/location/get", request, channel, timeout, cancellationToken);
+            "/location/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetLocationByCodeRequest, LocationResponse>(
-            "POST", "/location/get-by-code", request, channel, timeout, cancellationToken);
+            "/location/get-by-code", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListLocationsRequest, LocationListResponse>(
-            "POST", "/location/list", request, channel, timeout, cancellationToken);
+            "/location/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListLocationsByRealmRequest, LocationListResponse>(
-            "POST", "/location/list-by-realm", request, channel, timeout, cancellationToken);
+            "/location/list-by-realm", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListLocationsByParentRequest, LocationListResponse>(
-            "POST", "/location/list-by-parent", request, channel, timeout, cancellationToken);
+            "/location/list-by-parent", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListRootLocationsRequest, LocationListResponse>(
-            "POST", "/location/list-root", request, channel, timeout, cancellationToken);
+            "/location/list-root", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetLocationAncestorsRequest, LocationListResponse>(
-            "POST", "/location/get-ancestors", request, channel, timeout, cancellationToken);
+            "/location/get-ancestors", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetLocationDescendantsRequest, LocationListResponse>(
-            "POST", "/location/get-descendants", request, channel, timeout, cancellationToken);
+            "/location/get-descendants", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateLocationRequest, LocationResponse>(
-            "POST", "/location/create", request, channel, timeout, cancellationToken);
+            "/location/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateLocationRequest, LocationResponse>(
-            "POST", "/location/update", request, channel, timeout, cancellationToken);
+            "/location/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SetLocationParentRequest, LocationResponse>(
-            "POST", "/location/set-parent", request, channel, timeout, cancellationToken);
+            "/location/set-parent", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RemoveLocationParentRequest, LocationResponse>(
-            "POST", "/location/remove-parent", request, channel, timeout, cancellationToken);
+            "/location/remove-parent", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -255,7 +255,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteLocationRequest>(
-            "POST", "/location/delete", request, channel, cancellationToken);
+            "/location/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -273,7 +273,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeprecateLocationRequest, LocationResponse>(
-            "POST", "/location/deprecate", request, channel, timeout, cancellationToken);
+            "/location/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -291,7 +291,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UndeprecateLocationRequest, LocationResponse>(
-            "POST", "/location/undeprecate", request, channel, timeout, cancellationToken);
+            "/location/undeprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -309,7 +309,7 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<LocationExistsRequest, LocationExistsResponse>(
-            "POST", "/location/exists", request, channel, timeout, cancellationToken);
+            "/location/exists", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -327,6 +327,6 @@ public sealed class LocationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SeedLocationsRequest, SeedLocationsResponse>(
-            "POST", "/location/seed", request, channel, timeout, cancellationToken);
+            "/location/seed", request, channel, timeout, cancellationToken);
     }
 }

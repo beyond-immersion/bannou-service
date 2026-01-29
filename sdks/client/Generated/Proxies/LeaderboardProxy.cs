@@ -41,7 +41,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
-            "POST", "/leaderboard/definition/create", request, channel, timeout, cancellationToken);
+            "/leaderboard/definition/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
-            "POST", "/leaderboard/definition/get", request, channel, timeout, cancellationToken);
+            "/leaderboard/definition/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListLeaderboardDefinitionsRequest, ListLeaderboardDefinitionsResponse>(
-            "POST", "/leaderboard/definition/list", request, channel, timeout, cancellationToken);
+            "/leaderboard/definition/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
-            "POST", "/leaderboard/definition/update", request, channel, timeout, cancellationToken);
+            "/leaderboard/definition/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteLeaderboardDefinitionRequest>(
-            "POST", "/leaderboard/definition/delete", request, channel, cancellationToken);
+            "/leaderboard/definition/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SubmitScoreRequest, SubmitScoreResponse>(
-            "POST", "/leaderboard/score/submit", request, channel, timeout, cancellationToken);
+            "/leaderboard/score/submit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SubmitScoreBatchRequest, SubmitScoreBatchResponse>(
-            "POST", "/leaderboard/score/submit-batch", request, channel, timeout, cancellationToken);
+            "/leaderboard/score/submit-batch", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEntityRankRequest, EntityRankResponse>(
-            "POST", "/leaderboard/rank/get", request, channel, timeout, cancellationToken);
+            "/leaderboard/rank/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetTopRanksRequest, LeaderboardEntriesResponse>(
-            "POST", "/leaderboard/rank/top", request, channel, timeout, cancellationToken);
+            "/leaderboard/rank/top", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRanksAroundRequest, LeaderboardEntriesResponse>(
-            "POST", "/leaderboard/rank/around", request, channel, timeout, cancellationToken);
+            "/leaderboard/rank/around", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateSeasonRequest, SeasonResponse>(
-            "POST", "/leaderboard/season/create", request, channel, timeout, cancellationToken);
+            "/leaderboard/season/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -237,6 +237,6 @@ public sealed class LeaderboardProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSeasonRequest, SeasonResponse>(
-            "POST", "/leaderboard/season/get", request, channel, timeout, cancellationToken);
+            "/leaderboard/season/get", request, channel, timeout, cancellationToken);
     }
 }

@@ -214,11 +214,11 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     // Check if this is a capability manifest
                     var responseObj = JsonNode.Parse(responseText)?.AsObject();
 
-                    // Capability manifest should have eventName="connect.capability_manifest" and availableAPIs
+                    // Capability manifest should have eventName="connect.capability_manifest" and availableApis
                     var messageType = responseObj?["eventName"]?.GetValue<string>();
                     if (messageType == "connect.capability_manifest")
                     {
-                        var availableApis = responseObj?["availableAPIs"]?.AsArray();
+                        var availableApis = responseObj?["availableApis"]?.AsArray();
                         var apiCount = availableApis?.Count ?? 0;
                         Console.WriteLine($"✅ Received capability manifest with {apiCount} available APIs");
 
@@ -597,7 +597,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             }
 
             var sessionId = initialManifest?["sessionId"]?.GetValue<string>();
-            var initialApis = initialManifest?["availableAPIs"]?.AsArray();
+            var initialApis = initialManifest?["availableApis"]?.AsArray();
             var initialApiCount = initialApis?.Count ?? 0;
             Console.WriteLine($"✅ Initial capability manifest: {initialApiCount} APIs, sessionId: {sessionId}");
 
@@ -623,7 +623,6 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             try
             {
                 var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
                     "/permission/update-session-state",
                     stateUpdate,
                     timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
@@ -654,7 +653,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 var updatedType = updatedManifest?["eventName"]?.GetValue<string>();
                 if (updatedType == "connect.capability_manifest")
                 {
-                    var updatedApis = updatedManifest?["availableAPIs"]?.AsArray();
+                    var updatedApis = updatedManifest?["availableApis"]?.AsArray();
                     var updatedApiCount = updatedApis?.Count ?? 0;
 
                     Console.WriteLine($"✅ Updated capability manifest: {updatedApiCount} APIs");

@@ -41,7 +41,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateCharacterRequest, CharacterResponse>(
-            "POST", "/character/create", request, channel, timeout, cancellationToken);
+            "/character/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetCharacterRequest, CharacterResponse>(
-            "POST", "/character/get", request, channel, timeout, cancellationToken);
+            "/character/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateCharacterRequest, CharacterResponse>(
-            "POST", "/character/update", request, channel, timeout, cancellationToken);
+            "/character/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteCharacterRequest>(
-            "POST", "/character/delete", request, channel, cancellationToken);
+            "/character/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListCharactersRequest, CharacterListResponse>(
-            "POST", "/character/list", request, channel, timeout, cancellationToken);
+            "/character/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEnrichedCharacterRequest, EnrichedCharacterResponse>(
-            "POST", "/character/get-enriched", request, channel, timeout, cancellationToken);
+            "/character/get-enriched", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CompressCharacterRequest, CharacterArchive>(
-            "POST", "/character/compress", request, channel, timeout, cancellationToken);
+            "/character/compress", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetCharacterArchiveRequest, CharacterArchive>(
-            "POST", "/character/get-archive", request, channel, timeout, cancellationToken);
+            "/character/get-archive", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CheckReferencesRequest, CharacterRefCount>(
-            "POST", "/character/check-references", request, channel, timeout, cancellationToken);
+            "/character/check-references", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -201,6 +201,6 @@ public sealed class CharacterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetCharactersByRealmRequest, CharacterListResponse>(
-            "POST", "/character/by-realm", request, channel, timeout, cancellationToken);
+            "/character/by-realm", request, channel, timeout, cancellationToken);
     }
 }

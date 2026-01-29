@@ -41,7 +41,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<IngestEventRequest, IngestEventResponse>(
-            "POST", "/analytics/event/ingest", request, channel, timeout, cancellationToken);
+            "/analytics/event/ingest", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<IngestEventBatchRequest, IngestEventBatchResponse>(
-            "POST", "/analytics/event/ingest-batch", request, channel, timeout, cancellationToken);
+            "/analytics/event/ingest-batch", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEntitySummaryRequest, EntitySummaryResponse>(
-            "POST", "/analytics/summary/get", request, channel, timeout, cancellationToken);
+            "/analytics/summary/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryEntitySummariesRequest, QueryEntitySummariesResponse>(
-            "POST", "/analytics/summary/query", request, channel, timeout, cancellationToken);
+            "/analytics/summary/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSkillRatingRequest, SkillRatingResponse>(
-            "POST", "/analytics/rating/get", request, channel, timeout, cancellationToken);
+            "/analytics/rating/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateSkillRatingRequest, UpdateSkillRatingResponse>(
-            "POST", "/analytics/rating/update", request, channel, timeout, cancellationToken);
+            "/analytics/rating/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<RecordControllerEventRequest>(
-            "POST", "/analytics/controller-history/record", request, channel, cancellationToken);
+            "/analytics/controller-history/record", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryControllerHistoryRequest, QueryControllerHistoryResponse>(
-            "POST", "/analytics/controller-history/query", request, channel, timeout, cancellationToken);
+            "/analytics/controller-history/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,6 +183,6 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CleanupControllerHistoryRequest, CleanupControllerHistoryResponse>(
-            "POST", "/analytics/controller-history/cleanup", request, channel, timeout, cancellationToken);
+            "/analytics/controller-history/cleanup", request, channel, timeout, cancellationToken);
     }
 }

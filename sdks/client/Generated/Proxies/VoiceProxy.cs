@@ -41,7 +41,7 @@ public sealed class VoiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateVoiceRoomRequest, VoiceRoomResponse>(
-            "POST", "/voice/room/create", request, channel, timeout, cancellationToken);
+            "/voice/room/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class VoiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetVoiceRoomRequest, VoiceRoomResponse>(
-            "POST", "/voice/room/get", request, channel, timeout, cancellationToken);
+            "/voice/room/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class VoiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<JoinVoiceRoomRequest, JoinVoiceRoomResponse>(
-            "POST", "/voice/room/join", request, channel, timeout, cancellationToken);
+            "/voice/room/join", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public sealed class VoiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<LeaveVoiceRoomRequest>(
-            "POST", "/voice/room/leave", request, channel, cancellationToken);
+            "/voice/room/leave", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -109,7 +109,7 @@ public sealed class VoiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteVoiceRoomRequest>(
-            "POST", "/voice/room/delete", request, channel, cancellationToken);
+            "/voice/room/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public sealed class VoiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<PeerHeartbeatRequest>(
-            "POST", "/voice/peer/heartbeat", request, channel, cancellationToken);
+            "/voice/peer/heartbeat", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -141,6 +141,6 @@ public sealed class VoiceProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<AnswerPeerRequest>(
-            "POST", "/voice/peer/answer", request, channel, cancellationToken);
+            "/voice/peer/answer", request, channel, cancellationToken);
     }
 }

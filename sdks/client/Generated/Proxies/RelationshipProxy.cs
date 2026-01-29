@@ -41,7 +41,7 @@ public sealed class RelationshipProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateRelationshipRequest, RelationshipResponse>(
-            "POST", "/relationship/create", request, channel, timeout, cancellationToken);
+            "/relationship/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class RelationshipProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRelationshipRequest, RelationshipResponse>(
-            "POST", "/relationship/get", request, channel, timeout, cancellationToken);
+            "/relationship/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class RelationshipProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListRelationshipsByEntityRequest, RelationshipListResponse>(
-            "POST", "/relationship/list-by-entity", request, channel, timeout, cancellationToken);
+            "/relationship/list-by-entity", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class RelationshipProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRelationshipsBetweenRequest, RelationshipListResponse>(
-            "POST", "/relationship/get-between", request, channel, timeout, cancellationToken);
+            "/relationship/get-between", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class RelationshipProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListRelationshipsByTypeRequest, RelationshipListResponse>(
-            "POST", "/relationship/list-by-type", request, channel, timeout, cancellationToken);
+            "/relationship/list-by-type", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class RelationshipProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateRelationshipRequest, RelationshipResponse>(
-            "POST", "/relationship/update", request, channel, timeout, cancellationToken);
+            "/relationship/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,6 +147,6 @@ public sealed class RelationshipProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<EndRelationshipRequest>(
-            "POST", "/relationship/end", request, channel, cancellationToken);
+            "/relationship/end", request, channel, cancellationToken);
     }
 }

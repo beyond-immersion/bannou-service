@@ -41,7 +41,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRealmRequest, RealmResponse>(
-            "POST", "/realm/get", request, channel, timeout, cancellationToken);
+            "/realm/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRealmByCodeRequest, RealmResponse>(
-            "POST", "/realm/get-by-code", request, channel, timeout, cancellationToken);
+            "/realm/get-by-code", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListRealmsRequest, RealmListResponse>(
-            "POST", "/realm/list", request, channel, timeout, cancellationToken);
+            "/realm/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateRealmRequest, RealmResponse>(
-            "POST", "/realm/create", request, channel, timeout, cancellationToken);
+            "/realm/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateRealmRequest, RealmResponse>(
-            "POST", "/realm/update", request, channel, timeout, cancellationToken);
+            "/realm/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteRealmRequest>(
-            "POST", "/realm/delete", request, channel, cancellationToken);
+            "/realm/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeprecateRealmRequest, RealmResponse>(
-            "POST", "/realm/deprecate", request, channel, timeout, cancellationToken);
+            "/realm/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UndeprecateRealmRequest, RealmResponse>(
-            "POST", "/realm/undeprecate", request, channel, timeout, cancellationToken);
+            "/realm/undeprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RealmExistsRequest, RealmExistsResponse>(
-            "POST", "/realm/exists", request, channel, timeout, cancellationToken);
+            "/realm/exists", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -201,6 +201,6 @@ public sealed class RealmProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SeedRealmsRequest, SeedRealmsResponse>(
-            "POST", "/realm/seed", request, channel, timeout, cancellationToken);
+            "/realm/seed", request, channel, timeout, cancellationToken);
     }
 }
