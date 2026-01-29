@@ -89,7 +89,7 @@ public class RtpEngineClient : IRtpEngineClient
         }
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseBencodeResponse<RtpEngineOfferResponse>(response);
+        return await ParseBencodeResponse<RtpEngineOfferResponse>(response);
     }
 
     /// <inheritdoc />
@@ -110,7 +110,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseBencodeResponse<RtpEngineAnswerResponse>(response);
+        return await ParseBencodeResponse<RtpEngineAnswerResponse>(response);
     }
 
     /// <inheritdoc />
@@ -127,7 +127,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseBencodeResponse<RtpEngineDeleteResponse>(response);
+        return await ParseBencodeResponse<RtpEngineDeleteResponse>(response);
     }
 
     /// <inheritdoc />
@@ -146,7 +146,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseBencodeResponse<RtpEnginePublishResponse>(response);
+        return await ParseBencodeResponse<RtpEnginePublishResponse>(response);
     }
 
     /// <inheritdoc />
@@ -165,7 +165,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseBencodeResponse<RtpEngineSubscribeResponse>(response);
+        return await ParseBencodeResponse<RtpEngineSubscribeResponse>(response);
     }
 
     /// <inheritdoc />
@@ -180,7 +180,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseBencodeResponse<RtpEngineQueryResponse>(response);
+        return await ParseBencodeResponse<RtpEngineQueryResponse>(response);
     }
 
     /// <inheritdoc />
@@ -456,7 +456,7 @@ public class RtpEngineClient : IRtpEngineClient
         return (null, index + 1);
     }
 
-    private T ParseBencodeResponse<T>(string bencode) where T : RtpEngineBaseResponse, new()
+    private async Task<T> ParseBencodeResponse<T>(string bencode) where T : RtpEngineBaseResponse, new()
     {
         try
         {
@@ -494,14 +494,14 @@ public class RtpEngineClient : IRtpEngineClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to parse RTPEngine bencode response: {Bencode}", bencode);
-            _messageBus.TryPublishErrorAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "ParseBencodeResponse",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "rtpengine",
                 details: new { bencode },
-                stack: ex.StackTrace).GetAwaiter().GetResult();
+                stack: ex.StackTrace);
             return new T { Result = "error", ErrorReason = ex.Message };
         }
     }

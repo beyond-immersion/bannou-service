@@ -20,9 +20,9 @@ public class AccountServiceTests
     private readonly AccountServiceConfiguration _configuration;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<AccountModel>> _mockAccountStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<AuthMethodInfo>>> _mockAuthMethodsStore;
+    private readonly Mock<IJsonQueryableStateStore<AccountModel>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -34,9 +34,9 @@ public class AccountServiceTests
         _configuration = new AccountServiceConfiguration();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockAccountStore = new Mock<IStateStore<AccountModel>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockAuthMethodsStore = new Mock<IStateStore<List<AuthMethodInfo>>>();
+        _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<AccountModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -45,14 +45,14 @@ public class AccountServiceTests
             .Setup(f => f.GetStore<AccountModel>(ACCOUNT_STATE_STORE))
             .Returns(_mockAccountStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<List<string>>(ACCOUNT_STATE_STORE))
-            .Returns(_mockListStore.Object);
-        _mockStateStoreFactory
             .Setup(f => f.GetStore<string>(ACCOUNT_STATE_STORE))
             .Returns(_mockStringStore.Object);
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<AuthMethodInfo>>(ACCOUNT_STATE_STORE))
             .Returns(_mockAuthMethodsStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<AccountModel>(ACCOUNT_STATE_STORE))
+            .Returns(_mockJsonQueryableStore.Object);
     }
 
     #region Permission Registration Tests
@@ -66,7 +66,7 @@ public class AccountServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(13, endpoints.Count); // 13 endpoints defined in account-api.yaml with x-permissions
+        Assert.Equal(16, endpoints.Count); // 16 endpoints defined in account-api.yaml with x-permissions
     }
 
     [Fact]
@@ -94,8 +94,8 @@ public class AccountServiceTests
         var guardedEndpoints = endpoints.Where(e =>
             e.Permissions.All(p => p.Role == "user" || p.Role == "admin")).ToList();
 
-        Assert.Equal(13, guardedEndpoints.Count);
-        Assert.Equal(10, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
+        Assert.Equal(16, guardedEndpoints.Count);
+        Assert.Equal(13, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
         Assert.Equal(3, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
     }
 
@@ -106,14 +106,14 @@ public class AccountServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = AccountPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = AccountPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);
         Assert.Equal("account", registrationEvent.ServiceName);
         Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(13, registrationEvent.Endpoints.Count);
+        Assert.Equal(16, registrationEvent.Endpoints.Count);
     }
 
     [Fact]
@@ -166,12 +166,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -185,14 +179,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -228,12 +214,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -247,14 +227,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -278,7 +250,7 @@ public class AccountServiceTests
         var accountId = Guid.NewGuid();
         var accountModel = new AccountModel
         {
-            AccountId = accountId.ToString(),
+            AccountId = accountId,
             Email = "user@test.local",
             PasswordHash = "old",
             Roles = new List<string> { "user" },
@@ -287,16 +259,16 @@ public class AccountServiceTests
         };
 
         _mockAccountStore
-            .Setup(s => s.GetAsync(
+            .Setup(s => s.GetWithETagAsync(
                 $"account-{accountId}",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountModel);
+            .ReturnsAsync((accountModel, "etag-0"));
 
         _mockAccountStore
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
@@ -325,7 +297,7 @@ public class AccountServiceTests
         var accountId = Guid.NewGuid();
         var accountModel = new AccountModel
         {
-            AccountId = accountId.ToString(),
+            AccountId = accountId,
             Email = "user@test.local",
             PasswordHash = "hash",
             IsVerified = false,
@@ -335,16 +307,16 @@ public class AccountServiceTests
         };
 
         _mockAccountStore
-            .Setup(s => s.GetAsync(
+            .Setup(s => s.GetWithETagAsync(
                 $"account-{accountId}",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountModel);
+            .ReturnsAsync((accountModel, "etag-0"));
 
         _mockAccountStore
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
@@ -385,12 +357,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -404,14 +370,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -451,12 +409,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -470,14 +422,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -510,12 +454,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -529,14 +467,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -577,12 +507,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -596,14 +520,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -656,12 +572,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest());
@@ -683,12 +603,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = -5 });
@@ -710,12 +634,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { PageSize = -10 });
@@ -737,12 +665,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = 0 });
@@ -782,12 +714,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock account save
         _mockAccountStore
@@ -798,14 +724,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -844,12 +762,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -860,13 +772,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -903,12 +808,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -919,13 +818,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -954,12 +846,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -970,13 +856,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         var accountIds = new List<Guid>();
 
@@ -1018,12 +897,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -1034,13 +907,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Truncate to second precision to match Unix timestamp storage
         var beforeCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -1092,12 +958,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -1108,13 +968,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -1176,6 +1029,663 @@ public class AccountServiceTests
 
         // Assert
         Assert.Equal("@admin.example.com", trimmedDomain);
+    }
+
+    #endregion
+
+    #region BatchGetAccounts Tests
+
+    [Fact]
+    public async Task BatchGetAccountsAsync_ReturnsFoundAccountsWithAuthMethods()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId1 = Guid.NewGuid();
+        var accountId2 = Guid.NewGuid();
+
+        var account1 = new AccountModel
+        {
+            AccountId = accountId1,
+            Email = "user1@test.local",
+            DisplayName = "User One",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        var account2 = new AccountModel
+        {
+            AccountId = accountId2,
+            Email = "user2@test.local",
+            DisplayName = "User Two",
+            Roles = new List<string> { "user", "admin" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId1}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account1);
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId2}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account2);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        var request = new BatchGetAccountsRequest
+        {
+            AccountIds = new List<Guid> { accountId1, accountId2 }
+        };
+
+        // Act
+        var (status, response) = await service.BatchGetAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Accounts.Count);
+        Assert.Empty(response.NotFound);
+    }
+
+    [Fact]
+    public async Task BatchGetAccountsAsync_ReportsNotFoundIds()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var existingId = Guid.NewGuid();
+        var missingId = Guid.NewGuid();
+
+        var existingAccount = new AccountModel
+        {
+            AccountId = existingId,
+            Email = "exists@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{existingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAccount);
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{missingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        var request = new BatchGetAccountsRequest
+        {
+            AccountIds = new List<Guid> { existingId, missingId }
+        };
+
+        // Act
+        var (status, response) = await service.BatchGetAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Accounts);
+        Assert.Equal(existingId, response.Accounts.First().AccountId);
+        Assert.Single(response.NotFound);
+        Assert.Contains(missingId, response.NotFound);
+    }
+
+    [Fact]
+    public async Task BatchGetAccountsAsync_TreatsSoftDeletedAsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var deletedId = Guid.NewGuid();
+
+        var deletedAccount = new AccountModel
+        {
+            AccountId = deletedId,
+            Email = "deleted@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            DeletedAt = DateTimeOffset.UtcNow // Soft-deleted
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{deletedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(deletedAccount);
+
+        var request = new BatchGetAccountsRequest
+        {
+            AccountIds = new List<Guid> { deletedId }
+        };
+
+        // Act
+        var (status, response) = await service.BatchGetAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Accounts);
+        Assert.Single(response.NotFound);
+        Assert.Contains(deletedId, response.NotFound);
+    }
+
+    [Fact]
+    public async Task BatchGetAccountsAsync_MixOfFoundAndNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        var id3 = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{id1}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = id1,
+                Email = "found@test.local",
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{id2}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{id3}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = id3,
+                Email = "deleted@test.local",
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        var request = new BatchGetAccountsRequest
+        {
+            AccountIds = new List<Guid> { id1, id2, id3 }
+        };
+
+        // Act
+        var (status, response) = await service.BatchGetAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Accounts);
+        Assert.Equal(2, response.NotFound.Count);
+        Assert.Contains(id2, response.NotFound);
+        Assert.Contains(id3, response.NotFound);
+    }
+
+    #endregion
+
+    #region CountAccounts Tests
+
+    [Fact]
+    public async Task CountAccountsAsync_NoFilters_ReturnsCount()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(42L);
+
+        var request = new CountAccountsRequest();
+
+        // Act
+        var (status, response) = await service.CountAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(42L, response.Count);
+    }
+
+    [Fact]
+    public async Task CountAccountsAsync_WithEmailFilter_PassesContainsCondition()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        List<QueryCondition>? capturedConditions = null;
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, CancellationToken>(
+                (conditions, ct) => capturedConditions = conditions?.ToList())
+            .ReturnsAsync(5L);
+
+        var request = new CountAccountsRequest { Email = "test@" };
+
+        // Act
+        var (status, response) = await service.CountAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedConditions);
+        Assert.Contains(capturedConditions, c =>
+            c.Path == "$.Email" &&
+            c.Operator == QueryOperator.Contains &&
+            c.Value.ToString() == "test@");
+    }
+
+    [Fact]
+    public async Task CountAccountsAsync_WithRoleFilter_PassesInCondition()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        List<QueryCondition>? capturedConditions = null;
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, CancellationToken>(
+                (conditions, ct) => capturedConditions = conditions?.ToList())
+            .ReturnsAsync(3L);
+
+        var request = new CountAccountsRequest { Role = "admin" };
+
+        // Act
+        var (status, response) = await service.CountAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(3L, response.Count);
+        Assert.NotNull(capturedConditions);
+        Assert.Contains(capturedConditions, c =>
+            c.Path == "$.Roles" &&
+            c.Operator == QueryOperator.In &&
+            c.Value.ToString() == "admin");
+    }
+
+    [Fact]
+    public async Task CountAccountsAsync_WithVerifiedFilter_PassesEqualsCondition()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        List<QueryCondition>? capturedConditions = null;
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, CancellationToken>(
+                (conditions, ct) => capturedConditions = conditions?.ToList())
+            .ReturnsAsync(10L);
+
+        var request = new CountAccountsRequest { Verified = true };
+
+        // Act
+        var (status, response) = await service.CountAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedConditions);
+        Assert.Contains(capturedConditions, c =>
+            c.Path == "$.IsVerified" &&
+            c.Operator == QueryOperator.Equals &&
+            c.Value is bool b && b == true);
+    }
+
+    [Fact]
+    public async Task CountAccountsAsync_ReturnsZeroWhenNoMatches()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0L);
+
+        var request = new CountAccountsRequest { Email = "nonexistent@nowhere.com" };
+
+        // Act
+        var (status, response) = await service.CountAccountsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0L, response.Count);
+    }
+
+    #endregion
+
+    #region BulkUpdateRoles Tests
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_AddRoles_SucceedsForMultipleAccounts()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        SetupAccountForBulkUpdate(id1, new List<string> { "user" });
+        SetupAccountForBulkUpdate(id2, new List<string> { "user" });
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { id1, id2 },
+            AddRoles = new List<string> { "moderator" }
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Succeeded.Count);
+        Assert.Empty(response.Failed);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_RemoveRoles_SucceedsForMultipleAccounts()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        SetupAccountForBulkUpdate(id1, new List<string> { "user", "moderator" });
+        SetupAccountForBulkUpdate(id2, new List<string> { "user", "moderator", "admin" });
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { id1, id2 },
+            RemoveRoles = new List<string> { "moderator" }
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Succeeded.Count);
+        Assert.Empty(response.Failed);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_NotFoundAccounts_ReportedInFailed()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var existingId = Guid.NewGuid();
+        var missingId = Guid.NewGuid();
+
+        SetupAccountForBulkUpdate(existingId, new List<string> { "user" });
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{missingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { existingId, missingId },
+            AddRoles = new List<string> { "admin" }
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Succeeded);
+        Assert.Contains(existingId, response.Succeeded);
+        Assert.Single(response.Failed);
+        Assert.Equal(missingId, response.Failed.First().AccountId);
+        Assert.Equal("Account not found", response.Failed.First().Error);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_PublishesEventForChangedAccounts()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        SetupAccountForBulkUpdate(accountId, new List<string> { "user" });
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { accountId },
+            AddRoles = new List<string> { "admin" }
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_NoEventForUnchangedAccounts()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        // Account already has the role we're trying to add
+        SetupAccountForBulkUpdate(accountId, new List<string> { "user", "admin" });
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { accountId },
+            AddRoles = new List<string> { "admin" } // Already has admin
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Succeeded); // No-op is success
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_ReturnsBadRequest_WhenNoRolesSpecified()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { Guid.NewGuid() }
+            // Neither addRoles nor removeRoles specified
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_ConcurrentModification_ReportedInFailed()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "conflict@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        // TrySaveAsync returns null to simulate ETag conflict
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { accountId },
+            AddRoles = new List<string> { "admin" }
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Succeeded);
+        Assert.Single(response.Failed);
+        Assert.Equal(accountId, response.Failed.First().AccountId);
+        Assert.Equal("Concurrent modification", response.Failed.First().Error);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_SoftDeletedAccount_ReportedAsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        var deletedAccount = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "deleted@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            DeletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((deletedAccount, "etag-0"));
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { accountId },
+            AddRoles = new List<string> { "admin" }
+        };
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Succeeded);
+        Assert.Single(response.Failed);
+        Assert.Equal("Account not found", response.Failed.First().Error);
+    }
+
+    [Fact]
+    public async Task BulkUpdateRolesAsync_AddAndRemoveRoles_SimultaneousOperation()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        SetupAccountForBulkUpdate(accountId, new List<string> { "user", "moderator" });
+
+        var request = new BulkUpdateRolesRequest
+        {
+            AccountIds = new List<Guid> { accountId },
+            AddRoles = new List<string> { "admin" },
+            RemoveRoles = new List<string> { "moderator" }
+        };
+
+        // Capture saved account to verify roles
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (key, account, etag, ct) => savedAccount = account)
+            .ReturnsAsync("etag-1");
+
+        // Act
+        var (status, response) = await service.BulkUpdateRolesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Succeeded);
+        Assert.NotNull(savedAccount);
+        Assert.Contains("user", savedAccount.Roles);
+        Assert.Contains("admin", savedAccount.Roles);
+        Assert.DoesNotContain("moderator", savedAccount.Roles);
+    }
+
+    /// <summary>
+    /// Helper method to set up an account for bulk update tests with ETag-based concurrency.
+    /// </summary>
+    private void SetupAccountForBulkUpdate(Guid accountId, List<string> roles)
+    {
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = $"{accountId}@test.local",
+            Roles = roles,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
     }
 
     #endregion

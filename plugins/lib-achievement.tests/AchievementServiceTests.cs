@@ -31,6 +31,7 @@ public class AchievementServiceTests
     private readonly Mock<IStateStore<AchievementDefinitionData>> _mockDefinitionStore;
     private readonly Mock<IStateStore<EntityProgressData>> _mockProgressStore;
     private readonly List<IPlatformAchievementSync> _platformSyncs;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     public AchievementServiceTests()
     {
@@ -41,12 +42,18 @@ public class AchievementServiceTests
         _mockDefinitionStore = new Mock<IStateStore<AchievementDefinitionData>>();
         _mockProgressStore = new Mock<IStateStore<EntityProgressData>>();
         _platformSyncs = new List<IPlatformAchievementSync>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         _configuration = new AchievementServiceConfiguration
         {
-            DefinitionStoreName = "test-definition",
-            ProgressStoreName = "test-progress",
-            UnlockStoreName = "test-unlock",
             SteamApiKey = "test-steam-key",
             SteamAppId = "test-app-id",
             XboxClientId = "test-xbox-id",
@@ -80,7 +87,7 @@ public class AchievementServiceTests
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
     }
@@ -93,7 +100,8 @@ public class AchievementServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            _platformSyncs);
+            _platformSyncs,
+            _mockLockProvider.Object);
     }
 
     #region Constructor Validation
@@ -114,13 +122,10 @@ public class AchievementServiceTests
     {
         var config = new AchievementServiceConfiguration();
 
-        Assert.Equal("achievement-definition", config.DefinitionStoreName);
-        Assert.Equal("achievement-progress", config.ProgressStoreName);
-        Assert.Equal("achievement-unlock", config.UnlockStoreName);
         Assert.True(config.AutoSyncOnUnlock);
         Assert.Equal(3, config.SyncRetryAttempts);
         Assert.Equal(60, config.SyncRetryDelaySeconds);
-        Assert.Equal(300, config.ProgressCacheTtlSeconds);
+        Assert.Equal(0, config.ProgressTtlSeconds);
         Assert.Equal(60, config.RarityCalculationIntervalMinutes);
         Assert.Equal(5.0, config.RareThresholdPercent);
     }
@@ -130,24 +135,18 @@ public class AchievementServiceTests
     {
         var config = new AchievementServiceConfiguration
         {
-            DefinitionStoreName = "custom-def",
-            ProgressStoreName = "custom-progress",
-            UnlockStoreName = "custom-unlock",
             AutoSyncOnUnlock = false,
             SyncRetryAttempts = 5,
             SyncRetryDelaySeconds = 120,
-            ProgressCacheTtlSeconds = 600,
+            ProgressTtlSeconds = 600,
             RarityCalculationIntervalMinutes = 30,
             RareThresholdPercent = 10.0
         };
 
-        Assert.Equal("custom-def", config.DefinitionStoreName);
-        Assert.Equal("custom-progress", config.ProgressStoreName);
-        Assert.Equal("custom-unlock", config.UnlockStoreName);
         Assert.False(config.AutoSyncOnUnlock);
         Assert.Equal(5, config.SyncRetryAttempts);
         Assert.Equal(120, config.SyncRetryDelaySeconds);
-        Assert.Equal(600, config.ProgressCacheTtlSeconds);
+        Assert.Equal(600, config.ProgressTtlSeconds);
         Assert.Equal(30, config.RarityCalculationIntervalMinutes);
         Assert.Equal(10.0, config.RareThresholdPercent);
     }

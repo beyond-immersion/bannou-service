@@ -42,7 +42,7 @@ public partial class ConnectService
     /// <param name="evt">The session invalidated event.</param>
     public async Task HandleSessionInvalidatedAsync(SessionInvalidatedEvent evt)
     {
-        var sessionIds = evt.SessionIds?.ToList() ?? new List<string>();
+        var sessionIds = evt.SessionIds?.Select(id => id.ToString()).ToList() ?? new List<string>();
         var reason = evt.Reason.ToString();
         var disconnectClients = evt.DisconnectClients;
 
@@ -89,9 +89,10 @@ public partial class ConnectService
         try
         {
             // Create a client event payload for admin notification
+            // Use eventName for consistency with the client event system (BannouClient routes on eventName)
             var adminNotification = new
             {
-                type = "service_error",
+                eventName = "service_error",
                 eventId = evt.EventId,
                 timestamp = evt.Timestamp,
                 serviceId = evt.ServiceId,

@@ -1,3 +1,14 @@
+openapi: 3.0.3
+info:
+  title: Save-Load Service Configuration
+  version: 1.0.0
+  description: |
+    Configuration schema for Save-Load service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
+paths: {}
 x-service-configuration:
   properties:
     MaxSaveSizeBytes:
@@ -15,40 +26,16 @@ x-service-configuration:
       description: Auto-compress saves larger than this (default 1MB)
 
     DefaultCompressionType:
-      type: string
+      $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
       env: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
       default: GZIP
-      description: Default compression algorithm (NONE, GZIP, BROTLI)
-
-    SlotMetadataStoreName:
-      type: string
-      env: SAVE_LOAD_SLOT_METADATA_STORE_NAME
-      default: save-load-slots
-      description: State store name for slot metadata (MySQL backend)
-
-    VersionManifestStoreName:
-      type: string
-      env: SAVE_LOAD_VERSION_MANIFEST_STORE_NAME
-      default: save-load-versions
-      description: State store name for version manifests (MySQL backend)
-
-    HotCacheStoreName:
-      type: string
-      env: SAVE_LOAD_HOT_CACHE_STORE_NAME
-      default: save-load-cache
-      description: State store name for hot save cache (Redis backend)
+      description: Default compression algorithm
 
     HotCacheTtlMinutes:
       type: integer
       env: SAVE_LOAD_HOT_CACHE_TTL_MINUTES
       default: 60
       description: TTL for hot cache entries in minutes
-
-    SchemaStoreName:
-      type: string
-      env: SAVE_LOAD_SCHEMA_STORE_NAME
-      default: save-load-schemas
-      description: State store name for registered schemas
 
     AssetBucket:
       type: string
@@ -91,6 +78,12 @@ x-service-configuration:
       env: SAVE_LOAD_CLEANUP_INTERVAL_MINUTES
       default: 60
       description: Interval for automatic cleanup task
+
+    CleanupStartupDelaySeconds:
+      type: integer
+      env: SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 30
+      description: Delay in seconds before cleanup service starts processing
 
     CleanupControlPlaneOnly:
       type: boolean
@@ -164,8 +157,10 @@ x-service-configuration:
       description: GZIP compression level (1-9, higher = better compression, slower)
 
     DefaultCompressionByCategory:
-      type: object
-      description: Default compression per category. Overrides DefaultCompressionType. QUICK_SAVE uses NONE, AUTO_SAVE and MANUAL_SAVE use GZIP, CHECKPOINT uses GZIP, STATE_SNAPSHOT uses BROTLI.
+      type: string
+      nullable: true
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY
+      description: Default compression per category as comma-separated KEY=VALUE pairs (e.g., "QUICK_SAVE=NONE,AUTO_SAVE=GZIP"). Overrides DefaultCompressionType when specified. If empty/null, uses DefaultCompressionType for all categories.
 
     # ═══════════════════════════════════════════════════════════════════════════
     # THUMBNAIL SETTINGS
@@ -183,12 +178,6 @@ x-service-configuration:
       default: "image/jpeg,image/webp,image/png"
       description: Comma-separated list of allowed thumbnail MIME types
 
-    ThumbnailUrlTtlMinutes:
-      type: integer
-      env: SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES
-      default: 60
-      description: TTL for thumbnail pre-signed URLs
-
     # ═══════════════════════════════════════════════════════════════════════════
     # DELTA SAVE SETTINGS
     # ═══════════════════════════════════════════════════════════════════════════
@@ -200,10 +189,10 @@ x-service-configuration:
       description: Enable delta/incremental save support
 
     DefaultDeltaAlgorithm:
-      type: string
+      $ref: 'save-load-api.yaml#/components/schemas/DeltaAlgorithm'
       env: SAVE_LOAD_DEFAULT_DELTA_ALGORITHM
       default: JSON_PATCH
-      description: Default algorithm for delta computation (JSON_PATCH, BSDIFF, XDELTA)
+      description: Default algorithm for delta computation
 
     MaxDeltaChainLength:
       type: integer
@@ -222,6 +211,12 @@ x-service-configuration:
       env: SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT
       default: 50
       description: If delta is larger than this percent of full save, store as full instead. Avoids storing deltas that dont provide meaningful savings.
+
+    MinBaseSizeForDeltaThresholdBytes:
+      type: integer
+      env: SAVE_LOAD_MIN_BASE_SIZE_FOR_DELTA_THRESHOLD_BYTES
+      default: 1024
+      description: Minimum base save size in bytes before applying delta threshold logic (1KB default)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # DEVICE & CLOUD SYNC SETTINGS
@@ -248,12 +243,6 @@ x-service-configuration:
       env: SAVE_LOAD_ASYNC_UPLOAD_ENABLED
       default: true
       description: Queue uploads to MinIO/S3 instead of synchronous write. Save is acknowledged immediately when data is stored in Redis pending queue. Background worker uploads asynchronously.
-
-    PendingUploadStoreName:
-      type: string
-      env: SAVE_LOAD_PENDING_UPLOAD_STORE_NAME
-      default: save-load-pending
-      description: Redis store for pending uploads awaiting async processing
 
     PendingUploadTtlMinutes:
       type: integer

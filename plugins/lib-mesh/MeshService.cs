@@ -30,8 +30,7 @@ public partial class MeshService : IMeshService
     // Track service start time for uptime
     private static readonly DateTimeOffset _serviceStartTime = DateTimeOffset.UtcNow;
 
-    // Default TTL for endpoint registrations (90 seconds)
-    private const int DEFAULT_TTL_SECONDS = 90;
+    // TTL for endpoint registrations comes from _configuration.EndpointTtlSeconds
 
     /// <summary>
     /// Initializes a new instance of the MeshService class.
@@ -186,7 +185,7 @@ public partial class MeshService : IMeshService
                 LastSeen = now
             };
 
-            var success = await _stateManager.RegisterEndpointAsync(endpoint, DEFAULT_TTL_SECONDS);
+            var success = await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
 
             if (!success)
             {
@@ -200,7 +199,7 @@ public partial class MeshService : IMeshService
             var response = new RegisterEndpointResponse
             {
                 Endpoint = endpoint,
-                TtlSeconds = DEFAULT_TTL_SECONDS
+                TtlSeconds = _configuration.EndpointTtlSeconds
             };
 
             return (StatusCodes.OK, response);
@@ -300,7 +299,7 @@ public partial class MeshService : IMeshService
                 body.Status ?? EndpointStatus.Healthy,
                 body.LoadPercent ?? 0,
                 body.CurrentConnections ?? 0,
-                DEFAULT_TTL_SECONDS);
+                _configuration.EndpointTtlSeconds);
 
             if (!success)
             {
@@ -312,8 +311,8 @@ public partial class MeshService : IMeshService
 
             var response = new HeartbeatResponse
             {
-                NextHeartbeatSeconds = Math.Max(DEFAULT_TTL_SECONDS / 3, 10),
-                TtlSeconds = DEFAULT_TTL_SECONDS
+                NextHeartbeatSeconds = _configuration.HeartbeatIntervalSeconds,
+                TtlSeconds = _configuration.EndpointTtlSeconds
             };
 
             return (StatusCodes.OK, response);
@@ -368,13 +367,45 @@ public partial class MeshService : IMeshService
                 }
             }
 
+            // Filter out degraded endpoints (stale heartbeat)
+            var degradationThreshold = DateTimeOffset.UtcNow.AddSeconds(-_configuration.DegradationThresholdSeconds);
+            var healthyEndpoints = endpoints
+                .Where(e => e.LastSeen >= degradationThreshold)
+                .ToList();
+
+            // Filter out overloaded endpoints (above load threshold)
+            if (healthyEndpoints.Count > 1)
+            {
+                var underThreshold = healthyEndpoints
+                    .Where(e => e.LoadPercent <= _configuration.LoadThresholdPercent)
+                    .ToList();
+                if (underThreshold.Count > 0)
+                {
+                    healthyEndpoints = underThreshold;
+                }
+            }
+
+            // Fall back to all endpoints if filtering removed everything
+            if (healthyEndpoints.Count == 0)
+            {
+                healthyEndpoints = endpoints;
+            }
+
+            // Determine effective algorithm (use configured default when request uses default value)
+            var effectiveAlgorithm = body.Algorithm;
+            if (effectiveAlgorithm == default)
+            {
+                // Cast config enum to API enum (both have same values in same order)
+                effectiveAlgorithm = (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
+            }
+
             // Apply load balancing algorithm
-            var selectedEndpoint = SelectEndpoint(endpoints, body.AppId, body.Algorithm);
+            var selectedEndpoint = SelectEndpoint(healthyEndpoints, body.AppId, effectiveAlgorithm);
 
             // Get alternates (other healthy endpoints)
-            var alternates = endpoints
+            var alternates = healthyEndpoints
                 .Where(e => e.InstanceId != selectedEndpoint.InstanceId)
-                .Take(2)
+                .Take(_configuration.MaxTopEndpointsReturned)
                 .ToList();
 
             var response = new GetRouteResponse
@@ -682,10 +713,10 @@ public partial class MeshService : IMeshService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Mesh service permissions...");
-        await MeshPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await MeshPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

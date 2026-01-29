@@ -39,7 +39,7 @@ export class AchievementProxy {
     return this.client.invokeAsync<
       Schemas['CreateAchievementDefinitionRequest'],
       Schemas['AchievementDefinitionResponse']
-    >('POST', '/achievement/definition/create', request, channel, timeout);
+    >('/achievement/definition/create', request, channel, timeout);
   }
 
   /**
@@ -57,7 +57,7 @@ export class AchievementProxy {
     return this.client.invokeAsync<
       Schemas['ListAchievementDefinitionsRequest'],
       Schemas['ListAchievementDefinitionsResponse']
-    >('POST', '/achievement/definition/list', request, channel, timeout);
+    >('/achievement/definition/list', request, channel, timeout);
   }
 
   /**
@@ -75,7 +75,7 @@ export class AchievementProxy {
     return this.client.invokeAsync<
       Schemas['UpdateAchievementDefinitionRequest'],
       Schemas['AchievementDefinitionResponse']
-    >('POST', '/achievement/definition/update', request, channel, timeout);
+    >('/achievement/definition/update', request, channel, timeout);
   }
 
   /**
@@ -89,7 +89,6 @@ export class AchievementProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeleteAchievementDefinitionRequest']>(
-      'POST',
       '/achievement/definition/delete',
       request,
       channel
@@ -111,7 +110,7 @@ export class AchievementProxy {
     return this.client.invokeAsync<
       Schemas['GetAchievementProgressRequest'],
       Schemas['AchievementProgressResponse']
-    >('POST', '/achievement/progress/get', request, channel, timeout);
+    >('/achievement/progress/get', request, channel, timeout);
   }
 
   /**
@@ -129,6 +128,6 @@ export class AchievementProxy {
     return this.client.invokeAsync<
       Schemas['ListUnlockedAchievementsRequest'],
       Schemas['ListUnlockedAchievementsResponse']
-    >('POST', '/achievement/list-unlocked', request, channel, timeout);
+    >('/achievement/list-unlocked', request, channel, timeout);
   }
 }

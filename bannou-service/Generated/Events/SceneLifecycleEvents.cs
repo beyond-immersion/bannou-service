@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Scene;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -66,7 +68,8 @@ public partial class SceneCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SceneType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneType SceneType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable scene name
@@ -157,7 +160,8 @@ public partial class SceneUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SceneType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneType SceneType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable scene name
@@ -256,7 +260,8 @@ public partial class SceneDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SceneType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneType SceneType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable scene name

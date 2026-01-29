@@ -37,7 +37,6 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmResponse']>> {
     return this.client.invokeAsync<Schemas['GetRealmRequest'], Schemas['RealmResponse']>(
-      'POST',
       '/realm/get',
       request,
       channel,
@@ -58,7 +57,6 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmResponse']>> {
     return this.client.invokeAsync<Schemas['GetRealmByCodeRequest'], Schemas['RealmResponse']>(
-      'POST',
       '/realm/get-by-code',
       request,
       channel,
@@ -79,7 +77,6 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmListResponse']>> {
     return this.client.invokeAsync<Schemas['ListRealmsRequest'], Schemas['RealmListResponse']>(
-      'POST',
       '/realm/list',
       request,
       channel,
@@ -100,7 +97,6 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmExistsResponse']>> {
     return this.client.invokeAsync<Schemas['RealmExistsRequest'], Schemas['RealmExistsResponse']>(
-      'POST',
       '/realm/exists',
       request,
       channel,

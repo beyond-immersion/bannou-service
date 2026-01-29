@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BeyondImmersion.BannouService.EdgeTester</RootNamespace>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <OutputType>Exe</OutputType>
+    <Configurations>Debug;Release;Development</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|AnyCPU'">
+    <NoWarn>1701;1702</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.8" />
+  </ItemGroup>
+
+  <!-- Backwards Compatibility Testing: Use Published NuGet SDK -->
+  <!-- Version="*" matches stable releases only (not preview versions) -->
+  <!-- Backwards compat testing activates after first stable release (e.g., 1.0.0) -->
+  <ItemGroup Condition="'$(UsePublishedSDK)' == 'true'">
+    <PackageReference Include="BeyondImmersion.Bannou.Client" Version="*" />
+  </ItemGroup>
+
+  <!-- Forward Compatibility Testing: Use Current Generated SDK -->
+  <ItemGroup Condition="'$(UseCurrentSDK)' == 'true'">
+    <ProjectReference Include="../../sdks/client/Bannou.Client.csproj" />
+  </ItemGroup>
+
+  <!-- Development Mode: Default to current generated SDK when no specific mode -->
+  <ItemGroup Condition="'$(UsePublishedSDK)' != 'true' AND '$(UseCurrentSDK)' != 'true'">
+    <ProjectReference Include="../../sdks/client/Bannou.Client.csproj" />
+  </ItemGroup>
+
+
+  <!-- Build Target Validation -->
+  <Target Name="ValidateSDKMode" BeforeTargets="BeforeBuild">
+    <Message Condition="'$(UsePublishedSDK)' == 'true'" Text="🔄 Building edge-tester with PUBLISHED NuGet SDK (backwards compatibility testing)" Importance="high" />
+    <Message Condition="'$(UseCurrentSDK)' == 'true'" Text="🚀 Building edge-tester with CURRENT generated SDK (forward compatibility testing)" Importance="high" />
+    <Message Condition="'$(UsePublishedSDK)' != 'true' AND '$(UseCurrentSDK)' != 'true'" Text="⚙️ Building edge-tester with CURRENT generated SDK (development mode)" Importance="high" />
+  </Target>
+
+</Project>

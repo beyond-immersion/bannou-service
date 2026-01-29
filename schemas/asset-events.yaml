@@ -6,7 +6,7 @@ info:
     Contains asset-specific service-to-service events for upload tracking,
     processing coordination, and asset lifecycle management.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -54,29 +54,13 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    # Base event schema for $ref resolution
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
-
     # ==========================================================================
     # Upload Events
     # ==========================================================================
 
     AssetUploadRequestedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a new upload is initiated via requestUpload API
@@ -113,10 +97,10 @@ components:
           type: string
           description: MIME content type
         assetType:
-          $ref: '#/components/schemas/AssetTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of asset being uploaded
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         isMultipart:
           type: boolean
@@ -125,7 +109,7 @@ components:
 
     AssetUploadCompletedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an upload is completed and file is stored
@@ -180,7 +164,7 @@ components:
 
     AssetProcessingQueuedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is queued for processing
@@ -209,7 +193,7 @@ components:
 
     AssetProcessingCompletedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when asset processing completes
@@ -248,7 +232,7 @@ components:
 
     AssetReadyEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is fully processed and available
@@ -284,10 +268,10 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
         assetType:
-          $ref: '#/components/schemas/AssetTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of the asset
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
 
     # ==========================================================================
@@ -296,7 +280,7 @@ components:
 
     BundleCreatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is successfully created
@@ -309,7 +293,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         version:
           type: string
           description: Bundle version string
@@ -328,7 +312,7 @@ components:
           type: integer
           description: Number of assets in the bundle
         compression:
-          $ref: '#/components/schemas/CompressionTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/CompressionType'
           description: Compression algorithm used for the bundle
         owner:
           type: string
@@ -340,7 +324,7 @@ components:
 
     MetabundleCreatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a metabundle is successfully created from source bundles
@@ -355,12 +339,12 @@ components:
       properties:
         metabundleId:
           type: string
-          description: Metabundle identifier
+          description: Human-readable metabundle identifier
         version:
           type: string
           description: Metabundle version string
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm for this metabundle
         sourceBundleCount:
           type: integer
@@ -370,7 +354,7 @@ components:
           nullable: true
           items:
             type: string
-          description: List of source bundle IDs that were composed
+          description: List of human-readable source bundle IDs that were composed
         assetCount:
           type: integer
           description: Number of unique assets in the metabundle
@@ -399,7 +383,7 @@ components:
 
     BundleUpdatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when bundle metadata is updated
@@ -412,7 +396,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         version:
           type: integer
           description: New metadata version number after update
@@ -432,12 +416,12 @@ components:
           type: string
           description: Account ID or service name that performed the update
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleDeletedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is soft-deleted or permanently deleted
@@ -448,7 +432,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         permanent:
           type: boolean
           description: True if permanently deleted, false for soft-delete
@@ -465,12 +449,12 @@ components:
           type: string
           description: Account ID or service name that performed the deletion
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleRestoredEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a soft-deleted bundle is restored
@@ -481,7 +465,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         restoredFromVersion:
           type: integer
           description: Metadata version the bundle was restored from
@@ -493,35 +477,14 @@ components:
           type: string
           description: Account ID or service name that performed the restoration
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     # ==========================================================================
     # Supporting Types
+    # NOTE: AssetType, Realm, and CompressionType are defined in asset-api.yaml
+    # and referenced via $ref per IMPLEMENTATION TENETS (T26 schema hierarchy)
     # ==========================================================================
-
-    AssetTypeEnum:
-      type: string
-      description: Category of asset in the system
-      enum:
-        - texture
-        - model
-        - audio
-        - behavior
-        - bundle
-        - prefab
-        - other
-      nullable: true
-
-    RealmEnum:
-      type: string
-      description: Game realm the asset is associated with
-      enum:
-        - omega
-        - arcadia
-        - fantasia
-        - shared
-      nullable: true
 
     ProcessingTypeEnum:
       type: string
@@ -533,15 +496,6 @@ components:
         - validation
         - behavior_compile
       description: Type of processing being performed
-
-    CompressionTypeEnum:
-      type: string
-      description: Compression algorithm used for bundle packaging
-      enum:
-        - lz4
-        - lzma
-        - none
-      nullable: true
 
     ProcessingOutput:
       type: object

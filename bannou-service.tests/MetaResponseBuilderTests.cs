@@ -68,7 +68,6 @@ public class MetaResponseBuilderTests
 
         // Assert
         Assert.Equal("endpoint-info", response.MetaType);
-        Assert.Equal($"{method}:{path}", response.EndpointKey);
         Assert.Equal(serviceName, response.ServiceName);
         Assert.Equal(method, response.Method);
         Assert.Equal(path, response.Path);
@@ -95,7 +94,6 @@ public class MetaResponseBuilderTests
 
         // Assert
         Assert.Equal("request-schema", response.MetaType);
-        Assert.Equal($"{method}:{path}", response.EndpointKey);
 
         // Verify Data contains JSON Schema
         Assert.Equal(JsonValueKind.Object, response.Data.ValueKind);
@@ -141,7 +139,6 @@ public class MetaResponseBuilderTests
 
         // Assert
         Assert.Equal("full-schema", response.MetaType);
-        Assert.Equal($"{method}:{path}", response.EndpointKey);
 
         // Verify Data contains all three sections
         Assert.Equal(JsonValueKind.Object, response.Data.ValueKind);

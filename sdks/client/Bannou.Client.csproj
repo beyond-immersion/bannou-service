@@ -55,6 +55,7 @@
   <!-- This target dynamically includes generated model/event files from bannou-service -->
   <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">
     <ItemGroup>
+      <Compile Include="../../bannou-service/Generated/CommonApiModels.cs" />
       <Compile Include="../../bannou-service/Generated/CommonClientEventsModels.cs" />
       <Compile Include="../../bannou-service/Generated/Models/*.cs" />
       <Compile Include="../../bannou-service/Generated/Events/*.cs" />

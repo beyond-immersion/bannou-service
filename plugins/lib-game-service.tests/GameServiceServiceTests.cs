@@ -18,7 +18,7 @@ public class GameServiceServiceTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<GameServiceRegistryModel>> _mockModelStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<GameServiceService>> _mockLogger;
@@ -30,7 +30,7 @@ public class GameServiceServiceTests
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockModelStore = new Mock<IStateStore<GameServiceRegistryModel>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<GameServiceService>>();
@@ -40,7 +40,7 @@ public class GameServiceServiceTests
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<GameServiceRegistryModel>(STATE_STORE))
             .Returns(_mockModelStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
@@ -93,10 +93,13 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync("game-service-stub:testservice", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock: Empty service list
+        // Mock: Empty service list with ETag support
         _mockListStore
-            .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Guid>(), "etag-1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         // Act
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
@@ -127,10 +130,13 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync("game-service-stub:mygame", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock: Empty service list
+        // Mock: Empty service list with ETag support
         _mockListStore
-            .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Guid>(), "etag-1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         // Act
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
@@ -170,22 +176,23 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync("game-service-stub:newservice", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock: Existing service list with one item
-        var existingList = new List<string> { "existing-service-id" };
+        // Mock: Existing service list with one item and ETag support
+        var existingList = new List<Guid> { Guid.NewGuid() };
         _mockListStore
-            .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingList);
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingList, "etag-1"));
 
         // Capture the saved list
-        List<string>? savedList = null;
+        List<Guid>? savedList = null;
         _mockListStore
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 "game-service-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<List<Guid>>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, List<string>, StateOptions?, CancellationToken>(
-                (key, data, options, ct) => savedList = data);
+            .Callback<string, List<Guid>, string, CancellationToken>(
+                (key, data, etag, ct) => savedList = data)
+            .ReturnsAsync("etag-2");
 
         // Act
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
@@ -275,9 +282,13 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync("game-service-stub:mygameservice", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
+        // Mock: Empty service list with ETag support
         _mockListStore
-            .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Guid>(), "etag-1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         // Act
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
@@ -305,7 +316,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Test Service",
                 Description = "Test description",
@@ -362,7 +373,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Test Service",
                 IsActive = true,
@@ -413,14 +424,14 @@ public class GameServiceServiceTests
         // Mock: Service list with two IDs
         _mockListStore
             .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { serviceId1.ToString(), serviceId2.ToString() });
+            .ReturnsAsync(new List<Guid> { serviceId1, serviceId2 });
 
         // Mock: Service 1
         _mockModelStore
             .Setup(s => s.GetAsync($"game-service:{serviceId1}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId1.ToString(),
+                ServiceId = serviceId1,
                 StubName = "service1",
                 DisplayName = "Service 1",
                 IsActive = true,
@@ -432,7 +443,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId2}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId2.ToString(),
+                ServiceId = serviceId2,
                 StubName = "service2",
                 DisplayName = "Service 2",
                 IsActive = false,
@@ -461,14 +472,14 @@ public class GameServiceServiceTests
         // Mock: Service list with two IDs
         _mockListStore
             .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { serviceId1.ToString(), serviceId2.ToString() });
+            .ReturnsAsync(new List<Guid> { serviceId1, serviceId2 });
 
         // Mock: Service 1 (active)
         _mockModelStore
             .Setup(s => s.GetAsync($"game-service:{serviceId1}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId1.ToString(),
+                ServiceId = serviceId1,
                 StubName = "active-service",
                 DisplayName = "Active Service",
                 IsActive = true,
@@ -480,7 +491,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId2}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId2.ToString(),
+                ServiceId = serviceId2,
                 StubName = "inactive-service",
                 DisplayName = "Inactive Service",
                 IsActive = false,
@@ -508,7 +519,7 @@ public class GameServiceServiceTests
         // Mock: Empty service list
         _mockListStore
             .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
@@ -541,7 +552,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Original Name",
                 IsActive = true,
@@ -588,7 +599,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Original Name",
                 IsActive = true,
@@ -676,7 +687,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Test Service",
                 IsActive = true,
@@ -722,17 +733,20 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Test Service",
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
 
-        // Mock: Service list
+        // Mock: Service list with ETag support
         _mockListStore
-            .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { serviceId.ToString() });
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Guid> { serviceId }, "etag-1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         // Act
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
@@ -759,17 +773,20 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Test Service",
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
 
-        // Mock: Service list
+        // Mock: Service list with ETag support
         _mockListStore
-            .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { serviceId.ToString() });
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Guid> { serviceId }, "etag-1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         // Act
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
@@ -797,28 +814,29 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = "testservice",
                 DisplayName = "Test Service",
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
 
-        // Mock: Service list with multiple items
+        // Mock: Service list with multiple items and ETag support
         _mockListStore
-            .Setup(s => s.GetAsync("game-service-list", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { serviceId.ToString(), otherId.ToString() });
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Guid> { serviceId, otherId }, "etag-1"));
 
         // Capture saved list
-        List<string>? savedList = null;
+        List<Guid>? savedList = null;
         _mockListStore
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 "game-service-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<List<Guid>>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, List<string>, StateOptions?, CancellationToken>(
-                (key, data, options, ct) => savedList = data);
+            .Callback<string, List<Guid>, string, CancellationToken>(
+                (key, data, etag, ct) => savedList = data)
+            .ReturnsAsync("etag-2");
 
         // Act
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
@@ -827,7 +845,7 @@ public class GameServiceServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(savedList);
         Assert.Single(savedList);
-        Assert.Equal(otherId.ToString(), savedList[0]);
+        Assert.Equal(otherId, savedList[0]);
     }
 
     [Fact]
@@ -879,13 +897,4 @@ public class GameServiceConfigurationTests
         Assert.NotNull(config);
     }
 
-    [Fact]
-    public void Configuration_StateStoreName_ShouldHaveDefault()
-    {
-        // Arrange
-        var config = new GameServiceServiceConfiguration();
-
-        // Act & Assert - StateStoreName has a default value
-        Assert.Equal("game-service-statestore", config.StateStoreName);
-    }
 }

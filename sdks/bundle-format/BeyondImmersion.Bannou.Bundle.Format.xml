@@ -134,8 +134,8 @@
             <summary>
             Finalizes the bundle and writes it to the output stream.
             </summary>
-            <param name="bundleId">Unique bundle identifier.</param>
-            <param name="name">Bundle name.</param>
+            <param name="bundleId">Human-readable bundle identifier (e.g., "synty/polygon-adventure").</param>
+            <param name="name">Bundle display name.</param>
             <param name="version">Bundle version.</param>
             <param name="createdBy">Account ID of creator.</param>
             <param name="description">Optional description.</param>
@@ -263,7 +263,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.BundleId">
             <summary>
-            Unique identifier for this bundle.
+            Human-readable identifier for this bundle (e.g., "synty/polygon-adventure", "my-bundle-v1").
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.Name">
@@ -428,7 +428,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.BundleId">
             <summary>
-            Bundle ID that was validated.
+            Bundle ID that was validated (human-readable identifier).
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.IsValid">

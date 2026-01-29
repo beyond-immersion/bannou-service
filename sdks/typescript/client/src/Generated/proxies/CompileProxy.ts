@@ -39,6 +39,6 @@ export class CompileProxy {
     return this.client.invokeAsync<
       Schemas['CompileBehaviorRequest'],
       Schemas['CompileBehaviorResponse']
-    >('POST', '/compile', request, channel, timeout);
+    >('/compile', request, channel, timeout);
   }
 }

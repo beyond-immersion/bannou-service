@@ -31,7 +31,6 @@ public static class MetaResponseBuilder
         return new MetaResponse
         {
             MetaType = "endpoint-info",
-            EndpointKey = $"{method}:{path}",
             ServiceName = serviceName,
             Method = method,
             Path = path,
@@ -60,7 +59,6 @@ public static class MetaResponseBuilder
         return new MetaResponse
         {
             MetaType = metaType,
-            EndpointKey = $"{method}:{path}",
             ServiceName = serviceName,
             Method = method,
             Path = path,
@@ -101,7 +99,6 @@ public static class MetaResponseBuilder
         return new MetaResponse
         {
             MetaType = "full-schema",
-            EndpointKey = $"{method}:{path}",
             ServiceName = serviceName,
             Method = method,
             Path = path,

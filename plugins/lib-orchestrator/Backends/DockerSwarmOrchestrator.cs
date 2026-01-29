@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Orchestrator;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,7 @@ namespace LibOrchestrator.Backends;
 public class DockerSwarmOrchestrator : IContainerOrchestrator
 {
     private readonly ILogger<DockerSwarmOrchestrator> _logger;
+    private readonly OrchestratorServiceConfiguration _configuration;
     private readonly DockerClient _client;
 
     /// <summary>
@@ -29,9 +31,10 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// </summary>
     private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
-    public DockerSwarmOrchestrator(ILogger<DockerSwarmOrchestrator> logger)
+    public DockerSwarmOrchestrator(OrchestratorServiceConfiguration configuration, ILogger<DockerSwarmOrchestrator> logger)
     {
         _logger = logger;
+        _configuration = configuration;
         using var config = new DockerClientConfiguration();
         _client = config.CreateClient();
     }
@@ -347,8 +350,9 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
             // of available methods in Docker.DotNet for task listing
             return Array.Empty<TaskResponse>();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogDebug(ex, "Failed to list service tasks for swarm service");
             return Array.Empty<TaskResponse>();
         }
     }
@@ -366,7 +370,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
 
         try
         {
-            var imageName = "bannou:latest";
+            var imageName = _configuration.DockerImageName;
 
             // Prepare environment variables
             var envList = new List<string>

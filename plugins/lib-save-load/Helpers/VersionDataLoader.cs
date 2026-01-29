@@ -43,7 +43,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         CancellationToken cancellationToken)
     {
         // Try hot cache first
-        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         var hotKey = HotSaveEntry.GetStateKey(slotId, version.VersionNumber);
         var hotEntry = await hotCacheStore.GetAsync(hotKey, cancellationToken);
 
@@ -51,14 +51,16 @@ public sealed class VersionDataLoader : IVersionDataLoader
         {
             _logger.LogDebug("Hot cache hit for slot {SlotId} version {Version}", slotId, version.VersionNumber);
             var compressedData = Convert.FromBase64String(hotEntry.Data);
-            var hotCompressionType = Enum.TryParse<CompressionType>(hotEntry.CompressionType, out var hct) ? hct : CompressionType.NONE;
+            // HotSaveEntry.CompressionType is now a nullable enum - use it directly or default to NONE
+            var hotCompressionType = hotEntry.CompressionType ?? CompressionType.NONE;
             return CompressionHelper.Decompress(compressedData, hotCompressionType);
         }
 
         _logger.LogDebug("Hot cache miss for slot {SlotId} version {Version}", slotId, version.VersionNumber);
 
         // Load from asset service
-        if (string.IsNullOrEmpty(version.AssetId))
+        // SaveVersionManifest.AssetId is now Guid? - check for null or empty Guid
+        if (!version.AssetId.HasValue || version.AssetId.Value == Guid.Empty)
         {
             _logger.LogWarning(
                 "No asset ID for version {Version} and no hot cache entry",
@@ -66,11 +68,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
             return null;
         }
 
-        if (!Guid.TryParse(version.AssetId, out var assetGuid))
-        {
-            _logger.LogError("Invalid asset ID format: {AssetId}", version.AssetId);
-            return null;
-        }
+        var assetGuid = version.AssetId.Value;
 
         try
         {
@@ -86,8 +84,8 @@ public sealed class VersionDataLoader : IVersionDataLoader
 
             using var httpClient = _httpClientFactory.CreateClient();
             var compressedData = await httpClient.GetByteArrayAsync(assetResponse.DownloadUrl, cancellationToken);
-            var versionCompressionType = Enum.TryParse<CompressionType>(version.CompressionType, out var vct) ? vct : CompressionType.NONE;
-            return CompressionHelper.Decompress(compressedData, versionCompressionType);
+            // SaveVersionManifest.CompressionType is now an enum - use it directly
+            return CompressionHelper.Decompress(compressedData, version.CompressionType);
         }
         catch (Exception ex)
         {
@@ -149,7 +147,9 @@ public sealed class VersionDataLoader : IVersionDataLoader
                 return null;
             }
 
-            var algorithm = deltaVersion.DeltaAlgorithm ?? _configuration.DefaultDeltaAlgorithm;
+            // DeltaAlgorithm - use enum value or config default, then convert to string for DeltaProcessor
+            var algorithmEnum = deltaVersion.DeltaAlgorithm ?? _configuration.DefaultDeltaAlgorithm;
+            var algorithm = algorithmEnum.ToString();
             result = deltaProcessor.ApplyDelta(result, deltaData, algorithm);
 
             if (result == null)
@@ -209,19 +209,26 @@ public sealed class VersionDataLoader : IVersionDataLoader
         try
         {
             // Re-compress for storage efficiency
-            var compressionType = Enum.TryParse<CompressionType>(manifest.CompressionType, out var ct) ? ct : CompressionType.NONE;
+            // SaveVersionManifest.CompressionType is now an enum - use it directly
+            var compressionType = manifest.CompressionType;
+            var cacheCompressionLevel = compressionType == CompressionType.BROTLI
+                ? _configuration.BrotliCompressionLevel
+                : compressionType == CompressionType.GZIP
+                    ? _configuration.GzipCompressionLevel
+                    : (int?)null;
             var dataToStore = compressionType != CompressionType.NONE
-                ? CompressionHelper.Compress(decompressedData, compressionType)
+                ? CompressionHelper.Compress(decompressedData, compressionType, cacheCompressionLevel)
                 : decompressedData;
 
+            // HotSaveEntry.SlotId is now Guid - parse the string slotId
             var hotEntry = new HotSaveEntry
             {
-                SlotId = slotId,
+                SlotId = Guid.Parse(slotId),
                 VersionNumber = versionNumber,
                 Data = Convert.ToBase64String(dataToStore),
                 ContentHash = contentHash,
                 IsCompressed = compressionType != CompressionType.NONE,
-                CompressionType = compressionType.ToString(),
+                CompressionType = compressionType,
                 SizeBytes = dataToStore.Length,
                 CachedAt = DateTimeOffset.UtcNow,
                 IsDelta = manifest.IsDelta
@@ -247,9 +254,10 @@ public sealed class VersionDataLoader : IVersionDataLoader
         CancellationToken cancellationToken)
     {
         // Search through versions from newest to oldest
+        // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
         for (var v = slot.LatestVersion ?? 0; v >= 1; v--)
         {
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, v);
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
             var manifest = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (manifest?.CheckpointName == checkpointName)

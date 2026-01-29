@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -22,6 +23,7 @@ public class TokenService : ITokenService
     private readonly ISubscriptionClient _subscriptionClient;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<TokenService> _logger;
 
@@ -33,6 +35,7 @@ public class TokenService : ITokenService
         ISubscriptionClient subscriptionClient,
         ISessionService sessionService,
         AuthServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         IMessageBus messageBus,
         ILogger<TokenService> logger)
     {
@@ -40,21 +43,19 @@ public class TokenService : ITokenService
         _subscriptionClient = subscriptionClient;
         _sessionService = sessionService;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _messageBus = messageBus;
         _logger = logger;
     }
 
     /// <inheritdoc/>
-    public async Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
+    public async Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
-        // Use core app configuration for JWT settings (validated at startup in Program.cs)
-        var jwtConfig = Program.Configuration;
-
         _logger.LogDebug("Generating access token for account {AccountId}", account.AccountId);
 
         // Generate opaque session key for JWT Redis key security
         var sessionKey = Guid.NewGuid().ToString("N");
-        var sessionId = Guid.NewGuid().ToString();
+        var sessionId = Guid.NewGuid();
 
         // Fetch current subscriptions/authorizations for the account
         var authorizations = new List<string>();
@@ -91,6 +92,7 @@ public class TokenService : ITokenService
         }
 
         // Store session data in Redis
+        var now = DateTimeOffset.UtcNow;
         var sessionData = new SessionDataModel
         {
             AccountId = account.AccountId,
@@ -99,18 +101,23 @@ public class TokenService : ITokenService
             Roles = account.Roles?.ToList() ?? new List<string>(),
             Authorizations = authorizations,
             SessionId = sessionId,
-            CreatedAt = DateTimeOffset.UtcNow,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
+            CreatedAt = now,
+            LastActiveAt = now,
+            ExpiresAt = now.AddMinutes(_configuration.JwtExpirationMinutes)
         };
 
         await _sessionService.SaveSessionAsync(sessionKey, sessionData, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
         // Maintain indexes
-        await _sessionService.AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
+        await _sessionService.AddSessionToAccountIndexAsync(account.AccountId, sessionKey, cancellationToken);
         await _sessionService.AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
-        // Generate JWT using core app configuration
-        var key = Encoding.UTF8.GetBytes(jwtConfig.JwtSecret!);
+        if (string.IsNullOrWhiteSpace(_appConfiguration.JwtSecret))
+        {
+            throw new InvalidOperationException("JWT secret not configured");
+        }
+
+        var key = Encoding.UTF8.GetBytes(_appConfiguration.JwtSecret);
         var tokenHandler = new JwtSecurityTokenHandler();
 
         var claims = new List<Claim>
@@ -134,8 +141,8 @@ public class TokenService : ITokenService
             NotBefore = DateTime.UtcNow,
             IssuedAt = DateTime.UtcNow,
             SigningCredentials = signingCredentials,
-            Issuer = jwtConfig.JwtIssuer,
-            Audience = jwtConfig.JwtAudience
+            Issuer = _appConfiguration.JwtIssuer,
+            Audience = _appConfiguration.JwtAudience
         };
 
         var jwt = tokenHandler.CreateToken(tokenDescriptor);
@@ -146,29 +153,39 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public string GenerateRefreshToken()
     {
-        return Guid.NewGuid().ToString("N");
+        var tokenBytes = new byte[32]; // 256 bits of cryptographic randomness
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(tokenBytes);
+        return Convert.ToHexString(tokenBytes).ToLowerInvariant();
     }
 
     /// <inheritdoc/>
-    public async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken = default)
+    public async Task StoreRefreshTokenAsync(Guid accountId, string refreshToken, CancellationToken cancellationToken = default)
     {
         var redisKey = $"refresh_token:{refreshToken}";
         var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
+        // Storage boundary: state store requires string value type (Guid is a value type)
         await stringStore.SaveAsync(
             redisKey,
-            accountId,
-            new StateOptions { Ttl = (int)TimeSpan.FromDays(7).TotalSeconds }, // 7 days
+            accountId.ToString(),
+            new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.SessionTokenTtlDays).TotalSeconds },
             cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<string?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    public async Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-            return await stringStore.GetAsync(redisKey, cancellationToken);
+            var storedAccountId = await stringStore.GetAsync(redisKey, cancellationToken);
+            // Storage boundary: parse once at read boundary
+            if (string.IsNullOrEmpty(storedAccountId) || !Guid.TryParse(storedAccountId, out var accountId))
+            {
+                return null;
+            }
+            return accountId;
         }
         catch (Exception ex)
         {
@@ -213,9 +230,7 @@ public class TokenService : ITokenService
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            // Use core app configuration for JWT settings (validated at startup in Program.cs)
-            var jwtConfig = Program.Configuration;
-            var key = Encoding.ASCII.GetBytes(jwtConfig.JwtSecret!);
+            var key = Encoding.UTF8.GetBytes(_appConfiguration.JwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
 
             try
             {
@@ -224,9 +239,9 @@ public class TokenService : ITokenService
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = jwtConfig.JwtIssuer,
+                    ValidIssuer = _appConfiguration.JwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtConfig.JwtAudience,
+                    ValidAudience = _appConfiguration.JwtAudience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
@@ -255,14 +270,37 @@ public class TokenService : ITokenService
                     return (StatusCodes.Unauthorized, null);
                 }
 
+                // Validate session data integrity - null roles or authorizations indicates data corruption
+                if (sessionData.Roles == null || sessionData.Authorizations == null)
+                {
+                    _logger.LogError(
+                        "Session data corrupted - null Roles or Authorizations. SessionKey: {SessionKey}, AccountId: {AccountId}, RolesNull: {RolesNull}, AuthNull: {AuthNull}",
+                        sessionKey, sessionData.AccountId, sessionData.Roles == null, sessionData.Authorizations == null);
+                    await _messageBus.TryPublishErrorAsync(
+                        "auth",
+                        "ValidateToken",
+                        "session_data_corrupted",
+                        "Session has null Roles or Authorizations - data integrity failure",
+                        endpoint: "post:/auth/validate",
+                        cancellationToken: cancellationToken);
+                    return (StatusCodes.Unauthorized, null);
+                }
+
+                // Update last activity timestamp and re-save with remaining TTL
+                var remainingSeconds = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                sessionData.LastActiveAt = DateTimeOffset.UtcNow;
+                await _sessionService.SaveSessionAsync(sessionKey, sessionData, remainingSeconds, cancellationToken);
+
+                // Return sessionKey as SessionId so Connect service tracks connections by the same
+                // key used in account-sessions index and published in SessionInvalidatedEvent
                 return (StatusCodes.OK, new ValidateTokenResponse
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
                     SessionId = Guid.Parse(sessionKey),
-                    Roles = sessionData.Roles ?? new List<string>(),
-                    Authorizations = sessionData.Authorizations ?? new List<string>(),
-                    RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
+                    Roles = sessionData.Roles,
+                    Authorizations = sessionData.Authorizations,
+                    RemainingTime = remainingSeconds
                 });
             }
             catch (SecurityTokenException ex)
@@ -290,29 +328,6 @@ public class TokenService : ITokenService
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<string?> ExtractSessionKeyFromJwtAsync(string jwt)
-    {
-        try
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jsonToken = tokenHandler.ReadJwtToken(jwt);
-            var sessionKeyClaim = jsonToken?.Claims?.FirstOrDefault(c => c.Type == "session_key");
-            return sessionKeyClaim?.Value;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error extracting session_key from JWT");
-            await _messageBus.TryPublishErrorAsync(
-                "auth",
-                "ExtractSessionKeyFromJwt",
-                ex.GetType().Name,
-                ex.Message,
-                endpoint: "post:/auth/validate");
-            return null;
         }
     }
 

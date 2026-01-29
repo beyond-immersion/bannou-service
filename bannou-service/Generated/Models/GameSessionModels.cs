@@ -41,15 +41,14 @@ public partial class ListGameSessionsRequest
     /// Filter by game type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ListGameSessionsRequestGameType GameType { get; set; } = default!;
+    public string? GameType { get; set; } = default!;
 
     /// <summary>
-    /// Filter by session status
+    /// Filter by session status (finished not included for active filters)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ListGameSessionsRequestStatus Status { get; set; } = default!;
+    public SessionStatus? Status { get; set; } = default!;
 
 }
 
@@ -111,13 +110,12 @@ public partial class CreateGameSessionRequest
 {
 
     /// <summary>
-    /// Type of game for this session (arcadia or generic)
+    /// Game service stub name for this session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CreateGameSessionRequestGameType GameType { get; set; } = default!;
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of players allowed in the session
@@ -194,8 +192,7 @@ public partial class GameSessionResponse
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameSessionResponseGameType GameType { get; set; } = default!;
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Type of session - lobby or matchmade
@@ -219,7 +216,7 @@ public partial class GameSessionResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameSessionResponseStatus Status { get; set; } = default!;
+    public SessionStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of players allowed in the session
@@ -326,7 +323,7 @@ public partial class JoinGameSessionRequest
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system.
+    /// Game service stub name to join. Determines which lobby to join. Provided by shortcut system.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -375,7 +372,7 @@ public partial class JoinGameSessionResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public JoinGameSessionResponsePlayerRole PlayerRole { get; set; } = default!;
+    public PlayerRole PlayerRole { get; set; } = default!;
 
     /// <summary>
     /// Initial game state data
@@ -418,7 +415,7 @@ public partial class GamePlayer
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Display name shown to other players
@@ -433,7 +430,7 @@ public partial class GamePlayer
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GamePlayerRole Role { get; set; } = default!;
+    public PlayerRole Role { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the player joined the session
@@ -453,7 +450,7 @@ public partial class GamePlayer
     /// Voice participant session ID (if player has joined voice)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSessionId")]
-    public string? VoiceSessionId { get; set; } = default!;
+    public System.Guid? VoiceSessionId { get; set; } = default!;
 
 }
 
@@ -534,7 +531,7 @@ public partial class ChatMessageRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ChatMessageRequestMessageType MessageType { get; set; } = BeyondImmersion.BannouService.GameSession.ChatMessageRequestMessageType.Public;
+    public ChatMessageType MessageType { get; set; } = BeyondImmersion.BannouService.GameSession.ChatMessageType.Public;
 
     /// <summary>
     /// For whisper messages
@@ -582,7 +579,7 @@ public partial class GameActionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameActionRequestActionType ActionType { get; set; } = default!;
+    public GameActionType ActionType { get; set; } = default!;
 
     /// <summary>
     /// Action-specific data
@@ -679,14 +676,14 @@ public partial class VoiceConnectionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tier")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceConnectionInfoTier? Tier { get; set; } = default!;
+    public VoiceTier? Tier { get; set; } = default!;
 
     /// <summary>
     /// Audio codec to use
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceConnectionInfoCodec? Codec { get; set; } = default!;
+    public VoiceCodec? Codec { get; set; } = default!;
 
     /// <summary>
     /// STUN server URIs for NAT traversal (clients should configure these early)
@@ -709,6 +706,95 @@ public enum SessionType
 
     [System.Runtime.Serialization.EnumMember(Value = @"matchmade")]
     Matchmade = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Current status of the game session
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
+    Waiting = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    Active = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    Full = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"finished")]
+    Finished = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Role of the player in the game session
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PlayerRole
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"player")]
+    Player = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"spectator")]
+    Spectator = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"moderator")]
+    Moderator = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Type of chat message
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ChatMessageType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"public")]
+    Public = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"whisper")]
+    Whisper = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"system")]
+    System = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Type of game action
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GameActionType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"move")]
+    Move = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"interact")]
+    Interact = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"attack")]
+    Attack = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cast_spell")]
+    CastSpell = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"use_item")]
+    UseItem = 4,
 
 }
 #pragma warning restore CS1591
@@ -810,7 +896,7 @@ public partial class PublishJoinShortcutRequest
     [System.Text.Json.Serialization.JsonPropertyName("targetWebSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TargetWebSocketSessionId { get; set; } = default!;
+    public System.Guid TargetWebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the player
@@ -892,162 +978,15 @@ public partial class LeaveGameSessionByIdRequest
 
 }
 
+/// <summary>
+/// Voice communication tier:
+/// <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
+/// <br/>- scaled: RTP server-mediated communication (unlimited participants)
+/// <br/>
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ListGameSessionsRequestGameType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
-    Arcadia = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
-    Generic = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ListGameSessionsRequestStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
-    Waiting = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
-    Active = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CreateGameSessionRequestGameType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
-    Arcadia = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
-    Generic = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameSessionResponseGameType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
-    Arcadia = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
-    Generic = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameSessionResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
-    Waiting = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
-    Active = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"finished")]
-    Finished = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum JoinGameSessionResponsePlayerRole
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"player")]
-    Player = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"spectator")]
-    Spectator = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"moderator")]
-    Moderator = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GamePlayerRole
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"player")]
-    Player = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"spectator")]
-    Spectator = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"moderator")]
-    Moderator = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ChatMessageRequestMessageType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"public")]
-    Public = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"whisper")]
-    Whisper = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"system")]
-    System = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameActionRequestActionType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"move")]
-    Move = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"interact")]
-    Interact = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"attack")]
-    Attack = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cast_spell")]
-    Cast_spell = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"use_item")]
-    Use_item = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceConnectionInfoTier
+public enum VoiceTier
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
@@ -1059,9 +998,12 @@ public enum VoiceConnectionInfoTier
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Audio codec for voice communication
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceConnectionInfoCodec
+public enum VoiceCodec
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"opus")]

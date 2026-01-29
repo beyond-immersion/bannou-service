@@ -204,13 +204,17 @@ public class ConnectionState
     /// <summary>
     /// Adds a pending message awaiting response.
     /// </summary>
-    public void AddPendingMessage(ulong messageId, string serviceName, DateTimeOffset sentAt)
+    /// <param name="messageId">Unique message identifier.</param>
+    /// <param name="serviceName">Target service name.</param>
+    /// <param name="sentAt">Timestamp when message was sent.</param>
+    /// <param name="timeoutSeconds">Timeout in seconds before message is considered expired.</param>
+    public void AddPendingMessage(ulong messageId, string serviceName, DateTimeOffset sentAt, int timeoutSeconds = 30)
     {
         PendingMessages[messageId] = new PendingMessageInfo
         {
             ServiceName = serviceName,
             SentAt = sentAt,
-            TimeoutAt = sentAt.AddSeconds(30) // Default 30 second timeout
+            TimeoutAt = sentAt.AddSeconds(timeoutSeconds)
         };
     }
 
@@ -445,7 +449,7 @@ public class PendingRPCInfo
     /// <summary>
     /// Session ID of the client that received the RPC.
     /// </summary>
-    public string ClientSessionId { get; set; } = string.Empty;
+    public Guid ClientSessionId { get; set; }
 
     /// <summary>
     /// Name of the service that initiated the RPC.

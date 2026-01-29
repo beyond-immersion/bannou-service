@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -29,6 +30,7 @@ public class TokenServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<TokenService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly TokenService _service;
 
     public TokenServiceTests()
@@ -47,6 +49,12 @@ public class TokenServiceTests
         {
             JwtExpirationMinutes = 60
         };
+        _appConfiguration = new AppConfiguration
+        {
+            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
+            JwtIssuer = "test-issuer",
+            JwtAudience = "test-audience"
+        };
 
         // Setup state store factory to return the string store
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
@@ -57,6 +65,7 @@ public class TokenServiceTests
             _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
     }
@@ -96,13 +105,13 @@ public class TokenServiceTests
     }
 
     [Fact]
-    public void GenerateRefreshToken_ShouldReturn32CharacterGuidFormat()
+    public void GenerateRefreshToken_ShouldReturn64CharacterHexString()
     {
         // Act
         var token = _service.GenerateRefreshToken();
 
-        // Assert - Guid.ToString("N") produces 32 hex characters
-        Assert.Equal(32, token.Length);
+        // Assert - 32 random bytes converted to lowercase hex produces 64 characters
+        Assert.Equal(64, token.Length);
         Assert.True(token.All(c => char.IsLetterOrDigit(c)));
     }
 
@@ -151,13 +160,13 @@ public class TokenServiceTests
     public async Task StoreRefreshTokenAsync_ShouldCallStateStoreWithCorrectKey()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var refreshToken = "test-refresh-token";
         var expectedKey = $"refresh_token:{refreshToken}";
 
         _mockStringStore.Setup(s => s.SaveAsync(
             expectedKey,
-            accountId,
+            accountId.ToString(),
             It.IsAny<StateOptions>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
@@ -168,7 +177,7 @@ public class TokenServiceTests
         // Assert - TTL is in seconds: 7 days = 604800 seconds
         _mockStringStore.Verify(s => s.SaveAsync(
             expectedKey,
-            accountId,
+            accountId.ToString(),
             It.Is<StateOptions>(o => o.Ttl == (int)TimeSpan.FromDays(7).TotalSeconds),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -182,11 +191,12 @@ public class TokenServiceTests
     {
         // Arrange
         var refreshToken = "valid-refresh-token";
-        var expectedAccountId = "test-account-id";
+        var expectedAccountId = Guid.NewGuid();
         var expectedKey = $"refresh_token:{refreshToken}";
 
+        // Storage returns string; service parses to Guid at read boundary
         _mockStringStore.Setup(s => s.GetAsync(expectedKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedAccountId);
+            .ReturnsAsync(expectedAccountId.ToString());
 
         // Act
         var result = await _service.ValidateRefreshTokenAsync(refreshToken);
@@ -269,19 +279,28 @@ public class TokenServiceTests
     #region GenerateAccessTokenAsync Tests
 
     [Fact]
-    public async Task GenerateAccessTokenAsync_WithEmptyJwtSecret_ShouldThrowArgumentException()
+    public async Task GenerateAccessTokenAsync_WithEmptyJwtSecret_ShouldThrowInvalidOperationException()
     {
-        // Arrange - JWT config now comes from Program.Configuration
-        // Empty JwtSecret causes SymmetricSecurityKey to throw ArgumentException
-        TestConfigurationHelper.ConfigureJwt(jwtSecret: "", jwtIssuer: "test-issuer", jwtAudience: "test-audience");
+        // Arrange - Create a service with empty JwtSecret in injected AppConfiguration
+        var emptySecretConfig = new AppConfiguration
+        {
+            JwtSecret = "",
+            JwtIssuer = "test-issuer",
+            JwtAudience = "test-audience"
+        };
+        var serviceWithEmptySecret = new TokenService(
+            _mockStateStoreFactory.Object,
+            _mockSubscriptionClient.Object,
+            _mockSessionService.Object,
+            _configuration,
+            emptySecretConfig,
+            _mockMessageBus.Object,
+            _mockLogger.Object);
         var account = CreateTestAccount();
 
-        // Act & Assert - SymmetricSecurityKey throws ArgumentException for zero-length key
-        await Assert.ThrowsAsync<ArgumentException>(() =>
-            _service.GenerateAccessTokenAsync(account));
-
-        // Cleanup - restore valid config for other tests
-        TestConfigurationHelper.ConfigureJwt();
+        // Act & Assert - Empty JwtSecret throws InvalidOperationException (misconfigured service)
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            serviceWithEmptySecret.GenerateAccessTokenAsync(account));
     }
 
     [Fact]
@@ -306,7 +325,7 @@ public class TokenServiceTests
         // Assert
         Assert.NotNull(result.accessToken);
         Assert.NotEmpty(result.accessToken);
-        Assert.NotNull(result.sessionId);
+        Assert.NotEqual(Guid.Empty, result.sessionId);
 
         // Cleanup - restore valid config for other tests
         TestConfigurationHelper.ConfigureJwt();
@@ -334,7 +353,7 @@ public class TokenServiceTests
         // Assert
         Assert.NotNull(result.accessToken);
         Assert.NotEmpty(result.accessToken);
-        Assert.NotNull(result.sessionId);
+        Assert.NotEqual(Guid.Empty, result.sessionId);
 
         // Cleanup - restore valid config for other tests
         TestConfigurationHelper.ConfigureJwt();
@@ -367,13 +386,13 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()))
@@ -384,7 +403,7 @@ public class TokenServiceTests
 
         // Assert
         Assert.False(string.IsNullOrWhiteSpace(token));
-        Assert.NotNull(sessionId);
+        Assert.NotEqual(Guid.Empty, sessionId);
         // JWT has 3 parts separated by dots
         Assert.Equal(3, token.Split('.').Length);
     }
@@ -408,13 +427,13 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()))
@@ -425,7 +444,7 @@ public class TokenServiceTests
 
         // Assert - Should still generate a valid JWT
         Assert.False(string.IsNullOrWhiteSpace(token));
-        Assert.NotNull(sessionId);
+        Assert.NotEqual(Guid.Empty, sessionId);
         Assert.Equal(3, token.Split('.').Length);
     }
 
@@ -476,13 +495,13 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()))
@@ -526,33 +545,6 @@ public class TokenServiceTests
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
         Assert.Null(response);
-    }
-
-    #endregion
-
-    #region ExtractSessionKeyFromJwtAsync Tests
-
-    [Fact]
-    public async Task ExtractSessionKeyFromJwtAsync_WithInvalidJwt_ShouldReturnNull()
-    {
-        // Arrange
-        var invalidToken = "not.valid.jwt";
-
-        // Act
-        var result = await _service.ExtractSessionKeyFromJwtAsync(invalidToken);
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public async Task ExtractSessionKeyFromJwtAsync_WithEmptyString_ShouldReturnNull()
-    {
-        // Act
-        var result = await _service.ExtractSessionKeyFromJwtAsync("");
-
-        // Assert
-        Assert.Null(result);
     }
 
     #endregion

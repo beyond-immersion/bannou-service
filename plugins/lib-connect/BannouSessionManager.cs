@@ -176,14 +176,14 @@ public class BannouSessionManager : ISessionManager
     #region Heartbeat
 
     /// <inheritdoc />
-    public async Task UpdateSessionHeartbeatAsync(string sessionId, string instanceId)
+    public async Task UpdateSessionHeartbeatAsync(string sessionId, Guid instanceId)
     {
         try
         {
             var key = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
             var heartbeatData = new SessionHeartbeat
             {
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 InstanceId = instanceId,
                 LastSeen = DateTimeOffset.UtcNow,
                 ConnectionCount = 1
@@ -328,7 +328,7 @@ public class BannouSessionManager : ISessionManager
             existingState.UserRoles = userRoles?.ToList();
 
             // Store updated state with extended TTL for reconnection window
-            await SetConnectionStateAsync(sessionId, existingState, reconnectionWindow.Add(TimeSpan.FromMinutes(1)));
+            await SetConnectionStateAsync(sessionId, existingState, reconnectionWindow.Add(TimeSpan.FromMinutes(_configuration.ReconnectionWindowExtensionMinutes)));
 
             // Store token -> sessionId mapping
             await SetReconnectionTokenAsync(reconnectionToken, sessionId, reconnectionWindow);
@@ -464,7 +464,7 @@ public class BannouSessionManager : ISessionManager
             var sessionEvent = new SessionEvent
             {
                 EventType = eventType,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Timestamp = DateTimeOffset.UtcNow,
                 Data = eventData
             };

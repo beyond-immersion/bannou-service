@@ -10,18 +10,8 @@ using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Web;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -38,25 +28,12 @@ public partial class AuthService : IAuthService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly AppConfiguration _appConfiguration;
 
     // Helper services for better separation of concerns and testability
     private readonly ITokenService _tokenService;
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
-
-    private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
-    private const string SESSION_UPDATED_TOPIC = "session.updated";
-    private const string DEFAULT_CONNECT_URL = "ws://localhost:5014/connect";
-
-    // OAuth provider URLs
-    private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
-    private const string DISCORD_USER_URL = "https://discord.com/api/users/@me";
-    private const string GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-    private const string GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
-    private const string TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
-    private const string TWITCH_USER_URL = "https://api.twitch.tv/helix/users";
-    private const string STEAM_AUTH_URL = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/";
 
     public AuthService(
         IAccountClient accountClient,
@@ -64,8 +41,8 @@ public partial class AuthService : IAuthService
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         ILogger<AuthService> logger,
-        IHttpClientFactory httpClientFactory,
         ITokenService tokenService,
         ISessionService sessionService,
         IOAuthProviderService oauthService,
@@ -76,8 +53,8 @@ public partial class AuthService : IAuthService
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _logger = logger;
-        _httpClientFactory = httpClientFactory;
         _tokenService = tokenService;
         _sessionService = sessionService;
         _oauthService = oauthService;
@@ -85,36 +62,27 @@ public partial class AuthService : IAuthService
         // Register event handlers via partial class (AuthServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
 
-        // JWT config comes from core AppConfiguration (BANNOU_JWT_*), validated at startup in Program.cs
-        var jwtConfig = Program.Configuration;
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
-            jwtConfig.JwtSecret?.Length ?? 0, jwtConfig.JwtIssuer, jwtConfig.JwtAudience, _configuration.MockProviders);
+            _appConfiguration.JwtSecret?.Length ?? 0, _appConfiguration.JwtIssuer, _appConfiguration.JwtAudience, _configuration.MockProviders);
     }
 
     /// <summary>
     /// Gets the effective WebSocket URL for client connections.
-    /// Priority: AUTH_CONNECT_URL > ws://BANNOU_SERVICE_DOMAIN/connect > default localhost
+    /// Priority: BANNOU_SERVICE_DOMAIN (production) > AUTH_CONNECT_URL (configured default)
     /// </summary>
     private Uri EffectiveConnectUrl
     {
         get
         {
-            // If explicit ConnectUrl is configured, use it
-            if (!string.IsNullOrWhiteSpace(_configuration.ConnectUrl) &&
-                _configuration.ConnectUrl != DEFAULT_CONNECT_URL)
-            {
-                return new Uri(_configuration.ConnectUrl);
-            }
-
-            // If ServiceDomain is configured, derive WebSocket URL from it
-            var serviceDomain = Program.Configuration?.ServiceDomain;
+            // If ServiceDomain is configured, derive WebSocket URL from it (production pattern)
+            var serviceDomain = _appConfiguration.ServiceDomain;
             if (!string.IsNullOrWhiteSpace(serviceDomain))
             {
                 return new Uri($"wss://{serviceDomain}/connect");
             }
 
-            // Default to localhost
-            return new Uri(DEFAULT_CONNECT_URL);
+            // Use configured ConnectUrl (defaults to ws://localhost:5014/connect via schema)
+            return new Uri(_configuration.ConnectUrl);
         }
     }
 
@@ -125,7 +93,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing login request for email: {Email}", body.Email);
+            _logger.LogDebug("Processing login request for email: {Email}", body.Email);
 
             if (string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
             {
@@ -133,13 +101,13 @@ public partial class AuthService : IAuthService
             }
 
             // Lookup account by email via AccountClient
-            _logger.LogInformation("Looking up account by email via AccountClient: {Email}", body.Email);
+            _logger.LogDebug("Looking up account by email via AccountClient: {Email}", body.Email);
 
             AccountResponse account;
             try
             {
                 account = await _accountClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = body.Email }, cancellationToken);
-                _logger.LogInformation("Account found via service call: {AccountId}", account?.AccountId);
+                _logger.LogDebug("Account found via service call: {AccountId}", account?.AccountId);
 
                 if (account == null)
                 {
@@ -177,7 +145,7 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.Unauthorized, null);
             }
 
-            _logger.LogInformation("Password verification successful for email: {Email}", body.Email);
+            _logger.LogDebug("Password verification successful for email: {Email}", body.Email);
 
             // Generate tokens (returns both accessToken and sessionId for event publishing)
             var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
@@ -185,7 +153,7 @@ public partial class AuthService : IAuthService
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             // Store refresh token
-            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("Successfully authenticated user: {Email} (ID: {AccountId})",
                 body.Email, account.AccountId);
@@ -217,7 +185,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing registration request for username: {Username}", body.Username);
+            _logger.LogDebug("Processing registration request for username: {Username}", body.Username);
 
             if (string.IsNullOrWhiteSpace(body.Username) || string.IsNullOrWhiteSpace(body.Password))
             {
@@ -225,11 +193,11 @@ public partial class AuthService : IAuthService
             }
 
             // Hash password before storing
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: 12);
-            _logger.LogInformation("Password hashed successfully for registration");
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: _configuration.BcryptWorkFactor);
+            _logger.LogDebug("Password hashed successfully for registration");
 
             // Create account via AccountClient service call
-            _logger.LogInformation("Creating account via AccountClient for registration: {Email}", body.Email);
+            _logger.LogDebug("Creating account via AccountClient for registration: {Email}", body.Email);
 
             var createRequest = new CreateAccountRequest
             {
@@ -243,7 +211,7 @@ public partial class AuthService : IAuthService
             try
             {
                 accountResult = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
-                _logger.LogInformation("Account created successfully via service call: {AccountId}", accountResult?.AccountId);
+                _logger.LogDebug("Account created successfully via service call: {AccountId}", accountResult?.AccountId);
 
                 if (accountResult == null)
                 {
@@ -273,7 +241,7 @@ public partial class AuthService : IAuthService
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             // Store refresh token
-            await _tokenService.StoreRefreshTokenAsync(accountResult.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(accountResult.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("Successfully registered user: {Username} with ID: {AccountId}",
                 body.Username, accountResult.AccountId);
@@ -338,7 +306,7 @@ public partial class AuthService : IAuthService
                 provider, userInfo.ProviderId, userInfo.Email);
 
             // Find or create account linked to this OAuth identity
-            var account = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
+            var (account, isNewAccount) = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for OAuth user: {ProviderId}", userInfo.ProviderId);
@@ -349,13 +317,13 @@ public partial class AuthService : IAuthService
             // Generate tokens (returns both accessToken and sessionId for event publishing)
             var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = _tokenService.GenerateRefreshToken();
-            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("OAuth authentication successful for account {AccountId} via {Provider}",
                 account.AccountId, provider);
 
             // Publish audit event for successful OAuth login
-            await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), userInfo.ProviderId, sessionId, isNewAccount: false);
+            await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), userInfo.ProviderId, sessionId, isNewAccount);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -415,14 +383,15 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Steam ticket validated successfully for SteamID: {SteamId}", steamId);
 
             // Find or create account linked to this Steam identity
+            var suffix = steamId.Length >= 6 ? steamId.Substring(steamId.Length - 6) : steamId;
             var userInfo = new Services.OAuthUserInfo
             {
                 ProviderId = steamId,
-                DisplayName = $"Steam_{steamId.Substring(steamId.Length - 6)}", // Last 6 chars of Steam ID
+                DisplayName = $"Steam_{suffix}",
                 Email = null // Steam doesn't provide email
             };
 
-            var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, cancellationToken, "steam");
+            var (account, isNewAccount) = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
@@ -433,12 +402,12 @@ public partial class AuthService : IAuthService
             // Generate tokens (returns both accessToken and sessionId for event publishing)
             var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = _tokenService.GenerateRefreshToken();
-            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("Steam authentication successful for account {AccountId}", account.AccountId);
 
             // Publish audit event for successful Steam login
-            await PublishSteamLoginSuccessfulEventAsync(account.AccountId, steamId, sessionId, isNewAccount: false);
+            await PublishSteamLoginSuccessfulEventAsync(account.AccountId, steamId, sessionId, isNewAccount);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -465,34 +434,45 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing token refresh request");
+            _logger.LogDebug("Processing token refresh request");
 
             if (string.IsNullOrWhiteSpace(body.RefreshToken))
             {
                 return (StatusCodes.BadRequest, null);
             }
 
+            // The jwt parameter is generated from schema x-permissions but intentionally unused here.
+            // Refresh tokens are designed to work when the access token has expired - validating
+            // the JWT would defeat the purpose of the refresh flow. The refresh token alone is
+            // the credential for obtaining a new access token.
+
             // Validate refresh token
             var accountId = await _tokenService.ValidateRefreshTokenAsync(body.RefreshToken, cancellationToken);
-            if (string.IsNullOrEmpty(accountId))
+            if (!accountId.HasValue)
             {
                 return (StatusCodes.Forbidden, null);
             }
 
             // Lookup account by ID via AccountClient
-            _logger.LogInformation("Looking up account by ID via AccountClient: {AccountId}", accountId);
+            _logger.LogDebug("Looking up account by ID via AccountClient: {AccountId}", accountId.Value);
 
             AccountResponse account;
             try
             {
-                account = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
-                _logger.LogInformation("Account found for refresh: {AccountId}", account?.AccountId);
+                account = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId.Value }, cancellationToken);
+                _logger.LogDebug("Account found for refresh: {AccountId}", account?.AccountId);
 
                 if (account == null)
                 {
-                    _logger.LogWarning("No account found for ID: {AccountId}", accountId);
+                    _logger.LogWarning("No account found for ID: {AccountId}", accountId.Value);
                     return (StatusCodes.Unauthorized, null);
                 }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Account not found - return Unauthorized (refresh token may be stale)
+                _logger.LogWarning("Account not found for refresh token: {AccountId}", accountId.Value);
+                return (StatusCodes.Unauthorized, null);
             }
             catch (Exception ex)
             {
@@ -506,7 +486,7 @@ public partial class AuthService : IAuthService
             var newRefreshToken = _tokenService.GenerateRefreshToken();
 
             // Store new refresh token and remove old one
-            await _tokenService.StoreRefreshTokenAsync(accountId, newRefreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(accountId.Value, newRefreshToken, cancellationToken);
             await _tokenService.RemoveRefreshTokenAsync(body.RefreshToken, cancellationToken);
 
             return (StatusCodes.OK, new AuthResponse
@@ -534,55 +514,20 @@ public partial class AuthService : IAuthService
         string? state,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             _logger.LogInformation("Initializing OAuth for provider: {Provider}", provider);
 
-            string? authUrl = null;
-            var encodedState = HttpUtility.UrlEncode(state ?? Guid.NewGuid().ToString());
-
-            switch (provider)
+            var authUrl = _oauthService.GetAuthorizationUrl(provider, redirectUri, state);
+            if (authUrl == null)
             {
-                case Provider.Discord:
-                    if (string.IsNullOrWhiteSpace(_configuration.DiscordClientId))
-                    {
-                        _logger.LogError("Discord Client ID not configured");
-                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Discord Client ID not configured");
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    var discordRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.DiscordRedirectUri);
-                    authUrl = $"https://discord.com/oauth2/authorize?client_id={_configuration.DiscordClientId}&response_type=code&redirect_uri={discordRedirectUri}&scope=identify%20email&state={encodedState}";
-                    break;
-
-                case Provider.Google:
-                    if (string.IsNullOrWhiteSpace(_configuration.GoogleClientId))
-                    {
-                        _logger.LogError("Google Client ID not configured");
-                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Google Client ID not configured");
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    var googleRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.GoogleRedirectUri);
-                    authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_configuration.GoogleClientId}&response_type=code&redirect_uri={googleRedirectUri}&scope=openid%20email%20profile&state={encodedState}";
-                    break;
-
-                case Provider.Twitch:
-                    if (string.IsNullOrWhiteSpace(_configuration.TwitchClientId))
-                    {
-                        _logger.LogError("Twitch Client ID not configured");
-                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Twitch Client ID not configured");
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    var twitchRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.TwitchRedirectUri);
-                    authUrl = $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
-                    break;
-
-                default:
-                    _logger.LogWarning("Unknown OAuth provider: {Provider}", provider);
-                    return (StatusCodes.BadRequest, null);
+                await PublishErrorEventAsync("InitOAuth", "configuration_error",
+                    $"OAuth provider {provider} is not properly configured - check client ID and redirect URI settings",
+                    details: new { Provider = provider.ToString() });
+                return (StatusCodes.InternalServerError, null);
             }
 
-            _logger.LogDebug("Generated OAuth URL for {Provider}: {Url}", provider, authUrl);
+            _logger.LogDebug("Generated OAuth URL for {Provider}", provider);
             return (StatusCodes.OK, new InitOAuthResponse { AuthorizationUrl = new Uri(authUrl) });
         }
         catch (Exception ex)
@@ -617,13 +562,8 @@ public partial class AuthService : IAuthService
                 return StatusCodes.Unauthorized;
             }
 
-            // Extract session_key from JWT claims to identify which session to logout
-            var sessionKey = await _tokenService.ExtractSessionKeyFromJwtAsync(jwt);
-            if (sessionKey == null)
-            {
-                _logger.LogWarning("Could not extract session_key from JWT for logout");
-                return StatusCodes.Unauthorized;
-            }
+            // SessionId in ValidateTokenResponse is the internal session key (Guid.Parse(sessionKey))
+            var sessionKey = validateResponse.SessionId.ToString("N");
 
             var invalidatedSessions = new List<string>();
 
@@ -631,32 +571,33 @@ public partial class AuthService : IAuthService
             {
                 _logger.LogInformation("AllSessions logout requested for account: {AccountId}", validateResponse.AccountId);
 
-                // Get all sessions for the account using our new efficient method
-                var accountSessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
+                // Get session keys directly from the index (no need to load full session data first)
+                var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(validateResponse.AccountId, cancellationToken);
 
-                if (accountSessions.Count > 0)
+                if (sessionKeys.Count > 0)
                 {
-                    // Get session keys from index to delete all sessions
-                    var indexKey = $"account-sessions:{validateResponse.AccountId}";
-                    var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
-                    var sessionKeys = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
+                    var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
-                    if (sessionKeys != null && sessionKeys.Count > 0)
+                    // Load session data to get SessionIds for reverse index cleanup, then delete
+                    foreach (var key in sessionKeys)
                     {
-                        // Delete all sessions
-                        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-                        var deleteTasks = sessionKeys.Select(key =>
-                            sessionStore.DeleteAsync($"session:{key}", cancellationToken));
-                        await Task.WhenAll(deleteTasks);
+                        var sessionData = await sessionStore.GetAsync($"session:{key}", cancellationToken);
+                        await sessionStore.DeleteAsync($"session:{key}", cancellationToken);
 
-                        // Remove the account sessions index
-                        await sessionIndexStore.DeleteAsync(indexKey, cancellationToken);
-
-                        invalidatedSessions.AddRange(sessionKeys);
-
-                        _logger.LogInformation("All {SessionCount} sessions logged out for account: {AccountId}",
-                            sessionKeys.Count, validateResponse.AccountId);
+                        // Clean up reverse index if session data was still available
+                        if (sessionData != null && sessionData.SessionId != Guid.Empty)
+                        {
+                            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionData.SessionId, cancellationToken);
+                        }
                     }
+
+                    // Remove the account sessions index
+                    await _sessionService.DeleteAccountSessionsIndexAsync(validateResponse.AccountId, cancellationToken);
+
+                    invalidatedSessions.AddRange(sessionKeys);
+
+                    _logger.LogInformation("All {SessionCount} sessions logged out for account: {AccountId}",
+                        sessionKeys.Count, validateResponse.AccountId);
                 }
                 else
                 {
@@ -670,7 +611,7 @@ public partial class AuthService : IAuthService
                 await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
                 // Remove session from account index
-                await _sessionService.RemoveSessionFromAccountIndexAsync(validateResponse.AccountId.ToString(), sessionKey, cancellationToken);
+                await _sessionService.RemoveSessionFromAccountIndexAsync(validateResponse.AccountId, sessionKey, cancellationToken);
 
                 invalidatedSessions.Add(sessionKey);
 
@@ -680,10 +621,11 @@ public partial class AuthService : IAuthService
             // Publish session invalidation event for Connect service to disconnect clients
             if (invalidatedSessions.Count > 0)
             {
-                await PublishSessionInvalidatedEventAsync(
+                await _sessionService.PublishSessionInvalidatedEventAsync(
                     validateResponse.AccountId,
                     invalidatedSessions,
-                    SessionInvalidatedEventReason.Logout);
+                    SessionInvalidatedEventReason.Logout,
+                    cancellationToken);
             }
 
             return StatusCodes.OK;
@@ -709,7 +651,7 @@ public partial class AuthService : IAuthService
 
             // Find and remove the session from Redis
             // Since we store sessions with session_key, we need to find sessions by session_id
-            var sessionKey = await _sessionService.FindSessionKeyBySessionIdAsync(sessionId.ToString(), cancellationToken);
+            var sessionKey = await _sessionService.FindSessionKeyBySessionIdAsync(sessionId, cancellationToken);
 
             if (sessionKey == null)
             {
@@ -727,19 +669,20 @@ public partial class AuthService : IAuthService
             // Remove session from account index if we found the session data
             if (sessionData != null)
             {
-                await _sessionService.RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
+                await _sessionService.RemoveSessionFromAccountIndexAsync(sessionData.AccountId, sessionKey, cancellationToken);
             }
 
             // Remove reverse index entry
-            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
+            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionId, cancellationToken);
 
-            // Publish SessionInvalidatedEvent to disconnect WebSocket clients (like LogoutAsync does)
+            // Publish SessionInvalidatedEvent to disconnect WebSocket clients
             if (sessionData != null)
             {
-                await PublishSessionInvalidatedEventAsync(
+                await _sessionService.PublishSessionInvalidatedEventAsync(
                     sessionData.AccountId,
                     new List<string> { sessionKey },
-                    SessionInvalidatedEventReason.Admin_action);
+                    SessionInvalidatedEventReason.Admin_action,
+                    cancellationToken);
             }
 
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
@@ -785,9 +728,7 @@ public partial class AuthService : IAuthService
             {
                 // Generate secure reset token
                 var resetToken = _tokenService.GenerateSecureToken();
-                var resetTokenTtlMinutes = _configuration.PasswordResetTokenTtlMinutes > 0
-                    ? _configuration.PasswordResetTokenTtlMinutes
-                    : 60; // Default 1 hour
+                var resetTokenTtlMinutes = _configuration.PasswordResetTokenTtlMinutes;
 
                 var resetData = new PasswordResetData
                 {
@@ -837,7 +778,8 @@ public partial class AuthService : IAuthService
         }
         var resetUrl = $"{_configuration.PasswordResetBaseUrl}?token={resetToken}";
 
-        _logger.LogInformation(
+        // LogDebug for mock email output to prevent token leakage in production log aggregation
+        _logger.LogDebug(
             "=== PASSWORD RESET EMAIL (MOCK) ===\n" +
             "To: {Email}\n" +
             "Subject: Password Reset Request\n" +
@@ -886,7 +828,7 @@ public partial class AuthService : IAuthService
             }
 
             // Hash the new password
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: 12);
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: _configuration.BcryptWorkFactor);
 
             // Update password via AccountClient
             await _accountClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
@@ -930,7 +872,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Sessions requested");
+            _logger.LogDebug("Sessions requested");
 
             if (string.IsNullOrWhiteSpace(jwt))
             {
@@ -946,12 +888,12 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.Unauthorized, null);
             }
 
-            _logger.LogInformation("Getting sessions for account: {AccountId}", validateResponse.AccountId);
+            _logger.LogDebug("Getting sessions for account: {AccountId}", validateResponse.AccountId);
 
             // Use efficient account-to-sessions index with bulk state operations
-            var sessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
+            var sessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId, cancellationToken);
 
-            _logger.LogInformation("Returning {SessionCount} session(s) for account: {AccountId}",
+            _logger.LogDebug("Returning {SessionCount} session(s) for account: {AccountId}",
                 sessions.Count, validateResponse.AccountId);
 
             return (StatusCodes.OK, new SessionsResponse
@@ -972,128 +914,13 @@ public partial class AuthService : IAuthService
         string jwt,
         CancellationToken cancellationToken = default)
     {
-        try
+        if (string.IsNullOrWhiteSpace(jwt))
         {
-            _logger.LogInformation("Validating JWT token");
-
-            if (string.IsNullOrWhiteSpace(jwt))
-            {
-                _logger.LogWarning("JWT token is null or empty");
-                return (StatusCodes.Unauthorized, null);
-            }
-
-            // Validate JWT signature and extract claims
-            // Use core app configuration for JWT settings (validated at startup in Program.cs)
-            var jwtConfig = Program.Configuration;
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(jwtConfig.JwtSecret!);
-
-            try
-            {
-                var tokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtConfig.JwtIssuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtConfig.JwtAudience,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                };
-
-                var principal = tokenHandler.ValidateToken(jwt, tokenValidationParameters, out var validatedToken);
-
-                // Extract session_key from JWT claims
-                var sessionKeyClaimType = "session_key";
-                var sessionKeyClaim = principal.FindFirst(sessionKeyClaimType);
-                if (sessionKeyClaim == null)
-                {
-                    _logger.LogWarning("JWT token does not contain session_key claim");
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                var sessionKey = sessionKeyClaim.Value;
-
-                _logger.LogDebug("Validating session from JWT, SessionKey: {SessionKey}", sessionKey);
-
-                // Debug logging for session lookup
-                _logger.LogDebug("Looking up session state for SessionKey: {SessionKey}", sessionKey);
-
-                // Lookup session data from Redis
-                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-                var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
-
-                if (sessionData == null)
-                {
-                    _logger.LogWarning("Session not found, SessionKey: {SessionKey}", sessionKey);
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                _logger.LogDebug("Session loaded for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
-                    sessionData.AccountId, sessionKey, sessionData.ExpiresAt);
-
-                // Check if session has expired
-                if (sessionData.ExpiresAt < DateTimeOffset.UtcNow)
-                {
-                    _logger.LogWarning("Session expired, SessionKey: {SessionKey}, ExpiredAt: {ExpiresAt}", sessionKey, sessionData.ExpiresAt);
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                // Validate session data integrity - null roles or authorizations indicates data corruption
-                if (sessionData.Roles == null || sessionData.Authorizations == null)
-                {
-                    _logger.LogError(
-                        "Session data corrupted - null Roles or Authorizations. SessionKey: {SessionKey}, AccountId: {AccountId}, RolesNull: {RolesNull}, AuthNull: {AuthNull}",
-                        sessionKey, sessionData.AccountId, sessionData.Roles == null, sessionData.Authorizations == null);
-                    await PublishErrorEventAsync("ValidateToken", "session_data_corrupted", "Session has null Roles or Authorizations - data integrity failure");
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                _logger.LogDebug("Token validated successfully, AccountId: {AccountId}, SessionKey: {SessionKey}", sessionData.AccountId, sessionKey);
-
-                // Return session information
-                // IMPORTANT: Return sessionKey (not sessionData.SessionId) so Connect service
-                // tracks connections by the same key used in account-sessions index and
-                // published in SessionInvalidatedEvent for proper WebSocket disconnection
-                return (StatusCodes.OK, new ValidateTokenResponse
-                {
-                    Valid = true,
-                    AccountId = sessionData.AccountId,
-                    SessionId = Guid.Parse(sessionKey),
-                    Roles = sessionData.Roles,
-                    Authorizations = sessionData.Authorizations,
-                    RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
-                });
-            }
-            catch (SecurityTokenValidationException ex)
-            {
-                _logger.LogWarning(ex, "JWT token validation failed");
-                return (StatusCodes.Unauthorized, null);
-            }
-            catch (SecurityTokenMalformedException ex)
-            {
-                _logger.LogWarning(ex, "JWT token is malformed");
-                return (StatusCodes.Unauthorized, null);
-            }
-            catch (SecurityTokenException ex)
-            {
-                _logger.LogWarning(ex, "JWT security token error");
-                return (StatusCodes.Unauthorized, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error during JWT validation");
-                await PublishErrorEventAsync("ValidateToken", ex.GetType().Name, ex.Message);
-                return (StatusCodes.InternalServerError, null);
-            }
+            _logger.LogWarning("JWT token is null or empty for validation");
+            return (StatusCodes.Unauthorized, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during token validation");
-            await PublishErrorEventAsync("ValidateToken", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        return await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -1162,53 +989,8 @@ public partial class AuthService : IAuthService
 
     #region Private Helper Methods
 
-    /// <summary>
-    /// Internal model for session data stored in Redis
-    /// </summary>
-    private class SessionDataModel
-    {
-        public Guid AccountId { get; set; }
-        public string Email { get; set; } = string.Empty;
-        public string? DisplayName { get; set; }
-        public List<string> Roles { get; set; } = new List<string>();
-        public List<string> Authorizations { get; set; } = new List<string>();
-        public string SessionId { get; set; } = string.Empty;
-
-        // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
-        public long CreatedAtUnix { get; set; }
-        public long ExpiresAtUnix { get; set; }
-
-        // Expose as DateTimeOffset for code convenience (not serialized)
-        [System.Text.Json.Serialization.JsonIgnore]
-        public DateTimeOffset CreatedAt
-        {
-            get => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
-            set => CreatedAtUnix = value.ToUnixTimeSeconds();
-        }
-
-        [System.Text.Json.Serialization.JsonIgnore]
-        public DateTimeOffset ExpiresAt
-        {
-            get => DateTimeOffset.FromUnixTimeSeconds(ExpiresAtUnix);
-            set => ExpiresAtUnix = value.ToUnixTimeSeconds();
-        }
-    }
-
-    private string HashPassword(string password)
-    {
-        // Simplified password hashing - use BCrypt in production
-        // Use core app configuration for JWT secret (validated at startup in Program.cs)
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + Program.Configuration.JwtSecret));
-    }
-
-    private bool VerifyPassword(string password, string? hash)
-    {
-        if (string.IsNullOrEmpty(hash)) return false;
-        return HashPassword(password) == hash;
-    }
-
-    // Token generation and session management methods have been extracted to ITokenService and ISessionService
-    // for improved testability and separation of concerns.
+    // Token generation and session management methods use ITokenService and ISessionService.
+    // SessionDataModel is defined in ISessionService.cs (BeyondImmersion.BannouService.Auth.Services namespace).
 
     #endregion
 
@@ -1225,7 +1007,7 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Using mock OAuth provider for {Provider}", provider);
 
         var userInfo = await _oauthService.GetMockUserInfoAsync(provider, cancellationToken);
-        var account = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
+        var (account, _) = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
         if (account == null)
         {
             return (StatusCodes.InternalServerError, null);
@@ -1234,7 +1016,7 @@ public partial class AuthService : IAuthService
         // Mock providers don't need audit events - discard sessionId
         var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
-        await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+        await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -1254,8 +1036,7 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Using mock Steam provider");
 
         var userInfo = await _oauthService.GetMockSteamUserInfoAsync(cancellationToken);
-        // Use a fake provider for Steam since it's not in the enum
-        var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, cancellationToken, "steam");
+        var (account, _) = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
         if (account == null)
         {
             return (StatusCodes.InternalServerError, null);
@@ -1264,7 +1045,7 @@ public partial class AuthService : IAuthService
         // Mock providers don't need audit events - discard sessionId
         var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
-        await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+        await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -1281,149 +1062,16 @@ public partial class AuthService : IAuthService
     #region Event Handlers
 
     /// <summary>
-    /// Called when a pub/sub event is received. Routes to appropriate event handlers.
-    /// </summary>
-    public async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
-    {
-        _logger.LogDebug("Received event on topic {Topic}, DataType: {DataType}", topic, typeof(T).Name);
-
-        switch (topic)
-        {
-            case "account.deleted":
-                if (eventData is AccountDeletedEvent deletedEvent)
-                {
-                    await HandleAccountDeletedEventAsync(deletedEvent);
-                }
-                else
-                {
-                    _logger.LogError("Failed to cast event data to AccountDeletedEvent, ActualType: {ActualType}", eventData?.GetType().FullName ?? "null");
-                }
-                break;
-            default:
-                _logger.LogWarning("Received unknown event topic: {Topic}", topic);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Handles account deleted events to invalidate all sessions for the deleted account.
-    /// This ensures security by preventing continued access after account deletion.
-    /// </summary>
-    private async Task HandleAccountDeletedEventAsync(AccountDeletedEvent eventData)
-    {
-        try
-        {
-            _logger.LogInformation("Received account deleted event {EventId} for account: {AccountId}",
-                eventData.EventId, eventData.AccountId);
-
-            // Invalidate all sessions for the deleted account
-            await InvalidateAllSessionsForAccountAsync(eventData.AccountId);
-
-            _logger.LogInformation("Successfully invalidated all sessions for deleted account: {AccountId}",
-                eventData.AccountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process account deleted event {EventId} for account: {AccountId}",
-                eventData.EventId, eventData.AccountId);
-
-            // Don't re-throw - log the error and continue
-            // The generated controller will handle HTTP response for the event endpoint
-        }
-    }
-
-    /// <summary>
     /// Public wrapper for invalidating all sessions for a specific account.
-    /// Called by AuthEventsController when account.deleted event is received.
+    /// Called by AuthServiceEvents.HandleAccountDeletedAsync when account.deleted event is received.
     /// </summary>
-    public async Task InvalidateAccountSessionsAsync(Guid accountId)
+    /// <param name="accountId">The account ID whose sessions should be invalidated.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task InvalidateAccountSessionsAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted);
+        await _sessionService.InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted, cancellationToken);
     }
 
-    /// <summary>
-    /// Invalidate all sessions for a specific account.
-    /// Used when account is deleted to ensure security.
-    /// Publishes SessionInvalidatedEvent to notify Connect service to disconnect clients.
-    /// </summary>
-    private async Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.Account_deleted)
-    {
-        try
-        {
-            // Get session keys directly from the account index
-            var indexKey = $"account-sessions:{accountId}";
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-
-            var sessionKeys = await sessionIndexStore.GetAsync(indexKey, CancellationToken.None);
-
-            if (sessionKeys == null || !sessionKeys.Any())
-            {
-                _logger.LogDebug("No sessions found for account {AccountId}", accountId);
-                return;
-            }
-
-            _logger.LogDebug("Invalidating {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
-
-            // Remove each session from Redis
-            foreach (var sessionKey in sessionKeys)
-            {
-                try
-                {
-                    // Delete the session data
-                    await sessionStore.DeleteAsync($"session:{sessionKey}", CancellationToken.None);
-                    _logger.LogDebug("Deleted session {SessionKey} for account {AccountId}", sessionKey, accountId);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete session {SessionKey} for account {AccountId}", sessionKey, accountId);
-                    // Continue with other sessions even if one fails
-                }
-            }
-
-            // Remove the account-to-sessions index
-            await sessionIndexStore.DeleteAsync(indexKey, CancellationToken.None);
-
-            _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}",
-                sessionKeys.Count, accountId);
-
-            // Publish session invalidation event for Connect service to disconnect clients
-            await PublishSessionInvalidatedEventAsync(accountId, sessionKeys, reason);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to invalidate sessions for account {AccountId}", accountId);
-            throw; // Re-throw to let the event handler know about the failure
-        }
-    }
-
-    /// <summary>
-    /// Publish SessionInvalidatedEvent to notify Connect service to disconnect affected WebSocket clients.
-    /// </summary>
-    private async Task PublishSessionInvalidatedEventAsync(Guid accountId, List<string> sessionIds, SessionInvalidatedEventReason reason)
-    {
-        try
-        {
-            var eventModel = new SessionInvalidatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                AccountId = accountId,
-                SessionIds = sessionIds,
-                Reason = reason,
-                DisconnectClients = true
-            };
-
-            await _messageBus.TryPublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
-            _logger.LogInformation("Published SessionInvalidatedEvent for account {AccountId}: {SessionCount} sessions, reason: {Reason}",
-                accountId, sessionIds.Count, reason);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish SessionInvalidatedEvent for account {AccountId}", accountId);
-            // Don't throw - session invalidation succeeded, event publishing failure shouldn't fail the operation
-        }
-    }
 
     /// <summary>
     /// Propagate role changes to all active sessions for an account.
@@ -1457,10 +1105,19 @@ public partial class AuthService : IAuthService
                     {
                         session.Roles = newRoles;
 
-                        await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
+                        // Preserve remaining TTL so sessions still expire on schedule
+                        var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                        if (remainingSeconds <= 0)
+                        {
+                            _logger.LogDebug("Session {SessionKey} already expired, skipping role update", sessionKey);
+                            continue;
+                        }
+
+                        await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                            new StateOptions { Ttl = remainingSeconds }, cancellationToken);
 
                         // Publish session.updated event for Permission service
-                        await PublishSessionUpdatedEventAsync(
+                        await _sessionService.PublishSessionUpdatedEventAsync(
                             accountId,
                             session.SessionId,
                             newRoles,
@@ -1505,7 +1162,11 @@ public partial class AuthService : IAuthService
 
             if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
+                // Format: "stubName:state" per IMPLEMENTATION TENETS
+                // Permission service parses this to update session authorization state
+                authorizations = subscriptionsResponse.Subscriptions
+                    .Select(s => $"{s.StubName}:authorized")
+                    .ToList();
             }
 
             var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
@@ -1529,10 +1190,19 @@ public partial class AuthService : IAuthService
                     {
                         session.Authorizations = authorizations;
 
-                        await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
+                        // Preserve remaining TTL so sessions still expire on schedule
+                        var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                        if (remainingSeconds <= 0)
+                        {
+                            _logger.LogDebug("Session {SessionKey} already expired, skipping authorization update", sessionKey);
+                            continue;
+                        }
+
+                        await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                            new StateOptions { Ttl = remainingSeconds }, cancellationToken);
 
                         // Publish session.updated event for Permission service
-                        await PublishSessionUpdatedEventAsync(
+                        await _sessionService.PublishSessionUpdatedEventAsync(
                             accountId,
                             session.SessionId,
                             session.Roles,
@@ -1559,50 +1229,6 @@ public partial class AuthService : IAuthService
         }
     }
 
-    /// <summary>
-    /// Publish SessionUpdatedEvent to notify Permission service about role/authorization changes.
-    /// </summary>
-    private async Task PublishSessionUpdatedEventAsync(
-        Guid accountId,
-        string sessionId,
-        List<string> roles,
-        List<string> authorizations,
-        SessionUpdatedEventReason reason,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var eventModel = new SessionUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                AccountId = accountId,
-                SessionId = Guid.Parse(sessionId),
-                Roles = roles,
-                Authorizations = authorizations,
-                Reason = reason
-            };
-
-            await _messageBus.TryPublishAsync(SESSION_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published SessionUpdatedEvent for session {SessionId}, reason: {Reason}",
-                sessionId, reason);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish SessionUpdatedEvent for session {SessionId}", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "auth",
-                "PublishSessionUpdatedEvent",
-                "event_publishing_failed",
-                ex.Message,
-                dependency: "messaging",
-                endpoint: null,
-                details: $"sessionId={sessionId},reason={reason}",
-                stack: ex.StackTrace);
-            // Don't throw - session update succeeded, event publishing failure shouldn't fail the operation
-        }
-    }
-
     #endregion
 
     #region Permission Registration
@@ -1611,10 +1237,10 @@ public partial class AuthService : IAuthService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Auth service permissions...");
-        await AuthPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await AuthPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion
@@ -1652,7 +1278,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthLoginSuccessfulEvent for security audit trail.
     /// </summary>
-    private async Task PublishLoginSuccessfulEventAsync(Guid accountId, string username, string sessionId)
+    private async Task PublishLoginSuccessfulEventAsync(Guid accountId, string username, Guid sessionId)
     {
         try
         {
@@ -1662,7 +1288,7 @@ public partial class AuthService : IAuthService
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 Username = username,
-                SessionId = Guid.Parse(sessionId)
+                SessionId = sessionId
             };
 
             await _messageBus.TryPublishAsync(AUTH_LOGIN_SUCCESSFUL_TOPIC, eventModel);
@@ -1702,7 +1328,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthRegistrationSuccessfulEvent for user onboarding analytics.
     /// </summary>
-    private async Task PublishRegistrationSuccessfulEventAsync(Guid accountId, string username, string email, string sessionId)
+    private async Task PublishRegistrationSuccessfulEventAsync(Guid accountId, string username, string email, Guid sessionId)
     {
         try
         {
@@ -1713,7 +1339,7 @@ public partial class AuthService : IAuthService
                 AccountId = accountId,
                 Username = username,
                 Email = email,
-                SessionId = Guid.Parse(sessionId)
+                SessionId = sessionId
             };
 
             await _messageBus.TryPublishAsync(AUTH_REGISTRATION_SUCCESSFUL_TOPIC, eventModel);
@@ -1728,7 +1354,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthOAuthLoginSuccessfulEvent for OAuth provider analytics.
     /// </summary>
-    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, string provider, string providerUserId, string sessionId, bool isNewAccount)
+    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, string provider, string providerUserId, Guid sessionId, bool isNewAccount)
     {
         try
         {
@@ -1737,9 +1363,9 @@ public partial class AuthService : IAuthService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                Provider = provider,
+                Provider = Enum.Parse<Provider>(provider, ignoreCase: true),
                 ProviderUserId = providerUserId,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 IsNewAccount = isNewAccount
             };
 
@@ -1755,7 +1381,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthSteamLoginSuccessfulEvent for platform login analytics.
     /// </summary>
-    private async Task PublishSteamLoginSuccessfulEventAsync(Guid accountId, string steamId, string sessionId, bool isNewAccount)
+    private async Task PublishSteamLoginSuccessfulEventAsync(Guid accountId, string steamId, Guid sessionId, bool isNewAccount)
     {
         try
         {
@@ -1765,7 +1391,7 @@ public partial class AuthService : IAuthService
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SteamId = steamId,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 IsNewAccount = isNewAccount
             };
 
@@ -1802,20 +1428,4 @@ public partial class AuthService : IAuthService
     }
 
     #endregion
-}
-
-/// <summary>
-/// Wrapper class for storing string values in IStateStore (since value types need a class wrapper).
-/// </summary>
-internal class StringWrapper
-{
-    public string Value { get; set; } = "";
-}
-
-/// <summary>
-/// Wrapper class for storing Guid? values in IStateStore (since value types need a class wrapper).
-/// </summary>
-internal class GuidWrapper
-{
-    public Guid? Value { get; set; }
 }

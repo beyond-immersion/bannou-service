@@ -54,7 +54,7 @@ public partial interface IRealmClient
     /// Get realm by code
     /// </summary>
     /// <remarks>
-    /// Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+    /// Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
     /// </remarks>
     /// <returns>Realm retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -392,7 +392,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
     /// Get realm by code
     /// </summary>
     /// <remarks>
-    /// Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+    /// Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
     /// </remarks>
     /// <returns>Realm retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>

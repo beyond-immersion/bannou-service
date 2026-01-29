@@ -37,7 +37,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['LoginRequest'], Schemas['AuthResponse']>(
-      'POST',
       '/auth/login',
       request,
       channel,
@@ -58,7 +57,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RegisterResponse']>> {
     return this.client.invokeAsync<Schemas['RegisterRequest'], Schemas['RegisterResponse']>(
-      'POST',
       '/auth/register',
       request,
       channel,
@@ -79,7 +77,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['OAuthCallbackRequest'], Schemas['AuthResponse']>(
-      'POST',
       '/auth/oauth/{provider}/callback',
       request,
       channel,
@@ -100,7 +97,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['SteamVerifyRequest'], Schemas['AuthResponse']>(
-      'POST',
       '/auth/steam/verify',
       request,
       channel,
@@ -121,7 +117,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['RefreshRequest'], Schemas['AuthResponse']>(
-      'POST',
       '/auth/refresh',
       request,
       channel,
@@ -140,7 +135,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ValidateTokenResponse']>> {
     return this.client.invokeAsync<object, Schemas['ValidateTokenResponse']>(
-      'POST',
       '/auth/validate',
       {},
       channel,
@@ -155,12 +149,7 @@ export class AuthProxy {
    * @returns Promise that completes when the event is sent.
    */
   async logoutEventAsync(request: Schemas['LogoutRequest'], channel: number = 0): Promise<void> {
-    return this.client.sendEventAsync<Schemas['LogoutRequest']>(
-      'POST',
-      '/auth/logout',
-      request,
-      channel
-    );
+    return this.client.sendEventAsync<Schemas['LogoutRequest']>('/auth/logout', request, channel);
   }
 
   /**
@@ -174,7 +163,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SessionsResponse']>> {
     return this.client.invokeAsync<object, Schemas['SessionsResponse']>(
-      'POST',
       '/auth/sessions/list',
       {},
       channel,
@@ -193,7 +181,6 @@ export class AuthProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['TerminateSessionRequest']>(
-      'POST',
       '/auth/sessions/terminate',
       request,
       channel
@@ -211,7 +198,6 @@ export class AuthProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['PasswordResetRequest']>(
-      'POST',
       '/auth/password/reset',
       request,
       channel
@@ -229,7 +215,6 @@ export class AuthProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['PasswordResetConfirmRequest']>(
-      'POST',
       '/auth/password/confirm',
       request,
       channel
@@ -247,7 +232,6 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ProvidersResponse']>> {
     return this.client.invokeAsync<object, Schemas['ProvidersResponse']>(
-      'POST',
       '/auth/providers',
       {},
       channel,

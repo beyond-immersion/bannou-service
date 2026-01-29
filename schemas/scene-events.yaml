@@ -7,7 +7,7 @@ info:
     The Scene service publishes lifecycle events for scene documents and
     operational events for instantiation and checkout workflows.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 
@@ -66,7 +66,7 @@ x-lifecycle:
     model:
       sceneId: { type: string, format: uuid, primary: true, required: true, description: "Unique scene identifier" }
       gameId: { type: string, required: true, description: "Game service identifier for partitioning" }
-      sceneType: { type: string, required: true, description: "Scene classification (region, building, etc.)" }
+      sceneType: { $ref: 'scene-api.yaml#/components/schemas/SceneType', required: true, description: "Scene classification (region, building, etc.)" }
       name: { type: string, required: true, description: "Human-readable scene name" }
       description: { type: string, nullable: true, description: "Optional scene description" }
       version: { type: string, required: true, description: "Semantic version (MAJOR.MINOR.PATCH)" }
@@ -80,30 +80,12 @@ paths: {}
 
 components:
   schemas:
-    # ========== BASE EVENT ==========
-
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      description: Base type for all service events
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
 
     # ========== INSTANTIATION EVENTS ==========
 
     SceneInstantiatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
@@ -137,7 +119,7 @@ components:
           type: string
           description: Game ID from the scene
         sceneType:
-          type: string
+          $ref: 'scene-api.yaml#/components/schemas/SceneType'
           description: Scene type from the scene
         regionId:
           type: string
@@ -158,14 +140,12 @@ components:
 
     SceneDestroyedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scene instance is removed from the game world
       required:
         - instanceId
-        - sceneAssetId
-        - regionId
       properties:
         instanceId:
           type: string
@@ -174,11 +154,13 @@ components:
         sceneAssetId:
           type: string
           format: uuid
-          description: Source scene asset ID
+          nullable: true
+          description: Source scene asset ID (null if not provided by caller)
         regionId:
           type: string
           format: uuid
-          description: Region where the instance was located
+          nullable: true
+          description: Region where the instance was located (null if not provided by caller)
         destroyedBy:
           type: string
           nullable: true
@@ -193,7 +175,7 @@ components:
 
     SceneCheckedOutEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scene is locked for editing
@@ -224,7 +206,7 @@ components:
 
     SceneCommittedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when checkout changes are committed
@@ -266,7 +248,7 @@ components:
 
     SceneCheckoutDiscardedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a checkout is discarded without saving
@@ -292,7 +274,7 @@ components:
 
     SceneCheckoutExpiredEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a checkout lock expires due to TTL
@@ -325,7 +307,7 @@ components:
 
     SceneValidationRulesUpdatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when validation rules are registered or updated
@@ -337,7 +319,7 @@ components:
           type: string
           description: Game ID for the rules
         sceneType:
-          type: string
+          $ref: 'scene-api.yaml#/components/schemas/SceneType'
           description: Scene type for the rules
         ruleCount:
           type: integer
@@ -359,7 +341,7 @@ components:
 
     SceneReferenceBrokenEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |

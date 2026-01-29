@@ -5,7 +5,7 @@ info:
     Shared event schemas used across all Bannou services.
     These events enable service-to-service communication via RabbitMQ pub/sub.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
@@ -301,6 +301,7 @@ components:
           description: Human-readable error summary
         correlationId:
           type: string
+          format: uuid
           nullable: true
           description: Correlation ID / request ID, if available
         severity:
@@ -420,7 +421,7 @@ components:
           items:
             type: string
           nullable: true
-          description: Authorization states from JWT (e.g., ["arcadia:authorized"]). Format is "serviceId:state".
+          description: Authorization states from JWT (e.g., ["my-game:authorized"]). Format is "serviceId:state".
         connectInstanceId:
           type: string
           format: uuid

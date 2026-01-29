@@ -1,0 +1,12 @@
+global using System.CommandLine;
+global using System.CommandLine.Invocation;
+global using System.Reflection;
+global using System.Reflection.Metadata;
+global using System.Reflection.PortableExecutable;
+global using System.Text;
+global using System.Text.RegularExpressions;
+global using BeyondImmersion.BannouService.Tools.Inspect.Commands;
+global using BeyondImmersion.BannouService.Tools.Inspect.Models;
+global using BeyondImmersion.BannouService.Tools.Inspect.Output;
+global using BeyondImmersion.BannouService.Tools.Inspect.Services;
+global using LoxSmoke.DocXml;

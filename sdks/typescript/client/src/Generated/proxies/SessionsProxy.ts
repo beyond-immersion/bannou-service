@@ -39,7 +39,7 @@ export class SessionsProxy {
     return this.client.invokeAsync<
       Schemas['GetGameSessionRequest'],
       Schemas['GameSessionResponse']
-    >('POST', '/sessions/get', request, channel, timeout);
+    >('/sessions/get', request, channel, timeout);
   }
 
   /**
@@ -53,7 +53,6 @@ export class SessionsProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['LeaveGameSessionRequest']>(
-      'POST',
       '/sessions/leave',
       request,
       channel
@@ -71,7 +70,6 @@ export class SessionsProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['ChatMessageRequest']>(
-      'POST',
       '/sessions/chat',
       request,
       channel
@@ -91,7 +89,6 @@ export class SessionsProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GameActionResponse']>> {
     return this.client.invokeAsync<Schemas['GameActionRequest'], Schemas['GameActionResponse']>(
-      'POST',
       '/sessions/actions',
       request,
       channel,
@@ -110,7 +107,6 @@ export class SessionsProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['LeaveGameSessionByIdRequest']>(
-      'POST',
       '/sessions/leave-session',
       request,
       channel

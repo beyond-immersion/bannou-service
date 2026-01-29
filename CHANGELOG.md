@@ -9,6 +9,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.13.0] - 2026-01-29
+
+### Added
+- **Currency Service** (`lib-currency`): Multi-currency management for game economies (32 endpoints)
+  - Currency definitions with precision, scope, caps, autogain, expiration
+  - Wallet management (create, freeze, close with balance transfer)
+  - Balance operations (credit, debit, transfer with deadlock-free locking)
+  - Authorization holds (reserve/capture/release pattern)
+  - Currency conversion via exchange rates
+  - Escrow integration wrappers
+  - Background autogain task service
+  - Idempotency-key deduplication throughout
+- **Contract Service** (`lib-contract`): Binding agreements with milestone-based progression (30 endpoints)
+  - Reactive design: external systems report conditions; contracts store state and execute prebound APIs
+  - Template-based structure (party roles, milestones, terms)
+  - Four enforcement modes (advisory, event_only, consequence_based, community)
+  - Breach handling with ISO 8601 cure periods
+  - Guardian custody for asset-backed contracts (escrow integration)
+  - Prebound API execution with template substitution
+- **Escrow Service** (`lib-escrow`): Multi-party asset exchange orchestration (20 endpoints)
+  - 13-state finite state machine
+  - Four escrow types (two_party, multi_party, conditional, auction)
+  - Three trust modes (full_consent with tokens, initiator_trusted, single_party_trusted)
+  - SHA-256 token authorization
+  - Arbiter-mediated dispute resolution
+  - Custom asset type handler registration
+- **Inventory Service** (`lib-inventory`): Container and item placement management (16 endpoints)
+  - Multiple constraint models (slot, weight, grid, volumetric, unlimited)
+  - Item placement, movement, stacking operations
+  - Equipment slots as specialized containers
+  - Nested containers with weight propagation
+  - Graceful degradation when item service unavailable
+- **Item Service** (`lib-item`): Dual-model item management (13 endpoints)
+  - Templates (immutable definitions) and Instances (individual occurrences)
+  - Multiple quantity models (discrete, continuous, unique)
+  - Soulbound/binding system (none, on_pickup, on_equip, on_use)
+  - Redis read-through caching
+- **Character Encounter Service** (`lib-character-encounter`): Memorable interaction tracking (19 endpoints)
+  - Multi-participant encounter/perspective design
+  - Time-based memory decay applied lazily
+  - Weighted sentiment aggregation
+- **TENETS v6.0**: Major documentation restructuring
+  - New T25 (Type Safety): ALL models must use proper types (enums, GUIDs) - no string representations
+  - T21 expanded: No dead configuration, no hardcoded tunables
+  - T0 added: Never reference tenet numbers in source code
+- **SCHEMA-RULES.md**: Comprehensive schema authoring reference (899 lines)
+  - 10-step generation pipeline with dependencies
+  - Extension attributes documentation
+  - 30+ anti-patterns with explanations
+- **Plugin Deep-Dives**: 41 comprehensive service documentation files at `docs/plugins/{SERVICE}.md`
+- **Configuration Validation Framework**: New attributes translating OpenAPI keywords
+  - `ConfigRangeAttribute`, `ConfigPatternAttribute`, `ConfigStringLengthAttribute`, `ConfigMultipleOfAttribute`
+  - Startup validation via `IServiceConfiguration.Validate()`
+- **Prebound API Infrastructure**: Template substitution and response validation for contract execution
+- **Claude Safety Hooks**: 4 PreToolUse hooks enforcing development standards
+- **Assembly Inspector** (`tools/bannou-inspect`): CLI for external API research
+- **Code Generation Improvements**: `scripts/common.sh` (420 lines), `scripts/resolve-event-refs.py` (383 lines)
+
+### Changed
+- **Testing Infrastructure Reorganization**: HTTP and Edge testers moved to `tools/` directory
+  - Edge tester updated to use strongly typed models (critical fix for type safety)
+  - Typed proxy requirement enforces compile-time validation
+  - TypeScript SDK parity validation via embedded harness
+- **Client SDK Enhancements**: New helpers for detecting capability additions/removals on reconnection
+- **SDK Updates**: 5 new service proxies across C#, TypeScript, and Unreal platforms
+  - C#: Lazy-loaded proxy properties, ClientEndpointMetadata registry
+  - TypeScript: 29,000+ line type definitions, discriminated union support
+  - Unreal: 1,019+ line endpoint registry, 13,221+ line type definitions
+- **State Store Expansion**: 23 new state stores across the 5 new services
+
+### Fixed
+- Type safety enforcement across all models (no more string-typed enums or GUIDs)
+
+---
+
 ## [0.12.0] - 2026-01-19
 
 ### Added
@@ -259,7 +334,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.9.0...v0.10.0

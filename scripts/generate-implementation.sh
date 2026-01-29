@@ -50,7 +50,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,19 +70,23 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
+/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
+/// <list type="bullet">
+///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
+///   <item><b>Configuration:</b> ALL config properties in ${SERVICE_PASCAL}ServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
+///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
+///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
+///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
+/// </list>
+/// </para>
+/// <para>
 /// <b>RELATED FILES:</b>
 /// <list type="bullet">
 ///   <item>Request/Response models: bannou-service/Generated/Models/${SERVICE_PASCAL}Models.cs</item>
 ///   <item>Event models: bannou-service/Generated/Events/${SERVICE_PASCAL}EventsModels.cs</item>
 ///   <item>Lifecycle events: bannou-service/Generated/Events/${SERVICE_PASCAL}LifecycleEvents.cs</item>
-/// </list>
-/// </para>
-/// <para>
-/// Standard structure:
-/// <list type="bullet">
-///   <item>${SERVICE_PASCAL}Service.cs (this file) - Business logic</item>
-///   <item>${SERVICE_PASCAL}ServiceEvents.cs - Event consumer handlers (generated)</item>
-///   <item>Generated/${SERVICE_PASCAL}PermissionRegistration.cs - Permission registration (generated)</item>
+///   <item>Configuration: Generated/${SERVICE_PASCAL}ServiceConfiguration.cs</item>
+///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -91,7 +94,6 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 {
     private readonly IMessageBus _messageBus;
-    private readonly IServiceNavigator _navigator;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
     private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;
@@ -100,13 +102,11 @@ public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 
     public ${SERVICE_PASCAL}Service(
         IMessageBus messageBus,
-        IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
         ILogger<${SERVICE_PASCAL}Service> logger,
         ${SERVICE_PASCAL}ServiceConfiguration configuration)
     {
         _messageBus = messageBus;
-        _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
@@ -231,6 +231,7 @@ try:
 
             # Generate implementation method stub
             params_str = ', '.join(param_parts)
+            path_clean = path.lstrip('/')
 
             print(f'''    /// <summary>
     /// Implementation of {method_name} operation.
@@ -272,13 +273,14 @@ try:
             // For event publishing (lib-messaging):
             // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
             //
-            // For calling other services (lib-mesh via IServiceNavigator):
-            // var (status, result) = await _navigator.Account.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
+            // For calling other services (lib-mesh):
+            // Inject the specific client you need, e.g.: IAccountClient _accountClient
+            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
             // if (status != StatusCodes.OK) return (status, default);
             //
             // For client event delivery (if request from WebSocket):
-            // if (_navigator.HasClientContext)
-            //     await _navigator.PublishToRequesterAsync(new YourClientEvent {{ ... }}, cancellationToken);
+            // Inject IClientEventPublisher _clientEventPublisher
+            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent {{ ... }}, cancellationToken);
         }}
         catch (Exception ex)
         {{
@@ -289,7 +291,7 @@ try:
                 \"unexpected_exception\",
                 ex.Message,
                 dependency: null,
-                endpoint: \"{http_method}:/{path.strip('/')}\",
+                endpoint: \"{http_method}:/{path_clean}\",
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);

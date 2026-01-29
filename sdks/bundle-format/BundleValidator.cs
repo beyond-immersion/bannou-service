@@ -484,9 +484,9 @@ public sealed class BundleValidatorOptions
 public sealed class BundleValidationResult
 {
     /// <summary>
-    /// Bundle ID that was validated.
+    /// Bundle ID that was validated (human-readable identifier).
     /// </summary>
-    public string BundleId { get; set; } = string.Empty;
+    public required string BundleId { get; set; }
 
     /// <summary>
     /// Whether validation passed.

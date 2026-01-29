@@ -22,7 +22,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// Local cache of room participants for fast lookups.
     /// Key: roomId, Value: concurrent dictionary of sessionId -> participant
     /// </summary>
-    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, ParticipantRegistration>> _localCache = new();
+    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, ParticipantRegistration>> _localCache = new();
 
     /// <summary>
     /// Initializes a new instance of the SipEndpointRegistry.
@@ -43,16 +43,11 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<bool> RegisterAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         SipEndpoint endpoint,
         string? displayName = null,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            throw new ArgumentException("SessionId is required", nameof(sessionId));
-        }
-
         var now = DateTimeOffset.UtcNow;
         var participant = new ParticipantRegistration
         {
@@ -73,7 +68,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             if (roomParticipants == null)
             {
                 // Room doesn't exist yet, create new dictionary
-                roomParticipants = new ConcurrentDictionary<string, ParticipantRegistration>();
+                roomParticipants = new ConcurrentDictionary<Guid, ParticipantRegistration>();
                 _localCache[roomId] = roomParticipants;
             }
         }
@@ -95,14 +90,9 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<ParticipantRegistration?> UnregisterAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            return null;
-        }
-
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             // Try loading from state store
@@ -148,14 +138,9 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<ParticipantRegistration?> GetParticipantAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            return null;
-        }
-
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -172,14 +157,9 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<bool> UpdateHeartbeatAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            return false;
-        }
-
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -214,15 +194,10 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<bool> UpdateEndpointAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         SipEndpoint newEndpoint,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            return false;
-        }
-
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -297,7 +272,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// </summary>
     private async Task PersistRoomParticipantsAsync(
         Guid roomId,
-        ConcurrentDictionary<string, ParticipantRegistration> participants,
+        ConcurrentDictionary<Guid, ParticipantRegistration> participants,
         CancellationToken cancellationToken)
     {
         var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
@@ -309,7 +284,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <summary>
     /// Loads room participants from state store into local cache.
     /// </summary>
-    private async Task<ConcurrentDictionary<string, ParticipantRegistration>?> LoadRoomParticipantsAsync(
+    private async Task<ConcurrentDictionary<Guid, ParticipantRegistration>?> LoadRoomParticipantsAsync(
         Guid roomId,
         CancellationToken cancellationToken)
     {
@@ -321,7 +296,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             return null;
         }
 
-        var dict = new ConcurrentDictionary<string, ParticipantRegistration>();
+        var dict = new ConcurrentDictionary<Guid, ParticipantRegistration>();
         foreach (var p in participantList)
         {
             dict[p.SessionId] = p;

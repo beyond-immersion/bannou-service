@@ -10,6 +10,9 @@ info:
     The client sees a shortcut GUID in their capability manifest and invokes it like any other API,
     but Connect intercepts the call, swaps the GUID for the target capability GUID, and injects
     the pre-bound payload before forwarding to the target service.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -130,9 +133,14 @@ components:
       type: object
       additionalProperties: false
       description: |
+        INTERNAL EVENT - NOT SENT TO WEBSOCKET CLIENTS.
+
         Published by services to create or update a session shortcut.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
-        Connect handles this event internally and does NOT forward to the client.
+
+        Connect consumes this event, updates its internal shortcut registry, and sends
+        an updated capability manifest to the client. The client never sees this event
+        directly - they only receive the updated manifest containing the new shortcut.
       required:
         - eventId
         - eventName
@@ -167,8 +175,15 @@ components:
       type: object
       additionalProperties: false
       description: |
+        INTERNAL EVENT - NOT SENT TO WEBSOCKET CLIENTS.
+
         Published by services to remove shortcuts.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+
+        Connect consumes this event, removes the shortcut from its internal registry,
+        and sends an updated capability manifest to the client. The client never sees
+        this event directly - they only receive the updated manifest without the revoked shortcut.
+
         Supports both single-shortcut revocation (by routeGuid) and
         bulk revocation (all shortcuts from a sourceService).
       required:

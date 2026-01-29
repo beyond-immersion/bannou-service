@@ -39,7 +39,7 @@ export class RealmHistoryProxy {
     return this.client.invokeAsync<
       Schemas['GetRealmParticipationRequest'],
       Schemas['RealmParticipationListResponse']
-    >('POST', '/realm-history/get-participation', request, channel, timeout);
+    >('/realm-history/get-participation', request, channel, timeout);
   }
 
   /**
@@ -57,7 +57,7 @@ export class RealmHistoryProxy {
     return this.client.invokeAsync<
       Schemas['GetRealmEventParticipantsRequest'],
       Schemas['RealmParticipationListResponse']
-    >('POST', '/realm-history/get-event-participants', request, channel, timeout);
+    >('/realm-history/get-event-participants', request, channel, timeout);
   }
 
   /**
@@ -73,7 +73,6 @@ export class RealmHistoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmLoreResponse']>> {
     return this.client.invokeAsync<Schemas['GetRealmLoreRequest'], Schemas['RealmLoreResponse']>(
-      'POST',
       '/realm-history/get-lore',
       request,
       channel,

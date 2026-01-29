@@ -5,7 +5,7 @@ info:
     Configuration schema for Behavior service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -199,19 +199,6 @@ x-service-configuration:
       env: BEHAVIOR_COMPILER_MAX_STRINGS
       default: 65536
       description: Maximum strings in behavior string table
-
-    # === State Store Configuration (Tier 3) ===
-    StatestoreName:
-      type: string
-      env: BEHAVIOR_STATESTORE_NAME
-      default: "behavior-statestore"
-      description: Name of the state store for behavior metadata
-
-    MemoryStatestoreName:
-      type: string
-      env: BEHAVIOR_MEMORY_STATESTORE_NAME
-      default: "agent-memories"
-      description: Name of the state store for actor memories
 
     # === Key Prefix Configuration (Tier 3) ===
     BundleMembershipKeyPrefix:

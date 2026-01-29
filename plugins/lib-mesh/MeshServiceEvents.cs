@@ -21,9 +21,12 @@ public partial class MeshService
             "bannou.service-heartbeats",
             async (svc, evt) => await ((MeshService)svc).HandleServiceHeartbeatAsync(evt));
 
-        eventConsumer.RegisterHandler<IMeshService, FullServiceMappingsEvent>(
-            "bannou.full-service-mappings",
-            async (svc, evt) => await ((MeshService)svc).HandleServiceMappingsAsync(evt));
+        if (_configuration.EnableServiceMappingSync)
+        {
+            eventConsumer.RegisterHandler<IMeshService, FullServiceMappingsEvent>(
+                "bannou.full-service-mappings",
+                async (svc, evt) => await ((MeshService)svc).HandleServiceMappingsAsync(evt));
+        }
     }
 
     /// <summary>
@@ -53,7 +56,7 @@ public partial class MeshService
                     status,
                     evt.Capacity?.CpuUsage ?? 0,
                     evt.Capacity?.CurrentConnections ?? 0,
-                    90); // Default TTL
+                    _configuration.EndpointTtlSeconds);
 
                 _logger.LogDebug(
                     "Updated heartbeat for existing endpoint {InstanceId}",
@@ -69,17 +72,17 @@ public partial class MeshService
                     InstanceId = instanceId,
                     AppId = evt.AppId,
                     Host = evt.AppId, // Use app-id as host for mesh-style routing
-                    Port = 80,
+                    Port = _configuration.EndpointPort,
                     Status = MapHeartbeatStatus(evt.Status),
                     Services = evt.Services?.Select(s => s.ServiceName).ToList() ?? new List<string>(),
-                    MaxConnections = evt.Capacity?.MaxConnections ?? 1000,
+                    MaxConnections = evt.Capacity?.MaxConnections ?? _configuration.DefaultMaxConnections,
                     CurrentConnections = evt.Capacity?.CurrentConnections ?? 0,
                     LoadPercent = evt.Capacity?.CpuUsage ?? 0,
                     RegisteredAt = DateTimeOffset.UtcNow,
                     LastSeen = DateTimeOffset.UtcNow
                 };
 
-                await _stateManager.RegisterEndpointAsync(endpoint, 90);
+                await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
 
                 _logger.LogInformation(
                     "Auto-registered endpoint {InstanceId} for app {AppId} from heartbeat",
@@ -89,6 +92,10 @@ public partial class MeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing service heartbeat from {AppId}", evt.AppId);
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "HandleServiceHeartbeat", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "event:bannou.service-heartbeats",
+                details: new { AppId = evt.AppId }, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
     }
 
@@ -109,6 +116,8 @@ public partial class MeshService
 
         try
         {
+            await Task.CompletedTask; // Async method requires await in success path
+
             // Convert to dictionary - empty is valid (means reset to default)
             var mappingsDict = evt.Mappings?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                 ?? new Dictionary<string, string>();
@@ -137,13 +146,14 @@ public partial class MeshService
                         mappingsDict.Count);
 
                     // Log the mappings for debugging
-                    foreach (var mapping in mappingsDict.Take(10))
+                    var displayLimit = _configuration.MaxServiceMappingsDisplayed;
+                    foreach (var mapping in mappingsDict.Take(displayLimit))
                     {
                         _logger.LogDebug("  {Service} -> {AppId}", mapping.Key, mapping.Value);
                     }
-                    if (mappingsDict.Count > 10)
+                    if (mappingsDict.Count > displayLimit)
                     {
-                        _logger.LogDebug("  ... and {Count} more", mappingsDict.Count - 10);
+                        _logger.LogDebug("  ... and {Count} more", mappingsDict.Count - displayLimit);
                     }
                 }
             }
@@ -158,9 +168,11 @@ public partial class MeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing service mappings event");
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "HandleServiceMappings", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "event:bannou.full-service-mappings",
+                details: new { Version = evt.Version }, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
-
-        await Task.CompletedTask;
     }
 
     /// <summary>

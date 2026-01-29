@@ -8,7 +8,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 2.0.0
 servers:
 - url: http://localhost:5012
@@ -809,6 +809,199 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Update account password hash\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updatePasswordHash\"\
         \n}"
+  /account/batch-get:
+    post:
+      summary: Get multiple accounts by ID
+      operationId: batchGetAccounts
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetAccountsRequest'
+      responses:
+        '200':
+          description: Batch get completed (partial results possible)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGetAccountsResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetAccountsRequest\"\
+        ,\n    \"$defs\": {\n        \"BatchGetAccountsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get multiple accounts by ID\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountIds\"\n            ],\n            \"properties\": {\n                \"accountIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"minItems\"\
+        : 1,\n                    \"maxItems\": 100,\n                    \"description\": \"List of account IDs to retrieve
+        (max 100)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetAccountsResponse\"\
+        ,\n    \"$defs\": {\n        \"BatchGetAccountsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing found accounts, IDs not found, and fetch failures\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accounts\",\n                \"notFound\",\n            \
+        \    \"failed\"\n            ],\n            \"properties\": {\n                \"accounts\": {\n                \
+        \    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AccountResponse\"\
+        \n                    },\n                    \"description\": \"Successfully retrieved accounts\"\n             \
+        \   },\n                \"notFound\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                 \
+        \   },\n                    \"description\": \"Account IDs that were not found or are deleted\"\n                },\n\
+        \                \"failed\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/BulkOperationFailure\"\n                    },\n                    \"description\"\
+        : \"Account IDs that failed to fetch with error reasons\"\n                }\n            }\n        },\n        \"\
+        AccountResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Account information response\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n   \
+        \             \"email\",\n                \"createdAt\",\n                \"emailVerified\",\n                \"roles\"\
+        \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"email\",\n                    \"description\": \"Email address associated with the account\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n            \
+        \    },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the account was created\"\n                },\n         \
+        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was
+        last updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the email address has been verified\"\n                },\n    \
+        \            \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
+        \              \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles
+        assigned to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n       \
+        \             },\n                    \"description\": \"List of authentication methods linked to the account\"\n\
+        \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
+        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        },\n        \"\
+        BulkOperationFailure\": {\n            \"type\": \"object\",\n            \"description\": \"Details of a failed bulk
+        operation item\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
+        ,\n                \"error\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Account ID that failed\"\n                },\n                \"error\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Human-readable error reason\"\n                }\n            }\n      \
+        \  }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get multiple accounts by ID\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"batchGetAccounts\"\
+        \n}"
+  /account/count:
+    post:
+      summary: Count accounts matching filters
+      operationId: countAccounts
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountAccountsRequest'
+      responses:
+        '200':
+          description: Account count retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountAccountsResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CountAccountsRequest\"\
+        ,\n    \"$defs\": {\n        \"CountAccountsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to count accounts matching optional filters\",\n            \"additionalProperties\": false,\n       \
+        \     \"properties\": {\n                \"email\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Filter by email (contains match)\"\n           \
+        \     },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Filter by display name (contains match)\"\n                },\n  \
+        \              \"verified\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Filter by verification status\"\n                },\n                \"role\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by role membership (checks JSON array containment)\"\n                }\n            }\n        }\n   \
+        \ }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CountAccountsResponse\"\
+        ,\n    \"$defs\": {\n        \"CountAccountsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing account count\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"count\"\n            ],\n            \"properties\": {\n                \"count\": {\n      \
+        \              \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Number of accounts matching the filters\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Count accounts matching filters\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"countAccounts\"\
+        \n}"
+  /account/roles/bulk-update:
+    post:
+      summary: Bulk update roles for multiple accounts
+      operationId: bulkUpdateRoles
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUpdateRolesRequest'
+      responses:
+        '200':
+          description: Bulk update completed (partial success possible)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUpdateRolesResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkUpdateRolesRequest\"\
+        ,\n    \"$defs\": {\n        \"BulkUpdateRolesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update roles for multiple accounts\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"accountIds\"\n            ],\n            \"properties\": {\n                \"accountIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"minItems\"\
+        : 1,\n                    \"maxItems\": 100,\n                    \"description\": \"List of account IDs to update
+        (max 100)\"\n                },\n                \"addRoles\": {\n                    \"type\": \"array\",\n     \
+        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Roles to add to all specified accounts (null to
+        skip)\"\n                },\n                \"removeRoles\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Roles to remove from all specified accounts (null
+        to skip)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkUpdateRolesResponse\"\
+        ,\n    \"$defs\": {\n        \"BulkUpdateRolesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing bulk update results (partial success)\",\n            \"additionalProperties\": false,\n \
+        \           \"required\": [\n                \"succeeded\",\n                \"failed\"\n            ],\n        \
+        \    \"properties\": {\n                \"succeeded\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n\
+        \                    },\n                    \"description\": \"Account IDs that were successfully updated\"\n   \
+        \             },\n                \"failed\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/BulkOperationFailure\"\n                    },\n         \
+        \           \"description\": \"Account IDs that failed with reasons\"\n                }\n            }\n        },\n\
+        \        \"BulkOperationFailure\": {\n            \"type\": \"object\",\n            \"description\": \"Details of
+        a failed bulk operation item\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
+        \           \"accountId\",\n                \"error\"\n            ],\n            \"properties\": {\n           \
+        \     \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"Account ID that failed\"\n                },\n                \"error\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable error reason\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Bulk update roles for multiple accounts\",\n    \"description\": \"\",\n\
+        \    \"tags\": [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkUpdateRoles\"\
+        \n}"
   /account/verification/update:
     post:
       summary: Update email verification status
@@ -1256,3 +1449,136 @@ components:
         hasPreviousPage:
           type: boolean
           description: Whether there are pages before this one
+    BatchGetAccountsRequest:
+      type: object
+      description: Request to get multiple accounts by ID
+      additionalProperties: false
+      required:
+      - accountIds
+      properties:
+        accountIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of account IDs to retrieve (max 100)
+    CountAccountsRequest:
+      type: object
+      description: Request to count accounts matching optional filters
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          nullable: true
+          description: Filter by email (contains match)
+        displayName:
+          type: string
+          nullable: true
+          description: Filter by display name (contains match)
+        verified:
+          type: boolean
+          nullable: true
+          description: Filter by verification status
+        role:
+          type: string
+          nullable: true
+          description: Filter by role membership (checks JSON array containment)
+    BulkUpdateRolesRequest:
+      type: object
+      description: Request to update roles for multiple accounts
+      additionalProperties: false
+      required:
+      - accountIds
+      properties:
+        accountIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of account IDs to update (max 100)
+        addRoles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Roles to add to all specified accounts (null to skip)
+        removeRoles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Roles to remove from all specified accounts (null to skip)
+    BatchGetAccountsResponse:
+      type: object
+      description: Response containing found accounts, IDs not found, and fetch failures
+      additionalProperties: false
+      required:
+      - accounts
+      - notFound
+      - failed
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountResponse'
+          description: Successfully retrieved accounts
+        notFound:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Account IDs that were not found or are deleted
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkOperationFailure'
+          description: Account IDs that failed to fetch with error reasons
+    CountAccountsResponse:
+      type: object
+      description: Response containing account count
+      additionalProperties: false
+      required:
+      - count
+      properties:
+        count:
+          type: integer
+          format: int64
+          description: Number of accounts matching the filters
+    BulkUpdateRolesResponse:
+      type: object
+      description: Response containing bulk update results (partial success)
+      additionalProperties: false
+      required:
+      - succeeded
+      - failed
+      properties:
+        succeeded:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Account IDs that were successfully updated
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkOperationFailure'
+          description: Account IDs that failed with reasons
+    BulkOperationFailure:
+      type: object
+      description: Details of a failed bulk operation item
+      additionalProperties: false
+      required:
+      - accountId
+      - error
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID that failed
+        error:
+          type: string
+          description: Human-readable error reason

@@ -16,7 +16,7 @@ services:
   bannou-edge-tester:
     build:
       context: ..
-      dockerfile: edge-tester/Dockerfile
+      dockerfile: tools/edge-tester/Dockerfile
     networks:
       - external  # Only on external network - reaches OpenResty, not bannou directly
     env_file: ../.env.test.edge

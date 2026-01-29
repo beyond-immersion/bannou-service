@@ -5,10 +5,8 @@ using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("lib-character-history.tests")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+// Note: InternalsVisibleTo attributes are in AssemblyInfo.cs
 
 namespace BeyondImmersion.BannouService.CharacterHistory;
 
@@ -21,9 +19,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 public partial class CharacterHistoryService : ICharacterHistoryService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CharacterHistoryService> _logger;
-    private readonly CharacterHistoryServiceConfiguration _configuration;
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
 
@@ -51,9 +47,10 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
-        _configuration = configuration;
+
+        // Note: stateStoreFactory and configuration are used only during construction
+        // stateStoreFactory is passed to helpers; configuration is currently unused but kept for future use
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(
@@ -71,7 +68,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 StateStoreName = StateStoreDefinitions.CharacterHistory,
                 KeyPrefix = BACKSTORY_KEY_PREFIX,
                 ElementMatcher = new BackstoryElementMatcher<BackstoryElementData>(
-                    getType: e => e.ElementType,
+                    getType: e => e.ElementType.ToString(),
                     getKey: e => e.Key,
                     copyValues: (src, tgt) =>
                     {
@@ -89,8 +86,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                         RelatedEntityId = e.RelatedEntityId,
                         RelatedEntityType = e.RelatedEntityType
                     }),
-                GetEntityId = b => b.CharacterId,
-                SetEntityId = (b, id) => b.CharacterId = id,
+                GetEntityId = b => b.CharacterId.ToString(),
+                SetEntityId = (b, id) => b.CharacterId = Guid.Parse(id),
                 GetElements = b => b.Elements,
                 SetElements = (b, els) => b.Elements = els,
                 GetCreatedAtUnix = b => b.CreatedAtUnix,
@@ -121,12 +118,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             var participationData = new ParticipationData
             {
-                ParticipationId = participationId.ToString(),
-                CharacterId = body.CharacterId.ToString(),
-                EventId = body.EventId.ToString(),
+                ParticipationId = participationId,
+                CharacterId = body.CharacterId,
+                EventId = body.EventId,
                 EventName = body.EventName,
-                EventCategory = body.EventCategory.ToString(),
-                Role = body.Role.ToString(),
+                EventCategory = body.EventCategory,
+                Role = body.Role,
                 EventDateUnix = body.EventDate.ToUnixTimeSeconds(),
                 Significance = body.Significance,
                 Metadata = body.Metadata,
@@ -149,7 +146,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 CharacterId = body.CharacterId,
                 HistoricalEventId = body.EventId,
                 ParticipationId = participationId,
-                Role = body.Role.ToString()
+                Role = body.Role
             }, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Recorded participation {ParticipationId} for character {CharacterId}",
@@ -324,8 +321,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             // Use helper to remove record and update both indices
             await _participationHelper.RemoveRecordAsync(
                 body.ParticipationId.ToString(),
-                data.CharacterId,
-                data.EventId,
+                data.CharacterId.ToString(),
+                data.EventId.ToString(),
                 cancellationToken);
 
             // Publish typed event per FOUNDATION TENETS
@@ -334,8 +331,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ParticipationId = body.ParticipationId,
-                CharacterId = Guid.Parse(data.CharacterId),
-                HistoricalEventId = Guid.Parse(data.EventId)
+                CharacterId = data.CharacterId,
+                HistoricalEventId = data.EventId
             }, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Deleted participation {ParticipationId}", body.ParticipationId);
@@ -624,7 +621,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             // Use helper to delete all participations and update event indices
             var participationsDeleted = await _participationHelper.RemoveAllByPrimaryKeyAsync(
                 body.CharacterId.ToString(),
-                record => record.EventId,
+                record => record.EventId.ToString(),
                 cancellationToken);
 
             // Use helper to delete backstory
@@ -758,12 +755,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         return new HistoricalParticipation
         {
-            ParticipationId = Guid.Parse(data.ParticipationId),
-            CharacterId = Guid.Parse(data.CharacterId),
-            EventId = Guid.Parse(data.EventId),
+            ParticipationId = data.ParticipationId,
+            CharacterId = data.CharacterId,
+            EventId = data.EventId,
             EventName = data.EventName,
-            EventCategory = Enum.Parse<EventCategory>(data.EventCategory),
-            Role = Enum.Parse<ParticipationRole>(data.Role),
+            EventCategory = data.EventCategory,
+            Role = data.Role,
             EventDate = TimestampHelper.FromUnixSeconds(data.EventDateUnix),
             Significance = data.Significance,
             Metadata = data.Metadata,
@@ -775,11 +772,11 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         return new BackstoryElement
         {
-            ElementType = Enum.Parse<BackstoryElementType>(data.ElementType),
+            ElementType = data.ElementType,
             Key = data.Key,
             Value = data.Value,
             Strength = data.Strength,
-            RelatedEntityId = !string.IsNullOrEmpty(data.RelatedEntityId) ? Guid.Parse(data.RelatedEntityId) : null,
+            RelatedEntityId = data.RelatedEntityId,
             RelatedEntityType = data.RelatedEntityType
         };
     }
@@ -788,11 +785,11 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         return new BackstoryElementData
         {
-            ElementType = element.ElementType.ToString(),
+            ElementType = element.ElementType,
             Key = element.Key,
             Value = element.Value,
             Strength = element.Strength,
-            RelatedEntityId = element.RelatedEntityId?.ToString(),
+            RelatedEntityId = element.RelatedEntityId,
             RelatedEntityType = element.RelatedEntityType
         };
     }
@@ -801,15 +798,15 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         return element.ElementType switch
         {
-            "ORIGIN" => $"From {FormatValue(element.Value)}",
-            "OCCUPATION" => $"Worked as {FormatValue(element.Value)}",
-            "TRAINING" => $"Trained by {FormatValue(element.Value)}",
-            "TRAUMA" => $"Experienced {FormatValue(element.Value)}",
-            "ACHIEVEMENT" => $"Known for {FormatValue(element.Value)}",
-            "SECRET" => $"Hides {FormatValue(element.Value)}",
-            "GOAL" => $"Seeks to {FormatValue(element.Value)}",
-            "FEAR" => $"Fears {FormatValue(element.Value)}",
-            "BELIEF" => $"Believes in {FormatValue(element.Value)}",
+            BackstoryElementType.ORIGIN => $"From {FormatValue(element.Value)}",
+            BackstoryElementType.OCCUPATION => $"Worked as {FormatValue(element.Value)}",
+            BackstoryElementType.TRAINING => $"Trained by {FormatValue(element.Value)}",
+            BackstoryElementType.TRAUMA => $"Experienced {FormatValue(element.Value)}",
+            BackstoryElementType.ACHIEVEMENT => $"Known for {FormatValue(element.Value)}",
+            BackstoryElementType.SECRET => $"Hides {FormatValue(element.Value)}",
+            BackstoryElementType.GOAL => $"Seeks to {FormatValue(element.Value)}",
+            BackstoryElementType.FEAR => $"Fears {FormatValue(element.Value)}",
+            BackstoryElementType.BELIEF => $"Believes in {FormatValue(element.Value)}",
             _ => $"{element.Key}: {element.Value}"
         };
     }
@@ -818,14 +815,14 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         var roleText = participation.Role switch
         {
-            "LEADER" => "led",
-            "COMBATANT" => "fought in",
-            "VICTIM" => "suffered in",
-            "WITNESS" => "witnessed",
-            "BENEFICIARY" => "benefited from",
-            "CONSPIRATOR" => "conspired in",
-            "HERO" => "was a hero of",
-            "SURVIVOR" => "survived",
+            ParticipationRole.LEADER => "led",
+            ParticipationRole.COMBATANT => "fought in",
+            ParticipationRole.VICTIM => "suffered in",
+            ParticipationRole.WITNESS => "witnessed",
+            ParticipationRole.BENEFICIARY => "benefited from",
+            ParticipationRole.CONSPIRATOR => "conspired in",
+            ParticipationRole.HERO => "was a hero of",
+            ParticipationRole.SURVIVOR => "survived",
             _ => "participated in"
         };
 
@@ -845,12 +842,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// <summary>
     /// Registers this service's API permissions with the Permission service on startup.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering CharacterHistory service permissions...");
         try
         {
-            await CharacterHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await CharacterHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("CharacterHistory service permissions registered");
         }
         catch (Exception ex)
@@ -876,12 +873,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 /// </summary>
 internal class ParticipationData
 {
-    public string ParticipationId { get; set; } = string.Empty;
-    public string CharacterId { get; set; } = string.Empty;
-    public string EventId { get; set; } = string.Empty;
+    public Guid ParticipationId { get; set; }
+    public Guid CharacterId { get; set; }
+    public Guid EventId { get; set; }
     public string EventName { get; set; } = string.Empty;
-    public string EventCategory { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
+    public EventCategory EventCategory { get; set; }
+    public ParticipationRole Role { get; set; }
     public long EventDateUnix { get; set; }
     public float Significance { get; set; }
     public object? Metadata { get; set; }
@@ -893,7 +890,7 @@ internal class ParticipationData
 /// </summary>
 internal class BackstoryData
 {
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid CharacterId { get; set; }
     public List<BackstoryElementData> Elements { get; set; } = new();
     public long CreatedAtUnix { get; set; }
     public long UpdatedAtUnix { get; set; }
@@ -904,10 +901,10 @@ internal class BackstoryData
 /// </summary>
 internal class BackstoryElementData
 {
-    public string ElementType { get; set; } = string.Empty;
+    public BackstoryElementType ElementType { get; set; }
     public string Key { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;
     public float Strength { get; set; }
-    public string? RelatedEntityId { get; set; }
+    public Guid? RelatedEntityId { get; set; }
     public string? RelatedEntityType { get; set; }
 }

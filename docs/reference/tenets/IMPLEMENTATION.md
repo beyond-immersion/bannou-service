@@ -2,9 +2,11 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25
 
 These tenets define the patterns you follow while implementing services. Reference them during active development.
+
+> **Note**: Schema Reference Hierarchy (formerly T26) is now covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md) and referenced by Tenet 1 in [TENETS.md](../TENETS.md).
 
 ---
 
@@ -109,6 +111,32 @@ catch (Exception ex)
         operation: operationName, errorType: ex.GetType().Name, message: ex.Message);
     return (StatusCodes.InternalServerError, null);
 }
+```
+
+### When ApiException Handling Applies
+
+**IMPORTANT**: The `ApiException` catch block is ONLY required when making **inter-service calls** using:
+- Generated service clients (e.g., `IItemClient`, `IAuthClient`, `IAccountClient`)
+- `IServiceNavigator` to invoke other Bannou plugins
+- `IMeshClient` for direct mesh invocation
+
+These clients throw `ApiException` when the target service returns a non-2xx status code.
+
+**ApiException handling is NOT required for**:
+- State store operations (`IStateStore<T>`) - these throw standard exceptions, not ApiException
+- Message bus operations (`IMessageBus`) - fire-and-forget, uses `TryPublishAsync`
+- Lock provider operations (`IDistributedLockProvider`) - returns success/failure, doesn't throw
+- Local business logic - no cross-service boundary
+
+```csharp
+// REQUIRED: Inter-service call - must catch ApiException
+var (status, items) = await _itemClient.ListItemsByContainerAsync(request, ct);
+
+// NOT REQUIRED: State store operation - ApiException won't be thrown
+var container = await _containerStore.GetAsync(key, ct);
+
+// NOT REQUIRED: Message publishing - uses TryPublish pattern
+await _messageBus.TryPublishAsync("topic", evt, cancellationToken: ct);
 ```
 
 ### Error Event Publishing
@@ -430,6 +458,27 @@ var json = JsonSerializer.Serialize(model); // NO!
 var model = JsonSerializer.Deserialize<MyModel>(jsonString, options); // NO - even with custom options!
 ```
 
+### JsonDocument Navigation is Allowed
+
+This tenet targets **deserialization to typed models**, not DOM navigation. `JsonDocument.Parse()` and `JsonElement` navigation are acceptable for:
+
+1. **External API responses**: Parsing third-party API responses with unknown/variable structure
+2. **Metadata dictionaries**: Reading pre-parsed `JsonElement` values from metadata fields
+3. **JSON introspection**: Examining JSON structure without deserializing to a model
+
+```csharp
+// ALLOWED: JsonDocument for navigating external API response
+using var doc = JsonDocument.Parse(steamApiResponse);
+var success = doc.RootElement.GetProperty("response").GetProperty("success").GetBoolean();
+
+// ALLOWED: Reading JsonElement from metadata dictionary
+if (metadata.TryGetValue("threshold", out var element) && element.ValueKind == JsonValueKind.Number)
+    return element.GetDouble();
+
+// FORBIDDEN: JsonSerializer for typed model deserialization (use BannouJson)
+var model = JsonSerializer.Deserialize<SteamResponse>(steamApiResponse); // NO!
+```
+
 ### Key Serialization Behaviors
 
 All serialization via `BannouJson` uses these settings:
@@ -458,6 +507,71 @@ All serialization via `BannouJson` uses these settings:
 3. **Fail-Fast Required Config**: Required values without defaults MUST throw at startup
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
 5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
+6. **No Dead Configuration**: Every defined config property MUST be referenced in service code
+7. **No Hardcoded Tunables**: Any tunable value (limits, timeouts, thresholds, capacities) MUST be a configuration property. A hardcoded tunable is a sign you need to create a new config property.
+8. **Use Defined Infrastructure**: If a cache/ephemeral state store is defined for the service in `schemas/state-stores.yaml`, the service MUST implement cache read-through/write-through using that store
+9. **NEVER Add Secondary Fallbacks for Schema-Defaulted Properties**: If a configuration property has a default value in the schema (which compiles into the C# property initializer), service code MUST NOT add a null-coalescing fallback. This is absolutely forbidden because:
+   - **Redundant**: The default already exists in the generated class
+   - **Dangerous**: If the fallback differs from the schema default, it creates silent behavioral differences
+   - **Bug-masking**: If configuration loading fails catastrophically enough that a defaulted property becomes null, that's a critical infrastructure failure we NEED to know about via exception
+   - **Confusing**: Developers read the schema default and expect that behavior; a hidden code fallback violates that expectation
+
+### Configuration Completeness (MANDATORY)
+
+**Rule**: Configuration properties exist to be used. If a property is defined in the configuration schema, the service implementation MUST reference it. Unused config properties indicate either dead schema (remove from configuration YAML) or missing functionality (implement the feature that uses it).
+
+**Hardcoded Tunables are Forbidden**:
+
+Any numeric literal that represents a limit, timeout, threshold, or capacity is a sign that a configuration property needs to exist. If you find yourself writing a magic number, define it in the configuration schema first.
+
+```csharp
+// FORBIDDEN: Hardcoded tunables - these need configuration properties
+var maxResults = Math.Min(body.Limit, 1000);  // NO - define MaxResultsPerQuery in config schema
+await Task.Delay(TimeSpan.FromSeconds(30));   // NO - define RetryDelaySeconds in config schema
+if (list.Count >= 100) return error;          // NO - define MaxItemsPerContainer in config schema
+
+// CORRECT: All tunables come from configuration
+var maxResults = Math.Min(body.Limit, _configuration.MaxResultsPerQuery);
+await Task.Delay(TimeSpan.FromSeconds(_configuration.RetryDelaySeconds));
+if (list.Count >= _configuration.MaxItemsPerContainer) return error;
+```
+
+**Mathematical Constants are Not Tunables**:
+
+Constants used for mathematical correctness (not business logic tuning) are acceptable as hardcoded values:
+
+```csharp
+// ACCEPTABLE: Mathematical constants for floating-point comparison
+private const double Epsilon = 0.000001;  // Standard floating-point tolerance
+if (Math.Abs(a - b) < Epsilon) { ... }
+
+// ACCEPTABLE: Algorithm constants with mathematical meaning
+private const double GoldenRatio = 1.618033988749895;
+private const int BitsPerByte = 8;
+```
+
+**Stub Scaffolding Configuration**:
+
+Configuration properties for unimplemented features (stubs) may exist without being referenced, provided the stub is documented and the config is clearly prepared for future implementation. Document these in the plugin's Stubs section.
+
+**Defined State Stores Must Be Used**:
+
+If `schemas/state-stores.yaml` defines a Redis cache store for your service (e.g., `item-template-cache`), you MUST implement cache read-through:
+
+```csharp
+// CORRECT: Cache store defined in schema is used for read-through caching
+var cached = await _cacheStore.GetAsync(key, ct);
+if (cached is not null) return cached;
+
+var persistent = await _persistentStore.GetAsync(key, ct);
+if (persistent is null) return null;
+
+await _cacheStore.SaveAsync(key, persistent,
+    new StateOptions { Ttl = _configuration.CacheTtlSeconds }, ct);
+return persistent;
+```
+
+If a defined cache store is genuinely unnecessary, remove it from `schemas/state-stores.yaml` rather than leaving dead infrastructure.
 
 ### Allowed Exceptions (4 Categories)
 
@@ -683,4 +797,212 @@ This tenet is enforced via `CA2000` (Dispose objects before losing scope) at war
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24. See [TENETS.md](../TENETS.md) for the complete index.*
+## Tenet 25: Type Safety Across All Models (MANDATORY)
+
+**Rule**: ALL models in the Bannou codebase - requests, responses, events, configuration, internal POCOs - MUST use the strongest available C# type for each field. String representations of typed values are **absolutely forbidden**.
+
+### ⚠️ CRITICAL: There Are No "JSON Boundaries"
+
+**A common misconception**: "Strings are needed because JSON is involved" or "we get strings from HTTP requests."
+
+**This is FALSE.** Here's why:
+
+1. **NSwag generates typed models** from OpenAPI schemas. Request models have enum properties, not strings.
+2. **Configuration generator creates enum properties** from YAML enum definitions. Config classes have enum properties, not strings.
+3. **Event schemas define enum types**. Generated event models have enum properties, not strings.
+4. **BannouJson handles all serialization** automatically. Developers NEVER manually convert to/from JSON strings.
+
+**The JSON wire format is irrelevant to your code.** ASP.NET Core + NSwag + BannouJson handle the HTTP layer. By the time your service method receives a request body, it's already a fully-typed C# object with enum properties.
+
+### What This Means
+
+```csharp
+// When you receive a request:
+public async Task<(StatusCodes, Response?)> CreateItemAsync(CreateItemRequest body, CancellationToken ct)
+{
+    // body.Category is ALREADY ItemCategory enum - NSwag generated it that way
+    // body.Rarity is ALREADY ItemRarity enum - NSwag generated it that way
+    // There is NO string parsing needed. The framework did it.
+}
+
+// When you read configuration:
+public MyService(MyServiceConfiguration config)
+{
+    // config.DeploymentMode is ALREADY DeploymentMode enum - generator created it that way
+    // config.StorageProvider is ALREADY StorageProvider enum - generator created it that way
+    // There is NO string parsing needed. The DI system did it.
+}
+
+// When you receive an event:
+public async Task HandleItemCreatedAsync(ItemCreatedEvent evt)
+{
+    // evt.Category is ALREADY ItemCategory enum - NSwag generated it that way
+    // There is NO string parsing needed. BannouJson did it.
+}
+```
+
+### Requirements
+
+1. **Request/Response models**: Generated by NSwag with proper enum types. Never manually define string alternatives.
+2. **Event models**: Generated by NSwag with proper enum types. Never manually define string alternatives.
+3. **Configuration classes**: Generated with proper enum types. Never use string for enum config.
+4. **Internal POCOs**: MUST mirror the types in generated models. If the schema has an enum, the POCO has an enum.
+5. **GUIDs**: Always `Guid` type, never `string`.
+6. **Dates**: Always `DateTimeOffset`, never `string`.
+7. **No Enum.Parse in business logic**: If you're parsing enums, something is wrong with your model definitions.
+
+### Correct Patterns
+
+```csharp
+// CORRECT: All models use proper types throughout the entire flow
+public async Task<(StatusCodes, CreateItemResponse?)> CreateItemAsync(CreateItemRequest body, CancellationToken ct)
+{
+    // Request already has typed enums (NSwag generated)
+    var model = new ItemTemplateModel
+    {
+        TemplateId = Guid.NewGuid(),
+        Category = body.Category,        // ItemCategory enum → ItemCategory enum
+        Rarity = body.Rarity,            // ItemRarity enum → ItemRarity enum
+        CreatedAt = DateTimeOffset.UtcNow
+    };
+
+    await _stateStore.SaveAsync(key, model, ct);  // BannouJson serializes enums automatically
+
+    // Event also has typed enums (NSwag generated)
+    var evt = new ItemCreatedEvent
+    {
+        ItemId = model.TemplateId,
+        Category = model.Category,       // ItemCategory enum → ItemCategory enum
+        Rarity = model.Rarity            // ItemRarity enum → ItemRarity enum
+    };
+    await _messageBus.PublishAsync("item.created", evt, cancellationToken: ct);
+
+    return (StatusCodes.OK, new CreateItemResponse { ItemId = model.TemplateId });
+}
+
+// CORRECT: Configuration uses enum types
+public class MyServiceConfiguration : IServiceConfiguration
+{
+    public DeploymentMode DeploymentMode { get; set; } = DeploymentMode.Bannou;  // Enum, not string
+    public StorageProvider StorageProvider { get; set; } = StorageProvider.Minio;  // Enum, not string
+}
+
+// CORRECT: Internal POCO mirrors typed properties
+internal class ItemTemplateModel
+{
+    public Guid TemplateId { get; set; }           // Guid, not string
+    public ItemCategory Category { get; set; }     // Enum, not string
+    public ItemRarity Rarity { get; set; }         // Enum, not string
+    public DateTimeOffset CreatedAt { get; set; }  // DateTimeOffset, not string
+}
+```
+
+### Forbidden Patterns
+
+```csharp
+// FORBIDDEN: String representation of enum in ANY model
+public string Category { get; set; } = string.Empty;  // NO - use ItemCategory enum
+public string DeploymentMode { get; set; } = "bannou";  // NO - use DeploymentMode enum
+
+// FORBIDDEN: ToString() when assigning to models
+Category = body.Category.ToString(),  // NO - assign enum directly
+
+// FORBIDDEN: Enum.Parse anywhere in service code
+var rarity = Enum.Parse<ItemRarity>(someString);  // NO - if you need this, your model is wrong
+
+// FORBIDDEN: String comparison for enum values
+if (model.Status == "active") { ... }  // NO - use enum equality
+if (config.Mode == "internal") { ... }  // NO - config should have enum property
+
+// FORBIDDEN: String for GUID fields
+public string OwnerId { get; set; } = string.Empty;  // NO - use Guid
+
+// FORBIDDEN: Claiming "JSON requires strings"
+// This excuse is invalid. BannouJson handles serialization. You never touch JSON directly.
+```
+
+### The ONLY Acceptable String Conversions
+
+There are exactly TWO places where string conversion is acceptable:
+
+#### 1. State Store Set APIs (Infrastructure Constraint)
+
+The `AddToSetAsync`/`RemoveFromSetAsync` APIs require string members. This is a lib-state API constraint:
+
+```csharp
+// ACCEPTABLE: State store set API requires string values
+await _store.AddToSetAsync(indexKey, gameServiceId.ToString(), ct);
+
+// ACCEPTABLE: Parsing back when reading from set
+foreach (var idStr in await _store.GetSetMembersAsync(indexKey, ct))
+{
+    if (Guid.TryParse(idStr, out var id)) { ... }
+}
+```
+
+The internal model should still use `Guid` - only the set API call uses string.
+
+#### 2. External Third-Party APIs (Outside Bannou's Control)
+
+When calling external services (Steam API, Discord API, payment processors) that return string data:
+
+```csharp
+// ACCEPTABLE: Parsing external API response that WE DON'T CONTROL
+var steamResponse = await _httpClient.GetStringAsync(steamUrl, ct);
+using var doc = JsonDocument.Parse(steamResponse);
+var statusStr = doc.RootElement.GetProperty("status").GetString();
+if (Enum.TryParse<SteamStatus>(statusStr, out var status)) { ... }
+```
+
+Note: This applies to TRUE external APIs, not other Bannou services. Bannou-to-Bannou calls use generated clients with proper types.
+
+### Why Tests Use Proper Types Too
+
+Test code follows the same rules. If a test is setting `DeploymentMode = "bannou"` as a string, the test is **wrong** - it should use `DeploymentMode = DeploymentMode.Bannou`.
+
+The type system catches mistakes at compile time. String-based tests would compile successfully with typos like `"bannon"` and fail mysteriously at runtime.
+
+### Serialization
+
+`BannouJson` handles all enum serialization automatically (PascalCase string representation in JSON). State stores using `IStateStore<T>` serialize via `BannouJson`, so enum-typed POCO fields are stored as their string names and deserialized back to enum values transparently. **You never interact with this process.**
+
+---
+
+## Quick Reference: Implementation Violations
+
+| Violation | Tenet | Fix |
+|-----------|-------|-----|
+| Missing event consumer registration | T3 | Add RegisterEventConsumers call |
+| Using IErrorEventEmitter | T7 | Use IMessageBus.TryPublishErrorAsync instead |
+| Generic catch returning 500 | T7 | Catch ApiException specifically |
+| Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
+| Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
+| Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
+| Per-instance salt/key generation | T9 | Use shared/deterministic values |
+| Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
+| Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
+| Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
+| Hardcoded credential fallback | T21 | Remove default, require configuration |
+| Unused configuration property | T21 | Wire up in service or remove from schema |
+| Hardcoded magic number for tunable | T21 | Define in configuration schema |
+| Defined cache store not used | T21 | Implement cache read-through or remove store |
+| Secondary fallback for schema-defaulted property | T21 | Remove fallback; throw exception if null (indicates infrastructure failure) |
+| Non-async Task-returning method | T23 | Add async keyword and await |
+| `Task.FromResult` without async | T23 | Use async method with await |
+| `.Result` or `.Wait()` on Task | T23 | Use await instead |
+| Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
+| try/finally for disposal | T24 | Use `using` statement instead |
+| String field for enum in ANY model | T25 | Use the generated enum type |
+| String field for GUID in ANY model | T25 | Use `Guid` type |
+| `Enum.Parse` anywhere in service code | T25 | Your model is wrong - fix the type |
+| `.ToString()` when assigning enum | T25 | Assign enum directly |
+| String comparison for enum value | T25 | Use enum equality operator |
+| Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
+| String in request/response/event model | T25 | Schema should define enum type |
+| String in configuration class | T25 | Config schema should define enum type |
+
+> **Schema-related violations** (shared type in events schema, API `$ref` to events, cross-service `$ref`) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
+
+---
+
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*

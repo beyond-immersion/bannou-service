@@ -5,7 +5,7 @@ info:
     Event models for Relationship service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Relationship service doesn't subscribe to external events
@@ -28,9 +28,9 @@ x-lifecycle:
     model:
       relationshipId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship" }
       entity1Id: { type: string, format: uuid, required: true, description: "Unique identifier of the first entity in the relationship" }
-      entity1Type: { type: string, required: true, description: "Type classification of the first entity (e.g., character, account, npc)" }
+      entity1Type: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Type classification of the first entity" }
       entity2Id: { type: string, format: uuid, required: true, description: "Unique identifier of the second entity in the relationship" }
-      entity2Type: { type: string, required: true, description: "Type classification of the second entity (e.g., character, account, npc)" }
+      entity2Type: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Type classification of the second entity" }
       relationshipTypeId: { type: string, format: uuid, required: true, description: "Reference to the relationship type definition" }
       startedAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship began" }
       endedAt: { type: string, format: date-time, description: "Timestamp when the relationship ended, if applicable" }

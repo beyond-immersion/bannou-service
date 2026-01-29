@@ -139,8 +139,8 @@ public sealed class BannouBundleWriter : IDisposable
     /// <summary>
     /// Finalizes the bundle and writes it to the output stream.
     /// </summary>
-    /// <param name="bundleId">Unique bundle identifier.</param>
-    /// <param name="name">Bundle name.</param>
+    /// <param name="bundleId">Human-readable bundle identifier (e.g., "synty/polygon-adventure").</param>
+    /// <param name="name">Bundle display name.</param>
     /// <param name="version">Bundle version.</param>
     /// <param name="createdBy">Account ID of creator.</param>
     /// <param name="description">Optional description.</param>

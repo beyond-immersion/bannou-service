@@ -5,28 +5,12 @@ info:
     Configuration schema for Analytics service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
   properties:
-    # State Store Configuration
-    SummaryStoreName:
-      type: string
-      description: Name of the state store for entity summaries (Redis recommended)
-      default: "analytics-summary"
-      env: ANALYTICS_SUMMARY_STORE_NAME
-    RatingStoreName:
-      type: string
-      description: Name of the state store for skill ratings (Redis recommended)
-      default: "analytics-rating"
-      env: ANALYTICS_RATING_STORE_NAME
-    HistoryStoreName:
-      type: string
-      description: Name of the state store for event history (MySQL recommended)
-      default: "analytics-history"
-      env: ANALYTICS_HISTORY_STORE_NAME
     # Event Buffer Configuration
     EventBufferSize:
       type: integer
@@ -63,9 +47,79 @@ x-service-configuration:
       description: Glicko-2 system constant (tau) - controls volatility change speed
       default: 0.5
       env: ANALYTICS_GLICKO2_SYSTEM_CONSTANT
-    # Summary Cache Configuration
-    SummaryCacheTtlSeconds:
+    Glicko2MinRating:
+      type: number
+      format: double
+      description: Minimum allowed Glicko-2 rating (floor for clamping)
+      default: 100.0
+      env: ANALYTICS_GLICKO2_MIN_RATING
+    Glicko2MaxRating:
+      type: number
+      format: double
+      description: Maximum allowed Glicko-2 rating (ceiling for clamping)
+      default: 4000.0
+      env: ANALYTICS_GLICKO2_MAX_RATING
+    Glicko2MinDeviation:
+      type: number
+      format: double
+      description: Minimum rating deviation (prevents overconfidence)
+      default: 30.0
+      env: ANALYTICS_GLICKO2_MIN_DEVIATION
+    Glicko2MaxVolatilityIterations:
       type: integer
-      description: TTL in seconds for cached entity summaries
+      description: Maximum iterations for Glicko-2 volatility convergence algorithm
+      default: 100
+      env: ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS
+    # Resolution Cache Configuration
+    ResolutionCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for resolution caches (game service, realm, character lookups)
       default: 300
-      env: ANALYTICS_SUMMARY_CACHE_TTL_SECONDS
+      env: ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS
+    # Session Mapping Configuration
+    SessionMappingTtlSeconds:
+      type: integer
+      description: TTL in seconds for game session mappings (should exceed typical session duration)
+      default: 3600
+      env: ANALYTICS_SESSION_MAPPING_TTL_SECONDS
+    # Event Buffer Lock Configuration
+    EventBufferLockExpiryBaseSeconds:
+      type: integer
+      description: Base lock expiry time in seconds for event buffer flush operations (actual expiry is max of this and 2x flush interval)
+      default: 10
+      env: ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS
+    # Rating Update Lock Configuration
+    RatingUpdateLockExpirySeconds:
+      type: integer
+      description: Lock expiry time in seconds for skill rating update operations
+      default: 30
+      env: ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS
+    # Glicko-2 Algorithm Precision
+    Glicko2VolatilityConvergenceTolerance:
+      type: number
+      format: double
+      description: Convergence tolerance for Glicko-2 volatility iteration (smaller = more precise but slower)
+      default: 0.000001
+      env: ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE
+    # Controller History Retention
+    ControllerHistoryRetentionDays:
+      type: integer
+      description: Days to retain controller history records (0 = indefinite retention)
+      default: 90
+      env: ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS
+    ControllerHistoryCleanupBatchSize:
+      type: integer
+      description: Maximum records to delete per cleanup invocation
+      default: 5000
+      env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE
+    ControllerHistoryCleanupSubBatchSize:
+      type: integer
+      description: Number of records to delete per iteration within a cleanup batch
+      default: 100
+      env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE
+    # Milestone Configuration
+    MilestoneThresholds:
+      type: string
+      description: Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
+      default: "10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000"
+      env: ANALYTICS_MILESTONE_THRESHOLDS

@@ -18,13 +18,12 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
         Logger?.LogDebug("Configuring service dependencies");
 
         // Register named HttpClient for mesh proxying (FOUNDATION TENETS: use IHttpClientFactory)
-        services.AddHttpClient(ConnectService.HttpClientName, client =>
+        services.AddHttpClient(ConnectService.HttpClientName, (sp, client) =>
         {
-            // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
-            // This should be longer than client timeouts (60s) but shorter than infinite
-            client.Timeout = TimeSpan.FromSeconds(120);
+            var config = sp.GetRequiredService<ConnectServiceConfiguration>();
+            client.Timeout = TimeSpan.FromSeconds(config.HttpClientTimeoutSeconds);
         });
-        Logger?.LogDebug("Registered named HttpClient '{ClientName}' with 120s timeout", ConnectService.HttpClientName);
+        Logger?.LogDebug("Registered named HttpClient '{ClientName}' with configurable timeout", ConnectService.HttpClientName);
 
         // Register BannouSessionManager for distributed session state management
         // Uses lib-state (connect-statestore) for state storage

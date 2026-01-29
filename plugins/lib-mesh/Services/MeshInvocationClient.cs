@@ -4,6 +4,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
 
@@ -17,11 +18,15 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 {
     private readonly IMeshStateManager _stateManager;
+    private readonly MeshServiceConfiguration _configuration;
     private readonly ILogger<MeshInvocationClient> _logger;
     private readonly HttpMessageInvoker _httpClient;
 
     // Cache for endpoint resolution to reduce state store calls
     private readonly EndpointCache _endpointCache;
+
+    // Circuit breaker state per app-id
+    private readonly CircuitBreaker _circuitBreaker;
 
     // Round-robin counter for load balancing across multiple endpoints
     private int _roundRobinCounter;
@@ -30,12 +35,15 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// Creates a new MeshInvocationClient.
     /// </summary>
     /// <param name="stateManager">State manager for endpoint resolution (avoids circular dependency with generated clients).</param>
+    /// <param name="configuration">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     public MeshInvocationClient(
         IMeshStateManager stateManager,
+        MeshServiceConfiguration configuration,
         ILogger<MeshInvocationClient> logger)
     {
         _stateManager = stateManager;
+        _configuration = configuration;
         _logger = logger;
 
         // CA2000: handler ownership transferred to HttpMessageInvoker - it will dispose the handler
@@ -47,13 +55,16 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             AutomaticDecompression = DecompressionMethods.None,
             UseCookies = false,
             EnableMultipleHttp2Connections = true,
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-            ConnectTimeout = TimeSpan.FromSeconds(10)
+            PooledConnectionLifetime = TimeSpan.FromMinutes(configuration.PooledConnectionLifetimeMinutes),
+            ConnectTimeout = TimeSpan.FromSeconds(configuration.ConnectTimeoutSeconds)
         };
         _httpClient = new HttpMessageInvoker(handler);
 #pragma warning restore CA2000
 
-        _endpointCache = new EndpointCache(TimeSpan.FromSeconds(5));
+        _endpointCache = new EndpointCache(TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds));
+        _circuitBreaker = new CircuitBreaker(
+            configuration.CircuitBreakerThreshold,
+            TimeSpan.FromSeconds(configuration.CircuitBreakerResetSeconds));
     }
 
     /// <inheritdoc/>
@@ -123,7 +134,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         HttpRequestMessage request,
         CancellationToken cancellationToken = default)
     {
-
         // Extract app-id and method from request headers/uri
         if (!request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-app-id"), out var appId) ||
             string.IsNullOrEmpty(appId))
@@ -136,32 +146,143 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             methodName = request.RequestUri?.PathAndQuery ?? "unknown";
         }
 
-        // Resolve endpoint
-        var endpoint = await ResolveEndpointAsync(appId, cancellationToken) ?? throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
-
-        // Build target URL
-        var targetUri = BuildTargetUri(endpoint, methodName);
-        request.RequestUri = new Uri(targetUri);
-
-        _logger.LogDebug(
-            "Invoking {Method} on {AppId} at {TargetUri}",
-            methodName, appId, targetUri);
-
-        try
+        // Check circuit breaker before attempting invocation
+        if (_configuration.CircuitBreakerEnabled)
         {
-            // Send request directly using the HTTP client
-            var response = await _httpClient.SendAsync(request, cancellationToken);
-            return response;
+            var state = _circuitBreaker.GetState(appId);
+            if (state == CircuitState.Open)
+            {
+                _logger.LogWarning(
+                    "Circuit breaker open for {AppId}, rejecting call to {Method}",
+                    appId, methodName);
+                throw MeshInvocationException.CircuitBreakerOpen(appId, methodName);
+            }
         }
-        catch (HttpRequestException ex)
+
+        var maxAttempts = _configuration.MaxRetries + 1;
+        var delayMs = _configuration.RetryDelayMilliseconds;
+        HttpResponseMessage? lastResponse = null;
+        Exception? lastException = null;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
-            _logger.LogWarning(ex, "Failed to invoke {Method} on {AppId}", methodName, appId);
+            // On retry, invalidate cache to potentially get a different endpoint
+            if (attempt > 0)
+            {
+                _endpointCache.Invalidate(appId);
 
-            // Invalidate cached endpoint on connection failure
-            _endpointCache.Invalidate(appId);
+                _logger.LogDebug(
+                    "Retrying {Method} on {AppId} (attempt {Attempt}/{MaxAttempts}, delay {DelayMs}ms)",
+                    methodName, appId, attempt + 1, maxAttempts, delayMs);
 
-            throw new MeshInvocationException(appId, methodName, ex.Message, ex);
+                await Task.Delay(delayMs, cancellationToken);
+                delayMs *= 2; // Exponential backoff
+            }
+
+            // Resolve endpoint
+            var endpoint = await ResolveEndpointAsync(appId, cancellationToken);
+            if (endpoint == null)
+            {
+                if (attempt < maxAttempts - 1)
+                    continue; // Retry - endpoint might become available
+
+                RecordCircuitBreakerFailure(appId);
+                throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+            }
+
+            // Build target URL
+            var targetUri = BuildTargetUri(endpoint, methodName);
+            request.RequestUri = new Uri(targetUri);
+
+            if (attempt == 0)
+            {
+                _logger.LogDebug(
+                    "Invoking {Method} on {AppId} at {TargetUri}",
+                    methodName, appId, targetUri);
+            }
+
+            try
+            {
+                lastResponse = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (!IsTransientError(lastResponse.StatusCode))
+                {
+                    // Non-transient response (success or client error) - done
+                    RecordCircuitBreakerSuccess(appId);
+                    return lastResponse;
+                }
+
+                // Transient server error - retry if attempts remain
+                _logger.LogDebug(
+                    "Transient error {StatusCode} from {AppId}, {Remaining} retries remaining",
+                    (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
+
+                lastException = null;
+            }
+            catch (HttpRequestException ex)
+            {
+                lastException = ex;
+                _endpointCache.Invalidate(appId);
+
+                _logger.LogDebug(
+                    ex, "Connection failure to {AppId}, {Remaining} retries remaining",
+                    appId, maxAttempts - attempt - 1);
+            }
         }
+
+        // All attempts exhausted
+        RecordCircuitBreakerFailure(appId);
+
+        if (lastException != null)
+        {
+            _logger.LogWarning(lastException, "Failed to invoke {Method} on {AppId} after {Attempts} attempts",
+                methodName, appId, maxAttempts);
+            throw new MeshInvocationException(appId, methodName, lastException.Message, lastException);
+        }
+
+        // Return the last transient error response
+        return lastResponse ?? throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+    }
+
+    /// <summary>
+    /// Records a circuit breaker failure if circuit breaking is enabled.
+    /// Called once per invocation after all retries are exhausted.
+    /// </summary>
+    private void RecordCircuitBreakerFailure(string appId)
+    {
+        if (_configuration.CircuitBreakerEnabled)
+        {
+            _circuitBreaker.RecordFailure(appId);
+        }
+    }
+
+    /// <summary>
+    /// Records a circuit breaker success if circuit breaking is enabled.
+    /// </summary>
+    private void RecordCircuitBreakerSuccess(string appId)
+    {
+        if (_configuration.CircuitBreakerEnabled)
+        {
+            _circuitBreaker.RecordSuccess(appId);
+        }
+    }
+
+    /// <summary>
+    /// Determines if an HTTP status code represents a transient error eligible for retry.
+    /// Only server errors and specific timeout/throttle codes are retried.
+    /// </summary>
+    private static bool IsTransientError(HttpStatusCode statusCode)
+    {
+        return statusCode switch
+        {
+            HttpStatusCode.RequestTimeout => true,          // 408
+            HttpStatusCode.TooManyRequests => true,         // 429
+            HttpStatusCode.InternalServerError => true,     // 500
+            HttpStatusCode.BadGateway => true,              // 502
+            HttpStatusCode.ServiceUnavailable => true,      // 503
+            HttpStatusCode.GatewayTimeout => true,          // 504
+            _ => false
+        };
     }
 
     /// <inheritdoc/>
@@ -259,6 +380,91 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
+    }
+
+    /// <summary>
+    /// Circuit breaker states for mesh endpoints.
+    /// </summary>
+    private enum CircuitState
+    {
+        /// <summary>Requests flow normally.</summary>
+        Closed,
+        /// <summary>Requests are blocked; waiting for reset period to elapse.</summary>
+        Open,
+        /// <summary>One probe request allowed to test recovery.</summary>
+        HalfOpen
+    }
+
+    /// <summary>
+    /// Per-appId circuit breaker tracking consecutive failures.
+    /// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
+    /// </summary>
+    private sealed class CircuitBreaker
+    {
+        private readonly int _threshold;
+        private readonly TimeSpan _resetTimeout;
+        private readonly ConcurrentDictionary<string, CircuitEntry> _circuits = new();
+
+        public CircuitBreaker(int threshold, TimeSpan resetTimeout)
+        {
+            _threshold = threshold;
+            _resetTimeout = resetTimeout;
+        }
+
+        /// <summary>
+        /// Gets the current circuit state for an appId.
+        /// Transitions from Open to HalfOpen when the reset period has elapsed.
+        /// </summary>
+        public CircuitState GetState(string appId)
+        {
+            if (!_circuits.TryGetValue(appId, out var entry))
+                return CircuitState.Closed;
+
+            if (entry.State == CircuitState.Open &&
+                DateTimeOffset.UtcNow >= entry.OpenedAt + _resetTimeout)
+            {
+                // Reset period elapsed - allow a probe
+                entry.State = CircuitState.HalfOpen;
+                return CircuitState.HalfOpen;
+            }
+
+            return entry.State;
+        }
+
+        /// <summary>
+        /// Records a successful invocation. Resets the circuit to Closed.
+        /// </summary>
+        public void RecordSuccess(string appId)
+        {
+            if (_circuits.TryGetValue(appId, out var entry))
+            {
+                entry.ConsecutiveFailures = 0;
+                entry.State = CircuitState.Closed;
+            }
+        }
+
+        /// <summary>
+        /// Records a failed invocation. Opens the circuit when threshold is reached.
+        /// </summary>
+        public void RecordFailure(string appId)
+        {
+            var entry = _circuits.GetOrAdd(appId, _ => new CircuitEntry());
+
+            entry.ConsecutiveFailures++;
+
+            if (entry.ConsecutiveFailures >= _threshold)
+            {
+                entry.State = CircuitState.Open;
+                entry.OpenedAt = DateTimeOffset.UtcNow;
+            }
+        }
+
+        private sealed class CircuitEntry
+        {
+            public int ConsecutiveFailures;
+            public CircuitState State = CircuitState.Closed;
+            public DateTimeOffset OpenedAt;
+        }
     }
 
     /// <summary>

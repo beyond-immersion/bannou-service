@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: Music Service Configuration
+  description: |
+    Configuration schema for Music service.
+    Properties are bound to environment variables with MUSIC_ prefix.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Cache Configuration
+    CompositionCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for cached deterministic compositions
+      default: 86400
+      env: MUSIC_COMPOSITION_CACHE_TTL_SECONDS

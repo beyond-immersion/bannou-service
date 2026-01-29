@@ -27,7 +27,7 @@ public class AudioProcessorTests
         {
             StorageBucket = "test-bucket",
             MaxUploadSizeMb = 500,
-            AudioOutputFormat = "mp3",
+            AudioOutputFormat = AudioOutputFormat.Mp3,
             AudioBitrateKbps = 192,
             AudioPreserveLossless = true
         };
@@ -266,7 +266,7 @@ public class AudioProcessorTests
         {
             StorageBucket = "test-bucket",
             MaxUploadSizeMb = 500,
-            AudioOutputFormat = "opus", // Different default
+            AudioOutputFormat = AudioOutputFormat.Opus, // Different default
             AudioBitrateKbps = 128,     // Different bitrate
             AudioPreserveLossless = false // Don't preserve
         };

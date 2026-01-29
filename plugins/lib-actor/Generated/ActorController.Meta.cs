@@ -1715,15 +1715,19 @@ public partial class ActorController
                     "description": "ID of the entity causing this perception"
                 },
                 "sourceType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/PerceptionSourceType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of source (character, npc, object, environment)"
+                    "description": "Type of source (character, npc, object, environment, coordinator, scheduled, message)"
                 },
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Perception-specific data. For perceptionType=\"spatial\", this can contain\ngame-specific spatial context in any format the game server defines.\n"
+                    "description": "Perception-specific data. For perceptionType=\"spatial\", this can contain\ ngame-specific spatial context in any format the game server defines.\n"
                 },
                 "urgency": {
                     "type": "number",
@@ -1744,10 +1748,25 @@ public partial class ActorController
                 }
             }
         },
+        "PerceptionSourceType": {
+            "type": "string",
+            "description": "Type of source generating a perception event",
+            "enum": [
+                "character",
+                "npc",
+                "object",
+                "environment",
+                "coordinator",
+                "scheduled",
+                "message",
+                "service",
+                "system"
+            ]
+        },
         "SpatialContext": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Spatial context derived from game server's authoritative spatial state.\nIncluded in perception events to give NPC actors awareness of their environment\nwithout requiring direct map subscriptions.\ n\nNote: additionalProperties=true allows game-specific extensions.\n",
+            "description": "Spatial context derived from game server's authoritative spatial state.\nIncluded in perception events to give NPC actors awareness of their environment\nwithout requiring direct map subscriptions.\n\nNote: additionalProperties=true allows game-specific extensions.\n",
             "properties": {
                 "terrainType": {
                     "type": "string",
@@ -2317,6 +2336,7 @@ public partial class ActorController
                 },
                 "encounterId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for this encounter"
                 },
                 "encounterType": {
@@ -2559,6 +2579,7 @@ public partial class ActorController
                 },
                 "encounterId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "ID of the ended encounter"
                 },
                 "durationMs": {
@@ -2692,6 +2713,7 @@ public partial class ActorController
             "properties": {
                 "encounterId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for this encounter"
                 },
                 "encounterType": {

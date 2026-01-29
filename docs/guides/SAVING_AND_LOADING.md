@@ -20,7 +20,7 @@ A **slot** is a named container for save versions. Each slot has:
 
 | Property | Description |
 |----------|-------------|
-| `gameId` | Namespace isolation (e.g., "arcadia", "fantasia") |
+| `gameId` | Namespace isolation (e.g., "my-game", "other-game") |
 | `ownerId` | UUID of the owning entity |
 | `ownerType` | ACCOUNT, CHARACTER, SESSION, or REALM |
 | `slotName` | Unique name per owner (e.g., "autosave", "manual-1") |
@@ -56,7 +56,7 @@ Slots are auto-created on first save, but you can pre-configure them:
 ```csharp
 var request = new CreateSlotRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = accountId,
     OwnerType = OwnerType.ACCOUNT,
     SlotName = "manual-save-1",
@@ -75,7 +75,7 @@ var saveData = BannouJson.SerializeToUtf8Bytes(gameState);
 
 var request = new SaveRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "autosave",
@@ -100,7 +100,7 @@ var (status, response) = await _saveLoadClient.SaveAsync(request);
 // Load latest version
 var request = new LoadRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "autosave"
@@ -142,7 +142,7 @@ Pin important versions to protect them from rolling cleanup:
 ```csharp
 var request = new PinVersionRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "autosave",
@@ -160,7 +160,7 @@ Restore from an old version by promoting it to latest:
 ```csharp
 var request = new PromoteVersionRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "autosave",
@@ -182,7 +182,7 @@ var delta = ComputeJsonPatch(oldState, newState);
 
 var request = new SaveDeltaRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "world-state",
@@ -203,7 +203,7 @@ Delta saves are automatically reconstructed:
 // LoadWithDeltas handles reconstruction transparently
 var request = new LoadRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "world-state"
@@ -220,7 +220,7 @@ Long delta chains increase load latency. Collapse them periodically:
 ```csharp
 var request = new CollapseDeltasRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "world-state",
@@ -239,7 +239,7 @@ When game data formats change, register schemas with migration patches:
 ```csharp
 var request = new RegisterSchemaRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     SchemaName = "character-save",
     Version = "2.0.0",
     Schema = characterSaveJsonSchema,
@@ -260,7 +260,7 @@ var (status, response) = await _saveLoadClient.RegisterSchemaAsync(request);
 ```csharp
 var request = new MigrateSaveRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "main-save",
@@ -278,7 +278,7 @@ var (status, response) = await _saveLoadClient.MigrateSaveAsync(request);
 ```csharp
 var request = new ExportSavesRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = accountId,
     OwnerType = OwnerType.ACCOUNT,
     SlotNames = new List<string> { "settings", "achievements" }  // Or null for all
@@ -294,7 +294,7 @@ var (status, response) = await _saveLoadClient.ExportSavesAsync(request);
 var request = new ImportSavesRequest
 {
     ArchiveAssetId = uploadedArchiveId,
-    TargetGameId = "arcadia",
+    TargetGameId = "my-game",
     TargetOwnerId = newAccountId,
     TargetOwnerType = OwnerType.ACCOUNT,
     ConflictResolution = ConflictResolution.RENAME  // SKIP, OVERWRITE, RENAME, or FAIL
@@ -310,7 +310,7 @@ Search across slots with filters:
 ```csharp
 var request = new QuerySavesRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = accountId,
     OwnerType = OwnerType.ACCOUNT,
     Categories = new List<SaveCategory> { SaveCategory.MANUAL_SAVE, SaveCategory.CHECKPOINT },
@@ -329,7 +329,7 @@ Verify save data hasn't been corrupted:
 ```csharp
 var request = new VerifyIntegrityRequest
 {
-    GameId = "arcadia",
+    GameId = "my-game",
     OwnerId = characterId,
     OwnerType = OwnerType.CHARACTER,
     SlotName = "main-save",
@@ -345,7 +345,7 @@ if (!response.Valid)
 
 ## Configuration
 
-Key configuration options (environment variables):
+Key configuration options (environment variables). For complete configuration reference with all 41 properties, see [SAVE-LOAD.md](../plugins/SAVE-LOAD.md#configuration).
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -365,6 +365,7 @@ The service publishes events for integration:
 | Event | When |
 |-------|------|
 | `SaveSlotCreatedEvent` | Slot created |
+| `SaveSlotUpdatedEvent` | Slot metadata updated |
 | `SaveSlotDeletedEvent` | Slot deleted |
 | `SaveCreatedEvent` | New version saved |
 | `SaveLoadedEvent` | Version loaded |

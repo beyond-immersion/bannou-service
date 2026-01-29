@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.CharacterEncounter;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -293,13 +295,15 @@ public partial class EncounterPerspectiveUpdatedEvent
     /// Previous emotional impact (if changed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousEmotionalImpact")]
-    public string? PreviousEmotionalImpact { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EmotionalImpact? PreviousEmotionalImpact { get; set; } = default!;
 
     /// <summary>
     /// New emotional impact (if changed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newEmotionalImpact")]
-    public string? NewEmotionalImpact { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EmotionalImpact? NewEmotionalImpact { get; set; } = default!;
 
     /// <summary>
     /// Previous sentiment shift (if changed)

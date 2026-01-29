@@ -200,8 +200,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor.instance.status-changed",
                 It.Is<ActorStatusChangedEvent>(e =>
                     e.ActorId == "actor-1" &&
-                    e.PreviousStatus == "pending" &&
-                    e.NewStatus == "running"),
+                    e.PreviousStatus == ActorStatus.Pending &&
+                    e.NewStatus == ActorStatus.Running),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -246,7 +246,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor.instance.status-changed",
                 It.Is<ActorStatusChangedEvent>(e =>
                     e.ActorId == "actor-1" &&
-                    e.NewStatus == "error"),
+                    e.NewStatus == ActorStatus.Error),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -335,7 +335,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         mockRunner.Verify(
             r => r.InjectPerception(It.Is<PerceptionData>(p =>
                 p.PerceptionType == "perception-update" &&
-                p.SourceType == "message")),
+                p.SourceType == PerceptionSourceType.Message)),
             Times.Once);
     }
 

@@ -68,7 +68,7 @@ public partial class AchievementController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Which entity types can earn this achievement"
                 },
@@ -84,7 +84,6 @@ public partial class AchievementController
                 },
                 "iconUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "URL to achievement icon"
                 },
@@ -132,17 +131,6 @@ public partial class AchievementController
                 "progressive",
                 "hidden",
                 "secret"
-            ]
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
             ]
         },
         "Platform": {
@@ -208,7 +196,7 @@ public partial class AchievementController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -223,7 +211,6 @@ public partial class AchievementController
                 },
                 "iconUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Achievement icon URL"
                 },
@@ -280,17 +267,6 @@ public partial class AchievementController
                 "progressive",
                 "hidden",
                 "secret"
-            ]
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
             ]
         },
         "Platform": {
@@ -441,7 +417,7 @@ public partial class AchievementController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -456,7 +432,6 @@ public partial class AchievementController
                 },
                 "iconUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Achievement icon URL"
                 },
@@ -513,17 +488,6 @@ public partial class AchievementController
                 "progressive",
                 "hidden",
                 "secret"
-            ]
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
             ]
         },
         "Platform": {
@@ -726,7 +690,7 @@ public partial class AchievementController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -741,7 +705,6 @@ public partial class AchievementController
                 },
                 "iconUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Achievement icon URL"
                 },
@@ -798,17 +761,6 @@ public partial class AchievementController
                 "progressive",
                 "hidden",
                 "secret"
-            ]
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
             ]
         },
         "Platform": {
@@ -984,7 +936,7 @@ public partial class AchievementController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -999,7 +951,6 @@ public partial class AchievementController
                 },
                 "iconUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Achievement icon URL"
                 },
@@ -1056,17 +1007,6 @@ public partial class AchievementController
                 "progressive",
                 "hidden",
                 "secret"
-            ]
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
             ]
         },
         "Platform": {
@@ -1254,7 +1194,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type whose progress is requested"
                 },
                 "achievementId": {
@@ -1263,17 +1203,6 @@ public partial class AchievementController
                     "description": "Specific achievement ID (null for all)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1300,7 +1229,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type that owns this progress summary"
                 },
                 "progress": {
@@ -1319,17 +1248,6 @@ public partial class AchievementController
                     "description": "Number of unlocked achievements"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "AchievementProgress": {
             "type": "object",
@@ -1468,7 +1386,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type receiving the progress increment"
                 },
                 "increment": {
@@ -1477,17 +1395,6 @@ public partial class AchievementController
                     "description": "Amount to increment progress"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1629,7 +1536,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type to unlock the achievement for"
                 },
                 "skipPlatformSync": {
@@ -1638,17 +1545,6 @@ public partial class AchievementController
                     "description": "Skip syncing to external platforms"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1788,7 +1684,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type whose unlocked achievements are listed"
                 },
                 "platform": {
@@ -1797,17 +1693,6 @@ public partial class AchievementController
                     "description": "Filter by platform"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "Platform": {
             "type": "string",
@@ -1845,7 +1730,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for the returned unlocked achievements"
                 },
                 "achievements": {
@@ -1860,17 +1745,6 @@ public partial class AchievementController
                     "description": "Total points earned"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "UnlockedAchievement": {
             "type": "object",
@@ -1901,7 +1775,6 @@ public partial class AchievementController
                 },
                 "iconUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Achievement icon"
                 },
@@ -1999,7 +1872,7 @@ public partial class AchievementController
                     "description": "ID of the entity (must be account for platform sync)"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type to sync (must be account for platform links)"
                 },
                 "platform": {
@@ -2012,17 +1885,6 @@ public partial class AchievementController
                     "description": "Force resync even if already synced"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "Platform": {
             "type": "string",
@@ -2175,7 +2037,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type whose platform sync status is requested"
                 },
                 "platform": {
@@ -2184,17 +2046,6 @@ public partial class AchievementController
                     "description": "Specific platform (null for all)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "Platform": {
             "type": "string",
@@ -2231,7 +2082,7 @@ public partial class AchievementController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for the reported platform status"
                 },
                 "platforms": {
@@ -2242,17 +2093,6 @@ public partial class AchievementController
                     "description": "Sync status per platform"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can earn achievements",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "PlatformStatus": {
             "type": "object",

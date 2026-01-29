@@ -294,9 +294,11 @@ public sealed class BundleConverter : IBundleConverter
 
     private string GetCacheFilePath(string bundleId)
     {
-        // Sanitize bundle ID for use as filename
-        var safeName = string.Join("_", bundleId.Split(Path.GetInvalidFileNameChars()));
-        return Path.Combine(_cacheDirectory, $"{safeName}.zip");
+        // File system boundary: sanitize human-provided bundle ID for filename
+        // Replace path-unsafe characters with underscores
+        var sanitized = string.Concat(bundleId.Select(c =>
+            Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+        return Path.Combine(_cacheDirectory, $"{sanitized}.zip");
     }
 
     private static string GenerateAssetId(string fullPath, int index)

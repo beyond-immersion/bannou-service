@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Orchestrator;
 using Docker.DotNet;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ public class BackendDetector : IBackendDetector
 {
     private readonly ILogger<BackendDetector> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly IHttpClientFactory _httpClientFactory;
 
     /// <summary>
@@ -28,10 +30,12 @@ public class BackendDetector : IBackendDetector
     public BackendDetector(
         ILogger<BackendDetector> logger,
         OrchestratorServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _httpClientFactory = httpClientFactory;
     }
 
@@ -40,7 +44,7 @@ public class BackendDetector : IBackendDetector
     /// </summary>
     public async Task<BackendsResponse> DetectBackendsAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Detecting available container orchestration backends...");
+        _logger.LogDebug("Detecting available container orchestration backends...");
 
         var backends = new List<BackendInfo>();
         var detectionTasks = new List<Task<BackendInfo>>
@@ -318,6 +322,7 @@ public class BackendDetector : IBackendDetector
     private IContainerOrchestrator CreateSwarmOrchestrator()
     {
         return new DockerSwarmOrchestrator(
+            _configuration,
             _logger.GetType().Assembly.CreateLogger<DockerSwarmOrchestrator>());
     }
 
@@ -325,6 +330,7 @@ public class BackendDetector : IBackendDetector
     {
         return new DockerComposeOrchestrator(
             _configuration,
+            _appConfiguration,
             _logger.GetType().Assembly.CreateLogger<DockerComposeOrchestrator>());
     }
 }

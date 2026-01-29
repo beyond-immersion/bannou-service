@@ -9,37 +9,42 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 
 | Service | Proxy Property | Methods | Description |
 |---------|---------------|---------|-------------|
-| [Bannou Account Service API](#account) | `client.Account` | 13 | Internal account management service (CRUD operations only, n... |
+| [Bannou Account Service API](#account) | `client.Account` | 16 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 15 | Distributed actor management and execution for NPC brains, e... |
-| [Bannou Analytics Service API](#analytics) | `client.Analytics` | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
+| [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 12 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for Arcadia game world. |
+| [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
+| [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
+| [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
+| [Escrow Service API](#escrow) | `client.Escrow` | 20 | Full-custody orchestration layer for multi-party asset excha... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
-| [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for Arcadia and other games. |
+| [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
+| [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
+| [Item Service API](#item) | `client.Item` | 13 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for Arcadia game world. |
-| [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for Arcadia game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for game worlds. |
+| [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Bannou Messaging Service API](#messaging) | `client.Messaging` | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Bannou Realm Service API](#realm) | `client.Realm` | 10 | Realm management service for Arcadia game world. |
+| [Bannou Realm Service API](#realm) | `client.Realm` | 10 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 10 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
-| [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for Arcadia game world. |
+| [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
-| [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for Arcadia game world. |
+| [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 6 | Repository pattern state management with Redis and MySQL bac... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
@@ -93,6 +98,9 @@ Internal account management service (CRUD operations only, never exposed to inte
 | `UpdateAccountAsync` | `UpdateAccountRequest` | `AccountResponse` | Update account |
 | `DeleteAccountEventAsync` | `DeleteAccountRequest` | *(fire-and-forget)* | Delete account |
 | `UpdatePasswordhashEventAsync` | `UpdatePasswordRequest` | *(fire-and-forget)* | Update account password hash |
+| `BatchgetaccountsAsync` | `BatchGetAccountsRequest` | `BatchGetAccountsResponse` | Get multiple accounts by ID |
+| `CountaccountsAsync` | `CountAccountsRequest` | `CountAccountsResponse` | Count accounts matching filters |
+| `BulkupdaterolesAsync` | `BulkUpdateRolesRequest` | `BulkUpdateRolesResponse` | Bulk update roles for multiple accounts |
 | `UpdateVerificationstatusEventAsync` | `UpdateVerificationRequest` | *(fire-and-forget)* | Update email verification status |
 
 ### Authentication Methods
@@ -185,6 +193,7 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 |--------|---------|----------|---------|
 | `RecordcontrollereventEventAsync` | `RecordControllerEventRequest` | *(fire-and-forget)* | Record controller possession event |
 | `QuerycontrollerhistoryAsync` | `QueryControllerHistoryRequest` | `QueryControllerHistoryResponse` | Query controller history |
+| `CleanupcontrollerhistoryAsync` | `CleanupControllerHistoryRequest` | `CleanupControllerHistoryResponse` | Cleanup expired controller history |
 
 ### Event Ingestion
 
@@ -335,7 +344,7 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 
 **Proxy**: `client.Character` | **Version**: 1.0.0
 
-Character management service for Arcadia game world.
+Character management service for game worlds.
 
 ### Character Compression
 
@@ -513,6 +522,169 @@ Real-time communication and WebSocket connection management for Bannou services.
 
 ---
 
+## Contract Service API {#contract}
+
+**Proxy**: `client.Contract` | **Version**: 1.0.0
+
+Binding agreements between entities with milestone-based progression.
+
+### Breaches
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportbreachAsync` | `ReportBreachRequest` | `BreachResponse` | Report a contract breach |
+| `CurebreachAsync` | `CureBreachRequest` | `BreachResponse` | Mark breach as cured (system/admin action) |
+| `GetBreachAsync` | `GetBreachRequest` | `BreachResponse` | Get breach details |
+
+### ClauseTypes
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterClausetypeAsync` | `RegisterClauseTypeRequest` | `RegisterClauseTypeResponse` | Register a new clause type |
+| `ListClausetypesAsync` | `ListClauseTypesRequest` | `ListClauseTypesResponse` | List all registered clause types |
+
+### Constraints
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CheckcontractconstraintAsync` | `CheckConstraintRequest` | `CheckConstraintResponse` | Check if entity can take action given contracts |
+| `QueryactivecontractsAsync` | `QueryActiveContractsRequest` | `QueryActiveContractsResponse` | Query active contracts for entity |
+
+### Execution
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetcontracttemplatevaluesAsync` | `SetTemplateValuesRequest` | `SetTemplateValuesResponse` | Set template values on contract instance |
+| `CheckassetrequirementsAsync` | `CheckAssetRequirementsRequest` | `CheckAssetRequirementsResponse` | Check if asset requirement clauses are satisfied |
+| `ExecutecontractAsync` | `ExecuteContractRequest` | `ExecuteContractResponse` | Execute all contract clauses (idempotent) |
+
+### Guardian
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `LockcontractAsync` | `LockContractRequest` | `LockContractResponse` | Lock contract under guardian custody |
+| `UnlockcontractAsync` | `UnlockContractRequest` | `UnlockContractResponse` | Unlock contract from guardian custody |
+| `TransfercontractpartyAsync` | `TransferContractPartyRequest` | `TransferContractPartyResponse` | Transfer party role to new entity |
+
+### Instances
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateContractinstanceAsync` | `CreateContractInstanceRequest` | `ContractInstanceResponse` | Create contract instance from template |
+| `ProposecontractinstanceAsync` | `ProposeContractInstanceRequest` | `ContractInstanceResponse` | Propose contract to parties (starts consent flow) |
+| `ConsenttocontractAsync` | `ConsentToContractRequest` | `ContractInstanceResponse` | Party consents to contract |
+| `GetContractinstanceAsync` | `GetContractInstanceRequest` | `ContractInstanceResponse` | Get instance by ID |
+| `QuerycontractinstancesAsync` | `QueryContractInstancesRequest` | `QueryContractInstancesResponse` | Query instances by party, template, status |
+| `TerminatecontractinstanceAsync` | `TerminateContractInstanceRequest` | `ContractInstanceResponse` | Request early termination |
+| `GetContractinstancestatusAsync` | `GetContractInstanceStatusRequest` | `ContractInstanceStatusResponse` | Get current status and milestone progress |
+
+### Metadata
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `UpdateContractmetadataAsync` | `UpdateContractMetadataRequest` | `ContractMetadataResponse` | Update game metadata on instance |
+| `GetContractmetadataAsync` | `GetContractMetadataRequest` | `ContractMetadataResponse` | Get game metadata |
+
+### Milestones
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CompletemilestoneAsync` | `CompleteMilestoneRequest` | `MilestoneResponse` | External system reports milestone completed |
+| `FailmilestoneAsync` | `FailMilestoneRequest` | `MilestoneResponse` | External system reports milestone failed |
+| `GetMilestoneAsync` | `GetMilestoneRequest` | `MilestoneResponse` | Get milestone details and status |
+
+### Templates
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateContracttemplateAsync` | `CreateContractTemplateRequest` | `ContractTemplateResponse` | Create a contract template |
+| `GetContracttemplateAsync` | `GetContractTemplateRequest` | `ContractTemplateResponse` | Get template by ID or code |
+| `ListContracttemplatesAsync` | `ListContractTemplatesRequest` | `ListContractTemplatesResponse` | List templates with filters |
+| `UpdateContracttemplateAsync` | `UpdateContractTemplateRequest` | `ContractTemplateResponse` | Update template (not instances) |
+| `DeleteContracttemplateEventAsync` | `DeleteContractTemplateRequest` | *(fire-and-forget)* | Soft-delete template |
+
+---
+
+## Currency Service API {#currency}
+
+**Proxy**: `client.Currency` | **Version**: 1.0.0
+
+Multi-currency management service for game economies.
+
+### Analytics
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetGlobalsupplyAsync` | `GetGlobalSupplyRequest` | `GetGlobalSupplyResponse` | Get global supply statistics for a currency |
+| `GetWalletdistributionAsync` | `GetWalletDistributionRequest` | `GetWalletDistributionResponse` | Get wealth distribution statistics |
+
+### Authorization Hold
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateHoldAsync` | `CreateHoldRequest` | `HoldResponse` | Create an authorization hold (reserve funds) |
+| `CaptureholdAsync` | `CaptureHoldRequest` | `CaptureHoldResponse` | Capture held funds (debit final amount) |
+| `ReleaseholdAsync` | `ReleaseHoldRequest` | `HoldResponse` | Release held funds (make available again) |
+| `GetHoldAsync` | `GetHoldRequest` | `HoldResponse` | Get hold status and details |
+
+### Balance
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetBalanceAsync` | `GetBalanceRequest` | `GetBalanceResponse` | Get balance for a specific currency in a wallet |
+| `BatchgetbalancesAsync` | `BatchGetBalancesRequest` | `BatchGetBalancesResponse` | Get multiple balances in one call |
+| `CreditcurrencyAsync` | `CreditCurrencyRequest` | `CreditCurrencyResponse` | Credit currency to a wallet (faucet operation) |
+| `DebitcurrencyAsync` | `DebitCurrencyRequest` | `DebitCurrencyResponse` | Debit currency from a wallet (sink operation) |
+| `TransfercurrencyAsync` | `TransferCurrencyRequest` | `TransferCurrencyResponse` | Transfer currency between wallets |
+| `BatchcreditcurrencyAsync` | `BatchCreditRequest` | `BatchCreditResponse` | Credit multiple wallets in one call |
+
+### Conversion
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CalculateconversionAsync` | `CalculateConversionRequest` | `CalculateConversionResponse` | Calculate conversion without executing |
+| `ExecuteconversionAsync` | `ExecuteConversionRequest` | `ExecuteConversionResponse` | Execute currency conversion in a wallet |
+| `GetExchangerateAsync` | `GetExchangeRateRequest` | `GetExchangeRateResponse` | Get exchange rate between two currencies |
+| `UpdateExchangerateAsync` | `UpdateExchangeRateRequest` | `UpdateExchangeRateResponse` | Update a currency's exchange rate to base |
+
+### Currency Definition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateCurrencydefinitionAsync` | `CreateCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Create a new currency definition |
+| `GetCurrencydefinitionAsync` | `GetCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Get currency definition by ID or code |
+| `ListCurrencydefinitionsAsync` | `ListCurrencyDefinitionsRequest` | `ListCurrencyDefinitionsResponse` | List currency definitions with filters |
+| `UpdateCurrencydefinitionAsync` | `UpdateCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Update mutable fields of a currency definition |
+
+### Escrow Integration
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EscrowdepositAsync` | `EscrowDepositRequest` | `EscrowDepositResponse` | Debit wallet for escrow deposit |
+| `EscrowreleaseAsync` | `EscrowReleaseRequest` | `EscrowReleaseResponse` | Credit recipient on escrow completion |
+| `EscrowrefundAsync` | `EscrowRefundRequest` | `EscrowRefundResponse` | Credit depositor on escrow refund |
+
+### Transaction History
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetTransactionAsync` | `GetTransactionRequest` | `TransactionResponse` | Get a transaction by ID |
+| `GetTransactionhistoryAsync` | `GetTransactionHistoryRequest` | `GetTransactionHistoryResponse` | Get paginated transaction history for a wallet |
+| `GetTransactionsbyreferenceAsync` | `GetTransactionsByReferenceRequest` | `GetTransactionsByReferenceResponse` | Get transactions by reference type and ID |
+
+### Wallet
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateWalletAsync` | `CreateWalletRequest` | `WalletResponse` | Create a new wallet for an owner |
+| `GetWalletAsync` | `GetWalletRequest` | `WalletWithBalancesResponse` | Get wallet by ID or owner |
+| `GetOrcreatewalletAsync` | `GetOrCreateWalletRequest` | `GetOrCreateWalletResponse` | Get existing wallet or create if not exists |
+| `FreezewalletAsync` | `FreezeWalletRequest` | `WalletResponse` | Freeze a wallet to prevent transactions |
+| `UnfreezewalletAsync` | `UnfreezeWalletRequest` | `WalletResponse` | Unfreeze a frozen wallet |
+| `ClosewalletAsync` | `CloseWalletRequest` | `CloseWalletResponse` | Permanently close a wallet |
+
+---
+
 ## Bannou Documentation API {#documentation}
 
 **Proxy**: `client.Documentation` | **Version**: 1.0.0
@@ -571,11 +743,79 @@ Knowledge base API for AI agents to query documentation. Designed for SignalWire
 
 ---
 
+## Escrow Service API {#escrow}
+
+**Proxy**: `client.Escrow` | **Version**: 1.0.0
+
+Full-custody orchestration layer for multi-party asset exchanges.
+
+### Arbiter
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ResolveAsync` | `ResolveRequest` | `ResolveResponse` | Arbiter resolves disputed escrow |
+
+### Completion
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReleaseAsync` | `ReleaseRequest` | `ReleaseResponse` | Trigger release |
+| `RefundAsync` | `RefundRequest` | `RefundResponse` | Trigger refund |
+| `CancelAsync` | `CancelRequest` | `CancelResponse` | Cancel escrow before fully funded |
+| `DisputeAsync` | `DisputeRequest` | `DisputeResponse` | Raise a dispute on funded escrow |
+
+### Condition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `VerifyconditionAsync` | `VerifyConditionRequest` | `VerifyConditionResponse` | Verify condition for conditional escrow |
+
+### Consent
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RecordconsentAsync` | `ConsentRequest` | `ConsentResponse` | Record party consent |
+| `GetConsentstatusAsync` | `GetConsentStatusRequest` | `GetConsentStatusResponse` | Get consent status for escrow |
+
+### Deposits
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DepositAsync` | `DepositRequest` | `DepositResponse` | Deposit assets into escrow |
+| `ValidateDepositAsync` | `ValidateDepositRequest` | `ValidateDepositResponse` | Validate a deposit without executing |
+| `GetDepositstatusAsync` | `GetDepositStatusRequest` | `GetDepositStatusResponse` | Get deposit status for a party |
+
+### Handlers
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterHandlerAsync` | `RegisterHandlerRequest` | `RegisterHandlerResponse` | Register a custom asset type handler |
+| `ListHandlersAsync` | `ListHandlersRequest` | `ListHandlersResponse` | List registered asset handlers |
+| `DeregisterhandlerAsync` | `DeregisterHandlerRequest` | `DeregisterHandlerResponse` | Remove a custom asset handler registration |
+
+### Lifecycle
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateEscrowAsync` | `CreateEscrowRequest` | `CreateEscrowResponse` | Create a new escrow agreement |
+| `GetEscrowAsync` | `GetEscrowRequest` | `GetEscrowResponse` | Get escrow details |
+| `ListEscrowsAsync` | `ListEscrowsRequest` | `ListEscrowsResponse` | List escrows for a party |
+| `GetMytokenAsync` | `GetMyTokenRequest` | `GetMyTokenResponse` | Get deposit or release token for a party |
+
+### Validation
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ValidateEscrowAsync` | `ValidateEscrowRequest` | `ValidateEscrowResponse` | Manually trigger validation |
+| `ReaffirmAsync` | `ReaffirmRequest` | `ReaffirmResponse` | Re-affirm after validation failure |
+
+---
+
 ## Bannou Game Service API {#game-service}
 
 **Proxy**: `client.GameService` | **Version**: 1.0.0
 
-Registry service for game services that users can subscribe to. Provides a minimal registry of available services (games/applications) like Arcadia...
+Registry service for game services that users can subscribe to. Provides a minimal registry of available services (games/applications).
 
 ### Game Service Registry
 
@@ -593,7 +833,7 @@ Registry service for game services that users can subscribe to. Provides a minim
 
 **Proxy**: `client.GameSession` | **Version**: 2.0.0
 
-Minimal game session management for Arcadia and other games.
+Minimal game session management for games.
 
 ### Game Actions
 
@@ -625,6 +865,81 @@ Minimal game session management for Arcadia and other games.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `PublishjoinshortcutAsync` | `PublishJoinShortcutRequest` | `PublishJoinShortcutResponse` | Publish join shortcut for matchmade session |
+
+---
+
+## Inventory Service API {#inventory}
+
+**Proxy**: `client.Inventory` | **Version**: 1.0.0
+
+Container and inventory management service for games.
+
+### Container
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateContainerAsync` | `CreateContainerRequest` | `ContainerResponse` | Create a new container |
+| `GetContainerAsync` | `GetContainerRequest` | `ContainerWithContentsResponse` | Get container with contents |
+| `GetOrcreatecontainerAsync` | `GetOrCreateContainerRequest` | `ContainerResponse` | Get container or create if not exists |
+| `ListContainersAsync` | `ListContainersRequest` | `ListContainersResponse` | List containers for owner |
+| `UpdateContainerAsync` | `UpdateContainerRequest` | `ContainerResponse` | Update container properties |
+| `DeleteContainerAsync` | `DeleteContainerRequest` | `DeleteContainerResponse` | Delete container |
+
+### Inventory Operations
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AdditemtocontainerAsync` | `AddItemRequest` | `AddItemResponse` | Add item to container |
+| `RemoveitemfromcontainerAsync` | `RemoveItemRequest` | `RemoveItemResponse` | Remove item from container |
+| `MoveitemAsync` | `MoveItemRequest` | `MoveItemResponse` | Move item to different slot or container |
+| `TransferitemAsync` | `TransferItemRequest` | `TransferItemResponse` | Transfer item to different owner |
+| `SplitstackAsync` | `SplitStackRequest` | `SplitStackResponse` | Split stack into two |
+| `MergestacksAsync` | `MergeStacksRequest` | `MergeStacksResponse` | Merge two stacks |
+
+### Inventory Queries
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `QueryitemsAsync` | `QueryItemsRequest` | `QueryItemsResponse` | Find items across containers |
+| `CountitemsAsync` | `CountItemsRequest` | `CountItemsResponse` | Count items of a template |
+| `HasitemsAsync` | `HasItemsRequest` | `HasItemsResponse` | Check if entity has required items |
+| `FindspaceAsync` | `FindSpaceRequest` | `FindSpaceResponse` | Find where item would fit |
+
+---
+
+## Item Service API {#item}
+
+**Proxy**: `client.Item` | **Version**: 1.0.0
+
+Item template and instance management service.
+
+### Item Instance
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateIteminstanceAsync` | `CreateItemInstanceRequest` | `ItemInstanceResponse` | Create a new item instance |
+| `GetIteminstanceAsync` | `GetItemInstanceRequest` | `ItemInstanceResponse` | Get item instance by ID |
+| `ModifyiteminstanceAsync` | `ModifyItemInstanceRequest` | `ItemInstanceResponse` | Modify item instance state |
+| `BinditeminstanceAsync` | `BindItemInstanceRequest` | `ItemInstanceResponse` | Bind item to character |
+| `DestroyiteminstanceAsync` | `DestroyItemInstanceRequest` | `DestroyItemInstanceResponse` | Destroy item instance |
+
+### Item Query
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListItemsbycontainerAsync` | `ListItemsByContainerRequest` | `ListItemsResponse` | List items in a container |
+| `ListItemsbytemplateAsync` | `ListItemsByTemplateRequest` | `ListItemsResponse` | List instances of a template |
+| `BatchgetiteminstancesAsync` | `BatchGetItemInstancesRequest` | `BatchGetItemInstancesResponse` | Get multiple item instances by ID |
+
+### Item Template
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateItemtemplateAsync` | `CreateItemTemplateRequest` | `ItemTemplateResponse` | Create a new item template |
+| `GetItemtemplateAsync` | `GetItemTemplateRequest` | `ItemTemplateResponse` | Get item template by ID or code |
+| `ListItemtemplatesAsync` | `ListItemTemplatesRequest` | `ListItemTemplatesResponse` | List item templates with filters |
+| `UpdateItemtemplateAsync` | `UpdateItemTemplateRequest` | `ItemTemplateResponse` | Update mutable fields of an item template |
+| `DeprecateitemtemplateAsync` | `DeprecateItemTemplateRequest` | `ItemTemplateResponse` | Deprecate an item template |
 
 ---
 
@@ -672,7 +987,7 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 
 **Proxy**: `client.Location` | **Version**: 1.0.0
 
-Location management service for Arcadia game world.
+Location management service for game worlds.
 
 ### Location
 
@@ -707,7 +1022,7 @@ Location management service for Arcadia game world.
 
 **Proxy**: `client.Mapping` | **Version**: 1.0.0
 
-Spatial data management service for Arcadia game worlds.
+Spatial data management service for game worlds.
 
 ### Authoring
 
@@ -957,7 +1272,7 @@ Redis-backed high-performance permission system for WebSocket services.
 
 **Proxy**: `client.Realm` | **Version**: 1.0.0
 
-Realm management service for Arcadia game world.
+Realm management service for game worlds.
 
 ### Realm
 
@@ -1038,7 +1353,7 @@ Generic relationship management service for entity-to-entity relationships.
 
 **Proxy**: `client.RelationshipType` | **Version**: 2.0.0
 
-Relationship type management service for Arcadia game world.
+Relationship type management service for game worlds.
 
 ### RelationshipType
 
@@ -1195,7 +1510,7 @@ Hierarchical composition storage for game worlds.
 
 **Proxy**: `client.Species` | **Version**: 2.0.0
 
-Species management service for Arcadia game world.
+Species management service for game worlds.
 
 ### Species
 
@@ -1298,7 +1613,7 @@ Public-facing website service for registration, information, and account managem
 |--------|---------|----------|---------|
 | `GetAccountprofileAsync` | - | `AccountProfile` | Get account profile for logged-in user |
 | `GetAccountcharactersAsync` | - | `CharacterListResponse` | Get character list for logged-in user |
-| `GetSubscriptionAsync` | - | `SubscriptionResponse` | Get subscription status |
+| `GetAccountsubscriptionAsync` | - | `SubscriptionResponse` | Get subscription status |
 
 ### CMS
 
@@ -1341,8 +1656,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 35
-- **Total methods**: 419
+- **Total services**: 40
+- **Total methods**: 534
 
 ---
 

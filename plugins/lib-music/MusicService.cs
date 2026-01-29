@@ -12,12 +12,11 @@ using BeyondImmersion.Bannou.MusicTheory.Time;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-music.tests")]
 
 namespace BeyondImmersion.BannouService.Music;
 
@@ -51,12 +50,13 @@ public partial class MusicService : IMusicService
     /// <summary>
     /// Generates a complete musical composition using the specified style and constraints.
     /// Uses the Storyteller SDK for narrative-driven composition when mood or narrative options are provided.
+    /// Caches compositions when an explicit seed is provided (deterministic generation).
     /// </summary>
     public async Task<(StatusCodes, GenerateCompositionResponse?)> GenerateCompositionAsync(
         GenerateCompositionRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Generating composition with style {StyleId}", body.StyleId);
+        _logger.LogDebug("Generating composition with style {StyleId}", body.StyleId);
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -66,6 +66,21 @@ public partial class MusicService : IMusicService
             if (style == null)
             {
                 return (StatusCodes.NotFound, null);
+            }
+
+            // Check cache for deterministic requests (explicit seed provided)
+            var cacheKey = body.Seed.HasValue ? BuildCompositionCacheKey(body) : null;
+            if (cacheKey != null)
+            {
+                var cached = await TryGetCachedCompositionAsync(cacheKey, cancellationToken);
+                if (cached != null)
+                {
+                    _logger.LogDebug("Cache hit for composition {CacheKey}", cacheKey);
+                    stopwatch.Stop();
+                    // Update generation time to reflect cache hit
+                    cached.GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds;
+                    return (StatusCodes.OK, cached);
+                }
             }
 
             // Set up random generator
@@ -146,9 +161,10 @@ public partial class MusicService : IMusicService
             stopwatch.Stop();
 
             // Build response with narrative metadata
+            var compositionId = Guid.NewGuid();
             var response = new GenerateCompositionResponse
             {
-                CompositionId = Guid.NewGuid().ToString(),
+                CompositionId = compositionId.ToString(),
                 MidiJson = midiJson,
                 GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds,
                 Metadata = new CompositionMetadata
@@ -169,7 +185,12 @@ public partial class MusicService : IMusicService
                 TensionCurve = BuildTensionCurve(storyResult, totalBars)
             };
 
-            await Task.CompletedTask;
+            // Cache deterministic compositions (explicit seed provided)
+            if (cacheKey != null)
+            {
+                await CacheCompositionAsync(cacheKey, response, cancellationToken);
+            }
+
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
@@ -196,7 +217,7 @@ public partial class MusicService : IMusicService
         ValidateMidiJsonRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Validating MIDI-JSON structure");
+        _logger.LogDebug("Validating MIDI-JSON structure");
 
         try
         {
@@ -323,7 +344,7 @@ public partial class MusicService : IMusicService
         GetStyleRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting style {StyleId} / {StyleName}", body.StyleId, body.StyleName);
+        _logger.LogDebug("Getting style {StyleId} / {StyleName}", body.StyleId, body.StyleName);
 
         try
         {
@@ -372,7 +393,7 @@ public partial class MusicService : IMusicService
         ListStylesRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Listing styles with category filter {Category}", body.Category);
+        _logger.LogDebug("Listing styles with category filter {Category}", body.Category);
 
         try
         {
@@ -434,7 +455,7 @@ public partial class MusicService : IMusicService
         CreateStyleRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating style {Name}", body.Name);
+        _logger.LogDebug("Creating style {Name}", body.Name);
 
         try
         {
@@ -481,13 +502,11 @@ public partial class MusicService : IMusicService
         GenerateProgressionRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
+        _logger.LogDebug("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
 
         try
         {
             var seed = body.Seed ?? Environment.TickCount;
-            var random = new Random(seed);
-
             var scale = new Scale(body.Key.Tonic, ToModeType(body.Key.Mode));
             var generator = new ProgressionGenerator(seed);
 
@@ -558,12 +577,11 @@ public partial class MusicService : IMusicService
         GenerateMelodyRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Generating melody over {ChordCount} chords", body.Harmony?.Count ?? 0);
+        _logger.LogDebug("Generating melody over {ChordCount} chords", body.Harmony?.Count ?? 0);
 
         try
         {
             var seed = body.Seed ?? Environment.TickCount;
-            var random = new Random(seed);
 
             // Infer key from first chord (or default to C major)
             var firstChord = body.Harmony?.FirstOrDefault();
@@ -664,7 +682,7 @@ public partial class MusicService : IMusicService
         VoiceLeadRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Applying voice leading to {ChordCount} chords", body.Chords?.Count ?? 0);
+        _logger.LogDebug("Applying voice leading to {ChordCount} chords", body.Chords?.Count ?? 0);
 
         try
         {
@@ -1045,15 +1063,6 @@ public partial class MusicService : IMusicService
         _ => ContourShape.Arch
     };
 
-    private static FunctionalAnalysis ToApiFunctionalAnalysis(HarmonicFunctionType function) =>
-        function switch
-        {
-            HarmonicFunctionType.Tonic => FunctionalAnalysis.Tonic,
-            HarmonicFunctionType.Subdominant => FunctionalAnalysis.Subdominant,
-            HarmonicFunctionType.Dominant => FunctionalAnalysis.Dominant,
-            _ => FunctionalAnalysis.Tonic
-        };
-
     /// <summary>
     /// Derives functional analysis from scale degree.
     /// </summary>
@@ -1141,6 +1150,92 @@ public partial class MusicService : IMusicService
                 CommonProgressions = style.HarmonyStyle.CommonProgressions
             } : null
         };
+    }
+
+    /// <summary>
+    /// Builds a deterministic cache key from composition request parameters.
+    /// Only called when seed is explicitly provided (deterministic generation).
+    /// </summary>
+    private static string BuildCompositionCacheKey(GenerateCompositionRequest request)
+    {
+        // Include all parameters that affect output
+        var keyParts = new List<string>
+        {
+            request.StyleId,
+            request.Seed?.ToString() ?? "0",
+            request.DurationBars.ToString()
+        };
+
+        if (request.Key != null)
+        {
+            keyParts.Add($"key:{request.Key.Tonic}:{request.Key.Mode}");
+        }
+
+        if (request.Tempo > 0)
+        {
+            keyParts.Add($"tempo:{request.Tempo}");
+        }
+
+        if (!string.IsNullOrEmpty(request.TuneType))
+        {
+            keyParts.Add($"tune:{request.TuneType}");
+        }
+
+        keyParts.Add($"mood:{request.Mood}");
+
+        if (request.Narrative != null)
+        {
+            keyParts.Add($"narrative:{request.Narrative.TemplateId}");
+        }
+
+        return string.Join(":", keyParts);
+    }
+
+    /// <summary>
+    /// Attempts to retrieve a cached composition from Redis.
+    /// Uses StateStoreDefinitions.MusicCompositions directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task<GenerateCompositionResponse?> TryGetCachedCompositionAsync(
+        string cacheKey,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<GenerateCompositionResponse>(
+                StateStoreDefinitions.MusicCompositions);
+            return await cache.GetAsync(cacheKey, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Cache miss or error - proceed with generation
+            _logger.LogDebug(ex, "Cache lookup failed for {CacheKey}", cacheKey);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Caches a generated composition for future requests with the same parameters.
+    /// Uses StateStoreDefinitions.MusicCompositions directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task CacheCompositionAsync(
+        string cacheKey,
+        GenerateCompositionResponse response,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<GenerateCompositionResponse>(
+                StateStoreDefinitions.MusicCompositions);
+            // Compositions with explicit seed are deterministic - cache with configured TTL
+            await cache.SaveAsync(cacheKey, response,
+                new StateOptions { Ttl = _configuration.CompositionCacheTtlSeconds }, cancellationToken);
+            _logger.LogDebug("Cached composition {CacheKey}", cacheKey);
+        }
+        catch (Exception ex)
+        {
+            // Cache write failure is non-fatal
+            _logger.LogWarning(ex, "Failed to cache composition {CacheKey}", cacheKey);
+        }
     }
 
     #endregion

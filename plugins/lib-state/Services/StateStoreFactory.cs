@@ -104,7 +104,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             var hasRedisStore = _configuration.Stores.Values.Any(s => s.Backend == StateBackend.Redis);
             if (hasRedisStore && !string.IsNullOrEmpty(_configuration.RedisConnectionString))
             {
-                _logger.LogInformation("Connecting to Redis: {ConnectionString}",
+                _logger.LogDebug("Connecting to Redis: {ConnectionString}",
                     _configuration.RedisConnectionString.Split(',')[0]); // Log only host
                 _redis = await ConnectionMultiplexer.ConnectAsync(_configuration.RedisConnectionString);
 
@@ -120,7 +120,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 var totalTimeoutSeconds = _configuration.ConnectionTimeoutSeconds;
                 var retryDelayMs = Math.Max(1000, (totalTimeoutSeconds * 1000) / Math.Max(1, maxRetries));
 
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "Initializing MySQL connection (timeout: {TotalTimeout}s, retries: {MaxRetries})",
                     totalTimeoutSeconds, maxRetries);
 
@@ -466,7 +466,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to create search index '{Index}' for store '{Store}' - search queries may fail",
+                _logger.LogError(ex, "Failed to create search index '{Index}' for store '{Store}' - search queries may fail",
                     indexName, storeName);
             }
         }

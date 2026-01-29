@@ -180,7 +180,7 @@ public interface IWebsiteController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Subscription information retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionResponse>> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionResponse>> GetAccountSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -449,10 +449,10 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Subscription information retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/subscription")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionResponse>> GetSubscription(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionResponse>> GetAccountSubscription(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetSubscriptionAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetAccountSubscriptionAsync(cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

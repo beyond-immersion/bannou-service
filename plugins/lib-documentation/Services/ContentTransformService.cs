@@ -19,8 +19,8 @@ public partial class ContentTransformService : IContentTransformService
     [GeneratedRegex(@"^---\s*\r?\n(.*?)\r?\n---\s*\r?\n?", RegexOptions.Singleline)]
     private static partial Regex FrontmatterRegex();
 
-    // Regex for slug generation - matches non-alphanumeric characters
-    [GeneratedRegex(@"[^a-z0-9\-]")]
+    // Regex for slug generation - matches non-alphanumeric characters (preserves forward slashes for path separators)
+    [GeneratedRegex(@"[^a-z0-9\-/]")]
     private static partial Regex NonSlugCharRegex();
 
     // Regex to collapse multiple hyphens
@@ -111,7 +111,7 @@ public partial class ContentTransformService : IContentTransformService
         slug = slug.Replace(' ', '-').Replace('_', '-');
 
         // Remove special characters (keep alphanumeric, hyphens, and forward slashes)
-        slug = Regex.Replace(slug, @"[^a-z0-9\-/]", "");
+        slug = NonSlugCharRegex().Replace(slug, "");
 
         // Collapse multiple hyphens
         slug = MultipleHyphensRegex().Replace(slug, "-");

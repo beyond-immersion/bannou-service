@@ -349,11 +349,7 @@ public partial class MatchmakingController
         },
         "SessionGameType": {
             "type": "string",
-            "description": "Game type for created sessions (maps to game-session service GameType)",
-            "enum": [
-                "generic",
-                "arcadia"
-            ],
+            "description": "Game service stub name for created sessions. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions.",
             "default": "generic"
         },
         "SkillExpansionStep": {
@@ -476,7 +472,8 @@ public partial class MatchmakingController
                 },
                 "sessionGameType": {
                     "$ref": "#/$defs/SessionGameType",
-                    "description": "Game type for created sessions (maps to game-session service)"
+                    "nullable": true,
+                    "description": "Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided."
                 },
                 "displayName": {
                     "type": "string",
@@ -594,11 +591,7 @@ public partial class MatchmakingController
         },
         "SessionGameType": {
             "type": "string",
-            "description": "Game type for created sessions (maps to game-session service GameType)",
-            "enum": [
-                "generic",
-                "arcadia"
-            ],
+            "description": "Game service stub name for created sessions. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions.",
             "default": "generic"
         },
         "SkillExpansionStep": {
@@ -787,11 +780,7 @@ public partial class MatchmakingController
         },
         "SessionGameType": {
             "type": "string",
-            "description": "Game type for created sessions (maps to game-session service GameType)",
-            "enum": [
-                "generic",
-                "arcadia"
-            ],
+            "description": "Game service stub name for created sessions. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions.",
             "default": "generic"
         },
         "SkillExpansionStep": {
@@ -1164,11 +1153,7 @@ public partial class MatchmakingController
         },
         "SessionGameType": {
             "type": "string",
-            "description": "Game type for created sessions (maps to game-session service GameType)",
-            "enum": [
-                "generic",
-                "arcadia"
-            ],
+            "description": "Game service stub name for created sessions. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions.",
             "default": "generic"
         },
         "SkillExpansionStep": {

@@ -5,7 +5,7 @@ info:
     Configuration schema for Game Session service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -23,8 +23,8 @@ x-service-configuration:
       env: GAME_SESSION_MAX_PLAYERS_PER_SESSION
     DefaultSessionTimeoutSeconds:
       type: integer
-      description: Default session timeout in seconds
-      default: 7200
+      description: Default session timeout in seconds (0 = no timeout)
+      default: 0
       env: GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS
     DefaultReservationTtlSeconds:
       type: integer
@@ -51,8 +51,23 @@ x-service-configuration:
       description: Delay before startup service initializes subscription caches
       default: 2
       env: GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS
+    SubscriberSessionRetryMaxAttempts:
+      type: integer
+      description: Maximum retry attempts for optimistic concurrency on subscriber session state
+      default: 3
+      env: GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed session locks
+      default: 60
+      env: GAME_SESSION_LOCK_TIMEOUT_SECONDS
     SupportedGameServices:
       type: string
-      description: Comma-separated list of supported game service stub names
-      default: "arcadia,generic"
+      description: Comma-separated list of supported game service stub names (e.g. "generic" or "arcadia,fantasia"). Only subscription.updated events for these services trigger shortcut publishing. Use "generic" for catch-all lobbies.
+      default: "generic"
       env: GAME_SESSION_SUPPORTED_GAME_SERVICES
+    GenericLobbiesEnabled:
+      type: boolean
+      description: When true AND "generic" is in SupportedGameServices, auto-publish generic lobby shortcut to ALL authenticated sessions on connect without requiring subscription. Enables open catch-all lobbies.
+      default: false
+      env: GAME_SESSION_GENERIC_LOBBIES_ENABLED

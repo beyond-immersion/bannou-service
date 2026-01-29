@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Orchestrator;
 using Docker.DotNet;
 using Docker.DotNet.Models;
@@ -52,10 +53,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     public const string BANNOU_ORCHESTRATOR_MANAGED_LABEL = "bannou.orchestrator-managed";
 
     // Configuration from environment variables
+    private readonly OrchestratorServiceConfiguration _configuration;
     private readonly string _configuredDockerNetwork;
     private readonly string _certificatesHostPath;
     private readonly string _presetsHostPath;
     private readonly string _logsVolumeName;
+
+    private readonly AppConfiguration _appConfiguration;
 
     // Cached discovered network (lazy initialized)
     private string? _discoveredNetwork;
@@ -64,9 +68,11 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private Dictionary<string, string>? _discoveredInfrastructureHosts;
     private bool _infrastructureDiscoveryAttempted;
 
-    public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, ILogger<DockerComposeOrchestrator> logger)
+    public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, AppConfiguration appConfiguration, ILogger<DockerComposeOrchestrator> logger)
     {
         _logger = logger;
+        _configuration = config;
+        _appConfiguration = appConfiguration;
 
         // Create Docker client using default configuration
         // Linux: unix:///var/run/docker.sock
@@ -75,12 +81,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         _client = dockerConfig.CreateClient();
 
         // Read configuration from injected configuration class (IMPLEMENTATION TENETS compliant)
-        _configuredDockerNetwork = config.DockerNetwork ?? "bannou_default";
-        _certificatesHostPath = config.CertificatesHostPath ?? "/app/provisioning/certificates";
-        _presetsHostPath = config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
-        _logsVolumeName = config.LogsVolumeName ?? "logs-data";
+        // Central validation ensures non-nullable strings are not empty
+        _configuredDockerNetwork = config.DockerNetwork;
+        _certificatesHostPath = config.CertificatesHostPath;
+        _presetsHostPath = config.PresetsHostPath;
+        _logsVolumeName = config.LogsVolumeName;
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "DockerComposeOrchestrator configured: Network={Network}, Certificates={Certs}, Presets={Presets}",
             _configuredDockerNetwork, _certificatesHostPath, _presetsHostPath);
     }
@@ -629,8 +636,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private static async Task<string> ReadDockerLogStreamAsync(MultiplexedStream stream, CancellationToken cancellationToken)
     {
         // Read all output from the multiplexed stream
-        var stdout = new MemoryStream();
-        var stderr = new MemoryStream();
+        using var stdout = new MemoryStream();
+        using var stderr = new MemoryStream();
         await stream.CopyOutputToAsync(Stream.Null, stdout, stderr, cancellationToken);
 
         stdout.Position = 0;
@@ -670,7 +677,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             // 2. Connecting to the correct Docker network
             // 3. Starting the container
 
-            var imageName = "bannou:latest";
+            var imageName = _configuration.DockerImageName;
             var containerName = $"bannou-{appId}";
 
             // Validate that the bannou image is present locally
@@ -702,7 +709,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             // Prepare application container environment
             // Get the orchestrator's own app-id to set as the mapping source
-            var orchestratorAppId = Program.Configuration.EffectiveAppId;
+            var orchestratorAppId = _appConfiguration.EffectiveAppId;
 
             var envList = new List<string>
             {
@@ -1015,7 +1022,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Listing infrastructure services (Docker Compose mode)");
+        _logger.LogDebug("Listing infrastructure services (Docker Compose mode)");
 
         try
         {
@@ -1057,6 +1064,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _client.Dispose();

@@ -41,7 +41,7 @@ public sealed class StateProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetStateRequest, GetStateResponse>(
-            "POST", "/state/get", request, channel, timeout, cancellationToken);
+            "/state/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class StateProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SaveStateRequest, SaveStateResponse>(
-            "POST", "/state/save", request, channel, timeout, cancellationToken);
+            "/state/save", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class StateProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteStateRequest, DeleteStateResponse>(
-            "POST", "/state/delete", request, channel, timeout, cancellationToken);
+            "/state/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class StateProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryStateRequest, QueryStateResponse>(
-            "POST", "/state/query", request, channel, timeout, cancellationToken);
+            "/state/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class StateProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BulkGetStateRequest, BulkGetStateResponse>(
-            "POST", "/state/bulk-get", request, channel, timeout, cancellationToken);
+            "/state/bulk-get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,6 +131,6 @@ public sealed class StateProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListStoresRequest, ListStoresResponse>(
-            "POST", "/state/list-stores", request, channel, timeout, cancellationToken);
+            "/state/list-stores", request, channel, timeout, cancellationToken);
     }
 }

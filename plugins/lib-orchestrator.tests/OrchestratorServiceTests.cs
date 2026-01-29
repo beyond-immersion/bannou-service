@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -27,7 +28,10 @@ public class OrchestratorServiceTests
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly AppConfiguration _appConfiguration;
 
     public OrchestratorServiceTests()
     {
@@ -43,12 +47,32 @@ public class OrchestratorServiceTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup HTTP client factory to return a mock client
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private OrchestratorService CreateService()
@@ -58,11 +82,14 @@ public class OrchestratorServiceTests
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
             _mockEventConsumer.Object);
     }
 
@@ -191,6 +218,8 @@ public class OrchestratorServiceTests
         var expectedReport = new ServiceHealthReport
         {
             Timestamp = DateTimeOffset.UtcNow,
+            Source = ServiceHealthSource.All,
+            ControlPlaneAppId = "bannou",
             TotalServices = 3,
             HealthPercentage = 100.0f,
             HealthyServices = new List<ServiceHealthStatus>
@@ -203,7 +232,7 @@ public class OrchestratorServiceTests
         };
 
         _mockHealthMonitor
-            .Setup(x => x.GetServiceHealthReportAsync())
+            .Setup(x => x.GetServiceHealthReportAsync(It.IsAny<ServiceHealthSource>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedReport);
 
         var service = CreateService();
@@ -214,6 +243,8 @@ public class OrchestratorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
+        Assert.Equal(ServiceHealthSource.All, response.Source);
+        Assert.Equal("bannou", response.ControlPlaneAppId);
         Assert.Equal(3, response.TotalServices);
         Assert.Equal(100.0f, response.HealthPercentage);
         Assert.Equal(3, response.HealthyServices.Count);
@@ -637,18 +668,27 @@ public class ServiceHealthMonitorTests
     private readonly Mock<ILogger<ServiceHealthMonitor>> _mockLogger;
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
 
     public ServiceHealthMonitorTests()
     {
         _mockLogger = new Mock<ILogger<ServiceHealthMonitor>>();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
+
+        // Default setup for control plane provider
+        _mockControlPlaneProvider.Setup(x => x.ControlPlaneAppId).Returns("bannou");
+        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthStatus>());
+        _mockControlPlaneProvider.Setup(x => x.GetEnabledServiceNames()).Returns(new List<string>());
     }
 
     private ServiceHealthMonitor CreateMonitor()
@@ -656,8 +696,10 @@ public class ServiceHealthMonitorTests
         return new ServiceHealthMonitor(
             _mockLogger.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
-            _mockEventManager.Object);
+            _mockEventManager.Object,
+            _mockControlPlaneProvider.Object);
     }
 
     [Fact]
@@ -803,7 +845,9 @@ public class ServiceHealthMonitorRoutingProtectionTests
     private readonly Mock<ILogger<ServiceHealthMonitor>> _mockLogger;
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
 
     // Event handler captured from the mock
     private Action<ServiceHeartbeatEvent>? _heartbeatHandler;
@@ -813,11 +857,18 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _mockLogger = new Mock<ILogger<ServiceHealthMonitor>>();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
+
+        // Default setup for control plane provider
+        _mockControlPlaneProvider.Setup(x => x.ControlPlaneAppId).Returns("bannou");
+        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthStatus>());
+        _mockControlPlaneProvider.Setup(x => x.GetEnabledServiceNames()).Returns(new List<string>());
     }
 
     private ServiceHealthMonitor CreateMonitorWithEventCapture()
@@ -835,8 +886,10 @@ public class ServiceHealthMonitorRoutingProtectionTests
         return new ServiceHealthMonitor(
             _mockLogger.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
-            _mockEventManager.Object);
+            _mockEventManager.Object,
+            _mockControlPlaneProvider.Object);
     }
 
     [Fact]
@@ -1156,7 +1209,8 @@ public class OrchestratorStateManagerTests
         ServiceConstructorValidator.ValidateServiceConstructor<OrchestratorStateManager>();
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
         Assert.NotNull(manager);
     }
 
@@ -1166,7 +1220,8 @@ public class OrchestratorStateManagerTests
         // Arrange
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
 
         // Act
         var (isHealthy, message, _) = await manager.CheckHealthAsync();
@@ -1182,7 +1237,8 @@ public class OrchestratorStateManagerTests
         // Arrange
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
 
         // Act
         var result = await manager.GetConfigVersionAsync();
@@ -1197,7 +1253,8 @@ public class OrchestratorStateManagerTests
         // Arrange
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
 
         // Act
         var result = await manager.GetServiceHeartbeatsAsync();
@@ -1212,7 +1269,8 @@ public class OrchestratorStateManagerTests
         // Arrange
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
 
         // Act
         var result = await manager.GetServiceRoutingsAsync();
@@ -1227,7 +1285,8 @@ public class OrchestratorStateManagerTests
         // Arrange
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
         var heartbeat = new ServiceHeartbeatEvent
         {
             ServiceId = Guid.NewGuid(),
@@ -1246,7 +1305,8 @@ public class OrchestratorStateManagerTests
         // Arrange
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
         var routing = new ServiceRouting
         {
             AppId = "test-app",
@@ -1265,7 +1325,8 @@ public class OrchestratorStateManagerTests
         // Arrange
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
 
         // Act
         var result = await manager.RestoreConfigurationVersionAsync(1);
@@ -1280,7 +1341,8 @@ public class OrchestratorStateManagerTests
         // Arrange - using ensures disposal even if assertion fails; Dispose is idempotent
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
 
         // Act & Assert - Should not throw (manager is disposed explicitly, then again by using)
         var exception = Record.Exception(() => manager.Dispose());
@@ -1293,7 +1355,8 @@ public class OrchestratorStateManagerTests
         // Arrange - await using ensures disposal even if assertion fails; DisposeAsync is idempotent
         await using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
-            Mock.Of<ILogger<OrchestratorStateManager>>());
+            Mock.Of<ILogger<OrchestratorStateManager>>(),
+            new OrchestratorServiceConfiguration());
 
         // Act & Assert - Should not throw (manager is disposed explicitly, then again by await using)
         var exception = await Record.ExceptionAsync(async () => await manager.DisposeAsync());
@@ -1318,8 +1381,11 @@ public class OrchestratorResetToDefaultTests
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
 
     public OrchestratorResetToDefaultTests()
     {
@@ -1331,17 +1397,37 @@ public class OrchestratorResetToDefaultTests
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
 
         // Setup logger factory
         _mockLoggerFactory
             .Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
+
+        // Setup HTTP client factory to return a mock client
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private OrchestratorService CreateService()
@@ -1351,11 +1437,14 @@ public class OrchestratorResetToDefaultTests
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1685,11 +1774,14 @@ public class OrchestratorProcessingPoolTests
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public OrchestratorProcessingPoolTests()
@@ -1706,12 +1798,32 @@ public class OrchestratorProcessingPoolTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup HTTP client factory to return a mock client
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private OrchestratorService CreateService()
@@ -1721,11 +1833,14 @@ public class OrchestratorProcessingPoolTests
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1982,7 +2097,7 @@ public class OrchestratorProcessingPoolTests
             ProcessorId = $"{poolType}-{Guid.NewGuid():N}",
             AppId = $"bannou-pool-{poolType}-{i:D4}",
             PoolType = poolType,
-            Status = i < availableCount ? "available" : "busy",
+            Status = i < availableCount ? OrchestratorService.ProcessorStatus.Available : OrchestratorService.ProcessorStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
             LastUpdated = DateTimeOffset.UtcNow.AddMinutes(-1)
         }).ToList();
@@ -2000,6 +2115,167 @@ public class OrchestratorProcessingPoolTests
         _mockStateManager
             .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
             .ReturnsAsync(new Dictionary<string, OrchestratorService.ProcessorLease>());
+    }
+
+    #endregion
+
+    #region AcquireProcessorAsync Lock Tests
+
+    [Fact]
+    public async Task AcquireProcessorAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Override lock to fail for this pool type
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "orchestrator-pool",
+                "actor-shared",
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new AcquireProcessorRequest { PoolType = "actor-shared" };
+
+        // Act
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ReleaseProcessorAsync Lock Tests
+
+    [Fact]
+    public async Task ReleaseProcessorAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var leaseId = Guid.NewGuid();
+        var poolType = "actor-shared";
+
+        // Setup: known pool types
+        _mockStateManager
+            .Setup(x => x.GetListAsync<string>("orchestrator:pools:known"))
+            .ReturnsAsync(new List<string> { poolType });
+
+        // Setup: lease exists in this pool
+        var lease = new OrchestratorService.ProcessorLease
+        {
+            LeaseId = leaseId,
+            ProcessorId = "proc-001",
+            AppId = "bannou-pool-actor-shared-0001",
+            PoolType = poolType,
+            AcquiredAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5)
+        };
+        var leases = new Dictionary<string, OrchestratorService.ProcessorLease>
+        {
+            [leaseId.ToString()] = lease
+        };
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(
+                It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .ReturnsAsync(leases);
+
+        // Override lock to fail for this pool
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "orchestrator-pool",
+                poolType,
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
+
+        // Act
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ReleaseProcessorAsync Event Publication Tests
+
+    [Fact]
+    public async Task ReleaseProcessorAsync_SuccessfulRelease_PublishesProcessorReleasedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var leaseId = Guid.NewGuid();
+        var poolType = "actor-shared";
+        var processorId = "proc-001";
+
+        // Setup: known pool types
+        _mockStateManager
+            .Setup(x => x.GetListAsync<string>("orchestrator:pools:known"))
+            .ReturnsAsync(new List<string> { poolType });
+
+        // Setup: lease exists in this pool
+        var lease = new OrchestratorService.ProcessorLease
+        {
+            LeaseId = leaseId,
+            ProcessorId = processorId,
+            AppId = "bannou-pool-actor-shared-0001",
+            PoolType = poolType,
+            AcquiredAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5)
+        };
+        var leases = new Dictionary<string, OrchestratorService.ProcessorLease>
+        {
+            [leaseId.ToString()] = lease
+        };
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(
+                It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .ReturnsAsync(leases);
+
+        // Setup: available processors list
+        _mockStateManager
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(
+                It.Is<string>(s => s.Contains($"pool:{poolType}:available"))))
+            .ReturnsAsync(new List<OrchestratorService.ProcessorInstance>());
+
+        // Setup: message bus to capture published event
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
+
+        // Act
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Released);
+        Assert.Equal(processorId, response.ProcessorId);
+
+        // Verify the ProcessorReleasedEvent was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "orchestrator.processor.released",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     #endregion

@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Client.Voice;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
+using BeyondImmersion.BannouService.Voice;
 using Moq;
 using Xunit;
 
@@ -50,7 +51,7 @@ public class VoiceRoomManagerScaledTierTests
         using var manager = CreateManager();
 
         // Assert
-        Assert.Equal(VoiceRoomStateEventTier.P2p, manager.CurrentTier);
+        Assert.Equal(VoiceTier.P2p, manager.CurrentTier);
     }
 
     [Fact]

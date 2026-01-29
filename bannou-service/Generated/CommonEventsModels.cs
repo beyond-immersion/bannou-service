@@ -397,7 +397,7 @@ public partial class ServiceErrorEvent : BaseServiceEvent
     /// Correlation ID / request ID, if available
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("correlationId")]
-    public string? CorrelationId { get; set; } = default!;
+    public System.Guid? CorrelationId { get; set; } = default!;
 
     /// <summary>
     /// Severity for triage/routing
@@ -541,7 +541,7 @@ public partial class SessionConnectedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
-    /// Authorization states from JWT (e.g., ["arcadia:authorized"]). Format is "serviceId:state".
+    /// Authorization states from JWT (e.g., ["my-game:authorized"]). Format is "serviceId:state".
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
     public System.Collections.Generic.ICollection<string>? Authorizations { get; set; } = default!;

@@ -503,11 +503,11 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         return topic;
     }
 
-    private static Dictionary<string, object?> CreateDeadLetterArguments()
+    private Dictionary<string, object?> CreateDeadLetterArguments()
     {
         return new Dictionary<string, object?>
         {
-            ["x-dead-letter-exchange"] = "bannou-dlx",
+            ["x-dead-letter-exchange"] = _configuration.DeadLetterExchange,
             ["x-dead-letter-routing-key"] = "dead-letter"
         };
     }

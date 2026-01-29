@@ -78,7 +78,7 @@ public partial class QueryCurrentSubscriptionsRequest
     public System.Guid? AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Stub name of the service to filter by (e.g., "arcadia"). Returns all accounts subscribed to this service.
+    /// Stub name of the service to filter by (e.g., "my-game"). Returns all accounts subscribed to this service.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
     public string? StubName { get; set; } = default!;

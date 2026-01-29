@@ -3,18 +3,19 @@ namespace BeyondImmersion.BannouService.SaveLoad.Models;
 /// <summary>
 /// Internal model for pending upload queue entries in Redis.
 /// Holds save data awaiting async upload to Asset service.
+/// IMPLEMENTATION TENETS compliant: Uses proper C# types for enums and GUIDs.
 /// </summary>
 public sealed class PendingUploadEntry
 {
     /// <summary>
     /// Unique ID for this upload entry
     /// </summary>
-    public required string UploadId { get; set; }
+    public required Guid UploadId { get; set; }
 
     /// <summary>
     /// Slot ID this upload belongs to
     /// </summary>
-    public required string SlotId { get; set; }
+    public required Guid SlotId { get; set; }
 
     /// <summary>
     /// Version number being uploaded
@@ -29,12 +30,12 @@ public sealed class PendingUploadEntry
     /// <summary>
     /// Owner ID for the save
     /// </summary>
-    public required string OwnerId { get; set; }
+    public required Guid OwnerId { get; set; }
 
     /// <summary>
     /// Owner type for the save
     /// </summary>
-    public required string OwnerType { get; set; }
+    public required OwnerType OwnerType { get; set; }
 
     /// <summary>
     /// The actual save data (base64 encoded, compressed)
@@ -49,7 +50,7 @@ public sealed class PendingUploadEntry
     /// <summary>
     /// Compression type applied
     /// </summary>
-    public string CompressionType { get; set; } = "GZIP";
+    public CompressionType CompressionType { get; set; } = CompressionType.GZIP;
 
     /// <summary>
     /// Size of uncompressed data in bytes
@@ -74,7 +75,7 @@ public sealed class PendingUploadEntry
     /// <summary>
     /// Delta algorithm used
     /// </summary>
-    public string? DeltaAlgorithm { get; set; }
+    public DeltaAlgorithm? DeltaAlgorithm { get; set; }
 
     /// <summary>
     /// Thumbnail data (base64 encoded) if provided
@@ -107,7 +108,8 @@ public sealed class PendingUploadEntry
     public int Priority { get; set; }
 
     /// <summary>
-    /// Generates the state store key for this pending upload
+    /// Generates the state store key for this pending upload.
+    /// Note: Uses ToString() for UploadId as state store keys are strings.
     /// </summary>
     public string GetStateKey() => $"pending:{UploadId}";
 

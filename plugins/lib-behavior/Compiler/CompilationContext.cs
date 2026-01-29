@@ -23,12 +23,12 @@ public sealed class CompilationContext
     /// <summary>
     /// Constant pool builder for numeric literals.
     /// </summary>
-    public ConstantPoolBuilder Constants { get; } = new();
+    public ConstantPoolBuilder Constants { get; }
 
     /// <summary>
     /// String table builder for string literals.
     /// </summary>
-    public StringTableBuilder Strings { get; } = new();
+    public StringTableBuilder Strings { get; }
 
     /// <summary>
     /// Label manager for jump targets and flow offsets.
@@ -76,6 +76,8 @@ public sealed class CompilationContext
     public CompilationContext(CompilationOptions? options = null)
     {
         Options = options ?? CompilationOptions.Default;
+        Constants = new ConstantPoolBuilder(Options.MaxConstants);
+        Strings = new StringTableBuilder(Options.MaxStrings);
         Constants.AddCommonConstants(); // Pre-add 0, 1, -1
     }
 
@@ -129,6 +131,13 @@ public sealed class CompilationContext
             return existing;
         }
 
+        if (_localVariables.Count >= 256)
+        {
+            throw new InvalidOperationException(
+                $"Maximum local variable count (256) exceeded when allocating '{name}'. " +
+                "Consider reducing variable usage or splitting into multiple flows.");
+        }
+
         var index = _nextLocalIndex++;
         _localVariables[name] = index;
         return index;
@@ -137,6 +146,9 @@ public sealed class CompilationContext
     /// <summary>
     /// Tries to get an input variable index.
     /// </summary>
+    /// <param name="name">The variable name.</param>
+    /// <param name="index">When this method returns, contains the index if found.</param>
+    /// <returns>True if the input variable exists; otherwise, false.</returns>
     public bool TryGetInput(string name, out byte index)
     {
         return _inputVariables.TryGetValue(name, out index);
@@ -145,6 +157,9 @@ public sealed class CompilationContext
     /// <summary>
     /// Tries to get an output variable index.
     /// </summary>
+    /// <param name="name">The variable name.</param>
+    /// <param name="index">When this method returns, contains the index if found.</param>
+    /// <returns>True if the output variable exists; otherwise, false.</returns>
     public bool TryGetOutput(string name, out byte index)
     {
         return _outputVariables.TryGetValue(name, out index);
@@ -153,6 +168,9 @@ public sealed class CompilationContext
     /// <summary>
     /// Tries to get a local variable index.
     /// </summary>
+    /// <param name="name">The variable name.</param>
+    /// <param name="index">When this method returns, contains the index if found.</param>
+    /// <returns>True if the local variable exists; otherwise, false.</returns>
     public bool TryGetLocal(string name, out byte index)
     {
         return _localVariables.TryGetValue(name, out index);
@@ -265,6 +283,16 @@ public sealed class CompilationOptions
     /// Whether to skip semantic analysis.
     /// </summary>
     public bool SkipSemanticAnalysis { get; init; }
+
+    /// <summary>
+    /// Maximum constants in the constant pool. Zero uses VmConfig default.
+    /// </summary>
+    public int MaxConstants { get; init; }
+
+    /// <summary>
+    /// Maximum strings in the string table. Zero uses VmConfig default.
+    /// </summary>
+    public int MaxStrings { get; init; }
 
     /// <summary>
     /// Model ID to use (null for auto-generated).

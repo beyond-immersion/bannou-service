@@ -7,7 +7,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-SOURCE_FIXTURES="$REPO_ROOT/http-tester/fixtures"
+SOURCE_FIXTURES="$REPO_ROOT/tools/http-tester/fixtures"
 DEST_FIXTURES="${1:-/tmp/bannou-test-fixtures}"
 
 # Clean destination if it exists

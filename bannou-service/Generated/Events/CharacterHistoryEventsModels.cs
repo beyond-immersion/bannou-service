@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.CharacterHistory;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -82,7 +84,8 @@ public partial class CharacterParticipationRecordedEvent
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Role { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ParticipationRole Role { get; set; } = default!;
 
 }
 

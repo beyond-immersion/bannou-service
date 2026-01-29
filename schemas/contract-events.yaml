@@ -1,0 +1,682 @@
+openapi: 3.0.3
+info:
+  title: Contract Service Events
+  description: |
+    Event models for Contract service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **Event Categories**:
+    - Lifecycle events (auto-generated): contract-template.created/updated/deleted, contract-instance.created/updated/deleted
+    - Contract flow events: proposed, consent-received, accepted, activated, milestone events, breach events, fulfillment, termination
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []  # Contract service is reactive - no external event subscriptions for v1
+  x-event-publications:
+    # Lifecycle events (auto-generated from x-lifecycle)
+    - topic: contract-template.created
+      event: ContractTemplateCreatedEvent
+      description: Published when a new contract template is created
+    - topic: contract-template.updated
+      event: ContractTemplateUpdatedEvent
+      description: Published when a contract template is updated
+    - topic: contract-template.deleted
+      event: ContractTemplateDeletedEvent
+      description: Published when a contract template is soft-deleted
+
+    - topic: contract-instance.created
+      event: ContractInstanceCreatedEvent
+      description: Published when a new contract instance is created (draft status)
+    - topic: contract-instance.updated
+      event: ContractInstanceUpdatedEvent
+      description: Published when a contract instance is updated
+    - topic: contract-instance.deleted
+      event: ContractInstanceDeletedEvent
+      description: Published when a contract instance is deleted
+
+    # Custom contract flow events
+    - topic: contract.proposed
+      event: ContractProposedEvent
+      description: Published when a contract is proposed to parties (awaiting consent)
+    - topic: contract.consent-received
+      event: ContractConsentReceivedEvent
+      description: Published when one party consents to a contract
+    - topic: contract.accepted
+      event: ContractAcceptedEvent
+      description: Published when all required parties have consented
+    - topic: contract.activated
+      event: ContractActivatedEvent
+      description: Published when contract becomes active (effectiveFrom reached)
+    - topic: contract.milestone.completed
+      event: ContractMilestoneCompletedEvent
+      description: Published when a milestone is completed
+    - topic: contract.milestone.failed
+      event: ContractMilestoneFailedEvent
+      description: Published when a milestone fails
+    - topic: contract.breach.detected
+      event: ContractBreachDetectedEvent
+      description: Published when a breach is recorded
+    - topic: contract.breach.cured
+      event: ContractBreachCuredEvent
+      description: Published when a breach is cured within grace period
+    - topic: contract.fulfilled
+      event: ContractFulfilledEvent
+      description: Published when all required milestones are complete
+    - topic: contract.terminated
+      event: ContractTerminatedEvent
+      description: Published when contract is terminated early
+    - topic: contract.expired
+      event: ContractExpiredEvent
+      description: Published when contract reaches natural expiration
+
+    # Prebound API execution events (observability)
+    - topic: contract.prebound-api.executed
+      event: ContractPreboundApiExecutedEvent
+      description: Published when a prebound API is successfully called
+    - topic: contract.prebound-api.failed
+      event: ContractPreboundApiFailedEvent
+      description: Published when a prebound API call fails
+    - topic: contract.prebound-api.validation-failed
+      event: ContractPreboundApiValidationFailedEvent
+      description: Published when a prebound API response fails validation
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/contract-lifecycle-events.yaml
+x-lifecycle:
+  ContractTemplate:
+    model:
+      templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the contract template" }
+      code: { type: string, required: true, description: "Unique template code (lowercase, underscores)" }
+      name: { type: string, required: true, description: "Human-readable template name" }
+      description: { type: string, nullable: true, description: "Detailed description of this contract type" }
+      realmId: { type: string, format: uuid, nullable: true, description: "Realm ID if template is realm-specific" }
+      minParties: { type: integer, required: true, description: "Minimum number of parties required" }
+      maxParties: { type: integer, required: true, description: "Maximum number of parties allowed" }
+      defaultEnforcementMode: { $ref: 'contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
+      transferable: { type: boolean, required: true, description: "Whether contracts can be transferred" }
+      isActive: { type: boolean, required: true, description: "Whether template is active" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the template was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the template was last updated" }
+
+  ContractInstance:
+    model:
+      contractId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the contract instance" }
+      templateId: { type: string, format: uuid, required: true, description: "Reference to the source template" }
+      templateCode: { type: string, required: true, description: "Template code for reference" }
+      status: { $ref: 'contract-api.yaml#/components/schemas/ContractStatus', required: true, description: "Current contract status" }
+      proposedAt: { type: string, format: date-time, nullable: true, description: "When contract was proposed to parties" }
+      acceptedAt: { type: string, format: date-time, nullable: true, description: "When all parties consented" }
+      effectiveFrom: { type: string, format: date-time, nullable: true, description: "When contract became active" }
+      effectiveUntil: { type: string, format: date-time, nullable: true, description: "When contract expires" }
+      terminatedAt: { type: string, format: date-time, nullable: true, description: "When contract was terminated early" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the instance was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the instance was last updated" }
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Contract Flow Events
+    # =========================================================================
+
+    ContractProposedEvent:
+      type: object
+      description: Event published when a contract is proposed to parties
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - templateId
+      - templateCode
+      - parties
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Source template ID
+        templateCode:
+          type: string
+          description: Source template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: Parties awaiting consent
+
+    ContractConsentReceivedEvent:
+      type: object
+      description: Event published when one party consents
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - consentingEntityId
+      - consentingEntityType
+      - role
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        consentingEntityId:
+          type: string
+          format: uuid
+          description: Entity that consented
+        consentingEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        role:
+          type: string
+          description: Party's role in the contract
+        remainingConsentsNeeded:
+          type: integer
+          description: How many more consents are needed
+
+    ContractAcceptedEvent:
+      type: object
+      description: Event published when all required parties consent
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - parties
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: All contract parties
+        effectiveFrom:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract will become active
+
+    ContractActivatedEvent:
+      type: object
+      description: Event published when contract becomes active
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - parties
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: All contract parties
+        effectiveUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract expires
+
+    ContractMilestoneCompletedEvent:
+      type: object
+      description: Event published when a milestone is completed
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - milestoneCode
+      - milestoneName
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestoneCode:
+          type: string
+          description: Completed milestone code
+        milestoneName:
+          type: string
+          description: Milestone display name
+        evidence:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Evidence of completion
+        preboundApisExecuted:
+          type: integer
+          description: Number of prebound APIs executed
+
+    ContractMilestoneFailedEvent:
+      type: object
+      description: Event published when a milestone fails
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - milestoneCode
+      - milestoneName
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestoneCode:
+          type: string
+          description: Failed milestone code
+        milestoneName:
+          type: string
+          description: Milestone display name
+        reason:
+          type: string
+          description: Reason for failure
+        wasRequired:
+          type: boolean
+          description: Whether this was a required milestone
+        triggeredBreach:
+          type: boolean
+          description: Whether this failure triggered a breach
+
+    ContractBreachDetectedEvent:
+      type: object
+      description: Event published when a breach is recorded
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - breachId
+      - breachingEntityId
+      - breachingEntityType
+      - breachType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        breachId:
+          type: string
+          format: uuid
+          description: Breach record ID
+        breachingEntityId:
+          type: string
+          format: uuid
+          description: Entity that breached
+        breachingEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        breachType:
+          $ref: 'contract-api.yaml#/components/schemas/BreachType'
+          description: Type of breach
+        breachedTermOrMilestone:
+          type: string
+          nullable: true
+          description: What was breached
+        cureDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline to cure the breach
+
+    ContractBreachCuredEvent:
+      type: object
+      description: Event published when a breach is cured
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - breachId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        breachId:
+          type: string
+          format: uuid
+          description: Breach record ID
+        cureEvidence:
+          type: string
+          nullable: true
+          description: Evidence of cure
+
+    ContractFulfilledEvent:
+      type: object
+      description: Event published when all required milestones complete
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - parties
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: All contract parties
+        milestonesCompleted:
+          type: integer
+          description: Number of milestones completed
+
+    ContractTerminatedEvent:
+      type: object
+      description: Event published when contract is terminated early
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - terminatedByEntityId
+      - terminatedByEntityType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        terminatedByEntityId:
+          type: string
+          format: uuid
+          description: Entity that requested termination
+        terminatedByEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        reason:
+          type: string
+          nullable: true
+          description: Reason for termination
+        wasBreachRelated:
+          type: boolean
+          description: Whether termination was due to breach
+
+    ContractExpiredEvent:
+      type: object
+      description: Event published when contract reaches natural expiration
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        effectiveUntil:
+          type: string
+          format: date-time
+          description: When contract was set to expire
+
+    # =========================================================================
+    # Prebound API Execution Events
+    # =========================================================================
+
+    ContractPreboundApiExecutedEvent:
+      type: object
+      description: Event published when a prebound API is executed
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - serviceName
+      - endpoint
+      - statusCode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        trigger:
+          type: string
+          description: What triggered the API call (milestone.completed, breach.detected, etc.)
+        serviceName:
+          type: string
+          description: Target service
+        endpoint:
+          type: string
+          description: Target endpoint
+        statusCode:
+          type: integer
+          description: HTTP status code returned
+
+    ContractPreboundApiFailedEvent:
+      type: object
+      description: Event published when a prebound API call fails
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - serviceName
+      - endpoint
+      - errorMessage
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        trigger:
+          type: string
+          description: What triggered the API call
+        serviceName:
+          type: string
+          description: Target service
+        endpoint:
+          type: string
+          description: Target endpoint
+        errorMessage:
+          type: string
+          description: Error message from failure
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code if available
+
+    ContractPreboundApiValidationFailedEvent:
+      type: object
+      description: Event published when a prebound API response fails validation
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - serviceName
+      - endpoint
+      - validationOutcome
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        trigger:
+          type: string
+          description: What triggered the API call
+        serviceName:
+          type: string
+          description: Target service
+        endpoint:
+          type: string
+          description: Target endpoint
+        statusCode:
+          type: integer
+          description: HTTP status code from the API response
+        validationOutcome:
+          type: string
+          description: Validation outcome (PermanentFailure, TransientFailure)
+        failureReason:
+          type: string
+          nullable: true
+          description: Description of why validation failed
+
+    # =========================================================================
+    # Shared Event Models
+    # =========================================================================
+
+    PartyInfo:
+      type: object
+      description: Brief party information for events
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - role
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity ID
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        role:
+          type: string
+          description: Role in contract

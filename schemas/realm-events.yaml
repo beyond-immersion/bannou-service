@@ -5,7 +5,7 @@ info:
     Event models for Realm service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Realm service doesn't subscribe to external events
@@ -29,6 +29,7 @@ x-lifecycle:
       realmId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the realm" }
       code: { type: string, required: true, description: "Short code identifier for the realm used in URLs and references" }
       name: { type: string, required: true, description: "Display name of the realm" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "ID of the game service this realm belongs to" }
       description: { type: string, nullable: true, description: "Detailed description of the realm and its purpose" }
       category: { type: string, nullable: true, description: "Category classification for organizing realms" }
       isActive: { type: boolean, required: true, description: "Whether the realm is currently active and accessible" }

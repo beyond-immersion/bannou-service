@@ -236,7 +236,7 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     public bool Success { get; set; } = default!;
 
     /// <summary>
-    /// Assigned bundle ID on success
+    /// Assigned human-readable bundle ID on success
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     public string? BundleId { get; set; } = default!;
@@ -312,7 +312,7 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     public override string EventName { get; set; } = "asset.bundle.creation.complete";
 
     /// <summary>
-    /// ID of the created bundle
+    /// Human-readable ID of the created bundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -384,7 +384,7 @@ public partial class MetabundleCreationCompleteEvent : BaseClientEvent
     public System.Guid JobId { get; set; } = default!;
 
     /// <summary>
-    /// ID of the metabundle
+    /// Human-readable ID of the metabundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

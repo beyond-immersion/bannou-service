@@ -3125,16 +3125,18 @@ public partial class DocumentationController
                 },
                 "filePatterns": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "default": [
                         "**/*.md"
                     ],
-                    "description": "Glob patterns for files to include"
+                    "description": "Glob patterns for files to include (defaults to all markdown files if not provided)"
                 },
                 "excludePatterns": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3143,14 +3145,15 @@ public partial class DocumentationController
                         ".obsidian/**",
                         "node_modules/**"
                     ],
-                    "description": "Glob patterns for files to exclude"
+                    "description": "Glob patterns for files to exclude (defaults to common non-content directories if not provided)"
                 },
                 "categoryMapping": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Map directory prefixes to categories"
+                    "description": "Map directory prefixes to categories (empty mapping if not provided)"
                 },
                 "defaultCategory": {
                     "$ref": "#/$defs/DocumentCategory",

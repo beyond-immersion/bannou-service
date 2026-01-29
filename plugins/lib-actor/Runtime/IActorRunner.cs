@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Events;
+
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
@@ -82,7 +84,7 @@ public interface IActorRunner : IAsyncDisposable
     /// <summary>
     /// Gets the current encounter ID if this actor is managing one (Event Brain).
     /// </summary>
-    string? CurrentEncounterId { get; }
+    Guid? CurrentEncounterId { get; }
 
     /// <summary>
     /// Starts a new encounter managed by this actor (Event Brain).
@@ -92,7 +94,7 @@ public interface IActorRunner : IAsyncDisposable
     /// <param name="participants">Character IDs participating in the encounter.</param>
     /// <param name="initialData">Optional initial encounter data.</param>
     /// <returns>True if the encounter was started, false if one is already active.</returns>
-    bool StartEncounter(string encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null);
+    bool StartEncounter(Guid encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null);
 
     /// <summary>
     /// Updates the current encounter's phase.

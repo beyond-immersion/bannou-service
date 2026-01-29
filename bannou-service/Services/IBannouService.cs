@@ -353,8 +353,9 @@ public interface IBannouService
     /// based on x-permissions sections in the service's OpenAPI schema.
     /// Override this method if the service has custom permission registration logic.
     /// </summary>
+    /// <param name="appId">The effective app ID for this service instance, provided by the caller</param>
     /// <returns>Task representing the registration operation</returns>
-    virtual async Task RegisterServicePermissionsAsync()
+    virtual async Task RegisterServicePermissionsAsync(string appId)
     {
         await Task.CompletedTask;
         // Default implementation does nothing - method will be overridden

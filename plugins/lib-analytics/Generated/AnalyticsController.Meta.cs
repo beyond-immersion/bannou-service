@@ -49,7 +49,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity this event relates to"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type the event is attributed to"
                 },
                 "timestamp": {
@@ -69,17 +69,6 @@ public partial class AnalyticsController
                     "description": "Additional event-specific data"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -220,7 +209,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity this event relates to"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type the event is attributed to"
                 },
                 "timestamp": {
@@ -240,17 +229,6 @@ public partial class AnalyticsController
                     "description": "Additional event-specific data"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -374,21 +352,10 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type to summarize"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -417,7 +384,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this summary"
                 },
                 "totalEvents": {
@@ -452,17 +419,6 @@ public partial class AnalyticsController
                     "description": "Aggregated numeric values (sums, averages)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -543,7 +499,7 @@ public partial class AnalyticsController
                     "description": "ID of the game service"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Optional filter by entity type"
                 },
@@ -578,17 +534,6 @@ public partial class AnalyticsController
                     "description": "Number of results to skip"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -640,7 +585,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this summary"
                 },
                 "totalEvents": {
@@ -675,17 +620,6 @@ public partial class AnalyticsController
                     "description": "Aggregated numeric values (sums, averages)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -774,7 +708,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type whose rating is requested"
                 },
                 "ratingType": {
@@ -782,17 +716,6 @@ public partial class AnalyticsController
                     "description": "Type of rating (e.g., overall, ranked, casual)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -823,7 +746,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this rating record"
                 },
                 "ratingType": {
@@ -856,17 +779,6 @@ public partial class AnalyticsController
                     "description": "Timestamp of last rated match"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -984,7 +896,7 @@ public partial class AnalyticsController
                     "description": "ID of the participating entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this match participant"
                 },
                 "outcome": {
@@ -1001,17 +913,6 @@ public partial class AnalyticsController
                     "description": "Optional numeric score for the match"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1063,7 +964,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this rating change"
                 },
                 "previousRating": {
@@ -1082,17 +983,6 @@ public partial class AnalyticsController
                     "description": "Change in rating (can be negative)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1188,7 +1078,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity being controlled"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type being controlled"
                 },
                 "action": {
@@ -1207,17 +1097,6 @@ public partial class AnalyticsController
                     "description": "Game session ID (if applicable)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "ControllerAction": {
             "type": "string",
@@ -1322,7 +1201,7 @@ public partial class AnalyticsController
                     "description": "Filter by controlled entity"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Filter by entity type"
                 },
@@ -1345,17 +1224,6 @@ public partial class AnalyticsController
                     "description": "Maximum results to return"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1412,7 +1280,7 @@ public partial class AnalyticsController
                     "description": "ID of the controlled entity"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type that was controlled"
                 },
                 "action": {
@@ -1431,17 +1299,6 @@ public partial class AnalyticsController
                     "description": "Associated game session ID"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "ControllerAction": {
             "type": "string",
@@ -1506,6 +1363,123 @@ public partial class AnalyticsController
             _QueryControllerHistory_Info,
             _QueryControllerHistory_RequestSchema,
             _QueryControllerHistory_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanupControllerHistory
+
+    private static readonly string _CleanupControllerHistory_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupControllerHistoryRequest",
+    "$defs": {
+        "CleanupControllerHistoryRequest": {
+            "type": "object",
+            "description": "Request to cleanup expired controller history records",
+            "additionalProperties": false,
+            "properties": {
+                "dryRun": {
+                    "type": "boolean",
+                    "description": "Preview cleanup without deleting records",
+                    "default": true
+                },
+                "olderThanDays": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Override configured retention period (null uses ControllerHistoryRetentionDays config)"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Limit cleanup to specific game service (null cleans all)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupControllerHistory_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupControllerHistoryResponse",
+    "$defs": {
+        "CleanupControllerHistoryResponse": {
+            "type": "object",
+            "description": "Result of controller history cleanup",
+            "additionalProperties": false,
+            "required": [
+                "recordsDeleted",
+                "dryRun"
+            ],
+            "properties": {
+                "recordsDeleted": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Records deleted (or would be deleted if dry run)"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "description": "Whether this was a preview-only run"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupControllerHistory_Info = """
+{
+    "summary": "Cleanup expired controller history",
+    "description": "Deletes controller history records older than the configured retention period.\nRuns in batches to avoid overwhelming the database. Returns count of deleted records.\n",
+    "tags": [
+        "Controller History"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupControllerHistory"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupControllerHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/controller-history/cleanup/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupControllerHistory_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Analytics",
+            "POST",
+            "/analytics/controller-history/cleanup",
+            _CleanupControllerHistory_Info));
+
+    /// <summary>Returns request schema for CleanupControllerHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/controller-history/cleanup/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupControllerHistory_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Analytics",
+            "POST",
+            "/analytics/controller-history/cleanup",
+            "request-schema",
+            _CleanupControllerHistory_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupControllerHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/controller-history/cleanup/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupControllerHistory_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Analytics",
+            "POST",
+            "/analytics/controller-history/cleanup",
+            "response-schema",
+            _CleanupControllerHistory_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupControllerHistory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/controller-history/cleanup/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupControllerHistory_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Analytics",
+            "POST",
+            "/analytics/controller-history/cleanup",
+            _CleanupControllerHistory_Info,
+            _CleanupControllerHistory_RequestSchema,
+            _CleanupControllerHistory_ResponseSchema));
 
     #endregion
 }

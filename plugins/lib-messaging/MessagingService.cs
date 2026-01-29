@@ -68,16 +68,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     /// </summary>
     internal const string HttpClientName = "MessagingCallbacks";
 
-    /// <summary>
-    /// Store name for external subscription persistence.
-    /// </summary>
-    internal const string ExternalSubscriptionStoreName = "messaging-external-subs";
-
-    /// <summary>
-    /// Default TTL for external subscription sets (24 hours).
-    /// If a node doesn't come back online within this period, its subscriptions expire.
-    /// </summary>
-    private const int ExternalSubscriptionTtlSeconds = 86400;
 
     private readonly ILogger<MessagingService> _logger;
     private readonly MessagingServiceConfiguration _configuration;
@@ -123,7 +113,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
         _httpClientFactory = httpClientFactory;
-        _subscriptionStore = stateStoreFactory.GetStore<ExternalSubscriptionData>(ExternalSubscriptionStoreName);
+        _subscriptionStore = stateStoreFactory.GetStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs);
         _appId = appConfiguration.EffectiveAppId;
     }
 
@@ -198,83 +188,20 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
 
             // Create HTTP client that lives for the subscription duration (FOUNDATION TENETS: use IHttpClientFactory)
             httpClient = _httpClientFactory.CreateClient(HttpClientName);
-            var callbackUrl = body.CallbackUrl;
+            var callbackUrlString = body.CallbackUrl.ToString();
 
-            // Subscribe dynamically using GenericMessageEnvelope - MassTransit requires concrete types
-            // Capture config values for the lambda closure
-            var maxRetries = _configuration.CallbackRetryMaxAttempts;
-            var retryDelayMs = _configuration.CallbackRetryDelayMs;
+            // Create callback handler with retry logic (publishErrorEvent=true for new subscriptions)
+            var callbackHandler = CreateCallbackHandler(
+                httpClient,
+                callbackUrlString,
+                body.Topic,
+                _configuration.CallbackRetryMaxAttempts,
+                _configuration.CallbackRetryDelayMs,
+                publishErrorEvent: true);
 
             var handle = await _messageSubscriber.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 body.Topic,
-                async (envelope, ct) =>
-                {
-                    var attempt = 0;
-                    Exception? lastException = null;
-
-                    while (attempt <= maxRetries)
-                    {
-                        try
-                        {
-                            // Forward the original payload JSON to the callback (unwrap the envelope)
-                            var content = new StringContent(envelope.PayloadJson, System.Text.Encoding.UTF8, envelope.ContentType);
-                            var response = await httpClient.PostAsync(callbackUrl, content, ct);
-
-                            // Success - don't retry on any HTTP response (including 4xx/5xx)
-                            // Only network-level failures should retry
-                            return;
-                        }
-                        catch (HttpRequestException ex)
-                        {
-                            // Network-level failure (endpoint not reachable) - retry
-                            lastException = ex;
-                            attempt++;
-                            if (attempt <= maxRetries)
-                            {
-                                _logger.LogDebug(
-                                    "HTTP callback delivery attempt {Attempt} failed for {CallbackUrl}, retrying in {DelayMs}ms",
-                                    attempt, callbackUrl, retryDelayMs);
-                                await Task.Delay(retryDelayMs, ct);
-                            }
-                        }
-                        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
-                        {
-                            // Timeout (not user cancellation) - retry
-                            lastException = ex;
-                            attempt++;
-                            if (attempt <= maxRetries)
-                            {
-                                _logger.LogDebug(
-                                    "HTTP callback delivery attempt {Attempt} timed out for {CallbackUrl}, retrying in {DelayMs}ms",
-                                    attempt, callbackUrl, retryDelayMs);
-                                await Task.Delay(retryDelayMs, ct);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            // Other exceptions (including user cancellation) - don't retry
-                            _logger.LogError(ex, "Failed to deliver event to callback {CallbackUrl}: unexpected error", callbackUrl);
-                            return;
-                        }
-                    }
-
-                    // All retries exhausted - log error and publish error event
-                    _logger.LogError(
-                        lastException,
-                        "Failed to deliver event to callback {CallbackUrl} after {Attempts} attempts",
-                        callbackUrl, maxRetries + 1);
-
-                    await _messageBus.TryPublishErrorAsync(
-                        "messaging",
-                        "DeliverCallback",
-                        lastException?.GetType().Name ?? "Unknown",
-                        lastException?.Message ?? "Unknown error",
-                        dependency: "http-callback",
-                        endpoint: callbackUrl.ToString(),
-                        details: new { Topic = body.Topic, Attempts = maxRetries + 1 },
-                        stack: lastException?.StackTrace,
-                        cancellationToken: ct);
-                },
+                callbackHandler,
                 exchange: null, // Use default exchange
                 cancellationToken: cancellationToken);
 
@@ -287,13 +214,13 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             var subscriptionData = new ExternalSubscriptionData(
                 subscriptionId,
                 body.Topic,
-                callbackUrl.ToString(),
+                callbackUrlString,
                 DateTimeOffset.UtcNow);
 
             await _subscriptionStore.AddToSetAsync(
                 _appId,
                 subscriptionData,
-                new StateOptions { Ttl = ExternalSubscriptionTtlSeconds },
+                new StateOptions { Ttl = _configuration.ExternalSubscriptionTtlSeconds },
                 cancellationToken);
 
             _logger.LogInformation("Created subscription {SubscriptionId} to topic {Topic} (persisted for app-id: {AppId})",
@@ -456,56 +383,19 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
 
                 // Create subscription without re-persisting (it's already persisted)
                 var httpClient = _httpClientFactory.CreateClient(HttpClientName);
-                var queueName = $"bannou-dynamic-{sub.SubscriptionId:N}";
-                var maxRetries = _configuration.CallbackRetryMaxAttempts;
-                var retryDelayMs = _configuration.CallbackRetryDelayMs;
-                var callbackUrl = sub.CallbackUrl;
+
+                // Create callback handler with retry logic (publishErrorEvent=false for recovered subscriptions)
+                var callbackHandler = CreateCallbackHandler(
+                    httpClient,
+                    sub.CallbackUrl,
+                    sub.Topic,
+                    _configuration.CallbackRetryMaxAttempts,
+                    _configuration.CallbackRetryDelayMs,
+                    publishErrorEvent: false);
 
                 var handle = await _messageSubscriber.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                     sub.Topic,
-                    async (envelope, ct) =>
-                    {
-                        var attempt = 0;
-                        Exception? lastException = null;
-
-                        while (attempt <= maxRetries)
-                        {
-                            try
-                            {
-                                var content = new StringContent(envelope.PayloadJson, System.Text.Encoding.UTF8, envelope.ContentType);
-                                var response = await httpClient.PostAsync(callbackUrl, content, ct);
-                                return;
-                            }
-                            catch (HttpRequestException ex)
-                            {
-                                lastException = ex;
-                                attempt++;
-                                if (attempt <= maxRetries)
-                                {
-                                    await Task.Delay(retryDelayMs, ct);
-                                }
-                            }
-                            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
-                            {
-                                lastException = ex;
-                                attempt++;
-                                if (attempt <= maxRetries)
-                                {
-                                    await Task.Delay(retryDelayMs, ct);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Failed to deliver event to callback {CallbackUrl}: unexpected error", callbackUrl);
-                                return;
-                            }
-                        }
-
-                        _logger.LogError(
-                            lastException,
-                            "Failed to deliver event to callback {CallbackUrl} after {Attempts} attempts (recovered subscription)",
-                            callbackUrl, maxRetries + 1);
-                    },
+                    callbackHandler,
                     exchange: null,
                     cancellationToken: cancellationToken);
 
@@ -528,12 +418,102 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         }
 
         // Refresh TTL on the set to keep it alive
-        await _subscriptionStore.RefreshSetTtlAsync(_appId, ExternalSubscriptionTtlSeconds, cancellationToken);
+        await _subscriptionStore.RefreshSetTtlAsync(_appId, _configuration.ExternalSubscriptionTtlSeconds, cancellationToken);
 
         _logger.LogInformation("Recovered {Recovered} subscriptions for app-id {AppId} ({Failed} failed)",
             recovered, _appId, failed);
 
         return recovered;
+    }
+
+    /// <summary>
+    /// Creates a callback handler delegate with retry logic for HTTP callback delivery.
+    /// </summary>
+    /// <param name="httpClient">HTTP client for making callback requests.</param>
+    /// <param name="callbackUrl">URL to deliver events to.</param>
+    /// <param name="topic">Topic name for logging context.</param>
+    /// <param name="maxRetries">Maximum retry attempts.</param>
+    /// <param name="retryDelayMs">Delay between retries in milliseconds.</param>
+    /// <param name="publishErrorEvent">Whether to publish error events on final failure.</param>
+    /// <returns>A delegate suitable for message subscription handlers.</returns>
+    private Func<Services.GenericMessageEnvelope, CancellationToken, Task> CreateCallbackHandler(
+        HttpClient httpClient,
+        string callbackUrl,
+        string topic,
+        int maxRetries,
+        int retryDelayMs,
+        bool publishErrorEvent)
+    {
+        return async (envelope, ct) =>
+        {
+            var attempt = 0;
+            Exception? lastException = null;
+
+            while (attempt <= maxRetries)
+            {
+                try
+                {
+                    var content = new StringContent(envelope.PayloadJson, System.Text.Encoding.UTF8, envelope.ContentType);
+                    var response = await httpClient.PostAsync(callbackUrl, content, ct);
+                    // Success - don't retry on any HTTP response (including 4xx/5xx)
+                    // Only network-level failures should retry
+                    return;
+                }
+                catch (HttpRequestException ex)
+                {
+                    // Network-level failure (endpoint not reachable) - retry
+                    lastException = ex;
+                    attempt++;
+                    if (attempt <= maxRetries)
+                    {
+                        _logger.LogDebug(
+                            "HTTP callback delivery attempt {Attempt} failed for {CallbackUrl}, retrying in {DelayMs}ms",
+                            attempt, callbackUrl, retryDelayMs);
+                        await Task.Delay(retryDelayMs, ct);
+                    }
+                }
+                catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+                {
+                    // Timeout (not user cancellation) - retry
+                    lastException = ex;
+                    attempt++;
+                    if (attempt <= maxRetries)
+                    {
+                        _logger.LogDebug(
+                            "HTTP callback delivery attempt {Attempt} timed out for {CallbackUrl}, retrying in {DelayMs}ms",
+                            attempt, callbackUrl, retryDelayMs);
+                        await Task.Delay(retryDelayMs, ct);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Other exceptions (including user cancellation) - don't retry
+                    _logger.LogError(ex, "Failed to deliver event to callback {CallbackUrl}: unexpected error", callbackUrl);
+                    return;
+                }
+            }
+
+            // All retries exhausted - log error
+            _logger.LogError(
+                lastException,
+                "Failed to deliver event to callback {CallbackUrl} after {Attempts} attempts",
+                callbackUrl, maxRetries + 1);
+
+            // Optionally publish error event (only for fresh subscriptions, not recovered ones)
+            if (publishErrorEvent)
+            {
+                await _messageBus.TryPublishErrorAsync(
+                    "messaging",
+                    "DeliverCallback",
+                    lastException?.GetType().Name ?? "Unknown",
+                    lastException?.Message ?? "Unknown error",
+                    dependency: "http-callback",
+                    endpoint: callbackUrl,
+                    details: new { Topic = topic, Attempts = maxRetries + 1 },
+                    stack: lastException?.StackTrace,
+                    cancellationToken: ct);
+            }
+        };
     }
 
     /// <summary>
@@ -545,7 +525,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         if (_activeSubscriptions.Count > 0)
         {
-            await _subscriptionStore.RefreshSetTtlAsync(_appId, ExternalSubscriptionTtlSeconds, cancellationToken);
+            await _subscriptionStore.RefreshSetTtlAsync(_appId, _configuration.ExternalSubscriptionTtlSeconds, cancellationToken);
             _logger.LogDebug("Refreshed TTL on subscription set for app-id {AppId}", _appId);
         }
     }
@@ -579,10 +559,10 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Messaging service permissions...");
-        await MessagingPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await MessagingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

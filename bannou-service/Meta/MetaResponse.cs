@@ -15,11 +15,6 @@ public class MetaResponse
     public string MetaType { get; set; } = "";
 
     /// <summary>
-    /// Endpoint key in format "METHOD:/path" (e.g., "POST:/account/get")
-    /// </summary>
-    public string EndpointKey { get; set; } = "";
-
-    /// <summary>
     /// Service name that owns this endpoint (e.g., "Account")
     /// </summary>
     public string ServiceName { get; set; } = "";

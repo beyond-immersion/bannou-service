@@ -26,7 +26,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<RelationshipTypeModel>> _mockRelationshipTypeStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<RelationshipTypeService>> _mockLogger;
     private readonly Mock<IRelationshipClient> _mockRelationshipClient;
@@ -37,7 +37,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockRelationshipTypeStore = new Mock<IStateStore<RelationshipTypeModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<RelationshipTypeService>>();
         _mockRelationshipClient = new Mock<IRelationshipClient>();
@@ -46,7 +46,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipTypeModel>(STATE_STORE)).Returns(_mockRelationshipTypeStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockGuidListStore.Object);
     }
 
     private RelationshipTypeService CreateService()
@@ -241,14 +241,14 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync(parentModel);
 
         // Setup all-types list
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Setup children index
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync($"children-idx:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         var request = new CreateRelationshipTypeRequest
         {
@@ -397,14 +397,14 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync(model);
 
         // Setup all-types list
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { typeId.ToString() });
+            .ReturnsAsync(new List<Guid> { typeId });
 
         // Setup children index (no children)
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync($"children-idx:{typeId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var status = await service.DeleteRelationshipTypeAsync(
@@ -443,9 +443,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Arrange
         var service = CreateService();
 
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (status, response) = await service.ListRelationshipTypesAsync(new ListRelationshipTypesRequest());
@@ -461,16 +461,16 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         // Arrange
         var service = CreateService();
-        var typeIds = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        var typeIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
             .ReturnsAsync(typeIds);
 
         var bulkResults = typeIds.Select((id, idx) =>
             new KeyValuePair<string, RelationshipTypeModel>(
                 $"type:{id}",
-                CreateTestRelationshipTypeModel(Guid.Parse(id), $"TYPE{idx}", $"Type {idx}")))
+                CreateTestRelationshipTypeModel(id, $"TYPE{idx}", $"Type {idx}")))
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         _mockRelationshipTypeStore
@@ -503,9 +503,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .Setup(s => s.GetAsync($"type:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentModel);
 
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync($"children-idx:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (status, response) = await service.GetChildRelationshipTypesAsync(
@@ -1132,9 +1132,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync("etag");
 
         // List store for all-types and parent-index
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Child references parent - should process parent first even though child comes first in list
         var request = new SeedRelationshipTypesRequest
@@ -1223,9 +1223,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             })
             .ReturnsAsync("etag");
 
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Grandchild -> Child -> Parent hierarchy
         var request = new SeedRelationshipTypesRequest
@@ -1295,9 +1295,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
                 storedTypes[key] = model)
             .ReturnsAsync("etag");
 
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         var request = new SeedRelationshipTypesRequest
         {
@@ -1342,9 +1342,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .Setup(s => s.GetAsync($"type:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentModel);
 
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { child1Id.ToString(), child2Id.ToString() });
+            .ReturnsAsync(new List<Guid> { child1Id, child2Id });
 
         _mockRelationshipTypeStore
             .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
@@ -1383,19 +1383,19 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync(parentModel);
 
         // Parent has child
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { childId.ToString() });
+            .ReturnsAsync(new List<Guid> { childId });
 
         // Child has grandchild
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{childId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { grandchildId.ToString() });
+            .ReturnsAsync(new List<Guid> { grandchildId });
 
         // Grandchild has no children
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{grandchildId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         _mockRelationshipTypeStore
             .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
@@ -1434,7 +1434,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var parentId = Guid.NewGuid();
 
         var childModel = CreateTestRelationshipTypeModel(childId, "CHILD", "Child");
-        childModel.ParentTypeId = parentId.ToString();
+        childModel.ParentTypeId = parentId;
 
         var parentModel = CreateTestRelationshipTypeModel(parentId, "PARENT", "Parent");
 
@@ -1472,10 +1472,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var grandparentId = Guid.NewGuid();
 
         var grandchildModel = CreateTestRelationshipTypeModel(grandchildId, "GRANDCHILD", "Grandchild");
-        grandchildModel.ParentTypeId = parentId.ToString();
+        grandchildModel.ParentTypeId = parentId;
 
         var parentModel = CreateTestRelationshipTypeModel(parentId, "PARENT", "Parent");
-        parentModel.ParentTypeId = grandparentId.ToString();
+        parentModel.ParentTypeId = grandparentId;
 
         var grandparentModel = CreateTestRelationshipTypeModel(grandparentId, "GRANDPARENT", "Grandparent");
 
@@ -1554,10 +1554,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var grandparentId = Guid.NewGuid();
 
         var grandchildModel = CreateTestRelationshipTypeModel(grandchildId, "GRANDCHILD", "Grandchild");
-        grandchildModel.ParentTypeId = parentId.ToString();
+        grandchildModel.ParentTypeId = parentId;
 
         var parentModel = CreateTestRelationshipTypeModel(parentId, "PARENT", "Parent");
-        parentModel.ParentTypeId = grandparentId.ToString();
+        parentModel.ParentTypeId = grandparentId;
 
         var grandparentModel = CreateTestRelationshipTypeModel(grandparentId, "GRANDPARENT", "Grandparent");
         grandparentModel.ParentTypeId = null; // Root
@@ -1610,7 +1610,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         // Act
         var instanceId = Guid.NewGuid();
-        var registrationEvent = RelationshipTypePermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = RelationshipTypePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);
@@ -1634,7 +1634,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         return new RelationshipTypeModel
         {
-            RelationshipTypeId = typeId.ToString(),
+            RelationshipTypeId = typeId,
             Code = code,
             Name = name,
             Description = "Test relationship type description",
@@ -1654,9 +1654,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync(codeExists ? Guid.NewGuid().ToString() : null);
 
         // Setup all-types list
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
     }
 
     private void SetupSeedMocks()
@@ -1667,14 +1667,14 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync((string?)null);
 
         // Setup all-types list
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Setup parent-index for any type (no children by default)
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("parent-index:")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
     }
 
     #endregion

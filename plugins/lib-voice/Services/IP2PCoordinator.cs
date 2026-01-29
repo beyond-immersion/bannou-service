@@ -16,7 +16,7 @@ public interface IP2PCoordinator
     /// <returns>List of peer connection info for the new participant.</returns>
     Task<List<VoicePeer>> GetMeshPeersForNewJoinAsync(
         Guid roomId,
-        string joiningSessionId,
+        Guid joiningSessionId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -62,7 +62,7 @@ public interface IP2PCoordinator
     Task<JoinVoiceRoomResponse> BuildP2PConnectionInfoAsync(
         Guid roomId,
         List<VoicePeer> peers,
-        string defaultCodec,
+        VoiceCodec defaultCodec,
         List<string> stunServers,
         bool tierUpgradePending = false,
         CancellationToken cancellationToken = default);

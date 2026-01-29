@@ -139,7 +139,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -493,6 +494,7 @@ public partial class WebsiteController
             "properties": {
                 "realmId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for the game realm"
                 },
                 "name": {
@@ -630,13 +632,8 @@ public partial class WebsiteController
             ],
             "properties": {
                 "platform": {
-                    "type": "string",
-                    "enum": [
-                        "windows",
-                        "macos",
-                        "linux"
-                    ],
-                    "description": "Target operating system platform"
+                    "description": "Target platform for this download",
+                    "$ref": "#/$defs/Platform"
                 },
                 "version": {
                     "type": "string",
@@ -666,6 +663,15 @@ public partial class WebsiteController
                     "description": "Minimum system requirements for the client"
                 }
             }
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "windows",
+                "macos",
+                "linux"
+            ],
+            "description": "Target operating system platform"
         }
     }
 }
@@ -1129,7 +1135,8 @@ public partial class WebsiteController
             "required": [
                 "slug",
                 "title",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1236,7 +1243,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1350,7 +1358,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1520,7 +1529,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1634,7 +1644,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -2691,13 +2702,13 @@ public partial class WebsiteController
 
     #endregion
 
-    #region Meta Endpoints for GetSubscription
+    #region Meta Endpoints for GetAccountSubscription
 
-    private static readonly string _GetSubscription_RequestSchema = """
+    private static readonly string _GetAccountSubscription_RequestSchema = """
 {}
 """;
 
-    private static readonly string _GetSubscription_ResponseSchema = """
+    private static readonly string _GetAccountSubscription_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$ref": "#/$defs/SubscriptionResponse",
@@ -2754,7 +2765,7 @@ public partial class WebsiteController
 }
 """;
 
-    private static readonly string _GetSubscription_Info = """
+    private static readonly string _GetAccountSubscription_Info = """
 {
     "summary": "Get subscription status",
     "description": "",
@@ -2762,49 +2773,49 @@ public partial class WebsiteController
         "Account"
     ],
     "deprecated": false,
-    "operationId": "getSubscription"
+    "operationId": "getAccountSubscription"
 }
 """;
 
-    /// <summary>Returns endpoint information for GetSubscription</summary>
+    /// <summary>Returns endpoint information for GetAccountSubscription</summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/website/account/subscription/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaInfo()
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscription_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Website",
             "GET",
             "/website/account/subscription",
-            _GetSubscription_Info));
+            _GetAccountSubscription_Info));
 
-    /// <summary>Returns request schema for GetSubscription</summary>
+    /// <summary>Returns request schema for GetAccountSubscription</summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/website/account/subscription/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaRequestSchema()
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscription_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Website",
             "GET",
             "/website/account/subscription",
             "request-schema",
-            _GetSubscription_RequestSchema));
+            _GetAccountSubscription_RequestSchema));
 
-    /// <summary>Returns response schema for GetSubscription</summary>
+    /// <summary>Returns response schema for GetAccountSubscription</summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/website/account/subscription/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaResponseSchema()
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscription_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Website",
             "GET",
             "/website/account/subscription",
             "response-schema",
-            _GetSubscription_ResponseSchema));
+            _GetAccountSubscription_ResponseSchema));
 
-    /// <summary>Returns full schema for GetSubscription</summary>
+    /// <summary>Returns full schema for GetAccountSubscription</summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/website/account/subscription/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaFullSchema()
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscription_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Website",
             "GET",
             "/website/account/subscription",
-            _GetSubscription_Info,
-            _GetSubscription_RequestSchema,
-            _GetSubscription_ResponseSchema));
+            _GetAccountSubscription_Info,
+            _GetAccountSubscription_RequestSchema,
+            _GetAccountSubscription_ResponseSchema));
 
     #endregion
 }

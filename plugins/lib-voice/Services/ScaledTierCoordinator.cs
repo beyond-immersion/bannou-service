@@ -69,13 +69,8 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     }
 
     /// <inheritdoc />
-    public SipCredentials GenerateSipCredentials(string sessionId, Guid roomId)
+    public SipCredentials GenerateSipCredentials(Guid sessionId, Guid roomId)
     {
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
-        }
-
         // Generate deterministic password using SHA256(sessionId:roomId:salt)
         // Using sessionId instead of accountId to support multiple sessions per account
         if (string.IsNullOrWhiteSpace(_configuration.SipPasswordSalt))
@@ -85,25 +80,26 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
                 "All service instances must share the same salt for voice credentials to work correctly.");
         }
         var salt = _configuration.SipPasswordSalt;
-        var input = $"{sessionId}:{roomId}:{salt}";
+        var sessionIdStr = sessionId.ToString();
+        var input = $"{sessionIdStr}:{roomId}:{salt}";
         var passwordHash = ComputeSha256Hash(input);
 
-        // Username is the session ID (safe, not sensitive)
-        var username = $"voice-{sessionId[..Math.Min(8, sessionId.Length)]}";
+        // Username is the first 8 chars of session ID (safe, not sensitive)
+        var username = $"voice-{sessionIdStr[..8]}";
 
         // Conference URI based on room ID (SipDomain has default in configuration)
         var conferenceUri = $"sip:room-{roomId}@{_configuration.SipDomain}";
 
-        // Credentials expire with session (default 24h)
-        var expiresAt = DateTimeOffset.UtcNow.AddHours(24);
+        // Credentials expire based on configured expiration
+        var expiresAt = DateTimeOffset.UtcNow.AddHours(_configuration.SipCredentialExpirationHours);
 
         _logger.LogDebug(
             "Generated SIP credentials for session {SessionId} in room {RoomId}",
-            sessionId[..Math.Min(8, sessionId.Length)], roomId);
+            sessionIdStr[..8], roomId);
 
         return new SipCredentials
         {
-            Registrar = $"sip:{_configuration.KamailioHost}:{_configuration.KamailioRpcPort}",
+            Registrar = $"sip:{_configuration.KamailioHost}:{_configuration.KamailioSipPort}",
             Username = username,
             Password = passwordHash[..32], // Use first 32 chars for password
             ConferenceUri = conferenceUri,
@@ -114,9 +110,9 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     /// <inheritdoc />
     public async Task<JoinVoiceRoomResponse> BuildScaledConnectionInfoAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         string rtpServerUri,
-        string codec,
+        VoiceCodec codec,
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
@@ -126,7 +122,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         {
             RoomId = roomId,
             Tier = VoiceTier.Scaled,
-            Codec = ParseVoiceCodec(codec),
+            Codec = codec,
             Peers = new List<VoicePeer>(), // No peers in scaled mode - use RTPEngine
             RtpServerUri = rtpServerUri,
             StunServers = GetStunServers(),
@@ -137,7 +133,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
         _logger.LogDebug(
             "Built scaled connection info for session {SessionId} in room {RoomId}",
-            sessionId[..Math.Min(8, sessionId.Length)], roomId);
+            sessionId.ToString()[..8], roomId);
 
         return response;
     }
@@ -149,8 +145,8 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     {
         // For now, we use a single RTPEngine instance
         // In production, this would select from a pool based on load
-        var rtpHost = _configuration.RtpEngineHost ?? "localhost";
-        var rtpPort = _configuration.RtpEnginePort > 0 ? _configuration.RtpEnginePort : 22222;
+        var rtpHost = _configuration.RtpEngineHost;
+        var rtpPort = _configuration.RtpEnginePort;
 
         // Verify RTPEngine is healthy
         var isHealthy = await _rtpEngineClient.IsHealthyAsync(cancellationToken);
@@ -198,17 +194,6 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    private static VoiceCodec ParseVoiceCodec(string codec)
-    {
-        return codec?.ToLowerInvariant() switch
-        {
-            "opus" => VoiceCodec.Opus,
-            "g711" => VoiceCodec.G711,
-            "g722" => VoiceCodec.G722,
-            _ => VoiceCodec.Opus // Default
-        };
     }
 
     private List<string> GetStunServers()

@@ -305,18 +305,24 @@ public partial class BehaviorService : IBehaviorService
     /// <summary>
     /// Maps API compilation options to internal compiler options.
     /// </summary>
-    private static InternalCompilationOptions MapCompilationOptions(CompilationOptions? apiOptions)
+    private InternalCompilationOptions MapCompilationOptions(CompilationOptions? apiOptions)
     {
         if (apiOptions == null)
         {
-            return InternalCompilationOptions.Default;
+            return new InternalCompilationOptions
+            {
+                MaxConstants = _configuration.CompilerMaxConstants,
+                MaxStrings = _configuration.CompilerMaxStrings
+            };
         }
 
         return new InternalCompilationOptions
         {
             EnableOptimizations = apiOptions.EnableOptimizations,
-            IncludeDebugInfo = !apiOptions.EnableOptimizations, // Debug info when not optimizing
-            SkipSemanticAnalysis = !apiOptions.StrictValidation
+            IncludeDebugInfo = !apiOptions.EnableOptimizations,
+            SkipSemanticAnalysis = !apiOptions.StrictValidation,
+            MaxConstants = _configuration.CompilerMaxConstants,
+            MaxStrings = _configuration.CompilerMaxStrings
         };
     }
 
@@ -434,7 +440,7 @@ public partial class BehaviorService : IBehaviorService
                 Metadata = new AssetMetadataInput
                 {
                     Tags = new List<string> { "behavior", "abml", "compiled" },
-                    Realm = Asset.Realm.Shared
+                    Realm = "shared"
                 }
             };
 
@@ -497,10 +503,11 @@ public partial class BehaviorService : IBehaviorService
 
             _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.AbmlContent.Length);
 
-            // Configure options for validation only (skip bytecode generation)
             var options = new InternalCompilationOptions
             {
-                SkipSemanticAnalysis = !body.StrictMode
+                SkipSemanticAnalysis = !body.StrictMode,
+                MaxConstants = _configuration.CompilerMaxConstants,
+                MaxStrings = _configuration.CompilerMaxStrings
             };
 
             // Use the compiler's validation path
@@ -520,7 +527,7 @@ public partial class BehaviorService : IBehaviorService
             {
                 IsValid = result.Success,
                 ValidationErrors = validationErrors,
-                SemanticWarnings = new List<string>(),
+                SemanticWarnings = result.Warnings.Select(w => w.Message).ToList(),
                 SchemaVersion = "1.0"
             });
         }
@@ -1137,10 +1144,10 @@ public partial class BehaviorService : IBehaviorService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Behavior service permissions...");
-        await BehaviorPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await BehaviorPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

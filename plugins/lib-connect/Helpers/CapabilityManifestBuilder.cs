@@ -50,20 +50,10 @@ public class CapabilityManifestBuilder : ICapabilityManifestBuilder
                 continue;
             }
 
-            // Only expose POST endpoints to WebSocket clients
-            // GET and other HTTP methods are not supported through WebSocket binary protocol
-            if (!parsed.IsPost)
-            {
-                _logger.LogDebug("Skipping non-POST endpoint from capability manifest: {EndpointKey}", mapping.Key);
-                continue;
-            }
-
             apis.Add(new ManifestApiEntry
             {
                 ServiceGuid = mapping.Value,
-                Method = parsed.Method,
                 Path = parsed.Path,
-                EndpointKey = $"{parsed.Method}:{parsed.Path}",
                 ServiceName = parsed.ServiceName
             });
         }
@@ -113,7 +103,7 @@ public class CapabilityManifestBuilder : ICapabilityManifestBuilder
     /// <inheritdoc/>
     public ParsedEndpoint? ParseEndpointKey(string endpointKey)
     {
-        // Format: "serviceName:METHOD:/path"
+        // Format: "serviceName:/path"
         var firstColon = endpointKey.IndexOf(':');
         if (firstColon <= 0)
         {
@@ -121,17 +111,11 @@ public class CapabilityManifestBuilder : ICapabilityManifestBuilder
         }
 
         var serviceName = endpointKey[..firstColon];
-        var methodAndPath = endpointKey[(firstColon + 1)..];
-
-        // Split method and path (format: "GET:/some/path")
-        var methodPathColon = methodAndPath.IndexOf(':');
-        var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
-        var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+        var path = endpointKey[(firstColon + 1)..];
 
         return new ParsedEndpoint
         {
             ServiceName = serviceName,
-            Method = method,
             Path = path
         };
     }

@@ -86,7 +86,7 @@ Sent when bundle creation from asset_ids completes.
 | Property | Description |
 |----------|-------------|
 | `assetCount` | Number of assets in the bundle |
-| `bundleId` | ID of the created bundle |
+| `bundleId` | Human-readable ID of the created bundle |
 | `downloadUrl` | Pre-signed download URL (on success) |
 | `errorCode` | Error code on failure |
 | `errorMessage` | Human-readable error description |
@@ -104,7 +104,7 @@ Sent when a bundle upload has been validated and processed.
 | Property | Description |
 |----------|-------------|
 | `assetsRegistered` | Number of assets extracted and registered |
-| `bundleId` | Assigned bundle ID on success |
+| `bundleId` | Assigned human-readable bundle ID on success |
 | `duplicatesSkipped` | Assets with matching hash already in storage |
 | `success` | Whether validation passed |
 | `uploadId` | Correlates with the bundle upload request |
@@ -138,7 +138,7 @@ Sent when async metabundle creation job completes (success or failure).
 | `errorCode` | Error code on failure |
 | `errorMessage` | Human-readable error description |
 | `jobId` | Job ID from the original async creation request |
-| `metabundleId` | ID of the metabundle |
+| `metabundleId` | Human-readable ID of the metabundle |
 | `processingTimeMs` | Total processing time in milliseconds |
 | `sizeBytes` | Metabundle file size in bytes |
 | `standaloneAssetCount` | Number of standalone assets included |
@@ -556,7 +556,7 @@ Sent to remaining room participants when a peer leaves.
 | Property | Description |
 |----------|-------------|
 | `displayName` | Display name for UI notification |
-| `peerSessionId` | WebSocket session ID of the peer who left (ephemer |
+| `peerSessionId` | WebSocket session ID of the peer who left |
 | `remainingParticipantCount` | Participants remaining after departure |
 | `roomId` | Voice room ID |
 

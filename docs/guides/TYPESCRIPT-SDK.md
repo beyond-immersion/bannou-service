@@ -6,8 +6,8 @@ This guide covers integrating the Bannou TypeScript SDK into browser and Node.js
 
 The TypeScript SDK provides:
 - WebSocket client with binary protocol support
-- Typed service proxies for all 217 client-accessible endpoints
-- Event subscriptions for 32 server-push event types
+- Typed service proxies for all 309 client-accessible endpoints
+- Event subscriptions for 35 server-push event types
 - Request correlation with timeout handling
 - Automatic capability manifest management
 
@@ -86,13 +86,13 @@ if (loginResult.isSuccess) {
 
 // Character operations
 const characters = await client.character.listAsync({
-  realmId: 'arcadia-prime',
+  realmId: 'my-realm',
   limit: 10
 });
 
 // Game sessions
 const session = await client.sessions.createAsync({
-  gameType: 'arcadia',
+  gameType: 'my-game',
   maxPlayers: 4,
   isPrivate: false
 });
@@ -325,7 +325,7 @@ onMounted(async () => {
   connected.value = true;
 
   // Load characters
-  const response = await bannouClient.character.listAsync({ realmId: 'arcadia' });
+  const response = await bannouClient.character.listAsync({ realmId: 'my-realm' });
   if (response.isSuccess) {
     characters.value = response.data.characters;
   }

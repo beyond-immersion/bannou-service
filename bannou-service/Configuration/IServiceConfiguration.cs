@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using DotNetEnv;
 using System.IO;
 using System.Reflection;
@@ -36,7 +37,7 @@ public interface IServiceConfiguration
     /// Set to override GUID for administrative service endpoints.
     /// If not set, will generate a new GUID automatically on service startup.
     /// </summary>
-    public string? ForceServiceId { get; }
+    public Guid? ForceServiceId { get; }
 
 
     /// <summary>
@@ -52,6 +53,299 @@ public interface IServiceConfiguration
                     t.Item1.PropertyType != typeof(string) ||
                     !string.IsNullOrWhiteSpace((string)propValue));
             });
+    }
+
+    /// <summary>
+    /// Performs all configuration validation checks.
+    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, <see cref="ValidateStringLengths"/>, <see cref="ValidatePatterns"/>, and <see cref="ValidateMultipleOf"/>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any validation check fails.</exception>
+    public void Validate()
+    {
+        ValidateNonNullableStrings();
+        ValidateNumericRanges();
+        ValidateStringLengths();
+        ValidatePatterns();
+        ValidateMultipleOf();
+    }
+
+    /// <summary>
+    /// Validates that all non-nullable string properties have non-empty values.
+    /// IMPLEMENTATION TENETS: Non-nullable strings with schema defaults must not be empty.
+    /// If an env var sets a non-nullable string to empty, that's a configuration error - schema
+    /// provides the default, so the only way to get empty is explicit override to empty string.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any non-nullable string property is empty or whitespace.</exception>
+    public void ValidateNonNullableStrings()
+    {
+        var nullabilityContext = new NullabilityInfoContext();
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            // Only check string properties
+            if (property.PropertyType != typeof(string))
+                continue;
+
+            // Check nullability - if the property is nullable (string?), skip validation
+            var nullabilityInfo = nullabilityContext.Create(property);
+            if (nullabilityInfo.WriteState == NullabilityState.Nullable)
+                continue;
+
+            // Non-nullable string - check if empty
+            var value = property.GetValue(this) as string;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                invalidProperties.Add(property.Name);
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"Non-nullable string properties cannot be empty. " +
+                $"The following properties have empty values: {string.Join(", ", invalidProperties)}. " +
+                $"These properties have schema-defined defaults - if they are empty, it means an explicit " +
+                $"override to empty string was set (e.g., {envPrefix}{invalidProperties[0].ToUpperInvariant()}=\"\"). " +
+                $"Either remove the override to use the schema default, or provide a valid non-empty value.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all numeric properties with <see cref="ConfigRangeAttribute"/> are within their allowed ranges.
+    /// IMPLEMENTATION TENETS: Numeric configuration values must satisfy schema-defined constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any numeric property is outside its allowed range.</exception>
+    public void ValidateNumericRanges()
+    {
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var rangeAttr = property.GetCustomAttribute<ConfigRangeAttribute>();
+            if (rangeAttr == null)
+                continue;
+
+            // Get the value and convert to double for comparison
+            var rawValue = property.GetValue(this);
+            if (rawValue == null)
+                continue; // Nullable numeric with null value - skip (handled by other validation if needed)
+
+            double value;
+            try
+            {
+                value = Convert.ToDouble(rawValue);
+            }
+            catch (InvalidCastException)
+            {
+                // Property type doesn't convert to double - skip
+                continue;
+            }
+
+            if (!rangeAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                invalidProperties.Add(
+                    $"{property.Name}={value} (must be in range {rangeAttr.GetRangeDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"Numeric properties outside allowed range. " +
+                $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all string properties with <see cref="ConfigStringLengthAttribute"/> meet their length constraints.
+    /// IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined length constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any string property is outside its allowed length range.</exception>
+    public void ValidateStringLengths()
+    {
+        var nullabilityContext = new NullabilityInfoContext();
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var lengthAttr = property.GetCustomAttribute<ConfigStringLengthAttribute>();
+            if (lengthAttr == null)
+                continue;
+
+            // Only validate string properties
+            if (property.PropertyType != typeof(string))
+                continue;
+
+            var value = property.GetValue(this) as string;
+
+            // Skip validation for null values on nullable properties
+            if (value == null)
+            {
+                var nullabilityInfo = nullabilityContext.Create(property);
+                if (nullabilityInfo.WriteState == NullabilityState.Nullable)
+                    continue;
+            }
+
+            if (!lengthAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                var actualLength = value?.Length ?? 0;
+                invalidProperties.Add(
+                    $"{property.Name} (length={actualLength}, must be {lengthAttr.GetLengthDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"String properties outside allowed length range. " +
+                $"The following properties have invalid lengths: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all string properties with <see cref="ConfigPatternAttribute"/> match their required patterns.
+    /// IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined pattern constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any string property does not match its required pattern.</exception>
+    public void ValidatePatterns()
+    {
+        var nullabilityContext = new NullabilityInfoContext();
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var patternAttr = property.GetCustomAttribute<ConfigPatternAttribute>();
+            if (patternAttr == null)
+                continue;
+
+            // Only validate string properties
+            if (property.PropertyType != typeof(string))
+                continue;
+
+            var value = property.GetValue(this) as string;
+
+            // Skip validation for null values on nullable properties
+            if (value == null)
+            {
+                var nullabilityInfo = nullabilityContext.Create(property);
+                if (nullabilityInfo.WriteState == NullabilityState.Nullable)
+                    continue;
+            }
+
+            if (!patternAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                invalidProperties.Add(
+                    $"{property.Name} (value=\"{TruncateForDisplay(value)}\", {patternAttr.GetPatternDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"String properties do not match required patterns. " +
+                $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all numeric properties with <see cref="ConfigMultipleOfAttribute"/> are multiples of their required factor.
+    /// IMPLEMENTATION TENETS: Numeric configuration values must satisfy schema-defined multipleOf constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any numeric property is not a multiple of its required factor.</exception>
+    public void ValidateMultipleOf()
+    {
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var multipleOfAttr = property.GetCustomAttribute<ConfigMultipleOfAttribute>();
+            if (multipleOfAttr == null)
+                continue;
+
+            // Get the value and convert to double for comparison
+            var rawValue = property.GetValue(this);
+            if (rawValue == null)
+                continue; // Nullable numeric with null value - skip
+
+            double value;
+            try
+            {
+                value = Convert.ToDouble(rawValue);
+            }
+            catch (InvalidCastException)
+            {
+                // Property type doesn't convert to double - skip
+                continue;
+            }
+
+            if (!multipleOfAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                invalidProperties.Add(
+                    $"{property.Name}={value} ({multipleOfAttr.GetMultipleOfDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"Numeric properties are not multiples of their required factors. " +
+                $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Truncates a string for display in error messages.
+    /// </summary>
+    private static string TruncateForDisplay(string? value, int maxLength = 50)
+    {
+        if (value == null)
+            return "<null>";
+        if (value.Length <= maxLength)
+            return value;
+        return value.Substring(0, maxLength - 3) + "...";
+    }
+
+    /// <summary>
+    /// Converts a PascalCase property name to UPPER_SNAKE_CASE for environment variable display.
+    /// </summary>
+    private static string ToUpperSnakeCase(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return propertyName;
+
+        var result = new System.Text.StringBuilder();
+        for (int i = 0; i < propertyName.Length; i++)
+        {
+            var c = propertyName[i];
+            if (i > 0 && char.IsUpper(c))
+                result.Append('_');
+            result.Append(char.ToUpperInvariant(c));
+        }
+        return result.ToString();
     }
 
     /// <summary>

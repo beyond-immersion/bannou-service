@@ -8,7 +8,7 @@ info:
     - Subscribes to game-session.action.performed for event ingestion
     - Publishes analytics.score.updated for leaderboards/achievements to consume
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -43,6 +43,13 @@ info:
     - topic: realm-history.lore.updated
       event: RealmLoreUpdatedEvent
       handler: HandleRealmLoreUpdated
+    # Cache invalidation events
+    - topic: character.updated
+      event: CharacterUpdatedEvent
+      handler: HandleCharacterUpdatedForCacheInvalidation
+    - topic: realm.updated
+      event: RealmUpdatedEvent
+      handler: HandleRealmUpdatedForCacheInvalidation
   x-event-publications:
     # Published when a score/stat is updated (leaderboards and achievements subscribe)
     - topic: analytics.score.updated
@@ -94,13 +101,7 @@ components:
           format: uuid
           description: ID of the entity whose score changed
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         scoreType:
           type: string
@@ -156,13 +157,7 @@ components:
           format: uuid
           description: ID of the entity whose rating changed
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         ratingType:
           type: string
@@ -218,13 +213,7 @@ components:
           format: uuid
           description: ID of the entity that reached the milestone
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         milestoneType:
           type: string

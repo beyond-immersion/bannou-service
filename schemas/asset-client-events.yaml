@@ -12,7 +12,7 @@ info:
     Event delivery: Published to RabbitMQ channel `CONNECT_{sessionId}`, forwarded
     to client's WebSocket connection with Event flag (0x10).
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
@@ -195,7 +195,7 @@ components:
         bundleId:
           type: string
           nullable: true
-          description: Assigned bundle ID on success
+          description: Assigned human-readable bundle ID on success
         assetsRegistered:
           type: integer
           nullable: true
@@ -261,7 +261,7 @@ components:
           description: Fixed event type identifier
         bundleId:
           type: string
-          description: ID of the created bundle
+          description: Human-readable ID of the created bundle
         success:
           type: boolean
           description: Whether creation completed successfully
@@ -316,7 +316,7 @@ components:
           description: Job ID from the original async creation request
         metabundleId:
           type: string
-          description: ID of the metabundle
+          description: Human-readable ID of the metabundle
         success:
           type: boolean
           description: Whether creation completed successfully

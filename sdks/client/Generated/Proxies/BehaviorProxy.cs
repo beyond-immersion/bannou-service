@@ -41,7 +41,7 @@ public sealed class BehaviorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CompileBehaviorRequest, CompileBehaviorResponse>(
-            "POST", "/compile", request, channel, timeout, cancellationToken);
+            "/compile", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class BehaviorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ValidateAbmlRequest, ValidateAbmlResponse>(
-            "POST", "/validate", request, channel, timeout, cancellationToken);
+            "/validate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class BehaviorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetCachedBehaviorRequest, CachedBehaviorResponse>(
-            "POST", "/cache/get", request, channel, timeout, cancellationToken);
+            "/cache/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public sealed class BehaviorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<InvalidateCacheRequest>(
-            "POST", "/cache/invalidate", request, channel, cancellationToken);
+            "/cache/invalidate", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class BehaviorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GoapPlanRequest, GoapPlanResponse>(
-            "POST", "/goap/plan", request, channel, timeout, cancellationToken);
+            "/goap/plan", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -129,6 +129,6 @@ public sealed class BehaviorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ValidateGoapPlanRequest, ValidateGoapPlanResponse>(
-            "POST", "/goap/validate-plan", request, channel, timeout, cancellationToken);
+            "/goap/validate-plan", request, channel, timeout, cancellationToken);
     }
 }

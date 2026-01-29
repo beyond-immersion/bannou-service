@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.SaveLoad;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -86,13 +88,15 @@ public partial class SaveCreatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Save category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SaveCategory Category { get; set; } = default!;
 
     /// <summary>
     /// Save size in bytes
@@ -189,7 +193,8 @@ public partial class SaveLoadedEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -280,7 +285,8 @@ public partial class SaveMigratedEvent
     /// Owner entity type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -355,7 +361,8 @@ public partial class VersionPinnedEvent
     /// Owner entity type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -430,7 +437,8 @@ public partial class VersionUnpinnedEvent
     /// Owner entity type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -505,7 +513,8 @@ public partial class VersionDeletedEvent
     /// Owner entity type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -636,12 +645,13 @@ public partial class SaveQueuedEvent
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+    /// Type of entity that owns this save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Size of the queued save data in bytes
@@ -798,10 +808,11 @@ public partial class SaveUploadFailedEvent
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+    /// Type of entity that owns this save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Last error message

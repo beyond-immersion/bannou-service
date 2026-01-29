@@ -37,6 +37,15 @@ public interface IPlatformAchievementSync
     Platform Platform { get; }
 
     /// <summary>
+    /// Gets whether this platform sync provider is properly configured and operational.
+    /// </summary>
+    /// <remarks>
+    /// Returns false when required credentials or configuration are missing.
+    /// The service layer uses this to skip unconfigured platforms during sync operations.
+    /// </remarks>
+    bool IsConfigured { get; }
+
+    /// <summary>
     /// Checks if an account is linked to this platform.
     /// </summary>
     /// <param name="accountId">The Bannou account ID.</param>

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using LibOrchestrator;
@@ -118,7 +119,9 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
     {
         try
         {
-            var defaultAppId = Program.Configuration.EffectiveAppId;
+            var appConfig = ServiceProvider?.GetRequiredService<AppConfiguration>()
+                ?? throw new InvalidOperationException("AppConfiguration not available during route initialization");
+            var defaultAppId = appConfig.EffectiveAppId;
             var routesInitialized = 0;
 
             foreach (var serviceName in KnownRoutableServices)

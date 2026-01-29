@@ -55,7 +55,7 @@ public partial class GetRealmByCodeRequest
 {
 
     /// <summary>
-    /// Unique code for the realm (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -115,7 +115,7 @@ public partial class CreateRealmRequest
 {
 
     /// <summary>
-    /// Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -132,6 +132,14 @@ public partial class CreateRealmRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service this realm belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
     /// Description of the realm
@@ -175,6 +183,12 @@ public partial class UpdateRealmRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service this realm belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
 
     /// <summary>
     /// Display name for the realm
@@ -360,6 +374,14 @@ public partial class SeedRealm
     public string Name { get; set; } = default!;
 
     /// <summary>
+    /// ID of the game service this realm belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
     /// Detailed description of the realm and its characteristics
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
@@ -401,7 +423,7 @@ public partial class RealmResponse
     public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -415,6 +437,14 @@ public partial class RealmResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service this realm belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
     /// Detailed description of the realm

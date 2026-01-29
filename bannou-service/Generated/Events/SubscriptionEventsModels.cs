@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -63,7 +64,7 @@ public partial class SubscriptionUpdatedEvent : BaseServiceEvent
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Stub name of the service (e.g., "arcadia")
+    /// Stub name of the service (e.g., "my-game")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

@@ -39,7 +39,7 @@ export class RelationshipProxy {
     return this.client.invokeAsync<
       Schemas['GetRelationshipRequest'],
       Schemas['RelationshipResponse']
-    >('POST', '/relationship/get', request, channel, timeout);
+    >('/relationship/get', request, channel, timeout);
   }
 
   /**
@@ -57,7 +57,7 @@ export class RelationshipProxy {
     return this.client.invokeAsync<
       Schemas['ListRelationshipsByEntityRequest'],
       Schemas['RelationshipListResponse']
-    >('POST', '/relationship/list-by-entity', request, channel, timeout);
+    >('/relationship/list-by-entity', request, channel, timeout);
   }
 
   /**
@@ -75,7 +75,7 @@ export class RelationshipProxy {
     return this.client.invokeAsync<
       Schemas['GetRelationshipsBetweenRequest'],
       Schemas['RelationshipListResponse']
-    >('POST', '/relationship/get-between', request, channel, timeout);
+    >('/relationship/get-between', request, channel, timeout);
   }
 
   /**
@@ -93,6 +93,6 @@ export class RelationshipProxy {
     return this.client.invokeAsync<
       Schemas['ListRelationshipsByTypeRequest'],
       Schemas['RelationshipListResponse']
-    >('POST', '/relationship/list-by-type', request, channel, timeout);
+    >('/relationship/list-by-type', request, channel, timeout);
   }
 }

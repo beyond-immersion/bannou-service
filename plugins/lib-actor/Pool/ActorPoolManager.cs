@@ -3,6 +3,7 @@
 // Redis-backed pool node and actor assignment management.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -27,8 +28,8 @@ public sealed class ActorPoolManager : IActorPoolManager
     private readonly ILogger<ActorPoolManager> _logger;
     private readonly ActorServiceConfiguration _configuration;
 
-    private const string POOL_NODES_STORE = "actor-pool-nodes";
-    private const string ACTOR_ASSIGNMENTS_STORE = "actor-assignments";
+    private static readonly string POOL_NODES_STORE = StateStoreDefinitions.ActorPoolNodes;
+    private static readonly string ACTOR_ASSIGNMENTS_STORE = StateStoreDefinitions.ActorAssignments;
     private const string NODE_INDEX_KEY = "_node_index";
     private const string ACTOR_INDEX_KEY = "_actor_index";
 
@@ -240,7 +241,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         // Map category to pool type
         // In shared-pool mode, all categories go to "shared" pool
         // In pool-per-type mode, category maps directly to pool type
-        var poolType = _configuration.DeploymentMode == "shared-pool" ? "shared" : category;
+        var poolType = _configuration.DeploymentMode == DeploymentMode.SharedPool ? "shared" : category;
 
         var nodes = await ListNodesByTypeAsync(poolType, ct);
         var healthyNodes = nodes.Where(n => n.HasCapacity).ToList();
@@ -256,7 +257,9 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             if (healthyNodes.Count == 0)
             {
-                _logger.LogWarning("No pool nodes with capacity available for category {Category}", category);
+                _logger.LogWarning(
+                    "No pool nodes with capacity available for category {Category} (image: {PoolNodeImage}, max nodes: {MaxPoolNodes})",
+                    category, _configuration.PoolNodeImage, _configuration.MaxPoolNodes);
                 return null;
             }
         }
@@ -367,7 +370,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     }
 
     /// <inheritdoc/>
-    public async Task UpdateActorStatusAsync(string actorId, string newStatus, CancellationToken ct = default)
+    public async Task UpdateActorStatusAsync(string actorId, ActorStatus newStatus, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
@@ -379,7 +382,7 @@ public sealed class ActorPoolManager : IActorPoolManager
             assignment.Status = newStatus;
 
             // Set StartedAt when status transitions to running
-            if (newStatus == "running" && assignment.StartedAt == null)
+            if (newStatus == ActorStatus.Running && assignment.StartedAt == null)
             {
                 assignment.StartedAt = DateTimeOffset.UtcNow;
             }
@@ -392,6 +395,11 @@ public sealed class ActorPoolManager : IActorPoolManager
     public async Task<IReadOnlyList<ActorAssignment>> GetAssignmentsByTemplateAsync(string templateId, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
+
+        if (!Guid.TryParse(templateId, out var parsedTemplateId))
+        {
+            return Array.Empty<ActorAssignment>();
+        }
 
         // Get all actor IDs from the index
         var index = await GetActorIndexAsync(ct);
@@ -408,7 +416,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         foreach (var actorId in allActorIds)
         {
             var assignment = await store.GetAsync(actorId, ct);
-            if (assignment != null && assignment.TemplateId == templateId)
+            if (assignment != null && assignment.TemplateId == parsedTemplateId)
             {
                 assignments.Add(assignment);
             }

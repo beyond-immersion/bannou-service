@@ -5,15 +5,9 @@ info:
     Configuration schema for Game Service service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties:
-    # State Store Configuration
-    StateStoreName:
-      type: string
-      description: State store name for game service data
-      env: GAME_SERVICE_STATE_STORE_NAME
-      default: "game-service-statestore"
+  properties: {}

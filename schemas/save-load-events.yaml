@@ -2,7 +2,11 @@ openapi: 3.0.3
 info:
   title: Save-Load Service Events
   version: 1.0.0
-  description: Events published by the Save-Load service
+  description: |
+    Events published by the Save-Load service.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
 
   x-lifecycle:
     SaveSlot:
@@ -10,9 +14,9 @@ info:
         slotId: { type: string, format: uuid, primary: true, required: true }
         gameId: { type: string, required: true }
         ownerId: { type: string, format: uuid, required: true }
-        ownerType: { type: string, required: true }
+        ownerType: { $ref: 'save-load-api.yaml#/components/schemas/OwnerType', required: true }
         slotName: { type: string, required: true }
-        category: { type: string, required: true }
+        category: { $ref: 'save-load-api.yaml#/components/schemas/SaveCategory', required: true }
       sensitive: []
       # Generates: SaveSlotCreatedEvent, SaveSlotUpdatedEvent, SaveSlotDeletedEvent
 
@@ -48,10 +52,10 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
         category:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/SaveCategory'
           description: Save category
         sizeBytes:
           type: integer
@@ -97,7 +101,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     SaveMigratedEvent:
@@ -137,7 +141,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionPinnedEvent:
@@ -172,7 +176,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionUnpinnedEvent:
@@ -207,7 +211,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionDeletedEvent:
@@ -242,7 +246,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     CleanupCompletedEvent:
@@ -306,8 +310,8 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
-          description: Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
+          description: Type of entity that owns this save
         sizeBytes:
           type: integer
           format: int64
@@ -380,8 +384,8 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
-          description: Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
+          description: Type of entity that owns this save
         errorMessage:
           type: string
           description: Last error message

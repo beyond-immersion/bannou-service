@@ -16,6 +16,7 @@ public class KamailioClient : IKamailioClient
     private readonly ILogger<KamailioClient> _logger;
     private readonly IMessageBus _messageBus;
     private readonly string _rpcEndpoint;
+    private readonly TimeSpan _requestTimeout;
     private long _requestId;
 
     // NOTE: Kamailio JSONRPC API uses snake_case - intentionally NOT using BannouJson.Options
@@ -32,12 +33,14 @@ public class KamailioClient : IKamailioClient
     /// <param name="httpClient">HTTP client for JSONRPC requests.</param>
     /// <param name="host">Kamailio host address.</param>
     /// <param name="port">Kamailio JSONRPC port (default 5080).</param>
+    /// <param name="requestTimeout">Timeout for Kamailio HTTP requests.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
     public KamailioClient(
         HttpClient httpClient,
         string host,
         int port,
+        TimeSpan requestTimeout,
         ILogger<KamailioClient> logger,
         IMessageBus messageBus)
     {
@@ -45,6 +48,7 @@ public class KamailioClient : IKamailioClient
         _logger = logger;
         _messageBus = messageBus;
         _rpcEndpoint = $"http://{host}:{port}/RPC";
+        _requestTimeout = requestTimeout;
     }
 
     /// <inheritdoc />
@@ -189,7 +193,7 @@ public class KamailioClient : IKamailioClient
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(5));
+            cts.CancelAfter(_requestTimeout);
 
             var response = await _httpClient.GetAsync(
                 _rpcEndpoint.Replace("/RPC", "/health"),

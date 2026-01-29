@@ -70,8 +70,8 @@ Creates a new matchmaking queue with full configuration.
 ```json
 {
   "queueId": "ranked-1v1",
-  "gameId": "arcadia",
-  "sessionGameType": "arcadia",
+  "gameId": "my-game",
+  "sessionGameType": "my-game",
   "displayName": "Ranked Duel",
   "minCount": 2,
   "maxCount": 2,
@@ -86,7 +86,7 @@ Creates a new matchmaking queue with full configuration.
   ],
   "partySkillAggregation": "highest",
   "useSkillRating": true,
-  "ratingCategory": "arcadia-duel"
+  "ratingCategory": "my-game-duel"
 }
 ```
 
@@ -114,7 +114,7 @@ POST /matchmaking/queue/list
 **Request Body:**
 ```json
 {
-  "gameId": "arcadia",
+  "gameId": "my-game",
   "includeDisabled": false
 }
 ```
@@ -125,7 +125,7 @@ POST /matchmaking/queue/list
   "queues": [
     {
       "queueId": "ranked-1v1",
-      "gameId": "arcadia",
+      "gameId": "my-game",
       "displayName": "Ranked Duel",
       "enabled": true,
       "minCount": 2,
@@ -301,8 +301,8 @@ Tight skill matching with gradual expansion:
 
 ```yaml
 queueId: ranked-1v1
-gameId: arcadia
-sessionGameType: arcadia
+gameId: my-game
+sessionGameType: my-game
 displayName: Ranked Duel
 minCount: 2
 maxCount: 2
@@ -324,7 +324,7 @@ partySkillAggregation: highest
 allowConcurrent: true
 exclusiveGroup: ranked
 useSkillRating: true
-ratingCategory: arcadia-duel
+ratingCategory: my-game-duel
 ```
 
 ### Team Competitive (5v5)
@@ -333,8 +333,8 @@ Full team matching with longer wait tolerance:
 
 ```yaml
 queueId: competitive-5v5
-gameId: arcadia
-sessionGameType: arcadia
+gameId: my-game
+sessionGameType: my-game
 displayName: Competitive 5v5
 minCount: 10
 maxCount: 10
@@ -357,7 +357,7 @@ partyMaxSize: 5
 allowConcurrent: true
 exclusiveGroup: competitive
 useSkillRating: true
-ratingCategory: arcadia-team
+ratingCategory: my-game-team
 ```
 
 ### Casual Quick Play
@@ -366,8 +366,8 @@ No skill filtering, fast matches:
 
 ```yaml
 queueId: casual-quickplay
-gameId: arcadia
-sessionGameType: arcadia
+gameId: my-game
+sessionGameType: my-game
 displayName: Quick Play
 minCount: 4
 maxCount: 8
@@ -392,8 +392,8 @@ Large player pools, starts when minimum reached:
 
 ```yaml
 queueId: battle-royale-solo
-gameId: arcadia
-sessionGameType: arcadia
+gameId: my-game
+sessionGameType: my-game
 displayName: Battle Royale
 minCount: 20
 maxCount: 100
@@ -412,7 +412,7 @@ partyMaxSize: 1  # Solo only
 allowConcurrent: false
 exclusiveGroup: null
 useSkillRating: true
-ratingCategory: arcadia-br
+ratingCategory: my-game-br
 startWhenMinimumReached: true
 ```
 
@@ -422,7 +422,7 @@ Fixed player count, no skill:
 
 ```yaml
 queueId: mahjong-casual
-gameId: arcadia-minigames
+gameId: my-game-minigames
 sessionGameType: generic
 displayName: Mahjong
 minCount: 4
@@ -448,8 +448,8 @@ Extended wait for seeded matches:
 
 ```yaml
 queueId: tournament-bracket
-gameId: arcadia
-sessionGameType: arcadia
+gameId: my-game
+sessionGameType: my-game
 displayName: Tournament Match
 minCount: 2
 maxCount: 2
@@ -502,7 +502,7 @@ tournamentIdRequired: true
 | `GAME_SESSION_CLEANUP_INTERVAL_SECONDS` | `30` | Reservation cleanup interval |
 | `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | `10` | Cleanup service startup delay |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | `2` | Subscription cache init delay |
-| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `arcadia,generic` | Comma-separated game service names |
+| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Comma-separated game service names |
 
 ## Events
 
@@ -513,9 +513,9 @@ tournamentIdRequired: true
 | `matchmaking.ticket-created` | `MatchmakingTicketCreatedEvent` | Ticket created |
 | `matchmaking.ticket-cancelled` | `MatchmakingTicketCancelledEvent` | Ticket cancelled (with reason) |
 | `matchmaking.match-formed` | `MatchmakingMatchFormedEvent` | Match successfully formed |
-| `matchmaking.match-confirmed` | `MatchmakingMatchConfirmedEvent` | All players accepted |
+| `matchmaking.match-accepted` | `MatchmakingMatchAcceptedEvent` | All players accepted |
 | `matchmaking.match-cancelled` | `MatchmakingMatchCancelledEvent` | Match cancelled (decline/timeout) |
-| `matchmaking.stats` | `MatchmakingStatsEvent` | Queue statistics |
+| `matchmaking.stats` | `MatchmakingStatsEvent` | Queue statistics (basic counts; detailed metrics like avg wait time are placeholder) |
 | `game-session.session-cancelled` | `SessionCancelledServerEvent` | Session cancelled |
 
 ### Client Events (WebSocket Push)
@@ -617,7 +617,7 @@ make all
 
 ```typescript
 // List available queues
-const queues = await client.listQueues({ gameId: "arcadia" });
+const queues = await client.listQueues({ gameId: "my-game" });
 
 // Find suitable queue
 const rankedQueue = queues.find(q => q.queueId === "ranked-1v1");

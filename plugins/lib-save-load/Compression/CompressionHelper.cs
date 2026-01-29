@@ -9,12 +9,13 @@ namespace BeyondImmersion.BannouService.SaveLoad.Compression;
 public static class CompressionHelper
 {
     /// <summary>
-    /// Compresses data using the specified compression type.
+    /// Compresses data using the specified compression type and level.
     /// </summary>
     /// <param name="data">The data to compress.</param>
     /// <param name="compressionType">The compression algorithm to use.</param>
+    /// <param name="compressionLevel">Optional explicit compression level (1-9 for GZIP, 0-11 for Brotli). If null, uses Optimal.</param>
     /// <returns>Compressed data, or original data if compression type is NONE.</returns>
-    public static byte[] Compress(byte[] data, CompressionType compressionType)
+    public static byte[] Compress(byte[] data, CompressionType compressionType, int? compressionLevel = null)
     {
         if (data == null || data.Length == 0)
         {
@@ -24,8 +25,8 @@ public static class CompressionHelper
         return compressionType switch
         {
             CompressionType.NONE => data,
-            CompressionType.GZIP => CompressGzip(data),
-            CompressionType.BROTLI => CompressBrotli(data),
+            CompressionType.GZIP => CompressGzip(data, compressionLevel),
+            CompressionType.BROTLI => CompressBrotli(data, compressionLevel),
             _ => data
         };
     }
@@ -78,10 +79,13 @@ public static class CompressionHelper
         return (double)compressedSize / originalSize;
     }
 
-    private static byte[] CompressGzip(byte[] data)
+    private static byte[] CompressGzip(byte[] data, int? level = null)
     {
         using var outputStream = new MemoryStream();
-        using (var gzipStream = new GZipStream(outputStream, CompressionLevel.Optimal, leaveOpen: true))
+        var compressionLevel = level.HasValue
+            ? (System.IO.Compression.CompressionLevel)Math.Clamp(level.Value, 0, 9)
+            : CompressionLevel.Optimal;
+        using (var gzipStream = new GZipStream(outputStream, compressionLevel, leaveOpen: true))
         {
             gzipStream.Write(data, 0, data.Length);
         }
@@ -97,10 +101,13 @@ public static class CompressionHelper
         return outputStream.ToArray();
     }
 
-    private static byte[] CompressBrotli(byte[] data)
+    private static byte[] CompressBrotli(byte[] data, int? level = null)
     {
         using var outputStream = new MemoryStream();
-        using (var brotliStream = new BrotliStream(outputStream, CompressionLevel.Optimal, leaveOpen: true))
+        var compressionLevel = level.HasValue
+            ? (System.IO.Compression.CompressionLevel)Math.Clamp(level.Value, 0, 11)
+            : CompressionLevel.Optimal;
+        using (var brotliStream = new BrotliStream(outputStream, compressionLevel, leaveOpen: true))
         {
             brotliStream.Write(data, 0, data.Length);
         }

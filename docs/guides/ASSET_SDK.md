@@ -26,7 +26,7 @@ await using var manager = await AssetManager.ConnectAsync(
     new AssetManagerOptions
     {
         CacheDirectory = "./asset-cache",
-        Realm = Realm.Arcadia
+        Realm = "my-realm"
     });
 
 // Load assets by ID
@@ -90,7 +90,7 @@ var options = new AssetManagerOptions
     CacheDirectory = "./asset-cache",
 
     // Default realm for bundle resolution
-    Realm = Realm.Arcadia,
+    Realm = "my-realm",
 
     // Parallel download limit
     MaxConcurrentDownloads = 4,
@@ -285,7 +285,7 @@ var uploader = new BannouUploader(client);
 var result = await uploader.UploadBundleAsync(
     bundlePath: "characters.bannou",
     bundleId: "synty-characters-v1",
-    realm: Realm.Arcadia,
+    realm: "my-realm",
     progress: uploadProgress);
 
 Console.WriteLine($"Uploaded: {result.BundleId}");
@@ -299,10 +299,10 @@ Metabundles combine multiple bundles for efficient downloads:
 // Via API
 var response = await client.Asset.CreateMetabundleAsync(new CreateMetabundleRequest
 {
-    Name = "arcadia-characters-v1",
-    Description = "All character assets for Arcadia",
+    Name = "game-characters-v1",
+    Description = "All character assets for the game",
     SourceBundleIds = { "synty-characters-v1", "synty-animations-v1" },
-    Realm = Realm.Arcadia
+    Realm = "my-realm"
 });
 ```
 
@@ -576,7 +576,7 @@ public class AssetQueryService
         var request = new ResolveBundlesRequest
         {
             AssetIds = assetIds.ToList(),
-            Realm = Realm.Arcadia,
+            Realm = "my-realm",
             PreferMetabundles = true
         };
         return await _assetClient.ResolveBundlesAsync(request);
@@ -613,7 +613,7 @@ public class ServerAssetLoader
     public ServerAssetLoader(IAssetClient assetClient)
     {
         // Create mesh-based asset source
-        var source = new BannouMeshAssetSource(assetClient, Realm.Arcadia);
+        var source = new BannouMeshAssetSource(assetClient, "my-realm");
 
         // Optional: ephemeral cache for container environments
         var cache = new MemoryAssetCache(maxSizeBytes: 256 * 1024 * 1024);
@@ -645,7 +645,7 @@ services.AddSingleton<IAssetSource>(sp =>
 {
     var assetClient = sp.GetRequiredService<IAssetClient>();
     var logger = sp.GetService<ILogger<BannouMeshAssetSource>>();
-    return new BannouMeshAssetSource(assetClient, Realm.Arcadia, logger);
+    return new BannouMeshAssetSource(assetClient, "my-realm", logger);
 });
 
 // Optional cache (use MemoryAssetCache for containers, FileAssetCache for VMs)
@@ -695,7 +695,7 @@ var model = await manager.GetAssetAsync<Model>(assetId);
 var info = await _assetClient.GetAssetAsync(new GetAssetRequest { AssetId = assetId });
 
 // Or full loading when needed
-var source = new BannouMeshAssetSource(assetClient, Realm.Arcadia);
+var source = new BannouMeshAssetSource(assetClient, "my-realm");
 var loader = new AssetLoader(source);
 await loader.EnsureAssetsAvailableAsync(assetIds);
 var bytes = await loader.GetAssetBytesAsync(assetId);

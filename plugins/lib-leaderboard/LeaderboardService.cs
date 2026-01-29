@@ -114,12 +114,12 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> CreateLeaderboardDefinitionAsync(CreateLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating leaderboard {LeaderboardId} for game service {GameServiceId}",
+        _logger.LogDebug("Creating leaderboard {LeaderboardId} for game service {GameServiceId}",
             body.LeaderboardId, body.GameServiceId);
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
             // Check if already exists
@@ -186,11 +186,11 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> GetLeaderboardDefinitionAsync(GetLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting leaderboard {LeaderboardId}", body.LeaderboardId);
+        _logger.LogDebug("Getting leaderboard {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
             var definition = await definitionStore.GetAsync(key, cancellationToken);
@@ -200,7 +200,7 @@ public partial class LeaderboardService : ILeaderboardService
             }
 
             // Get entry count from sorted set
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
             var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
 
@@ -229,11 +229,11 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, ListLeaderboardDefinitionsResponse?)> ListLeaderboardDefinitionsAsync(ListLeaderboardDefinitionsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Listing leaderboards for game service {GameServiceId}", body.GameServiceId);
+        _logger.LogDebug("Listing leaderboards for game service {GameServiceId}", body.GameServiceId);
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var indexKey = GetDefinitionIndexKey(body.GameServiceId);
             var leaderboardIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 
@@ -247,22 +247,11 @@ public partial class LeaderboardService : ILeaderboardService
 
             if (body.IncludeArchived)
             {
-                var errorMessage = "IncludeArchived is not supported because archived leaderboards are not tracked";
-                _logger.LogError(errorMessage);
-                await _messageBus.TryPublishErrorAsync(
-                    "leaderboard",
-                    "ListLeaderboardDefinitions",
-                    "leaderboard_archive_not_supported",
-                    errorMessage,
-                    dependency: null,
-                    endpoint: "post:/leaderboard/definition/list",
-                    details: $"gameServiceId:{body.GameServiceId}",
-                    stack: null,
-                    cancellationToken: cancellationToken);
+                _logger.LogWarning("IncludeArchived not supported for game service {GameServiceId}", body.GameServiceId);
                 return (StatusCodes.NotImplemented, null);
             }
 
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var leaderboards = new List<LeaderboardDefinitionResponse>();
 
             foreach (var leaderboardId in leaderboardIds)
@@ -312,14 +301,14 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> UpdateLeaderboardDefinitionAsync(UpdateLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Updating leaderboard {LeaderboardId}", body.LeaderboardId);
+        _logger.LogDebug("Updating leaderboard {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
-            var definition = await definitionStore.GetAsync(key, cancellationToken);
+            var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
             if (definition == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -339,10 +328,16 @@ public partial class LeaderboardService : ILeaderboardService
                 definition.IsPublic = body.IsPublic.Value;
             }
 
-            await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+            // etag is non-null at this point; coalesce satisfies compiler nullable analysis
+            var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId}", body.LeaderboardId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Get entry count
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
             var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
 
@@ -371,11 +366,11 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<StatusCodes> DeleteLeaderboardDefinitionAsync(DeleteLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting leaderboard {LeaderboardId}", body.LeaderboardId);
+        _logger.LogDebug("Deleting leaderboard {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
             var definition = await definitionStore.GetAsync(key, cancellationToken);
@@ -387,7 +382,7 @@ public partial class LeaderboardService : ILeaderboardService
             // Delete the definition
             await definitionStore.DeleteAsync(key, cancellationToken);
 
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
 
             if (definition.IsSeasonal)
             {
@@ -443,13 +438,13 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, SubmitScoreResponse?)> SubmitScoreAsync(SubmitScoreRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Submitting score for {EntityType}:{EntityId} to {LeaderboardId}",
+        _logger.LogDebug("Submitting score for {EntityType}:{EntityId} to {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
         try
         {
             // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -464,7 +459,7 @@ public partial class LeaderboardService : ILeaderboardService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
             var memberKey = GetMemberKey(body.EntityType, body.EntityId);
 
@@ -501,7 +496,7 @@ public partial class LeaderboardService : ILeaderboardService
                     GameServiceId = body.GameServiceId,
                     LeaderboardId = body.LeaderboardId,
                     EntityId = body.EntityId,
-                    EntityType = MapToEntryAddedEventEntityType(body.EntityType),
+                    EntityType = body.EntityType,
                     Score = finalScore,
                     Rank = currentRank,
                     TotalEntries = totalEntries
@@ -518,7 +513,7 @@ public partial class LeaderboardService : ILeaderboardService
                     GameServiceId = body.GameServiceId,
                     LeaderboardId = body.LeaderboardId,
                     EntityId = body.EntityId,
-                    EntityType = MapToEventEntityType(body.EntityType),
+                    EntityType = body.EntityType,
                     PreviousRank = prevRank,
                     NewRank = currentRank,
                     RankChange = rankChange,
@@ -561,7 +556,7 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, SubmitScoreBatchResponse?)> SubmitScoreBatchAsync(SubmitScoreBatchRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Submitting batch of {Count} scores to {LeaderboardId}",
+        _logger.LogDebug("Submitting batch of {Count} scores to {LeaderboardId}",
             body.Scores.Count, body.LeaderboardId);
 
         try
@@ -575,7 +570,7 @@ public partial class LeaderboardService : ILeaderboardService
             }
 
             // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -584,7 +579,7 @@ public partial class LeaderboardService : ILeaderboardService
                 return (StatusCodes.NotFound, null);
             }
 
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
 
             var accepted = 0;
@@ -643,13 +638,13 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, EntityRankResponse?)> GetEntityRankAsync(GetEntityRankRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting rank for {EntityType}:{EntityId} on {LeaderboardId}",
+        _logger.LogDebug("Getting rank for {EntityType}:{EntityId} on {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
         try
         {
             // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -658,7 +653,7 @@ public partial class LeaderboardService : ILeaderboardService
                 return (StatusCodes.NotFound, null);
             }
 
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
             var memberKey = GetMemberKey(body.EntityType, body.EntityId);
 
@@ -717,7 +712,7 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, LeaderboardEntriesResponse?)> GetTopRanksAsync(GetTopRanksRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting top {Count} for {LeaderboardId}", body.Count, body.LeaderboardId);
+        _logger.LogDebug("Getting top {Count} for {LeaderboardId}", body.Count, body.LeaderboardId);
 
         try
         {
@@ -735,7 +730,7 @@ public partial class LeaderboardService : ILeaderboardService
             }
 
             // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -744,7 +739,7 @@ public partial class LeaderboardService : ILeaderboardService
                 return (StatusCodes.NotFound, null);
             }
 
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
 
             // Get range from sorted set
@@ -799,7 +794,7 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, LeaderboardEntriesResponse?)> GetRanksAroundAsync(GetRanksAroundRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting ranks around {EntityType}:{EntityId} on {LeaderboardId}",
+        _logger.LogDebug("Getting ranks around {EntityType}:{EntityId} on {LeaderboardId}",
             body.EntityType, body.EntityId, body.LeaderboardId);
 
         try
@@ -822,7 +817,7 @@ public partial class LeaderboardService : ILeaderboardService
             }
 
             // Get leaderboard definition
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -831,7 +826,7 @@ public partial class LeaderboardService : ILeaderboardService
                 return (StatusCodes.NotFound, null);
             }
 
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
             var memberKey = GetMemberKey(body.EntityType, body.EntityId);
 
@@ -895,13 +890,13 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, SeasonResponse?)> CreateSeasonAsync(CreateSeasonRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating new season for {LeaderboardId}", body.LeaderboardId);
+        _logger.LogDebug("Creating new season for {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+            var (definition, defEtag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
 
             if (definition == null)
             {
@@ -919,7 +914,7 @@ public partial class LeaderboardService : ILeaderboardService
             var previousSeason = definition.CurrentSeason;
             if (!_configuration.AutoArchiveOnSeasonEnd && previousSeason.HasValue)
             {
-                var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+                var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
                 var previousRankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, previousSeason.Value);
                 await rankingStore.SortedSetDeleteAsync(previousRankingKey, cancellationToken);
 
@@ -929,9 +924,15 @@ public partial class LeaderboardService : ILeaderboardService
                     cancellationToken: cancellationToken);
             }
 
-            // Update definition with new season
+            // Update definition with new season using optimistic concurrency
             definition.CurrentSeason = newSeasonNumber;
-            await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
+            // defEtag is non-null at this point; coalesce satisfies compiler nullable analysis
+            var newDefEtag = await definitionStore.TrySaveAsync(defKey, definition, defEtag ?? string.Empty, cancellationToken);
+            if (newDefEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId} season creation", body.LeaderboardId);
+                return (StatusCodes.Conflict, null);
+            }
             await definitionStore.AddToSetAsync(
                 GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId),
                 newSeasonNumber,
@@ -983,11 +984,11 @@ public partial class LeaderboardService : ILeaderboardService
     /// </summary>
     public async Task<(StatusCodes, SeasonResponse?)> GetSeasonAsync(GetSeasonRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting season info for {LeaderboardId}", body.LeaderboardId);
+        _logger.LogDebug("Getting season info for {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -1012,7 +1013,7 @@ public partial class LeaderboardService : ILeaderboardService
             }
 
             // Get entry count for the season
-            var rankingStore = _stateStoreFactory.GetStore<object>(_configuration.RankingStoreName);
+            var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
             var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, seasonNumber);
             var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
 
@@ -1079,34 +1080,6 @@ public partial class LeaderboardService : ILeaderboardService
             Metadata = definition.Metadata
         };
 
-    /// <summary>
-    /// Maps EntityType to LeaderboardRankChangedEvent entity type.
-    /// </summary>
-    private static LeaderboardRankChangedEventEntityType MapToEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => LeaderboardRankChangedEventEntityType.Account,
-            EntityType.Character => LeaderboardRankChangedEventEntityType.Character,
-            EntityType.Guild => LeaderboardRankChangedEventEntityType.Guild,
-            EntityType.Actor => LeaderboardRankChangedEventEntityType.Actor,
-            EntityType.Custom => LeaderboardRankChangedEventEntityType.Custom,
-            _ => LeaderboardRankChangedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to LeaderboardEntryAddedEvent entity type.
-    /// </summary>
-    private static LeaderboardEntryAddedEventEntityType MapToEntryAddedEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => LeaderboardEntryAddedEventEntityType.Account,
-            EntityType.Character => LeaderboardEntryAddedEventEntityType.Character,
-            EntityType.Guild => LeaderboardEntryAddedEventEntityType.Guild,
-            EntityType.Actor => LeaderboardEntryAddedEventEntityType.Actor,
-            EntityType.Custom => LeaderboardEntryAddedEventEntityType.Custom,
-            _ => LeaderboardEntryAddedEventEntityType.Custom
-        };
-
     #endregion
 
     #region Permission Registration
@@ -1115,10 +1088,10 @@ public partial class LeaderboardService : ILeaderboardService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Leaderboard service permissions...");
-        await LeaderboardPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        _logger.LogDebug("Registering Leaderboard service permissions...");
+        await LeaderboardPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

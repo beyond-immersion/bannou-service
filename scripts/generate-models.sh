@@ -45,6 +45,15 @@ ensure_dotnet_root
 EXCLUDED_TYPES="ApiException,ApiException\<TResult\>"
 ADDITIONAL_NAMESPACES="BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
 
+# Extract $refs to common-api.yaml types (shared types like EntityType)
+# These are generated once in CommonApiModels.cs, so we exclude them
+COMMON_API_REFS=$(extract_common_api_refs "$SCHEMA_FILE")
+if [ -n "$COMMON_API_REFS" ]; then
+    echo -e "${BLUE}ℹ️  Found common-api.yaml refs - excluding shared types${NC}"
+    echo -e "  📦 Common types: $COMMON_API_REFS"
+    EXCLUDED_TYPES="$EXCLUDED_TYPES,$COMMON_API_REFS"
+fi
+
 # Extract SDK type mappings from schema (x-sdk-type extensions)
 # This allows schemas to reference types from external SDKs without generating duplicates
 SCRIPT_DIR="$(dirname "$0")"
@@ -100,6 +109,10 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     echo -e "${YELLOW}🔄 Post-processing: Adding AdditionalProperties XML docs...${NC}"
     postprocess_additional_properties_docs "$OUTPUT_FILE"
 
+    # Post-process: Convert enum member names to proper PascalCase
+    echo -e "${YELLOW}🔄 Post-processing: Converting enum names to PascalCase...${NC}"
+    postprocess_enum_pascalcase "$OUTPUT_FILE"
+
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
 else
@@ -121,6 +134,30 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     # Ensure lifecycle events output directory exists
     mkdir -p "$LIFECYCLE_OUTPUT_DIR"
 
+    # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
+    LIFECYCLE_API_REFS=$(extract_api_refs "$LIFECYCLE_EVENTS_FILE" "$SERVICE_NAME")
+
+    # Extract $refs to common-api.yaml types (shared types like EntityType)
+    LIFECYCLE_COMMON_REFS=$(extract_common_api_refs "$LIFECYCLE_EVENTS_FILE")
+
+    # Build exclusion list: base exclusions + any API-referenced types + common types
+    LIFECYCLE_EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseServiceEvent"
+    if [ -n "$LIFECYCLE_API_REFS" ]; then
+        LIFECYCLE_EXCLUSIONS="${LIFECYCLE_EXCLUSIONS},${LIFECYCLE_API_REFS}"
+        echo -e "  ${BLUE}Excluding API types: ${LIFECYCLE_API_REFS}${NC}"
+    fi
+    if [ -n "$LIFECYCLE_COMMON_REFS" ]; then
+        LIFECYCLE_EXCLUSIONS="${LIFECYCLE_EXCLUSIONS},${LIFECYCLE_COMMON_REFS}"
+        echo -e "  ${BLUE}Excluding common types: ${LIFECYCLE_COMMON_REFS}${NC}"
+    fi
+
+    # Build namespace usages: base + service namespace if we have API refs
+    # BeyondImmersion.BannouService is always included for common types
+    LIFECYCLE_NAMESPACE_USAGES="BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService"
+    if [ -n "$LIFECYCLE_API_REFS" ]; then
+        LIFECYCLE_NAMESPACE_USAGES="${LIFECYCLE_NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
+    fi
+
     "$NSWAG_EXE" openapi2csclient \
         "/input:$LIFECYCLE_EVENTS_FILE" \
         "/output:$LIFECYCLE_OUTPUT_FILE" \
@@ -128,8 +165,8 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
-        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core" \
+        "/excludedTypeNames:${LIFECYCLE_EXCLUSIONS}" \
+        "/additionalNamespaceUsages:${LIFECYCLE_NAMESPACE_USAGES}" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
@@ -152,6 +189,10 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         # Post-process: Add XML docs to AdditionalProperties
         echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding AdditionalProperties XML docs...${NC}"
         postprocess_additional_properties_docs "$LIFECYCLE_OUTPUT_FILE"
+
+        # Post-process: Convert enum member names to proper PascalCase
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Converting enum names to PascalCase...${NC}"
+        postprocess_enum_pascalcase "$LIFECYCLE_OUTPUT_FILE"
 
         LIFECYCLE_FILE_SIZE=$(wc -l < "$LIFECYCLE_OUTPUT_FILE" 2>/dev/null || echo "0")
         echo -e "${GREEN}✅ Generated lifecycle event models ($LIFECYCLE_FILE_SIZE lines)${NC}"

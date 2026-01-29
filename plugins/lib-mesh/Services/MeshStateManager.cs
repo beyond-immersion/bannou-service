@@ -27,7 +27,7 @@ public class MeshStateManager : IMeshStateManager
     private IStateStore<MeshEndpoint>? _appIdIndexStore;
     private IStateStore<MeshEndpoint>? _globalIndexStore;
 
-    private bool _initialized;
+    private int _initialized; // 0 = false, 1 = true; uses Interlocked for thread safety
 
     /// <summary>
     /// Creates MeshStateManager with state store factory from lib-state.
@@ -47,7 +47,8 @@ public class MeshStateManager : IMeshStateManager
     {
         try
         {
-            if (_initialized)
+            // Thread-safe check-and-set to prevent double initialization
+            if (Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
             {
                 _logger.LogDebug("Mesh state stores already initialized, skipping...");
                 return true;
@@ -69,18 +70,22 @@ public class MeshStateManager : IMeshStateManager
 
             if (testResult.IsHealthy)
             {
-                _initialized = true;
+                // _initialized already set to 1 by CompareExchange above
                 _logger.LogInformation(
                     "Mesh state stores initialized successfully (operation time: {OperationTime}ms)",
                     testResult.OperationTime?.TotalMilliseconds ?? 0);
                 return true;
             }
 
+            // Reset to allow retry on failure
+            Interlocked.Exchange(ref _initialized, 0);
             _logger.LogWarning("Mesh state store health check failed: {Message}", testResult.Message);
             return false;
         }
         catch (Exception ex)
         {
+            // Reset to allow retry on failure
+            Interlocked.Exchange(ref _initialized, 0);
             _logger.LogError(ex, "Failed to initialize mesh state stores");
             return false;
         }

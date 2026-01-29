@@ -13,25 +13,30 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
 | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
+| `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | bool | `true` | When true, automatically manages the anonymous role. If remo... |
+| `ACCOUNT_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for list operations when not specified |
+| `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
+| `ACCOUNT_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for list operations |
 
 ### Achievement
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | bool | `true` | Automatically sync achievements to platforms when unlocked |
-| `ACHIEVEMENT_DEFINITION_STORE_NAME` | string | `achievement-definition` | Name of the state store for achievement definitions (MySQL r... |
+| `ACHIEVEMENT_EARNED_COUNT_RETRY_ATTEMPTS` | int | `3` | Maximum retry attempts for ETag conflicts when incrementing ... |
+| `ACHIEVEMENT_LOCK_EXPIRY_SECONDS` | int | `30` | Expiry time in seconds for distributed locks on achievement ... |
 | `ACHIEVEMENT_MOCK_PLATFORM_SYNC` | bool | `false` | Enable mock mode for platform sync (returns success without ... |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (optional - not implemented) |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (optional - not implemente... |
-| `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
-| `ACHIEVEMENT_PROGRESS_STORE_NAME` | string | `achievement-progress` | Name of the state store for progress tracking (Redis for hot... |
+| `ACHIEVEMENT_PROGRESS_TTL_SECONDS` | int | `0` | TTL in seconds for progress data in Redis (0 = no expiry, pr... |
 | `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | double | `5.0` | Threshold percentage below which an achievement is considere... |
 | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | int | `60` | How often to recalculate achievement rarity percentages |
+| `ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before first rarity calculation (allows ser... |
+| `ACHIEVEMENT_RARITY_THRESHOLD_EARNED_COUNT` | int | `100` | Minimum earned count for an achievement to be considered com... |
 | `ACHIEVEMENT_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for achievement sync (optional - Steam syn... |
 | `ACHIEVEMENT_STEAM_APP_ID` | string | **REQUIRED** | Steam App ID for achievement mapping (optional - Steam sync ... |
 | `ACHIEVEMENT_SYNC_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed platform syncs |
 | `ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS` | int | `60` | Delay between sync retry attempts in seconds |
-| `ACHIEVEMENT_UNLOCK_STORE_NAME` | string | `achievement-unlock` | Name of the state store for unlock records (MySQL for persis... |
 | `ACHIEVEMENT_XBOX_CLIENT_ID` | string | **REQUIRED** | Xbox Live client ID (optional - not implemented) |
 | `ACHIEVEMENT_XBOX_CLIENT_SECRET` | string | **REQUIRED** | Xbox Live client secret (optional - not implemented) |
 
@@ -39,50 +44,67 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ACTOR_CONTROL_PLANE_APP_ID` | string | `bannou` | App-id of control plane for pool node registration. Pool nod... |
 | `ACTOR_DEFAULT_ACTORS_PER_NODE` | int | `100` | Default capacity per pool node |
 | `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | int | `60` | Default interval for periodic state saves (0 to disable) |
 | `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | int | `60` | Default expiration time in minutes for actor memories |
 | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
 | `ACTOR_DEPLOYMENT_MODE` | string | `bannou` | Actor deployment mode: bannou (local dev), pool-per-type, sh... |
+| `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached encounter data |
+| `ACTOR_ERROR_RETRY_DELAY_MS` | int | `1000` | Delay in milliseconds before retrying after behavior loop er... |
+| `ACTOR_EVENT_BRAIN_DEFAULT_URGENCY` | double | `0.8` | Default urgency for Event Brain instruction perceptions (0.0... |
 | `ACTOR_GOAP_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search |
 | `ACTOR_GOAP_PLAN_TIMEOUT_MS` | int | `50` | Maximum time allowed for GOAP planning in milliseconds |
 | `ACTOR_GOAP_REPLAN_THRESHOLD` | double | `0.3` | Threshold for triggering GOAP replanning when goal relevance... |
 | `ACTOR_HEARTBEAT_INTERVAL_SECONDS` | int | `10` | Pool node heartbeat frequency |
 | `ACTOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `30` | Mark node unhealthy after this many seconds without heartbea... |
-| `ACTOR_INSTANCE_STATESTORE_NAME` | string | `actor-instances` | Name of the state store for actor instance tracking |
 | `ACTOR_LOCAL_MODE_APP_ID` | string | `bannou` | App ID used when running in local/bannou deployment mode |
 | `ACTOR_LOCAL_MODE_NODE_ID` | string | `bannou-local` | Node ID used when running in local/bannou deployment mode |
+| `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results returned per query |
 | `ACTOR_MAX_POOL_NODES` | int | `10` | Maximum pool nodes allowed (auto-scale mode) |
-| `ACTOR_MESSAGE_QUEUE_SIZE` | int | `50` | Max messages queued per actor before dropping oldest |
+| `ACTOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Maximum retry attempts for memory store operations |
 | `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
+| `ACTOR_OPERATION_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for individual actor operations |
 | `ACTOR_PERCEPTION_FILTER_THRESHOLD` | double | `0.1` | Minimum urgency for perception to be processed (0.0-1.0) |
 | `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | double | `0.7` | Minimum urgency for perception to become a memory (0.0-1.0) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
+| `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached personality data |
+| `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | int | `15` | Interval in seconds between pool health check operations |
+| `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before pool health monitor starts checking ... |
 | `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
 | `ACTOR_POOL_NODE_CAPACITY` | int | `100` | Maximum actors this pool node can run. Overrides DefaultActo... |
 | `ACTOR_POOL_NODE_ID` | string | **REQUIRED** | If set, this instance runs as a pool node (not control plane... |
 | `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
 | `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
+| `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | int | `5000` | Default max age in milliseconds for cached query options |
+| `ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS` | int | `100` | Interval in milliseconds for checking scheduled events |
+| `ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY` | double | `0.7` | Default urgency value for scheduled event perceptions (0.0-1... |
 | `ACTOR_SHORT_TERM_MEMORY_MINUTES` | int | `5` | Expiration time in minutes for short-term memories from high... |
-| `ACTOR_STATE_STORE_NAME` | string | `actor-state` | Name of the state store for actor state persistence |
-| `ACTOR_STATE_UPDATE_TRANSPORT` | string | `messaging` | State update transport: messaging (default, works in bannou ... |
-| `ACTOR_TEMPLATE_STATESTORE_NAME` | string | `actor-templates` | Name of the state store for actor templates |
+| `ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS` | int | `50` | Base delay in milliseconds between state persistence retry a... |
+| `ACTOR_STOP_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for graceful actor stop operations |
 
 ### Analytics
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | int | `5000` | Maximum records to delete per cleanup invocation |
+| `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE` | int | `100` | Number of records to delete per iteration within a cleanup b... |
+| `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | int | `90` | Days to retain controller history records (0 = indefinite re... |
 | `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds to flush event buffer |
+| `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | int | `10` | Base lock expiry time in seconds for event buffer flush oper... |
 | `ANALYTICS_EVENT_BUFFER_SIZE` | int | `1000` | Maximum events to buffer before flushing to storage |
 | `ANALYTICS_GLICKO2_DEFAULT_DEVIATION` | double | `350.0` | Default rating deviation for new entities (higher = less cer... |
 | `ANALYTICS_GLICKO2_DEFAULT_RATING` | double | `1500.0` | Default Glicko-2 rating for new entities |
 | `ANALYTICS_GLICKO2_DEFAULT_VOLATILITY` | double | `0.06` | Default volatility for new entities (0.06 is standard) |
+| `ANALYTICS_GLICKO2_MAX_RATING` | double | `4000.0` | Maximum allowed Glicko-2 rating (ceiling for clamping) |
+| `ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS` | int | `100` | Maximum iterations for Glicko-2 volatility convergence algor... |
+| `ANALYTICS_GLICKO2_MIN_DEVIATION` | double | `30.0` | Minimum rating deviation (prevents overconfidence) |
+| `ANALYTICS_GLICKO2_MIN_RATING` | double | `100.0` | Minimum allowed Glicko-2 rating (floor for clamping) |
 | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | double | `0.5` | Glicko-2 system constant (tau) - controls volatility change ... |
-| `ANALYTICS_HISTORY_STORE_NAME` | string | `analytics-history` | Name of the state store for event history (MySQL recommended... |
-| `ANALYTICS_RATING_STORE_NAME` | string | `analytics-rating` | Name of the state store for skill ratings (Redis recommended... |
-| `ANALYTICS_SUMMARY_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached entity summaries |
-| `ANALYTICS_SUMMARY_STORE_NAME` | string | `analytics-summary` | Name of the state store for entity summaries (Redis recommen... |
+| `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | double | `1e-06` | Convergence tolerance for Glicko-2 volatility iteration (sma... |
+| `ANALYTICS_MILESTONE_THRESHOLDS` | string | `10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000` | Comma-separated list of score thresholds that trigger milest... |
+| `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | int | `30` | Lock expiry time in seconds for skill rating update operatio... |
+| `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for resolution caches (game service, realm, c... |
+| `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | int | `3600` | TTL in seconds for game session mappings (should exceed typi... |
 
 ### Asset
 
@@ -92,14 +114,15 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional forbidden content types |
 | `ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional processable content types... |
 | `ASSET_AUDIO_BITRATE_KBPS` | int | `192` | Default audio bitrate in kbps |
-| `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format (mp3, opus, aac) |
+| `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format |
 | `ASSET_AUDIO_PRESERVE_LOSSLESS` | bool | `true` | Keep original lossless file alongside transcoded version |
 | `ASSET_AUDIO_PROCESSOR_POOL_TYPE` | string | `audio-processor` | Pool type name for audio processing |
-| `ASSET_BUNDLE_COMPRESSION_DEFAULT` | string | `lz4` | Default compression for bundles (lz4, lzma, none) |
+| `ASSET_BUNDLE_COMPRESSION_DEFAULT` | string | `lz4` | Default compression for bundles |
 | `ASSET_BUNDLE_CURRENT_PATH_PREFIX` | string | `bundles/current` | Path prefix for finalized bundles in storage bucket |
 | `ASSET_BUNDLE_KEY_PREFIX` | string | `bundle:` | Key prefix for bundle entries in state store |
 | `ASSET_BUNDLE_UPLOAD_PATH_PREFIX` | string | `bundles/uploads` | Path prefix for bundle upload staging in storage bucket |
 | `ASSET_BUNDLE_ZIP_CACHE_PATH_PREFIX` | string | `bundles/zip-cache` | Path prefix for ZIP conversion cache in storage bucket |
+| `ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS` | int | `24` | Default TTL in hours for bundle cache entries |
 | `ASSET_DEFAULT_PROCESSOR_POOL_TYPE` | string | `asset-processor` | Default pool type name for general asset processing |
 | `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | int | `30` | Number of days to retain soft-deleted bundles before permane... |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
@@ -107,6 +130,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
 | `ASSET_FINAL_ASSET_PATH_PREFIX` | string | `assets` | Path prefix for final asset storage in bucket |
 | `ASSET_INDEX_KEY_PREFIX` | string | `asset-index:` | Key prefix for asset index entries in state store |
+| `ASSET_INDEX_OPTIMISTIC_RETRY_BASE_DELAY_MS` | int | `10` | Base delay in milliseconds between optimistic retry attempts... |
+| `ASSET_INDEX_OPTIMISTIC_RETRY_MAX_ATTEMPTS` | int | `5` | Maximum retry attempts for optimistic concurrency index upda... |
 | `ASSET_KEY_PREFIX` | string | `asset:` | Key prefix for asset entries in state store |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
 | `ASSET_MAX_BULK_GET_ASSETS` | int | `100` | Maximum number of asset IDs allowed in a single bulk get req... |
@@ -122,9 +147,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_MODEL_PROCESSOR_POOL_TYPE` | string | `model-processor` | Pool type name for 3D model processing |
 | `ASSET_MULTIPART_PART_SIZE_MB` | int | `16` | Size of each part in multipart uploads in megabytes |
 | `ASSET_MULTIPART_THRESHOLD_MB` | int | `50` | File size threshold for multipart uploads in megabytes |
+| `ASSET_PROCESSING_BATCH_INTERVAL_SECONDS` | int | `5` | Delay in seconds between batch processing attempts |
+| `ASSET_PROCESSING_JOB_MAX_WAIT_SECONDS` | int | `60` | Maximum seconds to wait for a synchronous processing job to ... |
 | `ASSET_PROCESSING_MAX_RETRIES` | int | `5` | Maximum retry attempts for asset processing |
-| `ASSET_PROCESSING_MODE` | string | `both` | Service mode (api, worker, both) |
+| `ASSET_PROCESSING_MODE` | string | `both` | Service mode |
 | `ASSET_PROCESSING_POOL_TYPE` | string | `asset-processor` | Processing pool identifier for orchestrator |
+| `ASSET_PROCESSING_QUEUE_CHECK_INTERVAL_SECONDS` | int | `30` | Interval in seconds to check processing queue when no jobs a... |
 | `ASSET_PROCESSING_RETRY_DELAY_SECONDS` | int | `30` | Delay in seconds between processing retries |
 | `ASSET_PROCESSOR_AVAILABILITY_MAX_WAIT_SECONDS` | int | `60` | Maximum seconds to wait for processor availability |
 | `ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS` | int | `2` | Polling interval in seconds when waiting for processor |
@@ -133,13 +161,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_PROCESSOR_IDLE_TIMEOUT_SECONDS` | int | `300` | Seconds of zero-load before auto-termination (0 to disable) |
 | `ASSET_PROCESSOR_MAX_CONCURRENT_JOBS` | int | `10` | Maximum concurrent jobs per processor node |
 | `ASSET_PROCESSOR_NODE_ID` | string | **REQUIRED** | Unique processor node ID (set by orchestrator when spawning ... |
-| `ASSET_PROCESSOR_POOL_STORE_NAME` | string | `asset-processor-pool` | Name of the state store for processor pool management |
-| `ASSET_STATESTORE_NAME` | string | `asset-statestore` | Name of the state store for asset metadata |
+| `ASSET_SHUTDOWN_DRAIN_INTERVAL_SECONDS` | int | `2` | Interval in seconds between shutdown drain checks |
+| `ASSET_SHUTDOWN_DRAIN_TIMEOUT_MINUTES` | int | `2` | Maximum minutes to allow queue draining during graceful shut... |
 | `ASSET_STORAGE_ACCESS_KEY` | string | `minioadmin` | Storage access key/username |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
 | `ASSET_STORAGE_ENDPOINT` | string | `minio:9000` | Storage endpoint host:port for internal service connections ... |
 | `ASSET_STORAGE_FORCE_PATH_STYLE` | bool | `true` | Force path-style URLs (required for MinIO) |
-| `ASSET_STORAGE_PROVIDER` | string | `minio` | Storage backend type (minio, s3, r2, azure, filesystem) |
+| `ASSET_STORAGE_PROVIDER` | string | `minio` | Storage backend type |
 | `ASSET_STORAGE_PUBLIC_ENDPOINT` | string | **REQUIRED** | Public endpoint for pre-signed URLs accessible by clients. I... |
 | `ASSET_STORAGE_REGION` | string | `us-east-1` | Storage region (for S3/R2) |
 | `ASSET_STORAGE_SECRET_KEY` | string | `minioadmin` | Storage secret key/password |
@@ -160,6 +188,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `AUTH_BCRYPT_WORK_FACTOR` | int | `12` | BCrypt work factor for password hashing. Higher values are m... |
 | `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to Connect service for WebSocket connections. Defaults t... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
@@ -172,8 +201,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
 | `AUTH_MOCK_STEAM_ID` | string | `76561198000000000` | Mock Steam user ID for testing |
+| `AUTH_MOCK_TWITCH_ID` | string | `mock-twitch-123456` | Mock Twitch user ID for testing |
 | `AUTH_PASSWORD_RESET_BASE_URL` | string | **REQUIRED** | Base URL for password reset page |
 | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | int | `30` | Password reset token expiration time in minutes |
+| `AUTH_SESSION_TOKEN_TTL_DAYS` | int | `7` | Session token TTL in days for persistent sessions |
 | `AUTH_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for session ticket validation |
 | `AUTH_STEAM_APP_ID` | string | **REQUIRED** | Steam application ID |
 | `AUTH_TWITCH_CLIENT_ID` | string | **REQUIRED** | Twitch OAuth client ID |
@@ -217,17 +248,20 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_MEMORY_MINIMUM_RELEVANCE_THRESHOLD` | double | `0.1` | Minimum relevance score for memory retrieval (0.0-1.0) |
 | `BEHAVIOR_MEMORY_RECENCY_BONUS_WEIGHT` | double | `0.1` | Maximum recency bonus for memories less than 1 hour old |
 | `BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT` | double | `0.1` | Weight for memory significance in relevance scoring |
-| `BEHAVIOR_MEMORY_STATESTORE_NAME` | string | `agent-memories` | Name of the state store for actor memories |
 | `BEHAVIOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Max retries for memory store operations |
 | `BEHAVIOR_METADATA_KEY_PREFIX` | string | `behavior-metadata:` | Key prefix for behavior metadata entries |
-| `BEHAVIOR_STATESTORE_NAME` | string | `behavior-statestore` | Name of the state store for behavior metadata |
 
 ### Character
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | int | `30` | Grace period in days before cleanup of dead character refere... |
+| `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | int | `5` | Maximum number of backstory points to include in character c... |
+| `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | int | `10` | Maximum number of major life events to include in character ... |
 | `CHARACTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size when not specified |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
+| `CHARACTER_PERSONALITY_TRAIT_THRESHOLD` | double | `0.3` | Threshold for personality trait classification (values above... |
+| `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating realm character index (... |
 | `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
 
 ### Character Encounter
@@ -247,32 +281,96 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | double | `0.1` | Memory strength below which encounters are considered forgot... |
 | `CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST` | double | `0.2` | Default memory strength boost when refreshing (0.0-1.0) |
 | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | bool | `true` | Automatically seed built-in encounter types on service start... |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE` | double | `0.1` | Default sentiment shift for memorable encounter outcomes |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_NEGATIVE` | double | `-0.2` | Default sentiment shift for negative encounter outcomes (sho... |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_POSITIVE` | double | `0.2` | Default sentiment shift for positive encounter outcomes |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE` | double | `0.3` | Default sentiment shift for transformative encounter outcome... |
 | `CHARACTER_ENCOUNTER_SERVER_SALT` | string | `bannou-dev-encounter-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
+
+### Character Personality
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY` | double | `0.15` | Base chance for trait shift per evolution event (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_DEFEAT_STYLE_TRANSITION_PROBABILITY` | double | `0.4` | Probability for combat style transitions after defeat (0.0-1... |
+| `CHARACTER_PERSONALITY_COMBAT_DEFENSIVE_SHIFT_PROBABILITY` | double | `0.5` | Probability for defensive shift after injury (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_INTENSE_SHIFT_MULTIPLIER` | double | `1.5` | Multiplier for intense stat shifts (near-death, heavy defeat... |
+| `CHARACTER_PERSONALITY_COMBAT_MILDEST_SHIFT_MULTIPLIER` | double | `0.3` | Multiplier for mildest stat shifts (minor injuries) |
+| `CHARACTER_PERSONALITY_COMBAT_MILD_SHIFT_MULTIPLIER` | double | `0.5` | Multiplier for mild stat shifts (standard victories/defeats) |
+| `CHARACTER_PERSONALITY_COMBAT_ROLE_TRANSITION_PROBABILITY` | double | `0.4` | Base probability for combat role transitions (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_STYLE_TRANSITION_PROBABILITY` | double | `0.3` | Base probability for combat style transitions (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_VICTORY_BALANCED_TRANSITION_PROBABILITY` | double | `0.2` | Probability for balanced style to become aggressive after vi... |
+| `CHARACTER_PERSONALITY_MAX_BATCH_SIZE` | int | `100` | Maximum number of characters allowed in batch operations |
+| `CHARACTER_PERSONALITY_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
+| `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | double | `0.1` | Maximum magnitude of trait change per evolution event |
+| `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | double | `0.02` | Minimum magnitude of trait change per evolution event |
 
 ### Connect
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `CONNECT_AUTHENTICATED_SERVICES` | string[] | `['account', 'behavior', 'permission', 'gamesession']` | Additional services available to authenticated connections |
-| `CONNECT_BINARY_PROTOCOL_VERSION` | string | `2.0` | Binary protocol version identifier |
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
+| `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between connection cleanup runs |
 | `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
-| `CONNECT_CONNECTION_TIMEOUT_SECONDS` | int | `300` | WebSocket connection timeout in seconds |
-| `CONNECT_DEFAULT_SERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
+| `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
+| `CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS` | int | `30` | Default timeout in seconds for RPC calls when not specified |
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
 | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
+| `CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS` | int | `120` | Timeout in seconds for HTTP client requests to backend servi... |
+| `CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES` | int | `30` | Timeout in minutes after which inactive connections are clea... |
 | `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | `amqp://guest:guest@rabbitmq:5672` (insecure) | RabbitMQ connection string for client event subscriptions |
+| `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for pending messages awaiting acknowledgm... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
+| `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | int | `1` | Additional minutes added to reconnection window on each exte... |
 | `CONNECT_RECONNECTION_WINDOW_SECONDS` | int | `300` | Window for client reconnection after disconnect in seconds (... |
+| `CONNECT_RPC_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between pending RPC cleanup runs |
 | `CONNECT_SERVER_SALT` | string | `bannou-dev-connect-salt-change-in-production` | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
-| `CONNECT_URL` | string | **REQUIRED** | WebSocket URL for client reconnection. Defaults to wss://{BA... |
+
+### Contract
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | int | `15` | Staleness threshold in seconds for cached clause validation ... |
+| `CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS` | int | `7` | Default number of days for parties to consent before proposa... |
+| `CONTRACT_DEFAULT_ENFORCEMENT_MODE` | string | `event_only` | Default enforcement mode for contracts |
+| `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for idempotency key storage (default 24 hours... |
+| `CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Lock timeout in seconds for index update distributed locks |
+| `CONTRACT_LOCK_TIMEOUT_SECONDS` | int | `60` | Lock timeout in seconds for contract-level distributed locks |
+| `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | int | `100` | Maximum active contracts per entity (0 for unlimited) |
+| `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | int | `50` | Maximum number of milestones allowed in a template |
+| `CONTRACT_MAX_PARTIES_PER_CONTRACT` | int | `20` | Maximum number of parties allowed in a single contract |
+| `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | int | `10` | Maximum number of prebound APIs per milestone |
+| `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
+| `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
+
+### Currency
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CURRENCY_AUTOGAIN_BATCH_SIZE` | int | `1000` | For task mode - batch size per processing cycle |
+| `CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for autogain distributed locks |
+| `CURRENCY_AUTOGAIN_PROCESSING_MODE` | string | `lazy` | How autogain is calculated (lazy = on-demand at query time, ... |
+| `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | int | `60000` | For task mode - how often to process autogain in millisecond... |
+| `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before first autogain task cycle (allows se... |
+| `CURRENCY_BALANCE_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for balance cache entries |
+| `CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for balance-level distributed locks |
+| `CURRENCY_CONVERSION_ROUNDING_PRECISION` | int | `8` | Number of decimal places for currency conversion rounding |
+| `CURRENCY_DEFAULT_ALLOW_NEGATIVE` | bool | `false` | Default for currencies that do not specify allowNegative |
+| `CURRENCY_DEFAULT_PRECISION` | string | `decimal_2` | Default precision for currencies that do not specify |
+| `CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts for exchange rate update with optimis... |
+| `CURRENCY_HOLD_CACHE_TTL_SECONDS` | int | `120` | TTL in seconds for hold cache entries |
+| `CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for hold-level distributed locks |
+| `CURRENCY_HOLD_MAX_DURATION_DAYS` | int | `7` | Maximum duration for authorization holds in days |
+| `CURRENCY_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | How long to cache idempotency keys in seconds |
+| `CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for index update distributed locks |
+| `CURRENCY_TRANSACTION_RETENTION_DAYS` | int | `365` | How many days to retain detailed transaction history |
+| `CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for wallet-level distributed locks |
 
 ### Documentation
 
@@ -280,28 +378,50 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | **REQUIRED** | Model for generating embeddings (when AI enabled) |
 | `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | bool | `false` | Enable AI-powered semantic search (future feature) |
+| `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | int | `10` | Maximum documents processed per bulk operation |
 | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
 | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
 | `DOCUMENTATION_GIT_STORAGE_PATH` | string | `/tmp/bannou-git-repos` | Local path for cloned git repositories |
 | `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | int | `3` | Maximum concurrent sync operations |
 | `DOCUMENTATION_MAX_CONTENT_SIZE_BYTES` | int | `524288` | Maximum document content size in bytes (500KB default) |
 | `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | int | `1000` | Maximum documents per sync operation |
+| `DOCUMENTATION_MAX_FETCH_LIMIT` | int | `1000` | Maximum documents to fetch when filtering/sorting in memory |
 | `DOCUMENTATION_MAX_IMPORT_DOCUMENTS` | int | `0` | Maximum documents per import (0 = unlimited) |
+| `DOCUMENTATION_MAX_RELATED_DOCUMENTS` | int | `5` | Maximum related documents to return for standard depth |
+| `DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED` | int | `10` | Maximum related documents to return for extended depth |
 | `DOCUMENTATION_MAX_SEARCH_RESULTS` | int | `20` | Maximum search results to return |
 | `DOCUMENTATION_MIN_RELEVANCE_SCORE` | double | `0.3` | Default minimum relevance score for search results |
+| `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | int | `30` | Interval in seconds between repository sync opportunity chec... |
 | `DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS` | int | `300` | TTL for search result caching |
 | `DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP` | bool | `true` | Whether to rebuild search index on service startup |
-| `DOCUMENTATION_SESSION_TTL_SECONDS` | int | `86400` | TTL for informal session tracking (24 hours default) |
+| `DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before search index rebuild starts (allows ... |
+| `DOCUMENTATION_SEARCH_SNIPPET_LENGTH` | int | `200` | Length in characters for search result snippets |
+| `DOCUMENTATION_STATS_SAMPLE_SIZE` | int | `10` | Number of documents to sample for namespace statistics |
+| `DOCUMENTATION_SYNC_LOCK_TTL_SECONDS` | int | `1800` | TTL in seconds for repository sync distributed lock |
 | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | int | `5` | How often to check for repos needing sync |
 | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | bool | `true` | Enable background sync scheduler |
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
 | `DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH` | int | `200` | Maximum characters for voice summaries |
 
-### Game Service
+### Escrow
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `GAME_SERVICE_STATE_STORE_NAME` | string | `game-service-statestore` | State store name for game service data |
+| `ESCROW_DEFAULT_LIST_LIMIT` | int | `50` | Default limit for listing escrows when not specified |
+| `ESCROW_DEFAULT_TIMEOUT` | string | `P7D` | Default escrow expiration if not specified (ISO 8601 duratio... |
+| `ESCROW_EXPIRATION_BATCH_SIZE` | int | `100` | Batch size for expiration processing |
+| `ESCROW_EXPIRATION_CHECK_INTERVAL` | string | `PT1M` | How often to check for expired escrows (ISO 8601 duration) |
+| `ESCROW_EXPIRATION_GRACE_PERIOD` | string | `PT1H` | Grace period after expiration before auto-refund (ISO 8601 d... |
+| `ESCROW_IDEMPOTENCY_TTL_HOURS` | int | `24` | TTL in hours for idempotency key storage |
+| `ESCROW_MAX_ASSETS_PER_DEPOSIT` | int | `50` | Maximum asset lines per deposit |
+| `ESCROW_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency operations |
+| `ESCROW_MAX_PARTIES` | int | `10` | Maximum parties per escrow |
+| `ESCROW_MAX_PENDING_PER_PARTY` | int | `100` | Maximum concurrent pending escrows per party |
+| `ESCROW_MAX_TIMEOUT` | string | `P30D` | Maximum allowed escrow duration (ISO 8601 duration) |
+| `ESCROW_TOKEN_ALGORITHM` | string | `hmac_sha256` | Algorithm used for token generation |
+| `ESCROW_TOKEN_LENGTH` | int | `32` | Token length in bytes (before encoding) |
+| `ESCROW_TOKEN_SECRET` | string | **REQUIRED** | Token secret for HMAC (must be set in production) |
+| `ESCROW_VALIDATION_CHECK_INTERVAL` | string | `PT5M` | How often to validate held assets (ISO 8601 duration) |
 
 ### Game Session
 
@@ -311,31 +431,68 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | int | `10` | Delay before cleanup service starts (allows other services t... |
 | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
 | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
-| `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
+| `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `0` | Default session timeout in seconds (0 = no timeout) |
+| `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | bool | `false` | When true AND "generic" is in SupportedGameServices, auto-pu... |
+| `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for distributed session locks |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
 | `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
-| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `arcadia,generic` | Comma-separated list of supported game service stub names |
+| `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for optimistic concurrency on subscri... |
+| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `generic` | Comma-separated list of supported game service stub names (e... |
+
+### Inventory
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `INVENTORY_CONTAINER_CACHE_TTL_SECONDS` | int | `300` | TTL for container cache entries |
+| `INVENTORY_DEFAULT_MAX_NESTING_DEPTH` | int | `3` | Default maximum nesting depth for containers |
+| `INVENTORY_DEFAULT_MAX_SLOTS` | int | `20` | Default max slots for new slot-based containers |
+| `INVENTORY_DEFAULT_MAX_WEIGHT` | double | `100.0` | Default max weight for new weight-based containers |
+| `INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION` | string | `self_plus_contents` | Default weight contribution mode for containers |
+| `INVENTORY_ENABLE_LAZY_CONTAINER_CREATION` | bool | `true` | Whether to enable lazy container creation for characters |
+| `INVENTORY_LIST_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout for owner/type index list modification locks (shorte... |
+| `INVENTORY_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout for container modification locks |
+| `INVENTORY_MAX_COUNT_QUERY_LIMIT` | int | `10000` | Maximum items to scan when counting items across containers |
+| `INVENTORY_QUERY_PAGE_SIZE` | int | `200` | Number of items to fetch per query page for inventory operat... |
+
+### Item
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `ITEM_BINDING_ALLOW_ADMIN_OVERRIDE` | bool | `true` | Whether admins can unbind soulbound items |
+| `ITEM_DEFAULT_MAX_STACK_SIZE` | int | `99` | Default max stack size for new templates when not specified |
+| `ITEM_DEFAULT_RARITY` | string | `common` | Default rarity for new templates when not specified |
+| `ITEM_DEFAULT_SOULBOUND_TYPE` | string | `none` | Default soulbound type for new templates |
+| `ITEM_DEFAULT_WEIGHT_PRECISION` | string | `decimal_2` | Default weight precision for new templates |
+| `ITEM_INSTANCE_CACHE_TTL_SECONDS` | int | `900` | TTL for instance cache entries in seconds (15 minutes for ac... |
+| `ITEM_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency on list op... |
+| `ITEM_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on item instance mo... |
+| `ITEM_MAX_INSTANCES_PER_QUERY` | int | `1000` | Maximum item instances returned in a single query |
+| `ITEM_TEMPLATE_CACHE_TTL_SECONDS` | int | `3600` | TTL for template cache entries in seconds (templates change ... |
 
 ### Leaderboard
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | bool | `true` | Automatically archive leaderboard data when season ends |
-| `LEADERBOARD_DEFINITION_STORE_NAME` | string | `leaderboard-definition` | Name of the state store for leaderboard definitions (MySQL r... |
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
-| `LEADERBOARD_RANKING_STORE_NAME` | string | `leaderboard-ranking` | Name of the state store for rankings (Redis required for sor... |
-| `LEADERBOARD_RANK_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for cached rank queries |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
-| `LEADERBOARD_SEASON_STORE_NAME` | string | `leaderboard-season` | Name of the state store for season data (MySQL recommended) |
+
+### Location
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | int | `10` | Default max depth when listing descendants if not specified ... |
+| `LOCATION_MAX_ANCESTOR_DEPTH` | int | `20` | Maximum depth to traverse when walking ancestor chain (preve... |
+| `LOCATION_MAX_DESCENDANT_DEPTH` | int | `20` | Safety limit for descendant traversal and circular reference... |
 
 ### Mapping
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS` | int | `60` | Default TTL for cached affordance query results |
+| `MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS` | double | `1.0` | Distance tolerance in world units for position exclusion mat... |
 | `MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds after missed heartbeat before author... |
-| `MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended heartbeat interval for authorities (for client g... |
 | `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
 | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
 | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | int | `100` | Window in milliseconds for batching rapid updates into singl... |
@@ -344,6 +501,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | int | `1800` | Maximum duration for authoring checkout locks |
 | `MAPPING_MAX_OBJECTS_PER_QUERY` | int | `5000` | Maximum objects returned in a single query |
 | `MAPPING_MAX_PAYLOADS_PER_PUBLISH` | int | `100` | Maximum payloads in single publish or ingest event |
+| `MAPPING_MAX_SPATIAL_QUERY_RESULTS` | int | `5` | Maximum results returned for spatial queries (bounding box, ... |
 | `MAPPING_SPATIAL_CELL_SIZE` | double | `64.0` | Size of spatial index cells in world units (default 64) |
 | `MAPPING_TTL_COMBAT_EFFECTS` | int | `30` | TTL for combat effects layer data (very short-lived, ephemer... |
 | `MAPPING_TTL_DYNAMIC_OBJECTS` | int | `3600` | TTL for dynamic objects layer data |
@@ -382,20 +540,25 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_CIRCUIT_BREAKER_ENABLED` | bool | `true` | Whether to enable circuit breaker for failed endpoints |
 | `MESH_CIRCUIT_BREAKER_RESET_SECONDS` | int | `30` | Seconds before attempting to close circuit |
 | `MESH_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before opening circuit |
-| `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm (RoundRobin, LeastConnectio... |
+| `MESH_CONNECT_TIMEOUT_SECONDS` | int | `10` | TCP connection timeout in seconds |
+| `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm |
+| `MESH_DEFAULT_MAX_CONNECTIONS` | int | `1000` | Default max connections for auto-registered endpoints when h... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
-| `MESH_ENABLE_DETAILED_LOGGING` | bool | `false` | Whether to log detailed routing decisions |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
+| `MESH_ENDPOINT_CACHE_TTL_SECONDS` | int | `5` | TTL in seconds for cached service endpoints |
 | `MESH_ENDPOINT_HOST` | string | **REQUIRED** | Hostname/IP for mesh endpoint registration. Defaults to app-... |
 | `MESH_ENDPOINT_PORT` | int | `80` | Port for mesh endpoint registration. |
 | `MESH_ENDPOINT_TTL_SECONDS` | int | `90` | TTL for endpoint registration (should be > 2x heartbeat inte... |
 | `MESH_HEALTH_CHECK_ENABLED` | bool | `false` | Whether to perform active health checks on endpoints |
 | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | int | `60` | Interval between active health checks |
+| `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
 | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | int | `5` | Timeout for health check requests |
 | `MESH_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended interval between heartbeats |
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
-| `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
+| `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | int | `10` | Maximum service mappings shown in diagnostic logs |
+| `MESH_MAX_TOP_ENDPOINTS_RETURNED` | int | `2` | Maximum top endpoints returned in health status queries |
+| `MESH_POOLED_CONNECTION_LIFETIME_MINUTES` | int | `2` | How long to keep pooled HTTP connections alive in minutes |
 | `MESH_RETRY_DELAY_MILLISECONDS` | int | `100` | Initial delay between retries (doubles on each retry) |
 | `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of lib-state. All calls route... |
 
@@ -407,7 +570,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for HTTP callback delivery (network f... |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
-| `MESSAGING_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for establishing RabbitMQ connection |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
 | `MESSAGING_DEFAULT_AUTO_ACK` | bool | `false` | Default auto-acknowledge setting for subscriptions |
 | `MESSAGING_DEFAULT_EXCHANGE` | string | `bannou` | Default exchange name for publishing |
@@ -415,20 +577,29 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_ENABLE_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability |
 | `MESSAGING_ENABLE_METRICS` | bool | `true` | Enable message bus metrics collection |
 | `MESSAGING_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for messages |
+| `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | int | `86400` | TTL in seconds for external HTTP callback subscriptions (def... |
 | `MESSAGING_RABBITMQ_HOST` | string | `rabbitmq` | RabbitMQ server hostname |
+| `MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS` | int | `10` | Interval in seconds between RabbitMQ connection recovery att... |
 | `MESSAGING_RABBITMQ_PASSWORD` | string | `guest` (insecure) | RabbitMQ password |
 | `MESSAGING_RABBITMQ_PORT` | int | `5672` | RabbitMQ server port |
 | `MESSAGING_RABBITMQ_USERNAME` | string | `guest` (insecure) | RabbitMQ username |
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
-| `MESSAGING_REQUEST_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for individual message operations |
 | `MESSAGING_RETRY_BUFFER_ENABLED` | bool | `true` | Enable retry buffer for failed event publishes |
 | `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | int | `5` | Interval between retry attempts for buffered messages |
 | `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `300` | Maximum age of buffered messages before node crash (prevents... |
 | `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `10000` | Maximum number of messages in retry buffer before node crash |
 | `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds |
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering |
+| `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | int | `2` | Delay in seconds before starting subscription recovery servi... |
+| `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | int | `6` | Interval in hours between subscription TTL refresh operation... |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
 | `MESSAGING_USE_MASSTRANSIT` | bool | `true` | Use MassTransit wrapper (true) or direct RabbitMQ.Client (fa... |
+
+### Music
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `MUSIC_COMPOSITION_CACHE_TTL_SECONDS` | int | `86400` | TTL in seconds for cached deterministic compositions |
 
 ### Orchestrator
 
@@ -436,21 +607,30 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ORCHESTRATOR_CACHE_TTL_MINUTES` | int | `5` | Cache TTL in minutes for orchestrator data |
 | `ORCHESTRATOR_CERTIFICATES_HOST_PATH` | string | `/app/provisioning/certificates` | Host path for TLS certificates |
+| `ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS` | int | `30` | TTL in days for configuration history entries in state store |
+| `ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS` | int | `2` | Interval in seconds for polling container status during depl... |
 | `ORCHESTRATOR_DEFAULT_BACKEND` | string | `compose` | Default container orchestration backend when not specified i... |
+| `ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS` | int | `30` | Default seconds to wait before killing a container during st... |
 | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | int | `5` | Time in minutes before a service is marked as degraded |
 | `ORCHESTRATOR_DOCKER_HOST` | string | `unix:///var/run/docker.sock` | Docker host for direct Docker API access |
+| `ORCHESTRATOR_DOCKER_IMAGE_NAME` | string | `bannou:latest` | Docker image name for deployed Bannou containers |
 | `ORCHESTRATOR_DOCKER_NETWORK` | string | `bannou_default` | Docker network name for deployed containers |
+| `ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS` | int | `2000` | Interval in milliseconds between health checks during restar... |
 | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Service heartbeat timeout in seconds |
+| `ORCHESTRATOR_HEARTBEAT_TTL_SECONDS` | int | `90` | TTL in seconds for service heartbeat entries in state store |
 | `ORCHESTRATOR_KUBECONFIG_PATH` | string | **REQUIRED** | Path to kubeconfig file (null uses default ~/.kube/config) |
 | `ORCHESTRATOR_KUBERNETES_NAMESPACE` | string | `default` | Kubernetes namespace for deployments |
 | `ORCHESTRATOR_LOGS_VOLUME` | string | `logs-data` | Docker volume name for logs |
 | `ORCHESTRATOR_OPENRESTY_HOST` | string | `openresty` | OpenResty hostname for cache invalidation calls |
 | `ORCHESTRATOR_OPENRESTY_PORT` | int | `80` | OpenResty port for cache invalidation calls |
+| `ORCHESTRATOR_OPENRESTY_REQUEST_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for OpenResty HTTP requests |
 | `ORCHESTRATOR_PORTAINER_API_KEY` | string | **REQUIRED** | Portainer API key |
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
 | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
+| `ORCHESTRATOR_RESTART_TIMEOUT_SECONDS` | int | `120` | Default timeout in seconds for container restart operations |
+| `ORCHESTRATOR_ROUTING_TTL_SECONDS` | int | `300` | TTL in seconds for service routing entries in state store |
 | `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
 ### Permission
@@ -461,11 +641,18 @@ This document lists all configuration options defined in Bannou's configuration 
 | `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
 | `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
 
+### Relationship Type
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | int | `20` | Maximum depth for hierarchy traversal to prevent infinite lo... |
+| `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | int | `100` | Maximum number of individual migration error details to trac... |
+| `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
+
 ### Save Load
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SAVE-LOAD_DEFAULTCOMPRESSIONBYCATEGORY` | object | **REQUIRED** | Default compression per category. Overrides DefaultCompressi... |
 | `SAVE_LOAD_ASSET_BUCKET` | string | `game-saves` | MinIO bucket for save assets |
 | `SAVE_LOAD_ASYNC_UPLOAD_ENABLED` | bool | `true` | Queue uploads to MinIO/S3 instead of synchronous write. Save... |
 | `SAVE_LOAD_AUTO_COLLAPSE_ENABLED` | bool | `true` | Automatically collapse delta chains during cleanup |
@@ -473,10 +660,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_BROTLI_COMPRESSION_LEVEL` | int | `6` | Brotli compression level (0-11, higher = better compression,... |
 | `SAVE_LOAD_CLEANUP_CONTROL_PLANE_ONLY` | bool | `true` | Run scheduled cleanup only on control plane instance (Effect... |
 | `SAVE_LOAD_CLEANUP_INTERVAL_MINUTES` | int | `60` | Interval for automatic cleanup task |
+| `SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before cleanup service starts processing |
 | `SAVE_LOAD_CONFLICT_DETECTION_ENABLED` | bool | `true` | Enable device-based conflict detection for cloud saves. Requ... |
 | `SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES` | int | `5` | Time window for considering saves as potentially conflicting... |
-| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `GZIP` | Default compression algorithm (NONE, GZIP, BROTLI) |
-| `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JSON_PATCH` | Default algorithm for delta computation (JSON_PATCH, BSDIFF,... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY` | string | **REQUIRED** | Default compression per category as comma-separated KEY=VALU... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `GZIP` | Default compression algorithm |
+| `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JSON_PATCH` | Default algorithm for delta computation |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE` | int | `5` | Default max versions for AUTO_SAVE category |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_CHECKPOINT` | int | `20` | Default max versions for CHECKPOINT category |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_MANUAL_SAVE` | int | `10` | Default max versions for MANUAL_SAVE category |
@@ -485,7 +674,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_DELTA_SAVES_ENABLED` | bool | `true` | Enable delta/incremental save support |
 | `SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT` | int | `50` | If delta is larger than this percent of full save, store as ... |
 | `SAVE_LOAD_GZIP_COMPRESSION_LEVEL` | int | `6` | GZIP compression level (1-9, higher = better compression, sl... |
-| `SAVE_LOAD_HOT_CACHE_STORE_NAME` | string | `save-load-cache` | State store name for hot save cache (Redis backend) |
 | `SAVE_LOAD_HOT_CACHE_TTL_MINUTES` | int | `60` | TTL for hot cache entries in minutes |
 | `SAVE_LOAD_MAX_CONCURRENT_UPLOADS` | int | `10` | Maximum concurrent uploads to storage backend (semaphore). P... |
 | `SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH` | int | `10` | Maximum number of deltas before forcing collapse. Longer cha... |
@@ -495,23 +683,19 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER` | int | `1073741824` | Maximum total storage per owner (default 1GB) |
 | `SAVE_LOAD_MIGRATIONS_ENABLED` | bool | `true` | Enable/disable schema migrations entirely |
 | `SAVE_LOAD_MIGRATION_MAX_PATCH_OPERATIONS` | int | `1000` | Maximum JSON Patch operations per migration (safety limit) |
-| `SAVE_LOAD_PENDING_UPLOAD_STORE_NAME` | string | `save-load-pending` | Redis store for pending uploads awaiting async processing |
+| `SAVE_LOAD_MIN_BASE_SIZE_FOR_DELTA_THRESHOLD_BYTES` | int | `1024` | Minimum base save size in bytes before applying delta thresh... |
 | `SAVE_LOAD_PENDING_UPLOAD_TTL_MINUTES` | int | `60` | TTL for pending uploads in Redis. If upload fails repeatedly... |
-| `SAVE_LOAD_SCHEMA_STORE_NAME` | string | `save-load-schemas` | State store name for registered schemas |
 | `SAVE_LOAD_SESSION_CLEANUP_GRACE_PERIOD_MINUTES` | int | `5` | Grace period before cleaning up SESSION-owned saves after se... |
-| `SAVE_LOAD_SLOT_METADATA_STORE_NAME` | string | `save-load-slots` | State store name for slot metadata (MySQL backend) |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_ENABLED` | bool | `true` | Enable circuit breaker for storage backend (MinIO/S3). When ... |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS` | int | `2` | Successful uploads needed in half-open state to close circui... |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS` | int | `30` | Seconds before attempting to close circuit (half-open state) |
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before circuit opens |
 | `SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS` | string | `image/jpeg,image/webp,image/png` | Comma-separated list of allowed thumbnail MIME types |
 | `SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES` | int | `262144` | Maximum thumbnail size in bytes (default 256KB) |
-| `SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES` | int | `60` | TTL for thumbnail pre-signed URLs |
 | `SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS` | int | `100` | Interval between upload batch processing cycles |
 | `SAVE_LOAD_UPLOAD_BATCH_SIZE` | int | `5` | Number of pending uploads to process per batch cycle |
 | `SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed uploads before giving up |
 | `SAVE_LOAD_UPLOAD_RETRY_DELAY_MS` | int | `1000` | Base delay between retry attempts (exponential backoff appli... |
-| `SAVE_LOAD_VERSION_MANIFEST_STORE_NAME` | string | `save-load-versions` | State store name for version manifests (MySQL backend) |
 
 ### Scene
 
@@ -519,28 +703,30 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `SCENE_ASSET_BUCKET` | string | `scenes` | lib-asset bucket for storing scene documents |
 | `SCENE_ASSET_CONTENT_TYPE` | string | `application/x-bannou-scene+yaml` | Content type for scene assets (YAML format) |
-| `SCENE_CHECKOUT_EXPIRATION_CHECK_INTERVAL_SECONDS` | int | `60` | Interval for background checkout expiration detection |
-| `SCENE_CHECKOUT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Expected heartbeat interval for checkout locks |
+| `SCENE_CHECKOUT_TTL_BUFFER_MINUTES` | int | `5` | Buffer time added to checkout TTL for state store expiry (gr... |
 | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
 | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
-| `SCENE_DEFAULT_VERSION_RETENTION_COUNT` | int | `3` | Default number of versions to retain per scene |
 | `SCENE_MAX_CHECKOUT_EXTENSIONS` | int | `10` | Maximum number of times a checkout can be extended |
 | `SCENE_MAX_LIST_RESULTS` | int | `200` | Maximum results returned in a single list query |
 | `SCENE_MAX_NODE_COUNT` | int | `10000` | Maximum nodes allowed in a single scene |
 | `SCENE_MAX_REFERENCE_DEPTH_LIMIT` | int | `10` | Hard limit on reference depth that cannot be exceeded by req... |
-| `SCENE_MAX_SCENE_SIZE_BYTES` | int | `10485760` | Maximum scene document size in bytes (default 10MB) |
 | `SCENE_MAX_SEARCH_RESULTS` | int | `100` | Maximum results returned in a single search query |
 | `SCENE_MAX_TAGS_PER_NODE` | int | `20` | Maximum tags allowed per node |
 | `SCENE_MAX_TAGS_PER_SCENE` | int | `50` | Maximum tags allowed per scene |
 | `SCENE_MAX_VERSION_RETENTION_COUNT` | int | `100` | Maximum versions that can be retained (configurable per game... |
+
+### Species
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `SPECIES_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
 
 ### State
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
-| `STATE_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of connection retry attempts |
-| `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations (strong or ev... |
+| `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations |
 | `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
 | `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
@@ -552,19 +738,24 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `SUBSCRIPTION_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
-| `SUBSCRIPTION_STATE_STORE_NAME` | string | `subscription-statestore` | State store name for subscription |
+| `SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES` | int | `5` | Interval in minutes between subscription expiration checks |
+| `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds before expired subscriptions are mar... |
+| `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before background service starts processing |
 
 ### Voice
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `VOICE_KAMAILIO_HOST` | string | `localhost` | Kamailio SIP server host |
+| `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for Kamailio service requests |
 | `VOICE_KAMAILIO_RPC_PORT` | int | `5080` | Kamailio JSON-RPC port (typically 5080, not SIP port 5060) |
+| `VOICE_KAMAILIO_SIP_PORT` | int | `5060` | Kamailio SIP signaling port for client registration |
 | `VOICE_P2P_MAX_PARTICIPANTS` | int | `8` | Maximum participants in P2P voice sessions |
 | `VOICE_RTPENGINE_HOST` | string | `localhost` | RTPEngine media relay host |
 | `VOICE_RTPENGINE_PORT` | int | `22222` | RTPEngine control port |
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
+| `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | int | `24` | Hours until SIP credentials expire (clients should re-authen... |
 | `VOICE_SIP_DOMAIN` | string | `voice.bannou.local` | SIP domain for voice communication |
 | `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation. Required only when ScaledT... |
 | `VOICE_STUN_SERVERS` | string | `stun:stun.l.google.com:19302` | Comma-separated list of STUN server URLs for WebRTC |
@@ -573,9 +764,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 439
+- **Total properties**: 585
 - **Required (no default)**: 39
-- **Optional (has default)**: 400
+- **Optional (has default)**: 546
 
 ## Environment Variable Naming Convention
 

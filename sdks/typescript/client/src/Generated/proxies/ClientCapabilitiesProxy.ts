@@ -39,6 +39,6 @@ export class ClientCapabilitiesProxy {
     return this.client.invokeAsync<
       Schemas['GetClientCapabilitiesRequest'],
       Schemas['ClientCapabilitiesResponse']
-    >('POST', '/client-capabilities', request, channel, timeout);
+    >('/client-capabilities', request, channel, timeout);
   }
 }

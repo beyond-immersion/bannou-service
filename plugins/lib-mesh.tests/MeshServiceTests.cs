@@ -140,7 +140,7 @@ public class MeshServiceTests
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -957,6 +957,7 @@ public class MeshInvocationClientTests : IDisposable
     {
         _client = new MeshInvocationClient(
             _mockStateManager.Object,
+            new MeshServiceConfiguration(),
             _mockLogger.Object);
         return _client;
     }

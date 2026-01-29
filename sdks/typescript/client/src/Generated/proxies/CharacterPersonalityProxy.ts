@@ -39,7 +39,7 @@ export class CharacterPersonalityProxy {
     return this.client.invokeAsync<
       Schemas['GetPersonalityRequest'],
       Schemas['PersonalityResponse']
-    >('POST', '/character-personality/get', request, channel, timeout);
+    >('/character-personality/get', request, channel, timeout);
   }
 
   /**
@@ -57,6 +57,6 @@ export class CharacterPersonalityProxy {
     return this.client.invokeAsync<
       Schemas['GetCombatPreferencesRequest'],
       Schemas['CombatPreferencesResponse']
-    >('POST', '/character-personality/get-combat', request, channel, timeout);
+    >('/character-personality/get-combat', request, channel, timeout);
   }
 }

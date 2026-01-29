@@ -55,10 +55,9 @@ public class ActorLocalMemoryStoreTests
         _mockLogger = new Mock<ILogger<ActorLocalMemoryStore>>();
         _configuration = new BehaviorServiceConfiguration();
 
-        // Use configuration's default MemoryStatestoreName ("agent-memories")
-        _mockFactory.Setup(f => f.GetStore<Memory>(_configuration.MemoryStatestoreName))
+        _mockFactory.Setup(f => f.GetStore<Memory>(StateStoreDefinitions.AgentMemories))
             .Returns(_mockMemoryStore.Object);
-        _mockFactory.Setup(f => f.GetStore<List<string>>(_configuration.MemoryStatestoreName))
+        _mockFactory.Setup(f => f.GetStore<List<string>>(StateStoreDefinitions.AgentMemories))
             .Returns(_mockIndexStore.Object);
 
         _memoryStore = new ActorLocalMemoryStore(_mockFactory.Object, _configuration, _mockLogger.Object);

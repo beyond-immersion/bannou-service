@@ -66,7 +66,6 @@ This document lists all events defined in Bannou's event schemas.
 | `AssetReadyEvent` | Custom | `asset-ready` | Event published when an asset is fully processed a... |
 | `AssetUploadCompletedEvent` | Custom | `asset-upload-completed` | Event published when an upload is completed and fi... |
 | `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
 | `BundleDeletedEvent` | Lifecycle (Deleted) | `bundle.deleted` | Event published when a bundle is soft-deleted or p... |
 | `BundleRestoredEvent` | Custom | `bundle-restored` | Event published when a soft-deleted bundle is rest... |
@@ -96,7 +95,6 @@ This document lists all events defined in Bannou's event schemas.
 | `AuthPasswordResetSuccessfulEvent` | Custom | `auth-password-reset-successful` | Published when a password reset is successfully co... |
 | `AuthRegistrationSuccessfulEvent` | Custom | `auth-registration-successful` | Published when a new user successfully registers |
 | `AuthSteamLoginSuccessfulEvent` | Custom | `auth-steam-login-successful` | Published when a user authenticates via Steam |
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
@@ -109,6 +107,12 @@ This document lists all events defined in Bannou's event schemas.
 | `BehaviorCompilationFailedEvent` | Custom | `behavior-compilation-failed` | Event published when ABML compilation fails. Used ... |
 | `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
 | `GoapPlanGeneratedEvent` | Custom | `goap-plan-generated` | Event published when the GOAP planner generates a ... |
+
+### Character
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CharacterCompressedEvent` | Custom | `character-compressed` | Published when a character is compressed to archiv... |
 
 ### Character Encounter
 
@@ -157,6 +161,45 @@ This document lists all events defined in Bannou's event schemas.
 | `SystemErrorEvent` | Error | `system.error` | Generic error notification sent to client. |
 | `SystemNotificationEvent` | Custom | `system-notification` | Generic notification event for system-level messag... |
 
+### Contract
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ContractAcceptedEvent` | Custom | `contract-accepted` | Event published when all required parties consent |
+| `ContractActivatedEvent` | Custom | `contract-activated` | Event published when contract becomes active |
+| `ContractBreachCuredEvent` | Custom | `contract-breach-cured` | Event published when a breach is cured |
+| `ContractBreachDetectedEvent` | Custom | `contract-breach-detected` | Event published when a breach is recorded |
+| `ContractConsentReceivedEvent` | Custom | `contract-consent-received` | Event published when one party consents |
+| `ContractExpiredEvent` | Expiration | `contract.expired` | Event published when contract reaches natural expi... |
+| `ContractFulfilledEvent` | Custom | `contract-fulfilled` | Event published when all required milestones compl... |
+| `ContractMilestoneCompletedEvent` | Custom | `contract-milestone-completed` | Event published when a milestone is completed |
+| `ContractMilestoneFailedEvent` | Custom | `contract-milestone-failed` | Event published when a milestone fails |
+| `ContractPreboundApiExecutedEvent` | Custom | `contract-prebound-api-executed` | Event published when a prebound API is executed |
+| `ContractPreboundApiFailedEvent` | Custom | `contract-prebound-api-failed` | Event published when a prebound API call fails |
+| `ContractPreboundApiValidationFailedEvent` | Custom | `contract-prebound-api-validation-failed` | Event published when a prebound API response fails... |
+| `ContractProposedEvent` | Custom | `contract-proposed` | Event published when a contract is proposed to par... |
+| `ContractTerminatedEvent` | Custom | `contract-terminated` | Event published when contract is terminated early |
+
+### Currency
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CurrencyAutogainCalculatedEvent` | Custom | `currency-autogain-calculated` | Event published when autogain is calculated for a ... |
+| `CurrencyCreditedEvent` | Custom | `currency-credited` | Event published when currency is credited to a wal... |
+| `CurrencyDebitedEvent` | Custom | `currency-debited` | Event published when currency is debited from a wa... |
+| `CurrencyEarnCapReachedEvent` | Custom | `currency-earn-cap-reached` | Event published when a credit is limited by earn c... |
+| `CurrencyExchangeRateUpdatedEvent` | Lifecycle (Updated) | `currency-exchange-rate.updated` | Event published when a currency exchange rate is u... |
+| `CurrencyExpiredEvent` | Expiration | `currency.expired` | Event published when currency expires |
+| `CurrencyHoldCapturedEvent` | Custom | `currency-hold-captured` | Event published when a hold is captured |
+| `CurrencyHoldCreatedEvent` | Lifecycle (Created) | `currency-hold.created` | Event published when an authorization hold is crea... |
+| `CurrencyHoldExpiredEvent` | Expiration | `currency-hold.expired` | Event published when a hold expires (auto-release) |
+| `CurrencyHoldReleasedEvent` | Custom | `currency-hold-released` | Event published when a hold is released |
+| `CurrencyTransferredEvent` | Custom | `currency-transferred` | Event published when currency is transferred betwe... |
+| `CurrencyWalletCapReachedEvent` | Custom | `currency-wallet-cap-reached` | Event published when a credit hits the wallet cap |
+| `CurrencyWalletClosedEvent` | Custom | `currency-wallet-closed` | Event published when a wallet is permanently close... |
+| `CurrencyWalletFrozenEvent` | Custom | `currency-wallet-frozen` | Event published when a wallet is frozen |
+| `CurrencyWalletUnfrozenEvent` | Custom | `currency-wallet-unfrozen` | Event published when a wallet is unfrozen |
+
 ### Documentation
 
 | Event | Type | Likely Topic | Description |
@@ -168,6 +211,24 @@ This document lists all events defined in Bannou's event schemas.
 | `DocumentationSearchedEvent` | Custom | `documentation-searched` | Published when documentation is searched with keyw... |
 | `DocumentationSyncCompletedEvent` | Custom | `documentation-sync-completed` | Published when a repository sync completes |
 | `DocumentationSyncStartedEvent` | Custom | `documentation-sync-started` | Published when a repository sync starts |
+
+### Escrow
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `EscrowCancelledEvent` | Custom | `escrow-cancelled` | Event published when escrow is cancelled |
+| `EscrowConsentReceivedEvent` | Custom | `escrow-consent-received` | Event published when a party consents |
+| `EscrowCreatedEvent` | Lifecycle (Created) | `escrow.created` | Event published when a new escrow agreement is cre... |
+| `EscrowDepositReceivedEvent` | Custom | `escrow-deposit-received` | Event published when a deposit is received |
+| `EscrowDisputedEvent` | Custom | `escrow-disputed` | Event published when a party raises a dispute |
+| `EscrowExpiredEvent` | Expiration | `escrow.expired` | Event published when escrow times out |
+| `EscrowFinalizingEvent` | Custom | `escrow-finalizing` | Event published when finalization begins |
+| `EscrowFundedEvent` | Custom | `escrow-funded` | Event published when all expected deposits are rec... |
+| `EscrowRefundedEvent` | Custom | `escrow-refunded` | Event published when assets are refunded |
+| `EscrowReleasedEvent` | Custom | `escrow-released` | Event published when assets are released |
+| `EscrowResolvedEvent` | Custom | `escrow-resolved` | Event published when an arbiter resolves a dispute |
+| `EscrowValidationFailedEvent` | Custom | `escrow-validation-failed` | Event published when validation detects asset chan... |
+| `EscrowValidationReaffirmedEvent` | Custom | `escrow-validation-reaffirmed` | Event published when a party reaffirms after valid... |
 
 ### Game Session
 
@@ -188,6 +249,28 @@ This document lists all events defined in Bannou's event schemas.
 | `PlayerKickedEvent` | Custom | `player-kicked` | Sent to all session participants when a player is ... |
 | `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
 | `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
+
+### Inventory
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `InventoryContainerFullEvent` | Custom | `inventory-container-full` | Event when container reaches capacity |
+| `InventoryItemMovedEvent` | Custom | `inventory-item-moved` | Event when an item moves between slots or containe... |
+| `InventoryItemPlacedEvent` | Custom | `inventory-item-placed` | Event when an item is placed in a container |
+| `InventoryItemRemovedEvent` | Custom | `inventory-item-removed` | Event when an item is removed from a container |
+| `InventoryItemSplitEvent` | Custom | `inventory-item-split` | Event when a stack is split |
+| `InventoryItemStackedEvent` | Custom | `inventory-item-stacked` | Event when items are stacked together |
+| `InventoryItemTransferredEvent` | Custom | `inventory-item-transferred` | Event when item ownership transfers |
+
+### Item
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ItemInstanceBoundEvent` | Custom | `item-instance-bound` | Event published when an item is bound to a charact... |
+| `ItemInstanceDestroyedEvent` | Custom | `item-instance-destroyed` | Event published when an item instance is permanent... |
+| `ItemInstanceModifiedEvent` | Custom | `item-instance-modified` | Event published when an item instance is modified ... |
+| `ItemInstanceUnboundEvent` | Custom | `item-instance-unbound` | Event published when an item binding is removed (a... |
+| `ItemTemplateDeprecatedEvent` | Custom | `item-template-deprecated` | Event published when an item template is deprecate... |
 
 ### Leaderboard
 
@@ -242,28 +325,19 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
-
-### Messaging
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Orchestrator
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
 
 ### Permission
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
 ### Realm History
@@ -297,7 +371,6 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` | Base type for all service events |
 | `EventQuaternion` | Custom | `event-quaternion` | Quaternion for events |
 | `EventTransform` | Custom | `event-transform` | Transform for event payloads |
 | `EventVector3` | Custom | `event-vector3` | 3D vector for events |
@@ -314,27 +387,13 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SpeciesMergedEvent` | Custom | `species-merged` | Published when two species are merged, with the so... |
-
-### State
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Subscription
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
-
-### Voice
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Voice (client)
 

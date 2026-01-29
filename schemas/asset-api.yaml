@@ -20,7 +20,7 @@ info:
     - Asset search by type, tags, realm
     - Processing pipeline for textures, models, audio, behaviors
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
 
 servers:
 - url: http://localhost:5012
@@ -707,14 +707,12 @@ components:
       - other
       description: Type classification for assets
 
-    Realm:
+    GameRealm:
       type: string
-      enum:
-      - omega
-      - arcadia
-      - fantasia
-      - shared
-      description: Game realm the asset belongs to
+      description: |
+        Realm stub name (lowercase string identifier) that this asset belongs to.
+        Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
+        Use "shared" for assets that are available across all realms.
 
     ProcessingStatus:
       type: string
@@ -908,7 +906,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         tags:
           type: array
@@ -955,7 +953,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         tags:
           type: array
@@ -1175,7 +1173,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Filter by asset type
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Filter by game realm
         contentType:
           type: string
@@ -1237,14 +1235,14 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         version:
           type: string
           default: 1.0.0
           description: Bundle version string
         realm:
           allOf:
-          - $ref: '#/components/schemas/Realm'
+          - $ref: '#/components/schemas/GameRealm'
           nullable: true
           description: |
             Game realm this bundle belongs to.
@@ -1275,7 +1273,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         status:
           type: string
           enum:
@@ -1298,7 +1296,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier to retrieve
+          description: Human-readable bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
           description: Desired download format (bannou or zip)
@@ -1320,7 +1318,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         version:
           type: string
           description: Bundle version string
@@ -1386,7 +1384,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier from the manifest
+          description: Human-readable bundle identifier from the manifest
         version:
           type: string
           description: Bundle version from the manifest
@@ -1469,15 +1467,15 @@ components:
       properties:
         metabundleId:
           type: string
-          description: Unique identifier for the new metabundle
+          description: Human-readable identifier for the new metabundle (e.g., "game-assets-v1")
         sourceBundleIds:
           type: array
           items:
             type: string
           nullable: true
           description: |
-            Source bundle IDs to pull assets from. Can cherry-pick specific
-            assets using assetFilter, or include all if assetFilter is null.
+            Human-readable source bundle IDs (e.g., "synty/polygon-adventure") to pull assets from.
+            Can cherry-pick specific assets using assetFilter, or include all if assetFilter is null.
         standaloneAssetIds:
           type: array
           items:
@@ -1498,7 +1496,7 @@ components:
             For user-initiated: the accountId (UUID format).
             For service-initiated: the service name.
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm for this metabundle
         description:
           type: string
@@ -1534,7 +1532,7 @@ components:
       properties:
         metabundleId:
           type: string
-          description: Metabundle identifier
+          description: Human-readable metabundle identifier
         jobId:
           type: string
           format: uuid
@@ -1617,7 +1615,7 @@ components:
           description: Job identifier
         metabundleId:
           type: string
-          description: Metabundle identifier being created
+          description: Human-readable metabundle identifier being created
         status:
           type: string
           enum:
@@ -1747,7 +1745,7 @@ components:
             type: string
           description: Platform asset IDs to resolve
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm to search within
         preferMetabundles:
           type: boolean
@@ -1805,7 +1803,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
           description: Whether source or metabundle
@@ -1905,7 +1903,7 @@ components:
           type: string
           description: Platform asset ID to search for
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm to search within
         bundleType:
           allOf:
@@ -1963,7 +1961,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
           description: Source or metabundle
@@ -1979,7 +1977,7 @@ components:
           nullable: true
           description: Bundle file size
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm
         createdAt:
           type: string
@@ -2073,7 +2071,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         bundleType:
           $ref: '#/components/schemas/BundleType'
           description: Whether source or metabundle
@@ -2096,7 +2094,7 @@ components:
           nullable: true
           description: Owner account ID or service name (null for system-owned bundles)
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm this bundle belongs to
         tags:
           type: object
@@ -2139,7 +2137,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier to update
+          description: Human-readable bundle identifier to update
         name:
           type: string
           nullable: true
@@ -2183,7 +2181,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Updated bundle identifier
+          description: Human-readable bundle identifier that was updated
         version:
           type: integer
           description: New version number after update
@@ -2209,7 +2207,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier to delete
+          description: Human-readable bundle identifier to delete
         permanent:
           type: boolean
           default: false
@@ -2230,7 +2228,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Deleted bundle identifier
+          description: Human-readable bundle identifier that was deleted
         status:
           type: string
           enum:
@@ -2256,7 +2254,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier to restore
+          description: Human-readable bundle identifier to restore
         reason:
           type: string
           nullable: true
@@ -2274,7 +2272,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Restored bundle identifier
+          description: Human-readable bundle identifier that was restored
         status:
           type: string
           description: Current bundle status (should be "active")
@@ -2334,7 +2332,7 @@ components:
           description: Filter by bundle owner account ID
         realm:
           allOf:
-          - $ref: '#/components/schemas/Realm'
+          - $ref: '#/components/schemas/GameRealm'
           nullable: true
           description: Filter by realm
         bundleType:
@@ -2405,7 +2403,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier to get history for
+          description: Human-readable bundle identifier to get history for
         limit:
           type: integer
           default: 50
@@ -2427,7 +2425,7 @@ components:
       properties:
         bundleId:
           type: string
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         currentVersion:
           type: integer
           description: Current version number

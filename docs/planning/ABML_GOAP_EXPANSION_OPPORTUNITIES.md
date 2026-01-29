@@ -1,7 +1,7 @@
 # ABML/GOAP Expansion Opportunities
 
 > **Created**: 2026-01-19
-> **Last Updated**: 2026-01-19
+> **Last Updated**: 2026-01-23
 > **Purpose**: Strategic analysis of future applications for Arcadia Behavior Markup Language (ABML) and Goal-Oriented Action Planning (GOAP)
 > **Scope**: New services, SDKs, and system integrations that leverage behavioral intelligence
 
@@ -1425,27 +1425,714 @@ flows:
                   - call: generate_advancement_quest
 ```
 
-### 7.7 Summary: Path to Victory
+### 7.7 Summary: Path to Victory (Updated 2026-01-23)
 
 **We want quests. Here's what's involved:**
 
-| Layer | Component | Status | Effort | Priority |
-|-------|-----------|--------|--------|----------|
-| **Data** | Inventory/Items | ❌ Missing | 3-5 days | **1st** |
-| **Data** | Economy/Currency | ❌ Missing | 1-2 weeks | **2nd** |
-| **Data** | Character-Encounters | ❌ Missing | 3-5 days | **3rd** |
-| **Core** | Quest Service | ❌ Missing | 3-5 days | **4th** |
-| **Intelligence** | Quest Generation GOAP | ❌ Design only | 1-2 weeks | **5th** |
-| **Foundation** | Character/Personality/History | ✅ Complete | - | - |
-| **Foundation** | Relationships/Species/Realm | ✅ Complete | - | - |
-| **Foundation** | Actor/Behavior/GOAP | ✅ Complete | - | - |
-| **Foundation** | Save-Load/State/Messaging | ✅ Complete | - | - |
+| Layer | Component | Status | Notes |
+|-------|-----------|--------|-------|
+| **Data** | Item Definitions + Instances | ✅ **Implemented** | Templates, instances, durability, soulbinding, provenance |
+| **Data** | Inventory/Containers | ✅ **Implemented** | 6 constraint models, nesting, equipment slots, grid/weight/volume |
+| **Data** | Currency/Wallets | ✅ **Implemented** | Multi-currency, autogain, holds, caps, exchange, full audit |
+| **Data** | Contracts/Agreements | ✅ **Implemented** | Reactive milestones, guardians, breach/cure, clause extensibility |
+| **Data** | Character-Encounters | ✅ **Implemented** | Multi-participant, per-perspective emotions, memory decay |
+| **Orchestration** | Escrow Service | 📋 **Spec Complete** | Full-custody vault, per-party infrastructure, contract-driven finalization |
+| **Core** | Quest Service | ❌ Missing | Objective tracking, prerequisites, rewards distribution |
+| **Intelligence** | Quest Generation GOAP | ❌ Design only | Procedurally generated quests from character/world state |
+| **Foundation** | Character/Personality/History | ✅ Complete | - |
+| **Foundation** | Relationships/Species/Realm | ✅ Complete | - |
+| **Foundation** | Actor/Behavior/GOAP | ✅ Complete | - |
+| **Foundation** | Save-Load/State/Messaging | ✅ Complete | - |
 
-**Total estimated effort to quest-ready: 4-6 weeks**
+**Remaining effort to quest-ready: lib-quest service (3-5 days) + GOAP integration (1-2 weeks)**
 
-The good news: Our behavioral intelligence layer (ABML/GOAP) is ready. Our entity foundation (characters, relationships, locations) is ready. We're missing the **"stuff" layer** (items, currency) and the **"memory" layer** (encounters) that make quests meaningful.
+The foundation is now complete. We have the "stuff" layer (items, currency), the "agreements" layer (contracts), and the "memory" layer (encounters). The Quest service is now a thin orchestration layer atop a rich ecosystem.
 
-Once those foundations exist, the Quest service becomes a relatively thin orchestration layer that leverages everything else.
+---
+
+## Part 8: Implementation Analysis - The Foundational Layer (2026-01-23)
+
+> **Context**: Five new services implemented: lib-currency, lib-contract, lib-item, lib-inventory, lib-character-encounter. This section analyzes what was built, how it compares to industry patterns, and what it means for ABML/GOAP integration.
+
+### 8.1 Architecture Summary: What Was Built
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       AGREEMENTS LAYER                                   │
+│                                                                          │
+│  lib-contract                                                            │
+│  ├── Templates (reusable agreement patterns)                             │
+│  ├── Instances (active contracts between parties)                        │
+│  ├── Milestones (progressive obligation checkpoints)                     │
+│  ├── Breaches (failure detection with grace/cure)                        │
+│  ├── Guardians (escrow custody, party transfer)                          │
+│  └── Clause Types (extensible validation/execution plugins)              │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                              ↕
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        VALUE LAYER                                        │
+│                                                                          │
+│  lib-currency                          lib-item + lib-inventory          │
+│  ├── Definitions (precision,           ├── Templates (catalog)            │
+│  │   scope, exchange rates)            ├── Instances (durability,         │
+│  ├── Wallets (polymorphic,             │   binding, provenance)           │
+│  │   multi-currency)                   ├── Containers (6 types:           │
+│  ├── Transactions (immutable,          │   slot/weight/grid/vol/...)      │
+│  │   idempotent, event-sourced)        ├── Equipment Slots                │
+│  ├── Autogain (passive income)         ├── Nesting (bags in bags)         │
+│  ├── Holds (pre-auth reserves)         └── Ownership derivation           │
+│  └── Caps (earn/wallet/supply)                                            │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                              ↕
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        MEMORY LAYER                                       │
+│                                                                          │
+│  lib-character-encounter                                                 │
+│  ├── Shared encounter records (what happened)                            │
+│  ├── Per-participant perspectives (how each felt)                        │
+│  ├── Memory decay (significance fades over time)                         │
+│  ├── Sentiment aggregation (weighted relationship score)                 │
+│  └── Lazy processing (decay on access, no background jobs)               │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 8.2 Industry Comparison & Analysis
+
+#### lib-currency vs. Industry Standard
+
+| Feature | Typical Game Currency | lib-currency |
+|---------|----------------------|--------------|
+| Multi-currency | Usually 2-3 hardcoded | Unlimited, schema-defined, scoped to realms |
+| Transaction history | Often none or limited | Full event-sourced immutable ledger |
+| Exchange rates | Fixed or nonexistent | Dynamic base-currency intermediary conversion |
+| Earn caps | Hardcoded daily limits | Configurable daily/weekly with reset times |
+| Pre-auth holds | Rare (gas station pattern) | Full hold/capture/release lifecycle |
+| Autogain/interest | Usually timer-based items | Native simple/compound modes with lazy/task processing |
+| Negative balances | Never | Configurable per currency (debt is valid) |
+| Supply tracking | Rare | Global supply caps with Gini coefficient analytics |
+
+**Assessment**: This goes well beyond typical game currency systems. The authorization holds pattern comes from payment processing (Stripe, Square), and autogain with compound interest is more fintech than gamedev. The earn cap system prevents inflation without hardcoding limits. The explicit separation from escrow/marketplace concerns shows mature domain modeling.
+
+#### lib-item + lib-inventory vs. Industry Standard
+
+| Feature | Typical Inventory | lib-item + lib-inventory |
+|---------|-------------------|--------------------------|
+| Item definition | Usually one model | Template (catalog) + Instance (occurrence) split |
+| Storage model | Fixed slots | 6 models: slot, weight, grid, slot+weight, volumetric, unlimited |
+| Ownership | Direct property | Derived from container (ownership follows placement) |
+| Nesting | Rare (bags in bags) | Full nesting with depth limits and weight propagation |
+| Quantity | Integer stacks | Three models: unique, discrete (int), continuous (float) |
+| Binding | Simple boolean | on_pickup, on_equip, on_use, none |
+| Provenance | None | Full origin tracking (loot, quest, craft, trade, purchase, spawn) |
+| Equipment | Separate system | Equipment slots are just specialized containers |
+
+**Assessment**: The container-based ownership derivation is elegant. Most systems store `ownerId` on items directly, creating update cascades when items change hands. Here, ownership is implicit from container membership, so transferring items between containers naturally transfers ownership. The six constraint models mean the same service handles Diablo-style grid inventories, Skyrim weight limits, and Tetris-style puzzle placement.
+
+The continuous quantity model is unusual and enables things like "2.5 liters of health potion" or "0.3 kg of gold dust" - materials and fluids that most games handle poorly or not at all.
+
+#### lib-character-encounter vs. Industry Standard
+
+| Feature | Typical NPC Memory | lib-character-encounter |
+|---------|-------------------|-------------------------|
+| Structure | Per-NPC friendship meters | Multi-participant shared records |
+| Perspectives | Same event = same opinion | Each participant has independent emotional response |
+| Memory model | Static (never fades) | Configurable decay with refresh on recall |
+| Sentiment | Simple +/- integer | Weighted aggregation across all encounters |
+| Scalability | Per-relationship pair | O(N) per encounter, efficient pair indexing |
+| Character deletion | Often leaks data | Event-driven cleanup of all perspectives |
+
+**Assessment**: The "one record, N perspectives" pattern is the key innovation. Most games either store nothing (NPCs are stateless) or store per-NPC opinion meters (Skyrim's relationship system). Having per-participant perspectives on shared events means two characters can have a combat encounter where one feels respect and the other feels anger. This is the foundation for believable grudges, debts, and alliances.
+
+The lazy memory decay is pragmatic - no background jobs needed, works at any scale, and naturally prioritizes recent encounters in sentiment calculations.
+
+### 8.3 lib-contract: The Standout Innovation
+
+This is the service that warrants detailed analysis. It's genuinely novel in the game systems space.
+
+#### What Makes It Different
+
+Most game systems handle agreements in one of three ways:
+
+1. **Transactional**: Instant exchange (trade window, auction house)
+2. **Quest-like**: Linear progression toward reward (fetch quest)
+3. **Subscription**: Time-based access (guild membership)
+
+lib-contract unifies all of these into a **single reactive agreement engine**:
+
+```
+Traditional Systems:          lib-contract:
+
+Trade Window → instant        Contract with instant milestones
+Quest → linear steps          Contract with ordered milestones
+Employment → time-based       Contract with recurring payment terms
+Alliance → binary state       Contract with mutual obligations
+Bounty → conditional          Contract with evidence-based milestone
+Apprenticeship → progression  Contract with skill-verification clauses
+```
+
+#### The Four Innovations
+
+**1. Contracts as Transferable Assets (Guardian System)**
+
+In most games, agreements are ephemeral metadata. In lib-contract, a contract can be **locked under a guardian's custody**, making it a first-class transferable object:
+
+```
+Landlord sells building →
+  Guardian (escrow) locks the lease contract →
+  Party role "landlord" transfers to buyer →
+  Tenants continue undisturbed →
+  Contract unlocked under new owner
+```
+
+This enables property markets, business acquisitions, and debt trading without per-feature code. The guardian can be any entity type - an escrow service, a court system, a guild leader.
+
+**2. Extensible Clause Types (Plugin-for-Plugins)**
+
+Rather than hardcoding what contracts can validate or execute, the clause type system lets games register arbitrary clause handlers:
+
+```yaml
+RegisterClauseType:
+  typeCode: "npc_recruitment_bounty"
+  category: "both"  # validation + execution
+  validationHandler:
+    serviceName: "character"
+    endpoint: "/character/get"
+    # Check character exists and is available
+  executionHandler:
+    serviceName: "relationship"
+    endpoint: "/relationship/create"
+    # Create employment relationship on fulfillment
+```
+
+This means lib-contract is a **platform** rather than a feature. New contract types emerge from registering new clause handlers without modifying the contract service itself.
+
+**3. Three-Outcome Validation (Transient Failure Awareness)**
+
+Most systems are binary: condition met or not. lib-contract adds a third state:
+
+| Outcome | Meaning | Action |
+|---------|---------|--------|
+| **Success** | Condition verified | Proceed normally |
+| **Permanent Failure** | Condition violated | Trigger breach |
+| **Transient Failure** | Service unavailable | Retry later, don't breach |
+
+This is critical for distributed game systems where a validation service might be temporarily unreachable. Without this, network hiccups would trigger false breaches.
+
+**4. Reactive Philosophy with Prebound APIs**
+
+Contracts don't poll or check themselves. External systems tell contracts what happened:
+
+```
+Game Server: "Milestone 'deliver_package' completed"
+  → Contract advances milestone
+  → Calls prebound API: economy/credit (reward)
+  → Calls prebound API: relationship/update (reputation)
+  → Publishes MilestoneCompletedEvent
+  → Next milestone becomes active
+```
+
+The **prebound API** pattern (with template variable substitution) means contract templates can define exactly what happens at each stage without the contract service needing to know about currency, inventory, or any other service.
+
+#### Industry Precedents (Where This Overlaps)
+
+| System | Similarity | Difference |
+|--------|-----------|------------|
+| **Ethereum Smart Contracts** | Self-executing agreements | lib-contract is reactive, not autonomous; no blockchain overhead |
+| **SAP Contract Management** | Milestone-based progression | lib-contract is for game entities, not humans; real-time performance |
+| **World of Warcraft Guilds** | Role-based membership | lib-contract generalizes to any agreement, not just groups |
+| **EVE Online Contracts** | Player-to-player agreements | EVE's are item-exchange focused; lib-contract handles ongoing obligations |
+| **Legal Smart Contracts (OpenLaw)** | Template-based, clause-driven | Same architecture; lib-contract applies it to virtual worlds |
+
+The closest real-world analog is probably **Ricardian Contracts** (Ian Grigg, 1996) - human-readable agreements with machine-executable terms. lib-contract implements this concept for game entities, where the "human readable" part is replaced by NPC cognition via ABML.
+
+### 8.4 ABML/GOAP Integration Opportunities (Updated)
+
+With these services in place, the ABML/GOAP integration picture is now much richer:
+
+#### Contracts as GOAP World State
+
+```yaml
+# NPC merchant brain - contract-aware goals
+goals:
+  fulfill_trade_contract:
+    priority: 85
+    conditions:
+      active_contract_milestones_remaining: "== 0"
+
+  negotiate_better_terms:
+    priority: 60
+    conditions:
+      contract_profit_margin: "> 0.2"
+
+flows:
+  deliver_contracted_goods:
+    goap:
+      preconditions:
+        has_contracted_items: "== true"
+        delivery_location_reachable: "== true"
+        active_contract_exists: "== true"
+      effects:
+        active_contract_milestones_remaining: "-1"
+        reputation_with_client: "+0.1"
+      cost: 3
+
+  report_breach:
+    goap:
+      preconditions:
+        counterparty_violated_terms: "== true"
+        breach_evidence_available: "== true"
+      effects:
+        contract_breach_filed: true
+        relationship_damaged: true
+      cost: 8  # High cost - NPCs prefer to work things out
+```
+
+#### Encounters Triggering Quest Contracts
+
+```yaml
+# After combat encounter with memorable outcome
+- cond:
+    - when: "${encounters.sentiment_toward(defeated_npc) > 0.3}"
+      then:
+        # Defeated enemy respects you - offer contract
+        - service_call:
+            service: "contract"
+            endpoint: "/contract/propose"
+            data:
+              templateId: "employment_bodyguard"
+              parties:
+                - entityId: "${character_id}"
+                  role: "employer"
+                - entityId: "${defeated_npc}"
+                  role: "employee"
+```
+
+#### Inventory-Aware NPC Behavior
+
+```yaml
+# Merchant NPC adjusts behavior based on inventory state
+- cond:
+    - when: "${inventory.count_by_category('weapon') < 3}"
+      then:
+        # Low stock - prioritize restocking
+        - set:
+            variable: restock_urgency
+            value: 0.9
+        - call: seek_supplier
+    - when: "${inventory.count_by_category('weapon') > 20}"
+      then:
+        # Overstocked - lower prices
+        - set:
+            variable: price_modifier
+            value: 0.8
+        - call: announce_sale
+```
+
+#### Currency-Driven Decision Making
+
+```yaml
+# NPC evaluates whether to accept quest based on wallet
+- cond:
+    - when: "${wallet.gold < 50}"
+      then:
+        # Desperate - accept any paying work
+        - set:
+            variable: quest_acceptance_threshold
+            value: 0.1
+    - when: "${wallet.gold > 1000}"
+      then:
+        # Wealthy - only interesting quests
+        - set:
+            variable: quest_acceptance_threshold
+            value: 0.8
+```
+
+### 8.5 What This Means for the Quest Service
+
+With these five services in place, the quest service becomes surprisingly thin. Most of what a "quest" does is actually handled by the ecosystem:
+
+| Quest Feature | Handled By |
+|---------------|------------|
+| "Collect 10 wolf pelts" | lib-inventory `hasItems` query |
+| "Deliver to location X" | lib-inventory `transferItem` + lib-location |
+| "Earn 500 gold reward" | lib-currency `credit` |
+| "Receive Sword of Darkness" | lib-item `createInstance` → lib-inventory `addItemToContainer` |
+| "NPC remembers you helped" | lib-character-encounter `recordEncounter` |
+| "Ongoing employment quest" | lib-contract (milestone-based progression) |
+| "Reputation with guild +50" | lib-relationship metadata update |
+| "NPC offers follow-up quest" | lib-character-encounter sentiment query → ABML/GOAP |
+
+**The quest service primarily needs to:**
+1. Define quest templates (objectives, rewards, prerequisites)
+2. Track active quest instances per character
+3. Validate prerequisites (query other services)
+4. Distribute rewards on completion (call other services)
+5. Publish events for NPC reactivity
+
+Many quest patterns can be expressed directly as **contracts**:
+- A bounty quest is a contract with a "kill target" milestone
+- An escort quest is a contract with "reach destination" milestone
+- A crafting quest is a contract with "deliver crafted item" milestone
+
+The question becomes: **do we need a separate lib-quest, or are quests just a specific contract pattern?**
+
+### 8.6 Quests as Contracts: The Convergence Question
+
+Consider a bounty quest expressed as a contract:
+
+```
+Template: "bounty_contract"
+Terms:
+  duration: P7D (7 day deadline)
+  paymentSchedule: milestone_based
+  terminationPolicy: unilateral_with_notice
+
+Parties:
+  - Quest Giver (role: "client")
+  - Player Character (role: "contractor")
+
+Milestones:
+  1. "accept_bounty" (auto-completed on contract acceptance)
+  2. "locate_target" (completed when player enters target location)
+  3. "defeat_target" (completed when combat encounter recorded)
+  4. "return_evidence" (completed when specific item delivered)
+
+Clauses:
+  - type: "currency_transfer" (500 gold on milestone 4)
+  - type: "item_transfer" (bounty token on milestone 1)
+  - type: "reputation_grant" (guild rep on completion)
+```
+
+**This IS a quest, expressed as a contract.** The milestone system provides progression tracking. The clause system provides rewards. The breach system handles failure/timeout. The party system handles quest givers and participants.
+
+**What a dedicated lib-quest would add on top:**
+- Quest discovery/availability (what's available to me?)
+- Quest log UI integration (list active/completed)
+- Categorization (main story, side quest, daily, tutorial)
+- Prerequisites beyond contract scope (achievement-gated, backstory-gated)
+- GOAP-based procedural generation of quest contracts
+
+This suggests **lib-quest is a thin orchestration layer** that generates and manages contracts rather than reimplementing progression tracking itself.
+
+---
+
+## Part 9: lib-escrow - The Missing Custody Layer (2026-01-23)
+
+> **Context**: lib-escrow provides a critical architectural layer between application logic (trades, quests, markets) and the foundational services (contracts, currency, inventory). See `docs/planning/ECONOMY_CURRENCY_ARCHITECTURE.md` for the full escrow integration plan and foundation completion prerequisites.
+
+### 9.1 The Key Insight: "Contract is Brain, Escrow is Vault"
+
+The spec's core design philosophy:
+
+```
+"lib-escrow is a full-custody orchestration layer that sits ABOVE the
+foundational asset plugins. It creates its own wallets, containers, and
+contract locks to take complete possession of assets during multi-party
+agreements."
+```
+
+This separation is elegant:
+
+| Component | Responsibility | What It Knows |
+|-----------|---------------|---------------|
+| **lib-escrow** | Physical custody, consent flows, tokens | How to hold, release, and refund assets |
+| **lib-contract** | Terms, conditions, distribution rules | What assets are needed, when to release, how to split |
+| **lib-currency** | Currency operations | Nothing about escrow or contracts |
+| **lib-inventory** | Item operations | Nothing about escrow or contracts |
+
+### 9.2 How It Works
+
+**Per-Party Infrastructure**: When an escrow is created, it generates dedicated wallets and containers for EACH party:
+
+```
+Escrow Agreement (entity owner)
+├── Party A Escrow Wallet (created by escrow, owned by escrow)
+├── Party A Escrow Container (created by escrow, owned by escrow)
+├── Party B Escrow Wallet (created by escrow, owned by escrow)
+└── Party B Escrow Container (created by escrow, owned by escrow)
+```
+
+This enables:
+- **Clean refunds**: Party A's escrow → Party A (no cross-party confusion)
+- **Contribution tracking**: Verify each party deposited their share
+- **Ownership validation**: Parties can only withdraw from their own escrow
+
+**Contract-Driven Finalization**: When conditions are met:
+
+```
+1. Escrow transitions to FINALIZING
+2. Calls POST /contract/instance/execute on bound contract
+3. Contract handles ALL distribution:
+   - Fee clauses: Move fees from escrow wallets to fee recipients
+   - Distribution clauses: Move remaining assets to recipients
+4. Escrow verifies all escrow wallets/containers are empty
+5. Escrow transitions to RELEASED
+```
+
+**Template Variables**: The escrow sets template values on the bound contract:
+
+```yaml
+templateValues:
+  EscrowId: "{{agreementId}}"
+  PartyA_EscrowWalletId: "{{partyA.escrowWalletId}}"
+  PartyA_EscrowContainerId: "{{partyA.escrowContainerId}}"
+  PartyB_WalletId: "{{partyB.walletId}}"  # Destination
+  PartyB_ContainerId: "{{partyB.containerId}}"  # Destination
+```
+
+The contract's clauses reference these variables, enabling fully dynamic distribution rules.
+
+### 9.3 The Full Plugin Stack
+
+The spec shows the complete dependency hierarchy:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    APPLICATION LAYER                         │
+│  lib-market (auctions)  |  lib-trade (P2P)  |  lib-quest    │
+│  (All thin orchestrators that generate escrows)              │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    CUSTODY LAYER                             │
+│                                                              │
+│                      lib-escrow                              │
+│  ├── Full-custody orchestration ("the vault")                │
+│  ├── Per-party wallets and containers                        │
+│  ├── Token-based consent flows                               │
+│  ├── Trust modes (full_consent, initiator_trusted, etc.)     │
+│  ├── Periodic asset validation                               │
+│  └── Contract-driven finalization                            │
+│                                                              │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    LOGIC LAYER                               │
+│                                                              │
+│                     lib-contract                             │
+│  ├── Agreement terms ("the brain")                           │
+│  ├── Milestone tracking                                      │
+│  ├── Asset requirement clauses (validation)                  │
+│  ├── Fee/distribution clauses (execution)                    │
+│  └── Prebound API handlers                                   │
+│                                                              │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    ASSET LAYER                               │
+│                                                              │
+│  lib-currency        lib-inventory        lib-item           │
+│  (wallets,           (containers,         (templates,        │
+│   transfers)          movement)            instances)         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 9.4 Why This Matters for Quests
+
+With lib-escrow in the picture, the quest architecture becomes clearer:
+
+**A quest reward escrow**:
+1. Quest service creates escrow with `trustMode: initiator_trusted`
+2. Quest giver (NPC) deposits reward gold/items into their escrow container
+3. Bound contract defines: "distribute when 'kill_target' milestone completes"
+4. Player completes quest objective → contract milestone fulfilled
+5. Contract executes → rewards flow from NPC escrow to player inventory
+6. Escrow closes, infrastructure cleaned up
+
+**A player trade**:
+1. Trade service creates escrow with `trustMode: full_consent`
+2. Each party deposits their side into their escrow container
+3. Bound contract defines: "swap when both parties consent"
+4. Both use release tokens → contract executes cross-distribution
+5. Each party receives the other's deposits
+
+**A guild tax collection**:
+1. Guild creates escrow for monthly dues with `trustMode: initiator_trusted`
+2. Bound contract defines fee clauses (5% to realm treasury, 95% to guild)
+3. Members deposit dues → contract executes automatic fee distribution
+
+### 9.5 ABML/GOAP Integration with Escrow
+
+**NPC Trade Negotiation (GOAP + Escrow)**:
+
+```yaml
+# NPC Brain decides to trade
+goals:
+  - id: acquire_rare_item
+    conditions:
+      - has_rare_item: true
+    priority: 75
+
+actions:
+  - id: propose_trade
+    preconditions:
+      - has_item_npc_wants: true
+      - known_trader_nearby: true
+    effects:
+      - has_rare_item: true
+      - gold: -500
+    cost: 10
+    abml_behavior: "trade_negotiation"
+```
+
+**Trade Behavior Execution (ABML + Escrow)**:
+
+```yaml
+# trade_negotiation.behavior.yaml
+document_type: behavior
+
+flows:
+  main:
+    # Create escrow via Shortcut API
+    - shortcut:
+        api: escrow.create
+        request:
+          escrow_type: two_party
+          trust_mode: full_consent
+          parties:
+            - party_id: "${actor.id}"
+              party_type: character
+              role: depositor_recipient
+            - party_id: "${target.id}"
+              party_type: character
+              role: depositor_recipient
+          bound_contract_id: "${contract_templates.simple_trade}"
+        response_var: escrow
+
+    # Get our deposit token via shortcut
+    - shortcut:
+        api: escrow.get_my_token
+        request:
+          escrow_id: "${escrow.id}"
+          token_type: deposit
+        response_var: our_token
+
+    # Deposit our side
+    - shortcut:
+        api: escrow.deposit
+        request:
+          escrow_id: "${escrow.id}"
+          deposit_token: "${our_token.token}"
+          assets:
+            - asset_type: currency
+              currency_code: gold
+              amount: 500
+
+    # Wait for other party
+    - wait_for:
+        event: escrow.fully_funded
+        timeout: PT5M
+        on_timeout:
+          - call: abort_trade
+
+    # Consent to release
+    - shortcut:
+        api: escrow.consent
+        request:
+          escrow_id: "${escrow.id}"
+          consent_type: release
+          release_token: "${release_token}"
+```
+
+### 9.6 Status Summary
+
+| Service | Status | Role |
+|---------|--------|------|
+| lib-escrow | 📋 Spec Complete (v3.0.0) | Custody orchestration, consent flows, vault |
+| lib-contract | ✅ Implemented | Agreement logic, distribution rules, brain |
+| lib-currency | ✅ Implemented | Currency operations |
+| lib-inventory | ✅ Implemented | Item container operations |
+| lib-item | ✅ Implemented | Item template/instance |
+| lib-quest | ❌ Not Started | Quest discovery, logs, GOAP generation |
+| lib-trade | ❌ Not Started | P2P trade UI orchestration |
+| lib-market | ❌ Not Started | Auction/marketplace orchestration |
+
+**Implementation Order Recommendation**:
+1. ✅ Foundation layer (currency, item, inventory) - DONE
+2. ✅ Logic layer (contract) - DONE
+3. **lib-escrow** - Next priority (enables everything above it)
+4. lib-quest (thin layer over escrow+contract)
+5. lib-trade / lib-market (thin layers over escrow)
+
+---
+
+## Appendix C: Service Dependency Graph (Updated 2026-01-23)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    BEHAVIORAL INTELLIGENCE LAYER                     │
+│  Actor | Behavior | ABML | GOAP | Music | Cinematography            │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ queries / drives
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   APPLICATION / THIN ORCHESTRATION                   │
+│  lib-quest (❌)    lib-trade (❌)    lib-market (❌)                  │
+│  Quest discovery,  P2P trade UI,     Auction/listing               │
+│  logs, GOAP gen    negotiation       management                     │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ creates / manages
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        CUSTODY LAYER                                 │
+│  lib-escrow (📋 Spec Complete)                                       │
+│  Full custody, per-party wallets/containers, consent tokens,        │
+│  trust modes, periodic validation, contract-driven finalization     │
+│  "THE VAULT"                                                        │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ delegates logic to
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        LOGIC LAYER                                   │
+│  lib-contract (✅ Implemented)                                       │
+│  Templates, instances, milestones, breaches, guardians,             │
+│  clause types with prebound API execution                           │
+│  "THE BRAIN"                                                        │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ operates on
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        ASSET LAYER                                   │
+│  lib-currency (✅)   lib-item (✅)    lib-inventory (✅)             │
+│  Wallets, transfers, Templates,       Containers,                   │
+│  holds, autogain     instances        equipment, nesting            │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ + memory layer
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        MEMORY LAYER                                  │
+│  lib-character-encounter (✅ Implemented)                            │
+│  Multi-participant records, per-perspective emotions, decay         │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ references / scoped by
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       ENTITY FOUNDATION LAYER                        │
+│  Character | Personality | History | Relationship | Species          │
+│  Realm | Realm-History | Location | Account                         │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ persisted / routed by
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      INFRASTRUCTURE LAYER                            │
+│  State | Messaging | Mesh | Connect | Save-Load | Asset             │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Status Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| ✅ | Implemented and working |
+| 📋 | Spec complete, not yet implemented |
+| ❌ | Not started |
 
 ---
 

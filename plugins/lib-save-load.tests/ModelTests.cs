@@ -13,21 +13,22 @@ public class ModelTests
     public void SaveSlotMetadata_GetStateKey_ReturnsCorrectFormat()
     {
         // Arrange
+        var ownerId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var slot = new SaveSlotMetadata
         {
-            SlotId = "slot-123",
-            GameId = "arcadia",
-            OwnerId = "owner-456",
-            OwnerType = "ACCOUNT",
+            SlotId = Guid.NewGuid(),
+            GameId = "test-game",
+            OwnerId = ownerId,
+            OwnerType = OwnerType.ACCOUNT,
             SlotName = "main-save",
-            Category = "MANUAL"
+            Category = SaveCategory.MANUAL_SAVE
         };
 
         // Act
         var key = slot.GetStateKey();
 
         // Assert
-        Assert.Equal("slot:arcadia:ACCOUNT:owner-456:main-save", key);
+        Assert.Equal($"slot:test-game:ACCOUNT:{ownerId}:main-save", key);
     }
 
     [Fact]
@@ -44,20 +45,21 @@ public class ModelTests
     public void SaveSlotMetadata_InstanceAndStaticKeys_Match()
     {
         // Arrange
+        var ownerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var slot = new SaveSlotMetadata
         {
-            SlotId = "id",
+            SlotId = Guid.NewGuid(),
             GameId = "testgame",
-            OwnerId = "user123",
-            OwnerType = "SESSION",
+            OwnerId = ownerId,
+            OwnerType = OwnerType.SESSION,
             SlotName = "slot1",
-            Category = "AUTO"
+            Category = SaveCategory.AUTO_SAVE
         };
 
         // Act
         var instanceKey = slot.GetStateKey();
         var staticKey = SaveSlotMetadata.GetStateKey(
-            slot.GameId, slot.OwnerType, slot.OwnerId, slot.SlotName);
+            slot.GameId, slot.OwnerType.ToString(), slot.OwnerId.ToString(), slot.SlotName);
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -69,16 +71,16 @@ public class ModelTests
         // Arrange & Act
         var slot = new SaveSlotMetadata
         {
-            SlotId = "id",
+            SlotId = Guid.NewGuid(),
             GameId = "game",
-            OwnerId = "owner",
-            OwnerType = "ACCOUNT",
+            OwnerId = Guid.NewGuid(),
+            OwnerType = OwnerType.ACCOUNT,
             SlotName = "slot",
-            Category = "MANUAL"
+            Category = SaveCategory.MANUAL_SAVE
         };
 
         // Assert defaults
-        Assert.Equal("GZIP", slot.CompressionType);
+        Assert.Equal(CompressionType.GZIP, slot.CompressionType);
         Assert.Equal(0, slot.VersionCount);
         Assert.Null(slot.LatestVersion);
         Assert.Equal(0, slot.TotalSizeBytes);
@@ -98,9 +100,10 @@ public class ModelTests
     public void SaveVersionManifest_GetStateKey_ReturnsCorrectFormat()
     {
         // Arrange
+        var slotId = Guid.Parse("33333333-3333-3333-3333-333333333333");
         var manifest = new SaveVersionManifest
         {
-            SlotId = "slot-abc",
+            SlotId = slotId,
             VersionNumber = 42,
             ContentHash = "hash123"
         };
@@ -109,7 +112,7 @@ public class ModelTests
         var key = manifest.GetStateKey();
 
         // Assert
-        Assert.Equal("version:slot-abc:42", key);
+        Assert.Equal($"version:{slotId}:42", key);
     }
 
     [Fact]
@@ -126,16 +129,17 @@ public class ModelTests
     public void SaveVersionManifest_InstanceAndStaticKeys_Match()
     {
         // Arrange
+        var slotId = Guid.Parse("44444444-4444-4444-4444-444444444444");
         var manifest = new SaveVersionManifest
         {
-            SlotId = "slot-xyz",
+            SlotId = slotId,
             VersionNumber = 100,
             ContentHash = "abc123"
         };
 
         // Act
         var instanceKey = manifest.GetStateKey();
-        var staticKey = SaveVersionManifest.GetStateKey(manifest.SlotId, manifest.VersionNumber);
+        var staticKey = SaveVersionManifest.GetStateKey(manifest.SlotId.ToString(), manifest.VersionNumber);
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -147,14 +151,14 @@ public class ModelTests
         // Arrange & Act
         var manifest = new SaveVersionManifest
         {
-            SlotId = "slot",
+            SlotId = Guid.NewGuid(),
             VersionNumber = 1,
             ContentHash = "hash"
         };
 
         // Assert defaults
         Assert.Null(manifest.AssetId);
-        Assert.Equal("NONE", manifest.CompressionType);
+        Assert.Equal(CompressionType.NONE, manifest.CompressionType);
         Assert.False(manifest.IsPinned);
         Assert.Null(manifest.CheckpointName);
         Assert.False(manifest.IsDelta);
@@ -165,7 +169,7 @@ public class ModelTests
         Assert.Null(manifest.SchemaVersion);
         Assert.NotNull(manifest.Metadata);
         Assert.Empty(manifest.Metadata);
-        Assert.Equal("PENDING", manifest.UploadStatus);
+        Assert.Equal(UploadStatus.PENDING, manifest.UploadStatus);
         Assert.Null(manifest.ETag);
     }
 
@@ -187,9 +191,10 @@ public class ModelTests
     public void HotSaveEntry_GetStateKey_ReturnsCorrectFormat()
     {
         // Arrange
+        var slotId = Guid.Parse("55555555-5555-5555-5555-555555555555");
         var entry = new HotSaveEntry
         {
-            SlotId = "hot-slot",
+            SlotId = slotId,
             VersionNumber = 5,
             Data = "base64data",
             ContentHash = "sha256hash"
@@ -199,7 +204,7 @@ public class ModelTests
         var key = entry.GetStateKey();
 
         // Assert
-        Assert.Equal("hot:hot-slot:5", key);
+        Assert.Equal($"hot:{slotId}:5", key);
     }
 
     [Fact]
@@ -226,9 +231,10 @@ public class ModelTests
     public void HotSaveEntry_InstanceAndStaticKeys_Match()
     {
         // Arrange
+        var slotId = Guid.Parse("66666666-6666-6666-6666-666666666666");
         var entry = new HotSaveEntry
         {
-            SlotId = "test-slot",
+            SlotId = slotId,
             VersionNumber = 99,
             Data = "data",
             ContentHash = "hash"
@@ -236,7 +242,7 @@ public class ModelTests
 
         // Act
         var instanceKey = entry.GetStateKey();
-        var staticKey = HotSaveEntry.GetStateKey(entry.SlotId, entry.VersionNumber);
+        var staticKey = HotSaveEntry.GetStateKey(entry.SlotId.ToString(), entry.VersionNumber);
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -248,7 +254,7 @@ public class ModelTests
         // Arrange & Act
         var entry = new HotSaveEntry
         {
-            SlotId = "slot",
+            SlotId = Guid.NewGuid(),
             VersionNumber = 1,
             Data = "data",
             ContentHash = "hash"
@@ -269,14 +275,15 @@ public class ModelTests
     public void PendingUploadEntry_GetStateKey_ReturnsCorrectFormat()
     {
         // Arrange
+        var uploadId = Guid.Parse("77777777-7777-7777-7777-777777777777");
         var entry = new PendingUploadEntry
         {
-            UploadId = "upload-xyz",
-            SlotId = "slot-123",
+            UploadId = uploadId,
+            SlotId = Guid.NewGuid(),
             VersionNumber = 3,
             GameId = "game",
-            OwnerId = "owner",
-            OwnerType = "ACCOUNT",
+            OwnerId = Guid.NewGuid(),
+            OwnerType = OwnerType.ACCOUNT,
             Data = "data",
             ContentHash = "hash"
         };
@@ -285,7 +292,7 @@ public class ModelTests
         var key = entry.GetStateKey();
 
         // Assert
-        Assert.Equal("pending:upload-xyz", key);
+        Assert.Equal($"pending:{uploadId}", key);
     }
 
     [Fact]
@@ -302,21 +309,22 @@ public class ModelTests
     public void PendingUploadEntry_InstanceAndStaticKeys_Match()
     {
         // Arrange
+        var uploadId = Guid.Parse("88888888-8888-8888-8888-888888888888");
         var entry = new PendingUploadEntry
         {
-            UploadId = "my-upload",
-            SlotId = "slot",
+            UploadId = uploadId,
+            SlotId = Guid.NewGuid(),
             VersionNumber = 1,
             GameId = "game",
-            OwnerId = "owner",
-            OwnerType = "CHARACTER",
+            OwnerId = Guid.NewGuid(),
+            OwnerType = OwnerType.CHARACTER,
             Data = "data",
             ContentHash = "hash"
         };
 
         // Act
         var instanceKey = entry.GetStateKey();
-        var staticKey = PendingUploadEntry.GetStateKey(entry.UploadId);
+        var staticKey = PendingUploadEntry.GetStateKey(entry.UploadId.ToString());
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -328,18 +336,18 @@ public class ModelTests
         // Arrange & Act
         var entry = new PendingUploadEntry
         {
-            UploadId = "id",
-            SlotId = "slot",
+            UploadId = Guid.NewGuid(),
+            SlotId = Guid.NewGuid(),
             VersionNumber = 1,
             GameId = "game",
-            OwnerId = "owner",
-            OwnerType = "ACCOUNT",
+            OwnerId = Guid.NewGuid(),
+            OwnerType = OwnerType.ACCOUNT,
             Data = "data",
             ContentHash = "hash"
         };
 
         // Assert defaults
-        Assert.Equal("GZIP", entry.CompressionType);
+        Assert.Equal(CompressionType.GZIP, entry.CompressionType);
         Assert.Equal(0, entry.SizeBytes);
         Assert.Equal(0, entry.CompressedSizeBytes);
         Assert.False(entry.IsDelta);
@@ -360,10 +368,10 @@ public class ModelTests
     public void SaveSchemaDefinition_GetStateKey_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = SaveSchemaDefinition.GetStateKey("arcadia", "v1.0.0");
+        var key = SaveSchemaDefinition.GetStateKey("test-game", "v1.0.0");
 
         // Assert
-        Assert.Equal("arcadia:v1.0.0", key);
+        Assert.Equal("test-game:v1.0.0", key);
     }
 
     [Fact]

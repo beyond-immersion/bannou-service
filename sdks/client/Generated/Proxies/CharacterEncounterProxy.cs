@@ -41,7 +41,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateEncounterTypeRequest, EncounterTypeResponse>(
-            "POST", "/character-encounter/type/create", request, channel, timeout, cancellationToken);
+            "/character-encounter/type/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEncounterTypeRequest, EncounterTypeResponse>(
-            "POST", "/character-encounter/type/get", request, channel, timeout, cancellationToken);
+            "/character-encounter/type/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListEncounterTypesRequest, EncounterTypeListResponse>(
-            "POST", "/character-encounter/type/list", request, channel, timeout, cancellationToken);
+            "/character-encounter/type/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateEncounterTypeRequest, EncounterTypeResponse>(
-            "POST", "/character-encounter/type/update", request, channel, timeout, cancellationToken);
+            "/character-encounter/type/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteEncounterTypeRequest>(
-            "POST", "/character-encounter/type/delete", request, channel, cancellationToken);
+            "/character-encounter/type/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SeedEncounterTypesRequest, SeedEncounterTypesResponse>(
-            "POST", "/character-encounter/type/seed", request, channel, timeout, cancellationToken);
+            "/character-encounter/type/seed", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RecordEncounterRequest, EncounterResponse>(
-            "POST", "/character-encounter/record", request, channel, timeout, cancellationToken);
+            "/character-encounter/record", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryByCharacterRequest, EncounterListResponse>(
-            "POST", "/character-encounter/query/by-character", request, channel, timeout, cancellationToken);
+            "/character-encounter/query/by-character", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryBetweenRequest, EncounterListResponse>(
-            "POST", "/character-encounter/query/between", request, channel, timeout, cancellationToken);
+            "/character-encounter/query/between", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryByLocationRequest, EncounterListResponse>(
-            "POST", "/character-encounter/query/by-location", request, channel, timeout, cancellationToken);
+            "/character-encounter/query/by-location", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<HasMetRequest, HasMetResponse>(
-            "POST", "/character-encounter/has-met", request, channel, timeout, cancellationToken);
+            "/character-encounter/has-met", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -237,7 +237,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSentimentRequest, SentimentResponse>(
-            "POST", "/character-encounter/get-sentiment", request, channel, timeout, cancellationToken);
+            "/character-encounter/get-sentiment", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -255,7 +255,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BatchGetSentimentRequest, BatchSentimentResponse>(
-            "POST", "/character-encounter/batch-get", request, channel, timeout, cancellationToken);
+            "/character-encounter/batch-get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -273,7 +273,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetPerspectiveRequest, PerspectiveResponse>(
-            "POST", "/character-encounter/get-perspective", request, channel, timeout, cancellationToken);
+            "/character-encounter/get-perspective", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -291,7 +291,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdatePerspectiveRequest, PerspectiveResponse>(
-            "POST", "/character-encounter/update-perspective", request, channel, timeout, cancellationToken);
+            "/character-encounter/update-perspective", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -309,7 +309,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RefreshMemoryRequest, PerspectiveResponse>(
-            "POST", "/character-encounter/refresh-memory", request, channel, timeout, cancellationToken);
+            "/character-encounter/refresh-memory", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -327,7 +327,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteEncounterRequest, DeleteEncounterResponse>(
-            "POST", "/character-encounter/delete", request, channel, timeout, cancellationToken);
+            "/character-encounter/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -345,7 +345,7 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteByCharacterRequest, DeleteByCharacterResponse>(
-            "POST", "/character-encounter/delete-by-character", request, channel, timeout, cancellationToken);
+            "/character-encounter/delete-by-character", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -363,6 +363,6 @@ public sealed class CharacterEncounterProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DecayMemoriesRequest, DecayMemoriesResponse>(
-            "POST", "/character-encounter/decay-memories", request, channel, timeout, cancellationToken);
+            "/character-encounter/decay-memories", request, channel, timeout, cancellationToken);
     }
 }

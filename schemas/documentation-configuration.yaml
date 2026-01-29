@@ -5,25 +5,23 @@ info:
     Configuration schema for Documentation service.
     Properties are bound to environment variables with DOCUMENTATION_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
   properties:
     # Search Index Configuration
+    SearchIndexRebuildStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before search index rebuild starts (allows services to initialize)
+      env: DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS
+      default: 5
     SearchIndexRebuildOnStartup:
       type: boolean
       description: Whether to rebuild search index on service startup
       env: DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP
       default: true
-
-    # Session Configuration
-    SessionTtlSeconds:
-      type: integer
-      description: TTL for informal session tracking (24 hours default)
-      env: DOCUMENTATION_SESSION_TTL_SECONDS
-      default: 86400
 
     # Content Size Limits
     MaxContentSizeBytes:
@@ -118,3 +116,52 @@ x-service-configuration:
       description: Maximum documents per sync operation
       env: DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC
       default: 1000
+
+    # Background Service Configuration
+    RepositorySyncCheckIntervalSeconds:
+      type: integer
+      description: Interval in seconds between repository sync opportunity checks
+      env: DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS
+      default: 30
+    # Bulk Operation Limits
+    BulkOperationBatchSize:
+      type: integer
+      description: Maximum documents processed per bulk operation
+      env: DOCUMENTATION_BULK_OPERATION_BATCH_SIZE
+      default: 10
+
+    # Related Documents Configuration
+    MaxRelatedDocuments:
+      type: integer
+      description: Maximum related documents to return for standard depth
+      env: DOCUMENTATION_MAX_RELATED_DOCUMENTS
+      default: 5
+    MaxRelatedDocumentsExtended:
+      type: integer
+      description: Maximum related documents to return for extended depth
+      env: DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED
+      default: 10
+
+    # Sync Configuration
+    SyncLockTtlSeconds:
+      type: integer
+      description: TTL in seconds for repository sync distributed lock
+      env: DOCUMENTATION_SYNC_LOCK_TTL_SECONDS
+      default: 1800
+
+    # Query Limits
+    MaxFetchLimit:
+      type: integer
+      description: Maximum documents to fetch when filtering/sorting in memory
+      env: DOCUMENTATION_MAX_FETCH_LIMIT
+      default: 1000
+    StatsSampleSize:
+      type: integer
+      description: Number of documents to sample for namespace statistics
+      env: DOCUMENTATION_STATS_SAMPLE_SIZE
+      default: 10
+    SearchSnippetLength:
+      type: integer
+      description: Length in characters for search result snippets
+      env: DOCUMENTATION_SEARCH_SNIPPET_LENGTH
+      default: 200

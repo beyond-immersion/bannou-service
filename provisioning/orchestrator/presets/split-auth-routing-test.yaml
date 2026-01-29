@@ -3,8 +3,8 @@
 # This validates the core multi-node routing architecture
 #
 # Topology:
-# - Main node (already running): connect, permission, game-session, behavior, orchestrator, etc.
-# - bannou-auth (deployed by this preset): account, auth
+# - Main node (already running): connect, permission, game-session (generic), behavior, orchestrator, etc.
+# - bannou-auth (deployed by this preset): account, auth, game-session (test-game only)
 #
 # NOTE: The main node is NOT included here - orchestrator never deploys itself.
 # Presets only define ADDITIONAL nodes to deploy alongside the main orchestrator node.
@@ -17,8 +17,17 @@
 # When deployed, ServiceMappingEvents are published:
 # - account -> bannou-auth
 # - auth -> bannou-auth
+# - game-session -> bannou-auth (for test-game only; main node handles "generic")
 #
 # The ServiceAppMappingResolver receives these events and routes accordingly.
+#
+# Game Session Partitioning:
+# The bannou-auth node runs game-session with GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game,
+# meaning it only processes subscription.updated events for the "test-game" stub.
+# The main node's game-session (default "generic") ignores "test-game" events.
+# This tests the per-game horizontal scaling pattern where different nodes
+# handle different games' lobbies. Since all game-session endpoints are accessed
+# via prebound shortcuts, this partitioning is transparent to clients.
 
 name: split-auth-routing-test
 description: Split service deployment for routing validation - auth/account on separate node
@@ -26,16 +35,19 @@ category: testing
 
 topology:
   nodes:
-    # Auth node - handles authentication services only
+    # Auth node - handles authentication services and test-game lobbies
     # Deployed as a SEPARATE container from the main orchestrator node
     - name: bannou-auth
       services:
         - account
         - auth
+        - game-session
       replicas: 1
       environment:
         # Node-specific marker
         BANNOU_IS_AUTH_NODE: "true"
+        # Only handle "test-game" subscriptions - main node handles "generic" catch-all
+        GAME_SESSION_SUPPORTED_GAME_SERVICES: "test-game"
 
   infrastructure:
     mysql:

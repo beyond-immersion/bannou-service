@@ -15,6 +15,16 @@ public sealed class StringTableBuilder
 {
     private readonly List<string> _strings = new(64);
     private readonly Dictionary<string, ushort> _stringLookup = new(64, StringComparer.Ordinal);
+    private readonly int _maxStrings;
+
+    /// <summary>
+    /// Creates a new string table builder with configurable limit.
+    /// </summary>
+    /// <param name="maxStrings">Maximum strings allowed. Defaults to VmConfig.MaxStrings.</param>
+    public StringTableBuilder(int maxStrings = 0)
+    {
+        _maxStrings = maxStrings > 0 ? maxStrings : VmConfig.MaxStrings;
+    }
 
     /// <summary>
     /// Number of strings in the table.
@@ -22,12 +32,9 @@ public sealed class StringTableBuilder
     public int Count => _strings.Count;
 
     /// <summary>
-    /// Maximum number of strings (16-bit index limit).
+    /// Maximum number of strings for this builder instance.
     /// </summary>
-    /// <remarks>
-    /// References <see cref="VmConfig.MaxStrings"/> as the authoritative value.
-    /// </remarks>
-    public static int MaxStrings => VmConfig.MaxStrings;
+    public int MaxStrings => _maxStrings;
 
     /// <summary>
     /// Adds or retrieves an existing string from the table.
@@ -43,10 +50,10 @@ public sealed class StringTableBuilder
             return existingIndex;
         }
 
-        if (_strings.Count >= MaxStrings)
+        if (_strings.Count >= _maxStrings)
         {
             throw new InvalidOperationException(
-                $"String table overflow. Maximum {MaxStrings} strings supported.");
+                $"String table overflow. Maximum {_maxStrings} strings supported.");
         }
 
         var newIndex = (ushort)_strings.Count;

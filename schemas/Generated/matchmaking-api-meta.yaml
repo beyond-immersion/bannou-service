@@ -8,7 +8,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
     this schema. Optional reference types require `nullable: true`.
 
     **Features**:
@@ -173,18 +173,18 @@ paths:
         \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
         true,\n                    \"description\": \"When the queue was last updated\"\n                }\n            }\n\
         \        },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
+        service stub name for created sessions. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"\
+        generic\\\" for non-game-specific sessions.\",\n            \"default\": \"generic\"\n        },\n        \"SkillExpansionStep\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill window expansion curve\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"intervals\"\n    \
+        \        ],\n            \"properties\": {\n                \"intervals\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Number of intervals after which this
+        step applies\"\n                },\n                \"range\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Skill range (null means any skill level)\"\n                }\n            }\n        },\n        \"PartySkillAggregation\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Method for aggregating party member skills\"\
+        ,\n            \"enum\": [\n                \"highest\",\n                \"average\",\n                \"weighted\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get queue details\",\n    \"description\": \"Get detailed configuration
         for a specific matchmaking queue.\\n\",\n    \"tags\": [\n        \"Queues\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getQueue\"\n}"
@@ -225,63 +225,63 @@ paths:
         for the queue (lowercase alphanumeric with hyphens)\"\n                },\n                \"gameId\": {\n       \
         \             \"type\": \"string\",\n                    \"description\": \"Game this queue is for\"\n           \
         \     },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\",\n   \
-        \                 \"description\": \"Game type for created sessions (maps to game-session service)\"\n           \
-        \     },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Human-readable queue name\"\n                },\n                \"\
-        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"maxLength\": 500,\n                    \"description\": \"Detailed description of the queue\"\n      \
-        \          },\n                \"minCount\": {\n                    \"type\": \"integer\",\n                    \"\
-        minimum\": 2,\n                    \"maximum\": 200,\n                    \"description\": \"Minimum players required
-        for a match\"\n                },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n \
-        \                   \"minimum\": 2,\n                    \"maximum\": 200,\n                    \"description\": \"\
-        Maximum players in a match\"\n                },\n                \"countMultiple\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\"\
-        : \"Player count must be divisible by this\"\n                },\n                \"intervalSeconds\": {\n       \
-        \             \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 300,\n\
-        \                    \"default\": 15,\n                    \"description\": \"Seconds between match processing intervals\"\
-        \n                },\n                \"maxIntervals\": {\n                    \"type\": \"integer\",\n          \
-        \          \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 6,\n         \
-        \           \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n             \
-        \   \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
-        \              \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Maximum party size for this queue\"\n                },\n                \"\
-        allowConcurrent\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n       \
-        \             \"description\": \"Whether players can be in multiple queues\"\n                },\n               \
-        \ \"exclusiveGroup\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"maxLength\": 64,\n                    \"description\": \"Exclusive group name\"\n             \
-        \   },\n                \"useSkillRating\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": true,\n                    \"description\": \"Whether to use lib-analytics skill rating\"\n           \
-        \     },\n                \"ratingCategory\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"lib-analytics rating category to use\"\n               \
-        \ },\n                \"startWhenMinimumReached\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"default\": false,\n                    \"description\": \"Start match with minCount after maxIntervals\"\n\
-        \                },\n                \"requiresRegistration\": {\n                    \"type\": \"boolean\",\n   \
-        \                 \"default\": false,\n                    \"description\": \"Require tournament registration\"\n\
-        \                },\n                \"tournamentIdRequired\": {\n                    \"type\": \"boolean\",\n   \
-        \                 \"default\": false,\n                    \"description\": \"Require tournament ID to join\"\n  \
-        \              },\n                \"matchAcceptTimeoutSeconds\": {\n                    \"type\": \"integer\",\n\
-        \                    \"minimum\": 10,\n                    \"maximum\": 120,\n                    \"default\": 30,\n\
-        \                    \"description\": \"Seconds to accept/decline a match\"\n                }\n            }\n  \
-        \      },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
+        \                 \"nullable\": true,\n                    \"description\": \"Game type for created sessions (maps
+        to game-session service). Defaults to 'generic' if not provided.\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Human-readable queue name\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n                \
+        \    \"description\": \"Detailed description of the queue\"\n                },\n                \"minCount\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 2,\n                    \"maximum\"\
+        : 200,\n                    \"description\": \"Minimum players required for a match\"\n                },\n      \
+        \          \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 2,\n    \
+        \                \"maximum\": 200,\n                    \"description\": \"Maximum players in a match\"\n        \
+        \        },\n                \"countMultiple\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Player count must
+        be divisible by this\"\n                },\n                \"intervalSeconds\": {\n                    \"type\":
+        \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 300,\n                    \"default\"\
+        : 15,\n                    \"description\": \"Seconds between match processing intervals\"\n                },\n \
+        \               \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\":
+        1,\n                    \"maximum\": 100,\n                    \"default\": 6,\n                    \"description\"\
+        : \"Maximum intervals before relaxing to minCount\"\n                },\n                \"skillExpansion\": {\n \
+        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SkillExpansionStep\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Skill window
+        expansion steps\"\n                },\n                \"partySkillAggregation\": {\n                    \"$ref\"\
+        : \"#/$defs/PartySkillAggregation\",\n                    \"description\": \"How to calculate party skill rating\"\
+        \n                },\n                \"partySkillWeights\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"type\": \"number\"\n                    },\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Weights for weighted party skill aggregation\"\n\
+        \                },\n                \"partyMaxSize\": {\n                    \"type\": \"integer\",\n           \
+        \         \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Maximum
+        party size for this queue\"\n                },\n                \"allowConcurrent\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether players can
+        be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 64,\n                   \
+        \ \"description\": \"Exclusive group name\"\n                },\n                \"useSkillRating\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"\
+        Whether to use lib-analytics skill rating\"\n                },\n                \"ratingCategory\": {\n         \
+        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n     \
+        \               \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Start match with minCount after maxIntervals\"\n                },\n                \"requiresRegistration\":
+        {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Require tournament registration\"\n                },\n                \"tournamentIdRequired\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\":
+        \"Require tournament ID to join\"\n                },\n                \"matchAcceptTimeoutSeconds\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 10,\n                    \"maximum\": 120,\n\
+        \                    \"default\": 30,\n                    \"description\": \"Seconds to accept/decline a match\"\n\
+        \                }\n            }\n        },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Game service stub name for created sessions. Use the game service's stubName property
+        (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\",\n            \"default\": \"generic\"\
+        \n        },\n        \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A step in the skill window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\":
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of intervals after which this step applies\"\n                },\n                \"range\": {\n      \
+        \              \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Skill range (null means any skill level)\"\n                }\n          \
+        \  }\n        },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n       \
+        \         \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueueResponse\"\
         ,\n    \"$defs\": {\n        \"QueueResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full configuration details of a matchmaking queue\",\n            \"additionalProperties\": false,\n         \
@@ -339,18 +339,18 @@ paths:
         \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
         true,\n                    \"description\": \"When the queue was last updated\"\n                }\n            }\n\
         \        },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
+        service stub name for created sessions. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"\
+        generic\\\" for non-game-specific sessions.\",\n            \"default\": \"generic\"\n        },\n        \"SkillExpansionStep\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill window expansion curve\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"intervals\"\n    \
+        \        ],\n            \"properties\": {\n                \"intervals\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Number of intervals after which this
+        step applies\"\n                },\n                \"range\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Skill range (null means any skill level)\"\n                }\n            }\n        },\n        \"PartySkillAggregation\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Method for aggregating party member skills\"\
+        ,\n            \"enum\": [\n                \"highest\",\n                \"average\",\n                \"weighted\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new matchmaking queue\",\n    \"description\": \"Create a new
         matchmaking queue with specified configuration.\\nAdmin only. Queue configuration includes skill settings, party limits,\\
         nand exclusive group membership.\\n\",\n    \"tags\": [\n        \"Queue Administration\"\n    ],\n    \"deprecated\"\
@@ -480,18 +480,18 @@ paths:
         \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
         true,\n                    \"description\": \"When the queue was last updated\"\n                }\n            }\n\
         \        },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
+        service stub name for created sessions. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"\
+        generic\\\" for non-game-specific sessions.\",\n            \"default\": \"generic\"\n        },\n        \"SkillExpansionStep\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill window expansion curve\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"intervals\"\n    \
+        \        ],\n            \"properties\": {\n                \"intervals\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Number of intervals after which this
+        step applies\"\n                },\n                \"range\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Skill range (null means any skill level)\"\n                }\n            }\n        },\n        \"PartySkillAggregation\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Method for aggregating party member skills\"\
+        ,\n            \"enum\": [\n                \"highest\",\n                \"average\",\n                \"weighted\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a matchmaking queue\",\n    \"description\": \"Update configuration
         of an existing matchmaking queue.\\nAdmin only. Changes take effect for new tickets only.\\n\",\n    \"tags\": [\n\
         \        \"Queue Administration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateQueue\"\n}"
@@ -1089,7 +1089,9 @@ components:
           description: Game this queue is for
         sessionGameType:
           $ref: '#/components/schemas/SessionGameType'
-          description: Game type for created sessions (maps to game-session service)
+          nullable: true
+          description: Game type for created sessions (maps to game-session service). Defaults to 'generic' if not 
+            provided.
         displayName:
           type: string
           maxLength: 100
@@ -1288,10 +1290,8 @@ components:
       - weighted
     SessionGameType:
       type: string
-      description: Game type for created sessions (maps to game-session service GameType)
-      enum:
-      - generic
-      - arcadia
+      description: Game service stub name for created sessions. Use the game service's stubName property (e.g., 
+        "my-game"). Use "generic" for non-game-specific sessions.
       default: generic
     JoinMatchmakingRequest:
       type: object

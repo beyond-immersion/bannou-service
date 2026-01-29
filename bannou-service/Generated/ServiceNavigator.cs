@@ -7,6 +7,8 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
@@ -19,9 +21,14 @@ using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Connect;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Documentation;
+using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
@@ -50,12 +57,21 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 /// and provides session context access for client event publishing.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Registered as Scoped in DI to ensure per-request isolation of service clients.
 /// Session context is read from ServiceRequestContext (AsyncLocal storage).
+/// </para>
+/// <para>
+/// This is a partial class. Raw API execution methods are implemented in
+/// ServiceClients/ServiceNavigator.RawApi.cs (manual file).
+/// </para>
 /// </remarks>
-public sealed class ServiceNavigator : IServiceNavigator
+public partial class ServiceNavigator : IServiceNavigator
 {
     private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IServiceAppMappingResolver _appMappingResolver;
+    private readonly AppConfiguration _configuration;
 
     private readonly IAccountClient _account;
     private readonly IAchievementClient _achievement;
@@ -69,9 +85,14 @@ public sealed class ServiceNavigator : IServiceNavigator
     private readonly ICharacterHistoryClient _characterHistory;
     private readonly ICharacterPersonalityClient _characterPersonality;
     private readonly IConnectClient _connect;
+    private readonly IContractClient _contract;
+    private readonly ICurrencyClient _currency;
     private readonly IDocumentationClient _documentation;
+    private readonly IEscrowClient _escrow;
     private readonly IGameServiceClient _gameService;
     private readonly IGameSessionClient _gameSession;
+    private readonly IInventoryClient _inventory;
+    private readonly IItemClient _item;
     private readonly ILeaderboardClient _leaderboard;
     private readonly ILocationClient _location;
     private readonly IMappingClient _mapping;
@@ -98,6 +119,9 @@ public sealed class ServiceNavigator : IServiceNavigator
     /// </summary>
     public ServiceNavigator(
         IClientEventPublisher clientEventPublisher,
+        IHttpClientFactory httpClientFactory,
+        IServiceAppMappingResolver appMappingResolver,
+        AppConfiguration configuration,
         IAccountClient account,
         IAchievementClient achievement,
         IActorClient actor,
@@ -110,9 +134,14 @@ public sealed class ServiceNavigator : IServiceNavigator
         ICharacterHistoryClient characterHistory,
         ICharacterPersonalityClient characterPersonality,
         IConnectClient connect,
+        IContractClient contract,
+        ICurrencyClient currency,
         IDocumentationClient documentation,
+        IEscrowClient escrow,
         IGameServiceClient gameService,
         IGameSessionClient gameSession,
+        IInventoryClient inventory,
+        IItemClient item,
         ILeaderboardClient leaderboard,
         ILocationClient location,
         IMappingClient mapping,
@@ -135,6 +164,9 @@ public sealed class ServiceNavigator : IServiceNavigator
         IWebsiteClient website)
     {
         _clientEventPublisher = clientEventPublisher;
+        _httpClientFactory = httpClientFactory;
+        _appMappingResolver = appMappingResolver;
+        _configuration = configuration;
         _account = account;
         _achievement = achievement;
         _actor = actor;
@@ -147,9 +179,14 @@ public sealed class ServiceNavigator : IServiceNavigator
         _characterHistory = characterHistory;
         _characterPersonality = characterPersonality;
         _connect = connect;
+        _contract = contract;
+        _currency = currency;
         _documentation = documentation;
+        _escrow = escrow;
         _gameService = gameService;
         _gameSession = gameSession;
+        _inventory = inventory;
+        _item = item;
         _leaderboard = leaderboard;
         _location = location;
         _mapping = mapping;
@@ -253,13 +290,28 @@ public sealed class ServiceNavigator : IServiceNavigator
     public IConnectClient Connect => _connect;
 
     /// <inheritdoc />
+    public IContractClient Contract => _contract;
+
+    /// <inheritdoc />
+    public ICurrencyClient Currency => _currency;
+
+    /// <inheritdoc />
     public IDocumentationClient Documentation => _documentation;
+
+    /// <inheritdoc />
+    public IEscrowClient Escrow => _escrow;
 
     /// <inheritdoc />
     public IGameServiceClient GameService => _gameService;
 
     /// <inheritdoc />
     public IGameSessionClient GameSession => _gameSession;
+
+    /// <inheritdoc />
+    public IInventoryClient Inventory => _inventory;
+
+    /// <inheritdoc />
+    public IItemClient Item => _item;
 
     /// <inheritdoc />
     public ILeaderboardClient Leaderboard => _leaderboard;

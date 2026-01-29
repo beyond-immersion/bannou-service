@@ -31,32 +31,6 @@ namespace BeyondImmersion.BannouService.Analytics;
 using System = global::System;
 
 /// <summary>
-/// Type of entity being tracked
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum EntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Type of controller action
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -836,6 +810,54 @@ public partial class ControllerHistoryEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid? SessionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to cleanup expired controller history records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupControllerHistoryRequest
+{
+
+    /// <summary>
+    /// Preview cleanup without deleting records
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = true;
+
+    /// <summary>
+    /// Override configured retention period (null uses ControllerHistoryRetentionDays config)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("olderThanDays")]
+    public int? OlderThanDays { get; set; } = default!;
+
+    /// <summary>
+    /// Limit cleanup to specific game service (null cleans all)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of controller history cleanup
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupControllerHistoryResponse
+{
+
+    /// <summary>
+    /// Records deleted (or would be deleted if dry run)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recordsDeleted")]
+    public long RecordsDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this was a preview-only run
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = default!;
 
 }
 

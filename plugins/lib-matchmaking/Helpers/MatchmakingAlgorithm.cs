@@ -122,9 +122,10 @@ internal class MatchmakingAlgorithm : IMatchmakingAlgorithm
             }
             return true;
         }
-        catch
+        catch (Exception)
         {
-            return true; // On parse error, allow the match
+            // On parse/format error, allow the match (best effort query matching)
+            return true;
         }
     }
 

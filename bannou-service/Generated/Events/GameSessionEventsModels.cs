@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.GameSession;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -168,7 +170,8 @@ public partial class GameSessionActionPerformedEvent
     [System.Text.Json.Serialization.JsonPropertyName("actionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ActionType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public GameActionType ActionType { get; set; } = default!;
 
     /// <summary>
     /// Optional target entity ID for the action

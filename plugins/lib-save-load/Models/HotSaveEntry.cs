@@ -3,13 +3,14 @@ namespace BeyondImmersion.BannouService.SaveLoad.Models;
 /// <summary>
 /// Internal model for hot cache entries in Redis.
 /// Stores recent save data for fast access without hitting Asset service.
+/// IMPLEMENTATION TENETS compliant: Uses proper C# types for enums and GUIDs.
 /// </summary>
 public sealed class HotSaveEntry
 {
     /// <summary>
     /// Slot ID this entry belongs to
     /// </summary>
-    public required string SlotId { get; set; }
+    public required Guid SlotId { get; set; }
 
     /// <summary>
     /// Version number
@@ -34,7 +35,7 @@ public sealed class HotSaveEntry
     /// <summary>
     /// Compression type if compressed
     /// </summary>
-    public string? CompressionType { get; set; }
+    public CompressionType? CompressionType { get; set; }
 
     /// <summary>
     /// Size of the data in bytes
@@ -52,7 +53,8 @@ public sealed class HotSaveEntry
     public bool IsDelta { get; set; }
 
     /// <summary>
-    /// Generates the state store key for this hot cache entry
+    /// Generates the state store key for this hot cache entry.
+    /// Note: Uses ToString() for SlotId as state store keys are strings.
     /// </summary>
     public string GetStateKey() => $"hot:{SlotId}:{VersionNumber}";
 

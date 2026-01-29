@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Mapping;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -92,7 +94,8 @@ public partial class MappingChannelCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("nonAuthorityHandling")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string NonAuthorityHandling { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public NonAuthorityHandlingMode NonAuthorityHandling { get; set; } = default!;
 
     /// <summary>
     /// Current version number
@@ -181,7 +184,8 @@ public partial class MappingChannelUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("nonAuthorityHandling")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string NonAuthorityHandling { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public NonAuthorityHandlingMode NonAuthorityHandling { get; set; } = default!;
 
     /// <summary>
     /// Current version number
@@ -278,7 +282,8 @@ public partial class MappingChannelDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("nonAuthorityHandling")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string NonAuthorityHandling { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public NonAuthorityHandlingMode NonAuthorityHandling { get; set; } = default!;
 
     /// <summary>
     /// Current version number

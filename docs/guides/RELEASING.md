@@ -9,7 +9,9 @@ Bannou uses [Semantic Versioning](https://semver.org/) with two separate version
 | Track | Version File | Tag Format | Published To |
 |-------|--------------|------------|--------------|
 | **Platform** | `VERSION` | `v{major}.{minor}.{patch}` | GitHub Releases |
-| **SDK** | `sdks/SDK_VERSION` | `sdk-v{major}.{minor}.{patch}` | NuGet.org |
+| **.NET SDKs** | `sdks/SDK_VERSION` | `sdk-v{major}.{minor}.{patch}` | NuGet.org |
+| **TypeScript SDK** | `sdks/typescript/package.json` | (with .NET SDKs) | npm |
+| **Unreal SDK** | (generated headers) | N/A | Manual copy to UE project |
 
 ## Quick Reference
 
@@ -155,7 +157,16 @@ Use these categories in order:
 
 SDK releases follow a different process using PR labels. See `.github/workflows/ci.sdk-release.yml`.
 
-### SDK Release Workflow
+### .NET SDK Release Workflow
+
+The workflow publishes 20+ .NET packages in dependency order:
+
+1. **Foundation packages** (build first): `bannou-core`, `bannou-protocol`
+2. **Infrastructure**: `bannou-transport`, `bannou-bundle-format`
+3. **Runtime packages**: `bannou-server`, `bannou-client`, `bannou-client-voice`
+4. **Tool packages**: `music-theory`, `music-storyteller`, scene-composer variants, asset-bundler variants, asset-loader variants
+
+**Process:**
 
 1. Create PRs with appropriate labels:
    - `sdk:major` - Breaking changes
@@ -168,8 +179,30 @@ SDK releases follow a different process using PR labels. See `.github/workflows/
 3. The workflow:
    - Analyzes PR labels since last release
    - Calculates new version
-   - Builds and publishes to NuGet
+   - Builds and publishes to NuGet (14 packable projects in dependency order)
    - Creates git tag and GitHub release
+
+### TypeScript SDK
+
+The TypeScript SDK at `sdks/typescript/` is generated from OpenAPI schemas:
+
+```bash
+make generate-sdk-ts    # Generate types from schemas
+make build-sdk-ts       # Build the package
+make test-sdk-ts        # Run parity tests
+```
+
+TypeScript SDK versioning is coordinated with .NET SDKs but published to npm separately.
+
+### Unreal SDK
+
+The Unreal SDK at `sdks/unreal/` generates C++ headers:
+
+```bash
+make generate-unreal-sdk   # Generate headers from schemas
+```
+
+Headers are copied manually into Unreal projects (not published to a package manager).
 
 ## Manual Release (Emergency)
 

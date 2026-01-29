@@ -2,10 +2,10 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,7 +27,6 @@ public partial class AccountService : IAccountService
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
     private const string PROVIDER_INDEX_KEY_PREFIX = "provider-index-"; // provider:externalId -> accountId
     private const string AUTH_METHODS_KEY_PREFIX = "auth-methods-"; // accountId -> List<AuthMethodInfo>
-    private const string ACCOUNT_LIST_KEY = "accounts-list"; // Sorted list of all account IDs for pagination
     private const string ACCOUNT_CREATED_TOPIC = "account.created";
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
     private const string ACCOUNT_DELETED_TOPIC = "account.deleted";
@@ -48,6 +47,7 @@ public partial class AccountService : IAccountService
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
         ListAccountsRequest body,
         CancellationToken cancellationToken = default)
@@ -64,125 +64,71 @@ public partial class AccountService : IAccountService
 
             // Apply default values for pagination parameters
             if (page <= 0) page = 1;
-            if (pageSize <= 0) pageSize = 20;
-            if (pageSize > 100) pageSize = 100; // Cap at 100
+            if (pageSize <= 0) pageSize = _configuration.DefaultPageSize;
+            if (pageSize > _configuration.MaxPageSize) pageSize = _configuration.MaxPageSize;
 
-            var hasFilters = !string.IsNullOrWhiteSpace(emailFilter) ||
-                            !string.IsNullOrWhiteSpace(displayNameFilter) ||
-                            providerFilter.HasValue ||
-                            verifiedFilter.HasValue;
+            _logger.LogInformation("Listing accounts - Page: {Page}, PageSize: {PageSize}, ProviderFilter: {ProviderFilter}",
+                page, pageSize, providerFilter.HasValue);
 
-            _logger.LogInformation("Listing accounts - Page: {Page}, PageSize: {PageSize}, HasFilters: {HasFilters}",
-                page, pageSize, hasFilters);
+            var offset = (page - 1) * pageSize;
 
-            // Get the list of all account IDs (sorted by creation order)
-            var accountIdStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
-            var accountIds = await accountIdStore.GetAsync(ACCOUNT_LIST_KEY, cancellationToken) ?? new List<string>();
+            // Build query conditions for MySQL JSON queries on account records
+            var conditions = BuildAccountQueryConditions(emailFilter, displayNameFilter, verifiedFilter);
 
-            var totalCount = accountIds.Count;
-
-            // Optimized path: No filters - load only the page we need
-            if (!hasFilters)
+            // Provider filter requires in-memory filtering because auth methods are stored
+            // in separate keys (auth-methods-{id}), not in the account record itself
+            if (providerFilter.HasValue)
             {
-                var skip = (page - 1) * pageSize;
-
-                // Get the subset of account IDs for this page (newest first)
-                var pageAccountIds = accountIds
-                    .AsEnumerable()
-                    .Reverse() // Newest first (accounts added to end of list)
-                    .Skip(skip)
-                    .Take(pageSize)
-                    .ToList();
-
-                var pagedAccounts = new List<AccountResponse>();
-                var skippedCount = 0;
-                foreach (var accountId in pageAccountIds)
-                {
-                    var account = await LoadAccountResponseAsync(accountId, cancellationToken);
-                    if (account != null)
-                    {
-                        pagedAccounts.Add(account);
-                    }
-                    else
-                    {
-                        skippedCount++;
-                        _logger.LogWarning("Account {AccountId} in index but failed to load - possible data inconsistency", accountId);
-                    }
-                }
-
-                if (skippedCount > 0)
-                {
-                    _logger.LogWarning("Skipped {SkippedCount} accounts that failed to load on page {Page}", skippedCount, page);
-                }
-
-                var response = new AccountListResponse
-                {
-                    Accounts = pagedAccounts,
-                    TotalCount = totalCount,
-                    Page = page,
-                    PageSize = pageSize
-                };
-
-                _logger.LogInformation("Returning {Count} accounts (Total: {Total}, optimized path)", pagedAccounts.Count, totalCount);
-                return (StatusCodes.OK, response);
+                return await ListAccountsWithProviderFilterAsync(
+                    conditions, providerFilter.Value, page, pageSize, cancellationToken);
             }
 
-            // Filtered path: Need to load accounts to apply filters
-            // For efficiency, we scan accounts and apply filters in batches
-            var filteredAccounts = new List<AccountResponse>();
-            var batchSize = 100; // Process 100 accounts at a time to reduce memory
+            // No provider filter: fully server-side via MySQL JSON queries
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<AccountModel>(StateStoreDefinitions.Account);
 
-            // Scan in reverse order (newest first) for consistent ordering
-            var reversedIds = accountIds.AsEnumerable().Reverse().ToList();
-
-            for (var i = 0; i < reversedIds.Count; i += batchSize)
+            var sortSpec = new JsonSortSpec
             {
-                var batchIds = reversedIds.Skip(i).Take(batchSize);
+                Path = "$.CreatedAtUnix",
+                Descending = true
+            };
 
-                foreach (var accountId in batchIds)
+            var result = await jsonStore.JsonQueryPagedAsync(
+                conditions,
+                offset,
+                pageSize,
+                sortSpec,
+                cancellationToken);
+
+            // Map results to response models with auth methods
+            var accounts = new List<AccountResponse>();
+            foreach (var item in result.Items)
+            {
+                var authMethods = await GetAuthMethodsForAccountAsync(
+                    item.Value.AccountId.ToString(), cancellationToken);
+
+                accounts.Add(new AccountResponse
                 {
-                    var account = await LoadAccountResponseAsync(accountId, cancellationToken);
-                    if (account == null)
-                    {
-                        _logger.LogWarning("Account {AccountId} in index but failed to load - possible data inconsistency", accountId);
-                        continue;
-                    }
-
-                    // Apply filters
-                    if (!string.IsNullOrWhiteSpace(emailFilter) &&
-                        !account.Email.Contains(emailFilter, StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    if (!string.IsNullOrWhiteSpace(displayNameFilter) &&
-                        (string.IsNullOrEmpty(account.DisplayName) ||
-                        !account.DisplayName.Contains(displayNameFilter, StringComparison.OrdinalIgnoreCase)))
-                        continue;
-
-                    if (providerFilter.HasValue &&
-                        account.AuthMethods?.Any(m => m.Provider.ToString() == providerFilter.Value.ToString()) != true)
-                        continue;
-
-                    if (verifiedFilter.HasValue && account.EmailVerified != verifiedFilter.Value)
-                        continue;
-
-                    filteredAccounts.Add(account);
-                }
+                    AccountId = item.Value.AccountId,
+                    Email = item.Value.Email,
+                    DisplayName = item.Value.DisplayName,
+                    EmailVerified = item.Value.IsVerified,
+                    CreatedAt = item.Value.CreatedAt,
+                    UpdatedAt = item.Value.UpdatedAt,
+                    Roles = item.Value.Roles,
+                    AuthMethods = authMethods
+                });
             }
 
-            var filteredTotalCount = filteredAccounts.Count;
-            var skip2 = (page - 1) * pageSize;
-            var pagedFilteredAccounts = filteredAccounts.Skip(skip2).Take(pageSize).ToList();
-
-            var filteredResponse = new AccountListResponse
+            var response = new AccountListResponse
             {
-                Accounts = pagedFilteredAccounts,
-                TotalCount = filteredTotalCount,
+                Accounts = accounts,
+                TotalCount = (int)result.TotalCount,
                 Page = page,
                 PageSize = pageSize
             };
 
-            _logger.LogInformation("Returning {Count} accounts (Total: {Total}, filtered path)", pagedFilteredAccounts.Count, filteredTotalCount);
-            return (StatusCodes.OK, filteredResponse);
+            _logger.LogInformation("Returning {Count} accounts (Total: {Total})", accounts.Count, result.TotalCount);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -198,33 +144,130 @@ public partial class AccountService : IAccountService
     }
 
     /// <summary>
-    /// Load a full AccountResponse for an account ID including auth methods.
-    /// Returns null if account doesn't exist or is deleted.
+    /// Builds query conditions for filtering account records in the MySQL state store.
+    /// Uses AccountId exists as a type discriminator to match only account records
+    /// (the store also contains email-index, provider-index, and auth-methods entries).
     /// </summary>
-    private async Task<AccountResponse?> LoadAccountResponseAsync(string accountId, CancellationToken cancellationToken)
+    private static List<QueryCondition> BuildAccountQueryConditions(
+        string? emailFilter,
+        string? displayNameFilter,
+        bool? verifiedFilter)
     {
-        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-        var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-
-        if (account == null || account.DeletedAt.HasValue)
-            return null;
-
-        var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
-        var authMethods = await authMethodsStore.GetAsync($"{AUTH_METHODS_KEY_PREFIX}{accountId}", cancellationToken) ?? new List<AuthMethodInfo>();
-
-        return new AccountResponse
+        var conditions = new List<QueryCondition>
         {
-            AccountId = Guid.Parse(account.AccountId),
-            Email = account.Email,
-            DisplayName = account.DisplayName,
-            EmailVerified = account.IsVerified,
-            CreatedAt = account.CreatedAt,
-            UpdatedAt = account.UpdatedAt,
-            Roles = account.Roles,
-            AuthMethods = authMethods
+            // Type discriminator: only account records have AccountId in their JSON
+            new QueryCondition { Path = "$.AccountId", Operator = QueryOperator.Exists, Value = true },
+            // Exclude soft-deleted accounts
+            new QueryCondition { Path = "$.DeletedAtUnix", Operator = QueryOperator.NotExists, Value = true }
         };
+
+        if (!string.IsNullOrWhiteSpace(emailFilter))
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Email",
+                Operator = QueryOperator.Contains,
+                Value = emailFilter
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(displayNameFilter))
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.DisplayName",
+                Operator = QueryOperator.Contains,
+                Value = displayNameFilter
+            });
+        }
+
+        if (verifiedFilter.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.IsVerified",
+                Operator = QueryOperator.Equals,
+                Value = verifiedFilter.Value
+            });
+        }
+
+        return conditions;
     }
 
+    /// <summary>
+    /// Lists accounts with provider filter applied in-memory.
+    /// Auth methods are stored in separate state keys so provider filtering
+    /// cannot be done in a single JSON query. This is a rare admin operation.
+    /// </summary>
+    private async Task<(StatusCodes, AccountListResponse?)> ListAccountsWithProviderFilterAsync(
+        List<QueryCondition> conditions,
+        AuthProvider providerFilter,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var jsonStore = _stateStoreFactory.GetJsonQueryableStore<AccountModel>(StateStoreDefinitions.Account);
+
+        // Load all matching accounts (without provider filter) for in-memory filtering
+        var allResults = await jsonStore.JsonQueryAsync(conditions, cancellationToken);
+
+        var filteredAccounts = new List<AccountResponse>();
+        var batchSize = _configuration.ListBatchSize;
+
+        for (var i = 0; i < allResults.Count; i += batchSize)
+        {
+            var batch = allResults.Skip(i).Take(batchSize).ToList();
+
+            // Load auth methods in parallel within each batch
+            var batchTasks = batch.Select(async item =>
+            {
+                var authMethods = await GetAuthMethodsForAccountAsync(
+                    item.Value.AccountId.ToString(), cancellationToken);
+                return (item.Value, authMethods);
+            });
+
+            var batchResults = await Task.WhenAll(batchTasks);
+
+            foreach (var (account, authMethods) in batchResults)
+            {
+                // Check if any auth method matches the provider filter
+                if (authMethods.Any(m => m.Provider == providerFilter))
+                {
+                    filteredAccounts.Add(new AccountResponse
+                    {
+                        AccountId = account.AccountId,
+                        Email = account.Email,
+                        DisplayName = account.DisplayName,
+                        EmailVerified = account.IsVerified,
+                        CreatedAt = account.CreatedAt,
+                        UpdatedAt = account.UpdatedAt,
+                        Roles = account.Roles,
+                        AuthMethods = authMethods
+                    });
+                }
+            }
+        }
+
+        // Sort by creation time descending (newest first) and paginate in-memory
+        filteredAccounts.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
+
+        var offset = (page - 1) * pageSize;
+        var pagedAccounts = filteredAccounts.Skip(offset).Take(pageSize).ToList();
+
+        var response = new AccountListResponse
+        {
+            Accounts = pagedAccounts,
+            TotalCount = filteredAccounts.Count,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        _logger.LogInformation("Returning {Count} accounts (Total: {Total}, provider-filtered)",
+            pagedAccounts.Count, filteredAccounts.Count);
+        return (StatusCodes.OK, response);
+    }
+
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> CreateAccountAsync(
         CreateAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -271,7 +314,7 @@ public partial class AccountService : IAccountService
 
             var account = new AccountModel
             {
-                AccountId = accountId.ToString(),
+                AccountId = accountId,
                 Email = body.Email,
                 DisplayName = body.DisplayName,
                 PasswordHash = body.PasswordHash, // Store pre-hashed password from Auth service
@@ -289,9 +332,6 @@ public partial class AccountService : IAccountService
             await emailIndexStore.SaveAsync(
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 accountId.ToString());
-
-            // Add to accounts list for pagination
-            await AddAccountToIndexAsync(accountId.ToString(), cancellationToken);
 
             _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
                 accountId, body.Email, string.Join(", ", roles));
@@ -370,6 +410,7 @@ public partial class AccountService : IAccountService
         return false;
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> GetAccountAsync(
         GetAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -401,7 +442,7 @@ public partial class AccountService : IAccountService
 
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 EmailVerified = account.IsVerified,
@@ -426,6 +467,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> UpdateAccountAsync(
         UpdateAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -435,11 +477,12 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Updating account: {AccountId}", accountId);
 
-            // Get existing account
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
-            if (account == null)
+            if (account == null || account.DeletedAt.HasValue)
             {
                 _logger.LogWarning("Account not found for update: {AccountId}", accountId);
                 return (StatusCodes.NotFound, null);
@@ -459,7 +502,7 @@ public partial class AccountService : IAccountService
             if (body.Roles != null)
             {
                 var newRoles = body.Roles.ToList();
-                if (!account.Roles.SequenceEqual(newRoles))
+                if (!new HashSet<string>(account.Roles).SetEquals(newRoles))
                 {
                     changedFields.Add("roles");
                     account.Roles = newRoles;
@@ -483,8 +526,13 @@ public partial class AccountService : IAccountService
 
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save updated account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
+            // Save updated account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for account {AccountId}", accountId);
+                return (StatusCodes.Conflict, null);
+            }
 
             _logger.LogInformation("Account updated: {AccountId}", accountId);
 
@@ -499,7 +547,7 @@ public partial class AccountService : IAccountService
 
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 EmailVerified = account.IsVerified,
@@ -524,6 +572,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(
         GetAccountByEmailRequest body,
         CancellationToken cancellationToken = default)
@@ -568,7 +617,7 @@ public partial class AccountService : IAccountService
             // Convert to response model
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 PasswordHash = account.PasswordHash, // Include password hash for auth service validation
@@ -595,6 +644,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(
         GetAuthMethodsRequest body,
         CancellationToken cancellationToken = default)
@@ -636,6 +686,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(
         AddAuthMethodRequest body,
         CancellationToken cancellationToken = default)
@@ -667,23 +718,36 @@ public partial class AccountService : IAccountService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Check if this provider is already linked
+            // Check if this provider is already linked on this account
+            var mappedProvider = MapOAuthProviderToAuthProvider(body.Provider);
             var existingMethod = authMethods.FirstOrDefault(m =>
-                m.Provider.ToString() == body.Provider.ToString() && m.ExternalId == body.ExternalId);
+                m.Provider == mappedProvider && m.ExternalId == body.ExternalId);
 
             if (existingMethod != null)
             {
                 return (StatusCodes.Conflict, null);
             }
 
+            // Check if another account already owns this provider:externalId combination
+            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            var existingOwner = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
+            if (!string.IsNullOrEmpty(existingOwner) && existingOwner != accountId.ToString())
+            {
+                _logger.LogWarning("Provider {Provider}:{ExternalId} already linked to different account {ExistingOwner}",
+                    body.Provider, body.ExternalId, existingOwner);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Create new auth method
             var methodId = Guid.NewGuid();
+            var linkedAt = DateTimeOffset.UtcNow;
             var newMethod = new AuthMethodInfo
             {
                 MethodId = methodId,
                 Provider = MapOAuthProviderToAuthProvider(body.Provider),
                 ExternalId = body.ExternalId,
-                LinkedAt = DateTimeOffset.UtcNow
+                LinkedAt = linkedAt
             };
 
             authMethods.Add(newMethod);
@@ -691,9 +755,7 @@ public partial class AccountService : IAccountService
             // Save updated auth methods
             await authMethodsStore.SaveAsync(authMethodsKey, authMethods);
 
-            // Create provider index for lookup
-            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            // Create/update provider index for lookup
             await providerIndexStore.SaveAsync(providerIndexKey, accountId.ToString());
 
             _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
@@ -707,7 +769,7 @@ public partial class AccountService : IAccountService
                 MethodId = methodId,
                 Provider = body.Provider,
                 ExternalId = body.ExternalId, // Already validated non-empty above
-                LinkedAt = DateTimeOffset.UtcNow
+                LinkedAt = linkedAt
             };
 
             return (StatusCodes.OK, response);
@@ -736,10 +798,11 @@ public partial class AccountService : IAccountService
             OAuthProvider.Google => AuthProvider.Google,
             OAuthProvider.Steam => AuthProvider.Steam,
             OAuthProvider.Twitch => AuthProvider.Twitch,
-            _ => AuthProvider.Google // Default fallback
+            _ => throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unknown OAuth provider has no AuthProvider mapping")
         };
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(
         GetAccountByProviderRequest body,
         CancellationToken cancellationToken = default)
@@ -785,7 +848,7 @@ public partial class AccountService : IAccountService
 
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 EmailVerified = account.IsVerified,
@@ -827,11 +890,12 @@ public partial class AccountService : IAccountService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get auth methods for account: {AccountId}", accountId);
-            _ = PublishErrorEventAsync("GetAuthMethodsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId });
+            await PublishErrorEventAsync("GetAuthMethodsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId });
             throw; // Don't mask state store failures - empty list should mean "no auth methods", not "error"
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> UpdateProfileAsync(
         UpdateProfileRequest body,
         CancellationToken cancellationToken = default)
@@ -841,58 +905,89 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Updating profile for account: {AccountId}", accountId);
 
-            // Handle profile update similar to account update
-            try
+            // Get existing account with ETag for optimistic concurrency
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+            if (account == null || account.DeletedAt.HasValue)
             {
-                var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-                var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+                _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
+                return (StatusCodes.NotFound, null);
+            }
 
-                if (account == null)
+            // Track changed fields for event publication
+            var changedFields = new List<string>();
+
+            // Update profile fields
+            if (body.DisplayName != null && body.DisplayName != account.DisplayName)
+            {
+                account.DisplayName = body.DisplayName;
+                changedFields.Add("display_name");
+            }
+
+            // Handle metadata update if provided
+            if (body.Metadata != null)
+            {
+                var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+                if (newMetadata != null)
                 {
-                    _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
-                    return (StatusCodes.NotFound, null);
-                }
-
-                // Update profile fields
-                if (body.DisplayName != null)
-                    account.DisplayName = body.DisplayName;
-
-                // Handle metadata update if provided
-                if (body.Metadata != null)
-                {
-                    var newMetadata = ConvertToMetadataDictionary(body.Metadata);
-                    if (newMetadata != null)
+                    // If existing metadata is null or differs from new metadata, update
+                    var hasChanged = account.Metadata == null || !MetadataEquals(account.Metadata, newMetadata);
+                    if (hasChanged)
                     {
                         account.Metadata = newMetadata;
+                        changedFields.Add("metadata");
                     }
                 }
+            }
 
-                account.UpdatedAt = DateTimeOffset.UtcNow;
-
-                await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
-
-                // Get auth methods for the account
-                var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
-
-                var response = new AccountResponse
+            // If nothing changed, return early without saving or publishing
+            if (changedFields.Count == 0)
+            {
+                var authMethodsNoChange = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+                return (StatusCodes.OK, new AccountResponse
                 {
-                    AccountId = Guid.Parse(account.AccountId),
+                    AccountId = account.AccountId,
                     Email = account.Email,
                     DisplayName = account.DisplayName,
                     EmailVerified = account.IsVerified,
                     CreatedAt = account.CreatedAt,
                     UpdatedAt = account.UpdatedAt,
-                    Roles = account.Roles, // Return stored roles
-                    AuthMethods = authMethods
-                };
+                    Roles = account.Roles,
+                    AuthMethods = authMethodsNoChange
+                });
+            }
 
-                return (StatusCodes.OK, response);
-            }
-            catch (Exception innerEx)
+            account.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
             {
-                _logger.LogError(innerEx, "Inner exception updating profile: {AccountId}", body.AccountId);
-                throw;
+                _logger.LogWarning("Concurrent modification detected for account profile {AccountId}", accountId);
+                return (StatusCodes.Conflict, null);
             }
+
+            // Publish account updated event (T5: Event-Driven Architecture)
+            await PublishAccountUpdatedEventAsync(account, changedFields);
+
+            // Get auth methods for the account
+            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
+            var response = new AccountResponse
+            {
+                AccountId = account.AccountId,
+                Email = account.Email,
+                DisplayName = account.DisplayName,
+                EmailVerified = account.IsVerified,
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt,
+                Roles = account.Roles, // Return stored roles
+                AuthMethods = authMethods
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -907,7 +1002,7 @@ public partial class AccountService : IAccountService
         }
     }
 
-    // Add missing methods from interface
+    /// <inheritdoc/>
     public async Task<StatusCodes> DeleteAccountAsync(
         DeleteAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -917,9 +1012,10 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Deleting account: {AccountId}", accountId);
 
-            // Get existing account for event publishing
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
             if (account == null)
             {
@@ -930,15 +1026,32 @@ public partial class AccountService : IAccountService
             // Soft delete by setting DeletedAt timestamp
             account.DeletedAt = DateTimeOffset.UtcNow;
 
-            // Save the soft-deleted account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
+            // Save the soft-deleted account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for account deletion {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             // Remove email index
             var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
 
-            // Remove from accounts list index
-            await RemoveAccountFromIndexAsync(accountId.ToString(), cancellationToken);
+            // Remove provider index entries to prevent orphaned lookups
+            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
+            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken);
+            if (authMethods != null)
+            {
+                var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+                foreach (var method in authMethods)
+                {
+                    var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{method.Provider}:{method.ExternalId}";
+                    await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
+                }
+                await authMethodsStore.DeleteAsync(authMethodsKey, cancellationToken);
+            }
 
             _logger.LogInformation("Account deleted: {AccountId}", accountId);
 
@@ -960,6 +1073,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<StatusCodes> RemoveAuthMethodAsync(
         RemoveAuthMethodRequest body,
         CancellationToken cancellationToken = default)
@@ -979,10 +1093,11 @@ public partial class AccountService : IAccountService
                 return StatusCodes.NotFound;
             }
 
-            // Get existing auth methods
+            // Get existing auth methods with ETag for optimistic concurrency
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
             var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
-            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
+            var (authMethods, authEtag) = await authMethodsStore.GetWithETagAsync(authMethodsKey, cancellationToken);
+            authMethods ??= new List<AuthMethodInfo>();
 
             // Find the auth method to remove
             var methodToRemove = authMethods.FirstOrDefault(m => m.MethodId == methodId);
@@ -994,8 +1109,13 @@ public partial class AccountService : IAccountService
             // Remove the auth method
             authMethods.Remove(methodToRemove);
 
-            // Save updated auth methods
-            await authMethodsStore.SaveAsync(authMethodsKey, authMethods, cancellationToken: cancellationToken);
+            // Save updated auth methods with optimistic concurrency check
+            var newAuthEtag = await authMethodsStore.TrySaveAsync(authMethodsKey, authMethods, authEtag ?? string.Empty, cancellationToken);
+            if (newAuthEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for auth methods on account {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             // Remove provider index
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{methodToRemove.Provider}:{methodToRemove.ExternalId}";
@@ -1022,6 +1142,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<StatusCodes> UpdatePasswordHashAsync(
         UpdatePasswordRequest body,
         CancellationToken cancellationToken = default)
@@ -1031,11 +1152,12 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
 
-            // Get existing account
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
-            if (account == null)
+            if (account == null || account.DeletedAt.HasValue)
             {
                 _logger.LogWarning("Account not found for password update: {AccountId}", accountId);
                 return StatusCodes.NotFound;
@@ -1045,8 +1167,13 @@ public partial class AccountService : IAccountService
             account.PasswordHash = body.PasswordHash;
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save updated account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account, cancellationToken: cancellationToken);
+            // Save updated account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for password update on account {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
             await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" });
@@ -1066,6 +1193,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<StatusCodes> UpdateVerificationStatusAsync(
         UpdateVerificationRequest body,
         CancellationToken cancellationToken = default)
@@ -1076,11 +1204,12 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Updating verification status for account: {AccountId}, Verified: {Verified}",
                 accountId, body.EmailVerified);
 
-            // Get existing account
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
-            if (account == null)
+            if (account == null || account.DeletedAt.HasValue)
             {
                 _logger.LogWarning("Account not found for verification update: {AccountId}", accountId);
                 return StatusCodes.NotFound;
@@ -1090,8 +1219,13 @@ public partial class AccountService : IAccountService
             account.IsVerified = body.EmailVerified;
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save updated account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account, cancellationToken: cancellationToken);
+            // Save updated account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for verification update on account {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
                 accountId, body.EmailVerified);
@@ -1122,7 +1256,7 @@ public partial class AccountService : IAccountService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            AccountId = Guid.Parse(account.AccountId),
+            AccountId = account.AccountId,
             Email = account.Email,
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
@@ -1145,7 +1279,7 @@ public partial class AccountService : IAccountService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            AccountId = Guid.Parse(account.AccountId),
+            AccountId = account.AccountId,
             Email = account.Email,
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
@@ -1170,7 +1304,7 @@ public partial class AccountService : IAccountService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            AccountId = Guid.Parse(account.AccountId),
+            AccountId = account.AccountId,
             Email = account.Email,
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
@@ -1184,114 +1318,316 @@ public partial class AccountService : IAccountService
         _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", account.AccountId);
     }
 
-    #region Account Index Management
 
-    /// <summary>
-    /// Adds an account ID to the accounts list index for pagination support.
-    /// Uses optimistic concurrency with retry for concurrent updates.
-    /// </summary>
-    private async Task AddAccountToIndexAsync(string accountId, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BatchGetAccountsResponse?)> BatchGetAccountsAsync(
+        BatchGetAccountsRequest body,
+        CancellationToken cancellationToken = default)
     {
-        const int maxRetries = 3;
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
-
-        for (var attempt = 0; attempt < maxRetries; attempt++)
+        try
         {
-            try
-            {
-                var (accountIds, etag) = await indexStore.GetWithETagAsync(ACCOUNT_LIST_KEY, cancellationToken);
-                accountIds ??= new List<string>();
+            _logger.LogInformation("Batch getting {Count} accounts", body.AccountIds.Count);
 
-                if (!accountIds.Contains(accountId))
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var accounts = new List<AccountResponse>();
+            var notFound = new List<Guid>();
+            var failed = new List<BulkOperationFailure>();
+
+            // Fetch all accounts in parallel with per-item error handling
+            var accountIds = body.AccountIds.ToList();
+            var fetchTasks = accountIds.Select(async accountId =>
+            {
+                try
                 {
-                    accountIds.Add(accountId);
-
-                    // Use optimistic concurrency - retry if etag mismatch
-                    var savedEtag = string.IsNullOrEmpty(etag)
-                        ? await indexStore.SaveAsync(ACCOUNT_LIST_KEY, accountIds, cancellationToken: cancellationToken)
-                        : await indexStore.TrySaveAsync(ACCOUNT_LIST_KEY, accountIds, etag, cancellationToken);
-
-                    if (savedEtag != null)
-                    {
-                        _logger.LogDebug("Added account {AccountId} to accounts index (total: {Count})", accountId, accountIds.Count);
-                        return;
-                    }
-
-                    // ETag mismatch - retry
-                    _logger.LogDebug("ETag mismatch adding {AccountId} to index, retrying (attempt {Attempt})", accountId, attempt + 1);
-                    continue;
+                    var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+                    return (accountId, account, error: (string?)null);
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error fetching account {AccountId}", accountId);
+                    return (accountId, account: (AccountModel?)null, error: ex.Message);
+                }
+            });
 
-                return; // Already in list
-            }
-            catch (Exception ex) when (attempt < maxRetries - 1)
+            var results = await Task.WhenAll(fetchTasks);
+
+            // Process results: separate found, not-found, and failed
+            var foundAccounts = new List<(Guid Id, AccountModel Model)>();
+            foreach (var (accountId, account, error) in results)
             {
-                _logger.LogWarning(ex, "Error adding account {AccountId} to index, retrying (attempt {Attempt})", accountId, attempt + 1);
-                await Task.Delay(100 * (attempt + 1), cancellationToken);
+                if (error != null)
+                {
+                    failed.Add(new BulkOperationFailure
+                    {
+                        AccountId = accountId,
+                        Error = error
+                    });
+                }
+                else if (account == null || account.DeletedAt.HasValue)
+                {
+                    notFound.Add(accountId);
+                }
+                else
+                {
+                    foundAccounts.Add((accountId, account));
+                }
             }
-        }
 
-        throw new InvalidOperationException($"Failed to add account {accountId} to index after {maxRetries} attempts");
+            // Load auth methods in parallel for all found accounts with per-item error handling
+            var authMethodTasks = foundAccounts.Select(async item =>
+            {
+                try
+                {
+                    var authMethods = await GetAuthMethodsForAccountAsync(item.Id.ToString(), cancellationToken);
+                    return (item.Id, item.Model, authMethods, error: (string?)null);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error fetching auth methods for account {AccountId}", item.Id);
+                    return (item.Id, item.Model, authMethods: (List<AuthMethodInfo>?)null, error: ex.Message);
+                }
+            });
+
+            var authResults = await Task.WhenAll(authMethodTasks);
+
+            foreach (var (accountId, account, authMethods, error) in authResults)
+            {
+                if (error != null)
+                {
+                    failed.Add(new BulkOperationFailure
+                    {
+                        AccountId = accountId,
+                        Error = $"Auth methods fetch failed: {error}"
+                    });
+                }
+                else
+                {
+                    accounts.Add(new AccountResponse
+                    {
+                        AccountId = account.AccountId,
+                        Email = account.Email,
+                        DisplayName = account.DisplayName,
+                        EmailVerified = account.IsVerified,
+                        CreatedAt = account.CreatedAt,
+                        UpdatedAt = account.UpdatedAt,
+                        Roles = account.Roles,
+                        AuthMethods = authMethods ?? new List<AuthMethodInfo>()
+                    });
+                }
+            }
+
+            var response = new BatchGetAccountsResponse
+            {
+                Accounts = accounts,
+                NotFound = notFound,
+                Failed = failed
+            };
+
+            _logger.LogInformation("Batch get completed: {Found} found, {NotFound} not found, {Failed} failed",
+                accounts.Count, notFound.Count, failed.Count);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in batch get accounts");
+            await PublishErrorEventAsync(
+                "BatchGetAccounts",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { Count = body.AccountIds.Count });
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
-    /// <summary>
-    /// Removes an account ID from the accounts list index.
-    /// Uses optimistic concurrency with retry for concurrent updates.
-    /// </summary>
-    private async Task RemoveAccountFromIndexAsync(string accountId, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CountAccountsResponse?)> CountAccountsAsync(
+        CountAccountsRequest body,
+        CancellationToken cancellationToken = default)
     {
-        const int maxRetries = 3;
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
-
-        for (var attempt = 0; attempt < maxRetries; attempt++)
+        try
         {
-            try
-            {
-                var (accountIds, etag) = await indexStore.GetWithETagAsync(ACCOUNT_LIST_KEY, cancellationToken);
-                accountIds ??= new List<string>();
+            _logger.LogInformation("Counting accounts with filters - Email: {Email}, DisplayName: {DisplayName}, Verified: {Verified}, Role: {Role}",
+                body.Email != null, body.DisplayName != null, body.Verified, body.Role);
 
-                if (accountIds.Remove(accountId))
+            var conditions = BuildAccountQueryConditions(body.Email, body.DisplayName, body.Verified);
+
+            // Role filter uses JSON array containment (JSON_CONTAINS on $.Roles)
+            if (!string.IsNullOrWhiteSpace(body.Role))
+            {
+                conditions.Add(new QueryCondition
                 {
-                    // Use optimistic concurrency - retry if etag mismatch
-                    var savedEtag = string.IsNullOrEmpty(etag)
-                        ? await indexStore.SaveAsync(ACCOUNT_LIST_KEY, accountIds, cancellationToken: cancellationToken)
-                        : await indexStore.TrySaveAsync(ACCOUNT_LIST_KEY, accountIds, etag, cancellationToken);
-
-                    if (savedEtag != null)
-                    {
-                        _logger.LogDebug("Removed account {AccountId} from accounts index (remaining: {Count})", accountId, accountIds.Count);
-                        return;
-                    }
-
-                    // ETag mismatch - retry
-                    _logger.LogDebug("ETag mismatch removing {AccountId} from index, retrying (attempt {Attempt})", accountId, attempt + 1);
-                    continue;
-                }
-
-                return; // Not in list
+                    Path = "$.Roles",
+                    Operator = QueryOperator.In,
+                    Value = body.Role
+                });
             }
-            catch (Exception ex) when (attempt < maxRetries - 1)
+
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<AccountModel>(StateStoreDefinitions.Account);
+            var count = await jsonStore.JsonCountAsync(conditions, cancellationToken);
+
+            var response = new CountAccountsResponse
             {
-                _logger.LogWarning(ex, "Error removing account {AccountId} from index, retrying (attempt {Attempt})", accountId, attempt + 1);
-                await Task.Delay(100 * (attempt + 1), cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to remove account {AccountId} from index after {MaxRetries} attempts", accountId, maxRetries);
-                await _messageBus.TryPublishErrorAsync(
-                    "account",
-                    "RemoveAccountFromIndex",
-                    ex.GetType().Name,
-                    ex.Message,
-                    dependency: "state",
-                    cancellationToken: cancellationToken);
-                // Index cleanup failure must propagate - orphaned index entries are a data integrity issue
-                throw;
-            }
+                Count = count
+            };
+
+            _logger.LogInformation("Account count: {Count}", count);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error counting accounts");
+            await PublishErrorEventAsync(
+                "CountAccounts",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state");
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    #endregion
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BulkUpdateRolesResponse?)> BulkUpdateRolesAsync(
+        BulkUpdateRolesRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Validate that at least one operation is specified
+            var hasAddRoles = body.AddRoles != null && body.AddRoles.Count > 0;
+            var hasRemoveRoles = body.RemoveRoles != null && body.RemoveRoles.Count > 0;
+
+            if (!hasAddRoles && !hasRemoveRoles)
+            {
+                _logger.LogWarning("Bulk update roles called with neither addRoles nor removeRoles");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            _logger.LogInformation("Bulk updating roles for {Count} accounts - AddRoles: {AddRoles}, RemoveRoles: {RemoveRoles}",
+                body.AccountIds.Count,
+                body.AddRoles != null ? string.Join(",", body.AddRoles) : "none",
+                body.RemoveRoles != null ? string.Join(",", body.RemoveRoles) : "none");
+
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var succeeded = new List<Guid>();
+            var failed = new List<BulkOperationFailure>();
+
+            // Process each account sequentially (ETag-based concurrency requires read-modify-write)
+            foreach (var accountId in body.AccountIds)
+            {
+                try
+                {
+                    var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+                    var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+                    if (account == null || account.DeletedAt.HasValue)
+                    {
+                        failed.Add(new BulkOperationFailure
+                        {
+                            AccountId = accountId,
+                            Error = "Account not found"
+                        });
+                        continue;
+                    }
+
+                    // Compute new roles
+                    var currentRoles = new HashSet<string>(account.Roles);
+                    var originalRoles = new HashSet<string>(currentRoles);
+
+                    if (hasAddRoles)
+                    {
+                        foreach (var role in body.AddRoles!)
+                        {
+                            currentRoles.Add(role);
+                        }
+                    }
+
+                    if (hasRemoveRoles)
+                    {
+                        foreach (var role in body.RemoveRoles!)
+                        {
+                            currentRoles.Remove(role);
+                        }
+                    }
+
+                    // Apply anonymous role auto-management if configured
+                    if (_configuration.AutoManageAnonymousRole)
+                    {
+                        // If adding a non-anonymous role, remove "anonymous" if present
+                        if (hasAddRoles && body.AddRoles!.Any(r => r != "anonymous"))
+                        {
+                            currentRoles.Remove("anonymous");
+                        }
+
+                        // If resulting roles would be empty, add "anonymous"
+                        if (currentRoles.Count == 0)
+                        {
+                            currentRoles.Add("anonymous");
+                            _logger.LogDebug("Auto-added 'anonymous' role to account {AccountId} to prevent zero roles", accountId);
+                        }
+                    }
+
+                    // Check if roles actually changed
+                    if (currentRoles.SetEquals(originalRoles))
+                    {
+                        // No-op is success
+                        succeeded.Add(accountId);
+                        continue;
+                    }
+
+                    // Update and save
+                    account.Roles = currentRoles.ToList();
+                    account.UpdatedAt = DateTimeOffset.UtcNow;
+
+                    var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+                    if (newEtag == null)
+                    {
+                        failed.Add(new BulkOperationFailure
+                        {
+                            AccountId = accountId,
+                            Error = "Concurrent modification"
+                        });
+                        continue;
+                    }
+
+                    succeeded.Add(accountId);
+
+                    // Publish event for changed accounts
+                    await PublishAccountUpdatedEventAsync(account, new[] { "roles" });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating roles for account {AccountId}", accountId);
+                    failed.Add(new BulkOperationFailure
+                    {
+                        AccountId = accountId,
+                        Error = ex.Message
+                    });
+                }
+            }
+
+            var response = new BulkUpdateRolesResponse
+            {
+                Succeeded = succeeded,
+                Failed = failed
+            };
+
+            _logger.LogInformation("Bulk role update completed: {Succeeded} succeeded, {Failed} failed",
+                succeeded.Count, failed.Count);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in bulk update roles");
+            await PublishErrorEventAsync(
+                "BulkUpdateRoles",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { Count = body.AccountIds.Count });
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
 
     #region Permission Registration
 
@@ -1299,12 +1635,13 @@ public partial class AccountService : IAccountService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    /// <param name="appId">The application ID used to scope permission registrations.</param>
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Account service permissions... (starting)");
         try
         {
-            await AccountPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await AccountPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("Account service permissions registered via event (complete)");
         }
         catch (Exception ex)
@@ -1431,20 +1768,46 @@ public partial class AccountService : IAccountService
 /// </summary>
 public class AccountModel
 {
-    public string AccountId { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string? DisplayName { get; set; }
-    public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
-    public bool IsVerified { get; set; }
-    public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
-    public Dictionary<string, object>? Metadata { get; set; } // Custom metadata for the account
+    /// <summary>Unique identifier for the account.</summary>
+    public Guid AccountId { get; set; }
 
-    // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
+    /// <summary>Email address used for login and notifications.</summary>
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>User-visible display name, optional.</summary>
+    public string? DisplayName { get; set; }
+
+    /// <summary>BCrypt hashed password for email/password authentication.</summary>
+    public string? PasswordHash { get; set; }
+
+    /// <summary>Whether the email address has been verified.</summary>
+    public bool IsVerified { get; set; }
+
+    /// <summary>User roles for permission checks (e.g., "admin", "user").</summary>
+    public List<string> Roles { get; set; } = new List<string>();
+
+    /// <summary>Custom metadata key-value pairs for the account.</summary>
+    public Dictionary<string, object>? Metadata { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for account creation.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
     public long CreatedAtUnix { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for last account update.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
     public long UpdatedAtUnix { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for soft-deletion, null if not deleted.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
     public long? DeletedAtUnix { get; set; }
 
-    // Expose as DateTimeOffset for code convenience (not serialized)
+    /// <summary>Computed property for code convenience - not serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public DateTimeOffset CreatedAt
     {
@@ -1452,6 +1815,7 @@ public class AccountModel
         set => CreatedAtUnix = value.ToUnixTimeSeconds();
     }
 
+    /// <summary>Computed property for code convenience - not serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public DateTimeOffset UpdatedAt
     {
@@ -1459,6 +1823,7 @@ public class AccountModel
         set => UpdatedAtUnix = value.ToUnixTimeSeconds();
     }
 
+    /// <summary>Computed property for code convenience - not serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public DateTimeOffset? DeletedAt
     {

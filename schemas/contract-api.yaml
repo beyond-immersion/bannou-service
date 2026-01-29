@@ -1,0 +1,2958 @@
+openapi: 3.0.0
+info:
+  title: Contract Service API
+  version: 1.0.0
+  description: |
+    Binding agreements between entities with milestone-based progression.
+
+    lib-contract provides a generic system for binding agreements between entities.
+    While lib-escrow handles the mechanics of holding assets during exchanges,
+    lib-contract represents the ongoing obligations and rights that may result from,
+    accompany, or exist independently of asset exchanges.
+
+    **Key Design Principle**: Contracts are reactive, not proactive. External systems
+    tell contracts when conditions are met/failed via API calls. Contracts store state,
+    emit events, and execute prebound APIs on state transitions.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **Polymorphic Parties**: Any entity type can enter contracts (characters, NPCs,
+    guilds, companies, governments, locations).
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Templates (5 endpoints)
+  # ===========================================================================
+
+  /contract/template/create:
+    post:
+      operationId: createContractTemplate
+      tags:
+      - Templates
+      summary: Create a contract template
+      description: |
+        Creates a new contract template that defines a type of agreement.
+        Templates specify party roles, default terms, milestones, and prebound APIs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractTemplateRequest'
+      responses:
+        '200':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
+        '400':
+          description: Invalid request (validation error)
+        '409':
+          description: Template with this code already exists
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /contract/template/get:
+    post:
+      operationId: getContractTemplate
+      tags:
+      - Templates
+      summary: Get template by ID or code
+      description: |
+        Retrieves a contract template by its unique ID or code.
+        At least one of templateId or code must be provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContractTemplateRequest'
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
+        '400':
+          description: Neither templateId nor code provided
+        '404':
+          description: Template not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/template/list:
+    post:
+      operationId: listContractTemplates
+      tags:
+      - Templates
+      summary: List templates with filters
+      description: |
+        Lists contract templates with optional filtering by realm, active status,
+        and search term.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListContractTemplatesRequest'
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListContractTemplatesResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/template/update:
+    post:
+      operationId: updateContractTemplate
+      tags:
+      - Templates
+      summary: Update template (not instances)
+      description: |
+        Updates an existing contract template. Does not affect existing instances.
+        Only certain fields can be updated after creation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContractTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
+        '404':
+          description: Template not found
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /contract/template/delete:
+    post:
+      operationId: deleteContractTemplate
+      tags:
+      - Templates
+      summary: Soft-delete template
+      description: |
+        Soft-deletes a contract template. Existing instances continue to function
+        but no new instances can be created from this template.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteContractTemplateRequest'
+      responses:
+        '200':
+          description: Template deleted successfully
+        '404':
+          description: Template not found
+        '409':
+          description: Template has active instances and cannot be deleted
+      x-permissions:
+      - role: admin
+        states: {}
+
+  # ===========================================================================
+  # Instances (7 endpoints)
+  # ===========================================================================
+
+  /contract/instance/create:
+    post:
+      operationId: createContractInstance
+      tags:
+      - Instances
+      summary: Create contract instance from template
+      description: |
+        Creates a new contract instance from a template. The instance starts
+        in 'draft' status and must be proposed to parties before activation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractInstanceRequest'
+      responses:
+        '200':
+          description: Instance created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInstanceResponse'
+        '400':
+          description: Invalid request (missing required parties, invalid terms)
+        '404':
+          description: Template not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/instance/propose:
+    post:
+      operationId: proposeContractInstance
+      tags:
+      - Instances
+      summary: Propose contract to parties (starts consent flow)
+      description: |
+        Moves a draft contract to 'proposed' status and notifies parties.
+        Parties must consent before the contract becomes active.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeContractInstanceRequest'
+      responses:
+        '200':
+          description: Contract proposed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInstanceResponse'
+        '400':
+          description: Contract not in draft status
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/instance/consent:
+    post:
+      operationId: consentToContract
+      tags:
+      - Instances
+      summary: Party consents to contract
+      description: |
+        Records a party's consent to a proposed contract. When all required
+        parties consent, the contract moves to 'accepted' then 'active' status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentToContractRequest'
+      responses:
+        '200':
+          description: Consent recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInstanceResponse'
+        '400':
+          description: Party not part of this contract or already consented
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/instance/get:
+    post:
+      operationId: getContractInstance
+      tags:
+      - Instances
+      summary: Get instance by ID
+      description: Retrieves a contract instance by its unique ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContractInstanceRequest'
+      responses:
+        '200':
+          description: Instance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInstanceResponse'
+        '404':
+          description: Instance not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/instance/query:
+    post:
+      operationId: queryContractInstances
+      tags:
+      - Instances
+      summary: Query instances by party, template, status
+      description: |
+        Queries contract instances with various filters. At least one filter
+        must be provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryContractInstancesRequest'
+      responses:
+        '200':
+          description: Instances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryContractInstancesResponse'
+        '400':
+          description: No filter criteria provided
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/instance/terminate:
+    post:
+      operationId: terminateContractInstance
+      tags:
+      - Instances
+      summary: Request early termination
+      description: |
+        Requests early termination of an active contract. Depending on the
+        contract's termination policy, this may require mutual consent or
+        incur penalties.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateContractInstanceRequest'
+      responses:
+        '200':
+          description: Termination processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInstanceResponse'
+        '400':
+          description: Contract cannot be terminated (policy violation)
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/instance/get-status:
+    post:
+      operationId: getContractInstanceStatus
+      tags:
+      - Instances
+      summary: Get current status and milestone progress
+      description: |
+        Gets the current status of a contract including milestone progress,
+        pending consents, and any active breaches.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContractInstanceStatusRequest'
+      responses:
+        '200':
+          description: Status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInstanceStatusResponse'
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  # ===========================================================================
+  # Milestones (3 endpoints)
+  # ===========================================================================
+
+  /contract/milestone/complete:
+    post:
+      operationId: completeMilestone
+      tags:
+      - Milestones
+      summary: External system reports milestone completed
+      description: |
+        Called by external systems to report that a milestone's conditions
+        have been met. Triggers onComplete prebound APIs and may advance
+        contract status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteMilestoneRequest'
+      responses:
+        '200':
+          description: Milestone completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneResponse'
+        '400':
+          description: Milestone not in valid state for completion
+        '404':
+          description: Contract or milestone not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/milestone/fail:
+    post:
+      operationId: failMilestone
+      tags:
+      - Milestones
+      summary: External system reports milestone failed
+      description: |
+        Called by external systems to report that a milestone has failed
+        (e.g., deadline passed, conditions cannot be met). Triggers onExpire
+        prebound APIs and may record a breach.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailMilestoneRequest'
+      responses:
+        '200':
+          description: Milestone failure recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneResponse'
+        '400':
+          description: Milestone not in valid state for failure
+        '404':
+          description: Contract or milestone not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/milestone/get:
+    post:
+      operationId: getMilestone
+      tags:
+      - Milestones
+      summary: Get milestone details and status
+      description: Gets the current state of a specific milestone.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetMilestoneRequest'
+      responses:
+        '200':
+          description: Milestone retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneResponse'
+        '404':
+          description: Contract or milestone not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  # ===========================================================================
+  # Breaches (3 endpoints)
+  # ===========================================================================
+
+  /contract/breach/report:
+    post:
+      operationId: reportBreach
+      tags:
+      - Breaches
+      summary: Report a contract breach
+      description: |
+        Reports a breach of contract terms. This can be called by parties
+        or external systems. The breach enters a grace period for cure
+        if configured.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportBreachRequest'
+      responses:
+        '200':
+          description: Breach reported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreachResponse'
+        '400':
+          description: Invalid breach report
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/breach/cure:
+    post:
+      operationId: cureBreach
+      tags:
+      - Breaches
+      summary: Mark breach as cured (system/admin action)
+      description: |
+        Marks a breach as cured within the grace period. This prevents
+        consequences from being applied. Called by systems that verify
+        the breach has been remedied.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CureBreachRequest'
+      responses:
+        '200':
+          description: Breach cured successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreachResponse'
+        '400':
+          description: Breach not in curable state
+        '404':
+          description: Breach not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/breach/get:
+    post:
+      operationId: getBreach
+      tags:
+      - Breaches
+      summary: Get breach details
+      description: Retrieves details of a specific breach record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBreachRequest'
+      responses:
+        '200':
+          description: Breach retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreachResponse'
+        '404':
+          description: Breach not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  # ===========================================================================
+  # Metadata (2 endpoints)
+  # ===========================================================================
+
+  /contract/metadata/update:
+    post:
+      operationId: updateContractMetadata
+      tags:
+      - Metadata
+      summary: Update game metadata on instance
+      description: |
+        Updates game-specific metadata on a contract instance without
+        touching contract state. Used by higher-level systems (quests, etc.)
+        to store additional context.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContractMetadataRequest'
+      responses:
+        '200':
+          description: Metadata updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractMetadataResponse'
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/metadata/get:
+    post:
+      operationId: getContractMetadata
+      tags:
+      - Metadata
+      summary: Get game metadata
+      description: Retrieves game-specific metadata from a contract instance.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContractMetadataRequest'
+      responses:
+        '200':
+          description: Metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractMetadataResponse'
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  # ===========================================================================
+  # Constraints (2 endpoints)
+  # ===========================================================================
+
+  /contract/check-constraint:
+    post:
+      operationId: checkContractConstraint
+      tags:
+      - Constraints
+      summary: Check if entity can take action given contracts
+      description: |
+        Checks whether an entity's proposed action would violate any
+        active contract constraints (exclusivity, non-compete, territory, etc.).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckConstraintRequest'
+      responses:
+        '200':
+          description: Constraint check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckConstraintResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /contract/query-active:
+    post:
+      operationId: queryActiveContracts
+      tags:
+      - Constraints
+      summary: Query active contracts for entity
+      description: |
+        Returns all active contracts where the specified entity is a party.
+        Useful for displaying current obligations in UI.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryActiveContractsRequest'
+      responses:
+        '200':
+          description: Active contracts retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryActiveContractsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  # ===========================================================================
+  # Guardian System (3 endpoints) - for escrow to lock contracts as assets
+  # ===========================================================================
+
+  /contract/lock:
+    post:
+      operationId: lockContract
+      tags:
+      - Guardian
+      summary: Lock contract under guardian custody
+      description: |
+        Locks a contract under guardian custody (e.g., escrow). A locked contract
+        cannot be modified, terminated, or have parties transferred except by the
+        guardian. Requires the contract template to have `transferable: true`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LockContractRequest'
+      responses:
+        '200':
+          description: Contract locked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockContractResponse'
+        '400':
+          description: Contract not transferable
+        '404':
+          description: Contract not found
+        '409':
+          description: Contract already locked
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/unlock:
+    post:
+      operationId: unlockContract
+      tags:
+      - Guardian
+      summary: Unlock contract from guardian custody
+      description: |
+        Unlocks a contract from guardian custody. Only the current guardian can
+        unlock a contract. Called on escrow refund to restore contract to original state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockContractRequest'
+      responses:
+        '200':
+          description: Contract unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockContractResponse'
+        '403':
+          description: Not the current guardian
+        '404':
+          description: Contract not found or not locked
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/transfer-party:
+    post:
+      operationId: transferContractParty
+      tags:
+      - Guardian
+      summary: Transfer party role to new entity
+      description: |
+        Transfers a party role to a new entity. Used by escrow to reassign contract
+        roles on release (e.g., transfer landlord role to new property owner).
+        Contract must be locked and caller must be the guardian.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferContractPartyRequest'
+      responses:
+        '200':
+          description: Party transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferContractPartyResponse'
+        '400':
+          description: Party not found in contract
+        '403':
+          description: Not the current guardian or contract not locked
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Clause Types (2 endpoints) - extensible clause type registration
+  # ===========================================================================
+
+  /contract/clause-type/register:
+    post:
+      operationId: registerClauseType
+      tags:
+      - ClauseTypes
+      summary: Register a new clause type
+      description: |
+        Registers a new clause type with validation and/or execution handlers.
+        Clause types are registered globally (plugin-level, admin operation) and
+        referenced by contract templates via typeCode. Built-in types
+        (asset_requirement, currency_transfer, item_transfer) are pre-registered.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterClauseTypeRequest'
+      responses:
+        '200':
+          description: Clause type registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterClauseTypeResponse'
+        '409':
+          description: Clause type code already exists
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /contract/clause-type/list:
+    post:
+      operationId: listClauseTypes
+      tags:
+      - ClauseTypes
+      summary: List all registered clause types
+      description: |
+        Lists all registered clause types including built-in types and
+        custom-registered types.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListClauseTypesRequest'
+      responses:
+        '200':
+          description: Clause types listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListClauseTypesResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Execution System (3 endpoints) - for escrow-driven contract execution
+  # ===========================================================================
+
+  /contract/instance/set-template-values:
+    post:
+      operationId: setContractTemplateValues
+      tags:
+      - Execution
+      summary: Set template values on contract instance
+      description: |
+        Sets template values on a contract instance. Called by escrow when binding
+        a contract to an escrow agreement. Template values are used for variable
+        substitution in clause handlers (e.g., wallet IDs, container IDs).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTemplateValuesRequest'
+      responses:
+        '200':
+          description: Template values set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetTemplateValuesResponse'
+        '400':
+          description: Invalid template key format
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/instance/check-asset-requirements:
+    post:
+      operationId: checkAssetRequirements
+      tags:
+      - Execution
+      summary: Check if asset requirement clauses are satisfied
+      description: |
+        Checks if all asset requirement clauses are satisfied. Uses template values
+        (e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+        via the registered clause type handlers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAssetRequirementsRequest'
+      responses:
+        '200':
+          description: Asset requirements checked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckAssetRequirementsResponse'
+        '400':
+          description: Template values not set
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/instance/execute:
+    post:
+      operationId: executeContract
+      tags:
+      - Execution
+      summary: Execute all contract clauses (idempotent)
+      description: |
+        Executes all contract distribution clauses - distribute assets per clauses,
+        collect fees, mark contract as executed. This is idempotent - calling twice
+        returns the same result without re-executing. Contract must be in fulfilled
+        status and all template values must be set.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteContractRequest'
+      responses:
+        '200':
+          description: Contract executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteContractResponse'
+        '400':
+          description: Contract not in fulfilled status or template values missing
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    ContractStatus:
+      type: string
+      description: Current status of a contract instance
+      enum:
+      - draft
+      - proposed
+      - pending
+      - active
+      - fulfilled
+      - expired
+      - terminated
+      - breached
+      - suspended
+      - disputed
+      - declined
+
+    MilestoneStatus:
+      type: string
+      description: Current status of a milestone
+      enum:
+      - pending
+      - active
+      - completed
+      - failed
+      - skipped
+
+    BreachType:
+      type: string
+      description: Type of contract breach
+      enum:
+      - term_violation
+      - milestone_missed
+      - unauthorized_action
+      - non_payment
+
+    BreachStatus:
+      type: string
+      description: Current status of a breach record
+      enum:
+      - detected
+      - cure_period
+      - cured
+      - consequences_applied
+      - disputed
+      - forgiven
+
+    ConsentStatus:
+      type: string
+      description: Party's consent status
+      enum:
+      - pending
+      - consented
+      - declined
+      - implicit
+
+    EnforcementMode:
+      type: string
+      description: How contract breaches are handled
+      enum:
+      - advisory
+      - event_only
+      - consequence_based
+      - community
+
+    TerminationPolicy:
+      type: string
+      description: How the contract can be terminated
+      enum:
+      - mutual_consent
+      - unilateral_with_notice
+      - unilateral_immediate
+      - non_terminable
+
+    PaymentSchedule:
+      type: string
+      description: When payments occur
+      enum:
+      - one_time
+      - recurring
+      - milestone_based
+
+    ConstraintType:
+      type: string
+      description: Type of constraint to check
+      enum:
+      - exclusivity
+      - non_compete
+      - territory
+      - time_commitment
+
+    MetadataType:
+      type: string
+      description: Type of metadata to update
+      enum:
+      - instance_data
+      - runtime_state
+
+    # =========================================================================
+    # Template Models
+    # =========================================================================
+
+    CreateContractTemplateRequest:
+      type: object
+      description: Request to create a new contract template
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - minParties
+      - maxParties
+      - partyRoles
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          pattern: "^[a-z0-9_]+$"
+          description: Unique code for this template (lowercase, underscores)
+        name:
+          type: string
+          maxLength: 200
+          description: Human-readable template name
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Detailed description of this contract type
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID if template is realm-specific (null for cross-realm)
+        minParties:
+          type: integer
+          minimum: 2
+          description: Minimum number of parties required
+        maxParties:
+          type: integer
+          minimum: 2
+          maximum: 20
+          description: Maximum number of parties allowed
+        partyRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyRoleDefinition'
+          minItems: 1
+          description: Role definitions for parties in this contract
+        defaultTerms:
+          $ref: '#/components/schemas/ContractTerms'
+          nullable: true
+          description: Default terms for instances of this template
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneDefinition'
+          nullable: true
+          description: Milestone definitions for this contract type
+        defaultEnforcementMode:
+          $ref: '#/components/schemas/EnforcementMode'
+          description: Default enforcement mode for instances
+        transferable:
+          type: boolean
+          default: false
+          description: Whether contracts can be transferred to other parties
+        gameMetadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Template-level game-specific metadata
+
+    GetContractTemplateRequest:
+      type: object
+      description: Request to get a contract template
+      additionalProperties: false
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Template ID (provide this or code)
+        code:
+          type: string
+          nullable: true
+          description: Template code (provide this or templateId)
+
+    ListContractTemplatesRequest:
+      type: object
+      description: Request to list contract templates
+      additionalProperties: false
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm (null includes cross-realm templates)
+        isActive:
+          type: boolean
+          nullable: true
+          description: Filter by active status
+        searchTerm:
+          type: string
+          nullable: true
+          description: Search in name and description
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Results per page
+
+    UpdateContractTemplateRequest:
+      type: object
+      description: Request to update a contract template
+      additionalProperties: false
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID to update
+        name:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: New template name
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: New description
+        isActive:
+          type: boolean
+          nullable: true
+          description: Active status
+        gameMetadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Updated game metadata
+
+    DeleteContractTemplateRequest:
+      type: object
+      description: Request to delete a contract template
+      additionalProperties: false
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID to delete
+
+    ContractTemplateResponse:
+      type: object
+      description: Contract template details
+      additionalProperties: false
+      required:
+      - templateId
+      - code
+      - name
+      - minParties
+      - maxParties
+      - partyRoles
+      - defaultEnforcementMode
+      - isActive
+      - createdAt
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Unique template identifier
+        code:
+          type: string
+          description: Unique template code
+        name:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          nullable: true
+          description: Detailed description
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID if realm-specific
+        minParties:
+          type: integer
+          description: Minimum parties required
+        maxParties:
+          type: integer
+          description: Maximum parties allowed
+        partyRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyRoleDefinition'
+          description: Party role definitions
+        defaultTerms:
+          $ref: '#/components/schemas/ContractTerms'
+          nullable: true
+          description: Default contract terms
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneDefinition'
+          nullable: true
+          description: Milestone definitions
+        defaultEnforcementMode:
+          $ref: '#/components/schemas/EnforcementMode'
+          description: Default enforcement mode
+        transferable:
+          type: boolean
+          description: Whether contracts can be transferred
+        gameMetadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Game-specific metadata
+        isActive:
+          type: boolean
+          description: Whether template is active
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+
+    ListContractTemplatesResponse:
+      type: object
+      description: Paginated list of contract templates
+      additionalProperties: false
+      required:
+      - templates
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplateResponse'
+          description: List of templates
+        totalCount:
+          type: integer
+          description: Total matching templates
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Results per page
+        hasNextPage:
+          type: boolean
+          description: Whether more results exist
+
+    # =========================================================================
+    # Instance Models
+    # =========================================================================
+
+    CreateContractInstanceRequest:
+      type: object
+      description: Request to create a contract instance
+      additionalProperties: false
+      required:
+      - templateId
+      - parties
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template to create instance from
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractPartyInput'
+          minItems: 2
+          description: Parties to this contract
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
+          nullable: true
+          description: Terms overriding template defaults
+        effectiveFrom:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract becomes active (null for immediate)
+        effectiveUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract expires (null for perpetual)
+        escrowIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Related escrow IDs
+        gameMetadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Instance-level game metadata
+
+    ProposeContractInstanceRequest:
+      type: object
+      description: Request to propose a contract to parties
+      additionalProperties: false
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance to propose
+
+    ConsentToContractRequest:
+      type: object
+      description: Request to consent to a contract
+      additionalProperties: false
+      required:
+      - contractId
+      - partyEntityId
+      - partyEntityType
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract to consent to
+        partyEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of consenting party
+        partyEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type of consenting party
+
+    GetContractInstanceRequest:
+      type: object
+      description: Request to get a contract instance
+      additionalProperties: false
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    QueryContractInstancesRequest:
+      type: object
+      description: Request to query contract instances
+      additionalProperties: false
+      properties:
+        partyEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by party entity ID
+        partyEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Filter by party entity type
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by template
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractStatus'
+          nullable: true
+          description: Filter by statuses
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Results per page
+
+    TerminateContractInstanceRequest:
+      type: object
+      description: Request to terminate a contract
+      additionalProperties: false
+      required:
+      - contractId
+      - requestingEntityId
+      - requestingEntityType
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract to terminate
+        requestingEntityId:
+          type: string
+          format: uuid
+          description: Entity requesting termination
+        requestingEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of requesting entity
+        reason:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Reason for termination
+
+    GetContractInstanceStatusRequest:
+      type: object
+      description: Request to get contract status
+      additionalProperties: false
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    ContractInstanceResponse:
+      type: object
+      description: Contract instance details
+      additionalProperties: false
+      required:
+      - contractId
+      - templateId
+      - status
+      - parties
+      - createdAt
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Unique contract identifier
+        templateId:
+          type: string
+          format: uuid
+          description: Source template ID
+        templateCode:
+          type: string
+          description: Source template code
+        status:
+          $ref: '#/components/schemas/ContractStatus'
+          description: Current contract status
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractPartyResponse'
+          description: Contract parties
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
+          nullable: true
+          description: Contract terms
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneInstanceResponse'
+          nullable: true
+          description: Milestone progress
+        currentMilestoneIndex:
+          type: integer
+          nullable: true
+          description: Index of current milestone
+        escrowIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Related escrow IDs
+        proposedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract was proposed
+        acceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When all parties consented
+        effectiveFrom:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract became active
+        effectiveUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract expires
+        terminatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract was terminated
+        gameMetadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Game-specific metadata
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+
+    QueryContractInstancesResponse:
+      type: object
+      description: Paginated list of contract instances
+      additionalProperties: false
+      required:
+      - contracts
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractInstanceResponse'
+          description: List of contracts
+        totalCount:
+          type: integer
+          description: Total matching contracts
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Results per page
+        hasNextPage:
+          type: boolean
+          description: Whether more results exist
+
+    ContractInstanceStatusResponse:
+      type: object
+      description: Contract status summary
+      additionalProperties: false
+      required:
+      - contractId
+      - status
+      - milestoneProgress
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        status:
+          $ref: '#/components/schemas/ContractStatus'
+          description: Current status
+        milestoneProgress:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneProgressSummary'
+          description: Milestone progress summary
+        pendingConsents:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingConsentSummary'
+          nullable: true
+          description: Parties who haven't consented
+        activeBreaches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BreachSummary'
+          nullable: true
+          description: Active breach records
+        daysUntilExpiration:
+          type: integer
+          nullable: true
+          description: Days until natural expiration
+
+    # =========================================================================
+    # Party Models
+    # =========================================================================
+
+    PartyRoleDefinition:
+      type: object
+      description: Definition of a party role in a contract template
+      additionalProperties: false
+      required:
+      - role
+      - minCount
+      - maxCount
+      properties:
+        role:
+          type: string
+          maxLength: 64
+          description: Role identifier (employer, employee, buyer, seller, etc.)
+        minCount:
+          type: integer
+          minimum: 0
+          description: Minimum entities required in this role
+        maxCount:
+          type: integer
+          minimum: 1
+          description: Maximum entities allowed in this role
+        allowedEntityTypes:
+          type: array
+          items:
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Which entity types can fill this role (null for any)
+
+    ContractPartyInput:
+      type: object
+      description: Party input for contract creation
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - role
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity ID
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        role:
+          type: string
+          description: Role from template
+
+    ContractPartyResponse:
+      type: object
+      description: Contract party details
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - role
+      - consentStatus
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity ID
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        role:
+          type: string
+          description: Role in contract
+        consentStatus:
+          $ref: '#/components/schemas/ConsentStatus'
+          description: Consent status
+        consentedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When consent was given
+
+    PendingConsentSummary:
+      type: object
+      description: Summary of pending consent
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - role
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity ID
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        role:
+          type: string
+          description: Role in contract
+
+    # =========================================================================
+    # Terms Models
+    # =========================================================================
+
+    ContractTerms:
+      type: object
+      description: Configurable contract terms
+      additionalProperties: false
+      properties:
+        duration:
+          type: string
+          nullable: true
+          description: Contract duration (ISO 8601 duration, null for perpetual)
+        paymentSchedule:
+          $ref: '#/components/schemas/PaymentSchedule'
+          nullable: true
+          description: When payments occur
+        paymentFrequency:
+          type: string
+          nullable: true
+          description: Recurring payment frequency (ISO 8601 duration)
+        terminationPolicy:
+          $ref: '#/components/schemas/TerminationPolicy'
+          nullable: true
+          description: How contract can be terminated
+        terminationNoticePeriod:
+          type: string
+          nullable: true
+          description: Required notice for termination (ISO 8601 duration)
+        breachThreshold:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Breaches before auto-termination (0 for no auto)
+        gracePeriodForCure:
+          type: string
+          nullable: true
+          description: Time to cure breach (ISO 8601 duration)
+        customTerms:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Game-specific custom terms
+
+    # =========================================================================
+    # Milestone Models
+    # =========================================================================
+
+    MilestoneDefinition:
+      type: object
+      description: Milestone definition in a template
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - sequence
+      - required
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          description: Unique milestone code within template
+        name:
+          type: string
+          maxLength: 200
+          description: Human-readable name
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: What this milestone represents
+        sequence:
+          type: integer
+          minimum: 0
+          description: Order in the contract flow
+        required:
+          type: boolean
+          description: Whether milestone must be completed
+        deadline:
+          type: string
+          nullable: true
+          description: Relative deadline (ISO 8601 duration)
+        onComplete:
+          type: array
+          items:
+            $ref: '#/components/schemas/PreboundApi'
+          nullable: true
+          description: APIs to call on completion
+        onExpire:
+          type: array
+          items:
+            $ref: '#/components/schemas/PreboundApi'
+          nullable: true
+          description: APIs to call if deadline passes
+
+    MilestoneInstanceResponse:
+      type: object
+      description: Milestone instance status
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - sequence
+      - required
+      - status
+      properties:
+        code:
+          type: string
+          description: Milestone code
+        name:
+          type: string
+          description: Milestone name
+        sequence:
+          type: integer
+          description: Order in flow
+        required:
+          type: boolean
+          description: Whether required
+        status:
+          $ref: '#/components/schemas/MilestoneStatus'
+          description: Current status
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When completed
+        failedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When failed
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Absolute deadline
+
+    MilestoneProgressSummary:
+      type: object
+      description: Brief milestone progress
+      additionalProperties: false
+      required:
+      - code
+      - status
+      properties:
+        code:
+          type: string
+          description: Milestone code
+        status:
+          $ref: '#/components/schemas/MilestoneStatus'
+          description: Current status
+
+    CompleteMilestoneRequest:
+      type: object
+      description: Request to complete a milestone
+      additionalProperties: false
+      required:
+      - contractId
+      - milestoneCode
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestoneCode:
+          type: string
+          description: Milestone to complete
+        evidence:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Evidence of completion
+
+    FailMilestoneRequest:
+      type: object
+      description: Request to fail a milestone
+      additionalProperties: false
+      required:
+      - contractId
+      - milestoneCode
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestoneCode:
+          type: string
+          description: Milestone that failed
+        reason:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Reason for failure
+
+    GetMilestoneRequest:
+      type: object
+      description: Request to get milestone details
+      additionalProperties: false
+      required:
+      - contractId
+      - milestoneCode
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestoneCode:
+          type: string
+          description: Milestone code
+
+    MilestoneResponse:
+      type: object
+      description: Milestone details
+      additionalProperties: false
+      required:
+      - contractId
+      - milestone
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestone:
+          $ref: '#/components/schemas/MilestoneInstanceResponse'
+          description: Milestone details
+
+    # =========================================================================
+    # Breach Models
+    # =========================================================================
+
+    ReportBreachRequest:
+      type: object
+      description: Request to report a breach
+      additionalProperties: false
+      required:
+      - contractId
+      - breachingEntityId
+      - breachingEntityType
+      - breachType
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract that was breached
+        breachingEntityId:
+          type: string
+          format: uuid
+          description: Entity that breached
+        breachingEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of breaching entity
+        breachType:
+          $ref: '#/components/schemas/BreachType'
+          description: Type of breach
+        breachedTermOrMilestone:
+          type: string
+          nullable: true
+          description: Code of breached term or milestone
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Breach description
+
+    CureBreachRequest:
+      type: object
+      description: Request to cure a breach
+      additionalProperties: false
+      required:
+      - breachId
+      properties:
+        breachId:
+          type: string
+          format: uuid
+          description: Breach to cure
+        cureEvidence:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Evidence of cure
+
+    GetBreachRequest:
+      type: object
+      description: Request to get breach details
+      additionalProperties: false
+      required:
+      - breachId
+      properties:
+        breachId:
+          type: string
+          format: uuid
+          description: Breach ID
+
+    BreachResponse:
+      type: object
+      description: Breach record details
+      additionalProperties: false
+      required:
+      - breachId
+      - contractId
+      - breachingEntityId
+      - breachingEntityType
+      - breachType
+      - status
+      - detectedAt
+      properties:
+        breachId:
+          type: string
+          format: uuid
+          description: Unique breach identifier
+        contractId:
+          type: string
+          format: uuid
+          description: Contract that was breached
+        breachingEntityId:
+          type: string
+          format: uuid
+          description: Entity that breached
+        breachingEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of breaching entity
+        breachType:
+          $ref: '#/components/schemas/BreachType'
+          description: Type of breach
+        breachedTermOrMilestone:
+          type: string
+          nullable: true
+          description: What was breached
+        description:
+          type: string
+          nullable: true
+          description: Breach description
+        status:
+          $ref: '#/components/schemas/BreachStatus'
+          description: Current status
+        detectedAt:
+          type: string
+          format: date-time
+          description: When breach was detected
+        cureDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline to cure breach
+        curedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When breach was cured
+        consequencesAppliedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When consequences were applied
+
+    BreachSummary:
+      type: object
+      description: Brief breach information
+      additionalProperties: false
+      required:
+      - breachId
+      - breachType
+      - status
+      properties:
+        breachId:
+          type: string
+          format: uuid
+          description: Breach ID
+        breachType:
+          $ref: '#/components/schemas/BreachType'
+          description: Type of breach
+        status:
+          $ref: '#/components/schemas/BreachStatus'
+          description: Current status
+
+    # =========================================================================
+    # Metadata Models
+    # =========================================================================
+
+    UpdateContractMetadataRequest:
+      type: object
+      description: Request to update contract metadata
+      additionalProperties: false
+      required:
+      - contractId
+      - metadataType
+      - data
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        metadataType:
+          $ref: '#/components/schemas/MetadataType'
+          description: Which metadata to update
+        data:
+          type: object
+          additionalProperties: true
+          description: Metadata to set or merge
+
+    GetContractMetadataRequest:
+      type: object
+      description: Request to get contract metadata
+      additionalProperties: false
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    ContractMetadataResponse:
+      type: object
+      description: Contract metadata
+      additionalProperties: false
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        instanceData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Instance-level metadata
+        runtimeState:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Runtime state metadata
+
+    # =========================================================================
+    # Constraint Models
+    # =========================================================================
+
+    CheckConstraintRequest:
+      type: object
+      description: Request to check constraint
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - constraintType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to check
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        constraintType:
+          $ref: '#/components/schemas/ConstraintType'
+          description: Type of constraint to check
+        proposedAction:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: What the entity wants to do
+
+    CheckConstraintResponse:
+      type: object
+      description: Constraint check result
+      additionalProperties: false
+      required:
+      - allowed
+      properties:
+        allowed:
+          type: boolean
+          description: Whether action is allowed
+        conflictingContracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractSummary'
+          nullable: true
+          description: Contracts that would be violated
+        reason:
+          type: string
+          nullable: true
+          description: Explanation if not allowed
+
+    QueryActiveContractsRequest:
+      type: object
+      description: Request to query active contracts
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to query
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        templateCodes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by template codes
+
+    QueryActiveContractsResponse:
+      type: object
+      description: Active contracts for entity
+      additionalProperties: false
+      required:
+      - contracts
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractSummary'
+          description: Active contracts
+
+    ContractSummary:
+      type: object
+      description: Brief contract information
+      additionalProperties: false
+      required:
+      - contractId
+      - templateCode
+      - status
+      - role
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract ID
+        templateCode:
+          type: string
+          description: Template code
+        templateName:
+          type: string
+          nullable: true
+          description: Template name
+        status:
+          $ref: '#/components/schemas/ContractStatus'
+          description: Current status
+        role:
+          type: string
+          description: Entity's role in contract
+        effectiveUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract expires
+
+    # =========================================================================
+    # Prebound API Models
+    # =========================================================================
+
+    PreboundApi:
+      type: object
+      description: Pre-configured API call to execute on contract events
+      additionalProperties: false
+      required:
+      - serviceName
+      - endpoint
+      - payloadTemplate
+      properties:
+        serviceName:
+          type: string
+          description: Target service name
+        endpoint:
+          type: string
+          description: Target endpoint path
+        payloadTemplate:
+          type: string
+          description: JSON payload with variable placeholders
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+        executionMode:
+          type: string
+          enum: [sync, async, fire_and_forget]
+          default: sync
+          description: How to execute the API call
+        responseValidation:
+          $ref: '#/components/schemas/ResponseValidation'
+          nullable: true
+          description: Optional validation rules for the response
+
+    ResponseValidation:
+      type: object
+      description: |
+        Validation rules for API responses with three-outcome model.
+        Used by lib-contract to validate clause conditions without
+        understanding the specific API semantics.
+      additionalProperties: false
+      properties:
+        successConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationCondition'
+          description: |
+            Conditions that must ALL pass for success.
+            If any fail, checks permanent failure conditions.
+        permanentFailureConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationCondition'
+          description: |
+            Conditions that indicate permanent failure (clause violated).
+            Checked when success conditions fail.
+        transientFailureStatusCodes:
+          type: array
+          items:
+            type: integer
+          description: |
+            HTTP status codes that indicate transient failure (retry later).
+            Default: [408, 429, 502, 503, 504]
+
+    ValidationCondition:
+      type: object
+      description: A single condition to check against an API response
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ValidationConditionType'
+          description: The type of validation condition to check
+        jsonPath:
+          type: string
+          nullable: true
+          description: |
+            JsonPath expression to extract value from response.
+            Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
+            Example: "$.balance", "$.items[0].status"
+        expectedValue:
+          type: string
+          nullable: true
+          description: |
+            Expected value for comparison conditions.
+            Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+        operator:
+          $ref: '#/components/schemas/ComparisonOperator'
+          nullable: true
+          description: Comparison operator for numeric comparisons
+        statusCodes:
+          type: array
+          items:
+            type: integer
+          description: HTTP status codes for statusCodeIn condition
+
+    ValidationConditionType:
+      type: string
+      description: Type of validation condition
+      enum:
+      - statusCodeIn
+      - jsonPathEquals
+      - jsonPathNotEquals
+      - jsonPathExists
+      - jsonPathNotExists
+      - jsonPathGreaterThan
+      - jsonPathLessThan
+      - jsonPathContains
+
+    ComparisonOperator:
+      type: string
+      description: Comparison operators for numeric conditions
+      enum:
+      - eq
+      - ne
+      - gt
+      - gte
+      - lt
+      - lte
+
+    # =========================================================================
+    # Guardian Models
+    # =========================================================================
+
+    LockContractRequest:
+      type: object
+      description: Request to lock a contract under guardian custody
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID to lock
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (e.g., escrow agreement ID)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type (e.g., "escrow")
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    LockContractResponse:
+      type: object
+      description: Response from locking a contract
+      additionalProperties: false
+      required:
+      - locked
+      - contractId
+      properties:
+        locked:
+          type: boolean
+          description: Whether the contract was locked
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID
+        lockedAt:
+          type: string
+          format: date-time
+          description: When the contract was locked
+
+    UnlockContractRequest:
+      type: object
+      description: Request to unlock a contract from guardian custody
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID to unlock
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (must match current guardian)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    UnlockContractResponse:
+      type: object
+      description: Response from unlocking a contract
+      additionalProperties: false
+      required:
+      - unlocked
+      - contractId
+      properties:
+        unlocked:
+          type: boolean
+          description: Whether the contract was unlocked
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    TransferContractPartyRequest:
+      type: object
+      description: Request to transfer a party role to a new entity
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - fromEntityId
+      - fromEntityType
+      - toEntityId
+      - toEntityType
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Current party entity ID
+        fromEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Current party entity type
+        toEntityId:
+          type: string
+          format: uuid
+          description: New entity ID to receive the role
+        toEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: New entity type
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (must be current guardian)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    TransferContractPartyResponse:
+      type: object
+      description: Response from transferring a party role
+      additionalProperties: false
+      required:
+      - transferred
+      - contractId
+      properties:
+        transferred:
+          type: boolean
+          description: Whether the transfer was successful
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        role:
+          type: string
+          description: Role that was transferred
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Previous party entity ID
+        toEntityId:
+          type: string
+          format: uuid
+          description: New party entity ID
+
+    # =========================================================================
+    # Clause Type Models
+    # =========================================================================
+
+    ClauseCategory:
+      type: string
+      description: Category of clause type
+      enum:
+      - validation
+      - execution
+      - both
+
+    ClauseHandlerDefinition:
+      type: object
+      description: Handler definition for clause type operations
+      additionalProperties: false
+      required:
+      - service
+      - endpoint
+      properties:
+        service:
+          type: string
+          description: Target service name
+        endpoint:
+          type: string
+          description: Target endpoint path
+        requestMapping:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Template variable to request field mapping
+        responseMapping:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Response field to result mapping
+
+    RegisterClauseTypeRequest:
+      type: object
+      description: Request to register a new clause type
+      additionalProperties: false
+      required:
+      - typeCode
+      - description
+      - category
+      properties:
+        typeCode:
+          type: string
+          maxLength: 64
+          pattern: "^[a-z0-9_]+$"
+          description: Unique identifier for this clause type
+        description:
+          type: string
+          maxLength: 500
+          description: Human-readable description
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          description: Whether this is a validation, execution, or both type of clause
+        validationHandler:
+          $ref: '#/components/schemas/ClauseHandlerDefinition'
+          nullable: true
+          description: Handler called during check-asset-requirements
+        executionHandler:
+          $ref: '#/components/schemas/ClauseHandlerDefinition'
+          nullable: true
+          description: Handler called during execute
+
+    RegisterClauseTypeResponse:
+      type: object
+      description: Response from registering a clause type
+      additionalProperties: false
+      required:
+      - registered
+      - typeCode
+      properties:
+        registered:
+          type: boolean
+          description: Whether the type was registered
+        typeCode:
+          type: string
+          description: The registered type code
+
+    ListClauseTypesRequest:
+      type: object
+      description: Request to list clause types
+      additionalProperties: false
+      properties:
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          nullable: true
+          description: Filter by category
+        includeBuiltIn:
+          type: boolean
+          default: true
+          description: Include built-in types in response
+
+    ClauseTypeSummary:
+      type: object
+      description: Summary of a clause type
+      additionalProperties: false
+      required:
+      - typeCode
+      - description
+      - category
+      - hasValidationHandler
+      - hasExecutionHandler
+      - isBuiltIn
+      properties:
+        typeCode:
+          type: string
+          description: Unique identifier
+        description:
+          type: string
+          description: Human-readable description
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          description: Clause category
+        hasValidationHandler:
+          type: boolean
+          description: Whether a validation handler is registered
+        hasExecutionHandler:
+          type: boolean
+          description: Whether an execution handler is registered
+        isBuiltIn:
+          type: boolean
+          description: Whether this is a built-in type
+
+    ListClauseTypesResponse:
+      type: object
+      description: Response containing list of clause types
+      additionalProperties: false
+      required:
+      - clauseTypes
+      properties:
+        clauseTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseTypeSummary'
+          description: List of registered clause types
+
+    # =========================================================================
+    # Execution Models
+    # =========================================================================
+
+    SetTemplateValuesRequest:
+      type: object
+      description: Request to set template values on a contract
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - templateValues
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateValues:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Key-value pairs for template substitution.
+            Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+
+    SetTemplateValuesResponse:
+      type: object
+      description: Response from setting template values
+      additionalProperties: false
+      required:
+      - updated
+      - contractId
+      properties:
+        updated:
+          type: boolean
+          description: Whether values were updated
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        valueCount:
+          type: integer
+          description: Number of template values set
+
+    CheckAssetRequirementsRequest:
+      type: object
+      description: Request to check asset requirement clauses
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    AssetRequirementInfo:
+      type: object
+      description: Information about a required asset
+      additionalProperties: false
+      required:
+      - type
+      - code
+      - amount
+      properties:
+        type:
+          type: string
+          description: Asset type (currency, item, item_stack)
+        code:
+          type: string
+          description: Currency code or item template code
+        amount:
+          type: number
+          description: Amount or quantity required
+
+    ClauseAssetStatus:
+      type: object
+      description: Status of a single clause's asset requirements
+      additionalProperties: false
+      required:
+      - clauseId
+      - satisfied
+      - required
+      - current
+      - missing
+      properties:
+        clauseId:
+          type: string
+          description: Clause identifier
+        satisfied:
+          type: boolean
+          description: Whether requirement is satisfied
+        required:
+          $ref: '#/components/schemas/AssetRequirementInfo'
+          description: What the clause requires
+        current:
+          type: number
+          description: Current amount present
+        missing:
+          type: number
+          description: Amount still needed (0 if satisfied)
+
+    PartyAssetRequirementStatus:
+      type: object
+      description: Asset requirement status for a single party
+      additionalProperties: false
+      required:
+      - partyRole
+      - satisfied
+      - clauses
+      properties:
+        partyRole:
+          type: string
+          description: Party role (e.g., party_a, party_b)
+        satisfied:
+          type: boolean
+          description: Whether all party's requirements are satisfied
+        clauses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseAssetStatus'
+          description: Status of each clause for this party
+
+    CheckAssetRequirementsResponse:
+      type: object
+      description: Response from checking asset requirements
+      additionalProperties: false
+      required:
+      - allSatisfied
+      - byParty
+      properties:
+        allSatisfied:
+          type: boolean
+          description: Whether all requirements across all parties are satisfied
+        byParty:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAssetRequirementStatus'
+          description: Status broken down by party
+
+    ExecuteContractRequest:
+      type: object
+      description: Request to execute contract clauses
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Idempotency key for the execution
+
+    DistributionRecord:
+      type: object
+      description: Record of an asset distribution
+      additionalProperties: false
+      required:
+      - clauseId
+      - clauseType
+      - assetType
+      - amount
+      properties:
+        clauseId:
+          type: string
+          description: Clause that was executed
+        clauseType:
+          type: string
+          description: Type of clause (fee, distribution)
+        assetType:
+          type: string
+          description: Type of asset (currency, item)
+        amount:
+          type: number
+          description: Amount transferred
+        sourceWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source wallet ID (for currency)
+        destinationWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination wallet ID (for currency)
+        sourceContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source container ID (for items)
+        destinationContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination container ID (for items)
+
+    ExecuteContractResponse:
+      type: object
+      description: Response from executing a contract
+      additionalProperties: false
+      required:
+      - executed
+      - alreadyExecuted
+      properties:
+        executed:
+          type: boolean
+          description: Whether execution was successful
+        alreadyExecuted:
+          type: boolean
+          description: True if this was a repeat call (idempotency)
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        distributions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistributionRecord'
+          nullable: true
+          description: Records of what was moved where
+        executedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When execution occurred
+
+# Service Registration Information
+x-service-registration:
+  serviceId: "contract"
+  serviceName: "Contract Service"
+  version: "1.0.0"
+  categories:
+  - agreements
+  - obligations

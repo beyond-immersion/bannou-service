@@ -41,7 +41,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UploadRequest, UploadResponse>(
-            "POST", "/assets/upload/request", request, channel, timeout, cancellationToken);
+            "/assets/upload/request", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CompleteUploadRequest, AssetMetadata>(
-            "POST", "/assets/upload/complete", request, channel, timeout, cancellationToken);
+            "/assets/upload/complete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
-            "POST", "/assets/get", request, channel, timeout, cancellationToken);
+            "/assets/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteAssetRequest, DeleteAssetResponse>(
-            "POST", "/assets/delete", request, channel, timeout, cancellationToken);
+            "/assets/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListVersionsRequest, AssetVersionList>(
-            "POST", "/assets/list-versions", request, channel, timeout, cancellationToken);
+            "/assets/list-versions", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AssetSearchRequest, AssetSearchResult>(
-            "POST", "/assets/search", request, channel, timeout, cancellationToken);
+            "/assets/search", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateBundleRequest, CreateBundleResponse>(
-            "POST", "/bundles/create", request, channel, timeout, cancellationToken);
+            "/bundles/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
-            "POST", "/bundles/get", request, channel, timeout, cancellationToken);
+            "/bundles/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BundleUploadRequest, UploadResponse>(
-            "POST", "/bundles/upload/request", request, channel, timeout, cancellationToken);
+            "/bundles/upload/request", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateMetabundleRequest, CreateMetabundleResponse>(
-            "POST", "/bundles/metabundle/create", request, channel, timeout, cancellationToken);
+            "/bundles/metabundle/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetJobStatusRequest, GetJobStatusResponse>(
-            "POST", "/bundles/job/status", request, channel, timeout, cancellationToken);
+            "/bundles/job/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CancelJobRequest, CancelJobResponse>(
-            "POST", "/bundles/job/cancel", request, channel, timeout, cancellationToken);
+            "/bundles/job/cancel", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
-            "POST", "/bundles/resolve", request, channel, timeout, cancellationToken);
+            "/bundles/resolve", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryBundlesByAssetRequest, QueryBundlesByAssetResponse>(
-            "POST", "/bundles/query/by-asset", request, channel, timeout, cancellationToken);
+            "/bundles/query/by-asset", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateBundleRequest, UpdateBundleResponse>(
-            "POST", "/bundles/update", request, channel, timeout, cancellationToken);
+            "/bundles/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteBundleRequest, DeleteBundleResponse>(
-            "POST", "/bundles/delete", request, channel, timeout, cancellationToken);
+            "/bundles/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RestoreBundleRequest, RestoreBundleResponse>(
-            "POST", "/bundles/restore", request, channel, timeout, cancellationToken);
+            "/bundles/restore", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryBundlesRequest, QueryBundlesResponse>(
-            "POST", "/bundles/query", request, channel, timeout, cancellationToken);
+            "/bundles/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -365,7 +365,7 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListBundleVersionsRequest, ListBundleVersionsResponse>(
-            "POST", "/bundles/list-versions", request, channel, timeout, cancellationToken);
+            "/bundles/list-versions", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -383,6 +383,6 @@ public sealed class AssetProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BulkGetAssetsRequest, BulkGetAssetsResponse>(
-            "POST", "/assets/bulk-get", request, channel, timeout, cancellationToken);
+            "/assets/bulk-get", request, channel, timeout, cancellationToken);
     }
 }

@@ -59,7 +59,7 @@ public sealed class BundleClient
         };
 
         var response = await _client.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
-            "POST", "/bundles/get", request, cancellationToken: ct);
+            "/bundles/get", request, cancellationToken: ct);
 
         var result = AssetApiHelpers.EnsureSuccess(response, "get bundle");
 
@@ -102,7 +102,7 @@ public sealed class BundleClient
         };
 
         var response = await _client.InvokeAsync<UpdateBundleRequest, UpdateBundleResponse>(
-            "POST", "/bundles/update", request, cancellationToken: ct);
+            "/bundles/update", request, cancellationToken: ct);
 
         var result = AssetApiHelpers.EnsureSuccess(response, "update bundle");
 
@@ -146,7 +146,7 @@ public sealed class BundleClient
         };
 
         var response = await _client.InvokeAsync<DeleteBundleRequest, DeleteBundleResponse>(
-            "POST", "/bundles/delete", request, cancellationToken: ct);
+            "/bundles/delete", request, cancellationToken: ct);
 
         var result = AssetApiHelpers.EnsureSuccess(response, "delete bundle");
 
@@ -184,7 +184,7 @@ public sealed class BundleClient
         };
 
         var response = await _client.InvokeAsync<RestoreBundleRequest, RestoreBundleResponse>(
-            "POST", "/bundles/restore", request, cancellationToken: ct);
+            "/bundles/restore", request, cancellationToken: ct);
 
         var result = AssetApiHelpers.EnsureSuccess(response, "restore bundle");
 
@@ -227,7 +227,7 @@ public sealed class BundleClient
         };
 
         var response = await _client.InvokeAsync<ListBundleVersionsRequest, ListBundleVersionsResponse>(
-            "POST", "/bundles/list-versions", request, cancellationToken: ct);
+            "/bundles/list-versions", request, cancellationToken: ct);
 
         var result = AssetApiHelpers.EnsureSuccess(response, "list bundle versions");
 
@@ -279,7 +279,7 @@ public sealed class BundleClient
         };
 
         var response = await _client.InvokeAsync<QueryBundlesRequest, QueryBundlesResponse>(
-            "POST", "/bundles/query", request, cancellationToken: ct);
+            "/bundles/query", request, cancellationToken: ct);
 
         var result = AssetApiHelpers.EnsureSuccess(response, "query bundles");
 
@@ -333,7 +333,7 @@ public sealed class BundleClient
             Name = info.Name,
             Description = info.Description,
             Owner = info.Owner,
-            Realm = info.Realm.ToString(),
+            Realm = info.Realm,
             Tags = info.Tags,
             Status = info.Status.ToString(),
             AssetCount = info.AssetCount,

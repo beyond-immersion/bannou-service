@@ -54,6 +54,7 @@ public partial class RealmController
                 "realmId",
                 "code",
                 "name",
+                "gameServiceId",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -67,11 +68,16 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -198,7 +204,7 @@ public partial class RealmController
                     "minLength": 1,
                     "maxLength": 50,
                     "pattern": "^[A-Z][A-Z0-9_]*$",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\", \"FANTASIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 }
             }
         }
@@ -219,6 +225,7 @@ public partial class RealmController
                 "realmId",
                 "code",
                 "name",
+                "gameServiceId",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -232,11 +239,16 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -292,7 +304,7 @@ public partial class RealmController
     private static readonly string _GetRealmByCode_Info = """
 {
     "summary": "Get realm by code",
-    "description": "Retrieve a realm using its unique code (e.g., \"OMEGA\", \"ARCADIA\", \"FANTASIA\")",
+    "description": "Retrieve a realm using its unique code (e.g., \"REALM_1\", \"REALM_2\")",
     "tags": [
         "Realm"
     ],
@@ -442,6 +454,7 @@ public partial class RealmController
                 "realmId",
                 "code",
                 "name",
+                "gameServiceId",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -455,11 +468,16 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -579,7 +597,8 @@ public partial class RealmController
             "additionalProperties": false,
             "required": [
                 "code",
-                "name"
+                "name",
+                "gameServiceId"
             ],
             "properties": {
                 "code": {
@@ -587,13 +606,18 @@ public partial class RealmController
                     "minLength": 1,
                     "maxLength": 50,
                     "pattern": "^[A-Z][A-Z0-9_]*$",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 100,
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -637,6 +661,7 @@ public partial class RealmController
                 "realmId",
                 "code",
                 "name",
+                "gameServiceId",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -650,11 +675,16 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -781,6 +811,12 @@ public partial class RealmController
                     "format": "uuid",
                     "description": "ID of the realm to update"
                 },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the game service this realm belongs to"
+                },
                 "name": {
                     "type": "string",
                     "minLength": 1,
@@ -830,6 +866,7 @@ public partial class RealmController
                 "realmId",
                 "code",
                 "name",
+                "gameServiceId",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -843,11 +880,16 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -1083,6 +1125,7 @@ public partial class RealmController
                 "realmId",
                 "code",
                 "name",
+                "gameServiceId",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -1096,11 +1139,16 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -1246,6 +1294,7 @@ public partial class RealmController
                 "realmId",
                 "code",
                 "name",
+                "gameServiceId",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -1259,11 +1308,16 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",
@@ -1519,7 +1573,8 @@ public partial class RealmController
             "additionalProperties": false,
             "required": [
                 "code",
-                "name"
+                "name",
+                "gameServiceId"
             ],
             "properties": {
                 "code": {
@@ -1529,6 +1584,11 @@ public partial class RealmController
                 "name": {
                     "type": "string",
                     "description": "Display name for the realm"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game service this realm belongs to"
                 },
                 "description": {
                     "type": "string",

@@ -27,6 +27,7 @@ public partial class SubscriptionService : ISubscriptionService
     private const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
     private const string ACCOUNT_SUBSCRIPTIONS_PREFIX = "account-subscriptions:";
     private const string SERVICE_SUBSCRIPTIONS_PREFIX = "service-subscriptions:";
+    private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
     // Event topics
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
@@ -50,7 +51,7 @@ public partial class SubscriptionService : ISubscriptionService
     }
 
     private static string StateStoreName => StateStoreDefinitions.Subscription;
-    private string AuthorizationSuffix => _configuration.AuthorizationSuffix ?? "authorized";
+    private string AuthorizationSuffix => _configuration.AuthorizationSuffix;
 
     /// <summary>
     /// Get all subscriptions for an account with optional filtering.
@@ -58,12 +59,12 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionListResponse?)> GetAccountSubscriptionsAsync(
         GetAccountSubscriptionsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting subscriptions for account {AccountId} (includeInactive={IncludeInactive}, includeExpired={IncludeExpired})",
+        _logger.LogDebug("Getting subscriptions for account {AccountId} (includeInactive={IncludeInactive}, includeExpired={IncludeExpired})",
             body.AccountId, body.IncludeInactive, body.IncludeExpired);
 
         try
         {
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken);
 
             var subscriptions = new List<SubscriptionInfo>();
@@ -126,7 +127,7 @@ public partial class SubscriptionService : ISubscriptionService
             return (StatusCodes.BadRequest, null);
         }
 
-        _logger.LogInformation("Querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
+        _logger.LogDebug("Querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
             body.AccountId, body.StubName);
 
         try
@@ -134,11 +135,11 @@ public partial class SubscriptionService : ISubscriptionService
             var subscriptions = new List<SubscriptionInfo>();
             var accountIds = new HashSet<Guid>();
             var now = DateTimeOffset.UtcNow;
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
 
             // Determine which subscription IDs to fetch
-            var subscriptionIds = new List<string>();
+            var subscriptionIds = new List<Guid>();
 
             if (body.AccountId.HasValue)
             {
@@ -152,7 +153,18 @@ public partial class SubscriptionService : ISubscriptionService
             else if (!string.IsNullOrEmpty(body.StubName))
             {
                 // Query by stubName - need to look up serviceId first, then get subscriptions for that service
-                var serviceResponse = await _serviceClient.GetServiceAsync(new GetServiceRequest { StubName = body.StubName });
+                ServiceInfo? serviceResponse;
+                try
+                {
+                    serviceResponse = await _serviceClient.GetServiceAsync(new GetServiceRequest { StubName = body.StubName }, cancellationToken);
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    // Service not found - return empty result (this is a query, not a specific lookup)
+                    _logger.LogWarning("Service not found for stubName {StubName}", body.StubName);
+                    serviceResponse = null;
+                }
+
                 if (serviceResponse?.ServiceId != null)
                 {
                     var serviceSubIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceResponse.ServiceId}", cancellationToken);
@@ -160,10 +172,6 @@ public partial class SubscriptionService : ISubscriptionService
                     {
                         subscriptionIds.AddRange(serviceSubIds);
                     }
-                }
-                else
-                {
-                    _logger.LogWarning("Service not found for stubName {StubName}", body.StubName);
                 }
             }
 
@@ -190,10 +198,7 @@ public partial class SubscriptionService : ISubscriptionService
                     }
 
                     subscriptions.Add(MapToSubscriptionInfo(model));
-                    if (Guid.TryParse(model.AccountId, out var accountGuid))
-                    {
-                        accountIds.Add(accountGuid);
-                    }
+                    accountIds.Add(model.AccountId);
                 }
             }
 
@@ -223,7 +228,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> GetSubscriptionAsync(
         GetSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Getting subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -252,7 +257,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> CreateSubscriptionAsync(
         CreateSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating subscription for account {AccountId} to service {ServiceId}",
+        _logger.LogDebug("Creating subscription for account {AccountId} to service {ServiceId}",
             body.AccountId, body.ServiceId);
 
         try
@@ -278,16 +283,16 @@ public partial class SubscriptionService : ISubscriptionService
             }
 
             // Check for existing active subscription
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
-            var existingSubscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken) ?? new List<string>();
+            var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+            var existingSubscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken) ?? new List<Guid>();
 
             foreach (var existingId in existingSubscriptionIds)
             {
                 var existing = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{existingId}", cancellationToken);
 
                 if (existing != null &&
-                    existing.ServiceId == body.ServiceId.ToString() &&
+                    existing.ServiceId == body.ServiceId &&
                     existing.IsActive)
                 {
                     _logger.LogWarning("Active subscription already exists for account {AccountId} and service {ServiceId}",
@@ -314,9 +319,9 @@ public partial class SubscriptionService : ISubscriptionService
 
             var model = new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = body.AccountId.ToString(),
-                ServiceId = body.ServiceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = body.AccountId,
+                ServiceId = body.ServiceId,
                 StubName = serviceInfo.StubName,
                 DisplayName = serviceInfo.DisplayName,
                 StartDateUnix = startDate.ToUnixTimeSeconds(),
@@ -332,10 +337,13 @@ public partial class SubscriptionService : ISubscriptionService
             await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", model, cancellationToken: cancellationToken);
 
             // Add to account index
-            await AddToAccountIndexAsync(body.AccountId.ToString(), subscriptionId.ToString(), cancellationToken);
+            await AddToAccountIndexAsync(body.AccountId, subscriptionId, cancellationToken);
 
             // Add to service index
-            await AddToServiceIndexAsync(body.ServiceId.ToString(), subscriptionId.ToString(), cancellationToken);
+            await AddToServiceIndexAsync(body.ServiceId, subscriptionId, cancellationToken);
+
+            // Add to global subscription index (used by expiration worker)
+            await AddToSubscriptionIndexAsync(subscriptionId, cancellationToken);
 
             // Publish subscription.updated event
             await PublishSubscriptionUpdatedEventAsync(model, "created", cancellationToken);
@@ -359,7 +367,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> UpdateSubscriptionAsync(
         UpdateSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Updating subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Updating subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -410,7 +418,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> CancelSubscriptionAsync(
         CancelSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Cancelling subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Cancelling subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -455,7 +463,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> RenewSubscriptionAsync(
         RenewSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Renewing subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Renewing subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -523,7 +531,7 @@ public partial class SubscriptionService : ISubscriptionService
     /// </summary>
     public async Task<bool> ExpireSubscriptionAsync(string subscriptionId, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Expiring subscription {SubscriptionId}", subscriptionId);
+        _logger.LogDebug("Expiring subscription {SubscriptionId}", subscriptionId);
 
         try
         {
@@ -559,10 +567,10 @@ public partial class SubscriptionService : ISubscriptionService
 
     #region Private Helpers
 
-    private async Task AddToAccountIndexAsync(string accountId, string subscriptionId, CancellationToken cancellationToken)
+    private async Task AddToAccountIndexAsync(Guid accountId, Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-        var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", cancellationToken) ?? new List<Guid>();
 
         if (!subscriptionIds.Contains(subscriptionId))
         {
@@ -571,15 +579,27 @@ public partial class SubscriptionService : ISubscriptionService
         }
     }
 
-    private async Task AddToServiceIndexAsync(string serviceId, string subscriptionId, CancellationToken cancellationToken)
+    private async Task AddToServiceIndexAsync(Guid serviceId, Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-        var subscriptionIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", cancellationToken) ?? new List<Guid>();
 
         if (!subscriptionIds.Contains(subscriptionId))
         {
             subscriptionIds.Add(subscriptionId);
             await listStore.SaveAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", subscriptionIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task AddToSubscriptionIndexAsync(Guid subscriptionId, CancellationToken cancellationToken)
+    {
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken) ?? new List<Guid>();
+
+        if (!subscriptionIds.Contains(subscriptionId))
+        {
+            subscriptionIds.Add(subscriptionId);
+            await listStore.SaveAsync(SUBSCRIPTION_INDEX_KEY, subscriptionIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -590,9 +610,9 @@ public partial class SubscriptionService : ISubscriptionService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            SubscriptionId = Guid.Parse(model.SubscriptionId),
-            AccountId = Guid.Parse(model.AccountId),
-            ServiceId = Guid.Parse(model.ServiceId),
+            SubscriptionId = model.SubscriptionId,
+            AccountId = model.AccountId,
+            ServiceId = model.ServiceId,
             StubName = model.StubName,
             DisplayName = model.DisplayName,
             Action = ParseAction(action),
@@ -625,9 +645,9 @@ public partial class SubscriptionService : ISubscriptionService
     {
         return new SubscriptionInfo
         {
-            SubscriptionId = Guid.Parse(model.SubscriptionId),
-            AccountId = Guid.Parse(model.AccountId),
-            ServiceId = Guid.Parse(model.ServiceId),
+            SubscriptionId = model.SubscriptionId,
+            AccountId = model.AccountId,
+            ServiceId = model.ServiceId,
             StubName = model.StubName,
             DisplayName = model.DisplayName,
             StartDate = DateTimeOffset.FromUnixTimeSeconds(model.StartDateUnix),
@@ -654,10 +674,10 @@ public partial class SubscriptionService : ISubscriptionService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Subscription service permissions...");
-        await SubscriptionPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        _logger.LogDebug("Registering Subscription service permissions...");
+        await SubscriptionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion
@@ -693,9 +713,9 @@ public partial class SubscriptionService : ISubscriptionService
 /// </summary>
 internal class SubscriptionDataModel
 {
-    public string SubscriptionId { get; set; } = string.Empty;
-    public string AccountId { get; set; } = string.Empty;
-    public string ServiceId { get; set; } = string.Empty;
+    public Guid SubscriptionId { get; set; }
+    public Guid AccountId { get; set; }
+    public Guid ServiceId { get; set; }
     public string StubName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public long StartDateUnix { get; set; }

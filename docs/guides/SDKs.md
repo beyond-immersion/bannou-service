@@ -32,10 +32,10 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 | Artifact | Purpose | Target |
 |----------|---------|--------|
 | `BannouProtocol.h` | Binary protocol constants, flags, response codes | UE4/UE5 WebSocket integration |
-| `BannouTypes.h` | All request/response USTRUCT definitions (549 types) | UE4/UE5 JSON serialization |
-| `BannouEnums.h` | All UENUM definitions | UE4/UE5 type safety |
-| `BannouEndpoints.h` | Endpoint constants and registry (217 endpoints) | UE4/UE5 API discovery |
-| `BannouEvents.h` | Event name constants (32 event types) | UE4/UE5 event handling |
+| `BannouTypes.h` | All request/response USTRUCT definitions (814 types) | UE4/UE5 JSON serialization |
+| `BannouEnums.h` | All UENUM definitions (134 enums) | UE4/UE5 type safety |
+| `BannouEndpoints.h` | Endpoint constants and registry (309 endpoints) | UE4/UE5 API discovery |
+| `BannouEvents.h` | Event name constants (35 event types) | UE4/UE5 event handling |
 
 ## Decision Guide
 

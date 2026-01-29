@@ -7,7 +7,7 @@ info:
     Configuration schema for State service.
     Properties are bound to environment variables with STATE_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -39,14 +39,10 @@ x-service-configuration:
       description: Total timeout in seconds for establishing Redis/MySQL connections
       env: STATE_CONNECTION_TIMEOUT_SECONDS
       default: 60
-    ConnectRetryCount:
-      type: integer
-      description: Maximum number of connection retry attempts
-      env: STATE_CONNECT_RETRY_COUNT
-      default: 5
     DefaultConsistency:
       type: string
-      description: Default consistency level for state operations (strong or eventual)
+      enum: ["strong", "eventual"]
+      description: Default consistency level for state operations
       env: STATE_DEFAULT_CONSISTENCY
       default: "strong"
     EnableMetrics:

@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Bannou Species Service API
   description: |
-    Species management service for Arcadia game world.
+    Species management service for game worlds.
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
@@ -14,7 +14,7 @@ info:
 
     **Realm Association**: Each species belongs to one or more realms, enabling
     cross-realm species (e.g., humans in all realms) and realm-specific species
-    (e.g., elves only in Arcadia).
+    (e.g., elves only in a specific realm).
 
     **Trait System**: Species define base trait modifiers that affect character
     creation and development.
@@ -29,7 +29,7 @@ info:
     2. Merge deprecated species into another species (or VOID to effectively delete)
     3. Optionally hard-delete the deprecated species after merge
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 2.0.0
 servers:
 - url: http://localhost:5012

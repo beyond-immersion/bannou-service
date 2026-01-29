@@ -22,6 +22,7 @@ public class OAuthProviderService : IOAuthProviderService
     private readonly IAccountClient _accountClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<OAuthProviderService> _logger;
 
@@ -41,6 +42,7 @@ public class OAuthProviderService : IOAuthProviderService
         IAccountClient accountClient,
         IHttpClientFactory httpClientFactory,
         AuthServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         IMessageBus messageBus,
         ILogger<OAuthProviderService> logger)
     {
@@ -48,6 +50,7 @@ public class OAuthProviderService : IOAuthProviderService
         _accountClient = accountClient;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _messageBus = messageBus;
         _logger = logger;
     }
@@ -381,16 +384,16 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     /// <inheritdoc/>
-    public async Task<AccountResponse?> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken, string? providerOverride = null)
+    public async Task<(AccountResponse? Account, bool IsNewAccount)> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken)
     {
         // Handle null userInfo gracefully - return null if no user info provided
         if (userInfo == null)
         {
             _logger.LogWarning("FindOrCreateOAuthAccountAsync called with null userInfo for provider {Provider}", provider);
-            return null;
+            return (null, false);
         }
 
-        var providerName = providerOverride ?? provider.ToString().ToLower();
+        var providerName = provider.ToString().ToLower();
         var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
 
         try
@@ -409,7 +412,11 @@ public class OAuthProviderService : IOAuthProviderService
                         cancellationToken);
                     _logger.LogInformation("Found existing account {AccountId} for {Provider} user {ProviderId}",
                         account.AccountId, providerName, userInfo.ProviderId);
-                    return account;
+
+                    // Ensure auth method is synced to Account service (idempotent)
+                    await EnsureAuthMethodSyncedAsync(account.AccountId, provider, userInfo.ProviderId, cancellationToken);
+
+                    return (account, false);
                 }
                 catch (ApiException ex) when (ex.StatusCode == 404)
                 {
@@ -428,9 +435,11 @@ public class OAuthProviderService : IOAuthProviderService
             };
 
             AccountResponse? newAccount;
+            var isNewAccount = false;
             try
             {
                 newAccount = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
+                isNewAccount = true;
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
@@ -455,20 +464,20 @@ public class OAuthProviderService : IOAuthProviderService
                             dependency: "account",
                             stack: innerEx.StackTrace,
                             cancellationToken: cancellationToken);
-                        return null;
+                        return (null, false);
                     }
                 }
                 else
                 {
                     _logger.LogError("Account creation conflict but no email to search by");
-                    return null;
+                    return (null, false);
                 }
             }
 
             if (newAccount == null)
             {
                 _logger.LogError("Failed to create account for {Provider} user {ProviderId}", providerName, userInfo.ProviderId);
-                return null;
+                return (null, false);
             }
 
             // Store the OAuth link (as string since Guid is a value type)
@@ -477,10 +486,16 @@ public class OAuthProviderService : IOAuthProviderService
                 newAccount.AccountId.ToString(),
                 cancellationToken: cancellationToken);
 
+            // Maintain reverse index for cleanup on account deletion
+            await AddToAccountOAuthLinksIndexAsync(newAccount.AccountId, oauthLinkKey, cancellationToken);
+
+            // Sync auth method to Account service for cross-service discovery
+            await EnsureAuthMethodSyncedAsync(newAccount.AccountId, provider, userInfo.ProviderId, cancellationToken);
+
             _logger.LogInformation("Created new account {AccountId} and linked to {Provider} user {ProviderId}",
                 newAccount.AccountId, providerName, userInfo.ProviderId);
 
-            return newAccount;
+            return (newAccount, isNewAccount);
         }
         catch (Exception ex)
         {
@@ -494,7 +509,7 @@ public class OAuthProviderService : IOAuthProviderService
                 dependency: "account",
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return null;
+            return (null, false);
         }
     }
 
@@ -550,6 +565,11 @@ public class OAuthProviderService : IOAuthProviderService
                 var twitchRedirectUri = HttpUtility.UrlEncode(effectiveTwitchRedirect);
                 return $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
 
+            case Provider.Steam:
+                // Steam uses session tickets, not OAuth authorization URLs
+                _logger.LogWarning("Steam does not support OAuth authorization URLs - use /auth/steam/verify with session tickets");
+                return null;
+
             default:
                 _logger.LogWarning("Unknown OAuth provider: {Provider}", provider);
                 return null;
@@ -563,7 +583,8 @@ public class OAuthProviderService : IOAuthProviderService
         {
             Provider.Discord => _configuration.MockDiscordId,
             Provider.Google => _configuration.MockGoogleId,
-            Provider.Twitch => "mock-twitch-user-id-12345",
+            Provider.Twitch => _configuration.MockTwitchId,
+            Provider.Steam => _configuration.MockSteamId,
             _ => Guid.NewGuid().ToString()
         };
 
@@ -580,11 +601,14 @@ public class OAuthProviderService : IOAuthProviderService
     public async Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
+        // MockSteamId has a default value in schema - no fallback needed
+        var mockId = _configuration.MockSteamId;
+        var suffix = mockId.Length >= 6 ? mockId.Substring(mockId.Length - 6) : mockId;
         return new OAuthUserInfo
         {
-            ProviderId = _configuration.MockSteamId,
+            ProviderId = mockId,
             Email = null,
-            DisplayName = $"Steam_{_configuration.MockSteamId.Substring(_configuration.MockSteamId.Length - 6)}"
+            DisplayName = $"Steam_{suffix}"
         };
     }
 
@@ -595,7 +619,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <param name="configuredUri">The explicitly configured redirect URI (nullable)</param>
     /// <param name="provider">The provider name (discord, google, twitch)</param>
     /// <returns>The effective redirect URI, or null if neither is configured</returns>
-    private static string? GetEffectiveRedirectUri(string? configuredUri, string provider)
+    private string? GetEffectiveRedirectUri(string? configuredUri, string provider)
     {
         // If explicit redirect URI is configured, use it
         if (!string.IsNullOrWhiteSpace(configuredUri))
@@ -604,7 +628,7 @@ public class OAuthProviderService : IOAuthProviderService
         }
 
         // If ServiceDomain is configured, derive the redirect URI from it
-        var serviceDomain = Program.Configuration?.ServiceDomain;
+        var serviceDomain = _appConfiguration.ServiceDomain;
         if (!string.IsNullOrWhiteSpace(serviceDomain))
         {
             return $"https://{serviceDomain}/auth/oauth/{provider}/callback";
@@ -612,6 +636,124 @@ public class OAuthProviderService : IOAuthProviderService
 
         // Neither configured - return null to indicate provider should be disabled
         return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task CleanupOAuthLinksForAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var indexKey = $"account-oauth-links:{accountId}";
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+            var linkKeys = await indexStore.GetAsync(indexKey, cancellationToken);
+
+            if (linkKeys == null || linkKeys.Count == 0)
+            {
+                _logger.LogDebug("No OAuth links found for account {AccountId}", accountId);
+                return;
+            }
+
+            var linkStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
+
+            foreach (var linkKey in linkKeys)
+            {
+                await linkStore.DeleteAsync(linkKey, cancellationToken);
+            }
+
+            // Remove the reverse index itself
+            await indexStore.DeleteAsync(indexKey, cancellationToken);
+
+            _logger.LogInformation("Cleaned up {Count} OAuth link(s) for deleted account {AccountId}",
+                linkKeys.Count, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to cleanup OAuth links for account {AccountId}", accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "CleanupOAuthLinks",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Adds an OAuth link key to the account's reverse index for cleanup on deletion.
+    /// </summary>
+    private async Task AddToAccountOAuthLinksIndexAsync(Guid accountId, string oauthLinkKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var indexKey = $"account-oauth-links:{accountId}";
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+
+            var existingLinks = await indexStore.GetAsync(indexKey, cancellationToken) ?? new List<string>();
+
+            if (!existingLinks.Contains(oauthLinkKey))
+            {
+                existingLinks.Add(oauthLinkKey);
+            }
+
+            await indexStore.SaveAsync(indexKey, existingLinks, cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: link still works, just won't be cleaned up on account deletion
+            _logger.LogWarning(ex, "Failed to add OAuth link to reverse index for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Ensures the OAuth auth method is registered in the Account service.
+    /// This enables cross-service discovery (e.g., Achievement service finding Steam-linked accounts).
+    /// Best-effort: auth flow succeeds even if this sync fails.
+    /// </summary>
+    private async Task EnsureAuthMethodSyncedAsync(Guid accountId, Provider provider, string externalId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _accountClient.AddAuthMethodAsync(new AddAuthMethodRequest
+            {
+                AccountId = accountId,
+                Provider = MapProviderToOAuthProvider(provider),
+                ExternalId = externalId
+            }, cancellationToken);
+
+            _logger.LogDebug("Auth method synced to Account service for {AccountId}, provider {Provider}",
+                accountId, provider);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 409)
+        {
+            // Already linked (idempotent) - expected on repeat logins
+            _logger.LogDebug("Auth method already exists in Account service for {AccountId}, provider {Provider}",
+                accountId, provider);
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: OAuth auth still works via Auth service's oauth-link keys.
+            // Cross-service discovery (e.g., Achievement Steam sync) won't work until next successful login.
+            _logger.LogWarning(ex,
+                "Failed to sync auth method to Account service for {AccountId}, provider {Provider}",
+                accountId, provider);
+        }
+    }
+
+    /// <summary>
+    /// Maps Auth service Provider enum to Account service OAuthProvider enum.
+    /// </summary>
+    private static OAuthProvider MapProviderToOAuthProvider(Provider provider)
+    {
+        return provider switch
+        {
+            Provider.Google => OAuthProvider.Google,
+            Provider.Discord => OAuthProvider.Discord,
+            Provider.Twitch => OAuthProvider.Twitch,
+            Provider.Steam => OAuthProvider.Steam,
+            _ => throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unknown provider has no OAuthProvider mapping")
+        };
     }
 
     #region OAuth Response Models

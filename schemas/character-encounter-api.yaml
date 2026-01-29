@@ -24,7 +24,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
     this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
@@ -1235,8 +1235,8 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-          default: 0.2
-          description: Amount to boost memory strength (capped at 1.0)
+          nullable: true
+          description: Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if not provided.
 
     # ==========================================================================
     # Request Schemas - Admin

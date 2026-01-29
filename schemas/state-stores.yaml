@@ -3,6 +3,9 @@
 # This file defines all state stores used by Bannou services.
 # Generated code provides typed constants and configuration.
 #
+# Schema Rules: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+# modifying this schema.
+#
 # Schema: x-state-stores defines each store with:
 #   - backend: redis | mysql | memory
 #   - prefix: Redis key prefix (redis only)
@@ -57,6 +60,12 @@ x-state-stores:
     prefix: asset
     service: Asset
     purpose: Asset upload tracking and bundle state
+
+  asset-processor-pool:
+    backend: redis
+    prefix: "asset:pool"
+    service: Asset
+    purpose: Processor pool node state and indexing
 
   # ============================================================================
   # Orchestrator Stores
@@ -130,6 +139,12 @@ x-state-stores:
     service: Actor
     purpose: Actor-to-node assignments
 
+  behavior-statestore:
+    backend: redis
+    prefix: "behavior"
+    service: Behavior
+    purpose: Behavior metadata and compiled definitions
+
   # ============================================================================
   # Documentation Stores
   # ============================================================================
@@ -169,7 +184,12 @@ x-state-stores:
     backend: redis
     prefix: "analytics:sum"
     service: Analytics
-    purpose: Entity statistics summaries
+    purpose: Event buffer, session mappings, and resolution caches for analytics ingestion
+
+  analytics-summary-data:
+    backend: mysql
+    service: Analytics
+    purpose: Entity summary data for queryable analytics (MySQL for server-side filtering)
 
   analytics-rating:
     backend: redis
@@ -181,7 +201,12 @@ x-state-stores:
     backend: redis
     prefix: "analytics:hist"
     service: Analytics
-    purpose: Controller possession history
+    purpose: Event buffer and legacy controller history (Redis for backward compatibility)
+
+  analytics-history-data:
+    backend: mysql
+    service: Analytics
+    purpose: Controller possession history for queryable audit trails (MySQL for server-side filtering)
 
   # ============================================================================
   # Leaderboard Stores
@@ -219,12 +244,6 @@ x-state-stores:
     prefix: "ach:prog"
     service: Achievement
     purpose: Player achievement progress
-
-  achievement-unlock:
-    backend: redis
-    prefix: "ach:unlock"
-    service: Achievement
-    purpose: Unlocked achievements registry
 
   # ============================================================================
   # Save-Load Stores
@@ -392,3 +411,157 @@ x-state-stores:
     prefix: "music:comp"
     service: Music
     purpose: Cached generated compositions
+
+  # ============================================================================
+  # Contract Stores
+  # ============================================================================
+
+  contract-statestore:
+    backend: redis
+    prefix: contract
+    service: Contract
+    purpose: Contract templates, instances, breaches, and indexes
+
+  # ============================================================================
+  # Currency Stores
+  # ============================================================================
+
+  currency-balance-cache:
+    backend: redis
+    prefix: "currency:balance"
+    service: Currency
+    purpose: Real-time balance lookups (cached, refreshed on access)
+
+  currency-idempotency:
+    backend: redis
+    prefix: "currency:idemp"
+    service: Currency
+    purpose: Idempotency key deduplication
+
+  currency-holds-cache:
+    backend: redis
+    prefix: "currency:hold"
+    service: Currency
+    purpose: Authorization hold state for pre-auth scenarios
+
+  currency-definitions:
+    backend: mysql
+    service: Currency
+    purpose: Currency type definitions and behavior rules
+
+  currency-wallets:
+    backend: mysql
+    service: Currency
+    purpose: Wallet ownership and status
+
+  currency-balances:
+    backend: mysql
+    service: Currency
+    purpose: Currency balance records per wallet
+
+  currency-transactions:
+    backend: mysql
+    service: Currency
+    purpose: Immutable transaction history
+
+  currency-holds:
+    backend: mysql
+    service: Currency
+    purpose: Authorization hold records
+
+  # ============================================================================
+  # Item Stores
+  # ============================================================================
+
+  item-template-cache:
+    backend: redis
+    prefix: "item:tpl"
+    service: Item
+    purpose: Template lookup cache (global, aggressive caching)
+
+  item-template-store:
+    backend: mysql
+    service: Item
+    purpose: Item template definitions (persistent, queryable)
+
+  item-instance-cache:
+    backend: redis
+    prefix: "item:inst"
+    service: Item
+    purpose: Hot item instance data for active gameplay
+
+  item-instance-store:
+    backend: mysql
+    service: Item
+    purpose: Item instances (persistent, realm-partitioned)
+
+  item-lock:
+    backend: redis
+    prefix: "item:lock"
+    service: Item
+    purpose: Distributed locks for item instance modifications
+
+  # ============================================================================
+  # Inventory Stores
+  # ============================================================================
+
+  inventory-container-cache:
+    backend: redis
+    prefix: "inv:cont"
+    service: Inventory
+    purpose: Container state and item list cache
+
+  inventory-container-store:
+    backend: mysql
+    service: Inventory
+    purpose: Container definitions (persistent)
+
+  inventory-lock:
+    backend: redis
+    prefix: "inv:lock"
+    service: Inventory
+    purpose: Distributed locks for concurrent modifications
+
+  # ============================================================================
+  # Escrow Stores
+  # ============================================================================
+
+  escrow-tokens:
+    backend: redis
+    prefix: "escrow:token"
+    service: Escrow
+    purpose: Token hash validation (hashed tokens to escrow/party info)
+
+  escrow-idempotency:
+    backend: redis
+    prefix: "escrow:idemp"
+    service: Escrow
+    purpose: Idempotency key deduplication cache
+
+  escrow-status-index:
+    backend: redis
+    prefix: "escrow:status"
+    service: Escrow
+    purpose: Escrow IDs by status (sorted set for expiration/validation)
+
+  escrow-party-pending:
+    backend: redis
+    prefix: "escrow:pending"
+    service: Escrow
+    purpose: Count pending escrows per party for limits
+
+  escrow-active-validation:
+    backend: redis
+    prefix: "escrow:validate"
+    service: Escrow
+    purpose: Track active escrows requiring periodic validation
+
+  escrow-agreements:
+    backend: mysql
+    service: Escrow
+    purpose: Main escrow agreement records
+
+  escrow-handler-registry:
+    backend: mysql
+    service: Escrow
+    purpose: Custom asset type handler registrations

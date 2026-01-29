@@ -10,19 +10,19 @@ Comprehensive testing documentation for Bannou's schema-driven microservices arc
 - **`unit-tests/`**: Can ONLY reference `bannou-service`. CANNOT reference ANY `lib-*` plugins.
 - **`lib-*.tests/`**: Can ONLY reference their own `lib-*` plugin + `bannou-service`. CANNOT reference other `lib-*` plugins.
 - **`lib-testing/`**: Can ONLY reference `bannou-service`. CANNOT reference ANY other `lib-*` plugins.
-- **`http-tester/`**: Can reference all services via generated clients.
-- **`edge-tester/`**: Can test all services via WebSocket protocol.
+- **`tools/http-tester/`**: Can reference all services via generated clients.
+- **`tools/edge-tester/`**: Can test all services via WebSocket protocol.
 
 ### Critical Examples
 - ❌ **WRONG**: Testing `AuthServiceConfiguration` in `lib-testing` (cannot reference `lib-auth`)
 - ✅ **CORRECT**: Testing `AuthServiceConfiguration` in `lib-auth.tests` (own plugin)
 - ❌ **WRONG**: Testing `AuthServiceConfiguration` in `unit-tests` (cannot reference plugins)
-- ✅ **CORRECT**: Testing auth endpoints in `http-tester` (service integration)
+- ✅ **CORRECT**: Testing auth endpoints in `tools/http-tester` (service integration)
 
 ### Quick Decision Guide
 - **Testing specific service logic?** → `plugins/lib-{service}.tests/`
-- **Testing service-to-service calls?** → `http-tester/`
-- **Testing WebSocket protocol?** → `edge-tester/`
+- **Testing service-to-service calls?** → `tools/http-tester/`
+- **Testing WebSocket protocol?** → `tools/edge-tester/`
 - **Testing core framework?** → `unit-tests/`
 - **Testing infrastructure health?** → `lib-testing/`
 
@@ -81,8 +81,8 @@ Before understanding the specific test types, you must understand the strict iso
 - **`unit-tests/`**: Only `bannou-service` project (core framework code)
 - **`lib-*.tests/`**: Only their own `lib-*` plugin + `bannou-service` project + mocks
 - **`lib-testing/`**: Only `bannou-service` project (cannot reference other plugins)
-- **`http-tester/`**: All service plugins via NSwag-generated clients + `bannou-service`
-- **`edge-tester/`**: All service plugins via WebSocket protocol + `bannou-service`
+- **`tools/http-tester/`**: All service plugins via NSwag-generated clients + `bannou-service`
+- **`tools/edge-tester/`**: All service plugins via WebSocket protocol + `bannou-service`
 
 #### 3. Configuration Testing Rules
 **Problem**: You want to test `AuthServiceConfiguration` but it lives in `lib-auth` plugin.
@@ -91,8 +91,8 @@ Before understanding the specific test types, you must understand the strict iso
 - **Unit test in `unit-tests/`**: ❌ CANNOT - unit-tests cannot reference `lib-auth` plugin
 - **Unit test in `lib-auth.tests/`**: ✅ CAN - tests its own plugin with mocks
 - **Infrastructure test in `lib-testing/`**: ❌ CANNOT - lib-testing cannot reference `lib-auth` plugin
-- **HTTP integration test**: ✅ CAN - http-tester can call auth service endpoints
-- **WebSocket integration test**: ✅ CAN - edge-tester can test auth via WebSocket protocol
+- **HTTP integration test**: ✅ CAN - tools/http-tester can call auth service endpoints
+- **WebSocket integration test**: ✅ CAN - tools/edge-tester can test auth via WebSocket protocol
 
 **To test configuration binding mechanism itself**:
 - Create test configuration class IN `lib-testing` that mimics the pattern
@@ -117,13 +117,13 @@ Before understanding the specific test types, you must understand the strict iso
 - Validating that the basic service loading mechanism works
 - NEVER for testing specific service functionality
 
-**Use `http-tester/`** when:
+**Use `tools/http-tester/`** when:
 - Testing service-to-service communication
 - Testing actual API endpoints and business logic
 - Testing authentication flows and service integration
 - Testing request/response models and validation
 
-**Use `edge-tester/`** when:
+**Use `tools/edge-tester/`** when:
 - Testing WebSocket protocol implementation
 - Testing Connect service routing and binary protocol
 - Testing real-time features and client-server communication
@@ -160,10 +160,10 @@ public class AccountServiceTests
 }
 ```
 
-### 2. HTTP Integration Testing (`http-tester`)
+### 2. HTTP Integration Testing (`tools/http-tester`)
 
 **Purpose**: Direct HTTP endpoint validation for service logic testing
-**Location**: `http-tester/` project
+**Location**: `tools/http-tester/` project
 
 **Features**:
 - Direct service-to-service communication using generated clients
@@ -175,16 +175,16 @@ public class AccountServiceTests
 **Usage**:
 ```bash
 # Interactive mode
-dotnet run --project http-tester
+dotnet run --project tools/http-tester
 
 # CI/CD daemon mode
-DAEMON_MODE=true dotnet run --project http-tester --configuration Release
+DAEMON_MODE=true dotnet run --project tools/http-tester --configuration Release
 ```
 
-### 3. WebSocket Protocol Testing (`edge-tester`)
+### 3. WebSocket Protocol Testing (`tools/edge-tester`)
 
 **Purpose**: Complete Connect service edge gateway and binary protocol validation
-**Location**: `edge-tester/` project
+**Location**: `tools/edge-tester/` project
 
 **Features**:
 - WebSocket-first architecture validation
@@ -197,11 +197,66 @@ DAEMON_MODE=true dotnet run --project http-tester --configuration Release
 **Usage**:
 ```bash
 # Interactive mode
-dotnet run --project edge-tester
+dotnet run --project tools/edge-tester
 
 # CI/CD daemon mode
-DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
+DAEMON_MODE=true dotnet run --project tools/edge-tester --configuration Release
 ```
+
+#### Edge Test Development Guidelines
+
+**Typed Proxy Requirement (MANDATORY)**
+
+Edge tests MUST use **typed service proxies** (e.g., `adminClient.Realm.CreateRealmAsync()`) instead of raw `InvokeAsync` calls. Typed proxies provide:
+
+1. **Compile-time validation** of request/response types against the schema
+2. **Correct endpoint paths** (prevents typos like `/game-service/create` vs `/game-service/services/create`)
+3. **Correct property names** (prevents mismatches like `name` vs `displayName`)
+4. **Correct enum values** (prevents case issues like `CHARACTER` vs `character`)
+5. **SDK proxy testing** -- validates that the generated typed proxies themselves work correctly over the binary protocol
+
+New edge tests should extend `BaseWebSocketTestHandler` which provides:
+- `RunWebSocketTest()` for standardized test execution with error handling
+- `FormatError()` for consistent error formatting
+- `GenerateUniqueCode()` for test data uniqueness
+- Typed resource creation helpers (`CreateTestRealmAsync`, `CreateTestSpeciesAsync`, etc.)
+
+**Example -- correct pattern:**
+```csharp
+var response = await adminClient.Character.CreateCharacterAsync(new CreateCharacterRequest
+{
+    Name = "Test Character",
+    RealmId = realmId,
+    SpeciesId = speciesId
+}, timeout: TimeSpan.FromSeconds(5));
+
+if (!response.IsSuccess || response.Result == null)
+{
+    Console.WriteLine($"   Failed: {FormatError(response.Error)}");
+    return false;
+}
+
+return response.Result.CharacterId != Guid.Empty;
+```
+
+**Example -- incorrect pattern (do not use for service API tests):**
+```csharp
+// WRONG: Raw InvokeAsync bypasses typed proxy validation
+var response = await adminClient.InvokeAsync<object, JsonElement>(
+    "POST", "/character/create", new { name = "Test", realmId = id }, ...);
+```
+
+**Legitimate InvokeAsync Exceptions**
+
+Raw `InvokeAsync` is permitted ONLY in these specific categories. If adding a new exception, document WHY typed proxies cannot be used:
+
+| Category | Files | Rationale |
+|----------|-------|-----------|
+| **Raw protocol testing** | `ConnectWebSocketTestHandler.cs` | Tests binary header construction, frame parsing, malformed messages -- operates below the proxy abstraction layer |
+| **SDK parity testing** | `TypeScriptParityTestHandler.cs` | Must use raw JSON to compare byte-level output with TypeScript SDK |
+| **Infrastructure/routing testing** | `SplitServiceRoutingTestHandler.cs` | Tests orchestrator deployment and dynamic routing topology changes |
+| **Protocol mechanism testing** | `CapabilityFlowTestHandler.cs`, `ClientEventTestHandler.cs` | Tests capability push and event delivery mechanics, not service APIs |
+| **Dynamic endpoint testing** | `GameSessionWebSocketTestHandler.cs` | Tests runtime-created shortcuts with dynamic GUIDs that have no typed proxy |
 
 ### 4. Infrastructure Testing (`lib-testing`)
 
@@ -223,7 +278,7 @@ DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
 
 **What Infrastructure Tests CANNOT Test**:
 - Real service configurations from other plugins (AuthServiceConfiguration, etc.)
-- Service-to-service communication (use http-tester for this)
+- Service-to-service communication (use tools/http-tester for this)
 - Business logic from specific services (use lib-*.tests for this)
 - Cross-plugin functionality (plugins are isolated)
 
@@ -351,7 +406,7 @@ plugins/lib-{service}.tests/
 - **Service GUID**: 16 bytes - client-specific service routing
 - **Message ID**: 8 bytes - request/response correlation
 
-**Testing Implementation**: `edge-tester` validates complete protocol compliance including:
+**Testing Implementation**: `tools/edge-tester` validates complete protocol compliance including:
 - Client-specific GUID generation (SHA256 salted)
 - Zero-copy message routing via Connect service
 - Real-time capability updates via RabbitMQ
@@ -404,8 +459,8 @@ make test-infrastructure       # Infrastructure validation
 - Production environment protection
 
 **Compatibility Testing**:
-- **Backwards Compatibility**: `edge-tester` using published NuGet SDK
-- **Forward Compatibility**: `edge-tester` using current generated SDK
+- **Backwards Compatibility**: `tools/edge-tester` using published NuGet SDK
+- **Forward Compatibility**: `tools/edge-tester` using current generated SDK
 - **Breaking Change Detection**: Automated validation prevents API breaks
 
 ### Environment-Specific Testing
@@ -520,10 +575,10 @@ public async Task TestRealAuthEndpoint()
 
 #### ✅ CORRECT: Service Integration Testing in HTTP Tester
 ```csharp
-// In http-tester/Tests/AuthTestHandler.cs - THIS IS CORRECT
+// In tools/http-tester/Tests/AuthTestHandler.cs - THIS IS CORRECT
 public async Task TestRealAuthEndpoint()
 {
-    // ✅ CORRECT: http-tester has all services and can test real integration
+    // ✅ CORRECT: tools/http-tester has all services and can test real integration
     var authClient = GetServiceClient<IAuthClient>(); // This works
 }
 ```
@@ -533,8 +588,8 @@ public async Task TestRealAuthEndpoint()
 **When you want to test something, ask these questions**:
 
 1. **Am I testing a specific service's functionality?** → Use `plugins/lib-{service}.tests/`
-2. **Am I testing service-to-service communication?** → Use `http-tester/`
-3. **Am I testing WebSocket protocol or Connect service?** → Use `edge-tester/`
+2. **Am I testing service-to-service communication?** → Use `tools/http-tester/`
+3. **Am I testing WebSocket protocol or Connect service?** → Use `tools/edge-tester/`
 4. **Am I testing core framework functionality?** → Use `unit-tests/`
 5. **Am I testing basic infrastructure connectivity?** → Use `lib-testing/`
 

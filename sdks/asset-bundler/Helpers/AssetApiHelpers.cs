@@ -9,50 +9,34 @@ namespace BeyondImmersion.Bannou.AssetBundler.Helpers;
 /// </summary>
 public static class AssetApiHelpers
 {
+    #region Realm Helpers
+
+    /// <summary>
+    /// Passes through a realm string, returning null if empty.
+    /// </summary>
+    /// <param name="realm">Realm stub name or ID (nullable).</param>
+    /// <returns>The realm string, or null if empty.</returns>
+    public static string? ParseRealm(string? realm)
+    {
+        return string.IsNullOrEmpty(realm) ? null : realm;
+    }
+
+    /// <summary>
+    /// Validates and returns a required realm string.
+    /// </summary>
+    /// <param name="realm">Realm stub name or ID.</param>
+    /// <returns>The realm string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if realm is null or empty.</exception>
+    public static string ParseRealmRequired(string? realm)
+    {
+        if (string.IsNullOrEmpty(realm))
+            throw new ArgumentNullException(nameof(realm), "Realm is required");
+        return realm;
+    }
+
+    #endregion
+
     #region Enum Parsing
-
-    /// <summary>
-    /// Parses a realm string to the Realm enum.
-    /// </summary>
-    /// <param name="realm">Realm string (case-insensitive).</param>
-    /// <param name="defaultValue">Value to return if realm is null/empty (default: null).</param>
-    /// <returns>Parsed realm or default value.</returns>
-    public static Realm? ParseRealm(string? realm, Realm? defaultValue = null)
-    {
-        if (string.IsNullOrEmpty(realm))
-            return defaultValue;
-
-        return realm.ToLowerInvariant() switch
-        {
-            "omega" => Realm.Omega,
-            "arcadia" => Realm.Arcadia,
-            "fantasia" => Realm.Fantasia,
-            "shared" => Realm.Shared,
-            _ => defaultValue
-        };
-    }
-
-    /// <summary>
-    /// Parses a realm string to the Realm enum, throwing on unknown values.
-    /// </summary>
-    /// <param name="realm">Realm string (case-insensitive).</param>
-    /// <param name="defaultValue">Value to return if realm is null/empty.</param>
-    /// <returns>Parsed realm.</returns>
-    /// <exception cref="ArgumentException">Thrown if realm string is unrecognized.</exception>
-    public static Realm ParseRealmRequired(string? realm, Realm defaultValue = Realm.Omega)
-    {
-        if (string.IsNullOrEmpty(realm))
-            return defaultValue;
-
-        return realm.ToLowerInvariant() switch
-        {
-            "omega" => Realm.Omega,
-            "arcadia" => Realm.Arcadia,
-            "fantasia" => Realm.Fantasia,
-            "shared" => Realm.Shared,
-            _ => throw new ArgumentException($"Unknown realm: {realm}", nameof(realm))
-        };
-    }
 
     /// <summary>
     /// Parses a bundle type string to the BundleType enum.

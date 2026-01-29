@@ -35,6 +35,7 @@ public partial class ConnectController
             "properties": {
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID making the request"
                 },
                 "targetService": {
@@ -211,6 +212,7 @@ public partial class ConnectController
             "properties": {
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Session ID to retrieve capabilities for (must have active WebSocket connection)"
                 },
                 "serviceFilter": {
@@ -247,6 +249,7 @@ public partial class ConnectController
             "properties": {
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Session ID this capability manifest belongs to"
                 },
                 "capabilities": {
@@ -261,7 +264,7 @@ public partial class ConnectController
                     "items": {
                         "$ref": "#/$defs/ClientShortcut"
                     },
-                    "description": "Pre-bound API calls available for this session.\ nShortcuts are invoked like normal capabilities but Connect injects\na pre-bound payload instead of using the client's payload.\n",
+                    "description": "Pre-bound API calls available for this session.\nShortcuts are invoked like normal capabilities but Connect injects\ na pre-bound payload instead of using the client's payload.\n",
                     "nullable": true
                 },
                 "version": {

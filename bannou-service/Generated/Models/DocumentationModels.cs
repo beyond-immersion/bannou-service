@@ -127,10 +127,10 @@ public enum ListSortField
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
-    Created_at = 0,
+    CreatedAt = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
-    Updated_at = 1,
+    UpdatedAt = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"title")]
     Title = 2,
@@ -147,7 +147,7 @@ public enum SuggestionSource
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"document_id")]
-    Document_id = 0,
+    DocumentId = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"slug")]
     Slug = 1,
@@ -1982,22 +1982,22 @@ public partial class BindRepositoryRequest
     public int SyncIntervalMinutes { get; set; } = 60;
 
     /// <summary>
-    /// Glob patterns for files to include
+    /// Glob patterns for files to include (defaults to all markdown files if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filePatterns")]
-    public System.Collections.Generic.ICollection<string> FilePatterns { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? FilePatterns { get; set; } = default!;
 
     /// <summary>
-    /// Glob patterns for files to exclude
+    /// Glob patterns for files to exclude (defaults to common non-content directories if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("excludePatterns")]
-    public System.Collections.Generic.ICollection<string> ExcludePatterns { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ExcludePatterns { get; set; } = default!;
 
     /// <summary>
-    /// Map directory prefixes to categories
+    /// Map directory prefixes to categories (empty mapping if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryMapping")]
-    public System.Collections.Generic.IDictionary<string, string> CategoryMapping { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? CategoryMapping { get; set; } = default!;
 
     /// <summary>
     /// Default category for documents without mapping

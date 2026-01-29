@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Location;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -83,12 +85,13 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the location (e.g., room, area, zone)
+    /// Type classification of the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string LocationType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationType LocationType { get; set; } = default!;
 
     /// <summary>
     /// ID of the parent location for hierarchical structures
@@ -198,12 +201,13 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the location (e.g., room, area, zone)
+    /// Type classification of the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string LocationType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationType LocationType { get; set; } = default!;
 
     /// <summary>
     /// ID of the parent location for hierarchical structures
@@ -321,12 +325,13 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the location (e.g., room, area, zone)
+    /// Type classification of the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string LocationType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationType LocationType { get; set; } = default!;
 
     /// <summary>
     /// ID of the parent location for hierarchical structures

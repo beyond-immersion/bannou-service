@@ -2,11 +2,13 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -34,11 +36,11 @@ public sealed class RabbitMQMessageBus : IMessageBus
 {
     private readonly RabbitMQConnectionManager _connectionManager;
     private readonly MessageRetryBuffer _retryBuffer;
+    private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
 
-    // Track declared exchanges to avoid redeclaring
-    private readonly HashSet<string> _declaredExchanges = new();
-    private readonly object _exchangeLock = new();
+    // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
+    private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
 
     /// <summary>
     /// Topic for service error events.
@@ -51,10 +53,12 @@ public sealed class RabbitMQMessageBus : IMessageBus
     public RabbitMQMessageBus(
         RabbitMQConnectionManager connectionManager,
         MessageRetryBuffer retryBuffer,
+        AppConfiguration appConfiguration,
         ILogger<RabbitMQMessageBus> logger)
     {
         _connectionManager = connectionManager;
         _retryBuffer = retryBuffer;
+        _appConfiguration = appConfiguration;
         _logger = logger;
     }
 
@@ -273,7 +277,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
         ServiceErrorEventSeverity severity = ServiceErrorEventSeverity.Error,
         object? details = null,
         string? stack = null,
-        string? correlationId = null,
+        Guid? correlationId = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -282,9 +286,9 @@ public sealed class RabbitMQMessageBus : IMessageBus
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ServiceId = Guid.Parse(Program.ServiceGUID),
+                ServiceId = Program.ServiceGUID,
                 ServiceName = serviceName,
-                AppId = Program.Configuration.EffectiveAppId,
+                AppId = _appConfiguration.EffectiveAppId,
                 Operation = operation,
                 ErrorType = errorType,
                 Message = message,
@@ -317,12 +321,9 @@ public sealed class RabbitMQMessageBus : IMessageBus
     {
         // Check if already declared (optimization to avoid redeclaring)
         var key = $"{exchange}:{exchangeType}";
-        lock (_exchangeLock)
+        if (_declaredExchanges.ContainsKey(key))
         {
-            if (_declaredExchanges.Contains(key))
-            {
-                return;
-            }
+            return;
         }
 
         var type = exchangeType switch
@@ -340,10 +341,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             arguments: null,
             cancellationToken: cancellationToken);
 
-        lock (_exchangeLock)
-        {
-            _declaredExchanges.Add(key);
-        }
+        _declaredExchanges.TryAdd(key, 0);
 
         _logger.LogDebug("Declared exchange '{Exchange}' of type {Type}", exchange, type);
     }

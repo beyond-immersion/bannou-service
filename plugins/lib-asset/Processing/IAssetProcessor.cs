@@ -84,7 +84,7 @@ public sealed class AssetProcessingContext
     /// <summary>
     /// Optional realm-specific context for the asset.
     /// </summary>
-    public string? RealmId { get; init; }
+    public Guid? RealmId { get; init; }
 
     /// <summary>
     /// Optional metadata tags associated with the asset.

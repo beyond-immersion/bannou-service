@@ -3,7 +3,7 @@
 Generate IServiceNavigator interface extensions and ServiceNavigator implementation.
 
 This script scans Generated/Clients/ for service client interfaces and generates:
-1. IServiceNavigator.Generated.cs - partial interface with service client properties
+1. IServiceNavigator.cs - partial interface with service client properties
 2. ServiceNavigator.cs - concrete implementation
 
 Architecture:
@@ -16,7 +16,7 @@ Usage:
     python3 scripts/generate-service-navigator.py
 
 Output:
-    bannou-service/Generated/IServiceNavigator.Generated.cs
+    bannou-service/Generated/IServiceNavigator.cs
     bannou-service/Generated/ServiceNavigator.cs
 """
 
@@ -145,6 +145,8 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
         "",
         "using BeyondImmersion.Bannou.Core;",
         "using BeyondImmersion.BannouService.ClientEvents;",
+        "using BeyondImmersion.BannouService.Configuration;",
+        "using BeyondImmersion.BannouService.Services;",
     ]
 
     # Add using statements for each client namespace
@@ -160,12 +162,21 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
         "/// and provides session context access for client event publishing.",
         "/// </summary>",
         "/// <remarks>",
+        "/// <para>",
         "/// Registered as Scoped in DI to ensure per-request isolation of service clients.",
         "/// Session context is read from ServiceRequestContext (AsyncLocal storage).",
+        "/// </para>",
+        "/// <para>",
+        "/// This is a partial class. Raw API execution methods are implemented in",
+        "/// ServiceClients/ServiceNavigator.RawApi.cs (manual file).",
+        "/// </para>",
         "/// </remarks>",
-        "public sealed class ServiceNavigator : IServiceNavigator",
+        "public partial class ServiceNavigator : IServiceNavigator",
         "{",
         "    private readonly IClientEventPublisher _clientEventPublisher;",
+        "    private readonly IHttpClientFactory _httpClientFactory;",
+        "    private readonly IServiceAppMappingResolver _appMappingResolver;",
+        "    private readonly AppConfiguration _configuration;",
         "",
     ])
 
@@ -181,6 +192,9 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
     lines.append("    /// </summary>")
     lines.append("    public ServiceNavigator(")
     lines.append("        IClientEventPublisher clientEventPublisher,")
+    lines.append("        IHttpClientFactory httpClientFactory,")
+    lines.append("        IServiceAppMappingResolver appMappingResolver,")
+    lines.append("        AppConfiguration configuration,")
 
     # Add constructor parameters
     for i, client in enumerate(clients):
@@ -189,6 +203,9 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
 
     lines.append("    {")
     lines.append("        _clientEventPublisher = clientEventPublisher;")
+    lines.append("        _httpClientFactory = httpClientFactory;")
+    lines.append("        _appMappingResolver = appMappingResolver;")
+    lines.append("        _configuration = configuration;")
 
     for client in clients:
         param_name = client.field_name.lstrip('_')
@@ -289,9 +306,15 @@ def main():
 
     # Generate interface extension
     interface_code = generate_interface_extension(clients)
-    interface_file = output_dir / 'IServiceNavigator.Generated.cs'
+    interface_file = output_dir / 'IServiceNavigator.cs'
     interface_file.write_text(interface_code)
-    print(f"\n  Generated IServiceNavigator.Generated.cs ({len(clients)} properties)")
+    print(f"\n  Generated IServiceNavigator.cs ({len(clients)} properties)")
+
+    # Clean up old .Generated.cs file if it exists (legacy naming)
+    old_file = output_dir / 'IServiceNavigator.Generated.cs'
+    if old_file.exists():
+        old_file.unlink()
+        print(f"  Removed legacy file: IServiceNavigator.Generated.cs")
 
     # Generate implementation
     impl_code = generate_implementation(clients)

@@ -46,7 +46,7 @@ public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAs
                 return _redis.GetDatabase();
             }
 
-            _logger.LogInformation("Initializing Redis connection for distributed locks");
+            _logger.LogDebug("Initializing Redis connection for distributed locks");
             _redis = await ConnectionMultiplexer.ConnectAsync(_configuration.RedisConnectionString);
             _initialized = true;
             _logger.LogInformation("Redis connection established for distributed locks");

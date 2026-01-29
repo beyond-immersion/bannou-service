@@ -17,9 +17,6 @@ public class SmartRestartManager : ISmartRestartManager
     private readonly IOrchestratorEventManager _eventManager;
     private DockerClient? _dockerClient;
 
-    private const int DEFAULT_RESTART_TIMEOUT_SECONDS = 120;
-    private const int HEALTH_CHECK_INTERVAL_MS = 2000;
-
     public SmartRestartManager(
         ILogger<SmartRestartManager> logger,
         OrchestratorServiceConfiguration configuration,
@@ -39,21 +36,20 @@ public class SmartRestartManager : ISmartRestartManager
     {
         try
         {
-            var dockerHost = _configuration.DockerHost ?? "unix:///var/run/docker.sock";
-            _logger.LogInformation("Initializing Docker client with host: {DockerHost}", dockerHost);
+            var dockerHost = _configuration.DockerHost;
+            _logger.LogDebug("Initializing Docker client with host: {DockerHost}", dockerHost);
 
             using var config = new DockerClientConfiguration(new Uri(dockerHost));
             _dockerClient = config.CreateClient();
 
-            _logger.LogInformation("Docker client initialized successfully");
+            _logger.LogDebug("Docker client initialized successfully");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize Docker client");
             throw;
         }
-
-        await Task.CompletedTask;
+        await Task.CompletedTask; // Satisfies async interface requirement
     }
 
     /// <summary>
@@ -89,14 +85,14 @@ public class SmartRestartManager : ISmartRestartManager
 
             // Find container by service name
             var container = await FindContainerByServiceNameAsync(request.ServiceName) ?? throw new InvalidOperationException($"Container for service '{request.ServiceName}' not found");
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Restarting service: {ServiceName} (container: {ContainerId})",
                 request.ServiceName, container.ID[..12]);
 
             // Update environment variables if provided
             if (request.Environment != null && request.Environment.Any())
             {
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "Updating environment variables for {ServiceName}: {Count} variables",
                     request.ServiceName, request.Environment.Count);
 
@@ -116,11 +112,11 @@ public class SmartRestartManager : ISmartRestartManager
                 container.ID,
                 new ContainerRestartParameters
                 {
-                    WaitBeforeKillSeconds = 30
+                    WaitBeforeKillSeconds = (uint)_configuration.DefaultWaitBeforeKillSeconds
                 });
 
             // Wait for service to become healthy
-            var timeoutSeconds = request.Timeout > 0 ? request.Timeout : DEFAULT_RESTART_TIMEOUT_SECONDS;
+            var timeoutSeconds = request.Timeout > 0 ? request.Timeout : _configuration.RestartTimeoutSeconds;
             var timeout = TimeSpan.FromSeconds(timeoutSeconds);
             var isHealthy = await WaitForServiceHealthAsync(request.ServiceName, timeout);
 
@@ -199,7 +195,7 @@ public class SmartRestartManager : ISmartRestartManager
         var startTime = DateTime.UtcNow;
         var endTime = startTime + timeout;
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Waiting for {ServiceName} to become healthy (timeout: {TimeoutSeconds}s)",
             serviceName, timeout.TotalSeconds);
 
@@ -220,7 +216,7 @@ public class SmartRestartManager : ISmartRestartManager
                 "Service {ServiceName} status: {Status} - waiting...",
                 serviceName, recommendation.CurrentStatus);
 
-            await Task.Delay(HEALTH_CHECK_INTERVAL_MS);
+            await Task.Delay(_configuration.HealthCheckIntervalMs);
         }
 
         _logger.LogWarning(

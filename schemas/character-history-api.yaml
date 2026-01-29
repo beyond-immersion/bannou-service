@@ -33,7 +33,7 @@ info:
     **Compression Integration**: When a character is compressed (archived after death),
     history records are summarized into the CharacterArchive and then deleted.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
     this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:

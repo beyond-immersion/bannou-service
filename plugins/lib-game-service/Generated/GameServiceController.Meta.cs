@@ -84,11 +84,11 @@ public partial class GameServiceController
                 },
                 "stubName": {
                     "type": "string",
-                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                    "description": "URL-safe identifier (e.g., \"my-game\")"
                 },
                 "displayName": {
                     "type": "string",
-                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                    "description": "Human-readable name (e.g., \"My Game Online\")"
                 },
                 "description": {
                     "type": "string",
@@ -223,11 +223,11 @@ public partial class GameServiceController
                 },
                 "stubName": {
                     "type": "string",
-                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                    "description": "URL-safe identifier (e.g., \"my-game\")"
                 },
                 "displayName": {
                     "type": "string",
-                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                    "description": "Human-readable name (e.g., \"My Game Online\")"
                 },
                 "description": {
                     "type": "string",
@@ -330,13 +330,13 @@ public partial class GameServiceController
                     "pattern": "^[a-z0-9-]+$",
                     "minLength": 2,
                     "maxLength": 50,
-                    "description": "URL-safe identifier for the service (e.g., \"arcadia\", \"fantasia\")"
+                    "description": "URL-safe identifier for the service (e.g., \"my-game\", \"my-other-game\")"
                 },
                 "displayName": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 100,
-                    "description": "Human-readable name for the service (e.g., \"Arcadia Online\")"
+                    "description": "Human-readable name for the service (e.g., \"My Game Online\")"
                 },
                 "description": {
                     "type": "string",
@@ -379,11 +379,11 @@ public partial class GameServiceController
                 },
                 "stubName": {
                     "type": "string",
-                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                    "description": "URL-safe identifier (e.g., \"my-game\")"
                 },
                 "displayName": {
                     "type": "string",
-                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                    "description": "Human-readable name (e.g., \"My Game Online\")"
                 },
                 "description": {
                     "type": "string",
@@ -532,11 +532,11 @@ public partial class GameServiceController
                 },
                 "stubName": {
                     "type": "string",
-                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                    "description": "URL-safe identifier (e.g., \"my-game\")"
                 },
                 "displayName": {
                     "type": "string",
-                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                    "description": "Human-readable name (e.g., \"My Game Online\")"
                 },
                 "description": {
                     "type": "string",

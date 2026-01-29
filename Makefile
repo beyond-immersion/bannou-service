@@ -60,6 +60,30 @@ build-sdks: ## Build all SDK projects (separate from server)
 	dotnet build sdks/bannou-sdks.sln
 	@echo "✅ SDK build completed"
 
+build-tools: ## Build all development tools (http-tester, edge-tester, bannou-inspect)
+	@echo "🔧 Building development tools..."
+	dotnet build tools/tools.sln
+	@echo "✅ Development tools built"
+
+# =============================================================================
+# ASSEMBLY INSPECTOR
+# =============================================================================
+# IntelliSense-like type/method inspection from the command line.
+# Useful for understanding external APIs without leaving the terminal.
+# =============================================================================
+
+inspect-type: ## Inspect a type. Usage: make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- type "$(TYPE)" --package "$(PKG)"
+
+inspect-method: ## Inspect a method. Usage: make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- method "$(METHOD)" --package "$(PKG)"
+
+inspect-search: ## Search for types. Usage: make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- search "$(PATTERN)" --package "$(PKG)"
+
+inspect-list: ## List all types in a package. Usage: make inspect-list PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- list-types --package "$(PKG)"
+
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \
@@ -73,6 +97,55 @@ push-dev: build-compose ## Build and push development image to Docker Hub
 	@echo "🚀 Pushing beyondimmersion/bannou-service:development"
 	docker push beyondimmersion/bannou-service:development
 	@echo "✅ Push complete"
+
+# =============================================================================
+# ⛔ PRODUCTION DEPLOYMENT - AI AGENTS MUST NEVER RUN THIS COMMAND ⛔
+# =============================================================================
+# This command promotes the development image to production. It:
+#   1. Reads version from VERSION file
+#   2. Retags beyondimmersion/bannou-service:development as :{version}
+#   3. Also tags as :latest
+#   4. Pushes both tags to Docker Hub
+#
+# AI AGENTS: DO NOT RUN THIS COMMAND. If the developer asks about deploying
+# to production, return the command for them to run manually:
+#   make push-release
+#
+# A PreToolUse hook blocks Claude from executing this command.
+# =============================================================================
+push-release: ## ⛔ PRODUCTION DEPLOY - Promote development image to versioned release + latest (AI: DO NOT RUN)
+	@echo ""
+	@echo "⚠️  =========================================="
+	@echo "⚠️  PRODUCTION DEPLOYMENT"
+	@echo "⚠️  =========================================="
+	@echo ""
+	@VERSION=$$(cat VERSION | tr -d '[:space:]'); \
+	echo "📦 Version from VERSION file: $$VERSION"; \
+	echo ""; \
+	echo "This will:"; \
+	echo "  1. Tag beyondimmersion/bannou-service:development as :$$VERSION"; \
+	echo "  2. Tag beyondimmersion/bannou-service:development as :latest"; \
+	echo "  3. Push both tags to Docker Hub"; \
+	echo ""; \
+	read -p "Continue with production deployment? [y/N] " confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "❌ Deployment cancelled"; \
+		exit 1; \
+	fi; \
+	echo ""; \
+	echo "🏷️  Tagging beyondimmersion/bannou-service:development as :$$VERSION"; \
+	docker tag beyondimmersion/bannou-service:development beyondimmersion/bannou-service:$$VERSION; \
+	echo "🏷️  Tagging beyondimmersion/bannou-service:development as :latest"; \
+	docker tag beyondimmersion/bannou-service:development beyondimmersion/bannou-service:latest; \
+	echo ""; \
+	echo "🚀 Pushing beyondimmersion/bannou-service:$$VERSION"; \
+	docker push beyondimmersion/bannou-service:$$VERSION; \
+	echo "🚀 Pushing beyondimmersion/bannou-service:latest"; \
+	docker push beyondimmersion/bannou-service:latest; \
+	echo ""; \
+	echo "✅ Production deployment complete!"; \
+	echo "   - beyondimmersion/bannou-service:$$VERSION"; \
+	echo "   - beyondimmersion/bannou-service:latest"
 
 up-compose: ## Start services locally (base + services)
 	if [ ! -f .env ]; then touch .env; fi
@@ -1134,6 +1207,42 @@ check-sdk-ts: ## Check TypeScript SDK formatting (for CI)
 	fi
 	cd $(TS_SDK_DIR) && npm run format:check
 	@echo "✅ TypeScript SDK formatting check passed"
+
+# =============================================================================
+# ⛔ NPM PUBLISHING - AI AGENTS MUST NEVER RUN THIS COMMAND ⛔
+# =============================================================================
+# This command publishes the TypeScript SDK packages to npm. It:
+#   1. Builds both core and client packages
+#   2. Publishes @beyondimmersion/bannou-core to npm
+#   3. Publishes @beyondimmersion/bannou-client to npm
+#
+# AI AGENTS: DO NOT RUN THIS COMMAND. If the developer asks about publishing
+# to npm, return the command for them to run manually:
+#   make publish-sdk-ts
+#
+# A PreToolUse hook blocks Claude from executing this command.
+# =============================================================================
+publish-sdk-ts: build-sdk-ts ## ⛔ NPM PUBLISH - Publish TypeScript SDK packages to npm (AI: DO NOT RUN)
+	@echo ""
+	@echo "⚠️  =========================================="
+	@echo "⚠️  NPM PACKAGE PUBLISHING"
+	@echo "⚠️  =========================================="
+	@echo ""
+	@echo "This will publish the following packages to npm:"
+	@echo "  - @beyondimmersion/bannou-core"
+	@echo "  - @beyondimmersion/bannou-client"
+	@echo ""
+	@read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted."; exit 1)
+	@echo ""
+	@echo "📦 Publishing @beyondimmersion/bannou-core..."
+	cd $(TS_SDK_DIR)/core && npm publish --access public
+	@echo "✅ @beyondimmersion/bannou-core published"
+	@echo ""
+	@echo "📦 Publishing @beyondimmersion/bannou-client..."
+	cd $(TS_SDK_DIR)/client && npm publish --access public
+	@echo "✅ @beyondimmersion/bannou-client published"
+	@echo ""
+	@echo "🎉 TypeScript SDK packages published successfully!"
 
 # =============================================================================
 # UNREAL ENGINE SDK

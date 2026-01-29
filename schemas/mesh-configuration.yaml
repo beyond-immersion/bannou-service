@@ -12,7 +12,7 @@ info:
 
     **Load Balancing**: Algorithm selection and routing behavior.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 2.0.0
 paths: {}
@@ -43,6 +43,12 @@ x-service-configuration:
       env: MESH_ENDPOINT_PORT
       default: 80
 
+    DefaultMaxConnections:
+      type: integer
+      description: Default max connections for auto-registered endpoints when heartbeat does not provide capacity info.
+      env: MESH_DEFAULT_MAX_CONNECTIONS
+      default: 1000
+
     # =========================================================================
     # Heartbeat and TTL Configuration
     # =========================================================================
@@ -69,7 +75,8 @@ x-service-configuration:
     # =========================================================================
     DefaultLoadBalancer:
       type: string
-      description: Default load balancing algorithm (RoundRobin, LeastConnections, Weighted, Random)
+      enum: ["RoundRobin", "LeastConnections", "Weighted", "Random"]
+      description: Default load balancing algorithm
       env: MESH_DEFAULT_LOAD_BALANCER
       default: "RoundRobin"
 
@@ -146,16 +153,43 @@ x-service-configuration:
       default: 100
 
     # =========================================================================
-    # Logging and Diagnostics
+    # HTTP Client Configuration
     # =========================================================================
-    EnableDetailedLogging:
-      type: boolean
-      description: Whether to log detailed routing decisions
-      env: MESH_ENABLE_DETAILED_LOGGING
-      default: false
+    PooledConnectionLifetimeMinutes:
+      type: integer
+      description: How long to keep pooled HTTP connections alive in minutes
+      env: MESH_POOLED_CONNECTION_LIFETIME_MINUTES
+      default: 2
+    ConnectTimeoutSeconds:
+      type: integer
+      description: TCP connection timeout in seconds
+      env: MESH_CONNECT_TIMEOUT_SECONDS
+      default: 10
+    EndpointCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for cached service endpoints
+      env: MESH_ENDPOINT_CACHE_TTL_SECONDS
+      default: 5
 
-    MetricsEnabled:
-      type: boolean
-      description: Whether to collect routing metrics
-      env: MESH_METRICS_ENABLED
-      default: true
+    # =========================================================================
+    # Startup Configuration
+    # =========================================================================
+    HealthCheckStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before health check service starts probing endpoints
+      env: MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS
+      default: 10
+
+    # =========================================================================
+    # Display and Output Limits
+    # =========================================================================
+    MaxTopEndpointsReturned:
+      type: integer
+      description: Maximum top endpoints returned in health status queries
+      env: MESH_MAX_TOP_ENDPOINTS_RETURNED
+      default: 2
+    MaxServiceMappingsDisplayed:
+      type: integer
+      description: Maximum service mappings shown in diagnostic logs
+      env: MESH_MAX_SERVICE_MAPPINGS_DISPLAYED
+      default: 10

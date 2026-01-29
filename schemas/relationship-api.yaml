@@ -16,7 +16,7 @@ info:
     - Type-specific metadata storage
     - Soft-delete via endedAt (relationships can be re-created after ending)
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
 
 servers:
 - url: http://localhost:5012
@@ -213,33 +213,6 @@ paths:
 
 components:
   schemas:
-    # Enums
-    EntityType:
-      type: string
-      enum:
-      - CHARACTER
-      - NPC
-      - MONSTER
-      - ITEM
-      - LOCATION
-      - ORGANIZATION
-      - FACTION
-      - REALM
-      - SOUL
-      - OTHER
-      description: |
-        Type of entity in a relationship.
-        - CHARACTER: Player-controlled characters
-        - NPC: Non-player characters
-        - MONSTER: Hostile or neutral creatures
-        - ITEM: Physical objects, artifacts, etc.
-        - LOCATION: Places, regions, buildings
-        - ORGANIZATION: Guilds, companies, groups
-        - FACTION: Political or social factions
-        - REALM: Game realms/worlds
-        - SOUL: Immortal soul entity for reincarnation chains
-        - OTHER: Catch-all for future entity types
-
     # Request Models
     CreateRelationshipRequest:
       description: Request to create a new relationship between two entities
@@ -258,14 +231,14 @@ components:
           format: uuid
           description: ID of the first entity in the relationship
         entity1Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the first entity in the relationship
         entity2Id:
           type: string
           format: uuid
           description: ID of the second entity in the relationship
         entity2Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the second entity in the relationship
         relationshipTypeId:
           type: string
@@ -306,7 +279,7 @@ components:
           format: uuid
           description: ID of the entity to get relationships for
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the entity to get relationships for
         relationshipTypeId:
           type: string
@@ -314,7 +287,7 @@ components:
           nullable: true
           description: Optional filter by relationship type
         otherEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Optional filter by the other entity's type
         includeEnded:
@@ -348,14 +321,14 @@ components:
           format: uuid
           description: ID of the first entity to check relationships for
         entity1Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the first entity
         entity2Id:
           type: string
           format: uuid
           description: ID of the second entity to check relationships for
         entity2Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the second entity
         relationshipTypeId:
           type: string
@@ -379,11 +352,11 @@ components:
           format: uuid
           description: Relationship type to filter by
         entity1Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Optional filter by entity1 type
         entity2Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Optional filter by entity2 type
         includeEnded:
@@ -469,14 +442,14 @@ components:
           format: uuid
           description: ID of the first entity in the relationship
         entity1Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the first entity in the relationship
         entity2Id:
           type: string
           format: uuid
           description: ID of the second entity in the relationship
         entity2Type:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the second entity in the relationship
         relationshipTypeId:
           type: string

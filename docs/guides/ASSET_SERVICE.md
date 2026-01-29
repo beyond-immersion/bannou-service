@@ -120,7 +120,7 @@ Search assets by tags, type, realm, or content type.
 {
   "tags": ["player"],
   "asset_type": "texture",
-  "realm": "arcadia",
+  "realm": "my-realm",
   "limit": 50,
   "offset": 0
 }
@@ -275,7 +275,7 @@ Query bundles with advanced filtering. Requires owner filter for efficient query
   "tag_exists": ["release"],
   "status": "active",
   "bundle_type": "metabundle",
-  "realm": "arcadia",
+  "realm": "my-realm",
   "name_contains": "level",
   "created_after": "2025-01-01T00:00:00Z",
   "limit": 50,
@@ -295,7 +295,7 @@ Query bundles with advanced filtering. Requires owner filter for efficient query
       "metadata_version": 2,
       "name": "Level 1 Assets",
       "owner": "account_123",
-      "realm": "arcadia",
+      "realm": "my-realm",
       "status": "active",
       "asset_count": 25,
       "size_bytes": 52428800,

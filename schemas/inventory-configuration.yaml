@@ -1,0 +1,71 @@
+openapi: 3.0.0
+info:
+  title: Inventory Service Configuration
+  version: 1.0.0
+  description: |
+    Configuration schema for the Inventory service.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
+
+x-service-configuration:
+  properties:
+    DefaultMaxNestingDepth:
+      type: integer
+      default: 3
+      env: INVENTORY_DEFAULT_MAX_NESTING_DEPTH
+      description: Default maximum nesting depth for containers
+
+    DefaultWeightContribution:
+      $ref: 'inventory-api.yaml#/components/schemas/WeightContribution'
+      default: self_plus_contents
+      env: INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION
+      description: Default weight contribution mode for containers
+
+    ContainerCacheTtlSeconds:
+      type: integer
+      default: 300
+      env: INVENTORY_CONTAINER_CACHE_TTL_SECONDS
+      description: TTL for container cache entries
+
+    LockTimeoutSeconds:
+      type: integer
+      default: 30
+      env: INVENTORY_LOCK_TIMEOUT_SECONDS
+      description: Timeout for container modification locks
+
+    ListLockTimeoutSeconds:
+      type: integer
+      default: 15
+      env: INVENTORY_LIST_LOCK_TIMEOUT_SECONDS
+      description: Timeout for owner/type index list modification locks (shorter than container locks)
+
+    EnableLazyContainerCreation:
+      type: boolean
+      default: true
+      env: INVENTORY_ENABLE_LAZY_CONTAINER_CREATION
+      description: Whether to enable lazy container creation for characters
+
+    DefaultMaxSlots:
+      type: integer
+      default: 20
+      env: INVENTORY_DEFAULT_MAX_SLOTS
+      description: Default max slots for new slot-based containers
+
+    DefaultMaxWeight:
+      type: number
+      default: 100.0
+      env: INVENTORY_DEFAULT_MAX_WEIGHT
+      description: Default max weight for new weight-based containers
+
+    MaxCountQueryLimit:
+      type: integer
+      default: 10000
+      env: INVENTORY_MAX_COUNT_QUERY_LIMIT
+      description: Maximum items to scan when counting items across containers
+
+    QueryPageSize:
+      type: integer
+      default: 200
+      env: INVENTORY_QUERY_PAGE_SIZE
+      description: Number of items to fetch per query page for inventory operations

@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Actor;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -239,7 +241,8 @@ public partial class ActorInstanceCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ActorStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When the actor started running
@@ -300,7 +303,8 @@ public partial class ActorInstanceUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ActorStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When the actor started running
@@ -369,7 +373,8 @@ public partial class ActorInstanceDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ActorStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When the actor started running

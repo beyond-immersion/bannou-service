@@ -237,16 +237,14 @@ public sealed class BannouConnectionManager : IAsyncDisposable
     /// </summary>
     /// <typeparam name="TRequest">Request type.</typeparam>
     /// <typeparam name="TResponse">Response type.</typeparam>
-    /// <param name="method">HTTP method (POST, GET, etc.).</param>
-    /// <param name="path">API path.</param>
+    /// <param name="endpoint">API path.</param>
     /// <param name="request">Request payload.</param>
     /// <param name="channel">Optional channel for routing.</param>
     /// <param name="timeout">Optional timeout override.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>API response with success/failure status.</returns>
     public async Task<ApiResponse<TResponse>> InvokeAsync<TRequest, TResponse>(
-        string method,
-        string path,
+        string endpoint,
         TRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -263,11 +261,11 @@ public sealed class BannouConnectionManager : IAsyncDisposable
         try
         {
             return await _client.InvokeAsync<TRequest, TResponse>(
-                method, path, request, channel, timeout, cancellationToken);
+                endpoint, request, channel, timeout, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error invoking {Method} {Path}", method, path);
+            _logger?.LogError(ex, "Error invoking {Endpoint}", endpoint);
             return ApiResponse<TResponse>.Failure(new ErrorResponse
             {
                 Message = ex.Message
@@ -279,14 +277,12 @@ public sealed class BannouConnectionManager : IAsyncDisposable
     /// Send a fire-and-forget event to Bannou.
     /// </summary>
     /// <typeparam name="TRequest">Request type.</typeparam>
-    /// <param name="method">HTTP method.</param>
-    /// <param name="path">API path.</param>
+    /// <param name="endpoint">API path.</param>
     /// <param name="request">Request payload.</param>
     /// <param name="channel">Optional channel for routing.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SendEventAsync<TRequest>(
-        string method,
-        string path,
+        string endpoint,
         TRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -296,7 +292,7 @@ public sealed class BannouConnectionManager : IAsyncDisposable
             throw new InvalidOperationException("Not connected to Bannou services");
         }
 
-        await _client.SendEventAsync(method, path, request, channel, cancellationToken);
+        await _client.SendEventAsync(endpoint, request, channel, cancellationToken);
     }
 
     // ==========================================================================

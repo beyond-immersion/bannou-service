@@ -5,7 +5,7 @@ info:
     Configuration schema for Account service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -24,3 +24,29 @@ x-service-configuration:
       description: Email domain that grants admin access (e.g., "@company.com")
       env: ACCOUNT_ADMIN_EMAIL_DOMAIN
       example: "@admin.example.com"
+
+    # Pagination Configuration
+    DefaultPageSize:
+      type: integer
+      description: Default page size for list operations when not specified
+      env: ACCOUNT_DEFAULT_PAGE_SIZE
+      default: 20
+    MaxPageSize:
+      type: integer
+      description: Maximum allowed page size for list operations
+      env: ACCOUNT_MAX_PAGE_SIZE
+      default: 100
+
+    # Batch Processing Configuration
+    ListBatchSize:
+      type: integer
+      description: Number of accounts to process per batch in list operations
+      env: ACCOUNT_LIST_BATCH_SIZE
+      default: 100
+
+    # Role Management Configuration
+    AutoManageAnonymousRole:
+      type: boolean
+      description: When true, automatically manages the anonymous role. If removing roles would leave zero roles, anonymous is added automatically. If adding a non-anonymous role, anonymous is removed if present. This ensures accounts always have at least one role for permission resolution.
+      env: ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE
+      default: true

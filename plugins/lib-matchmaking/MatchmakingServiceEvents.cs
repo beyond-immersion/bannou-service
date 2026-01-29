@@ -2,8 +2,6 @@ using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
 
-using ClientCancelReason = BeyondImmersion.Bannou.Matchmaking.ClientEvents.CancelReason;
-
 namespace BeyondImmersion.BannouService.Matchmaking;
 
 /// <summary>
@@ -38,13 +36,13 @@ public partial class MatchmakingService
     /// New connections don't require any matchmaking action - players must explicitly join queues.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
+    public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
     {
         // New connections don't require any matchmaking action
         // Players must explicitly join queues via the JoinMatchmaking endpoint
         _logger.LogDebug("Session {SessionId} connected, account {AccountId}",
             evt.SessionId, evt.AccountId);
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -80,7 +78,7 @@ public partial class MatchmakingService
                 }
 
                 // Only cancel tickets associated with this session
-                if (ticket.WebSocketSessionId != evt.SessionId.ToString())
+                if (ticket.WebSocketSessionId != evt.SessionId)
                 {
                     continue;
                 }
@@ -91,7 +89,7 @@ public partial class MatchmakingService
                 // Cancel the ticket
                 await CancelTicketInternalAsync(
                     ticket.TicketId,
-                    ClientCancelReason.Session_disconnected,
+                    CancelReason.SessionDisconnected,
                     CancellationToken.None);
             }
         }
@@ -135,7 +133,7 @@ public partial class MatchmakingService
                         var ticket = await LoadTicketAsync(playerTicket.TicketId, CancellationToken.None);
                         if (ticket != null)
                         {
-                            ticket.WebSocketSessionId = evt.SessionId.ToString();
+                            ticket.WebSocketSessionId = evt.SessionId;
                             await SaveTicketAsync(ticket, CancellationToken.None);
                         }
 

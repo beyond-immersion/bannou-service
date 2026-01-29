@@ -31,32 +31,6 @@ namespace BeyondImmersion.BannouService.Leaderboard;
 using System = global::System;
 
 /// <summary>
-/// Type of entity on the leaderboard
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum EntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// How scores are sorted
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation

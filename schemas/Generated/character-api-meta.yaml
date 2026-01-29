@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Bannou Character Service API
   description: |
-    Character management service for Arcadia game world.
+    Character management service for game worlds.
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
@@ -20,7 +20,7 @@ info:
     **Relationships**: Character relationships are managed by the separate Relationship
     service, which handles entity-agnostic relationships between any two entities.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
 - url: http://localhost:5012

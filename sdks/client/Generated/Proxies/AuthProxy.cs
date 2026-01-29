@@ -41,7 +41,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<LoginRequest, AuthResponse>(
-            "POST", "/auth/login", request, channel, timeout, cancellationToken);
+            "/auth/login", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RegisterRequest, RegisterResponse>(
-            "POST", "/auth/register", request, channel, timeout, cancellationToken);
+            "/auth/register", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<OAuthCallbackRequest, AuthResponse>(
-            "POST", "/auth/oauth/{provider}/callback", request, channel, timeout, cancellationToken);
+            "/auth/oauth/{provider}/callback", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SteamVerifyRequest, AuthResponse>(
-            "POST", "/auth/steam/verify", request, channel, timeout, cancellationToken);
+            "/auth/steam/verify", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RefreshRequest, AuthResponse>(
-            "POST", "/auth/refresh", request, channel, timeout, cancellationToken);
+            "/auth/refresh", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, ValidateTokenResponse>(
-            "POST", "/auth/validate", new {}, channel, timeout, cancellationToken);
+            "/auth/validate", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -145,7 +145,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<LogoutRequest>(
-            "POST", "/auth/logout", request, channel, cancellationToken);
+            "/auth/logout", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, SessionsResponse>(
-            "POST", "/auth/sessions/list", new {}, channel, timeout, cancellationToken);
+            "/auth/sessions/list", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -177,7 +177,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<TerminateSessionRequest>(
-            "POST", "/auth/sessions/terminate", request, channel, cancellationToken);
+            "/auth/sessions/terminate", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<PasswordResetRequest>(
-            "POST", "/auth/password/reset", request, channel, cancellationToken);
+            "/auth/password/reset", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -209,7 +209,7 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<PasswordResetConfirmRequest>(
-            "POST", "/auth/password/confirm", request, channel, cancellationToken);
+            "/auth/password/confirm", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -225,6 +225,6 @@ public sealed class AuthProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<object, ProvidersResponse>(
-            "POST", "/auth/providers", new {}, channel, timeout, cancellationToken);
+            "/auth/providers", new {}, channel, timeout, cancellationToken);
     }
 }

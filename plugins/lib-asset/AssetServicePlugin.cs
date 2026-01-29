@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Asset.Metrics;
 using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Asset.Processing;
 using BeyondImmersion.BannouService.Asset.Storage;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +31,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
 
         // Register MinIO configuration options from AssetServiceConfiguration (IMPLEMENTATION TENETS)
         services.AddOptions<MinioStorageOptions>()
-            .Configure<AssetServiceConfiguration>((options, config) =>
+            .Configure<AssetServiceConfiguration, AppConfiguration>((options, config, appConfig) =>
             {
                 options.Endpoint = config.StorageEndpoint;
 
@@ -41,7 +42,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
                 }
                 else
                 {
-                    var serviceDomain = Program.Configuration?.ServiceDomain;
+                    var serviceDomain = appConfig.ServiceDomain;
                     if (!string.IsNullOrWhiteSpace(serviceDomain))
                     {
                         // Default: use ServiceDomain with port 9000 for direct MinIO access
@@ -95,10 +96,11 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             var logger = sp.GetService<ILogger<MinioStorageProvider>>();
 
             var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
+            var assetConfig = sp.GetRequiredService<AssetServiceConfiguration>();
             var config = new AmazonS3Config
             {
                 ServiceURL = $"{(options.UseSSL ? "https" : "http")}://{options.Endpoint}",
-                ForcePathStyle = true, // Required for MinIO
+                ForcePathStyle = assetConfig.StorageForcePathStyle,
                 UseHttp = !options.UseSSL
             };
 
@@ -115,8 +117,16 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Register event emitter for client notifications
         services.AddScoped<IAssetEventEmitter, AssetEventEmitter>();
 
-        // Register bundle services
-        services.AddSingleton<IBundleConverter, BundleConverter>();
+        // Register bundle services with configuration-driven cache TTL
+        services.AddSingleton<IBundleConverter>(sp =>
+        {
+            var bundleLogger = sp.GetRequiredService<ILogger<BundleConverter>>();
+            var assetConf = sp.GetRequiredService<AssetServiceConfiguration>();
+            return new BundleConverter(
+                bundleLogger,
+                cacheDirectory: null,
+                cacheTtl: TimeSpan.FromHours(assetConf.ZipCacheTtlHours));
+        });
         services.AddSingleton<BundleValidator>();
 
         // Register metrics

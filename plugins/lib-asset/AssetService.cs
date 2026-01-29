@@ -17,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using StorageModels = BeyondImmersion.BannouService.Storage;
 
 namespace BeyondImmersion.BannouService.Asset;
@@ -38,6 +37,11 @@ public partial class AssetService : IAssetService
     private readonly IOrchestratorClient _orchestratorClient;
     private readonly IAssetProcessorPoolManager _processorPoolManager;
     private readonly IBundleConverter _bundleConverter;
+
+    /// <summary>
+    /// Marker used to identify standalone assets (not from any bundle) in conflict reports.
+    /// </summary>
+    private const string StandaloneAssetBundleMarker = "system";
 
     // State store name and key prefixes now come from configuration
     // See AssetServiceConfiguration for defaults: StateStoreName, UploadSessionKeyPrefix, etc.
@@ -177,7 +181,7 @@ public partial class AssetService : IAssetService
                     ExpiresAt = multipartResult.ExpiresAt
                 };
 
-                var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
+                var sessionStore = _stateStoreFactory.GetStore<UploadSession>(StateStoreDefinitions.Asset);
                 await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             else
@@ -225,7 +229,7 @@ public partial class AssetService : IAssetService
                     ExpiresAt = uploadResult.ExpiresAt
                 };
 
-                var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
+                var sessionStore = _stateStoreFactory.GetStore<UploadSession>(StateStoreDefinitions.Asset);
                 await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
 
@@ -276,13 +280,13 @@ public partial class AssetService : IAssetService
         try
         {
             // Retrieve upload session - check both regular and bundle upload prefixes
-            var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
+            var sessionStore = _stateStoreFactory.GetStore<UploadSession>(StateStoreDefinitions.Asset);
             var session = await sessionStore.GetAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
 
             // If not found, check for bundle upload session and convert
             if (session == null)
             {
-                var bundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+                var bundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(StateStoreDefinitions.Asset);
                 var bundleSession = await bundleStore.GetAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
 
                 if (bundleSession != null)
@@ -318,7 +322,7 @@ public partial class AssetService : IAssetService
                 _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.UploadId);
                 // Delete both possible session keys (only one will exist)
                 await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
-                var expiredBundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+                var expiredBundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(StateStoreDefinitions.Asset);
                 await expiredBundleStore.DeleteAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
                 return (StatusCodes.BadRequest, null); // Session expired
             }
@@ -395,7 +399,7 @@ public partial class AssetService : IAssetService
                 ContentType = session.ContentType,
                 Size = assetRef.Size,
                 AssetType = session.Metadata?.AssetType ?? AssetType.Other,
-                Realm = session.Metadata?.Realm ?? Asset.Realm.Shared,
+                Realm = session.Metadata?.Realm ?? "shared",
                 Tags = session.Metadata?.Tags ?? new List<string>(),
                 ProcessingStatus = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
                 StorageKey = finalKey,
@@ -405,7 +409,7 @@ public partial class AssetService : IAssetService
             };
 
             // Store internal asset record (includes storage details for bundle creation)
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             await assetStore.SaveAsync($"{_configuration.AssetKeyPrefix}{assetId}", internalRecord, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             // Convert to public metadata for return value and events
@@ -417,7 +421,7 @@ public partial class AssetService : IAssetService
 
             // Delete upload session (both regular and bundle prefixes - only one will exist)
             await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
-            var bundleSessionStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+            var bundleSessionStore = _stateStoreFactory.GetStore<BundleUploadSession>(StateStoreDefinitions.Asset);
             await bundleSessionStore.DeleteAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CompleteUpload: Asset created {AssetId}, finalKey={FinalKey}, requiresProcessing={RequiresProcessing}",
@@ -476,7 +480,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Retrieve internal asset record (includes storage details)
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             var internalRecord = await assetStore.GetAsync($"{_configuration.AssetKeyPrefix}{body.AssetId}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
@@ -550,7 +554,7 @@ public partial class AssetService : IAssetService
             }
 
             // Retrieve internal asset record to get storage details
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             var assetKey = $"{_configuration.AssetKeyPrefix}{body.AssetId}";
             var internalRecord = await assetStore.GetAsync(assetKey, cancellationToken).ConfigureAwait(false);
 
@@ -637,7 +641,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Retrieve internal asset record to verify it exists and get storage details
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             var internalRecord = await assetStore.GetAsync($"{_configuration.AssetKeyPrefix}{body.AssetId}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
@@ -707,13 +711,13 @@ public partial class AssetService : IAssetService
         try
         {
             // Check if search is supported for this store
-            if (!_stateStoreFactory.SupportsSearch(_configuration.StatestoreName))
+            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Asset))
             {
-                _logger.LogDebug("Search not supported for store {Store}, using index fallback", _configuration.StatestoreName);
+                _logger.LogDebug("Search not supported for store {Store}, using index fallback", StateStoreDefinitions.Asset);
                 return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<AssetMetadata>(_configuration.StatestoreName);
+            var searchStore = _stateStoreFactory.GetSearchableStore<AssetMetadata>(StateStoreDefinitions.Asset);
 
             // Build RedisSearch query
             // Format: @asset_type:{type} @realm:{realm} [@content_type:{content_type}]
@@ -814,8 +818,8 @@ public partial class AssetService : IAssetService
         var matchingAssets = new List<AssetMetadata>();
 
         // Search by asset type index
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.StatestoreName);
-        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Asset);
+        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
 
         var indexKey = $"{_configuration.AssetIndexKeyPrefix}type:{body.AssetType.ToString().ToLowerInvariant()}";
         var assetIds = await indexStore.GetAsync(indexKey, cancellationToken).ConfigureAwait(false);
@@ -888,8 +892,8 @@ public partial class AssetService : IAssetService
             }
 
             // Check if bundle already exists
-            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
 
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
             var existingBundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
@@ -926,7 +930,7 @@ public partial class AssetService : IAssetService
             if (delegateToPool)
             {
                 // Queue bundle creation job to processing pool
-                var jobId = Guid.NewGuid().ToString();
+                var jobId = Guid.NewGuid();
                 var job = new BundleCreationJob
                 {
                     JobId = jobId,
@@ -940,7 +944,7 @@ public partial class AssetService : IAssetService
                 };
 
                 // Store job state
-                var jobStore = _stateStoreFactory.GetStore<BundleCreationJob>(_configuration.StatestoreName);
+                var jobStore = _stateStoreFactory.GetStore<BundleCreationJob>(StateStoreDefinitions.Asset);
                 var jobKey = $"bundle-job:{jobId}";
                 await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken);
 
@@ -987,10 +991,10 @@ public partial class AssetService : IAssetService
 
             writer.Finalize(
                 body.BundleId,
-                body.BundleId,
+                body.BundleId.ToString(),
                 body.Version ?? "1.0.0",
-                "system",
-                null,
+                body.Owner,
+                description: null,
                 MetadataHelper.ConvertToStringDictionary(body.Metadata));
 
             // Upload bundle
@@ -1018,7 +1022,7 @@ public partial class AssetService : IAssetService
                 BundleId = body.BundleId,
                 Version = body.Version ?? "1.0.0",
                 BundleType = BundleType.Source,
-                Realm = body.Realm ?? Asset.Realm.Shared,
+                Realm = body.Realm ?? "shared",
                 AssetIds = body.AssetIds.ToList(),
                 Assets = bundleAssetEntries,
                 StorageKey = bundlePath,
@@ -1029,7 +1033,10 @@ public partial class AssetService : IAssetService
                 Owner = body.Owner
             };
 
-            await bundleStore.SaveAsync(bundleKey, bundleMetadata, cancellationToken: cancellationToken);
+            var bundleCacheTtlSeconds = _configuration.DefaultBundleCacheTtlHours * 3600;
+            await bundleStore.SaveAsync(bundleKey, bundleMetadata,
+                new StateOptions { Ttl = bundleCacheTtlSeconds },
+                cancellationToken);
 
             // Populate reverse indexes for asset → bundle lookups
             await IndexBundleAssetsAsync(bundleMetadata, cancellationToken).ConfigureAwait(false);
@@ -1053,7 +1060,7 @@ public partial class AssetService : IAssetService
                     Key = bundlePath,
                     Size = bundleStream.Length,
                     AssetCount = body.AssetIds.Count,
-                    Compression = BeyondImmersion.BannouService.Events.CompressionTypeEnum.Lz4,
+                    Compression = CompressionType.Lz4,
                     Owner = body.Owner
                 }).ConfigureAwait(false);
 
@@ -1098,7 +1105,7 @@ public partial class AssetService : IAssetService
             }
 
             // Look up bundle metadata
-            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
             var bundleMetadata = await bundleStore.GetAsync(bundleKey, cancellationToken);
 
@@ -1183,7 +1190,7 @@ public partial class AssetService : IAssetService
             var tokenTtl = TimeSpan.FromSeconds(_configuration.TokenTtlSeconds);
 
             // Store download token
-            var tokenStore = _stateStoreFactory.GetStore<BundleDownloadToken>(_configuration.StatestoreName);
+            var tokenStore = _stateStoreFactory.GetStore<BundleDownloadToken>(StateStoreDefinitions.Asset);
             await tokenStore.SaveAsync(
                 $"bundle-download:{downloadToken}",
                 new BundleDownloadToken
@@ -1275,7 +1282,7 @@ public partial class AssetService : IAssetService
             }
 
             // Check if bundle already exists
-            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
             var existingBundle = await bundleStore.GetAsync($"{_configuration.BundleKeyPrefix}{body.ManifestPreview.BundleId}", cancellationToken);
 
             if (existingBundle != null)
@@ -1308,7 +1315,8 @@ public partial class AssetService : IAssetService
                 tokenTtl,
                 new Dictionary<string, string>
                 {
-                    { "bundle-id", body.ManifestPreview.BundleId },
+                    // S3 metadata requires string values
+                    { "bundle-id", body.ManifestPreview.BundleId.ToString() },
                     { "upload-id", uploadIdForPath }, // Use path format for S3 metadata
                     { "validation-required", "true" }
                 });
@@ -1316,7 +1324,7 @@ public partial class AssetService : IAssetService
             // Store upload session for validation on completion
             var uploadSession = new BundleUploadSession
             {
-                UploadId = uploadId,
+                UploadId = uploadIdGuid,
                 BundleId = body.ManifestPreview.BundleId,
                 Filename = sanitizedFilename,
                 ContentType = contentType,
@@ -1328,7 +1336,7 @@ public partial class AssetService : IAssetService
                 ExpiresAt = DateTimeOffset.UtcNow.Add(tokenTtl)
             };
 
-            var bundleUploadStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+            var bundleUploadStore = _stateStoreFactory.GetStore<BundleUploadSession>(StateStoreDefinitions.Asset);
             await bundleUploadStore.SaveAsync(
                 $"bundle-upload:{uploadId}",
                 uploadSession,
@@ -1397,7 +1405,7 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
             var bucket = _configuration.StorageBucket;
 
             // Check if metabundle already exists
@@ -1432,7 +1440,7 @@ public partial class AssetService : IAssetService
                     }
 
                     // Validate realm consistency (all must be same realm or 'shared')
-                    if (sourceBundle.Realm != body.Realm && sourceBundle.Realm != Asset.Realm.Shared)
+                    if (sourceBundle.Realm != body.Realm && sourceBundle.Realm != "shared")
                     {
                         _logger.LogWarning("CreateMetabundle: Realm mismatch - bundle {BundleId} is {BundleRealm}, expected {ExpectedRealm}",
                             sourceBundleId, sourceBundle.Realm, body.Realm);
@@ -1444,7 +1452,7 @@ public partial class AssetService : IAssetService
             }
 
             // Collect and validate standalone assets
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             var standaloneAssets = new List<InternalAssetRecord>();
             if (hasStandaloneAssets)
             {
@@ -1467,8 +1475,8 @@ public partial class AssetService : IAssetService
                     }
 
                     // Validate realm consistency
-                    var assetRealm = asset.Realm ?? Asset.Realm.Omega;
-                    if (assetRealm != body.Realm && assetRealm != Asset.Realm.Shared)
+                    var assetRealm = asset.Realm ?? "shared";
+                    if (assetRealm != body.Realm && assetRealm != "shared")
                     {
                         _logger.LogWarning("CreateMetabundle: Realm mismatch - asset {AssetId} is {AssetRealm}, expected {ExpectedRealm}",
                             assetId, assetRealm, body.Realm);
@@ -1481,7 +1489,7 @@ public partial class AssetService : IAssetService
 
             // Collect all assets from source bundles and standalone assets, checking for conflicts
             var assetsByHash = new Dictionary<string, (StoredBundleAssetEntry Entry, string SourceBundleId)>();
-            var assetsByPlatformId = new Dictionary<string, List<(string BundleId, string ContentHash)>>();
+            var assetsByPlatformId = new Dictionary<string, List<(string? BundleId, string ContentHash)>>();
             var standaloneByHash = new Dictionary<string, InternalAssetRecord>(); // Standalone assets tracked separately
             var conflicts = new List<AssetConflict>();
 
@@ -1498,7 +1506,7 @@ public partial class AssetService : IAssetService
                     // Track by platform ID to detect conflicts
                     if (!assetsByPlatformId.TryGetValue(asset.AssetId, out var versions))
                     {
-                        versions = new List<(string BundleId, string ContentHash)>();
+                        versions = new List<(string? BundleId, string ContentHash)>();
                         assetsByPlatformId[asset.AssetId] = versions;
                     }
                     versions.Add((sourceBundle.BundleId, asset.ContentHash));
@@ -1512,7 +1520,7 @@ public partial class AssetService : IAssetService
             }
 
             // Process standalone assets (track conflicts with bundle assets)
-            const string standaloneMarker = "__standalone__";
+            // Use null for standalone assets (not from any bundle)
             foreach (var standalone in standaloneAssets)
             {
                 var contentHash = standalone.ContentHash ?? standalone.AssetId; // Use asset ID if no hash
@@ -1520,10 +1528,10 @@ public partial class AssetService : IAssetService
                 // Track by platform ID to detect conflicts
                 if (!assetsByPlatformId.TryGetValue(standalone.AssetId, out var versions))
                 {
-                    versions = new List<(string BundleId, string ContentHash)>();
+                    versions = new List<(string? BundleId, string ContentHash)>();
                     assetsByPlatformId[standalone.AssetId] = versions;
                 }
-                versions.Add((standaloneMarker, contentHash));
+                versions.Add((null, contentHash));
 
                 // Track standalone assets by hash for deduplication
                 if (!standaloneByHash.ContainsKey(contentHash) && !assetsByHash.ContainsKey(contentHash))
@@ -1543,7 +1551,8 @@ public partial class AssetService : IAssetService
                         AssetId = platformId,
                         ConflictingBundles = versions.Select(v => new ConflictingBundleEntry
                         {
-                            BundleId = v.BundleId,
+                            // Use marker for standalone assets not from any bundle
+                            BundleId = v.BundleId ?? StandaloneAssetBundleMarker,
                             ContentHash = v.ContentHash
                         }).ToList()
                     });
@@ -1680,7 +1689,7 @@ public partial class AssetService : IAssetService
             // Finalize the bundle
             writer.Finalize(
                 body.MetabundleId,
-                body.MetabundleId,
+                body.MetabundleId.ToString(),
                 body.Version ?? "1.0.0",
                 body.Owner,
                 body.Description,
@@ -1744,7 +1753,10 @@ public partial class AssetService : IAssetService
                 Metadata = body.Metadata != null ? MetadataHelper.ConvertToDictionary(body.Metadata) : null
             };
 
-            await bundleStore.SaveAsync(metabundleKey, metabundleMetadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var metabundleCacheTtlSeconds = _configuration.DefaultBundleCacheTtlHours * 3600;
+            await bundleStore.SaveAsync(metabundleKey, metabundleMetadata,
+                new StateOptions { Ttl = metabundleCacheTtlSeconds },
+                cancellationToken).ConfigureAwait(false);
 
             // Populate reverse indexes
             await IndexBundleAssetsAsync(metabundleMetadata, cancellationToken).ConfigureAwait(false);
@@ -1762,7 +1774,7 @@ public partial class AssetService : IAssetService
                     Timestamp = DateTimeOffset.UtcNow,
                     MetabundleId = body.MetabundleId,
                     Version = body.Version ?? "1.0.0",
-                    Realm = (BeyondImmersion.BannouService.Events.RealmEnum)body.Realm,
+                    Realm = body.Realm,
                     SourceBundleCount = sourceBundles.Count,
                     SourceBundleIds = sourceBundles.Select(sb => sb.BundleId).ToList(),
                     AssetCount = metabundleAssets.Count,
@@ -1823,9 +1835,9 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
-            var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(_configuration.StatestoreName);
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
+            var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
 
             // Build coverage matrix: bundleId → set of requested assets it contains
             var bundleCoverage = new Dictionary<string, HashSet<string>>();
@@ -2033,7 +2045,7 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+            var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
             var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{body.JobId}";
             var job = await jobStore.GetAsync(jobKey, cancellationToken).ConfigureAwait(false);
 
@@ -2063,7 +2075,7 @@ public partial class AssetService : IAssetService
                 CreatedAt = job.CreatedAt,
                 UpdatedAt = job.UpdatedAt,
                 ProcessingTimeMs = job.ProcessingTimeMs,
-                ErrorCode = job.ErrorCode,
+                ErrorCode = job.ErrorCode?.ToString(),  // Convert enum to string for API response
                 ErrorMessage = job.ErrorMessage
             };
 
@@ -2093,7 +2105,7 @@ public partial class AssetService : IAssetService
                         {
                             BundleId = sb.BundleId,
                             Version = sb.Version,
-                            AssetIds = sb.AssetIds,
+                            AssetIds = (ICollection<string>)sb.AssetIds,
                             ContentHash = sb.ContentHash
                         })
                         .ToList();
@@ -2134,7 +2146,7 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+            var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
             var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{body.JobId}";
             var job = await jobStore.GetAsync(jobKey, cancellationToken).ConfigureAwait(false);
 
@@ -2178,17 +2190,19 @@ public partial class AssetService : IAssetService
             job.Status = InternalJobStatus.Cancelled;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
-            job.ErrorCode = MetabundleErrorCode.CANCELLED.ToString();
+            job.ErrorCode = MetabundleErrorCode.CANCELLED;
             job.ErrorMessage = "Job cancelled by user request";
-            await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await jobStore.SaveAsync(jobKey, job,
+                new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+                cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CancelJob: Job {JobId} cancelled (was {PreviousStatus})", body.JobId, previousStatus);
 
             // Emit completion event if there's a session to notify
-            if (!string.IsNullOrEmpty(job.RequesterSessionId))
+            if (job.RequesterSessionId.HasValue)
             {
                 await _eventEmitter.EmitMetabundleCreationCompleteAsync(
-                    job.RequesterSessionId,
+                    job.RequesterSessionId.Value.ToString(),
                     job.JobId,
                     job.MetabundleId,
                     success: false,
@@ -2242,8 +2256,8 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(_configuration.StatestoreName);
-            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
+            var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
 
             // Look up reverse index
             var indexKey = $"{body.Realm.ToString().ToLowerInvariant()}:asset-bundles:{body.AssetId}";
@@ -2338,7 +2352,7 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
             var assets = new List<AssetWithDownloadUrl>();
             var notFound = new List<string>();
             var tokenTtl = TimeSpan.FromSeconds(_configuration.DownloadTokenTtlSeconds);
@@ -2458,10 +2472,10 @@ public partial class AssetService : IAssetService
     private async Task AddToIndexWithOptimisticConcurrencyAsync(
         string indexKey,
         string assetId,
-        CancellationToken cancellationToken,
-        int maxRetries = 5)
+        CancellationToken cancellationToken)
     {
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.StatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Asset);
+        var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
@@ -2498,7 +2512,7 @@ public partial class AssetService : IAssetService
                 "Index update conflict for {IndexKey}, retrying (attempt {Attempt}/{MaxRetries})",
                 indexKey, attempt + 1, maxRetries);
 
-            await Task.Delay(TimeSpan.FromMilliseconds(10 * (attempt + 1)), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
         _logger.LogWarning(
@@ -2511,7 +2525,7 @@ public partial class AssetService : IAssetService
     /// </summary>
     private async Task IndexBundleAssetsAsync(BundleMetadata bundle, CancellationToken cancellationToken)
     {
-        var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(_configuration.StatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
         var realmPrefix = bundle.Realm.ToString().ToLowerInvariant();
 
         foreach (var assetId in bundle.AssetIds)
@@ -2531,9 +2545,10 @@ public partial class AssetService : IAssetService
         IStateStore<AssetBundleIndex> indexStore,
         string indexKey,
         string bundleId,
-        CancellationToken cancellationToken,
-        int maxRetries = 5)
+        CancellationToken cancellationToken)
     {
+        var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
+
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(indexKey, cancellationToken).ConfigureAwait(false);
@@ -2561,7 +2576,7 @@ public partial class AssetService : IAssetService
             }
 
             // ETag mismatch - retry
-            await Task.Delay(TimeSpan.FromMilliseconds(10 * (attempt + 1)), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
         _logger.LogWarning(
@@ -2678,8 +2693,8 @@ public partial class AssetService : IAssetService
                 poolType, scaleResponse.PreviousInstances, scaleResponse.CurrentInstances);
 
             // Wait for the new processor to register (poll state)
-            var maxWait = TimeSpan.FromSeconds(60);
-            var pollInterval = TimeSpan.FromSeconds(2);
+            var maxWait = TimeSpan.FromSeconds(_configuration.ProcessorAvailabilityMaxWaitSeconds);
+            var pollInterval = TimeSpan.FromSeconds(_configuration.ProcessorAvailabilityPollIntervalSeconds);
             var elapsed = TimeSpan.Zero;
 
             while (elapsed < maxWait)
@@ -2722,7 +2737,7 @@ public partial class AssetService : IAssetService
         CancellationToken cancellationToken)
     {
         var poolType = GetProcessorPoolType(metadata.ContentType);
-        var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(_configuration.StatestoreName);
+        var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
 
         try
         {
@@ -2742,8 +2757,8 @@ public partial class AssetService : IAssetService
                     ContentType = metadata.ContentType,
                     PoolType = poolType,
                     RetryCount = 0,
-                    MaxRetries = 5,
-                    RetryDelaySeconds = 30
+                    MaxRetries = _configuration.ProcessingMaxRetries,
+                    RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
                 };
 
                 await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
@@ -2802,8 +2817,8 @@ public partial class AssetService : IAssetService
                 ContentType = metadata.ContentType,
                 PoolType = poolType,
                 RetryCount = 0,
-                MaxRetries = 5,
-                RetryDelaySeconds = 30
+                MaxRetries = _configuration.ProcessingMaxRetries,
+                RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
             };
 
             await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
@@ -2839,11 +2854,11 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
-            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
             if (bundle == null)
             {
                 _logger.LogWarning("UpdateBundle: Bundle {BundleId} not found", body.BundleId);
@@ -2942,8 +2957,15 @@ public partial class AssetService : IAssetService
             var versionIndexKey = $"bundle-version-index:{body.BundleId}";
             await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
-            // Save updated bundle
-            await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+            // Save updated bundle with ETag
+            // GetWithETagAsync returns non-null ETag when bundle is found (null check above);
+            // coalesce satisfies compiler's nullable analysis
+            var newBundleEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+            if (newBundleEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for bundle {BundleId}", body.BundleId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync("asset.bundle.updated", new BeyondImmersion.BannouService.Events.BundleUpdatedEvent
@@ -2956,7 +2978,7 @@ public partial class AssetService : IAssetService
                 Changes = changes,
                 Reason = body.Reason,
                 UpdatedBy = bundle.Owner ?? "system",
-                Realm = MapRealmToEventEnum(bundle.Realm)
+                Realm = bundle.Realm
             });
 
             _logger.LogInformation("UpdateBundle: Updated bundle {BundleId} from version {PreviousVersion} to {NewVersion}",
@@ -3002,11 +3024,11 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
-            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
             if (bundle == null)
             {
                 _logger.LogWarning("DeleteBundle: Bundle {BundleId} not found", body.BundleId);
@@ -3073,7 +3095,13 @@ public partial class AssetService : IAssetService
                 var versionIndexKey = $"bundle-version-index:{body.BundleId}";
                 await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
-                await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+                // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
+                var deleteEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+                if (deleteEtag == null)
+                {
+                    _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during delete", body.BundleId);
+                    return (StatusCodes.Conflict, null);
+                }
 
                 _logger.LogInformation("DeleteBundle: Soft-deleted bundle {BundleId}, retention until {RetentionUntil}",
                     body.BundleId, retentionUntil);
@@ -3089,14 +3117,14 @@ public partial class AssetService : IAssetService
                 RetentionUntil = retentionUntil,
                 Reason = body.Reason,
                 DeletedBy = bundle.Owner ?? "system",
-                Realm = MapRealmToEventEnum(bundle.Realm)
+                Realm = bundle.Realm
             });
 
             return (StatusCodes.OK, new DeleteBundleResponse
             {
                 BundleId = body.BundleId,
                 Status = body.Permanent == true
-                    ? DeleteBundleResponseStatus.Permanently_deleted
+                    ? DeleteBundleResponseStatus.PermanentlyDeleted
                     : DeleteBundleResponseStatus.Deleted,
                 DeletedAt = deletedAt,
                 RetentionUntil = retentionUntil
@@ -3133,11 +3161,11 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
-            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
             if (bundle == null)
             {
                 _logger.LogWarning("RestoreBundle: Bundle {BundleId} not found", body.BundleId);
@@ -3178,7 +3206,13 @@ public partial class AssetService : IAssetService
             var versionIndexKey = $"bundle-version-index:{body.BundleId}";
             await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
-            await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+            // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
+            var restoreEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+            if (restoreEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during restore", body.BundleId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync("asset.bundle.restored", new BeyondImmersion.BannouService.Events.BundleRestoredEvent
@@ -3189,7 +3223,7 @@ public partial class AssetService : IAssetService
                 RestoredFromVersion = restoredFromVersion,
                 Reason = body.Reason,
                 RestoredBy = bundle.Owner ?? "system",
-                Realm = MapRealmToEventEnum(bundle.Realm)
+                Realm = bundle.Realm
             });
 
             _logger.LogInformation("RestoreBundle: Restored bundle {BundleId} from version {RestoredFromVersion}",
@@ -3231,7 +3265,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
 
             // For now, require owner filter for efficient querying
             // A full bundle registry would be needed for arbitrary queries
@@ -3285,9 +3319,9 @@ public partial class AssetService : IAssetService
                 bundles = bundles.Where(b => b.LifecycleStatus == targetStatus);
             }
 
-            if (body.Realm.HasValue)
+            if (!string.IsNullOrWhiteSpace(body.Realm))
             {
-                bundles = bundles.Where(b => b.Realm == body.Realm.Value);
+                bundles = bundles.Where(b => b.Realm == body.Realm);
             }
 
             if (body.BundleType.HasValue)
@@ -3334,7 +3368,7 @@ public partial class AssetService : IAssetService
             var totalCount = bundleList.Count;
 
             // Apply sorting
-            var sortField = body.SortField ?? QueryBundlesRequestSortField.Created_at;
+            var sortField = body.SortField ?? QueryBundlesRequestSortField.CreatedAt;
             var sortDesc = body.SortOrder != QueryBundlesRequestSortOrder.Asc;
 
             bundleList = sortField switch
@@ -3342,7 +3376,7 @@ public partial class AssetService : IAssetService
                 QueryBundlesRequestSortField.Name => sortDesc
                     ? bundleList.OrderByDescending(b => b.Name).ToList()
                     : bundleList.OrderBy(b => b.Name).ToList(),
-                QueryBundlesRequestSortField.Updated_at => sortDesc
+                QueryBundlesRequestSortField.UpdatedAt => sortDesc
                     ? bundleList.OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt).ToList()
                     : bundleList.OrderBy(b => b.UpdatedAt ?? b.CreatedAt).ToList(),
                 QueryBundlesRequestSortField.Size => sortDesc
@@ -3405,8 +3439,8 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
             var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
@@ -3484,7 +3518,7 @@ public partial class AssetService : IAssetService
     /// </summary>
     private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, CancellationToken cancellationToken)
     {
-        var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(_configuration.StatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
 
         foreach (var assetId in assetIds)
         {
@@ -3505,21 +3539,6 @@ public partial class AssetService : IAssetService
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// Helper to map Realm enum to event RealmEnum.
-    /// </summary>
-    private static BeyondImmersion.BannouService.Events.RealmEnum? MapRealmToEventEnum(Realm realm)
-    {
-        return realm switch
-        {
-            Realm.Omega => BeyondImmersion.BannouService.Events.RealmEnum.Omega,
-            Realm.Arcadia => BeyondImmersion.BannouService.Events.RealmEnum.Arcadia,
-            Realm.Fantasia => BeyondImmersion.BannouService.Events.RealmEnum.Fantasia,
-            Realm.Shared => BeyondImmersion.BannouService.Events.RealmEnum.Shared,
-            _ => null
-        };
     }
 
     #endregion
@@ -3588,15 +3607,17 @@ public partial class AssetService : IAssetService
             MetabundleId = request.MetabundleId,
             Status = InternalJobStatus.Queued,
             Request = request,
-            RequesterSessionId = requesterSessionId,
+            RequesterSessionId = !string.IsNullOrEmpty(requesterSessionId) ? Guid.Parse(requesterSessionId) : null,
             CreatedAt = now,
             UpdatedAt = now
         };
 
-        // Save job to state store
-        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+        // Save job to state store with TTL for automatic cleanup
+        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{jobId}";
-        await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await jobStore.SaveAsync(jobKey, job,
+            new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
             "CreateMetabundle: Created async job {JobId} for metabundle {MetabundleId} with {AssetCount} assets",
@@ -3647,10 +3668,10 @@ public partial class AssetService : IAssetService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Asset service permissions...");
-        await AssetPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await AssetPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion
@@ -3662,7 +3683,7 @@ public partial class AssetService : IAssetService
 /// </summary>
 public sealed class AssetProcessingJobEvent
 {
-    public string JobId { get; set; } = Guid.NewGuid().ToString();
+    public Guid JobId { get; set; } = Guid.NewGuid();
     public string AssetId { get; set; } = string.Empty;
     public string StorageKey { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
@@ -3673,7 +3694,7 @@ public sealed class AssetProcessingJobEvent
     /// Contains either an accountId or service name.
     /// </summary>
     public string Owner { get; set; } = string.Empty;
-    public string? RealmId { get; set; }
+    public Guid? RealmId { get; set; }
     public Dictionary<string, string>? Tags { get; set; }
     public Dictionary<string, object>? ProcessingOptions { get; set; }
     public string PoolType { get; set; } = string.Empty;
@@ -3702,9 +3723,9 @@ public sealed class AssetProcessingRetryEvent
 /// </summary>
 internal sealed class BundleDownloadToken
 {
-    public string BundleId { get; set; } = string.Empty;
+    public required string BundleId { get; set; }
     public BundleFormat Format { get; set; }
-    public string Path { get; set; } = string.Empty;
+    public required string Path { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
 }
@@ -3732,9 +3753,9 @@ internal sealed class MetabundleJob
     public Guid JobId { get; set; }
 
     /// <summary>
-    /// Target metabundle identifier.
+    /// Target metabundle identifier (human-readable, e.g., "game-assets-v1").
     /// </summary>
-    public string MetabundleId { get; set; } = string.Empty;
+    public required string MetabundleId { get; set; }
 
     /// <summary>
     /// Current job status.
@@ -3749,7 +3770,7 @@ internal sealed class MetabundleJob
     /// <summary>
     /// Session ID of the requester for completion notification.
     /// </summary>
-    public string? RequesterSessionId { get; set; }
+    public Guid? RequesterSessionId { get; set; }
 
     /// <summary>
     /// Serialized request for background processing.
@@ -3778,9 +3799,9 @@ internal sealed class MetabundleJob
     public long? ProcessingTimeMs { get; set; }
 
     /// <summary>
-    /// Error code if job failed.
+    /// Error code if job failed. Uses MetabundleErrorCode enum per IMPLEMENTATION TENETS T25.
     /// </summary>
-    public string? ErrorCode { get; set; }
+    public MetabundleErrorCode? ErrorCode { get; set; }
 
     /// <summary>
     /// Error message if job failed.
@@ -3822,10 +3843,10 @@ internal sealed class MetabundleJobResult
 /// </summary>
 internal sealed class SourceBundleReferenceInternal
 {
-    public string BundleId { get; set; } = string.Empty;
-    public string Version { get; set; } = string.Empty;
-    public List<string> AssetIds { get; set; } = new();
-    public string ContentHash { get; set; } = string.Empty;
+    public required string BundleId { get; set; }
+    public required string Version { get; set; }
+    public required List<string> AssetIds { get; set; }
+    public required string ContentHash { get; set; }
 }
 
 /// <summary>
@@ -3840,9 +3861,9 @@ internal sealed class MetabundleJobQueuedEvent
     public Guid JobId { get; set; }
 
     /// <summary>
-    /// The metabundle ID being created.
+    /// The metabundle ID being created (human-readable, e.g., "game-assets-v1").
     /// </summary>
-    public string MetabundleId { get; set; } = string.Empty;
+    public required string MetabundleId { get; set; }
 
     /// <summary>
     /// Number of source bundles to merge.

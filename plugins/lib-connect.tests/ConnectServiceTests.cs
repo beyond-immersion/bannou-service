@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net.Http.Headers;
@@ -32,6 +33,7 @@ public class ConnectServiceTests
     private readonly Mock<IAuthClient> _mockAuthClient;
     private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IServiceAppMappingResolver> _mockAppMappingResolver;
+    private readonly Mock<IServiceScopeFactory> _mockServiceScopeFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
@@ -49,12 +51,12 @@ public class ConnectServiceTests
             .Returns(Mock.Of<ILogger>());
         _configuration = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
         _mockAuthClient = new Mock<IAuthClient>();
         _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockAppMappingResolver = new Mock<IServiceAppMappingResolver>();
+        _mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
@@ -88,11 +90,11 @@ public class ConnectServiceTests
     public void Constructor_WithEmptyServerSalt_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var configWithoutSalt = new ConnectServiceConfiguration { BinaryProtocolVersion = "2.0", ServerSalt = "" };
+        var configWithoutSalt = new ConnectServiceConfiguration { ServerSalt = "" };
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object));
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _mockServiceScopeFactory.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object));
     }
 
     #endregion
@@ -437,9 +439,10 @@ public class ConnectServiceTests
     {
         // Arrange
         var service = CreateConnectService();
+        var sessionId = Guid.NewGuid();
         var eventData = new AuthEvent
         {
-            SessionId = "test-session-456",
+            SessionId = sessionId,
             EventType = AuthEventType.Login,
             UserId = "user-123",
             Timestamp = DateTimeOffset.UtcNow
@@ -454,7 +457,7 @@ public class ConnectServiceTests
         var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal("test-session-456", resultDict["sessionId"].ToString());
+        Assert.Equal(sessionId.ToString(), resultDict["sessionId"].ToString());
     }
 
     [Fact]
@@ -565,6 +568,7 @@ public class ConnectServiceTests
             _mockMessageSubscriber.Object,
             _mockHttpClientFactory.Object,
             _mockAppMappingResolver.Object,
+            _mockServiceScopeFactory.Object,
             _configuration,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
@@ -588,12 +592,11 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
 
         // Assert
-        Assert.Equal("external", config.ConnectionMode);
+        Assert.Equal(ConnectionMode.External, config.ConnectionMode);
     }
 
     /// <summary>
@@ -605,12 +608,11 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
 
         // Assert
-        Assert.Equal("service-token", config.InternalAuthMode);
+        Assert.Equal(InternalAuthMode.ServiceToken, config.InternalAuthMode);
     }
 
     /// <summary>
@@ -622,7 +624,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
 
@@ -639,10 +640,9 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
-            ConnectionMode = "internal",
-            InternalAuthMode = "service-token",
+            ConnectionMode = ConnectionMode.Internal,
+            InternalAuthMode = InternalAuthMode.ServiceToken,
             InternalServiceToken = null
         };
 
@@ -655,6 +655,7 @@ public class ConnectServiceTests
                 _mockMessageSubscriber.Object,
                 _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
+                _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
@@ -673,10 +674,9 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
-            ConnectionMode = "internal",
-            InternalAuthMode = "service-token",
+            ConnectionMode = ConnectionMode.Internal,
+            InternalAuthMode = InternalAuthMode.ServiceToken,
             InternalServiceToken = "test-secret-token"
         };
 
@@ -689,6 +689,7 @@ public class ConnectServiceTests
                 _mockMessageSubscriber.Object,
                 _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
+                _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
@@ -707,10 +708,9 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
-            ConnectionMode = "internal",
-            InternalAuthMode = "network-trust",
+            ConnectionMode = ConnectionMode.Internal,
+            InternalAuthMode = InternalAuthMode.NetworkTrust,
             InternalServiceToken = null
         };
 
@@ -723,6 +723,7 @@ public class ConnectServiceTests
                 _mockMessageSubscriber.Object,
                 _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
+                _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
@@ -741,9 +742,8 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
-            ConnectionMode = "external",
+            ConnectionMode = ConnectionMode.External,
             InternalServiceToken = null
         };
 
@@ -756,6 +756,7 @@ public class ConnectServiceTests
                 _mockMessageSubscriber.Object,
                 _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
+                _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
@@ -774,9 +775,8 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
-            ConnectionMode = "relayed",
+            ConnectionMode = ConnectionMode.Relayed,
             InternalServiceToken = null
         };
 
@@ -789,6 +789,7 @@ public class ConnectServiceTests
                 _mockMessageSubscriber.Object,
                 _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
+                _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,

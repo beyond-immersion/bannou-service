@@ -31,8 +31,6 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private bool _disposed;
 
-    private const int MAX_RETRY_ATTEMPTS = 10;
-    private const int INITIAL_RETRY_DELAY_MS = 1000;
     private const int MAX_POOL_SIZE = 10;
 
     /// <summary>
@@ -75,22 +73,23 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
                 return true;
             }
 
-            var retryDelay = INITIAL_RETRY_DELAY_MS;
+            var maxRetryAttempts = _configuration.ConnectionRetryCount;
+            var retryDelay = _configuration.ConnectionRetryDelayMs;
 
-            for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++)
+            for (int attempt = 1; attempt <= maxRetryAttempts; attempt++)
             {
                 try
                 {
                     _logger.LogInformation(
                         "Attempting RabbitMQ connection (attempt {Attempt}/{MaxAttempts})",
-                        attempt, MAX_RETRY_ATTEMPTS);
+                        attempt, maxRetryAttempts);
 
                     var connectionString = BuildConnectionString();
                     var factory = new ConnectionFactory
                     {
                         Uri = new Uri(connectionString),
                         AutomaticRecoveryEnabled = true,
-                        NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
+                        NetworkRecoveryInterval = TimeSpan.FromSeconds(_configuration.RabbitMQNetworkRecoveryIntervalSeconds)
                     };
 
                     _connection = await factory.CreateConnectionAsync(cancellationToken);
@@ -107,9 +106,9 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
                     _logger.LogWarning(
                         ex,
                         "RabbitMQ connection failed (attempt {Attempt}/{MaxAttempts}). Retrying in {DelayMs}ms...",
-                        attempt, MAX_RETRY_ATTEMPTS, retryDelay);
+                        attempt, maxRetryAttempts, retryDelay);
 
-                    if (attempt < MAX_RETRY_ATTEMPTS)
+                    if (attempt < maxRetryAttempts)
                     {
                         await Task.Delay(retryDelay, cancellationToken);
                         retryDelay = Math.Min(retryDelay * 2, 60000); // Exponential backoff, max 60s
@@ -117,7 +116,7 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
                 }
             }
 
-            _logger.LogError("Failed to connect to RabbitMQ after {MaxAttempts} attempts", MAX_RETRY_ATTEMPTS);
+            _logger.LogError("Failed to connect to RabbitMQ after {MaxAttempts} attempts", maxRetryAttempts);
             return false;
         }
         finally

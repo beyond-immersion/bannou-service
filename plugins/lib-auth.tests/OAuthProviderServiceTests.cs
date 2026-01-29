@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
@@ -28,12 +29,14 @@ public class OAuthProviderServiceTests : IDisposable
     private readonly HttpClient _httpClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IAccountClient> _mockAccountClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<HttpMessageHandler> _mockHttpHandler;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OAuthProviderService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly OAuthProviderService _service;
     private readonly List<HttpClient> _createdHttpClients = new();
     private readonly List<HttpResponseMessage> _createdResponses = new();
@@ -45,6 +48,7 @@ public class OAuthProviderServiceTests : IDisposable
 
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockAccountClient = new Mock<IAccountClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockHttpHandler = new Mock<HttpMessageHandler>();
@@ -71,10 +75,16 @@ public class OAuthProviderServiceTests : IDisposable
             SteamApiKey = "test-steam-api-key",
             SteamAppId = "123456"
         };
+        _appConfiguration = new AppConfiguration
+        {
+            ServiceDomain = "localhost"
+        };
 
         // Setup state store factory
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
 
         // Setup default HttpClient
         _httpClient = new HttpClient();
@@ -85,6 +95,7 @@ public class OAuthProviderServiceTests : IDisposable
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
     }
@@ -166,6 +177,7 @@ public class OAuthProviderServiceTests : IDisposable
             _mockAccountClient.Object,
             mockFactory.Object,
             configOverride ?? _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
     }
@@ -290,6 +302,7 @@ public class OAuthProviderServiceTests : IDisposable
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
             configWithMock,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
 
@@ -499,8 +512,9 @@ public class OAuthProviderServiceTests : IDisposable
         var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(existingAccountId, result.AccountId);
+        Assert.NotNull(result.Account);
+        Assert.False(result.IsNewAccount);
+        Assert.Equal(existingAccountId, result.Account.AccountId);
     }
 
     [Fact]
@@ -544,10 +558,201 @@ public class OAuthProviderServiceTests : IDisposable
         var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
+        Assert.NotNull(result.Account);
+        Assert.True(result.IsNewAccount);
         _mockAccountClient.Verify(c => c.CreateAccountAsync(
             It.Is<CreateAccountRequest>(r => r.Email == "new@example.com"),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task FindOrCreateOAuthAccountAsync_WithExistingLink_ShouldSyncAuthMethod()
+    {
+        // Arrange
+        var userInfo = new OAuthUserInfo
+        {
+            ProviderId = "sync-provider-id",
+            Email = "sync@example.com",
+            DisplayName = "Sync User"
+        };
+
+        var existingAccountId = Guid.NewGuid();
+        var existingAccount = new AccountResponse
+        {
+            AccountId = existingAccountId,
+            Email = "sync@example.com",
+            DisplayName = "Sync User"
+        };
+
+        // OAuth link exists in state store
+        var oauthLinkKey = "oauth-link:discord:sync-provider-id";
+        _mockStringStore.Setup(s => s.GetAsync(oauthLinkKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAccountId.ToString());
+
+        // Account exists
+        _mockAccountClient.Setup(c => c.GetAccountAsync(
+            It.Is<GetAccountRequest>(r => r.AccountId == existingAccountId),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAccount);
+
+        // AddAuthMethod succeeds
+        _mockAccountClient.Setup(c => c.AddAuthMethodAsync(
+            It.IsAny<AddAuthMethodRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AuthMethodResponse());
+
+        // Act
+        await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, CancellationToken.None);
+
+        // Assert - verify AddAuthMethodAsync was called with correct parameters
+        _mockAccountClient.Verify(c => c.AddAuthMethodAsync(
+            It.Is<AddAuthMethodRequest>(r =>
+                r.AccountId == existingAccountId &&
+                r.Provider == OAuthProvider.Discord &&
+                r.ExternalId == "sync-provider-id"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task FindOrCreateOAuthAccountAsync_WithNewAccount_ShouldSyncAuthMethod()
+    {
+        // Arrange
+        var userInfo = new OAuthUserInfo
+        {
+            ProviderId = "new-sync-provider-id",
+            Email = "newsync@example.com",
+            DisplayName = "New Sync User"
+        };
+
+        var newAccountId = Guid.NewGuid();
+        var newAccount = new AccountResponse
+        {
+            AccountId = newAccountId,
+            Email = "newsync@example.com",
+            DisplayName = "New Sync User"
+        };
+
+        // No existing OAuth link
+        var oauthLinkKey = "oauth-link:google:new-sync-provider-id";
+        _mockStringStore.Setup(s => s.GetAsync(oauthLinkKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Create account succeeds
+        _mockAccountClient.Setup(c => c.CreateAccountAsync(
+            It.IsAny<CreateAccountRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(newAccount);
+
+        // State store saves the link
+        _mockStringStore.Setup(s => s.SaveAsync(
+            oauthLinkKey,
+            It.IsAny<string>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // AddAuthMethod succeeds
+        _mockAccountClient.Setup(c => c.AddAuthMethodAsync(
+            It.IsAny<AddAuthMethodRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AuthMethodResponse());
+
+        // Act
+        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Google, userInfo, CancellationToken.None);
+
+        // Assert - verify AddAuthMethodAsync was called with correct parameters
+        Assert.NotNull(result.Account);
+        _mockAccountClient.Verify(c => c.AddAuthMethodAsync(
+            It.Is<AddAuthMethodRequest>(r =>
+                r.AccountId == newAccountId &&
+                r.Provider == OAuthProvider.Google &&
+                r.ExternalId == "new-sync-provider-id"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task FindOrCreateOAuthAccountAsync_AuthMethodSync409_ShouldStillSucceed()
+    {
+        // Arrange - auth method already exists (idempotent case on repeat login)
+        var userInfo = new OAuthUserInfo
+        {
+            ProviderId = "repeat-login-id",
+            Email = "repeat@example.com",
+            DisplayName = "Repeat User"
+        };
+
+        var existingAccountId = Guid.NewGuid();
+        var existingAccount = new AccountResponse
+        {
+            AccountId = existingAccountId,
+            Email = "repeat@example.com",
+            DisplayName = "Repeat User"
+        };
+
+        var oauthLinkKey = "oauth-link:twitch:repeat-login-id";
+        _mockStringStore.Setup(s => s.GetAsync(oauthLinkKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAccountId.ToString());
+
+        _mockAccountClient.Setup(c => c.GetAccountAsync(
+            It.Is<GetAccountRequest>(r => r.AccountId == existingAccountId),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAccount);
+
+        // AddAuthMethod returns 409 (already linked)
+        var headers = new Dictionary<string, IEnumerable<string>>();
+        _mockAccountClient.Setup(c => c.AddAuthMethodAsync(
+            It.IsAny<AddAuthMethodRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Conflict", 409, string.Empty, headers, null));
+
+        // Act
+        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Twitch, userInfo, CancellationToken.None);
+
+        // Assert - method should succeed despite 409 from sync
+        Assert.NotNull(result.Account);
+        Assert.Equal(existingAccountId, result.Account.AccountId);
+    }
+
+    [Fact]
+    public async Task FindOrCreateOAuthAccountAsync_AuthMethodSyncFailure_ShouldStillSucceed()
+    {
+        // Arrange - Account service unavailable for sync (best-effort)
+        var userInfo = new OAuthUserInfo
+        {
+            ProviderId = "resilient-id",
+            Email = "resilient@example.com",
+            DisplayName = "Resilient User"
+        };
+
+        var existingAccountId = Guid.NewGuid();
+        var existingAccount = new AccountResponse
+        {
+            AccountId = existingAccountId,
+            Email = "resilient@example.com",
+            DisplayName = "Resilient User"
+        };
+
+        var oauthLinkKey = "oauth-link:steam:resilient-id";
+        _mockStringStore.Setup(s => s.GetAsync(oauthLinkKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAccountId.ToString());
+
+        _mockAccountClient.Setup(c => c.GetAccountAsync(
+            It.Is<GetAccountRequest>(r => r.AccountId == existingAccountId),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAccount);
+
+        // AddAuthMethod throws a general exception (service unavailable)
+        _mockAccountClient.Setup(c => c.AddAuthMethodAsync(
+            It.IsAny<AddAuthMethodRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Service unavailable"));
+
+        // Act
+        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, CancellationToken.None);
+
+        // Assert - method should succeed despite sync failure (best-effort)
+        Assert.NotNull(result.Account);
+        Assert.Equal(existingAccountId, result.Account.AccountId);
     }
 
     #endregion
@@ -664,7 +869,7 @@ public class OAuthProviderServiceTests : IDisposable
             It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(),
             It.IsAny<string?>(),
-            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
     }

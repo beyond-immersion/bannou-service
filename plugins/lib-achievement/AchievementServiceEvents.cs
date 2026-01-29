@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
@@ -75,7 +76,8 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            // Cast Analytics.EntityType to Achievement.EntityType (same enum values, different namespaces)
+            var entityType = (EntityType)evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -95,8 +97,7 @@ public partial class AchievementService
                 }
 
                 var metadata = MetadataHelper.ConvertToReadOnlyDictionary(definition.Metadata);
-                if (!MetadataHelper.TryGetString(metadata, "scoreType", out var scoreType) &&
-                    !MetadataHelper.TryGetString(metadata, "eventType", out scoreType))
+                if (!MetadataHelper.TryGetString(metadata, "scoreType", out var scoreType))
                 {
                     continue;
                 }
@@ -115,7 +116,7 @@ public partial class AchievementService
                     Increment = increment
                 }, CancellationToken.None);
 
-                if (status != StatusCodes.OK)
+                if (status == StatusCodes.InternalServerError)
                 {
                     var message = "Failed to update achievement progress from analytics score update";
                     _logger.LogError(
@@ -134,6 +135,13 @@ public partial class AchievementService
                         details: $"achievementId:{definition.AchievementId};status:{status}",
                         stack: null,
                         cancellationToken: CancellationToken.None);
+                }
+                else if (status != StatusCodes.OK)
+                {
+                    _logger.LogDebug(
+                        "Achievement progress update returned expected status {Status} for {AchievementId}",
+                        status,
+                        definition.AchievementId);
                 }
             }
         }
@@ -170,7 +178,8 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            // Cast Analytics.EntityType to Achievement.EntityType (same enum values, different namespaces)
+            var entityType = (EntityType)evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -220,7 +229,7 @@ public partial class AchievementService
                     EntityType = entityType
                 }, CancellationToken.None);
 
-                if (status != StatusCodes.OK)
+                if (status == StatusCodes.InternalServerError)
                 {
                     var message = "Failed to unlock achievement from analytics milestone event";
                     _logger.LogError(
@@ -239,6 +248,13 @@ public partial class AchievementService
                         details: $"achievementId:{definition.AchievementId};status:{status}",
                         stack: null,
                         cancellationToken: CancellationToken.None);
+                }
+                else if (status != StatusCodes.OK)
+                {
+                    _logger.LogDebug(
+                        "Achievement unlock returned expected status {Status} for {AchievementId}",
+                        status,
+                        definition.AchievementId);
                 }
             }
         }
@@ -275,7 +291,8 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            // Cast Leaderboard.EntityType to Achievement.EntityType (same enum values, different namespaces)
+            var entityType = (EntityType)evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -339,7 +356,7 @@ public partial class AchievementService
                     EntityType = entityType
                 }, CancellationToken.None);
 
-                if (status != StatusCodes.OK)
+                if (status == StatusCodes.InternalServerError)
                 {
                     var message = "Failed to unlock achievement from leaderboard rank change";
                     _logger.LogError(
@@ -358,6 +375,13 @@ public partial class AchievementService
                         details: $"achievementId:{definition.AchievementId};status:{status}",
                         stack: null,
                         cancellationToken: CancellationToken.None);
+                }
+                else if (status != StatusCodes.OK)
+                {
+                    _logger.LogDebug(
+                        "Achievement unlock returned expected status {Status} for {AchievementId}",
+                        status,
+                        definition.AchievementId);
                 }
             }
         }
@@ -385,7 +409,7 @@ public partial class AchievementService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
-        var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+        var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
         var indexKey = GetDefinitionIndexKey(gameServiceId);
         var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 
@@ -408,38 +432,6 @@ public partial class AchievementService
         return definitions;
     }
 
-    private static EntityType MapToEntityType(AnalyticsScoreUpdatedEventEntityType entityType)
-        => entityType switch
-        {
-            AnalyticsScoreUpdatedEventEntityType.Account => EntityType.Account,
-            AnalyticsScoreUpdatedEventEntityType.Character => EntityType.Character,
-            AnalyticsScoreUpdatedEventEntityType.Guild => EntityType.Guild,
-            AnalyticsScoreUpdatedEventEntityType.Actor => EntityType.Actor,
-            AnalyticsScoreUpdatedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
-
-    private static EntityType MapToEntityType(AnalyticsMilestoneReachedEventEntityType entityType)
-        => entityType switch
-        {
-            AnalyticsMilestoneReachedEventEntityType.Account => EntityType.Account,
-            AnalyticsMilestoneReachedEventEntityType.Character => EntityType.Character,
-            AnalyticsMilestoneReachedEventEntityType.Guild => EntityType.Guild,
-            AnalyticsMilestoneReachedEventEntityType.Actor => EntityType.Actor,
-            AnalyticsMilestoneReachedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
-
-    private static EntityType MapToEntityType(LeaderboardRankChangedEventEntityType entityType)
-        => entityType switch
-        {
-            LeaderboardRankChangedEventEntityType.Account => EntityType.Account,
-            LeaderboardRankChangedEventEntityType.Character => EntityType.Character,
-            LeaderboardRankChangedEventEntityType.Guild => EntityType.Guild,
-            LeaderboardRankChangedEventEntityType.Actor => EntityType.Actor,
-            LeaderboardRankChangedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
 
     private static bool TryConvertDeltaToIncrement(double delta, out int increment)
     {

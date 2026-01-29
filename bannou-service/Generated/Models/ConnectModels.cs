@@ -99,7 +99,7 @@ public partial class GetClientCapabilitiesRequest
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Optional filter by service name prefix
@@ -128,7 +128,7 @@ public partial class ClientCapabilitiesResponse
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Available API capabilities for this client
@@ -312,7 +312,7 @@ public partial class InternalProxyRequest
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Target service name (e.g., "account", "auth", "behavior")
@@ -606,7 +606,7 @@ public partial class AuthEvent
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Type of authentication event (Login, Logout, TokenRefresh, PermissionChange)
@@ -1009,16 +1009,16 @@ public enum PermissionRecompileEventReason
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
-    Service_registered = 0,
+    ServiceRegistered = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"permission_rules_changed")]
-    Permission_rules_changed = 1,
+    PermissionRulesChanged = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"role_definitions_updated")]
-    Role_definitions_updated = 2,
+    RoleDefinitionsUpdated = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"manual_trigger")]
-    Manual_trigger = 3,
+    ManualTrigger = 3,
 
 }
 #pragma warning restore CS1591

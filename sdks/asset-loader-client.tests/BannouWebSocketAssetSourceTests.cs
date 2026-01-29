@@ -223,7 +223,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         // Assert
         mockClient.Verify(c => c.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
-            "POST",
             "/bundles/resolve",
             It.Is<ResolveBundlesRequest>(r =>
                 r.AssetIds.Count == 2 &&
@@ -398,7 +397,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         mockClient
             .Setup(c => c.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
                 It.IsAny<string>(),
-                It.IsAny<string>(),
                 It.IsAny<ResolveBundlesRequest>(),
                 It.IsAny<ushort>(),
                 It.IsAny<TimeSpan?>(),
@@ -434,7 +432,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         var expiresAt = DateTimeOffset.UtcNow.AddHours(1);
         mockClient
             .Setup(c => c.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
-                "POST",
                 "/bundles/get",
                 It.Is<GetBundleRequest>(r => r.BundleId == "bundle-123"),
                 It.IsAny<ushort>(),
@@ -473,7 +470,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         mockClient
             .Setup(c => c.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
-                "POST",
                 "/bundles/get",
                 It.IsAny<GetBundleRequest>(),
                 It.IsAny<ushort>(),
@@ -510,7 +506,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         var expiresAt = DateTimeOffset.UtcNow.AddHours(1);
         mockClient
             .Setup(c => c.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
-                "POST",
                 "/assets/get",
                 It.Is<GetAssetRequest>(r => r.AssetId == "asset-456" && r.Version == "latest"),
                 It.IsAny<ushort>(),
@@ -532,7 +527,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
                     Filename = "asset-456.bin",
                     ContentType = "model/gltf-binary",
                     AssetType = AssetType.Model,
-                    Realm = Realm.Shared,
+                    Realm = "shared",
                     ProcessingStatus = ProcessingStatus.Complete,
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow
@@ -564,7 +559,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         mockClient
             .Setup(c => c.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
-                "POST",
                 "/assets/get",
                 It.IsAny<GetAssetRequest>(),
                 It.IsAny<ushort>(),
@@ -596,7 +590,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         mockClient
             .Setup(c => c.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
-                "POST",
                 "/assets/get",
                 It.IsAny<GetAssetRequest>(),
                 It.IsAny<ushort>(),
@@ -671,7 +664,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         mockClient
             .Setup(c => c.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
-                "POST",
                 "/bundles/resolve",
                 It.IsAny<ResolveBundlesRequest>(),
                 It.IsAny<ushort>(),

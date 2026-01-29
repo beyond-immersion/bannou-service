@@ -205,7 +205,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 BehaviorRef = command.BehaviorRef,
                 Configuration = command.Configuration,
                 Category = _configuration.PoolNodeType,
-                TickIntervalMs = command.TickIntervalMs > 0 ? command.TickIntervalMs : 100
+                TickIntervalMs = command.TickIntervalMs > 0 ? command.TickIntervalMs : _configuration.DefaultTickIntervalMs
             };
 
             // Create and start the actor runner
@@ -224,7 +224,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             await runner.StartAsync(ct);
 
             // Publish status changed event
-            await PublishStatusChangedAsync(command.ActorId, "pending", "running", ct);
+            await PublishStatusChangedAsync(command.ActorId, ActorStatus.Pending, ActorStatus.Running, ct);
 
             _logger.LogInformation("Spawned actor {ActorId} successfully", command.ActorId);
             return true;
@@ -243,7 +243,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 cancellationToken: ct);
 
             // Publish error status
-            await PublishStatusChangedAsync(command.ActorId, "pending", "error", ct);
+            await PublishStatusChangedAsync(command.ActorId, ActorStatus.Pending, ActorStatus.Error, ct);
             return false;
         }
     }
@@ -267,7 +267,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 return false;
             }
 
-            var previousStatus = runner.Status.ToString().ToLowerInvariant();
+            var previousStatus = runner.Status;
 
             await runner.StopAsync(command.Graceful, ct);
 
@@ -277,7 +277,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             }
 
             // Publish status changed event
-            await PublishStatusChangedAsync(command.ActorId, previousStatus, "stopped", ct);
+            await PublishStatusChangedAsync(command.ActorId, previousStatus, ActorStatus.Stopped, ct);
 
             // Publish completed event
             var completedEvent = new ActorCompletedEvent
@@ -340,7 +340,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             {
                 PerceptionType = command.MessageType,
                 SourceId = "message-bus",
-                SourceType = "message",
+                SourceType = PerceptionSourceType.Message,
                 Data = command.Payload,
                 Urgency = command.Urgency ?? 0.5f
             };
@@ -377,7 +377,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         }
     }
 
-    private async Task PublishStatusChangedAsync(string actorId, string previousStatus, string newStatus, CancellationToken ct)
+    private async Task PublishStatusChangedAsync(string actorId, ActorStatus previousStatus, ActorStatus newStatus, CancellationToken ct)
     {
         var statusEvent = new ActorStatusChangedEvent
         {

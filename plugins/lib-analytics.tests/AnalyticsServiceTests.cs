@@ -1,9 +1,11 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Analytics;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -29,6 +31,8 @@ public class AnalyticsServiceTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IGameServiceClient> _mockGameServiceClient;
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
+    private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<AnalyticsService>> _mockLogger;
     private readonly AnalyticsServiceConfiguration _configuration;
@@ -40,22 +44,22 @@ public class AnalyticsServiceTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockGameServiceClient = new Mock<IGameServiceClient>();
         _mockGameSessionClient = new Mock<IGameSessionClient>();
+        _mockRealmClient = new Mock<IRealmClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<AnalyticsService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         _configuration = new AnalyticsServiceConfiguration
         {
-            SummaryStoreName = "test-summary",
-            RatingStoreName = "test-rating",
-            HistoryStoreName = "test-history",
             Glicko2DefaultRating = 1500.0,
             Glicko2DefaultDeviation = 350.0,
             Glicko2DefaultVolatility = 0.06,
             Glicko2SystemConstant = 0.5,
             EventBufferSize = 100,
             EventBufferFlushIntervalSeconds = 5,
-            SummaryCacheTtlSeconds = 300
+            ResolutionCacheTtlSeconds = 300,
+            SessionMappingTtlSeconds = 3600
         };
 
         // Minimal mock setup - just enough to construct the service
@@ -89,7 +93,7 @@ public class AnalyticsServiceTests
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
     }
@@ -101,6 +105,8 @@ public class AnalyticsServiceTests
             _mockStateStoreFactory.Object,
             _mockGameServiceClient.Object,
             _mockGameSessionClient.Object,
+            _mockRealmClient.Object,
+            _mockCharacterClient.Object,
             _mockLockProvider.Object,
             _mockLogger.Object,
             _configuration,
@@ -125,11 +131,10 @@ public class AnalyticsServiceTests
         Assert.Equal(0.06, config.Glicko2DefaultVolatility);
         Assert.Equal(0.5, config.Glicko2SystemConstant);
         Assert.Equal(1000, config.EventBufferSize);
-        Assert.Equal("analytics-summary", config.SummaryStoreName);
-        Assert.Equal("analytics-rating", config.RatingStoreName);
-        Assert.Equal("analytics-history", config.HistoryStoreName);
         Assert.Equal(5, config.EventBufferFlushIntervalSeconds);
-        Assert.Equal(300, config.SummaryCacheTtlSeconds);
+        Assert.Equal(300, config.ResolutionCacheTtlSeconds);
+        Assert.Equal(3600, config.SessionMappingTtlSeconds);
+        Assert.Equal(30, config.RatingUpdateLockExpirySeconds);
     }
 
     [Fact]
@@ -141,10 +146,7 @@ public class AnalyticsServiceTests
             Glicko2DefaultDeviation = 400.0,
             Glicko2DefaultVolatility = 0.08,
             Glicko2SystemConstant = 0.6,
-            EventBufferSize = 500,
-            SummaryStoreName = "custom-summary",
-            RatingStoreName = "custom-rating",
-            HistoryStoreName = "custom-history"
+            EventBufferSize = 500
         };
 
         Assert.Equal(1200.0, config.Glicko2DefaultRating);
@@ -152,9 +154,6 @@ public class AnalyticsServiceTests
         Assert.Equal(0.08, config.Glicko2DefaultVolatility);
         Assert.Equal(0.6, config.Glicko2SystemConstant);
         Assert.Equal(500, config.EventBufferSize);
-        Assert.Equal("custom-summary", config.SummaryStoreName);
-        Assert.Equal("custom-rating", config.RatingStoreName);
-        Assert.Equal("custom-history", config.HistoryStoreName);
     }
 
     #endregion

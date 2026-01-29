@@ -47,18 +47,14 @@ public class SceneServiceTests
 
         // Assert - verify all configuration defaults
         Assert.Equal("application/x-bannou-scene+yaml", config.AssetContentType);
-        Assert.Equal(30, config.CheckoutHeartbeatIntervalSeconds);
         Assert.Equal(10, config.MaxCheckoutExtensions);
         Assert.Equal(3, config.DefaultMaxReferenceDepth);
         Assert.Equal(10, config.MaxReferenceDepthLimit);
-        Assert.Equal(3, config.DefaultVersionRetentionCount);
         Assert.Equal(100, config.MaxVersionRetentionCount);
-        Assert.Equal(10485760, config.MaxSceneSizeBytes);
         Assert.Equal(50, config.MaxTagsPerScene);
         Assert.Equal(20, config.MaxTagsPerNode);
         Assert.Equal(200, config.MaxListResults);
         Assert.Equal(100, config.MaxSearchResults);
-        Assert.Equal(60, config.CheckoutExpirationCheckIntervalSeconds);
     }
 
     [Fact]
@@ -72,8 +68,9 @@ public class SceneServiceTests
     public void SceneServiceConfiguration_CanSetForceServiceId()
     {
         var config = new SceneServiceConfiguration();
-        config.ForceServiceId = "test-id";
-        Assert.Equal("test-id", config.ForceServiceId);
+        var testId = Guid.NewGuid();
+        config.ForceServiceId = testId;
+        Assert.Equal(testId, config.ForceServiceId);
     }
 
     #endregion
@@ -203,7 +200,7 @@ public class SceneServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);
@@ -220,7 +217,7 @@ public class SceneServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
         var directEndpoints = ScenePermissionRegistration.GetEndpoints();
 
         // Assert
@@ -573,13 +570,13 @@ public class SceneServiceTests
     public void MarkerType_ContainsExpectedValues()
     {
         Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Generic));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Spawn_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Npc_spawn));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.SpawnPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.NpcSpawn));
         Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Waypoint));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Camera_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Light_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Audio_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Trigger_point));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.CameraPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.LightPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.AudioPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.TriggerPoint));
     }
 
     #endregion
@@ -634,10 +631,10 @@ public class SceneServiceTests
         var node = new SceneNode
         {
             NodeType = NodeType.Marker,
-            MarkerType = MarkerType.Spawn_point
+            MarkerType = MarkerType.SpawnPoint
         };
 
-        Assert.Equal(MarkerType.Spawn_point, node.MarkerType);
+        Assert.Equal(MarkerType.SpawnPoint, node.MarkerType);
     }
 
     #endregion
@@ -669,11 +666,11 @@ public class SceneServiceTests
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = Guid.NewGuid(),
             GameId = "test-game",
-            SceneType = "region",
+            SceneType = SceneType.Region,
             Name = "Test Scene"
         };
         Assert.Equal("test-game", evt.GameId);
-        Assert.Equal("region", evt.SceneType);
+        Assert.Equal(SceneType.Region, evt.SceneType);
     }
 
     [Fact]

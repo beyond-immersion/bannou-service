@@ -58,7 +58,7 @@ public partial class PermissionService
     {
         try
         {
-            _logger.LogInformation("Processing service registration for {ServiceName} version {Version} with {EndpointCount} endpoints",
+            _logger.LogDebug("Processing service registration for {ServiceName} version {Version} with {EndpointCount} endpoints",
                 evt.ServiceName, evt.Version, evt.Endpoints?.Count ?? 0);
 
             if (evt.Endpoints == null || evt.Endpoints.Count == 0)
@@ -72,9 +72,8 @@ public partial class PermissionService
 
             foreach (var endpoint in evt.Endpoints)
             {
-                var path = endpoint.Path;
-                var method = endpoint.Method.ToString().ToUpperInvariant();
-                var methodSignature = $"{method}:{path}";
+                // Path is now the method signature (no HTTP method prefix)
+                var methodSignature = endpoint.Path;
 
                 // Process each permission requirement for this endpoint
                 foreach (var permission in endpoint.Permissions ?? new List<PermissionRequirement>())
@@ -131,11 +130,11 @@ public partial class PermissionService
             var servicePermissionMatrix = new ServicePermissionMatrix
             {
                 ServiceId = evt.ServiceName,
-                Version = evt.Version ?? "",
+                Version = evt.Version,
                 Permissions = permissionMatrix
             };
 
-            _logger.LogInformation("Built permission matrix for {ServiceName}: {StateCount} states, {MethodCount} total methods",
+            _logger.LogDebug("Built permission matrix for {ServiceName}: {StateCount} states, {MethodCount} total methods",
                 evt.ServiceName, permissionMatrix.Count,
                 permissionMatrix.Values.SelectMany(sp => sp.Values).SelectMany(methods => methods).Count());
 
@@ -144,19 +143,19 @@ public partial class PermissionService
 
             if (result.Item1 == StatusCodes.OK)
             {
-                _logger.LogInformation("Successfully registered permissions for service {ServiceName}", evt.ServiceName);
+                _logger.LogDebug("Successfully registered permissions for service {ServiceName}", evt.ServiceName);
             }
             else
             {
                 _logger.LogError("Failed to register permissions for service {ServiceName}: {StatusCode}",
                     evt.ServiceName, result.Item1);
-                _ = PublishErrorEventAsync("HandleServiceRegistration", "registration_failed", $"Failed to register permissions: {result.Item1}", details: new { evt.ServiceName, StatusCode = result.Item1 });
+                await PublishErrorEventAsync("HandleServiceRegistration", "registration_failed", $"Failed to register permissions: {result.Item1}", details: new { evt.ServiceName, StatusCode = result.Item1 });
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling service registration event for {ServiceName}", evt.ServiceName);
-            _ = PublishErrorEventAsync("HandleServiceRegistration", ex.GetType().Name, ex.Message, details: new { evt.ServiceName });
+            await PublishErrorEventAsync("HandleServiceRegistration", ex.GetType().Name, ex.Message, details: new { evt.ServiceName });
         }
     }
 
@@ -173,7 +172,7 @@ public partial class PermissionService
     {
         try
         {
-            _logger.LogInformation("Received session state change event for {SessionId}: {ServiceId} → {NewState}",
+            _logger.LogDebug("Received session state change event for {SessionId}: {ServiceId} → {NewState}",
                 evt.SessionId, evt.ServiceId, evt.NewState);
 
             if (evt.SessionId == Guid.Empty || string.IsNullOrEmpty(evt.ServiceId) || string.IsNullOrEmpty(evt.NewState))
@@ -195,7 +194,7 @@ public partial class PermissionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling session state change event for {SessionId}", evt.SessionId);
-            _ = PublishErrorEventAsync("HandleSessionStateChange", ex.GetType().Name, ex.Message, details: new { evt.SessionId, evt.ServiceId });
+            await PublishErrorEventAsync("HandleSessionStateChange", ex.GetType().Name, ex.Message, details: new { evt.SessionId, evt.ServiceId });
         }
     }
 
@@ -212,7 +211,7 @@ public partial class PermissionService
     {
         try
         {
-            _logger.LogInformation("Processing session.updated event for SessionId: {SessionId}, Reason: {Reason}, Roles: [{Roles}], Authorizations: [{Authorizations}]",
+            _logger.LogDebug("Processing session.updated event for SessionId: {SessionId}, Reason: {Reason}, Roles: [{Roles}], Authorizations: [{Authorizations}]",
                 evt.SessionId,
                 evt.Reason,
                 string.Join(", ", evt.Roles ?? new List<string>()),
@@ -242,7 +241,7 @@ public partial class PermissionService
             }
 
             // Update authorization states
-            // Authorization strings are in format "{stubName}:{state}" (e.g., "arcadia:authorized")
+            // Authorization strings are in format "{stubName}:{state}" (e.g., "my-game:authorized")
             foreach (var auth in evt.Authorizations ?? new List<string>())
             {
                 var parts = auth.Split(':');
@@ -277,13 +276,13 @@ public partial class PermissionService
                 }
             }
 
-            _logger.LogInformation("Successfully processed session.updated for SessionId: {SessionId}",
+            _logger.LogDebug("Successfully processed session.updated for SessionId: {SessionId}",
                 evt.SessionId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process session.updated event for {SessionId}", evt.SessionId);
-            _ = PublishErrorEventAsync("HandleSessionUpdated", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
+            await PublishErrorEventAsync("HandleSessionUpdated", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
         }
     }
 
@@ -331,7 +330,7 @@ public partial class PermissionService
     {
         try
         {
-            _logger.LogInformation("Processing session.connected for SessionId: {SessionId}, AccountId: {AccountId}, Roles: {RoleCount}, Authorizations: {AuthCount}",
+            _logger.LogDebug("Processing session.connected for SessionId: {SessionId}, AccountId: {AccountId}, Roles: {RoleCount}, Authorizations: {AuthCount}",
                 evt.SessionId,
                 evt.AccountId,
                 evt.Roles?.Count ?? 0,
@@ -351,14 +350,14 @@ public partial class PermissionService
             }
             else
             {
-                _logger.LogInformation("Successfully processed session.connected for SessionId: {SessionId}",
+                _logger.LogDebug("Successfully processed session.connected for SessionId: {SessionId}",
                     evt.SessionId);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process session.connected event for {SessionId}", evt.SessionId);
-            _ = PublishErrorEventAsync("HandleSessionConnectedEvent", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
+            await PublishErrorEventAsync("HandleSessionConnectedEvent", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
         }
     }
 
@@ -371,7 +370,7 @@ public partial class PermissionService
     {
         try
         {
-            _logger.LogInformation("Processing session.disconnected for SessionId: {SessionId}, Reason: {Reason}, Reconnectable: {Reconnectable}",
+            _logger.LogDebug("Processing session.disconnected for SessionId: {SessionId}, Reason: {Reason}, Reconnectable: {Reconnectable}",
                 evt.SessionId,
                 evt.Reason,
                 evt.Reconnectable);
@@ -388,14 +387,14 @@ public partial class PermissionService
             }
             else
             {
-                _logger.LogInformation("Successfully processed session.disconnected for SessionId: {SessionId}",
+                _logger.LogDebug("Successfully processed session.disconnected for SessionId: {SessionId}",
                     evt.SessionId);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process session.disconnected event for {SessionId}", evt.SessionId);
-            _ = PublishErrorEventAsync("HandleSessionDisconnectedEvent", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
+            await PublishErrorEventAsync("HandleSessionDisconnectedEvent", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
         }
     }
 

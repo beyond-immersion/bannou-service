@@ -57,7 +57,7 @@ public partial class LeaderboardController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Which entity types can appear on this leaderboard"
                 },
@@ -88,17 +88,6 @@ public partial class LeaderboardController
                     "description": "Additional leaderboard-specific metadata"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "SortOrder": {
             "type": "string",
@@ -163,7 +152,7 @@ public partial class LeaderboardController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -205,17 +194,6 @@ public partial class LeaderboardController
                     "description": "Additional metadata"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "SortOrder": {
             "type": "string",
@@ -365,7 +343,7 @@ public partial class LeaderboardController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -407,17 +385,6 @@ public partial class LeaderboardController
                     "description": "Additional metadata"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "SortOrder": {
             "type": "string",
@@ -584,7 +551,7 @@ public partial class LeaderboardController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -626,17 +593,6 @@ public partial class LeaderboardController
                     "description": "Additional metadata"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "SortOrder": {
             "type": "string",
@@ -803,7 +759,7 @@ public partial class LeaderboardController
                 "entityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "description": "Allowed entity types"
                 },
@@ -845,17 +801,6 @@ public partial class LeaderboardController
                     "description": "Additional metadata"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         },
         "SortOrder": {
             "type": "string",
@@ -1056,7 +1001,7 @@ public partial class LeaderboardController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type submitting the score"
                 },
                 "score": {
@@ -1071,17 +1016,6 @@ public partial class LeaderboardController
                     "description": "Optional metadata about this score (e.g., how it was achieved)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1245,7 +1179,7 @@ public partial class LeaderboardController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this score entry"
                 },
                 "score": {
@@ -1254,17 +1188,6 @@ public partial class LeaderboardController
                     "description": "Score value"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1385,21 +1308,10 @@ public partial class LeaderboardController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type whose rank is requested"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1428,7 +1340,7 @@ public partial class LeaderboardController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for the ranked entity"
                 },
                 "score": {
@@ -1452,17 +1364,6 @@ public partial class LeaderboardController
                     "description": "Percentile ranking (0-100)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1614,7 +1515,7 @@ public partial class LeaderboardController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this leaderboard entry"
                 },
                 "score": {
@@ -1639,17 +1540,6 @@ public partial class LeaderboardController
                     "description": "Entry metadata"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1742,7 +1632,7 @@ public partial class LeaderboardController
                     "description": "ID of the entity to center on"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type of the anchor entry"
                 },
                 "countBefore": {
@@ -1758,17 +1648,6 @@ public partial class LeaderboardController
                     "description": "Entries to show after the entity"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }
@@ -1824,7 +1703,7 @@ public partial class LeaderboardController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this leaderboard entry"
                 },
                 "score": {
@@ -1849,17 +1728,6 @@ public partial class LeaderboardController
                     "description": "Entry metadata"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity on the leaderboard",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "custom"
-            ]
         }
     }
 }

@@ -43,7 +43,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 
             var effectiveMessageId = messageId ?? Guid.NewGuid();
             _logger.LogDebug(
-                "[InMemory] Published to topic '{Topic}': {EventType} (id: {MessageId})",
+                "Published to topic '{Topic}': {EventType} (id: {MessageId})",
                 topic, typeof(TEvent).Name, effectiveMessageId);
 
             // Deliver to local subscribers
@@ -53,7 +53,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[InMemory] Failed to publish to topic '{Topic}'", topic);
+            _logger.LogError(ex, "Failed to publish to topic '{Topic}'", topic);
             return false;
         }
     }
@@ -73,14 +73,14 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 
             var effectiveMessageId = messageId ?? Guid.NewGuid();
             _logger.LogDebug(
-                "[InMemory] Published raw to topic '{Topic}': {ByteCount} bytes, {ContentType} (id: {MessageId})",
+                "Published raw to topic '{Topic}': {ByteCount} bytes, {ContentType} (id: {MessageId})",
                 topic, payload.Length, contentType, effectiveMessageId);
 
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[InMemory] Failed to publish raw to topic '{Topic}'", topic);
+            _logger.LogError(ex, "Failed to publish raw to topic '{Topic}'", topic);
             return false;
         }
     }
@@ -96,11 +96,11 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         ServiceErrorEventSeverity severity = ServiceErrorEventSeverity.Error,
         object? details = null,
         string? stack = null,
-        string? correlationId = null,
+        Guid? correlationId = null,
         CancellationToken cancellationToken = default)
     {
         _logger.LogWarning(
-            "[InMemory] Error event from {ServiceName}/{Operation}: {ErrorType} - {Message}",
+            "Error event from {ServiceName}/{Operation}: {ErrorType} - {Message}",
             serviceName, operation, errorType, message);
 
         await Task.CompletedTask;

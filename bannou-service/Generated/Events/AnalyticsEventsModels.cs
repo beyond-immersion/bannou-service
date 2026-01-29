@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -75,7 +76,7 @@ public partial class AnalyticsScoreUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AnalyticsScoreUpdatedEventEntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Type of score that changed (e.g., kills, points, xp)
@@ -157,7 +158,7 @@ public partial class AnalyticsRatingUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AnalyticsRatingUpdatedEventEntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Type of rating (e.g., overall, ranked, casual)
@@ -245,7 +246,7 @@ public partial class AnalyticsMilestoneReachedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AnalyticsMilestoneReachedEventEntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Type of milestone (e.g., total_kills, games_played)
@@ -268,75 +269,6 @@ public partial class AnalyticsMilestoneReachedEvent
     public string? MilestoneName { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AnalyticsScoreUpdatedEventEntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AnalyticsRatingUpdatedEventEntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AnalyticsMilestoneReachedEventEntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
 
 
 

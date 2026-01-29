@@ -17,6 +17,10 @@ public class InternalAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public Platform Platform => Platform.Internal;
 
+    /// <inheritdoc />
+    /// <remarks>Internal sync requires no external configuration and is always operational.</remarks>
+    public bool IsConfigured => true;
+
     /// <summary>
     /// Initializes a new instance of the InternalAchievementSync.
     /// </summary>

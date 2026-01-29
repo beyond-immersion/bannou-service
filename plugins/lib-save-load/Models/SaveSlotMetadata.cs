@@ -3,13 +3,14 @@ namespace BeyondImmersion.BannouService.SaveLoad.Models;
 /// <summary>
 /// Internal model for save slot metadata stored in state store.
 /// This is the authoritative record for a slot's configuration and state.
+/// IMPLEMENTATION TENETS compliant: Uses proper C# types for enums and GUIDs.
 /// </summary>
 public sealed class SaveSlotMetadata
 {
     /// <summary>
     /// Unique slot identifier (generated UUID)
     /// </summary>
-    public required string SlotId { get; set; }
+    public required Guid SlotId { get; set; }
 
     /// <summary>
     /// Game identifier for namespace isolation
@@ -19,12 +20,12 @@ public sealed class SaveSlotMetadata
     /// <summary>
     /// ID of the owning entity (account, character, session, realm)
     /// </summary>
-    public required string OwnerId { get; set; }
+    public required Guid OwnerId { get; set; }
 
     /// <summary>
     /// Type of the owning entity
     /// </summary>
-    public required string OwnerType { get; set; }
+    public required OwnerType OwnerType { get; set; }
 
     /// <summary>
     /// Slot name (unique per owner within game namespace)
@@ -34,7 +35,7 @@ public sealed class SaveSlotMetadata
     /// <summary>
     /// Save category determining default behavior
     /// </summary>
-    public required string Category { get; set; }
+    public required SaveCategory Category { get; set; }
 
     /// <summary>
     /// Maximum versions to retain before rolling cleanup
@@ -49,7 +50,7 @@ public sealed class SaveSlotMetadata
     /// <summary>
     /// Compression type for new saves
     /// </summary>
-    public string CompressionType { get; set; } = "GZIP";
+    public CompressionType CompressionType { get; set; } = CompressionType.GZIP;
 
     /// <summary>
     /// Current number of versions in slot
@@ -92,12 +93,14 @@ public sealed class SaveSlotMetadata
     public string? ETag { get; set; }
 
     /// <summary>
-    /// Generates the state store key for this slot
+    /// Generates the state store key for this slot.
+    /// Note: Uses ToString() for composite key generation as state store keys are strings.
     /// </summary>
     public string GetStateKey() => $"slot:{GameId}:{OwnerType}:{OwnerId}:{SlotName}";
 
     /// <summary>
-    /// Generates the state store key from components
+    /// Generates the state store key from components.
+    /// Parameters are strings to support both direct string values and enum/guid conversions at call site.
     /// </summary>
     public static string GetStateKey(string gameId, string ownerType, string ownerId, string slotName)
         => $"slot:{gameId}:{ownerType}:{ownerId}:{slotName}";

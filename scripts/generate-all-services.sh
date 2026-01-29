@@ -55,8 +55,18 @@ else
 fi
 echo ""
 
-# Generate common events first (shared across all services)
-echo -e "${BLUE}🌟 Generating common events first...${NC}"
+# Generate common API types first (shared types like EntityType)
+echo -e "${BLUE}🌟 Generating common API types first...${NC}"
+if ./generate-common-api.sh; then
+    echo -e "${GREEN}✅ Common API types generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate common API types${NC}"
+    exit 1
+fi
+echo ""
+
+# Generate common events (shared across all services)
+echo -e "${BLUE}🌟 Generating common events...${NC}"
 if ./generate-common-events.sh; then
     echo -e "${GREEN}✅ Common events generated successfully${NC}"
 else
@@ -134,6 +144,11 @@ for schema_file in "${SCHEMA_FILES[@]}"; do
 
     # Skip if specific service requested and this isn't it
     if [ -n "$REQUESTED_SERVICE" ] && [ "$service_name" != "$REQUESTED_SERVICE" ]; then
+        continue
+    fi
+
+    # Skip common-api.yaml - it's shared types, not a service (handled by generate-common-api.sh)
+    if [ "$service_name" = "common" ]; then
         continue
     fi
 

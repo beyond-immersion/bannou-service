@@ -54,15 +54,15 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
 
-            var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
+            var typeKey = BuildTypeKey(body.RelationshipTypeId);
             var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
                 .GetAsync(typeKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not found: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -83,15 +83,15 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting relationship type by code: {Code}", body.Code);
+            _logger.LogDebug("Getting relationship type by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code.ToUpperInvariant());
-            var typeId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+            var typeIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
                 .GetAsync(codeIndexKey, cancellationToken);
 
-            if (string.IsNullOrEmpty(typeId))
+            if (string.IsNullOrEmpty(typeIdStr) || !Guid.TryParse(typeIdStr, out var typeId))
             {
-                _logger.LogWarning("Relationship type not found for code: {Code}", body.Code);
+                _logger.LogDebug("Relationship type not found for code: {Code}", body.Code);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -101,7 +101,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found: {TypeId}", typeId);
+                _logger.LogDebug("Relationship type not found: {TypeId}", typeId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -122,10 +122,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Listing relationship types");
+            _logger.LogDebug("Listing relationship types");
 
-            var allTypeIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType)
-                .GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<string>();
+            var allTypeIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType)
+                .GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 
             if (allTypeIds.Count == 0)
             {
@@ -164,7 +164,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (body.RootsOnly == true)
             {
-                filtered = filtered.Where(t => string.IsNullOrEmpty(t.ParentTypeId));
+                filtered = filtered.Where(t => !t.ParentTypeId.HasValue);
             }
 
             var typesList = filtered.ToList();
@@ -194,10 +194,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting child types for parent: {ParentId}", body.ParentTypeId);
+            _logger.LogDebug("Getting child types for parent: {ParentId}", body.ParentTypeId);
 
             // Verify parent exists
-            var parentKey = BuildTypeKey(body.ParentTypeId.ToString());
+            var parentKey = BuildTypeKey(body.ParentTypeId);
             var parent = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
                 .GetAsync(parentKey, cancellationToken);
 
@@ -206,7 +206,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 return (StatusCodes.NotFound, null);
             }
 
-            var childIds = await GetChildTypeIdsAsync(body.ParentTypeId.ToString(), body.Recursive == true, cancellationToken);
+            var childIds = await GetChildTypeIdsAsync(body.ParentTypeId, body.Recursive == true, cancellationToken);
 
             if (childIds.Count == 0)
             {
@@ -251,7 +251,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Checking hierarchy match: {TypeId} -> {AncestorId}",
+            _logger.LogDebug("Checking hierarchy match: {TypeId} -> {AncestorId}",
                 body.TypeId, body.AncestorTypeId);
 
             // If they're the same, it's a match with depth 0
@@ -265,7 +265,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             }
 
             // Get the type and traverse up the hierarchy
-            var typeKey = BuildTypeKey(body.TypeId.ToString());
+            var typeKey = BuildTypeKey(body.TypeId);
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var currentType = await store.GetAsync(typeKey, cancellationToken);
 
@@ -275,7 +275,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             }
 
             // Verify ancestor exists
-            var ancestorKey = BuildTypeKey(body.AncestorTypeId.ToString());
+            var ancestorKey = BuildTypeKey(body.AncestorTypeId);
             var ancestor = await store.GetAsync(ancestorKey, cancellationToken);
 
             if (ancestor == null)
@@ -283,14 +283,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 return (StatusCodes.NotFound, null);
             }
 
-            var ancestorIdStr = body.AncestorTypeId.ToString();
             var depth = 0;
             var currentParentId = currentType.ParentTypeId;
 
-            while (!string.IsNullOrEmpty(currentParentId))
+            while (currentParentId.HasValue && depth < _configuration.MaxHierarchyDepth)
             {
                 depth++;
-                if (currentParentId == ancestorIdStr)
+                if (currentParentId.Value == body.AncestorTypeId)
                 {
                     return (StatusCodes.OK, new MatchesHierarchyResponse
                     {
@@ -299,7 +298,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                     });
                 }
 
-                var parentKey = BuildTypeKey(currentParentId);
+                var parentKey = BuildTypeKey(currentParentId.Value);
                 var parentType = await store.GetAsync(parentKey, cancellationToken);
 
                 currentParentId = parentType?.ParentTypeId;
@@ -325,9 +324,9 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting ancestors for type: {TypeId}", body.TypeId);
+            _logger.LogDebug("Getting ancestors for type: {TypeId}", body.TypeId);
 
-            var typeKey = BuildTypeKey(body.TypeId.ToString());
+            var typeKey = BuildTypeKey(body.TypeId);
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var currentType = await store.GetAsync(typeKey, cancellationToken);
 
@@ -338,10 +337,12 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             var ancestors = new List<RelationshipTypeResponse>();
             var currentParentId = currentType.ParentTypeId;
+            var iterations = 0;
 
-            while (!string.IsNullOrEmpty(currentParentId))
+            while (currentParentId.HasValue && iterations < _configuration.MaxHierarchyDepth)
             {
-                var parentKey = BuildTypeKey(currentParentId);
+                iterations++;
+                var parentKey = BuildTypeKey(currentParentId.Value);
                 var parentType = await store.GetAsync(parentKey, cancellationToken);
 
                 if (parentType == null) break;
@@ -374,18 +375,18 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Creating relationship type: {Code}", body.Code);
+            _logger.LogDebug("Creating relationship type: {Code}", body.Code);
 
             var code = body.Code.ToUpperInvariant();
 
             // Check if code already exists
             var codeIndexKey = BuildCodeIndexKey(code);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
-            var existingId = await stringStore.GetAsync(codeIndexKey, cancellationToken);
+            var existingIdStr = await stringStore.GetAsync(codeIndexKey, cancellationToken);
 
-            if (!string.IsNullOrEmpty(existingId))
+            if (!string.IsNullOrEmpty(existingIdStr))
             {
-                _logger.LogWarning("Relationship type with code already exists: {Code}", code);
+                _logger.LogDebug("Relationship type with code already exists: {Code}", code);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -395,24 +396,28 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             if (body.ParentTypeId.HasValue)
             {
-                var parentKey = BuildTypeKey(body.ParentTypeId.Value.ToString());
+                var parentKey = BuildTypeKey(body.ParentTypeId.Value);
                 var parent = await modelStore.GetAsync(parentKey, cancellationToken);
 
                 if (parent == null)
                 {
-                    _logger.LogWarning("Parent type not found: {ParentId}", body.ParentTypeId);
+                    _logger.LogDebug("Parent type not found: {ParentId}", body.ParentTypeId);
                     return (StatusCodes.BadRequest, null);
                 }
                 parentTypeCode = parent.Code;
                 depth = parent.Depth + 1;
             }
 
-            // Resolve inverse type if specified
-            string? inverseTypeId = null;
+            // Resolve inverse type if specified by code
+            Guid? inverseTypeId = null;
             if (!string.IsNullOrEmpty(body.InverseTypeCode))
             {
                 var inverseIndexKey = BuildCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
-                inverseTypeId = await stringStore.GetAsync(inverseIndexKey, cancellationToken);
+                var resolvedInverseIdStr = await stringStore.GetAsync(inverseIndexKey, cancellationToken);
+                if (!string.IsNullOrEmpty(resolvedInverseIdStr) && Guid.TryParse(resolvedInverseIdStr, out var resolvedInverseId))
+                {
+                    inverseTypeId = resolvedInverseId;
+                }
             }
 
             var typeId = Guid.NewGuid();
@@ -420,12 +425,12 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             var model = new RelationshipTypeModel
             {
-                RelationshipTypeId = typeId.ToString(),
+                RelationshipTypeId = typeId,
                 Code = code,
                 Name = body.Name,
                 Description = body.Description,
                 Category = body.Category,
-                ParentTypeId = body.ParentTypeId?.ToString(),
+                ParentTypeId = body.ParentTypeId,
                 ParentTypeCode = parentTypeCode,
                 InverseTypeId = inverseTypeId,
                 InverseTypeCode = body.InverseTypeCode,
@@ -437,20 +442,20 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             };
 
             // Save the model
-            var typeKey = BuildTypeKey(typeId.ToString());
+            var typeKey = BuildTypeKey(typeId);
             await modelStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
 
-            // Update code index
+            // Update code index (store typeId as string since state store requires reference type)
             await stringStore.SaveAsync(codeIndexKey, typeId.ToString(), cancellationToken: cancellationToken);
 
             // Update parent's children index
             if (body.ParentTypeId.HasValue)
             {
-                await AddToParentIndexAsync(body.ParentTypeId.Value.ToString(), typeId.ToString(), cancellationToken);
+                await AddToParentIndexAsync(body.ParentTypeId.Value, typeId, cancellationToken);
             }
 
             // Update all types list
-            await AddToAllTypesListAsync(typeId.ToString(), cancellationToken);
+            await AddToAllTypesListAsync(typeId, cancellationToken);
 
             await PublishRelationshipTypeCreatedEventAsync(model, cancellationToken);
 
@@ -471,9 +476,9 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Updating relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Updating relationship type: {TypeId}", body.RelationshipTypeId);
 
-            var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
+            var typeKey = BuildTypeKey(body.RelationshipTypeId);
             var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var existing = await modelStore.GetAsync(typeKey, cancellationToken);
 
@@ -517,7 +522,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             // Handle parent type change
             if (body.ParentTypeId.HasValue)
             {
-                var newParentId = body.ParentTypeId.Value.ToString();
+                var newParentId = body.ParentTypeId.Value;
                 if (newParentId != existing.ParentTypeId)
                 {
                     // Validate new parent exists
@@ -530,9 +535,9 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                     }
 
                     // Remove from old parent's index
-                    if (!string.IsNullOrEmpty(existing.ParentTypeId))
+                    if (existing.ParentTypeId.HasValue)
                     {
-                        await RemoveFromParentIndexAsync(existing.ParentTypeId, existing.RelationshipTypeId, cancellationToken);
+                        await RemoveFromParentIndexAsync(existing.ParentTypeId.Value, existing.RelationshipTypeId, cancellationToken);
                     }
 
                     // Add to new parent's index
@@ -556,9 +561,9 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 else
                 {
                     var inverseIndexKey = BuildCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
-                    var inverseId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+                    var inverseIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
                         .GetAsync(inverseIndexKey, cancellationToken);
-                    existing.InverseTypeId = inverseId;
+                    existing.InverseTypeId = Guid.TryParse(inverseIdStr, out var inverseId) ? inverseId : null;
                     existing.InverseTypeCode = body.InverseTypeCode;
                 }
                 changedFields.Add("inverseTypeCode");
@@ -588,9 +593,9 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
 
-            var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
+            var typeKey = BuildTypeKey(body.RelationshipTypeId);
             var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var existing = await modelStore.GetAsync(typeKey, cancellationToken);
 
@@ -600,10 +605,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             }
 
             // Check if type has children
-            var childIds = await GetChildTypeIdsAsync(body.RelationshipTypeId.ToString(), false, cancellationToken);
+            var childIds = await GetChildTypeIdsAsync(body.RelationshipTypeId, false, cancellationToken);
             if (childIds.Count > 0)
             {
-                _logger.LogWarning("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
                 return StatusCodes.Conflict;
             }
 
@@ -616,9 +621,9 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 .DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from parent's children index
-            if (!string.IsNullOrEmpty(existing.ParentTypeId))
+            if (existing.ParentTypeId.HasValue)
             {
-                await RemoveFromParentIndexAsync(existing.ParentTypeId, existing.RelationshipTypeId, cancellationToken);
+                await RemoveFromParentIndexAsync(existing.ParentTypeId.Value, existing.RelationshipTypeId, cancellationToken);
             }
 
             // Remove from all types list
@@ -642,7 +647,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Seeding {Count} relationship types", body.Types.Count);
+            _logger.LogDebug("Seeding {Count} relationship types", body.Types.Count);
 
             var created = 0;
             var updated = 0;
@@ -800,21 +805,21 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
-            var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
+            var typeKey = BuildTypeKey(body.RelationshipTypeId);
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var model = await store.GetAsync(typeKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found for deprecation: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not found for deprecation: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (model.IsDeprecated)
             {
-                _logger.LogWarning("Relationship type already deprecated: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type already deprecated: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -845,21 +850,21 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
-            var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
+            var typeKey = BuildTypeKey(body.RelationshipTypeId);
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var model = await store.GetAsync(typeKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found for undeprecation: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not found for undeprecation: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!model.IsDeprecated)
             {
-                _logger.LogWarning("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -890,33 +895,33 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Merging relationship type {SourceId} into {TargetId}",
+            _logger.LogDebug("Merging relationship type {SourceId} into {TargetId}",
                 body.SourceTypeId, body.TargetTypeId);
 
             // Verify source exists and is deprecated
-            var sourceKey = BuildTypeKey(body.SourceTypeId.ToString());
+            var sourceKey = BuildTypeKey(body.SourceTypeId);
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
             var sourceModel = await store.GetAsync(sourceKey, cancellationToken);
 
             if (sourceModel == null)
             {
-                _logger.LogWarning("Source relationship type not found: {TypeId}", body.SourceTypeId);
+                _logger.LogDebug("Source relationship type not found: {TypeId}", body.SourceTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!sourceModel.IsDeprecated)
             {
-                _logger.LogWarning("Source relationship type must be deprecated before merging: {TypeId}", body.SourceTypeId);
+                _logger.LogDebug("Source relationship type must be deprecated before merging: {TypeId}", body.SourceTypeId);
                 return (StatusCodes.BadRequest, null);
             }
 
             // Verify target exists
-            var targetKey = BuildTypeKey(body.TargetTypeId.ToString());
+            var targetKey = BuildTypeKey(body.TargetTypeId);
             var targetModel = await store.GetAsync(targetKey, cancellationToken);
 
             if (targetModel == null)
             {
-                _logger.LogWarning("Target relationship type not found: {TypeId}", body.TargetTypeId);
+                _logger.LogDebug("Target relationship type not found: {TypeId}", body.TargetTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -924,9 +929,9 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var migratedCount = 0;
             var failedCount = 0;
             var migrationErrors = new List<MigrationError>();
-            const int maxErrorsToTrack = 100;
+            var maxErrorsToTrack = _configuration.MaxMigrationErrorsToTrack;
             var page = 1;
-            const int pageSize = 100;
+            var pageSize = _configuration.SeedPageSize;
             var hasMorePages = true;
 
             while (hasMorePages)
@@ -1010,6 +1015,33 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Merged relationship type {SourceId} into {TargetId}, migrated {MigratedCount} relationships (failed: {FailedCount})",
                 body.SourceTypeId, body.TargetTypeId, migratedCount, failedCount);
 
+            // Handle delete-after-merge if requested and all migrations succeeded
+            var sourceDeleted = false;
+            if (body.DeleteAfterMerge)
+            {
+                if (failedCount > 0)
+                {
+                    _logger.LogWarning("Skipping delete-after-merge for relationship type {SourceId}: {FailedCount} migrations failed",
+                        body.SourceTypeId, failedCount);
+                }
+                else
+                {
+                    var deleteResult = await DeleteRelationshipTypeAsync(
+                        new DeleteRelationshipTypeRequest { RelationshipTypeId = body.SourceTypeId },
+                        cancellationToken);
+
+                    if (deleteResult == StatusCodes.OK)
+                    {
+                        sourceDeleted = true;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Delete-after-merge failed for relationship type {SourceId} with status {Status}",
+                            body.SourceTypeId, deleteResult);
+                    }
+                }
+            }
+
             return (StatusCodes.OK, new MergeRelationshipTypeResponse
             {
                 SourceTypeId = body.SourceTypeId,
@@ -1017,7 +1049,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 RelationshipsMigrated = migratedCount,
                 RelationshipsFailed = failedCount,
                 MigrationErrors = migrationErrors,
-                SourceDeleted = false // Source remains as deprecated for historical references
+                SourceDeleted = sourceDeleted
             });
         }
         catch (Exception ex)
@@ -1033,36 +1065,36 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
     #region Helper Methods
 
-    private static string BuildTypeKey(string typeId) => $"{TYPE_KEY_PREFIX}{typeId}";
+    private static string BuildTypeKey(Guid typeId) => $"{TYPE_KEY_PREFIX}{typeId}";
     private static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code}";
-    private static string BuildParentIndexKey(string parentId) => $"{PARENT_INDEX_PREFIX}{parentId}";
+    private static string BuildParentIndexKey(Guid parentId) => $"{PARENT_INDEX_PREFIX}{parentId}";
 
-    private async Task<List<string>> GetChildTypeIdsAsync(string parentId, bool recursive, CancellationToken cancellationToken)
+    private async Task<List<Guid>> GetChildTypeIdsAsync(Guid parentId, bool recursive, CancellationToken cancellationToken, int currentDepth = 0)
     {
         var parentIndexKey = BuildParentIndexKey(parentId);
-        var directChildren = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType)
-            .GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
+        var directChildren = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType)
+            .GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
-        if (!recursive || directChildren.Count == 0)
+        if (!recursive || directChildren.Count == 0 || currentDepth >= _configuration.MaxHierarchyDepth)
         {
             return directChildren;
         }
 
-        var allChildren = new List<string>(directChildren);
+        var allChildren = new List<Guid>(directChildren);
         foreach (var childId in directChildren)
         {
-            var grandchildren = await GetChildTypeIdsAsync(childId, true, cancellationToken);
+            var grandchildren = await GetChildTypeIdsAsync(childId, true, cancellationToken, currentDepth + 1);
             allChildren.AddRange(grandchildren);
         }
 
         return allChildren;
     }
 
-    private async Task AddToParentIndexAsync(string parentId, string childId, CancellationToken cancellationToken)
+    private async Task AddToParentIndexAsync(Guid parentId, Guid childId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(parentId);
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType);
-        var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (!children.Contains(childId))
         {
@@ -1071,11 +1103,11 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         }
     }
 
-    private async Task RemoveFromParentIndexAsync(string parentId, string childId, CancellationToken cancellationToken)
+    private async Task RemoveFromParentIndexAsync(Guid parentId, Guid childId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(parentId);
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType);
-        var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (children.Remove(childId))
         {
@@ -1083,10 +1115,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         }
     }
 
-    private async Task AddToAllTypesListAsync(string typeId, CancellationToken cancellationToken)
+    private async Task AddToAllTypesListAsync(Guid typeId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType);
-        var allTypes = await store.GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var allTypes = await store.GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 
         if (!allTypes.Contains(typeId))
         {
@@ -1095,10 +1127,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         }
     }
 
-    private async Task RemoveFromAllTypesListAsync(string typeId, CancellationToken cancellationToken)
+    private async Task RemoveFromAllTypesListAsync(Guid typeId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType);
-        var allTypes = await store.GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var allTypes = await store.GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 
         if (allTypes.Remove(typeId))
         {
@@ -1111,14 +1143,14 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         await Task.CompletedTask;
         return new RelationshipTypeResponse
         {
-            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            RelationshipTypeId = model.RelationshipTypeId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
             Category = model.Category,
-            ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? null : Guid.Parse(model.ParentTypeId),
+            ParentTypeId = model.ParentTypeId,
             ParentTypeCode = model.ParentTypeCode,
-            InverseTypeId = string.IsNullOrEmpty(model.InverseTypeId) ? null : Guid.Parse(model.InverseTypeId),
+            InverseTypeId = model.InverseTypeId,
             InverseTypeCode = model.InverseTypeCode,
             IsBidirectional = model.IsBidirectional,
             IsDeprecated = model.IsDeprecated,
@@ -1159,11 +1191,11 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+                RelationshipTypeId = model.RelationshipTypeId,
                 Code = model.Code,
                 Name = model.Name,
                 Category = model.Category,
-                ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId)
+                ParentTypeId = model.ParentTypeId ?? Guid.Empty
             };
 
             await _messageBus.TryPublishAsync("relationship-type.created", eventModel);
@@ -1187,13 +1219,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+                RelationshipTypeId = model.RelationshipTypeId,
                 Code = model.Code,
                 Name = model.Name,
                 Description = model.Description,
                 Category = model.Category,
-                ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId),
-                InverseTypeId = string.IsNullOrEmpty(model.InverseTypeId) ? Guid.Empty : Guid.Parse(model.InverseTypeId),
+                ParentTypeId = model.ParentTypeId ?? Guid.Empty,
+                InverseTypeId = model.InverseTypeId ?? Guid.Empty,
                 IsBidirectional = model.IsBidirectional,
                 Depth = model.Depth,
                 IsDeprecated = model.IsDeprecated,
@@ -1225,7 +1257,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+                RelationshipTypeId = model.RelationshipTypeId,
                 Code = model.Code
             };
 
@@ -1246,10 +1278,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering RelationshipType service permissions...");
-        await RelationshipTypePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        _logger.LogDebug("Registering RelationshipType service permissions...");
+        await RelationshipTypePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion
@@ -1260,14 +1292,14 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 /// </summary>
 internal class RelationshipTypeModel
 {
-    public string RelationshipTypeId { get; set; } = string.Empty;
+    public Guid RelationshipTypeId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Category { get; set; }
-    public string? ParentTypeId { get; set; }
+    public Guid? ParentTypeId { get; set; }
     public string? ParentTypeCode { get; set; }
-    public string? InverseTypeId { get; set; }
+    public Guid? InverseTypeId { get; set; }
     public string? InverseTypeCode { get; set; }
     public bool IsBidirectional { get; set; }
     public int Depth { get; set; }

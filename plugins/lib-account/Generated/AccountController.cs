@@ -140,6 +140,33 @@ public interface IAccountController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHashAsync(UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Get multiple accounts by ID
+    /// </summary>
+
+
+    /// <returns>Batch get completed (partial results possible)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetAccountsResponse>> BatchGetAccountsAsync(BatchGetAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Count accounts matching filters
+    /// </summary>
+
+
+    /// <returns>Account count retrieved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CountAccountsResponse>> CountAccountsAsync(CountAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Bulk update roles for multiple accounts
+    /// </summary>
+
+
+    /// <returns>Bulk update completed (partial success possible)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkUpdateRolesResponse>> BulkUpdateRolesAsync(BulkUpdateRolesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Update email verification status
     /// </summary>
 
@@ -351,6 +378,45 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         var statusCode = await _implementation.UpdatePasswordHashAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Get multiple accounts by ID
+    /// </summary>
+    /// <returns>Batch get completed (partial results possible)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("account/batch-get")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetAccountsResponse>> BatchGetAccounts([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchGetAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.BatchGetAccountsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Count accounts matching filters
+    /// </summary>
+    /// <returns>Account count retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("account/count")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CountAccountsResponse>> CountAccounts([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CountAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CountAccountsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Bulk update roles for multiple accounts
+    /// </summary>
+    /// <returns>Bulk update completed (partial success possible)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("account/roles/bulk-update")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkUpdateRolesResponse>> BulkUpdateRoles([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkUpdateRolesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.BulkUpdateRolesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
     }
 
     /// <summary>

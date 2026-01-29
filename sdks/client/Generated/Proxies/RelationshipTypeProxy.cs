@@ -41,7 +41,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRelationshipTypeRequest, RelationshipTypeResponse>(
-            "POST", "/relationship-type/get", request, channel, timeout, cancellationToken);
+            "/relationship-type/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetRelationshipTypeByCodeRequest, RelationshipTypeResponse>(
-            "POST", "/relationship-type/get-by-code", request, channel, timeout, cancellationToken);
+            "/relationship-type/get-by-code", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListRelationshipTypesRequest, RelationshipTypeListResponse>(
-            "POST", "/relationship-type/list", request, channel, timeout, cancellationToken);
+            "/relationship-type/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetChildRelationshipTypesRequest, RelationshipTypeListResponse>(
-            "POST", "/relationship-type/get-children", request, channel, timeout, cancellationToken);
+            "/relationship-type/get-children", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<MatchesHierarchyRequest, MatchesHierarchyResponse>(
-            "POST", "/relationship-type/matches-hierarchy", request, channel, timeout, cancellationToken);
+            "/relationship-type/matches-hierarchy", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAncestorsRequest, RelationshipTypeListResponse>(
-            "POST", "/relationship-type/get-ancestors", request, channel, timeout, cancellationToken);
+            "/relationship-type/get-ancestors", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateRelationshipTypeRequest, RelationshipTypeResponse>(
-            "POST", "/relationship-type/create", request, channel, timeout, cancellationToken);
+            "/relationship-type/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateRelationshipTypeRequest, RelationshipTypeResponse>(
-            "POST", "/relationship-type/update", request, channel, timeout, cancellationToken);
+            "/relationship-type/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteRelationshipTypeRequest>(
-            "POST", "/relationship-type/delete", request, channel, cancellationToken);
+            "/relationship-type/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeprecateRelationshipTypeRequest, RelationshipTypeResponse>(
-            "POST", "/relationship-type/deprecate", request, channel, timeout, cancellationToken);
+            "/relationship-type/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UndeprecateRelationshipTypeRequest, RelationshipTypeResponse>(
-            "POST", "/relationship-type/undeprecate", request, channel, timeout, cancellationToken);
+            "/relationship-type/undeprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -237,7 +237,7 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<MergeRelationshipTypeRequest, MergeRelationshipTypeResponse>(
-            "POST", "/relationship-type/merge", request, channel, timeout, cancellationToken);
+            "/relationship-type/merge", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -255,6 +255,6 @@ public sealed class RelationshipTypeProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SeedRelationshipTypesRequest, SeedRelationshipTypesResponse>(
-            "POST", "/relationship-type/seed", request, channel, timeout, cancellationToken);
+            "/relationship-type/seed", request, channel, timeout, cancellationToken);
     }
 }

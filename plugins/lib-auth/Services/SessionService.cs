@@ -18,6 +18,10 @@ public class SessionService : ISessionService
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
 
+    // Device info placeholders - device capture is unimplemented
+    private const string UNKNOWN_PLATFORM = "Unknown";
+    private const string UNKNOWN_BROWSER = "Unknown";
+
     /// <summary>
     /// Initializes a new instance of SessionService.
     /// </summary>
@@ -34,7 +38,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task<List<SessionInfo>> GetAccountSessionsAsync(string accountId, CancellationToken cancellationToken = default)
+    public async Task<List<SessionInfo>> GetAccountSessionsAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -70,16 +74,22 @@ public class SessionService : ISessionService
                 {
                     if (result.SessionData.ExpiresAt > DateTimeOffset.UtcNow)
                     {
+                        // LastActiveAt falls back to CreatedAt for sessions created before
+                        // this field was introduced (LastActiveAtUnix defaults to 0)
+                        var lastActive = result.SessionData.LastActiveAtUnix > 0
+                            ? result.SessionData.LastActiveAt
+                            : result.SessionData.CreatedAt;
+
                         sessions.Add(new SessionInfo
                         {
-                            SessionId = Guid.Parse(result.SessionData.SessionId),
+                            SessionId = result.SessionData.SessionId,
                             CreatedAt = result.SessionData.CreatedAt,
-                            LastActive = result.SessionData.CreatedAt,
+                            LastActive = lastActive,
                             DeviceInfo = new DeviceInfo
                             {
                                 DeviceType = DeviceInfoDeviceType.Desktop,
-                                Platform = "Unknown",
-                                Browser = "Unknown"
+                                Platform = UNKNOWN_PLATFORM,
+                                Browser = UNKNOWN_BROWSER
                             }
                         });
                     }
@@ -122,7 +132,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task AddSessionToAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken = default)
+    public async Task AddSessionToAccountIndexAsync(Guid accountId, string sessionKey, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -159,7 +169,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task RemoveSessionFromAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken = default)
+    public async Task RemoveSessionFromAccountIndexAsync(Guid accountId, string sessionKey, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -203,7 +213,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task AddSessionIdReverseIndexAsync(string sessionId, string sessionKey, int ttlSeconds, CancellationToken cancellationToken = default)
+    public async Task AddSessionIdReverseIndexAsync(Guid sessionId, string sessionKey, int ttlSeconds, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -231,7 +241,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task RemoveSessionIdReverseIndexAsync(string sessionId, CancellationToken cancellationToken = default)
+    public async Task RemoveSessionIdReverseIndexAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -246,7 +256,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task<string?> FindSessionKeyBySessionIdAsync(string sessionId, CancellationToken cancellationToken = default)
+    public async Task<string?> FindSessionKeyBySessionIdAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -310,7 +320,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task<List<string>> GetSessionKeysForAccountAsync(string accountId, CancellationToken cancellationToken = default)
+    public async Task<List<string>> GetSessionKeysForAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         var indexKey = $"account-sessions:{accountId}";
         var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
@@ -320,7 +330,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task DeleteAccountSessionsIndexAsync(string accountId, CancellationToken cancellationToken = default)
+    public async Task DeleteAccountSessionsIndexAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         var indexKey = $"account-sessions:{accountId}";
         var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
@@ -333,7 +343,7 @@ public class SessionService : ISessionService
     {
         try
         {
-            var sessionKeys = await GetSessionKeysForAccountAsync(accountId.ToString(), cancellationToken);
+            var sessionKeys = await GetSessionKeysForAccountAsync(accountId, cancellationToken);
 
             if (sessionKeys.Count == 0)
             {
@@ -355,7 +365,7 @@ public class SessionService : ISessionService
                 }
             }
 
-            await DeleteAccountSessionsIndexAsync(accountId.ToString(), cancellationToken);
+            await DeleteAccountSessionsIndexAsync(accountId, cancellationToken);
 
             _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 
@@ -381,12 +391,19 @@ public class SessionService : ISessionService
     {
         try
         {
+            // Session keys are stored as Guid.ToString("N") format - parse back to Guids
+            var sessionIdGuids = sessionIds
+                .Select(s => Guid.TryParse(s, out var g) ? g : (Guid?)null)
+                .Where(g => g.HasValue)
+                .Select(g => g!.Value)
+                .ToList();
+
             var eventModel = new SessionInvalidatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                SessionIds = sessionIds,
+                SessionIds = sessionIdGuids,
                 Reason = reason,
                 DisconnectClients = true
             };
@@ -410,7 +427,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task PublishSessionUpdatedEventAsync(Guid accountId, string sessionId, List<string> roles, List<string> authorizations, SessionUpdatedEventReason reason, CancellationToken cancellationToken = default)
+    public async Task PublishSessionUpdatedEventAsync(Guid accountId, Guid sessionId, List<string> roles, List<string> authorizations, SessionUpdatedEventReason reason, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -419,7 +436,7 @@ public class SessionService : ISessionService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Roles = roles,
                 Authorizations = authorizations,
                 Reason = reason

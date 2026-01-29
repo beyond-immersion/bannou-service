@@ -256,7 +256,7 @@ public sealed class SemanticAnalyzer
 
     private void ValidateEmitIntent(EmitIntentAction emit)
     {
-        var validChannels = new[] { "action", "locomotion", "attention", "stance" };
+        var validChannels = new[] { "action", "locomotion", "attention", "stance", "vocalization" };
         if (!validChannels.Contains(emit.Channel.ToLowerInvariant()))
         {
             _warnings.Add(new SemanticWarning(

@@ -142,11 +142,49 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string etag,
         CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
+        var json = BannouJson.Serialize(value);
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        // Check current version
+        // Empty etag means "create new entry if it doesn't exist"
+        if (string.IsNullOrEmpty(etag))
+        {
+            // Check if key already exists
+            var exists = await _database.KeyExistsAsync(fullKey);
+            if (exists)
+            {
+                _logger.LogDebug("Key '{Key}' already exists in store '{Store}' but empty etag provided (concurrent create)",
+                    key, _keyPrefix);
+                return null;
+            }
+
+            // Use transaction to atomically create only if key doesn't exist
+            var createTransaction = _database.CreateTransaction();
+            createTransaction.AddCondition(Condition.KeyNotExists(fullKey));
+
+            _ = createTransaction.StringSetAsync(fullKey, json);
+            _ = createTransaction.HashSetAsync(metaKey, new HashEntry[]
+            {
+                new("version", 1),
+                new("created", now),
+                new("updated", now)
+            });
+
+            var createSuccess = await createTransaction.ExecuteAsync();
+            if (createSuccess)
+            {
+                _logger.LogDebug("Created new key '{Key}' in store '{Store}'", key, _keyPrefix);
+                return "1";
+            }
+            else
+            {
+                _logger.LogDebug("Concurrent create conflict for key '{Key}' in store '{Store}'", key, _keyPrefix);
+                return null;
+            }
+        }
+
+        // Non-empty etag means "update existing entry with matching version"
         var currentVersion = await _database.HashGetAsync(metaKey, "version");
         if (currentVersion.ToString() != etag)
         {
@@ -156,24 +194,20 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         }
 
         // Perform optimistic update
-        var json = BannouJson.Serialize(value);
         var transaction = _database.CreateTransaction();
-
-        // Add condition for optimistic concurrency
         transaction.AddCondition(Condition.HashEqual(metaKey, "version", etag));
 
         _ = transaction.StringSetAsync(fullKey, json);
         _ = transaction.HashIncrementAsync(metaKey, "version", 1);
         _ = transaction.HashSetAsync(metaKey, new HashEntry[]
         {
-            new("updated", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            new("updated", now)
         });
 
         var success = await transaction.ExecuteAsync();
 
         if (success)
         {
-            // New version is original + 1
             var newVersion = long.Parse(etag) + 1;
             _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _keyPrefix);
             return newVersion.ToString();

@@ -3,13 +3,13 @@ info:
   title: Bannou Game Service API
   description: |
     Registry service for game services that users can subscribe to.
-    Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
+    Provides a minimal registry of available services (games/applications).
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
@@ -59,8 +59,8 @@ paths:
         : {\n                \"serviceId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"description\": \"Unique identifier for the service\"\n                },\n      \
         \          \"stubName\": {\n                    \"type\": \"string\",\n                    \"description\": \"URL-safe
-        identifier (e.g., \\\"arcadia\\\")\"\n                },\n                \"displayName\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"Human-readable name (e.g., \\\"Arcadia Online\\\"\
+        identifier (e.g., \\\"my-game\\\")\"\n                },\n                \"displayName\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Human-readable name (e.g., \\\"My Game Online\\\"\
         )\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n         \
         \           \"nullable\": true,\n                    \"description\": \"Optional description\"\n                },\n\
         \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
@@ -114,9 +114,9 @@ paths:
         ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"serviceId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique identifier for the service\"\n                },\n                \"stubName\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"URL-safe identifier (e.g., \\\"arcadia\\\")\"\n  \
+        \ \"type\": \"string\",\n                    \"description\": \"URL-safe identifier (e.g., \\\"my-game\\\")\"\n  \
         \              },\n                \"displayName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Human-readable name (e.g., \\\"Arcadia Online\\\")\"\n                },\n              \
+        \     \"description\": \"Human-readable name (e.g., \\\"My Game Online\\\")\"\n                },\n              \
         \  \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Optional description\"\n                },\n                \"isActive\": {\n  \
         \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the service is currently
@@ -161,10 +161,10 @@ paths:
         \              \"stubName\",\n                \"displayName\"\n            ],\n            \"properties\": {\n   \
         \             \"stubName\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\"\
         ,\n                    \"minLength\": 2,\n                    \"maxLength\": 50,\n                    \"description\"\
-        : \"URL-safe identifier for the service (e.g., \\\"arcadia\\\", \\\"fantasia\\\")\"\n                },\n        \
-        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n  \
-        \                  \"maxLength\": 100,\n                    \"description\": \"Human-readable name for the service
-        (e.g., \\\"Arcadia Online\\\")\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"URL-safe identifier for the service (e.g., \\\"my-game\\\", \\\"my-other-game\\\")\"\n                },\n   \
+        \             \"displayName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Human-readable name for the service
+        (e.g., \\\"My Game Online\\\")\"\n                },\n                \"description\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n                \
         \    \"description\": \"Optional description of the service\"\n                },\n                \"isActive\": {\n\
         \                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
@@ -176,9 +176,9 @@ paths:
         ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"serviceId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique identifier for the service\"\n                },\n                \"stubName\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"URL-safe identifier (e.g., \\\"arcadia\\\")\"\n  \
+        \ \"type\": \"string\",\n                    \"description\": \"URL-safe identifier (e.g., \\\"my-game\\\")\"\n  \
         \              },\n                \"displayName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Human-readable name (e.g., \\\"Arcadia Online\\\")\"\n                },\n              \
+        \     \"description\": \"Human-readable name (e.g., \\\"My Game Online\\\")\"\n                },\n              \
         \  \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Optional description\"\n                },\n                \"isActive\": {\n  \
         \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the service is currently
@@ -236,9 +236,9 @@ paths:
         ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"serviceId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique identifier for the service\"\n                },\n                \"stubName\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"URL-safe identifier (e.g., \\\"arcadia\\\")\"\n  \
+        \ \"type\": \"string\",\n                    \"description\": \"URL-safe identifier (e.g., \\\"my-game\\\")\"\n  \
         \              },\n                \"displayName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Human-readable name (e.g., \\\"Arcadia Online\\\")\"\n                },\n              \
+        \     \"description\": \"Human-readable name (e.g., \\\"My Game Online\\\")\"\n                },\n              \
         \  \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Optional description\"\n                },\n                \"isActive\": {\n  \
         \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the service is currently
@@ -323,12 +323,12 @@ components:
           pattern: '^[a-z0-9-]+$'
           minLength: 2
           maxLength: 50
-          description: URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+          description: URL-safe identifier for the service (e.g., "my-game", "my-other-game")
         displayName:
           type: string
           minLength: 1
           maxLength: 100
-          description: Human-readable name for the service (e.g., "Arcadia Online")
+          description: Human-readable name for the service (e.g., "My Game Online")
         description:
           type: string
           nullable: true
@@ -395,10 +395,10 @@ components:
           description: Unique identifier for the service
         stubName:
           type: string
-          description: URL-safe identifier (e.g., "arcadia")
+          description: URL-safe identifier (e.g., "my-game")
         displayName:
           type: string
-          description: Human-readable name (e.g., "Arcadia Online")
+          description: Human-readable name (e.g., "My Game Online")
         description:
           type: string
           nullable: true

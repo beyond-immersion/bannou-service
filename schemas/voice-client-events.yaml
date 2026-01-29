@@ -12,7 +12,7 @@ info:
     **Event Delivery**: Events are published to the session-specific RabbitMQ
     channel (CONNECT_SESSION_{sessionId}) and delivered to the client via WebSocket.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
@@ -59,12 +59,11 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: Associated game session ID
         tier:
-          type: string
-          enum: [p2p, scaled]
+          $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
           description: Current voice tier
         codec:
-          type: string
-          enum: [opus, g711, g722]
+          allOf:
+          - $ref: 'voice-api.yaml#/components/schemas/VoiceCodec'
           nullable: true  # NRT: Optional property MUST be nullable
           description: Audio codec to use
         peers:
@@ -143,7 +142,8 @@ components:
           description: Voice room ID
         peerSessionId:
           type: string
-          description: WebSocket session ID of the peer who left (ephemeral identifier)
+          format: uuid
+          description: WebSocket session ID of the peer who left
         displayName:
           type: string
           nullable: true
@@ -212,13 +212,12 @@ components:
           format: uuid
           description: Voice room ID
         previousTier:
-          type: string
-          default: p2p
+          allOf:
+            - $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
           nullable: true  # NRT: Optional property MUST be nullable
           description: Previous tier (always p2p for upgrade events)
         newTier:
-          type: string
-          default: scaled
+          $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
           description: New tier after upgrade (always scaled for upgrade events)
         rtpServerUri:
           type: string
@@ -278,7 +277,8 @@ components:
       properties:
         peerSessionId:
           type: string
-          description: WebSocket session ID for this peer (ephemeral identifier)
+          format: uuid
+          description: WebSocket session ID for this peer
         displayName:
           type: string
           nullable: true

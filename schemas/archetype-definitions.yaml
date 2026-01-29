@@ -6,7 +6,8 @@
 # Logical channels are semantic (Combat, Expression) and map to physical
 # bytecode output slots (Action, Locomotion, etc.).
 #
-# FOUNDATION TENETS: Schema-first, data-driven archetype definitions.
+# Schema Rules: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+# modifying this schema.
 # =============================================================================
 
 # -----------------------------------------------------------------------------

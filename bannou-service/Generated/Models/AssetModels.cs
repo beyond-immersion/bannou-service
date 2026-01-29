@@ -63,29 +63,6 @@ public enum AssetType
 #pragma warning restore CS1591
 
 /// <summary>
-/// Game realm the asset belongs to
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Realm
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"omega")]
-    Omega = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
-    Arcadia = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"fantasia")]
-    Fantasia = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"shared")]
-    Shared = 3,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Asset processing pipeline status
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -390,8 +367,7 @@ public partial class AssetMetadataInput
     /// Game realm the asset belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Searchable tags for the asset
@@ -461,8 +437,7 @@ public partial class AssetMetadata
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Searchable tags for the asset
@@ -779,8 +754,7 @@ public partial class AssetSearchRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// MIME content type filter (null to skip content type filtering)
@@ -856,7 +830,7 @@ public partial class CreateBundleRequest
     public string Owner { get; set; } = default!;
 
     /// <summary>
-    /// Unique bundle identifier
+    /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -875,8 +849,7 @@ public partial class CreateBundleRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm? Realm { get; set; } = default!;
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
     /// List of asset IDs to include in the bundle
@@ -909,7 +882,7 @@ public partial class CreateBundleResponse
 {
 
     /// <summary>
-    /// Unique bundle identifier
+    /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -941,7 +914,7 @@ public partial class GetBundleRequest
 {
 
     /// <summary>
-    /// Bundle identifier to retrieve
+    /// Human-readable bundle identifier to retrieve
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -965,7 +938,7 @@ public partial class BundleWithDownloadUrl
 {
 
     /// <summary>
-    /// Unique bundle identifier
+    /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1073,7 +1046,7 @@ public partial class BundleManifestPreview
 {
 
     /// <summary>
-    /// Bundle identifier from the manifest
+    /// Human-readable bundle identifier from the manifest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1198,7 +1171,7 @@ public partial class CreateMetabundleRequest
 {
 
     /// <summary>
-    /// Unique identifier for the new metabundle
+    /// Human-readable identifier for the new metabundle (e.g., "game-assets-v1")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1206,8 +1179,8 @@ public partial class CreateMetabundleRequest
     public string MetabundleId { get; set; } = default!;
 
     /// <summary>
-    /// Source bundle IDs to pull assets from. Can cherry-pick specific
-    /// <br/>assets using assetFilter, or include all if assetFilter is null.
+    /// Human-readable source bundle IDs (e.g., "synty/polygon-adventure") to pull assets from.
+    /// <br/>Can cherry-pick specific assets using assetFilter, or include all if assetFilter is null.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
@@ -1245,8 +1218,7 @@ public partial class CreateMetabundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Human-readable description
@@ -1282,7 +1254,7 @@ public partial class CreateMetabundleResponse
 {
 
     /// <summary>
-    /// Metabundle identifier
+    /// Human-readable metabundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1385,7 +1357,7 @@ public partial class GetJobStatusResponse
     public System.Guid JobId { get; set; } = default!;
 
     /// <summary>
-    /// Metabundle identifier being created
+    /// Human-readable metabundle identifier being created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1552,8 +1524,7 @@ public partial class ResolveBundlesRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Prefer metabundles when coverage is equal
@@ -1622,7 +1593,7 @@ public partial class ResolvedBundle
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1781,8 +1752,7 @@ public partial class QueryBundlesByAssetRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Filter by bundle type (optional, null for all types)
@@ -1856,7 +1826,7 @@ public partial class BundleSummary
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1898,8 +1868,7 @@ public partial class BundleSummary
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// When the bundle was created
@@ -2017,7 +1986,7 @@ public partial class BundleInfo
 {
 
     /// <summary>
-    /// Unique bundle identifier
+    /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2071,8 +2040,7 @@ public partial class BundleInfo
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Key-value tags for categorization and filtering
@@ -2131,7 +2099,7 @@ public partial class UpdateBundleRequest
 {
 
     /// <summary>
-    /// Bundle identifier to update
+    /// Human-readable bundle identifier to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2184,7 +2152,7 @@ public partial class UpdateBundleResponse
 {
 
     /// <summary>
-    /// Updated bundle identifier
+    /// Human-readable bundle identifier that was updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2227,7 +2195,7 @@ public partial class DeleteBundleRequest
 {
 
     /// <summary>
-    /// Bundle identifier to delete
+    /// Human-readable bundle identifier to delete
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2256,7 +2224,7 @@ public partial class DeleteBundleResponse
 {
 
     /// <summary>
-    /// Deleted bundle identifier
+    /// Human-readable bundle identifier that was deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2296,7 +2264,7 @@ public partial class RestoreBundleRequest
 {
 
     /// <summary>
-    /// Bundle identifier to restore
+    /// Human-readable bundle identifier to restore
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2319,7 +2287,7 @@ public partial class RestoreBundleResponse
 {
 
     /// <summary>
-    /// Restored bundle identifier
+    /// Human-readable bundle identifier that was restored
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2410,8 +2378,7 @@ public partial class QueryBundlesRequest
     /// Filter by realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm? Realm { get; set; } = default!;
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
     /// Filter by bundle type (source or metabundle)
@@ -2497,7 +2464,7 @@ public partial class ListBundleVersionsRequest
 {
 
     /// <summary>
-    /// Bundle identifier to get history for
+    /// Human-readable bundle identifier to get history for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2526,7 +2493,7 @@ public partial class ListBundleVersionsResponse
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2701,7 +2668,7 @@ public enum DeleteBundleResponseStatus
     Deleted = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"permanently_deleted")]
-    Permanently_deleted = 1,
+    PermanentlyDeleted = 1,
 
 }
 #pragma warning restore CS1591
@@ -2712,10 +2679,10 @@ public enum QueryBundlesRequestSortField
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
-    Created_at = 0,
+    CreatedAt = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
-    Updated_at = 1,
+    UpdatedAt = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"name")]
     Name = 2,

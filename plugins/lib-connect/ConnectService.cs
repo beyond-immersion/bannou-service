@@ -44,6 +44,7 @@ public partial class ConnectService : IConnectService
     private readonly IMessageBus _messageBus;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceAppMappingResolver _appMappingResolver;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly ISessionManager _sessionManager;
@@ -57,6 +58,7 @@ public partial class ConnectService : IConnectService
 
     // Pending RPCs awaiting client responses (MessageId -> RPC info for response forwarding)
     private readonly ConcurrentDictionary<ulong, PendingRPCInfo> _pendingRPCs = new();
+    private Timer? _pendingRPCCleanupTimer;
 
     /// <summary>
     /// Prefix for session-specific queue routing keys.
@@ -76,11 +78,11 @@ public partial class ConnectService : IConnectService
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
-    private readonly string _instanceId;
+    private readonly Guid _instanceId;
 
     // Connection mode configuration
-    private readonly string _connectionMode;
-    private readonly string _internalAuthMode;
+    private readonly ConnectionMode _connectionMode;
+    private readonly InternalAuthMode _internalAuthMode;
     private readonly string? _internalServiceToken;
 
     public ConnectService(
@@ -90,6 +92,7 @@ public partial class ConnectService : IConnectService
         IMessageSubscriber messageSubscriber,
         IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
+        IServiceScopeFactory serviceScopeFactory,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
@@ -103,6 +106,7 @@ public partial class ConnectService : IConnectService
         _messageSubscriber = messageSubscriber;
         _httpClientFactory = httpClientFactory;
         _appMappingResolver = appMappingResolver;
+        _serviceScopeFactory = serviceScopeFactory;
         _configuration = configuration;
         _logger = logger;
         _loggerFactory = loggerFactory;
@@ -110,7 +114,11 @@ public partial class ConnectService : IConnectService
         _manifestBuilder = manifestBuilder;
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
-        _connectionManager = new WebSocketConnectionManager();
+        _connectionManager = new WebSocketConnectionManager(
+            configuration.ConnectionShutdownTimeoutSeconds,
+            configuration.ConnectionCleanupIntervalSeconds,
+            configuration.InactiveConnectionTimeoutMinutes,
+            _logger);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly
@@ -122,21 +130,21 @@ public partial class ConnectService : IConnectService
         _serverSalt = configuration.ServerSalt;
 
         // Generate unique instance ID for distributed deployment
-        _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
+        _instanceId = Guid.NewGuid();
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
 
         // Connection mode configuration
-        _connectionMode = configuration.ConnectionMode ?? "external";
-        _internalAuthMode = configuration.InternalAuthMode ?? "service-token";
+        _connectionMode = configuration.ConnectionMode;
+        _internalAuthMode = configuration.InternalAuthMode;
         _internalServiceToken = string.IsNullOrEmpty(configuration.InternalServiceToken)
             ? null
             : configuration.InternalServiceToken;
 
         // Validate Internal mode configuration
-        if (_connectionMode == "internal" &&
-            _internalAuthMode == "service-token" &&
+        if (_connectionMode == ConnectionMode.Internal &&
+            _internalAuthMode == InternalAuthMode.ServiceToken &&
             string.IsNullOrEmpty(_internalServiceToken))
         {
             throw new InvalidOperationException(
@@ -162,10 +170,11 @@ public partial class ConnectService : IConnectService
 
             // Validate session has access to this API via local capability mappings
             // Session capabilities are pushed via SessionCapabilitiesEvent from Permission service
-            var endpointKey = $"{body.TargetService}:{body.Method}:{body.TargetEndpoint}";
+            // Key format: "serviceName:/path" (no HTTP method in key - all WebSocket endpoints are POST)
+            var endpointKey = $"{body.TargetService}:{body.TargetEndpoint}";
             var hasAccess = false;
 
-            if (_sessionServiceMappings.TryGetValue(body.SessionId, out var sessionMappings))
+            if (_sessionServiceMappings.TryGetValue(body.SessionId.ToString(), out var sessionMappings))
             {
                 hasAccess = sessionMappings.ContainsKey(endpointKey);
             }
@@ -312,7 +321,7 @@ public partial class ConnectService : IConnectService
                 body.SessionId, body.ServiceFilter ?? "(none)");
 
             // Look up the connection by session ID
-            var connection = _connectionManager.GetConnection(body.SessionId);
+            var connection = _connectionManager.GetConnection(body.SessionId.ToString());
             if (connection == null)
             {
                 _logger.LogWarning("No active WebSocket connection found for session {SessionId}", body.SessionId);
@@ -417,9 +426,9 @@ public partial class ConnectService : IConnectService
         try
         {
             // Internal mode authentication - bypass JWT validation
-            if (_connectionMode == "internal")
+            if (_connectionMode == ConnectionMode.Internal)
             {
-                if (_internalAuthMode == "network-trust")
+                if (_internalAuthMode == InternalAuthMode.NetworkTrust)
                 {
                     // Network trust: Accept connection without authentication
                     var sessionId = Guid.NewGuid().ToString();
@@ -427,7 +436,7 @@ public partial class ConnectService : IConnectService
                     return (sessionId, null, new List<string> { "internal" }, null, false);
                 }
 
-                if (_internalAuthMode == "service-token")
+                if (_internalAuthMode == InternalAuthMode.ServiceToken)
                 {
                     // Service token: Validate X-Service-Token header
                     if (string.IsNullOrEmpty(serviceTokenHeader))
@@ -523,10 +532,9 @@ public partial class ConnectService : IConnectService
                     {
                         _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
                         // Return stored roles and authorizations from reconnection state
-                        // Parse AccountId from string back to Guid (stored as string for Redis serialization)
+                        // AccountId is now Guid? type, no parsing needed
                         // Mark as reconnection so services can re-publish shortcuts
-                        Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
-                        return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations, true);
+                        return (sessionId, restoredState.AccountId, restoredState.UserRoles, restoredState.Authorizations, true);
                     }
                 }
 
@@ -588,8 +596,18 @@ public partial class ConnectService : IConnectService
         // Create connection state with service mappings from discovery
         var connectionState = new ConnectionState(sessionId);
 
+        // Check connection limit before accepting
+        if (_connectionManager.ConnectionCount >= _configuration.MaxConcurrentConnections)
+        {
+            _logger.LogWarning("Maximum concurrent connections ({MaxConnections}) reached, rejecting session {SessionId}",
+                _configuration.MaxConcurrentConnections, sessionId);
+            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation,
+                "Maximum connections exceeded", cancellationToken);
+            return;
+        }
+
         // INTERNAL MODE: Skip all capability initialization - just peer routing
-        if (_connectionMode == "internal")
+        if (_connectionMode == ConnectionMode.Internal)
         {
             // Add connection to manager (enables peer routing via PeerGuid)
             _connectionManager.AddConnection(sessionId, webSocket, connectionState);
@@ -651,7 +669,7 @@ public partial class ConnectService : IConnectService
         // Add connection to manager
         _connectionManager.AddConnection(sessionId, webSocket, connectionState);
 
-        var buffer = new byte[65536]; // Larger buffer for binary protocol
+        var buffer = new byte[_configuration.BufferSize]; // Configurable buffer for binary protocol
 
         try
         {
@@ -663,8 +681,8 @@ public partial class ConnectService : IConnectService
             // Create initial connection state in Redis for reconnection support
             var connectionStateData = new ConnectionStateData
             {
-                SessionId = sessionId,
-                AccountId = accountId?.ToString(),
+                SessionId = Guid.Parse(sessionId),
+                AccountId = accountId,
                 ConnectedAt = DateTimeOffset.UtcNow,
                 LastActivity = DateTimeOffset.UtcNow,
                 UserRoles = userRoles?.ToList(),
@@ -706,8 +724,7 @@ public partial class ConnectService : IConnectService
                     AccountId = accountId ?? Guid.Empty,
                     Roles = userRoles?.ToList(),
                     Authorizations = authorizations?.ToList(),
-                    ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
-                        ? instanceGuid : (Guid?)null,
+                    ConnectInstanceId = _instanceId,
                     PeerGuid = connectionState.PeerGuid
                 };
                 await _messageBus.TryPublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
@@ -771,9 +788,9 @@ public partial class ConnectService : IConnectService
 
                 connectionState.UpdateActivity();
 
-                // Periodic heartbeat update (every 30 seconds)
+                // Periodic heartbeat update (configurable interval)
                 if (_sessionManager != null &&
-                    (DateTimeOffset.UtcNow - connectionState.LastActivity).TotalSeconds >= 30)
+                    (DateTimeOffset.UtcNow - connectionState.LastActivity).TotalSeconds >= _configuration.HeartbeatIntervalSeconds)
                 {
                     await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
                 }
@@ -974,10 +991,12 @@ public partial class ConnectService : IConnectService
         int messageLength,
         CancellationToken cancellationToken)
     {
+        BinaryMessage? parsedMessage = null;
         try
         {
             // Parse binary message using protocol class
             var message = BinaryMessage.Parse(buffer, messageLength);
+            parsedMessage = message;
 
             _logger.LogDebug("Binary message from session {SessionId}: {Message}",
                 sessionId, message.ToString());
@@ -1031,7 +1050,7 @@ public partial class ConnectService : IConnectService
             }
 
             // Check rate limiting
-            var rateLimitResult = MessageRouter.CheckRateLimit(connectionState);
+            var rateLimitResult = MessageRouter.CheckRateLimit(connectionState, _configuration.MaxMessagesPerMinute, _configuration.RateLimitWindowMinutes);
             if (!rateLimitResult.IsAllowed)
             {
                 _logger.LogWarning("Rate limit exceeded for session {SessionId}", sessionId);
@@ -1079,13 +1098,22 @@ public partial class ConnectService : IConnectService
             }
             else if (routeInfo.RouteType == RouteType.Client)
             {
+                if (!_configuration.EnableClientToClientRouting)
+                {
+                    _logger.LogWarning("Client-to-client routing disabled, rejecting P2P message from session {SessionId}", sessionId);
+                    var errorResponse = MessageRouter.CreateErrorResponse(
+                        message, ResponseCodes.BroadcastNotAllowed, "Client-to-client routing is disabled");
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
                 await RouteToClientAsync(message, routeInfo, sessionId, cancellationToken);
             }
             else if (routeInfo.RouteType == RouteType.Broadcast)
             {
                 // Broadcast: Send to all connected peers (except sender)
                 // Mode enforcement: External mode rejects broadcast with BroadcastNotAllowed
-                if (_connectionMode == "external")
+                if (_connectionMode == ConnectionMode.External)
                 {
                     _logger.LogWarning("Broadcast rejected in External mode for session {SessionId}", sessionId);
                     var errorResponse = MessageRouter.CreateErrorResponse(
@@ -1103,27 +1131,27 @@ public partial class ConnectService : IConnectService
             _logger.LogError(ex, "Error handling binary message from session {SessionId}", sessionId);
             await PublishErrorEventAsync("HandleBinaryMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
 
-            // Send generic error response if we can parse the message
-            try
+            // Send error response using already-parsed message (avoids double-parse)
+            if (parsedMessage.HasValue)
             {
-                var message = BinaryMessage.Parse(buffer, messageLength);
-                var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.RequestError, "Internal server error");
+                try
+                {
+                    var errorResponse = MessageRouter.CreateErrorResponse(
+                        parsedMessage.Value, ResponseCodes.RequestError, "Internal server error");
 
-                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
-            }
-            catch (Exception parseEx)
-            {
-                // If we can't even parse the message or send error response, log and continue
-                // This is a last resort - the outer exception handler already logged the original error
-                _logger.LogError(parseEx, "Failed to send error response to session {SessionId} - message may be corrupted", sessionId);
-                _ = PublishErrorEventAsync("HandleBinaryMessage", parseEx.GetType().Name, "Failed to send error response - message may be corrupted", details: new { SessionId = sessionId });
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                }
+                catch (Exception sendEx)
+                {
+                    _logger.LogError(sendEx, "Failed to send error response to session {SessionId}", sessionId);
+                }
             }
         }
     }
 
     /// <summary>
     /// Routes a message to a Bannou service and handles the response.
+    /// Uses ServiceNavigator.ExecuteRawApiAsync for unified service invocation.
     /// ServiceName format: "servicename:METHOD:/path" (e.g., "orchestrator:GET:/orchestrator/health/infrastructure")
     /// </summary>
     private async Task RouteToServiceAsync(
@@ -1141,151 +1169,122 @@ public partial class ConnectService : IConnectService
             // Add to pending messages for response correlation
             if (routeInfo.RequiresResponse)
             {
-                connectionState.AddPendingMessage(message.MessageId, endpointKey, DateTimeOffset.UtcNow);
+                connectionState.AddPendingMessage(message.MessageId, endpointKey, DateTimeOffset.UtcNow, _configuration.PendingMessageTimeoutSeconds);
             }
 
-            // Parse endpoint key to extract service name, HTTP method, and path
-            // Format: "servicename:METHOD:/path"
-            var parts = endpointKey.Split(':', 3);
-            if (parts.Length < 3)
+            // Parse endpoint key to extract service name, method, and path
+            // Format: "serviceName:/path" (defaults to POST) or "serviceName:METHOD:/path"
+            var firstColon = endpointKey.IndexOf(':');
+            if (firstColon <= 0)
             {
                 throw new InvalidOperationException($"Invalid endpoint key format: {endpointKey}");
             }
 
-            var serviceName = parts[0];
-            var httpMethod = parts[1].ToUpperInvariant();
-            var path = parts[2];
+            var serviceName = endpointKey[..firstColon];
+            var rest = endpointKey[(firstColon + 1)..];
 
-            // Use ServiceAppMappingResolver for dynamic app-id resolution (using just service name)
-            var appId = _appMappingResolver.GetAppIdForService(serviceName);
+            // Check if rest starts with an HTTP method (GET, POST, PUT, DELETE, PATCH)
+            // If so, parse the three-part format: serviceName:METHOD:/path
+            var httpMethod = "POST"; // Default for WebSocket endpoints
+            var path = rest;
 
-            _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path}) via app-id {AppId}",
-                serviceName, httpMethod, path, appId);
+            if (rest.StartsWith("GET:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "GET";
+                path = rest[4..]; // Skip "GET:"
+            }
+            else if (rest.StartsWith("POST:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "POST";
+                path = rest[5..]; // Skip "POST:"
+            }
+            else if (rest.StartsWith("PUT:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "PUT";
+                path = rest[4..]; // Skip "PUT:"
+            }
+            else if (rest.StartsWith("DELETE:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "DELETE";
+                path = rest[7..]; // Skip "DELETE:"
+            }
+            else if (rest.StartsWith("PATCH:", StringComparison.OrdinalIgnoreCase))
+            {
+                httpMethod = "PATCH";
+                path = rest[6..]; // Skip "PATCH:"
+            }
+
+            _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path})",
+                serviceName, httpMethod, path);
 
             // Get raw payload bytes - true zero-copy forwarding without UTF-16 string conversion
             // Connect service should NEVER parse the payload - zero-copy routing based on GUID only
             var payloadBytes = message.Payload;
 
-            // Make the actual Bannou service invocation via direct HTTP
-            string? responseJson = null;
-            HttpResponseMessage? httpResponse = null;
-
+            // Execute service invocation via ServiceNavigator
+            // ServiceNavigator is Scoped, so we create a scope for each request
+            RawApiResult? apiResult = null;
             try
             {
-                // Build mesh URL using direct path
-                var bannouHttpEndpoint = Program.Configuration.EffectiveHttpEndpoint;
-                var meshUrl = $"{bannouHttpEndpoint}/{path.TrimStart('/')}";
+                // Set session context for tracing (ServiceNavigator will read from ServiceRequestContext)
+                ServiceRequestContext.SessionId = sessionId;
 
-                // Create HTTP request with proper headers
-                using var request = new HttpRequestMessage(new HttpMethod(httpMethod), meshUrl);
+                await using var scope = _serviceScopeFactory.CreateAsyncScope();
+                var navigator = scope.ServiceProvider.GetRequiredService<IServiceNavigator>();
 
-                // Add bannou-app-id header for routing (like ServiceClientBase.PrepareRequest)
-                request.Headers.Add("bannou-app-id", appId);
-                // Use static cached Accept header to avoid per-request allocation
-                request.Headers.Accept.Add(s_jsonAcceptHeader);
+                _logger.LogDebug("WebSocket -> ServiceNavigator: {Method} {Path}",
+                    httpMethod, path);
 
-                // TRACING ONLY: Pass client's WebSocket session ID to downstream services for request correlation.
-                // WARNING: This header is ONLY for distributed tracing and logging correlation.
-                // DO NOT use this for ownership, attribution, or access control decisions.
-                // For ownership/audit trail, services must receive an explicit "owner" field in request bodies
-                // containing either a service name (for service-initiated operations) or an accountId
-                // (for user-initiated operations).
-                request.Headers.Add("X-Bannou-Session-Id", sessionId);
+                // Execute via ServiceNavigator - uses zero-copy byte forwarding
+                apiResult = await navigator.ExecuteRawApiAsync(
+                    serviceName,
+                    path,
+                    payloadBytes,
+                    new HttpMethod(httpMethod),
+                    cancellationToken);
 
-                // Use Warning level to ensure visibility even when app logging is set to Warning
-                _logger.LogWarning("WebSocket -> mesh HTTP: {Method} {Uri} AppId={AppId}",
-                    request.Method, meshUrl, appId);
-
-                // Pass raw payload bytes directly to service - true zero-copy forwarding
-                // Uses ByteArrayContent instead of StringContent to avoid UTF-8 → UTF-16 → UTF-8 conversion
-                // All WebSocket binary protocol endpoints should be POST with JSON body
-                if (payloadBytes.Length > 0 && httpMethod == "POST")
-                {
-                    var content = new ByteArrayContent(payloadBytes.ToArray());
-                    content.Headers.ContentType = s_jsonContentType;
-                    request.Content = content;
-                    _logger.LogDebug("Request body: {Length} bytes", payloadBytes.Length);
-                }
-
-                // Track timing for long-running requests
-                var requestStartTime = DateTimeOffset.UtcNow;
-                _logger.LogDebug("Sending HTTP request to mesh at {StartTime}", requestStartTime);
-
-                // Create HttpClient from factory (properly pooled, configured with 120s timeout)
-                using var httpClient = _httpClientFactory.CreateClient(HttpClientName);
-
-                // Invoke the service via direct HTTP (preserves full path)
-                httpResponse = await httpClient.SendAsync(request, cancellationToken);
-
-                var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
                 // Use Warning level for response timing to ensure visibility in CI
-                _logger.LogWarning("mesh HTTP response in {DurationMs}ms: {StatusCode}",
-                    requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
+                _logger.LogWarning("ServiceNavigator response in {DurationMs}ms: {StatusCode}",
+                    apiResult.Duration.TotalMilliseconds, apiResult.StatusCode);
 
-                // Read response content
-                responseJson = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-
-                // Log response details - use Info level for non-success to help debug routing issues
-                if (httpResponse.IsSuccessStatusCode)
+                // Log response details
+                if (apiResult.IsSuccess)
                 {
                     _logger.LogDebug("Service {Service} responded with status {Status}: {ResponsePreview}",
-                        serviceName, httpResponse.StatusCode,
-                        responseJson?.Substring(0, Math.Min(200, responseJson?.Length ?? 0)) ?? "(empty)");
+                        serviceName, apiResult.StatusCode,
+                        apiResult.ResponseBody?.Substring(0, Math.Min(200, apiResult.ResponseBody?.Length ?? 0)) ?? "(empty)");
+                }
+                else if (apiResult.ErrorMessage != null)
+                {
+                    // Transport-level error (timeout, connection refused, etc.)
+                    _logger.LogError("Service {Service} transport error: {Error}",
+                        serviceName, apiResult.ErrorMessage);
+                    await PublishErrorEventAsync("RouteToService", "transport_error", apiResult.ErrorMessage,
+                        dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = apiResult.StatusCode });
                 }
                 else
                 {
+                    // HTTP error response
                     _logger.LogWarning("Service {Service} returned non-success status {StatusCode}: {ResponsePreview}",
-                        serviceName, (int)httpResponse.StatusCode,
-                        responseJson?.Substring(0, Math.Min(500, responseJson?.Length ?? 0)) ?? "(empty body)");
+                        serviceName, apiResult.StatusCode,
+                        apiResult.ResponseBody?.Substring(0, Math.Min(500, apiResult.ResponseBody?.Length ?? 0)) ?? "(empty body)");
                 }
             }
-            catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
+            finally
             {
-                // HTTP client timeout reached (120 seconds)
-                _logger.LogError("mesh HTTP request timed out (120s) for {Service} {Method} {Path}",
-                    serviceName, httpMethod, path);
-                await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out (120s) for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
-            }
-            catch (TaskCanceledException tcEx)
-            {
-                // Either cancellation was requested or timeout without inner TimeoutException
-                var isTimeout = !cancellationToken.IsCancellationRequested;
-                if (isTimeout)
-                {
-                    _logger.LogError("mesh HTTP request timed out for {Service} {Method} {Path}",
-                        serviceName, httpMethod, path);
-                    await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
-                }
-                else
-                {
-                    _logger.LogWarning(tcEx, "mesh HTTP request cancelled for {Service} {Method} {Path}",
-                        serviceName, httpMethod, path);
-                }
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
-            }
-            catch (HttpRequestException httpEx)
-            {
-                _logger.LogWarning(httpEx, "HTTP request to mesh failed for {Service} {Method} {Path}",
-                    serviceName, httpMethod, path);
-                await PublishErrorEventAsync("RouteToService", "http_error", httpEx.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = (int?)httpEx.StatusCode });
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error invoking service {Service} {Method} {Path}",
-                    serviceName, httpMethod, path);
-                await PublishErrorEventAsync("RouteToService", ex.GetType().Name, ex.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path });
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
+                // Always clear context after request
+                ServiceRequestContext.SessionId = null;
+                ServiceRequestContext.CorrelationId = null;
             }
 
             // Send response back to WebSocket client
             if (routeInfo.RequiresResponse)
             {
-                var responseCode = MapHttpStatusToResponseCode(httpResponse?.StatusCode);
+                var responseCode = MapHttpStatusToResponseCode(apiResult?.StatusCode);
+                var responseJson = apiResult?.ResponseBody ?? "{}";
 
                 var responseMessage = BinaryMessage.CreateResponse(
-                    message, responseCode, Encoding.UTF8.GetBytes(responseJson ?? "{}"));
+                    message, responseCode, Encoding.UTF8.GetBytes(responseJson));
 
                 await _connectionManager.SendMessageAsync(sessionId, responseMessage, cancellationToken);
             }
@@ -1327,9 +1326,9 @@ public partial class ConnectService : IConnectService
                 "HandleMetaRequestAsync called with null ServiceName - caller must validate");
         }
 
-        // Parse endpoint key: "serviceName:METHOD:/path"
-        var parts = routeInfo.ServiceName.Split(':', 3);
-        if (parts.Length < 3)
+        // Parse endpoint key: "serviceName:/path"
+        var firstColon = routeInfo.ServiceName.IndexOf(':');
+        if (firstColon <= 0)
         {
             _logger.LogWarning("Invalid endpoint key format for meta request: {EndpointKey}", routeInfo.ServiceName);
             var errorResponse = BinaryMessage.CreateResponse(message, ResponseCodes.RequestError);
@@ -1337,9 +1336,9 @@ public partial class ConnectService : IConnectService
             return;
         }
 
-        var serviceName = parts[0];
-        var httpMethod = parts[1];
-        var originalPath = parts[2];
+        var serviceName = routeInfo.ServiceName[..firstColon];
+        var originalPath = routeInfo.ServiceName[(firstColon + 1)..];
+        const string httpMethod = "POST"; // All WebSocket-routed endpoints are POST
 
         // Determine meta type from Channel field
         var metaType = (MetaType)message.Channel;
@@ -1552,7 +1551,7 @@ public partial class ConnectService : IConnectService
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
-        var buffer = new byte[65536];
+        var buffer = new byte[_configuration.BufferSize];
 
         try
         {
@@ -1666,6 +1665,11 @@ public partial class ConnectService : IConnectService
         // Client event subscriptions are created dynamically per-session via lib-messaging
         // using SubscribeDynamicRawAsync when sessions connect
         _logger.LogInformation("Client event subscriptions will be created per-session via lib-messaging");
+
+        // Start periodic cleanup of expired pending RPCs to prevent memory leaks
+        _pendingRPCCleanupTimer = new Timer(CleanupExpiredPendingRPCs, null,
+            TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds),
+            TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds));
     }
 
     #endregion
@@ -1687,7 +1691,8 @@ public partial class ConnectService : IConnectService
                 eventData.EventType, eventData.SessionId);
 
             // Check if the session has an active WebSocket connection
-            if (HasConnection(eventData.SessionId))
+            var sessionIdStr = eventData.SessionId.ToString();
+            if (HasConnection(sessionIdStr))
             {
                 if (eventData.EventType == AuthEventType.Login)
                 {
@@ -1709,11 +1714,11 @@ public partial class ConnectService : IConnectService
                 else if (eventData.EventType == AuthEventType.TokenRefresh)
                 {
                     // Token refreshed - validate session still exists
-                    var sessionValid = await ValidateSessionAsync(eventData.SessionId);
+                    var sessionValid = await ValidateSessionAsync(sessionIdStr);
                     if (!sessionValid)
                     {
                         _logger.LogWarning("Session {SessionId} invalid after token refresh, disconnecting", eventData.SessionId);
-                        await DisconnectAsync(eventData.SessionId, "Session invalid");
+                        await DisconnectAsync(sessionIdStr, "Session invalid");
                     }
                 }
             }
@@ -1750,7 +1755,7 @@ public partial class ConnectService : IConnectService
                 {
                     EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    Reason = PermissionRecompileEventReason.Service_registered,
+                    Reason = PermissionRecompileEventReason.ServiceRegistered,
                     ServiceId = eventData.ServiceName,
                     Metadata = new Dictionary<string, object>
                     {
@@ -1853,14 +1858,21 @@ public partial class ConnectService : IConnectService
                 {
                     // Register pending RPC for response forwarding
                     var now = DateTimeOffset.UtcNow;
+
+                    // Warn if ServiceName is missing - indicates publisher failed to set required metadata
+                    if (string.IsNullOrEmpty(eventData.ServiceName))
+                    {
+                        _logger.LogWarning("RPC event {MessageId} missing ServiceName - publisher should include service metadata", eventData.MessageId);
+                    }
+
                     var pendingRPC = new PendingRPCInfo
                     {
-                        ClientSessionId = eventData.ClientId,
+                        ClientSessionId = Guid.Parse(eventData.ClientId),
                         ServiceName = eventData.ServiceName ?? "unknown",
                         ResponseChannel = eventData.ResponseChannel,
                         ServiceGuid = eventData.ServiceGuid,
                         SentAt = now,
-                        TimeoutAt = now.AddSeconds(eventData.TimeoutSeconds > 0 ? eventData.TimeoutSeconds : 30)
+                        TimeoutAt = now.AddSeconds(eventData.TimeoutSeconds > 0 ? eventData.TimeoutSeconds : _configuration.DefaultRpcTimeoutSeconds)
                     };
 
                     _pendingRPCs[(ulong)eventData.MessageId] = pendingRPC;
@@ -1928,6 +1940,32 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to forward RPC response to {ResponseChannel}", pendingRPC.ResponseChannel);
+        }
+    }
+
+    /// <summary>
+    /// Periodically removes expired pending RPCs to prevent memory leaks.
+    /// Called by _pendingRPCCleanupTimer every 30 seconds.
+    /// </summary>
+    private void CleanupExpiredPendingRPCs(object? state)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var expiredCount = 0;
+
+        foreach (var kvp in _pendingRPCs)
+        {
+            if (kvp.Value.TimeoutAt < now)
+            {
+                if (_pendingRPCs.TryRemove(kvp.Key, out _))
+                {
+                    expiredCount++;
+                }
+            }
+        }
+
+        if (expiredCount > 0)
+        {
+            _logger.LogInformation("Cleaned up {ExpiredCount} expired pending RPCs", expiredCount);
         }
     }
 
@@ -2264,32 +2302,29 @@ public partial class ConnectService : IConnectService
                 connectionState.GetAllShortcuts(),
                 expiredGuid => connectionState.RemoveShortcut(expiredGuid));
 
-            // Transform to WebSocket JSON format
+            // Transform to WebSocket JSON format using new ClientCapabilityEntry schema
             var availableApis = new List<object>();
 
             foreach (var api in apiEntries)
             {
                 availableApis.Add(new
                 {
-                    serviceGuid = api.ServiceGuid.ToString(),
-                    method = api.Method,
-                    path = api.Path,
-                    endpointKey = api.EndpointKey,
-                    // Informational only - not used for routing (routing uses serviceGuid)
-                    serviceName = api.ServiceName
+                    serviceId = api.ServiceGuid.ToString(),
+                    endpoint = api.Path,
+                    service = api.ServiceName,
+                    description = api.Description
                 });
             }
 
             // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
             foreach (var shortcut in shortcutEntries)
             {
-                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                // Shortcuts use new schema format with "shortcut" as service
                 availableApis.Add(new
                 {
-                    serviceGuid = shortcut.RouteGuid.ToString(),
-                    method = "SHORTCUT",
-                    path = shortcut.Name,
-                    endpointKey = $"SHORTCUT:{shortcut.Name}",
+                    serviceId = shortcut.RouteGuid.ToString(),
+                    endpoint = shortcut.Name,
+                    service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
@@ -2298,9 +2333,9 @@ public partial class ConnectService : IConnectService
             {
                 eventName = "connect.capability_manifest",
                 sessionId = sessionId,
-                availableAPIs = availableApis,
+                availableApis = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                timestamp = DateTimeOffset.UtcNow,
                 peerGuid = connectionState.PeerGuid.ToString()
             };
 
@@ -2362,11 +2397,12 @@ public partial class ConnectService : IConnectService
             foreach (var servicePermissions in permissions)
             {
                 var serviceName = servicePermissions.Key;
-                var methods = servicePermissions.Value;
+                var paths = servicePermissions.Value;
 
-                foreach (var method in methods)
+                foreach (var path in paths)
                 {
-                    var endpointKey = $"{serviceName}:{method}";
+                    // Key format: "serviceName:/path" (no HTTP method - all WebSocket endpoints are POST)
+                    var endpointKey = $"{serviceName}:{path}";
                     var guid = GuidGenerator.GenerateServiceGuid(endpointKey, sessionId, _serverSalt);
                     newMappings[endpointKey] = guid;
                 }
@@ -2376,12 +2412,12 @@ public partial class ConnectService : IConnectService
             connectionState.UpdateAllServiceMappings(newMappings);
 
             // Build and send updated capability manifest
-            // INTERNAL format: "serviceName:METHOD:/path" - used for server-side routing
-            // CLIENT format: "METHOD:/path" - exposed in capability manifest (no service name leak)
+            // INTERNAL format: "serviceName:/path" - used for server-side routing
+            // CLIENT format matches new ClientCapabilityEntry schema
             var availableApis = new List<object>();
             foreach (var mapping in newMappings)
             {
-                // Parse the internal endpoint key format
+                // Parse the internal endpoint key format: "serviceName:/path"
                 var endpointKey = mapping.Key;
                 var guid = mapping.Value;
 
@@ -2389,10 +2425,7 @@ public partial class ConnectService : IConnectService
                 if (firstColon <= 0) continue;
 
                 var serviceName = endpointKey[..firstColon];
-                var methodAndPath = endpointKey[(firstColon + 1)..];
-                var methodPathColon = methodAndPath.IndexOf(':');
-                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
-                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+                var path = endpointKey[(firstColon + 1)..];
 
                 // Skip endpoints with path templates - WebSocket requires POST with JSON body
                 if (path.Contains('{'))
@@ -2400,21 +2433,11 @@ public partial class ConnectService : IConnectService
                     continue;
                 }
 
-                // Only expose POST endpoints to WebSocket clients
-                // GET and other HTTP methods are not supported through WebSocket binary protocol
-                if (method != "POST")
-                {
-                    continue;
-                }
-
                 availableApis.Add(new
                 {
-                    serviceGuid = guid.ToString(),
-                    method = method,
-                    path = path,
-                    endpointKey = $"{method}:{path}",
-                    // Informational only - not used for routing (routing uses serviceGuid)
-                    serviceName = serviceName
+                    serviceId = guid.ToString(),
+                    endpoint = path,
+                    service = serviceName
                 });
             }
 
@@ -2428,13 +2451,12 @@ public partial class ConnectService : IConnectService
                     continue;
                 }
 
-                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                // Shortcuts use new schema format with "shortcut" as service
                 availableApis.Add(new
                 {
-                    serviceGuid = shortcut.RouteGuid.ToString(),
-                    method = "SHORTCUT",
-                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    serviceId = shortcut.RouteGuid.ToString(),
+                    endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
@@ -2446,14 +2468,14 @@ public partial class ConnectService : IConnectService
             {
                 ["eventName"] = "connect.capability_manifest",
                 ["sessionId"] = sessionId,
-                ["availableAPIs"] = availableApis,
+                ["availableApis"] = availableApis,
                 ["version"] = 1,
-                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["timestamp"] = DateTimeOffset.UtcNow,
                 ["reason"] = reason
             };
 
             // Include peerGuid only in relayed/internal modes where peer routing is supported
-            if (_connectionMode != "external")
+            if (_connectionMode != ConnectionMode.External)
             {
                 capabilityManifest["peerGuid"] = connectionState.PeerGuid.ToString();
             }
@@ -2548,12 +2570,12 @@ public partial class ConnectService : IConnectService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Connect service permissions... (starting)");
         try
         {
-            await ConnectPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await ConnectPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("Connect service permissions registered via event (complete)");
         }
         catch (Exception ex)
@@ -2851,37 +2873,46 @@ public partial class ConnectService : IConnectService
     {
         try
         {
+            // Check if ServiceMappings is populated - if empty, initial capabilities haven't arrived yet
+            // In that case, skip sending manifest now; the shortcut is already in connectionState
+            // and will be included when ProcessCapabilitiesAsync sends the full manifest
+            if (!connectionState.ServiceMappings.Any())
+            {
+                _logger.LogDebug(
+                    "Deferring shortcut manifest for session {SessionId} - awaiting initial capabilities",
+                    sessionId);
+                return;
+            }
+
             // Build the capability manifest with available APIs using helper
             var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings);
             var shortcutEntries = _manifestBuilder.BuildShortcutList(
                 connectionState.GetAllShortcuts(),
                 expiredGuid => connectionState.RemoveShortcut(expiredGuid));
 
-            // Transform to WebSocket JSON format
+            // Transform to WebSocket JSON format using new ClientCapabilityEntry schema
             var availableApis = new List<object>();
 
             foreach (var api in apiEntries)
             {
                 availableApis.Add(new
                 {
-                    serviceGuid = api.ServiceGuid.ToString(),
-                    method = api.Method,
-                    path = api.Path,
-                    endpointKey = api.EndpointKey,
-                    serviceName = api.ServiceName
+                    serviceId = api.ServiceGuid.ToString(),
+                    endpoint = api.Path,
+                    service = api.ServiceName,
+                    description = api.Description
                 });
             }
 
             // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
             foreach (var shortcut in shortcutEntries)
             {
-                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                // Shortcuts use new schema format with "shortcut" as service
                 availableApis.Add(new
                 {
-                    serviceGuid = shortcut.RouteGuid.ToString(),
-                    method = "SHORTCUT",
-                    path = shortcut.Name,
-                    endpointKey = $"SHORTCUT:{shortcut.Name}",
+                    serviceId = shortcut.RouteGuid.ToString(),
+                    endpoint = shortcut.Name,
+                    service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
@@ -2890,9 +2921,9 @@ public partial class ConnectService : IConnectService
             {
                 eventName = "connect.capability_manifest",
                 sessionId = sessionId,
-                availableAPIs = availableApis,
+                availableApis = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                timestamp = DateTimeOffset.UtcNow,
                 peerGuid = connectionState.PeerGuid.ToString()
             };
 
@@ -2972,6 +3003,28 @@ public partial class ConnectService : IConnectService
             System.Net.HttpStatusCode.Forbidden => ResponseCodes.Service_Unauthorized,
             System.Net.HttpStatusCode.NotFound => ResponseCodes.Service_NotFound,
             System.Net.HttpStatusCode.Conflict => ResponseCodes.Service_Conflict,
+            _ => ResponseCodes.Service_InternalServerError
+        };
+    }
+
+    /// <summary>
+    /// Maps HTTP status codes (as int) to WebSocket ResponseCodes.
+    /// Overload for use with RawApiResult.StatusCode.
+    /// </summary>
+    private static ResponseCodes MapHttpStatusToResponseCode(int? statusCode)
+    {
+        if (statusCode == null || statusCode == 0)
+        {
+            return ResponseCodes.Service_InternalServerError;
+        }
+
+        return statusCode.Value switch
+        {
+            200 or 201 or 202 or 204 => ResponseCodes.OK,
+            400 => ResponseCodes.Service_BadRequest,
+            401 or 403 => ResponseCodes.Service_Unauthorized,
+            404 => ResponseCodes.Service_NotFound,
+            409 => ResponseCodes.Service_Conflict,
             _ => ResponseCodes.Service_InternalServerError
         };
     }

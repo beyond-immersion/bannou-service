@@ -30,7 +30,7 @@ public sealed class LocalMeshStateManager : IMeshStateManager
         // Use the shared Program.ServiceGUID for consistent identification
         _localEndpoint = new MeshEndpoint
         {
-            InstanceId = Guid.Parse(Program.ServiceGUID),
+            InstanceId = Program.ServiceGUID,
             AppId = AppConstants.DEFAULT_APP_NAME,
             Host = "localhost",
             Port = 80,

@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: Character Personality Service Configuration
+  description: |
+    Configuration schema for Character Personality service.
+    Properties are bound to environment variables with CHARACTER_PERSONALITY_ prefix.
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Evolution Configuration
+    BaseEvolutionProbability:
+      type: number
+      description: Base chance for trait shift per evolution event (0.0-1.0)
+      default: 0.15
+      env: CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY
+    MaxTraitShift:
+      type: number
+      description: Maximum magnitude of trait change per evolution event
+      default: 0.1
+      env: CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT
+    MinTraitShift:
+      type: number
+      description: Minimum magnitude of trait change per evolution event
+      default: 0.02
+      env: CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT
+
+    # Batch and Concurrency Configuration
+    MaxBatchSize:
+      type: integer
+      description: Maximum number of characters allowed in batch operations
+      default: 100
+      env: CHARACTER_PERSONALITY_MAX_BATCH_SIZE
+    MaxConcurrencyRetries:
+      type: integer
+      description: Maximum retry attempts for optimistic concurrency conflicts
+      default: 3
+      env: CHARACTER_PERSONALITY_MAX_CONCURRENCY_RETRIES
+
+    # Combat Evolution Configuration
+    CombatStyleTransitionProbability:
+      type: number
+      description: Base probability for combat style transitions (0.0-1.0)
+      default: 0.3
+      env: CHARACTER_PERSONALITY_COMBAT_STYLE_TRANSITION_PROBABILITY
+    CombatDefeatStyleTransitionProbability:
+      type: number
+      description: Probability for combat style transitions after defeat (0.0-1.0)
+      default: 0.4
+      env: CHARACTER_PERSONALITY_COMBAT_DEFEAT_STYLE_TRANSITION_PROBABILITY
+    CombatVictoryBalancedTransitionProbability:
+      type: number
+      description: Probability for balanced style to become aggressive after victory (0.0-1.0)
+      default: 0.2
+      env: CHARACTER_PERSONALITY_COMBAT_VICTORY_BALANCED_TRANSITION_PROBABILITY
+    CombatRoleTransitionProbability:
+      type: number
+      description: Base probability for combat role transitions (0.0-1.0)
+      default: 0.4
+      env: CHARACTER_PERSONALITY_COMBAT_ROLE_TRANSITION_PROBABILITY
+    CombatDefensiveShiftProbability:
+      type: number
+      description: Probability for defensive shift after injury (0.0-1.0)
+      default: 0.5
+      env: CHARACTER_PERSONALITY_COMBAT_DEFENSIVE_SHIFT_PROBABILITY
+    CombatIntenseShiftMultiplier:
+      type: number
+      description: Multiplier for intense stat shifts (near-death, heavy defeat)
+      default: 1.5
+      env: CHARACTER_PERSONALITY_COMBAT_INTENSE_SHIFT_MULTIPLIER
+    CombatMildShiftMultiplier:
+      type: number
+      description: Multiplier for mild stat shifts (standard victories/defeats)
+      default: 0.5
+      env: CHARACTER_PERSONALITY_COMBAT_MILD_SHIFT_MULTIPLIER
+    CombatMildestShiftMultiplier:
+      type: number
+      description: Multiplier for mildest stat shifts (minor injuries)
+      default: 0.3
+      env: CHARACTER_PERSONALITY_COMBAT_MILDEST_SHIFT_MULTIPLIER

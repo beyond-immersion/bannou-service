@@ -46,9 +46,8 @@ public interface IOAuthProviderService
     /// <param name="provider">The OAuth provider.</param>
     /// <param name="userInfo">The user info from the provider.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <param name="providerOverride">Optional provider name override (e.g., "steam" instead of using enum).</param>
-    /// <returns>The linked account if successful, null otherwise.</returns>
-    Task<AccountResponse?> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken, string? providerOverride = null);
+    /// <returns>Tuple of (account, isNewAccount) - account is null on failure.</returns>
+    Task<(AccountResponse? Account, bool IsNewAccount)> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken);
 
     /// <summary>
     /// Generates the OAuth authorization URL for a provider.
@@ -78,6 +77,13 @@ public interface IOAuthProviderService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Mock Steam user info.</returns>
     Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cleans up all OAuth links for a deleted account using the reverse index.
+    /// </summary>
+    /// <param name="accountId">The account ID being deleted.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task CleanupOAuthLinksForAccountAsync(Guid accountId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Auth;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -48,7 +50,7 @@ public partial class SessionInvalidatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sessionIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> SessionIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<System.Guid> SessionIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// The reason why the session(s) were invalidated
@@ -127,7 +129,7 @@ public partial class SessionUpdatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
-    /// Current authorization strings (e.g., ["arcadia:authorized"])
+    /// Current authorization strings (e.g., ["my-game:authorized"])
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -340,12 +342,13 @@ public partial class AuthOAuthLoginSuccessfulEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// OAuth provider name (e.g., discord, google)
+    /// OAuth provider name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Provider { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Provider Provider { get; set; } = default!;
 
     /// <summary>
     /// User ID from the OAuth provider

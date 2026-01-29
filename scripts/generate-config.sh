@@ -45,7 +45,16 @@ import sys
 import re
 
 def to_pascal_case(name):
-    return ''.join(word.capitalize() for word in name.replace('-', '_').split('_'))
+    # If name is ALL_CAPS (with or without underscores), preserve it as-is
+    # This matches NSwag behavior which keeps JSON_PATCH, GZIP, BROTLI, etc.
+    if name.isupper() or (name.replace('_', '').isupper() and '_' in name):
+        return name
+    # If name has hyphens or underscores, split and capitalize each part
+    # Otherwise, just ensure first letter is uppercase (preserve existing casing)
+    if '-' in name or '_' in name:
+        return ''.join(word.capitalize() for word in name.replace('-', '_').split('_'))
+    else:
+        return name[0].upper() + name[1:] if name else name
 
 def to_property_name(name):
     # Convert environment variable style to property name
@@ -65,6 +74,24 @@ try:
     service_pascal = '$SERVICE_PASCAL'
     service_name = '$SERVICE_NAME'
 
+    # Check for existing API enums to avoid duplicates
+    # Look for enums in the corresponding API schema and generated models
+    api_schema_path = f'../schemas/{service_name}-api.yaml'
+    existing_api_enums = set()
+    try:
+        with open(api_schema_path, 'r') as api_f:
+            api_schema = yaml.safe_load(api_f)
+            # Extract enum names from components/schemas
+            if api_schema and 'components' in api_schema and 'schemas' in api_schema['components']:
+                for schema_name, schema_def in api_schema['components']['schemas'].items():
+                    if schema_def and schema_def.get('type') == 'string' and 'enum' in schema_def:
+                        existing_api_enums.add(schema_name)
+    except FileNotFoundError:
+        pass  # No API schema, no conflicts possible
+
+    # Track enum types to generate
+    enum_types = []
+
     # Extract configuration from x-service-configuration section
     config_properties = []
     if 'x-service-configuration' in schema:
@@ -79,27 +106,80 @@ try:
             prop_description = prop_info.get('description', f'{prop_name} configuration property')
             prop_env_var = prop_info.get('env', prop_name.upper())
             prop_nullable = prop_info.get('nullable', False)
+            prop_enum = prop_info.get('enum', None)
+            prop_ref = prop_info.get('\$ref', None)
 
-            # Convert type to C# type
-            csharp_type = {
-                'string': 'string',
-                'integer': 'int',
-                'number': 'double',
-                'boolean': 'bool',
-                'array': 'string[]'
-            }.get(prop_type, 'string')
+            # OpenAPI 3.0 range validation keywords (numeric)
+            prop_minimum = prop_info.get('minimum', None)
+            prop_maximum = prop_info.get('maximum', None)
+            prop_exclusive_min = prop_info.get('exclusiveMinimum', False)
+            prop_exclusive_max = prop_info.get('exclusiveMaximum', False)
+
+            # OpenAPI 3.0 string length validation keywords
+            prop_min_length = prop_info.get('minLength', None)
+            prop_max_length = prop_info.get('maxLength', None)
+
+            # OpenAPI 3.0 pattern validation keyword
+            prop_pattern = prop_info.get('pattern', None)
+
+            # OpenAPI 3.0 multipleOf validation keyword
+            prop_multiple_of = prop_info.get('multipleOf', None)
+
+            # Check if this is a $ref to an external enum type
+            if prop_ref:
+                # Extract type name from $ref path (e.g., 'contract-api.yaml#/components/schemas/EnforcementMode' -> 'EnforcementMode')
+                ref_type_name = prop_ref.split('/')[-1]
+                csharp_type = ref_type_name
+                # Mark as enum for default value handling
+                prop_enum = True  # Signal that this is an enum type
+                print(f'# NOTE: Using \$ref enum {ref_type_name} from {prop_ref}', file=sys.stderr)
+            # Check if this is an inline enum property
+            elif prop_enum and prop_type == 'string':
+                # Generate enum type name from property name
+                enum_type_name = to_pascal_case(prop_name)
+                # Check if this enum already exists in API schema (avoid duplicates)
+                if enum_type_name in existing_api_enums:
+                    # API schema already defines this enum - use it directly (same namespace)
+                    csharp_type = enum_type_name
+                    print(f'# NOTE: Reusing API enum {enum_type_name} (already in same namespace)', file=sys.stderr)
+                else:
+                    # Store enum for generation
+                    enum_types.append({
+                        'name': enum_type_name,
+                        'values': prop_enum,
+                        'description': prop_description
+                    })
+                    csharp_type = enum_type_name
+            else:
+                # Convert type to C# type
+                csharp_type = {
+                    'string': 'string',
+                    'integer': 'int',
+                    'number': 'double',
+                    'boolean': 'bool',
+                    'array': 'string[]'
+                }.get(prop_type, 'string')
 
             # Handle nullable types and defaults for properties
             # For strings: add ? suffix if explicitly nullable in schema
+            # For enums: no suffix if default provided, ? if no default
             # For other types: add ? suffix if no default provided
+            is_enum = prop_enum is not None
             if csharp_type == 'string':
                 nullable_suffix = '?' if prop_nullable else ''
+            elif is_enum:
+                nullable_suffix = '' if prop_default is not None else '?'
             else:
                 nullable_suffix = '?' if prop_default is None else ''
             default_value = ''
 
             if prop_default is not None:
-                if csharp_type == 'string':
+                if is_enum:
+                    # Enum default: convert value to PascalCase enum member name
+                    # e.g., 'event_only' -> 'EventOnly'
+                    enum_value = to_pascal_case(str(prop_default))
+                    default_value = f' = {csharp_type}.{enum_value};'
+                elif csharp_type == 'string':
                     default_value = f' = \"{prop_default}\";'
                 elif csharp_type == 'bool':
                     default_value = f' = {str(prop_default).lower()};'
@@ -128,7 +208,15 @@ try:
                 'default': default_value,
                 'description': prop_description,
                 'env_var': prop_env_var,
-                'is_required': is_required
+                'is_required': is_required,
+                'minimum': prop_minimum,
+                'maximum': prop_maximum,
+                'exclusive_min': prop_exclusive_min,
+                'exclusive_max': prop_exclusive_max,
+                'min_length': prop_min_length,
+                'max_length': prop_max_length,
+                'pattern': prop_pattern,
+                'multiple_of': prop_multiple_of
             })
 
     # Generate the configuration class
@@ -136,7 +224,7 @@ try:
 // <auto-generated>
 //     Generated from OpenAPI schema: schemas/{service_name}-configuration.yaml
 //
-//     WARNING: DO NOT EDIT THIS FILE (TENETS T1/T2)
+//     WARNING: DO NOT EDIT THIS FILE (FOUNDATION TENETS)
 //     This file is auto-generated from configuration schema.
 //     Any manual changes will be overwritten on next generation.
 //
@@ -144,12 +232,16 @@ try:
 //     1. Edit the source schema (schemas/{service_name}-configuration.yaml)
 //     2. Run: scripts/generate-all-services.sh
 //
-//     USAGE (IMPLEMENTATION TENETS - Configuration-First):
-//     Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
+//     IMPLEMENTATION TENETS - Configuration-First:
+//     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
+//     - ALL properties below MUST be referenced in {service_pascal}Service.cs (no dead config).
+//     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
+//       a configuration property is MISSING - add it to the configuration schema.
+//     - If a property is unused, remove it from the configuration schema.
+//
 //     Example: public MyService({service_pascal}ServiceConfiguration config) {{ _config = config; }}
 //
-//     See: docs/reference/tenets/FOUNDATION.md
-//     See: docs/reference/tenets/IMPLEMENTATION.md
+//     See: docs/reference/tenets/IMPLEMENTATION.md (Configuration-First, Internal Model Type Safety)
 // </auto-generated>
 //----------------------
 
@@ -161,8 +253,27 @@ using BeyondImmersion.BannouService.Configuration;
 #nullable enable
 
 namespace BeyondImmersion.BannouService.{service_pascal};
+''')
 
+    # Generate enum types if any
+    for enum_type in enum_types:
+        # Suppress CS1591 for enum members (they don't need individual docs)
+        print(f'''
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 /// <summary>
+/// {enum_type['description']}
+/// </summary>
+public enum {enum_type['name']}
+{{''')
+        for value in enum_type['values']:
+            # Convert value to PascalCase for C# enum member
+            member_name = to_pascal_case(str(value))
+            print(f'    {member_name},')
+        print('''}
+#pragma warning restore CS1591
+''')
+
+    print(f'''/// <summary>
 /// Configuration class for {service_pascal} service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
@@ -170,6 +281,8 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
+/// ALL properties in this class MUST be referenced in the service implementation.
+/// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
 /// Environment variable names follow the pattern: {{SERVICE}}_{{PROPERTY}} (e.g., AUTH_JWT_SECRET).
@@ -179,24 +292,64 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 {{
     /// <inheritdoc />
-    public string? ForceServiceId {{ get; set; }}
+    public Guid? ForceServiceId {{ get; set; }}
 ''')
 
-    if config_properties:
-        for prop in config_properties:
-            required_attr = '    [Required(AllowEmptyStrings = false)]\n' if prop.get('is_required', False) else ''
-            print(f'''    /// <summary>
+    for prop in config_properties:
+        required_attr = '    [Required(AllowEmptyStrings = false)]\n' if prop.get('is_required', False) else ''
+
+        # Generate ConfigRange attribute if minimum or maximum is specified
+        range_attr = ''
+        has_min = prop.get('minimum') is not None
+        has_max = prop.get('maximum') is not None
+        has_exclusive_min = prop.get('exclusive_min', False)
+        has_exclusive_max = prop.get('exclusive_max', False)
+
+        if has_min or has_max:
+            range_parts = []
+            if has_min:
+                range_parts.append('Minimum = ' + str(prop['minimum']))
+            if has_max:
+                range_parts.append('Maximum = ' + str(prop['maximum']))
+            if has_exclusive_min:
+                range_parts.append('ExclusiveMinimum = true')
+            if has_exclusive_max:
+                range_parts.append('ExclusiveMaximum = true')
+            range_attr = '    [ConfigRange(' + ', '.join(range_parts) + ')]\\n'
+
+        # Generate ConfigStringLength attribute if minLength or maxLength is specified
+        string_length_attr = ''
+        has_min_length = prop.get('min_length') is not None
+        has_max_length = prop.get('max_length') is not None
+
+        if has_min_length or has_max_length:
+            length_parts = []
+            if has_min_length:
+                length_parts.append('MinLength = ' + str(prop['min_length']))
+            if has_max_length:
+                length_parts.append('MaxLength = ' + str(prop['max_length']))
+            string_length_attr = '    [ConfigStringLength(' + ', '.join(length_parts) + ')]\\n'
+
+        # Generate ConfigPattern attribute if pattern is specified
+        pattern_attr = ''
+        prop_pattern = prop.get('pattern')
+        if prop_pattern:
+            # Escape the pattern for C# verbatim string (@\\\"...\\\")
+            # Double any quotes in the pattern
+            escaped_pattern = prop_pattern.replace('\\\"', '\\\"\\\"')
+            pattern_attr = '    [ConfigPattern(@\\\"' + escaped_pattern + '\\\")]\\n'
+
+        # Generate ConfigMultipleOf attribute if multipleOf is specified
+        multiple_of_attr = ''
+        prop_multiple_of = prop.get('multiple_of')
+        if prop_multiple_of is not None:
+            multiple_of_attr = '    [ConfigMultipleOf(' + str(prop_multiple_of) + ')]\\n'
+
+        print(f'''    /// <summary>
     /// {prop['description']}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-{required_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
-''')
-    else:
-        print(f'''    /// <summary>
-    /// Default configuration property - can be removed if not needed.
-    /// Environment variable: {service_name.upper()}_ENABLED
-    /// </summary>
-    public bool Enabled {{ get; set; }} = true;
+{required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
 
     print('}')

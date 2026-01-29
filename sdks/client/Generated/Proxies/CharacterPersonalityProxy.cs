@@ -41,7 +41,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetPersonalityRequest, PersonalityResponse>(
-            "POST", "/character-personality/get", request, channel, timeout, cancellationToken);
+            "/character-personality/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SetPersonalityRequest, PersonalityResponse>(
-            "POST", "/character-personality/set", request, channel, timeout, cancellationToken);
+            "/character-personality/set", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RecordExperienceRequest, ExperienceResult>(
-            "POST", "/character-personality/evolve", request, channel, timeout, cancellationToken);
+            "/character-personality/evolve", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BatchGetPersonalitiesRequest, BatchPersonalityResponse>(
-            "POST", "/character-personality/batch-get", request, channel, timeout, cancellationToken);
+            "/character-personality/batch-get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeletePersonalityRequest>(
-            "POST", "/character-personality/delete", request, channel, cancellationToken);
+            "/character-personality/delete", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetCombatPreferencesRequest, CombatPreferencesResponse>(
-            "POST", "/character-personality/get-combat", request, channel, timeout, cancellationToken);
+            "/character-personality/get-combat", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SetCombatPreferencesRequest, CombatPreferencesResponse>(
-            "POST", "/character-personality/set-combat", request, channel, timeout, cancellationToken);
+            "/character-personality/set-combat", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<EvolveCombatRequest, CombatEvolutionResult>(
-            "POST", "/character-personality/evolve-combat", request, channel, timeout, cancellationToken);
+            "/character-personality/evolve-combat", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -181,6 +181,6 @@ public sealed class CharacterPersonalityProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<DeleteCombatPreferencesRequest>(
-            "POST", "/character-personality/delete-combat", request, channel, cancellationToken);
+            "/character-personality/delete-combat", request, channel, cancellationToken);
     }
 }

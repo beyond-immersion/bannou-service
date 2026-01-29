@@ -550,6 +550,8 @@ await client.Music.StyleCreateAsync(new MusicStyleCreateRequest
 });
 ```
 
+> **Note**: `StyleCreateAsync` currently returns the parsed style without persisting it. Styles are currently built-in only. See [MUSIC.md](../plugins/MUSIC.md) for implementation details.
+
 ---
 
 ## Decision Guide

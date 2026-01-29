@@ -286,10 +286,9 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
     }
 
     /// <summary>
-    /// Track declared exchanges to avoid redeclaring.
+    /// Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access).
     /// </summary>
-    private readonly HashSet<string> _declaredExchanges = new();
-    private readonly object _exchangeLock = new();
+    private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
 
     /// <summary>
     /// Ensures an exchange is declared.
@@ -300,12 +299,9 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
         PublishOptionsExchangeType exchangeType)
     {
         var key = $"{exchange}:{exchangeType}";
-        lock (_exchangeLock)
+        if (_declaredExchanges.ContainsKey(key))
         {
-            if (_declaredExchanges.Contains(key))
-            {
-                return;
-            }
+            return;
         }
 
         var type = exchangeType switch
@@ -322,10 +318,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
             autoDelete: false,
             arguments: null);
 
-        lock (_exchangeLock)
-        {
-            _declaredExchanges.Add(key);
-        }
+        _declaredExchanges.TryAdd(key, 0);
     }
 
     /// <inheritdoc />

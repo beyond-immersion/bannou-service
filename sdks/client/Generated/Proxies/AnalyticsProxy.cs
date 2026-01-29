@@ -41,7 +41,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<IngestEventRequest, IngestEventResponse>(
-            "POST", "/analytics/event/ingest", request, channel, timeout, cancellationToken);
+            "/analytics/event/ingest", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<IngestEventBatchRequest, IngestEventBatchResponse>(
-            "POST", "/analytics/event/ingest-batch", request, channel, timeout, cancellationToken);
+            "/analytics/event/ingest-batch", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetEntitySummaryRequest, EntitySummaryResponse>(
-            "POST", "/analytics/summary/get", request, channel, timeout, cancellationToken);
+            "/analytics/summary/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryEntitySummariesRequest, QueryEntitySummariesResponse>(
-            "POST", "/analytics/summary/query", request, channel, timeout, cancellationToken);
+            "/analytics/summary/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSkillRatingRequest, SkillRatingResponse>(
-            "POST", "/analytics/rating/get", request, channel, timeout, cancellationToken);
+            "/analytics/rating/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateSkillRatingRequest, UpdateSkillRatingResponse>(
-            "POST", "/analytics/rating/update", request, channel, timeout, cancellationToken);
+            "/analytics/rating/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<RecordControllerEventRequest>(
-            "POST", "/analytics/controller-history/record", request, channel, cancellationToken);
+            "/analytics/controller-history/record", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -165,6 +165,24 @@ public sealed class AnalyticsProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryControllerHistoryRequest, QueryControllerHistoryResponse>(
-            "POST", "/analytics/controller-history/query", request, channel, timeout, cancellationToken);
+            "/analytics/controller-history/query", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Cleanup expired controller history
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupControllerHistoryResponse on success.</returns>
+    public Task<ApiResponse<CleanupControllerHistoryResponse>> CleanupControllerHistoryAsync(
+        CleanupControllerHistoryRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupControllerHistoryRequest, CleanupControllerHistoryResponse>(
+            "/analytics/controller-history/cleanup", request, channel, timeout, cancellationToken);
     }
 }

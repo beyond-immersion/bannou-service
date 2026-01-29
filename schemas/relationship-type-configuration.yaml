@@ -5,9 +5,26 @@ info:
     Configuration schema for Relationship Type service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties: {}
+  properties:
+    # Seed Operation Configuration
+    SeedPageSize:
+      type: integer
+      description: Number of records to process per page during seed operations
+      env: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
+      default: 100
+    # Safety Limits
+    MaxHierarchyDepth:
+      type: integer
+      description: Maximum depth for hierarchy traversal to prevent infinite loops on corrupted data
+      env: RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH
+      default: 20
+    MaxMigrationErrorsToTrack:
+      type: integer
+      description: Maximum number of individual migration error details to track during merge operations
+      env: RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK
+      default: 100

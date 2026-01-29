@@ -42,7 +42,7 @@ public class BannouMeshAssetSourceTests
     public void Constructor_WithCustomRealm_CreatesInstance()
     {
         // Act
-        var source = new BannouMeshAssetSource(_mockAssetClient.Object, Realm.Fantasia);
+        var source = new BannouMeshAssetSource(_mockAssetClient.Object, "test-realm");
 
         // Assert
         Assert.NotNull(source);

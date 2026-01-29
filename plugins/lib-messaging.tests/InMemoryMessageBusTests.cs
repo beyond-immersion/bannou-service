@@ -234,7 +234,7 @@ public class InMemoryMessageBusTests
         var severity = ServiceErrorEventSeverity.Warning;
         var details = new { key = "value" };
         var stack = "at Method()";
-        var correlationId = "correlation-123";
+        var correlationId = Guid.NewGuid();
 
         // Act
         var result = await _messageBus.TryPublishErrorAsync(

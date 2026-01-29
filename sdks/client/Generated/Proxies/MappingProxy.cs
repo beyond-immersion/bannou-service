@@ -41,7 +41,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateChannelRequest, AuthorityGrant>(
-            "POST", "/mapping/create-channel", request, channel, timeout, cancellationToken);
+            "/mapping/create-channel", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ReleaseAuthorityRequest, ReleaseAuthorityResponse>(
-            "POST", "/mapping/release-authority", request, channel, timeout, cancellationToken);
+            "/mapping/release-authority", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AuthorityHeartbeatRequest, AuthorityHeartbeatResponse>(
-            "POST", "/mapping/authority-heartbeat", request, channel, timeout, cancellationToken);
+            "/mapping/authority-heartbeat", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PublishMapUpdateRequest, PublishMapUpdateResponse>(
-            "POST", "/mapping/publish", request, channel, timeout, cancellationToken);
+            "/mapping/publish", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PublishObjectChangesRequest, PublishObjectChangesResponse>(
-            "POST", "/mapping/publish-objects", request, channel, timeout, cancellationToken);
+            "/mapping/publish-objects", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RequestSnapshotRequest, RequestSnapshotResponse>(
-            "POST", "/mapping/request-snapshot", request, channel, timeout, cancellationToken);
+            "/mapping/request-snapshot", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryPointRequest, QueryPointResponse>(
-            "POST", "/mapping/query/point", request, channel, timeout, cancellationToken);
+            "/mapping/query/point", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryBoundsRequest, QueryBoundsResponse>(
-            "POST", "/mapping/query/bounds", request, channel, timeout, cancellationToken);
+            "/mapping/query/bounds", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryObjectsByTypeRequest, QueryObjectsByTypeResponse>(
-            "POST", "/mapping/query/objects-by-type", request, channel, timeout, cancellationToken);
+            "/mapping/query/objects-by-type", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AffordanceQueryRequest, AffordanceQueryResponse>(
-            "POST", "/mapping/query/affordance", request, channel, timeout, cancellationToken);
+            "/mapping/query/affordance", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AuthoringCheckoutRequest, AuthoringCheckoutResponse>(
-            "POST", "/mapping/authoring/checkout", request, channel, timeout, cancellationToken);
+            "/mapping/authoring/checkout", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AuthoringCommitRequest, AuthoringCommitResponse>(
-            "POST", "/mapping/authoring/commit", request, channel, timeout, cancellationToken);
+            "/mapping/authoring/commit", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AuthoringReleaseRequest, AuthoringReleaseResponse>(
-            "POST", "/mapping/authoring/release", request, channel, timeout, cancellationToken);
+            "/mapping/authoring/release", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateDefinitionRequest, MapDefinition>(
-            "POST", "/mapping/definition/create", request, channel, timeout, cancellationToken);
+            "/mapping/definition/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetDefinitionRequest, MapDefinition>(
-            "POST", "/mapping/definition/get", request, channel, timeout, cancellationToken);
+            "/mapping/definition/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListDefinitionsRequest, ListDefinitionsResponse>(
-            "POST", "/mapping/definition/list", request, channel, timeout, cancellationToken);
+            "/mapping/definition/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateDefinitionRequest, MapDefinition>(
-            "POST", "/mapping/definition/update", request, channel, timeout, cancellationToken);
+            "/mapping/definition/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,6 +347,6 @@ public sealed class MappingProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteDefinitionRequest, DeleteDefinitionResponse>(
-            "POST", "/mapping/definition/delete", request, channel, timeout, cancellationToken);
+            "/mapping/definition/delete", request, channel, timeout, cancellationToken);
     }
 }

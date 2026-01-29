@@ -57,7 +57,7 @@ public class MessagingServiceTests : IDisposable
 
         // Configure state store factory to return the mock subscription store
         _mockStateStoreFactory
-            .Setup(x => x.GetStore<ExternalSubscriptionData>(MessagingService.ExternalSubscriptionStoreName))
+            .Setup(x => x.GetStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs))
             .Returns(_mockSubscriptionStore.Object);
 
         // Configure default mock behaviors for state store set operations
@@ -217,7 +217,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -357,7 +357,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -509,7 +509,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

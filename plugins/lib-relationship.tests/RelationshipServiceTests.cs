@@ -23,7 +23,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<RelationshipModel>> _mockRelationshipStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<RelationshipService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -35,7 +35,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockRelationshipStore = new Mock<IStateStore<RelationshipModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<RelationshipService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -43,7 +43,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipModel>(STATE_STORE)).Returns(_mockRelationshipStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockListStore.Object);
     }
 
     private RelationshipService CreateService()
@@ -147,9 +147,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.CHARACTER,
+            Entity2Type = EntityType.Character,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = startedAt
         };
@@ -168,11 +168,11 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         Assert.NotNull(savedModel);
         Assert.NotNull(savedKey);
         Assert.StartsWith("rel:", savedKey);
-        Assert.Equal(entity1Id.ToString(), savedModel.Entity1Id);
-        Assert.Equal(entity2Id.ToString(), savedModel.Entity2Id);
-        Assert.Equal("CHARACTER", savedModel.Entity1Type);
-        Assert.Equal("CHARACTER", savedModel.Entity2Type);
-        Assert.Equal(relationshipTypeId.ToString(), savedModel.RelationshipTypeId);
+        Assert.Equal(entity1Id, savedModel.Entity1Id);
+        Assert.Equal(entity2Id, savedModel.Entity2Id);
+        Assert.Equal(EntityType.Character, savedModel.Entity1Type);
+        Assert.Equal(EntityType.Character, savedModel.Entity2Type);
+        Assert.Equal(relationshipTypeId, savedModel.RelationshipTypeId);
         Assert.Equal(startedAt, savedModel.StartedAt);
     }
 
@@ -191,9 +191,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.CHARACTER,
+            Entity2Type = EntityType.Character,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = DateTimeOffset.UtcNow
         };
@@ -227,9 +227,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.NPC,
+            Entity2Type = EntityType.Actor,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = DateTimeOffset.UtcNow,
             Metadata = metadata
@@ -246,8 +246,8 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Assert - State was saved with metadata
         Assert.NotNull(savedModel);
         Assert.NotNull(savedModel.Metadata);
-        Assert.Equal("CHARACTER", savedModel.Entity1Type);
-        Assert.Equal("NPC", savedModel.Entity2Type);
+        Assert.Equal(EntityType.Character, savedModel.Entity1Type);
+        Assert.Equal(EntityType.Actor, savedModel.Entity2Type);
     }
 
     [Fact]
@@ -280,9 +280,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.CHARACTER,
+            Entity2Type = EntityType.Character,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = DateTimeOffset.UtcNow
         };
@@ -560,14 +560,15 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var service = CreateService();
         var entityId = Guid.NewGuid();
 
+        // Entity index key uses EntityType.ToString() which returns PascalCase (e.g., "Character")
         _mockListStore
-            .Setup(s => s.GetAsync($"entity-idx:CHARACTER:{entityId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
 
         var request = new ListRelationshipsByEntityRequest
         {
             EntityId = entityId,
-            EntityType = EntityType.CHARACTER
+            EntityType = EntityType.Character
         };
 
         // Act
@@ -586,16 +587,17 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Arrange
         var service = CreateService();
         var entityId = Guid.NewGuid();
-        var relationshipIds = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        var relationshipIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
+        // Entity index key uses EntityType.ToString() which returns PascalCase (e.g., "Character")
         _mockListStore
-            .Setup(s => s.GetAsync($"entity-idx:CHARACTER:{entityId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(relationshipIds);
 
         // Setup bulk retrieval
         var bulkResults = relationshipIds.ToDictionary(
             id => $"rel:{id}",
-            id => CreateTestRelationshipModel(Guid.Parse(id)));
+            id => CreateTestRelationshipModel(id));
 
         _mockRelationshipStore
             .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
@@ -604,7 +606,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new ListRelationshipsByEntityRequest
         {
             EntityId = entityId,
-            EntityType = EntityType.CHARACTER,
+            EntityType = EntityType.Character,
             IncludeEnded = true
         };
 
@@ -637,7 +639,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     {
         // Act
         var instanceId = Guid.NewGuid();
-        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);
@@ -661,12 +663,12 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     {
         return new RelationshipModel
         {
-            RelationshipId = relationshipId.ToString(),
-            Entity1Id = Guid.NewGuid().ToString(),
-            Entity1Type = "CHARACTER",
-            Entity2Id = Guid.NewGuid().ToString(),
-            Entity2Type = "CHARACTER",
-            RelationshipTypeId = Guid.NewGuid().ToString(),
+            RelationshipId = relationshipId,
+            Entity1Id = Guid.NewGuid(),
+            Entity1Type = EntityType.Character,
+            Entity2Id = Guid.NewGuid(),
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = Guid.NewGuid(),
             StartedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -682,17 +684,17 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Setup entity index gets (for adding to index)
         _mockListStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("entity-idx:")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Setup type index get
         _mockListStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("type-idx:")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Setup all-relationships list
         _mockListStore
             .Setup(s => s.GetAsync("all-relationships", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
     }
 
     #endregion

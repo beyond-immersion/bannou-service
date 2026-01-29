@@ -54,8 +54,9 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             config = KubernetesClientConfiguration.InClusterConfig();
             _logger.LogDebug("Using in-cluster Kubernetes configuration");
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogDebug(ex, "In-cluster config not available, falling back to kubeconfig");
             // Fall back to kubeconfig file - use configuration if set, otherwise default path
             var kubeconfigPath = configuration.KubeconfigPath
                 ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".kube", "config");
@@ -67,7 +68,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         _client = new Kubernetes(config);
 
         // Get namespace from config or default
-        _namespace = configuration.KubernetesNamespace ?? "default";
+        _namespace = configuration.KubernetesNamespace;
     }
 
     /// <inheritdoc />
@@ -403,7 +404,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
         try
         {
-            var imageName = "bannou:latest";
+            var imageName = _configuration.DockerImageName;
 
             // Prepare environment variables
             var envVars = new List<V1EnvVar>

@@ -39,12 +39,8 @@ public class LeaderboardServiceTests
 
         _configuration = new LeaderboardServiceConfiguration
         {
-            DefinitionStoreName = "test-definition",
-            RankingStoreName = "test-ranking",
-            SeasonStoreName = "test-season",
             MaxEntriesPerQuery = 100,
-            ScoreUpdateBatchSize = 50,
-            RankCacheTtlSeconds = 60
+            ScoreUpdateBatchSize = 50
         };
 
         SetupMinimalMocks();
@@ -69,7 +65,7 @@ public class LeaderboardServiceTests
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
     }
@@ -102,12 +98,8 @@ public class LeaderboardServiceTests
     {
         var config = new LeaderboardServiceConfiguration();
 
-        Assert.Equal("leaderboard-definition", config.DefinitionStoreName);
-        Assert.Equal("leaderboard-ranking", config.RankingStoreName);
-        Assert.Equal("leaderboard-season", config.SeasonStoreName);
         Assert.Equal(1000, config.MaxEntriesPerQuery);
         Assert.Equal(1000, config.ScoreUpdateBatchSize);
-        Assert.Equal(60, config.RankCacheTtlSeconds);
         Assert.True(config.AutoArchiveOnSeasonEnd);
     }
 
@@ -116,21 +108,13 @@ public class LeaderboardServiceTests
     {
         var config = new LeaderboardServiceConfiguration
         {
-            DefinitionStoreName = "custom-def",
-            RankingStoreName = "custom-rank",
-            SeasonStoreName = "custom-season",
             MaxEntriesPerQuery = 500,
             ScoreUpdateBatchSize = 200,
-            RankCacheTtlSeconds = 120,
             AutoArchiveOnSeasonEnd = false
         };
 
-        Assert.Equal("custom-def", config.DefinitionStoreName);
-        Assert.Equal("custom-rank", config.RankingStoreName);
-        Assert.Equal("custom-season", config.SeasonStoreName);
         Assert.Equal(500, config.MaxEntriesPerQuery);
         Assert.Equal(200, config.ScoreUpdateBatchSize);
-        Assert.Equal(120, config.RankCacheTtlSeconds);
         Assert.False(config.AutoArchiveOnSeasonEnd);
     }
 
@@ -394,8 +378,8 @@ public class LeaderboardServiceTests
         var leaderboardId = "test-leaderboard";
 
         _mockDefinitionStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LeaderboardDefinitionData
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new LeaderboardDefinitionData
             {
                 GameServiceId = gameServiceId,
                 LeaderboardId = leaderboardId,
@@ -403,7 +387,7 @@ public class LeaderboardServiceTests
                 SortOrder = SortOrder.Descending,
                 UpdateMode = UpdateMode.Replace,
                 IsSeasonal = false // Not seasonal
-            });
+            }, "etag-0"));
 
         var request = new CreateSeasonRequest
         {

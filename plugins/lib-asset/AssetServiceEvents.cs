@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Asset.Streaming;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -43,7 +44,7 @@ public partial class AssetService
             evt.JobId, evt.MetabundleId, evt.AssetCount);
 
         // Load job from state store
-        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{evt.JobId}";
         var job = await jobStore.GetAsync(jobKey, cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -63,9 +64,11 @@ public partial class AssetService
             job.Status = InternalJobStatus.Failed;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
-            job.ErrorCode = MetabundleErrorCode.TIMEOUT.ToString();
+            job.ErrorCode = MetabundleErrorCode.TIMEOUT;
             job.ErrorMessage = "Job timed out before processing could start";
-            await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await jobStore.SaveAsync(jobKey, job,
+            new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
 
             await EmitJobCompletionEventAsync(job, evt.RequesterSessionId, cancellationToken).ConfigureAwait(false);
             return;
@@ -74,7 +77,9 @@ public partial class AssetService
         // Update status to Processing
         job.Status = InternalJobStatus.Processing;
         job.UpdatedAt = DateTimeOffset.UtcNow;
-        await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await jobStore.SaveAsync(jobKey, job,
+            new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
 
         try
         {
@@ -89,7 +94,9 @@ public partial class AssetService
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
             job.Result = result;
-            await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await jobStore.SaveAsync(jobKey, job,
+            new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "Metabundle job completed: JobId={JobId}, MetabundleId={MetabundleId}, AssetCount={AssetCount}, ProcessingTimeMs={ProcessingTimeMs}",
@@ -107,9 +114,11 @@ public partial class AssetService
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
-            job.ErrorCode = MetabundleErrorCode.INTERNAL_ERROR.ToString();
+            job.ErrorCode = MetabundleErrorCode.INTERNAL_ERROR;
             job.ErrorMessage = ex.Message;
-            await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await jobStore.SaveAsync(jobKey, job,
+            new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
         }
 
         // Emit completion event to requester session
@@ -129,8 +138,8 @@ public partial class AssetService
 
         var request = job.Request;
         var bucket = _configuration.StorageBucket;
-        var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
-        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+        var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
+        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{job.JobId}";
 
         // Load streaming options from configuration
@@ -149,7 +158,7 @@ public partial class AssetService
         }
 
         // Load standalone assets if specified
-        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
         var standaloneAssets = new List<InternalAssetRecord>();
         foreach (var assetId in request.StandaloneAssetIds ?? Enumerable.Empty<string>())
         {
@@ -303,7 +312,7 @@ public partial class AssetService
             // Finalize the streaming bundle
             bundleSize = await writer.FinalizeAsync(
                 request.MetabundleId,
-                request.MetabundleId,
+                request.MetabundleId.ToString(),
                 request.Version ?? "1.0.0",
                 request.Owner,
                 request.Description,
@@ -351,7 +360,10 @@ public partial class AssetService
             Metadata = request.Metadata != null ? MetadataHelper.ConvertToDictionary(request.Metadata) : null
         };
 
-        await bundleStore.SaveAsync(metabundleKey, metabundleMetadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var bundleCacheTtlSeconds = _configuration.DefaultBundleCacheTtlHours * 3600;
+        await bundleStore.SaveAsync(metabundleKey, metabundleMetadata,
+            new StateOptions { Ttl = bundleCacheTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
 
         // Index bundle assets
         await IndexBundleAssetsAsync(metabundleMetadata, cancellationToken).ConfigureAwait(false);
@@ -365,7 +377,7 @@ public partial class AssetService
                 Timestamp = DateTimeOffset.UtcNow,
                 MetabundleId = request.MetabundleId,
                 Version = request.Version ?? "1.0.0",
-                Realm = (BeyondImmersion.BannouService.Events.RealmEnum)request.Realm,
+                Realm = request.Realm,
                 SourceBundleCount = sourceBundles.Count,
                 SourceBundleIds = sourceBundles.Select(sb => sb.BundleId).ToList(),
                 AssetCount = metabundleAssets.Count,
@@ -395,7 +407,7 @@ public partial class AssetService
     /// <summary>
     /// Updates job progress in state store.
     /// </summary>
-    private static async Task UpdateJobProgressAsync(
+    private async Task UpdateJobProgressAsync(
         IStateStore<MetabundleJob> jobStore,
         string jobKey,
         MetabundleJob job,
@@ -404,7 +416,9 @@ public partial class AssetService
     {
         job.Progress = progress;
         job.UpdatedAt = DateTimeOffset.UtcNow;
-        await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await jobStore.SaveAsync(jobKey, job,
+            new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -450,12 +464,8 @@ public partial class AssetService
             _ => MetabundleJobStatus.Failed
         };
 
-        // Map error code
-        MetabundleErrorCode? errorCode = null;
-        if (!string.IsNullOrEmpty(job.ErrorCode) && Enum.TryParse<MetabundleErrorCode>(job.ErrorCode, true, out var parsed))
-        {
-            errorCode = parsed;
-        }
+        // Error code is already typed per IMPLEMENTATION TENETS T25
+        var errorCode = job.ErrorCode;
 
         await _eventEmitter.EmitMetabundleCreationCompleteAsync(
             sessionId,

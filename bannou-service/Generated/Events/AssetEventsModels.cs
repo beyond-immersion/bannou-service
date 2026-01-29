@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Asset;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -88,14 +90,13 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetTypeEnum? AssetType { get; set; } = default!;
+    public AssetType AssetType { get; set; } = default!;
 
     /// <summary>
     /// Game realm the asset belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmEnum? Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Whether this is a multipart upload
@@ -339,14 +340,13 @@ public partial class AssetReadyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetTypeEnum? AssetType { get; set; } = default!;
+    public AssetType AssetType { get; set; } = default!;
 
     /// <summary>
     /// Game realm the asset belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmEnum? Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
 }
 
@@ -358,7 +358,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -406,7 +406,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compression")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CompressionTypeEnum? Compression { get; set; } = default!;
+    public CompressionType Compression { get; set; } = default!;
 
     /// <summary>
     /// Owner of this bundle. NOT a session ID.
@@ -427,7 +427,7 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Metabundle identifier
+    /// Human-readable metabundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -446,8 +446,9 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
     /// Game realm for this metabundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmEnum? Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Realm { get; set; } = default!;
 
     /// <summary>
     /// Number of source bundles composed
@@ -456,7 +457,7 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
     public int SourceBundleCount { get; set; } = default!;
 
     /// <summary>
-    /// List of source bundle IDs that were composed
+    /// List of human-readable source bundle IDs that were composed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
     public System.Collections.Generic.ICollection<string>? SourceBundleIds { get; set; } = default!;
@@ -514,7 +515,7 @@ public partial class BundleUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -559,8 +560,7 @@ public partial class BundleUpdatedEvent : BaseServiceEvent
     /// Game realm of the bundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmEnum? Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
 }
 
@@ -572,7 +572,7 @@ public partial class BundleDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -609,8 +609,7 @@ public partial class BundleDeletedEvent : BaseServiceEvent
     /// Game realm of the bundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmEnum? Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
 }
 
@@ -622,7 +621,7 @@ public partial class BundleRestoredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -653,65 +652,9 @@ public partial class BundleRestoredEvent : BaseServiceEvent
     /// Game realm of the bundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmEnum? Realm { get; set; } = default!;
+    public string Realm { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Category of asset in the system
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetTypeEnum
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"texture")]
-    Texture = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"model")]
-    Model = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"audio")]
-    Audio = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior")]
-    Behavior = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"bundle")]
-    Bundle = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"prefab")]
-    Prefab = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"other")]
-    Other = 6,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Game realm the asset is associated with
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmEnum
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"omega")]
-    Omega = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
-    Arcadia = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"fantasia")]
-    Fantasia = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"shared")]
-    Shared = 3,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// Type of processing being performed
@@ -738,26 +681,6 @@ public enum ProcessingTypeEnum
 
     [System.Runtime.Serialization.EnumMember(Value = @"behavior_compile")]
     Behavior_compile = 5,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Compression algorithm used for bundle packaging
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CompressionTypeEnum
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"lz4")]
-    Lz4 = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"lzma")]
-    Lzma = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
-    None = 2,
 
 }
 #pragma warning restore CS1591

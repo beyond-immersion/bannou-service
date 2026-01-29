@@ -38,7 +38,7 @@ components:
           type: string
           description: "Game service identifier for partitioning"
         sceneType: &id003
-          type: string
+          $ref: ../scene-api.yaml#/components/schemas/SceneType
           description: "Scene classification (region, building, etc.)"
         name: &id004
           type: string

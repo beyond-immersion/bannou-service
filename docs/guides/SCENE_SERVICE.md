@@ -77,7 +77,7 @@ A tavern scene defines "bar counter is child of bar area, rotated 45°". Mapping
 ```yaml
 Scene:
   sceneId: UUID           # Unique identifier
-  gameId: string          # Partition key (e.g., "arcadia-online")
+  gameId: string          # Partition key (e.g., "my-game")
   sceneType: SceneType    # Classification (region, building, prefab, etc.)
   name: string            # Human-readable name
   description: string?    # Optional description
@@ -150,7 +150,7 @@ annotations:
   physics:
     collisionShape: "convex"
     mass: 0
-  arcadia:  # Game-specific namespace
+  game:  # Game-specific namespace
     interactionType: "sit"
     npcBehavior: "guard_patrol"
 ```
@@ -243,7 +243,8 @@ Published when scenes are placed/removed from game world:
 | `scene.checked_out` | Scene locked for editing |
 | `scene.committed` | Checkout changes saved |
 | `scene.checkout.discarded` | Lock released without saving |
-| `scene.checkout.expired` | Lock TTL exceeded |
+
+> **Note**: `scene.checkout.expired` is defined in the schema but not currently published. Expired checkouts are detected lazily when another editor attempts to checkout the scene (enabling takeover of expired locks).
 
 ### Validation Events
 
@@ -253,9 +254,7 @@ Published when scenes are placed/removed from game world:
 
 ### Reference Events
 
-| Topic | Description |
-|-------|-------------|
-| `scene.reference.broken` | Referenced scene became unavailable (edge case) |
+> **Note**: `scene.reference.broken` is defined in the schema but not currently published. Reference integrity is checked on load, not actively monitored.
 
 ---
 
@@ -345,7 +344,7 @@ Register custom rules per gameId + sceneType:
 
 ```json
 {
-  "gameId": "arcadia-online",
+  "gameId": "my-game",
   "sceneType": "building",
   "rules": [
     {
@@ -398,7 +397,7 @@ Environment variables (prefix: `SCENE_`):
 ```yaml
 $schema: "bannou://schemas/scene/v1"
 sceneId: "550e8400-e29b-41d4-a716-446655440001"
-gameId: "arcadia-online"
+gameId: "my-game"
 sceneType: building
 name: "Cozy Tavern Interior"
 version: "1.2.0"
@@ -456,7 +455,7 @@ root:
             scale: { x: 1, y: 1, z: 1 }
           tags: ["position", "npc"]
           annotations:
-            arcadia:
+            game:
               suggestedRole: "bartender"
 ```
 

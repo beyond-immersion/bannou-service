@@ -31,6 +31,26 @@ namespace BeyondImmersion.BannouService.Website;
 using System = global::System;
 
 /// <summary>
+/// Target operating system platform
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Platform
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
+    Windows = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
+    Macos = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
+    Linux = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Health and version status information for the website service
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -131,6 +151,8 @@ public partial class PageContent
     /// Date and time of the last modification
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastModified")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LastModified { get; set; } = default!;
 
     /// <summary>
@@ -192,6 +214,8 @@ public partial class PageMetadata
     /// Date and time of the last modification
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastModified")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LastModified { get; set; } = default!;
 
     /// <summary>
@@ -645,7 +669,7 @@ public partial class RealmStatus
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string RealmId { get; set; } = default!;
+    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// Display name of the game realm
@@ -712,13 +736,13 @@ public partial class DownloadInfo
 {
 
     /// <summary>
-    /// Target operating system platform
+    /// Target platform for this download
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platform")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DownloadInfoPlatform Platform { get; set; } = default!;
+    public Platform Platform { get; set; } = default!;
 
     /// <summary>
     /// Version number of the game client
@@ -1040,23 +1064,6 @@ public partial class ErrorResponse
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Platform
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
-    Windows = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
-    Macos = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
-    Linux = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum StatusResponseStatus
 {
 
@@ -1159,23 +1166,6 @@ public enum RealmStatusPopulation
 
     [System.Runtime.Serialization.EnumMember(Value = @"full")]
     Full = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DownloadInfoPlatform
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
-    Windows = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
-    Macos = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
-    Linux = 2,
 
 }
 #pragma warning restore CS1591

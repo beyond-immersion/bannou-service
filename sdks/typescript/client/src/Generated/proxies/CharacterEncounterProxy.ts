@@ -39,7 +39,7 @@ export class CharacterEncounterProxy {
     return this.client.invokeAsync<
       Schemas['GetEncounterTypeRequest'],
       Schemas['EncounterTypeResponse']
-    >('POST', '/character-encounter/type/get', request, channel, timeout);
+    >('/character-encounter/type/get', request, channel, timeout);
   }
 
   /**
@@ -57,7 +57,7 @@ export class CharacterEncounterProxy {
     return this.client.invokeAsync<
       Schemas['ListEncounterTypesRequest'],
       Schemas['EncounterTypeListResponse']
-    >('POST', '/character-encounter/type/list', request, channel, timeout);
+    >('/character-encounter/type/list', request, channel, timeout);
   }
 
   /**
@@ -75,7 +75,7 @@ export class CharacterEncounterProxy {
     return this.client.invokeAsync<
       Schemas['QueryByCharacterRequest'],
       Schemas['EncounterListResponse']
-    >('POST', '/character-encounter/query/by-character', request, channel, timeout);
+    >('/character-encounter/query/by-character', request, channel, timeout);
   }
 
   /**
@@ -93,7 +93,7 @@ export class CharacterEncounterProxy {
     return this.client.invokeAsync<
       Schemas['QueryBetweenRequest'],
       Schemas['EncounterListResponse']
-    >('POST', '/character-encounter/query/between', request, channel, timeout);
+    >('/character-encounter/query/between', request, channel, timeout);
   }
 
   /**
@@ -111,7 +111,7 @@ export class CharacterEncounterProxy {
     return this.client.invokeAsync<
       Schemas['QueryByLocationRequest'],
       Schemas['EncounterListResponse']
-    >('POST', '/character-encounter/query/by-location', request, channel, timeout);
+    >('/character-encounter/query/by-location', request, channel, timeout);
   }
 
   /**
@@ -127,7 +127,6 @@ export class CharacterEncounterProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HasMetResponse']>> {
     return this.client.invokeAsync<Schemas['HasMetRequest'], Schemas['HasMetResponse']>(
-      'POST',
       '/character-encounter/has-met',
       request,
       channel,
@@ -148,7 +147,6 @@ export class CharacterEncounterProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SentimentResponse']>> {
     return this.client.invokeAsync<Schemas['GetSentimentRequest'], Schemas['SentimentResponse']>(
-      'POST',
       '/character-encounter/get-sentiment',
       request,
       channel,
@@ -171,6 +169,6 @@ export class CharacterEncounterProxy {
     return this.client.invokeAsync<
       Schemas['GetPerspectiveRequest'],
       Schemas['PerspectiveResponse']
-    >('POST', '/character-encounter/get-perspective', request, channel, timeout);
+    >('/character-encounter/get-perspective', request, channel, timeout);
   }
 }

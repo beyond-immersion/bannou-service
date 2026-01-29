@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("lib-character-personality.tests")]
+// Note: InternalsVisibleTo is in AssemblyInfo.cs
 
 namespace BeyondImmersion.BannouService.CharacterPersonality;
 
@@ -35,10 +35,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private const string COMBAT_PREFERENCES_EVOLVED_TOPIC = "combat-preferences.evolved";
     private const string COMBAT_PREFERENCES_DELETED_TOPIC = "combat-preferences.deleted";
 
-    // Evolution probability constants
-    private const float BASE_EVOLUTION_PROBABILITY = 0.15f; // 15% base chance
-    private const float MAX_TRAIT_SHIFT = 0.1f; // Maximum shift per evolution
-    private const float MIN_TRAIT_SHIFT = 0.02f; // Minimum shift per evolution
 
     /// <summary>
     /// Initializes the CharacterPersonality service with required dependencies.
@@ -67,7 +63,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<(StatusCodes, PersonalityResponse?)> GetPersonalityAsync(GetPersonalityRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting personality for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Getting personality for character {CharacterId}", body.CharacterId);
 
         try
         {
@@ -104,7 +100,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<(StatusCodes, PersonalityResponse?)> SetPersonalityAsync(SetPersonalityRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Setting personality for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Setting personality for character {CharacterId}", body.CharacterId);
 
         try
         {
@@ -115,8 +111,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             var data = new PersonalityData
             {
-                CharacterId = body.CharacterId.ToString(),
-                Traits = body.Traits.ToDictionary(t => t.Axis.ToString(), t => t.Value),
+                CharacterId = body.CharacterId,
+                Traits = body.Traits.ToDictionary(t => t.Axis, t => t.Value),
                 Version = isNew ? 1 : existing!.Version + 1,
                 CreatedAtUnix = isNew ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : existing!.CreatedAtUnix,
                 UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -126,7 +122,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             var response = MapToPersonalityResponse(data);
 
-            // Publish event using typed events per IMPLEMENTATION TENETS (TENET 5)
+            // Publish event using typed events per IMPLEMENTATION TENETS
             if (isNew)
             {
                 await _messageBus.TryPublishAsync(PERSONALITY_CREATED_TOPIC, new PersonalityCreatedEvent
@@ -176,14 +172,14 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<(StatusCodes, ExperienceResult?)> RecordExperienceAsync(RecordExperienceRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Recording experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
+        _logger.LogDebug("Recording experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
         try
         {
             var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-            var data = await store.GetAsync(key, cancellationToken);
+            var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
             if (data == null)
             {
@@ -191,8 +187,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Evaluate whether evolution occurs
-            var evolutionProbability = BASE_EVOLUTION_PROBABILITY * body.Intensity;
+            // Evaluate whether evolution occurs (probability rolled once, not per-retry)
+            var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
             var roll = Random.Shared.NextDouble();
             var evolved = roll < evolutionProbability;
 
@@ -207,46 +203,66 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             if (evolved)
             {
                 var affectedTraits = GetAffectedTraits(body.ExperienceType);
-                var changedTraits = new List<TraitValue>();
 
-                foreach (var (trait, direction) in affectedTraits)
+                // Optimistic concurrency retry loop: re-read fresh data on conflict
+                for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
                 {
-                    if (data.Traits.TryGetValue(trait, out var currentValue))
+                    if (attempt > 0)
                     {
-                        var shift = (MIN_TRAIT_SHIFT + (MAX_TRAIT_SHIFT - MIN_TRAIT_SHIFT) * body.Intensity) * direction;
-                        var newValue = Math.Clamp(currentValue + shift, -1.0f, 1.0f);
-                        data.Traits[trait] = newValue;
-
-                        changedTraits.Add(new TraitValue
+                        (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                        if (data == null)
                         {
-                            Axis = Enum.Parse<TraitAxis>(trait),
-                            Value = newValue
-                        });
+                            _logger.LogWarning("Personality for character {CharacterId} deleted during evolution retry", body.CharacterId);
+                            return (StatusCodes.NotFound, null);
+                        }
                     }
+
+                    // Apply trait shifts to fresh data each attempt
+                    var changedTraits = new List<TraitValue>();
+                    foreach (var (traitAxis, direction) in affectedTraits)
+                    {
+                        if (data.Traits.TryGetValue(traitAxis, out var currentValue))
+                        {
+                            var shift = (float)((_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * body.Intensity) * direction);
+                            var newValue = Math.Clamp(currentValue + shift, -1.0f, 1.0f);
+                            data.Traits[traitAxis] = newValue;
+
+                            changedTraits.Add(new TraitValue
+                            {
+                                Axis = traitAxis,
+                                Value = newValue
+                            });
+                        }
+                    }
+
+                    data.Version++;
+                    data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                    var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                    if (saveResult != null)
+                    {
+                        result.ChangedTraits = changedTraits;
+                        result.NewVersion = data.Version;
+
+                        await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            CharacterId = body.CharacterId,
+                            ExperienceType = body.ExperienceType,
+                            Intensity = body.Intensity,
+                            Version = data.Version,
+                            AffectedTraits = affectedTraits.Keys.Select(k => k.ToString()).ToList()
+                        }, cancellationToken: cancellationToken);
+
+                        _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
+                            body.CharacterId, data.Version);
+                        break;
+                    }
+
+                    _logger.LogDebug("Concurrent modification during personality evolution for character {CharacterId}, retrying (attempt {Attempt})",
+                        body.CharacterId, attempt + 1);
                 }
-
-                data.Version++;
-                data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-                result.ChangedTraits = changedTraits;
-                result.NewVersion = data.Version;
-
-                // Publish evolution event using typed events per IMPLEMENTATION TENETS (TENET 5)
-                await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    CharacterId = body.CharacterId,
-                    ExperienceType = body.ExperienceType.ToString(),
-                    Intensity = body.Intensity,
-                    Version = data.Version,
-                    AffectedTraits = affectedTraits.Keys.ToList()
-                }, cancellationToken: cancellationToken);
-
-                _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
-                    body.CharacterId, data.Version);
             }
 
             return (StatusCodes.OK, result);
@@ -274,13 +290,13 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<(StatusCodes, BatchPersonalityResponse?)> BatchGetPersonalitiesAsync(BatchGetPersonalitiesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Batch getting personalities for {Count} characters", body.CharacterIds.Count);
+        _logger.LogDebug("Batch getting personalities for {Count} characters", body.CharacterIds.Count);
 
         try
         {
-            if (body.CharacterIds.Count > 100)
+            if (body.CharacterIds.Count > _configuration.MaxBatchSize)
             {
-                _logger.LogWarning("Batch get request exceeds maximum of 100 characters");
+                _logger.LogWarning("Batch get request exceeds maximum of {MaxBatchSize} characters", _configuration.MaxBatchSize);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -334,7 +350,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<StatusCodes> DeletePersonalityAsync(DeletePersonalityRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting personality for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Deleting personality for character {CharacterId}", body.CharacterId);
 
         try
         {
@@ -349,7 +365,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             await store.DeleteAsync(key, cancellationToken);
 
-            // Publish deletion event using typed events per IMPLEMENTATION TENETS (TENET 5)
+            // Publish deletion event using typed events per IMPLEMENTATION TENETS
             await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -386,7 +402,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<(StatusCodes, CombatPreferencesResponse?)> GetCombatPreferencesAsync(GetCombatPreferencesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting combat preferences for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Getting combat preferences for character {CharacterId}", body.CharacterId);
 
         try
         {
@@ -423,7 +439,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<(StatusCodes, CombatPreferencesResponse?)> SetCombatPreferencesAsync(SetCombatPreferencesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Setting combat preferences for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Setting combat preferences for character {CharacterId}", body.CharacterId);
 
         try
         {
@@ -434,10 +450,10 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             var data = new CombatPreferencesData
             {
-                CharacterId = body.CharacterId.ToString(),
-                Style = body.Preferences.Style.ToString(),
-                PreferredRange = body.Preferences.PreferredRange.ToString(),
-                GroupRole = body.Preferences.GroupRole.ToString(),
+                CharacterId = body.CharacterId,
+                Style = body.Preferences.Style,
+                PreferredRange = body.Preferences.PreferredRange,
+                GroupRole = body.Preferences.GroupRole,
                 RiskTolerance = body.Preferences.RiskTolerance,
                 RetreatThreshold = body.Preferences.RetreatThreshold,
                 ProtectAllies = body.Preferences.ProtectAllies,
@@ -450,7 +466,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             var response = MapToCombatPreferencesResponse(data);
 
-            // Publish event using typed events per IMPLEMENTATION TENETS (TENET 5)
+            // Publish event using typed events per IMPLEMENTATION TENETS
             if (isNew)
             {
                 await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_CREATED_TOPIC, new CombatPreferencesCreatedEvent
@@ -499,7 +515,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<StatusCodes> DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting combat preferences for character {CharacterId}", body.CharacterId);
+        _logger.LogDebug("Deleting combat preferences for character {CharacterId}", body.CharacterId);
 
         try
         {
@@ -547,14 +563,14 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// </summary>
     public async Task<(StatusCodes, CombatEvolutionResult?)> EvolveCombatPreferencesAsync(EvolveCombatRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Recording combat experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
+        _logger.LogDebug("Recording combat experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
         try
         {
             var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-            var data = await store.GetAsync(key, cancellationToken);
+            var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
             if (data == null)
             {
@@ -562,8 +578,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Evaluate whether evolution occurs
-            var evolutionProbability = BASE_EVOLUTION_PROBABILITY * body.Intensity;
+            // Evaluate whether evolution occurs (probability rolled once, not per-retry)
+            var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
             var roll = Random.Shared.NextDouble();
             var evolved = roll < evolutionProbability;
 
@@ -576,32 +592,51 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             if (evolved)
             {
-                result.PreviousPreferences = MapToCombatPreferences(data);
-
-                // Apply combat experience effects
-                ApplyCombatEvolution(data, body.ExperienceType, body.Intensity);
-
-                data.Version++;
-                data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-                result.NewPreferences = MapToCombatPreferences(data);
-                result.NewVersion = data.Version;
-
-                // Publish evolution event using typed events per IMPLEMENTATION TENETS (TENET 5)
-                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
+                // Optimistic concurrency retry loop: re-read fresh data on conflict
+                for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
                 {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    CharacterId = body.CharacterId,
-                    ExperienceType = body.ExperienceType.ToString(),
-                    Intensity = body.Intensity,
-                    Version = data.Version
-                }, cancellationToken: cancellationToken);
+                    if (attempt > 0)
+                    {
+                        (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                        if (data == null)
+                        {
+                            _logger.LogWarning("Combat preferences for character {CharacterId} deleted during evolution retry", body.CharacterId);
+                            return (StatusCodes.NotFound, null);
+                        }
+                    }
 
-                _logger.LogInformation("Combat preferences evolved for character {CharacterId}, new version {Version}",
-                    body.CharacterId, data.Version);
+                    result.PreviousPreferences = MapToCombatPreferences(data);
+
+                    // Apply combat experience effects to fresh data each attempt
+                    ApplyCombatEvolution(data, body.ExperienceType, body.Intensity);
+
+                    data.Version++;
+                    data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                    var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                    if (saveResult != null)
+                    {
+                        result.NewPreferences = MapToCombatPreferences(data);
+                        result.NewVersion = data.Version;
+
+                        await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            CharacterId = body.CharacterId,
+                            ExperienceType = body.ExperienceType,
+                            Intensity = body.Intensity,
+                            Version = data.Version
+                        }, cancellationToken: cancellationToken);
+
+                        _logger.LogInformation("Combat preferences evolved for character {CharacterId}, new version {Version}",
+                            body.CharacterId, data.Version);
+                        break;
+                    }
+
+                    _logger.LogDebug("Concurrent modification during combat evolution for character {CharacterId}, retrying (attempt {Attempt})",
+                        body.CharacterId, attempt + 1);
+                }
             }
 
             return (StatusCodes.OK, result);
@@ -631,117 +666,117 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// Returns traits affected by an experience type and the direction of change.
     /// Positive = increase trait, Negative = decrease trait.
     /// </summary>
-    private static Dictionary<string, float> GetAffectedTraits(ExperienceType experienceType)
+    private static Dictionary<TraitAxis, float> GetAffectedTraits(ExperienceType experienceType)
     {
         return experienceType switch
         {
-            ExperienceType.TRAUMA => new Dictionary<string, float>
+            ExperienceType.TRAUMA => new Dictionary<TraitAxis, float>
             {
-                { "NEUROTICISM", 0.5f },
-                { "OPENNESS", -0.3f },
-                { "EXTRAVERSION", -0.2f }
+                { TraitAxis.NEUROTICISM, 0.5f },
+                { TraitAxis.OPENNESS, -0.3f },
+                { TraitAxis.EXTRAVERSION, -0.2f }
             },
-            ExperienceType.BETRAYAL => new Dictionary<string, float>
+            ExperienceType.BETRAYAL => new Dictionary<TraitAxis, float>
             {
-                { "AGREEABLENESS", -0.5f },
-                { "HONESTY", -0.3f },
-                { "LOYALTY", 0.2f } // Can increase loyalty to those who remain
+                { TraitAxis.AGREEABLENESS, -0.5f },
+                { TraitAxis.HONESTY, -0.3f },
+                { TraitAxis.LOYALTY, 0.2f } // Can increase loyalty to those who remain
             },
-            ExperienceType.LOSS => new Dictionary<string, float>
+            ExperienceType.LOSS => new Dictionary<TraitAxis, float>
             {
-                { "NEUROTICISM", 0.3f },
-                { "CONSCIENTIOUSNESS", 0.2f }
+                { TraitAxis.NEUROTICISM, 0.3f },
+                { TraitAxis.CONSCIENTIOUSNESS, 0.2f }
             },
-            ExperienceType.VICTORY => new Dictionary<string, float>
+            ExperienceType.VICTORY => new Dictionary<TraitAxis, float>
             {
-                { "EXTRAVERSION", 0.3f },
-                { "AGGRESSION", 0.2f },
-                { "NEUROTICISM", -0.2f }
+                { TraitAxis.EXTRAVERSION, 0.3f },
+                { TraitAxis.AGGRESSION, 0.2f },
+                { TraitAxis.NEUROTICISM, -0.2f }
             },
-            ExperienceType.FRIENDSHIP => new Dictionary<string, float>
+            ExperienceType.FRIENDSHIP => new Dictionary<TraitAxis, float>
             {
-                { "AGREEABLENESS", 0.4f },
-                { "EXTRAVERSION", 0.3f },
-                { "LOYALTY", 0.3f }
+                { TraitAxis.AGREEABLENESS, 0.4f },
+                { TraitAxis.EXTRAVERSION, 0.3f },
+                { TraitAxis.LOYALTY, 0.3f }
             },
-            ExperienceType.REDEMPTION => new Dictionary<string, float>
+            ExperienceType.REDEMPTION => new Dictionary<TraitAxis, float>
             {
-                { "HONESTY", 0.4f },
-                { "CONSCIENTIOUSNESS", 0.3f },
-                { "NEUROTICISM", -0.2f }
+                { TraitAxis.HONESTY, 0.4f },
+                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
+                { TraitAxis.NEUROTICISM, -0.2f }
             },
-            ExperienceType.CORRUPTION => new Dictionary<string, float>
+            ExperienceType.CORRUPTION => new Dictionary<TraitAxis, float>
             {
-                { "HONESTY", -0.5f },
-                { "AGREEABLENESS", -0.3f },
-                { "AGGRESSION", 0.3f }
+                { TraitAxis.HONESTY, -0.5f },
+                { TraitAxis.AGREEABLENESS, -0.3f },
+                { TraitAxis.AGGRESSION, 0.3f }
             },
-            ExperienceType.ENLIGHTENMENT => new Dictionary<string, float>
+            ExperienceType.ENLIGHTENMENT => new Dictionary<TraitAxis, float>
             {
-                { "OPENNESS", 0.5f },
-                { "CONSCIENTIOUSNESS", 0.3f },
-                { "NEUROTICISM", -0.3f }
+                { TraitAxis.OPENNESS, 0.5f },
+                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
+                { TraitAxis.NEUROTICISM, -0.3f }
             },
-            ExperienceType.SACRIFICE => new Dictionary<string, float>
+            ExperienceType.SACRIFICE => new Dictionary<TraitAxis, float>
             {
-                { "LOYALTY", 0.5f },
-                { "CONSCIENTIOUSNESS", 0.3f },
-                { "AGREEABLENESS", 0.2f }
+                { TraitAxis.LOYALTY, 0.5f },
+                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
+                { TraitAxis.AGREEABLENESS, 0.2f }
             },
-            _ => new Dictionary<string, float>()
+            _ => new Dictionary<TraitAxis, float>()
         };
     }
 
     /// <summary>
     /// Applies combat experience effects to preferences.
     /// </summary>
-    private static void ApplyCombatEvolution(CombatPreferencesData data, CombatExperienceType experienceType, float intensity)
+    private void ApplyCombatEvolution(CombatPreferencesData data, CombatExperienceType experienceType, float intensity)
     {
-        var shift = MIN_TRAIT_SHIFT + (MAX_TRAIT_SHIFT - MIN_TRAIT_SHIFT) * intensity;
+        var shift = (float)(_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * intensity);
 
         switch (experienceType)
         {
             case CombatExperienceType.DECISIVE_VICTORY:
                 data.RiskTolerance = Math.Clamp(data.RiskTolerance + shift, 0, 1);
                 // May become more aggressive
-                if (data.Style == "DEFENSIVE" && Random.Shared.NextDouble() < 0.3)
-                    data.Style = "BALANCED";
-                else if (data.Style == "BALANCED" && Random.Shared.NextDouble() < 0.2)
-                    data.Style = "AGGRESSIVE";
+                if (data.Style == CombatStyle.DEFENSIVE && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
+                    data.Style = CombatStyle.BALANCED;
+                else if (data.Style == CombatStyle.BALANCED && Random.Shared.NextDouble() < _configuration.CombatVictoryBalancedTransitionProbability)
+                    data.Style = CombatStyle.AGGRESSIVE;
                 break;
 
             case CombatExperienceType.NARROW_VICTORY:
                 // Slight confidence boost but also caution
-                data.RiskTolerance = Math.Clamp(data.RiskTolerance + shift * 0.5f, 0, 1);
+                data.RiskTolerance = Math.Clamp(data.RiskTolerance + shift * (float)_configuration.CombatMildShiftMultiplier, 0, 1);
                 break;
 
             case CombatExperienceType.DEFEAT:
                 data.RiskTolerance = Math.Clamp(data.RiskTolerance - shift, 0, 1);
-                data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * 0.5f, 0, 1);
+                data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * (float)_configuration.CombatMildShiftMultiplier, 0, 1);
                 // May become more defensive
-                if (data.Style == "AGGRESSIVE" && Random.Shared.NextDouble() < 0.3)
-                    data.Style = "BALANCED";
-                else if (data.Style == "BERSERKER" && Random.Shared.NextDouble() < 0.4)
-                    data.Style = "AGGRESSIVE";
+                if (data.Style == CombatStyle.AGGRESSIVE && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
+                    data.Style = CombatStyle.BALANCED;
+                else if (data.Style == CombatStyle.BERSERKER && Random.Shared.NextDouble() < _configuration.CombatDefeatStyleTransitionProbability)
+                    data.Style = CombatStyle.AGGRESSIVE;
                 break;
 
             case CombatExperienceType.NEAR_DEATH:
-                data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * 1.5f, 0, 1);
-                data.RiskTolerance = Math.Clamp(data.RiskTolerance - shift * 1.5f, 0, 1);
+                data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * (float)_configuration.CombatIntenseShiftMultiplier, 0, 1);
+                data.RiskTolerance = Math.Clamp(data.RiskTolerance - shift * (float)_configuration.CombatIntenseShiftMultiplier, 0, 1);
                 // High chance of becoming more defensive
-                if (data.Style != "DEFENSIVE" && Random.Shared.NextDouble() < 0.5)
-                    data.Style = "DEFENSIVE";
+                if (data.Style != CombatStyle.DEFENSIVE && Random.Shared.NextDouble() < _configuration.CombatDefensiveShiftProbability)
+                    data.Style = CombatStyle.DEFENSIVE;
                 break;
 
             case CombatExperienceType.ALLY_SAVED:
                 data.ProtectAllies = true;
-                if (data.GroupRole == "SOLO" && Random.Shared.NextDouble() < 0.4)
-                    data.GroupRole = "SUPPORT";
+                if (data.GroupRole == GroupRole.SOLO && Random.Shared.NextDouble() < _configuration.CombatRoleTransitionProbability)
+                    data.GroupRole = GroupRole.SUPPORT;
                 break;
 
             case CombatExperienceType.ALLY_LOST:
                 // Complex - may increase or decrease protection tendency
-                if (Random.Shared.NextDouble() < 0.5)
+                if (Random.Shared.NextDouble() < _configuration.CombatDefensiveShiftProbability)
                 {
                     data.ProtectAllies = true; // Determined to not let it happen again
                 }
@@ -753,15 +788,15 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             case CombatExperienceType.SUCCESSFUL_RETREAT:
                 // Validates retreat as a viable strategy
-                data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * 0.3f, 0, 1);
+                data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * (float)_configuration.CombatMildestShiftMultiplier, 0, 1);
                 break;
 
             case CombatExperienceType.FAILED_RETREAT:
                 // May fight harder next time or become more cautious
-                if (Random.Shared.NextDouble() < 0.5)
+                if (Random.Shared.NextDouble() < _configuration.CombatDefensiveShiftProbability)
                 {
                     data.RetreatThreshold = Math.Clamp(data.RetreatThreshold - shift, 0, 1);
-                    data.Style = "AGGRESSIVE"; // Fight instead of flee
+                    data.Style = CombatStyle.AGGRESSIVE; // Fight instead of flee
                 }
                 else
                 {
@@ -770,9 +805,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 break;
 
             case CombatExperienceType.AMBUSH_SUCCESS:
-                if (data.GroupRole != "LEADER" && Random.Shared.NextDouble() < 0.3)
-                    data.GroupRole = "FLANKER";
-                data.Style = data.Style == "DEFENSIVE" ? "TACTICAL" : data.Style;
+                if (data.GroupRole != GroupRole.LEADER && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
+                    data.GroupRole = GroupRole.FLANKER;
+                data.Style = data.Style == CombatStyle.DEFENSIVE ? CombatStyle.TACTICAL : data.Style;
                 break;
 
             case CombatExperienceType.AMBUSH_SURVIVED:
@@ -790,10 +825,10 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         return new PersonalityResponse
         {
-            CharacterId = Guid.Parse(data.CharacterId),
+            CharacterId = data.CharacterId,
             Traits = data.Traits.Select(t => new TraitValue
             {
-                Axis = Enum.Parse<TraitAxis>(t.Key),
+                Axis = t.Key,
                 Value = t.Value
             }).ToList(),
             Version = data.Version,
@@ -808,7 +843,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         return new CombatPreferencesResponse
         {
-            CharacterId = Guid.Parse(data.CharacterId),
+            CharacterId = data.CharacterId,
             Preferences = MapToCombatPreferences(data),
             Version = data.Version,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix),
@@ -822,9 +857,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         return new CombatPreferences
         {
-            Style = Enum.Parse<CombatStyle>(data.Style),
-            PreferredRange = Enum.Parse<PreferredRange>(data.PreferredRange),
-            GroupRole = Enum.Parse<GroupRole>(data.GroupRole),
+            Style = data.Style,
+            PreferredRange = data.PreferredRange,
+            GroupRole = data.GroupRole,
             RiskTolerance = data.RiskTolerance,
             RetreatThreshold = data.RetreatThreshold,
             ProtectAllies = data.ProtectAllies
@@ -838,12 +873,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// <summary>
     /// Registers this service's API permissions with the Permission service on startup.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering CharacterPersonality service permissions...");
         try
         {
-            await CharacterPersonalityPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await CharacterPersonalityPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("CharacterPersonality service permissions registered");
         }
         catch (Exception ex)
@@ -869,8 +904,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 /// </summary>
 internal class PersonalityData
 {
-    public string CharacterId { get; set; } = string.Empty;
-    public Dictionary<string, float> Traits { get; set; } = new();
+    public Guid CharacterId { get; set; }
+    public Dictionary<TraitAxis, float> Traits { get; set; } = new();
     public int Version { get; set; }
     public long CreatedAtUnix { get; set; }
     public long UpdatedAtUnix { get; set; }
@@ -881,10 +916,10 @@ internal class PersonalityData
 /// </summary>
 internal class CombatPreferencesData
 {
-    public string CharacterId { get; set; } = string.Empty;
-    public string Style { get; set; } = "BALANCED";
-    public string PreferredRange { get; set; } = "MEDIUM";
-    public string GroupRole { get; set; } = "FRONTLINE";
+    public Guid CharacterId { get; set; }
+    public CombatStyle Style { get; set; } = CombatStyle.BALANCED;
+    public PreferredRange PreferredRange { get; set; } = PreferredRange.MEDIUM;
+    public GroupRole GroupRole { get; set; } = GroupRole.FRONTLINE;
     public float RiskTolerance { get; set; } = 0.5f;
     public float RetreatThreshold { get; set; } = 0.3f;
     public bool ProtectAllies { get; set; } = true;

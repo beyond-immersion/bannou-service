@@ -24,8 +24,8 @@ public class AffordanceScorerTests
         var kinds = _sut.GetKindsForAffordanceType(AffordanceType.Ambush);
 
         // Assert
-        Assert.Contains(MapKind.Static_geometry, kinds);
-        Assert.Contains(MapKind.Dynamic_objects, kinds);
+        Assert.Contains(MapKind.StaticGeometry, kinds);
+        Assert.Contains(MapKind.DynamicObjects, kinds);
         Assert.Contains(MapKind.Navigation, kinds);
     }
 
@@ -36,8 +36,8 @@ public class AffordanceScorerTests
         var kinds = _sut.GetKindsForAffordanceType(AffordanceType.Shelter);
 
         // Assert
-        Assert.Contains(MapKind.Static_geometry, kinds);
-        Assert.Contains(MapKind.Dynamic_objects, kinds);
+        Assert.Contains(MapKind.StaticGeometry, kinds);
+        Assert.Contains(MapKind.DynamicObjects, kinds);
         Assert.Equal(2, kinds.Count);
     }
 
@@ -49,19 +49,19 @@ public class AffordanceScorerTests
 
         // Assert
         Assert.Contains(MapKind.Terrain, kinds);
-        Assert.Contains(MapKind.Static_geometry, kinds);
-        Assert.Contains(MapKind.Points_of_interest, kinds);
+        Assert.Contains(MapKind.StaticGeometry, kinds);
+        Assert.Contains(MapKind.PointsOfInterest, kinds);
     }
 
     [Fact]
     public void GetKindsForAffordanceType_ChokePoint_ReturnsCorrectKinds()
     {
         // Act
-        var kinds = _sut.GetKindsForAffordanceType(AffordanceType.Choke_point);
+        var kinds = _sut.GetKindsForAffordanceType(AffordanceType.ChokePoint);
 
         // Assert
         Assert.Contains(MapKind.Navigation, kinds);
-        Assert.Contains(MapKind.Static_geometry, kinds);
+        Assert.Contains(MapKind.StaticGeometry, kinds);
     }
 
     [Fact]
@@ -79,10 +79,10 @@ public class AffordanceScorerTests
     public void GetKindsForAffordanceType_DefensiblePosition_ReturnsCorrectKinds()
     {
         // Act
-        var kinds = _sut.GetKindsForAffordanceType(AffordanceType.Defensible_position);
+        var kinds = _sut.GetKindsForAffordanceType(AffordanceType.DefensiblePosition);
 
         // Assert
-        Assert.Contains(MapKind.Static_geometry, kinds);
+        Assert.Contains(MapKind.StaticGeometry, kinds);
         Assert.Contains(MapKind.Terrain, kinds);
         Assert.Contains(MapKind.Navigation, kinds);
     }
@@ -141,7 +141,7 @@ public class AffordanceScorerTests
         var candidate = CreateMapObject(data);
 
         // Act
-        var score = _sut.ScoreAffordance(candidate, AffordanceType.Defensible_position, null, null);
+        var score = _sut.ScoreAffordance(candidate, AffordanceType.DefensiblePosition, null, null);
 
         // Assert
         Assert.True(score > 0.5);
@@ -170,7 +170,7 @@ public class AffordanceScorerTests
         var candidate = CreateMapObject(data);
 
         // Act
-        var score = _sut.ScoreAffordance(candidate, AffordanceType.Dramatic_reveal, null, null);
+        var score = _sut.ScoreAffordance(candidate, AffordanceType.DramaticReveal, null, null);
 
         // Assert
         Assert.True(score > 0.5);
@@ -508,7 +508,7 @@ public class AffordanceScorerTests
         var candidate = CreateMapObject(data);
 
         // Act
-        var features = _sut.ExtractFeatures(candidate, AffordanceType.Choke_point) as Dictionary<string, object>;
+        var features = _sut.ExtractFeatures(candidate, AffordanceType.ChokePoint) as Dictionary<string, object>;
 
         // Assert
         Assert.NotNull(features);
@@ -530,7 +530,7 @@ public class AffordanceScorerTests
         var candidate = CreateMapObject(data);
 
         // Act
-        var features = _sut.ExtractFeatures(candidate, AffordanceType.Gathering_spot) as Dictionary<string, object>;
+        var features = _sut.ExtractFeatures(candidate, AffordanceType.GatheringSpot) as Dictionary<string, object>;
 
         // Assert
         Assert.NotNull(features);
@@ -552,7 +552,7 @@ public class AffordanceScorerTests
         var candidate = CreateMapObject(data);
 
         // Act
-        var features = _sut.ExtractFeatures(candidate, AffordanceType.Hidden_path) as Dictionary<string, object>;
+        var features = _sut.ExtractFeatures(candidate, AffordanceType.HiddenPath) as Dictionary<string, object>;
 
         // Assert
         Assert.NotNull(features);
@@ -620,7 +620,7 @@ public class AffordanceScorerTests
         {
             ObjectId = Guid.NewGuid(),
             ObjectType = objectType,
-            Kind = MapKind.Static_geometry,
+            Kind = MapKind.StaticGeometry,
             Data = data
         };
     }

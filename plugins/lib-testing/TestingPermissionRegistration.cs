@@ -32,7 +32,8 @@ public static class TestingPermissionRegistration
     /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
     /// </summary>
     /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
-    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId)
+    /// <param name="appId">The effective app ID for this service instance</param>
+    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId, string appId)
     {
         return new ServiceRegistrationEvent
         {
@@ -41,7 +42,7 @@ public static class TestingPermissionRegistration
             ServiceId = instanceId,
             ServiceName = ServiceId,
             Version = ServiceVersion,
-            AppId = Program.Configuration.EffectiveAppId,
+            AppId = appId,
             Endpoints = GetEndpoints()
         };
     }
@@ -197,11 +198,14 @@ public static class TestingPermissionRegistration
     /// Registers service permissions via event publishing.
     /// Should only be called after messaging connectivity is confirmed.
     /// </summary>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
+    /// <param name="messageBus">The message bus for publishing events</param>
+    /// <param name="appId">The effective app ID for this service instance</param>
+    /// <param name="logger">Optional logger for diagnostics</param>
+    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
     {
         try
         {
-            var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
+            var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
 
             await messageBus.TryPublishAsync(
                 "permission.service-registered",

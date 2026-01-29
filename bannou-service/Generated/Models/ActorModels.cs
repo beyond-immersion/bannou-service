@@ -530,6 +530,44 @@ public enum ActorStatus
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of source generating a perception event
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PerceptionSourceType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"character")]
+    Character = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"npc")]
+    Npc = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"object")]
+    Object = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"environment")]
+    Environment = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"coordinator")]
+    Coordinator = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"scheduled")]
+    Scheduled = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"message")]
+    Message = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"service")]
+    Service = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"system")]
+    System = 8,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to stop a running actor
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -704,10 +742,11 @@ public partial class PerceptionData
     public string SourceId { get; set; } = default!;
 
     /// <summary>
-    /// Type of source (character, npc, object, environment)
+    /// Type of source (character, npc, object, environment, coordinator, scheduled, message)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
-    public string? SourceType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PerceptionSourceType? SourceType { get; set; } = default!;
 
     /// <summary>
     /// Perception-specific data. For perceptionType="spatial", this can contain
@@ -1105,7 +1144,7 @@ public enum OptionsFreshness
     Cached = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"stale_ok")]
-    Stale_ok = 2,
+    StaleOk = 2,
 
 }
 #pragma warning restore CS1591
@@ -1298,7 +1337,7 @@ public partial class ChoreographyInstruction
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Unique ID for this sequence within the choreography.
@@ -1526,10 +1565,10 @@ public enum ChoreographyStartCondition
     Immediate = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"after_previous")]
-    After_previous = 1,
+    AfterPrevious = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"sync_point")]
-    Sync_point = 2,
+    SyncPoint = 2,
 
 }
 #pragma warning restore CS1591
@@ -1582,7 +1621,7 @@ public partial class StartEncounterRequest
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Type of encounter (e.g., "combat", "conversation", "choreography")
@@ -1702,7 +1741,7 @@ public partial class EndEncounterResponse
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Duration of the encounter in milliseconds
@@ -1771,7 +1810,7 @@ public partial class EncounterState
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Type of encounter

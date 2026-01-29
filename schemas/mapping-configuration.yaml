@@ -8,7 +8,7 @@ info:
     The Mapping service manages spatial data for game worlds, including
     authority management, spatial indexing, and affordance queries.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -26,12 +26,6 @@ x-service-configuration:
       description: Grace period in seconds after missed heartbeat before authority released
       default: 30
       env: MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS
-    AuthorityHeartbeatIntervalSeconds:
-      type: integer
-      description: Recommended heartbeat interval for authorities (for client guidance)
-      default: 30
-      env: MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS
-
     # Spatial Indexing
     DefaultSpatialCellSize:
       type: number
@@ -62,6 +56,11 @@ x-service-configuration:
       description: Maximum candidate points to evaluate in affordance queries
       default: 1000
       env: MAPPING_MAX_AFFORDANCE_CANDIDATES
+    AffordanceExclusionToleranceUnits:
+      type: number
+      description: Distance tolerance in world units for position exclusion matching in affordance queries
+      default: 1.0
+      env: MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS
 
     # Large Payload Handling
     InlinePayloadMaxBytes:
@@ -152,3 +151,10 @@ x-service-configuration:
       description: TTL for visual effects layer data (short-lived, ephemeral)
       default: 60
       env: MAPPING_TTL_VISUAL_EFFECTS
+
+    # Spatial Query Configuration
+    MaxSpatialQueryResults:
+      type: integer
+      description: Maximum results returned for spatial queries (bounding box, etc)
+      default: 5
+      env: MAPPING_MAX_SPATIAL_QUERY_RESULTS

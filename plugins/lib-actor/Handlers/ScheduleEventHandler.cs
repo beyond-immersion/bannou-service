@@ -137,7 +137,7 @@ public sealed class ScheduleEventHandler : IActionHandler
         // Schedule the event
         var scheduledEvent = new ScheduledEvent
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             TargetCharacterId = targetCharacterId,
             SourceActorId = actorId,
             SourceId = sourceId,
@@ -184,7 +184,7 @@ public sealed class ScheduledEvent
     /// <summary>
     /// Unique ID for this scheduled event.
     /// </summary>
-    public required string Id { get; init; }
+    public required Guid Id { get; init; }
 
     /// <summary>
     /// Target character to receive the event. Null if Event Brain self-event.
@@ -249,7 +249,8 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ScheduledEventManager> _logger;
-    private readonly ConcurrentDictionary<string, ScheduledEvent> _pendingEvents = new();
+    private readonly ActorServiceConfiguration _config;
+    private readonly ConcurrentDictionary<Guid, ScheduledEvent> _pendingEvents = new();
     private readonly Timer _timer;
     private bool _disposed;
 
@@ -258,15 +259,18 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     /// </summary>
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Actor service configuration.</param>
     public ScheduledEventManager(
         IMessageBus messageBus,
-        ILogger<ScheduledEventManager> logger)
+        ILogger<ScheduledEventManager> logger,
+        ActorServiceConfiguration configuration)
     {
         _messageBus = messageBus;
         _logger = logger;
+        _config = configuration;
 
-        // Check for events to fire every 100ms
-        _timer = new Timer(CheckEvents, null, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+        var checkInterval = TimeSpan.FromMilliseconds(configuration.ScheduledEventCheckIntervalMilliseconds);
+        _timer = new Timer(CheckEvents, null, checkInterval, checkInterval);
     }
 
     /// <inheritdoc/>
@@ -280,7 +284,11 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     /// <inheritdoc/>
     public bool Cancel(string eventId)
     {
-        var cancelled = _pendingEvents.TryRemove(eventId, out _);
+        if (!Guid.TryParse(eventId, out var parsedId))
+        {
+            return false;
+        }
+        var cancelled = _pendingEvents.TryRemove(parsedId, out _);
         if (cancelled)
         {
             _logger.LogDebug("Cancelled scheduled event {EventId}", eventId);
@@ -324,13 +332,13 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = evt.TargetCharacterId.Value,
                 SourceAppId = "bannou", // Scheduled events come from Bannou
-                Perception = new Events.PerceptionData
+                Perception = new PerceptionData
                 {
                     PerceptionType = evt.EventType,
                     SourceId = evt.SourceId,
-                    SourceType = "scheduled",
+                    SourceType = PerceptionSourceType.Scheduled,
                     Data = evt.Data,
-                    Urgency = 0.7f // Scheduled events are moderately urgent
+                    Urgency = (float)_config.ScheduledEventDefaultUrgency
                 }
             };
 

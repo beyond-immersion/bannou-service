@@ -46,6 +46,8 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<RealmParticipationRecordedEvent>("realm-history.participation.recorded");
         EventSubscriptionRegistry.Register<RealmLoreCreatedEvent>("realm-history.lore.created");
         EventSubscriptionRegistry.Register<RealmLoreUpdatedEvent>("realm-history.lore.updated");
+        EventSubscriptionRegistry.Register<CharacterUpdatedEvent>("character.updated");
+        EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
 
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
@@ -58,6 +60,10 @@ public static class EventSubscriptionRegistration
         // From connect-events.yaml
         EventSubscriptionRegistry.Register<SessionInvalidatedEvent>("session.invalidated");
         EventSubscriptionRegistry.Register<ServiceErrorEvent>("service.error");
+
+        // From escrow-events.yaml
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
 
         // From game-session-events.yaml
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");

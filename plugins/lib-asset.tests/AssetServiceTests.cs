@@ -172,7 +172,7 @@ public class AssetServiceTests
             Metadata = new AssetMetadataInput
             {
                 AssetType = AssetType.Texture,
-                Realm = Realm.Arcadia,
+                Realm = "test-realm",
                 Tags = new List<string> { "test" }
             }
         };
@@ -466,7 +466,7 @@ public class AssetServiceTests
             Metadata = new AssetMetadataInput
             {
                 AssetType = AssetType.Texture,
-                Realm = Realm.Arcadia,
+                Realm = "test-realm",
                 Tags = new List<string> { "test" }
             },
             CreatedAt = DateTimeOffset.UtcNow,
@@ -664,7 +664,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -756,7 +756,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -805,7 +805,7 @@ public class AssetServiceTests
         var request = new AssetSearchRequest
         {
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Limit = 10,
             Offset = 0
         };
@@ -836,7 +836,7 @@ public class AssetServiceTests
         var request = new AssetSearchRequest
         {
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             ContentType = "image/png",
             Limit = 10,
             Offset = 0
@@ -848,7 +848,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-1",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             ContentType = "image/png",
             ContentHash = "hash1",
             Filename = "asset1.png",
@@ -863,7 +863,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-2",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             ContentType = "image/jpeg", // Different content type
             ContentHash = "hash2",
             Filename = "asset2.jpg",
@@ -878,7 +878,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-3",
             AssetType = AssetType.Texture,
-            Realm = Realm.Omega, // Different realm
+            Realm = "other-realm", // Different realm
             ContentType = "image/png",
             ContentHash = "hash3",
             Filename = "asset3.png",
@@ -934,7 +934,7 @@ public class AssetServiceTests
         var request = new AssetSearchRequest
         {
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Tags = new List<string> { "character", "sword" },
             Limit = 10,
             Offset = 0
@@ -946,7 +946,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-1",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Tags = new List<string> { "character", "sword", "warrior" }, // Has both required tags
             ContentType = "image/png",
             ContentHash = "hash1",
@@ -962,7 +962,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-2",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Tags = new List<string> { "character" }, // Missing "sword" tag
             ContentType = "image/png",
             ContentHash = "hash2",
@@ -1035,7 +1035,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = "test-bundle",
+            BundleId = Guid.NewGuid().ToString(),
             AssetIds = new List<string>()
         };
 
@@ -1054,16 +1054,16 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = "existing-bundle",
+            BundleId = Guid.NewGuid().ToString(),
             AssetIds = new List<string> { "asset-1" }
         };
 
         var existingBundle = new BundleMetadata
         {
-            BundleId = "existing-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared,
+            Realm = "shared",
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
@@ -1090,7 +1090,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = "new-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             AssetIds = new List<string> { "nonexistent-asset" }
         };
 
@@ -1120,9 +1120,10 @@ public class AssetServiceTests
         _configuration.StorageBucket = "test-bucket";
         _configuration.LargeFileThresholdMb = 100; // High threshold
         var service = CreateService();
+        var bundleId = Guid.NewGuid().ToString();
         var request = new CreateBundleRequest
         {
-            BundleId = "small-bundle",
+            BundleId = bundleId,
             AssetIds = new List<string> { "small-asset" }
         };
 
@@ -1138,7 +1139,7 @@ public class AssetServiceTests
             ContentHash = "iconhash",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             StorageKey = "assets/texture/small-asset.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -1179,7 +1180,7 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.Equal("small-bundle", result.BundleId);
+        Assert.Equal(bundleId, result.BundleId);
         Assert.Equal(CreateBundleResponseStatus.Ready, result.Status);
     }
 
@@ -1233,10 +1234,10 @@ public class AssetServiceTests
 
         var pendingBundle = new BundleMetadata
         {
-            BundleId = "pending-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared,
+            Realm = "shared",
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
@@ -1326,7 +1327,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -1386,7 +1387,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -1535,10 +1536,10 @@ public class AssetServiceTests
 
         var existingBundle = new BundleMetadata
         {
-            BundleId = "existing-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared,
+            Realm = "shared",
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
@@ -1575,7 +1576,7 @@ public class AssetServiceTests
             MetabundleId = "",
             SourceBundleIds = new List<string> { "bundle-1" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Act
@@ -1597,7 +1598,7 @@ public class AssetServiceTests
             SourceBundleIds = null,
             StandaloneAssetIds = null,
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Act
@@ -1619,7 +1620,7 @@ public class AssetServiceTests
             SourceBundleIds = new List<string>(),
             StandaloneAssetIds = new List<string>(),
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Act
@@ -1640,15 +1641,15 @@ public class AssetServiceTests
             MetabundleId = "existing-metabundle",
             SourceBundleIds = new List<string> { "bundle-1" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         var existingMetabundle = new BundleMetadata
         {
-            BundleId = "existing-metabundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Metabundle,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-metabundle.bundle",
             SizeBytes = 1024,
@@ -1678,7 +1679,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "nonexistent-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Metabundle doesn't exist
@@ -1709,7 +1710,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "nonexistent-asset" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Metabundle doesn't exist
@@ -1740,7 +1741,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "pending-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Metabundle doesn't exist
@@ -1750,10 +1751,10 @@ public class AssetServiceTests
 
         var pendingBundle = new BundleMetadata
         {
-            BundleId = "pending-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
@@ -1783,7 +1784,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "pending-asset" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Metabundle doesn't exist
@@ -1799,7 +1800,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 512,
             AssetType = AssetType.Behavior,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             StorageKey = "assets/behavior/pending-asset.yaml",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Processing, // Not complete
@@ -1829,7 +1830,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "wrong-realm-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia // Request is for Arcadia
+            Realm = "test-realm" // Request is for test-realm
         };
 
         // Metabundle doesn't exist
@@ -1839,10 +1840,10 @@ public class AssetServiceTests
 
         var wrongRealmBundle = new BundleMetadata
         {
-            BundleId = "wrong-realm-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Fantasia, // Different realm
+            Realm = "other-realm", // Different realm
             AssetIds = new List<string> { "asset-1" },
             Assets = new List<StoredBundleAssetEntry>(),
             StorageKey = "bundles/current/wrong-realm-bundle.bundle",
@@ -1875,7 +1876,7 @@ public class AssetServiceTests
             MetabundleId = "cross-realm-metabundle",
             SourceBundleIds = new List<string> { "shared-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia // Request is for Arcadia
+            Realm = "test-realm" // Request is for test-realm
         };
 
         // Metabundle doesn't exist
@@ -1885,10 +1886,10 @@ public class AssetServiceTests
 
         var sharedBundle = new BundleMetadata
         {
-            BundleId = "shared-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared, // Shared realm should work with any target realm
+            Realm = "shared", // Shared realm should work with any target realm
             AssetIds = new List<string> { "shared-asset" },
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -1958,13 +1959,13 @@ public class AssetServiceTests
             MetabundleId = "conflict-test-metabundle",
             SourceBundleIds = new List<string> { "bundle-1", "bundle-2" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Bundle 1 has asset "shared-asset" with hash "hash-a"
         var bundle1 = new BundleMetadata
         {
-            BundleId = "bundle-1",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/bundle-1.bundle",
@@ -1972,7 +1973,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry
@@ -1990,7 +1991,7 @@ public class AssetServiceTests
         // Bundle 2 has same asset "shared-asset" but with different hash "hash-b"
         var bundle2 = new BundleMetadata
         {
-            BundleId = "bundle-2",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/bundle-2.bundle",
@@ -1998,7 +1999,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 150,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry
@@ -2044,12 +2045,12 @@ public class AssetServiceTests
             SourceBundleIds = new List<string> { "multi-asset-bundle" },
             AssetFilter = new List<string> { "asset-1", "asset-3" }, // Only include these
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         var sourceBundle = new BundleMetadata
         {
-            BundleId = "multi-asset-bundle",
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/multi-asset-bundle.bundle",
@@ -2057,7 +2058,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
             SizeBytes = 300,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 },
@@ -2106,7 +2107,7 @@ public class AssetServiceTests
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string>(),
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Act
@@ -2126,18 +2127,20 @@ public class AssetServiceTests
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string> { "asset-1" },
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Asset-to-bundle index shows asset is in both bundles
+        var regularBundleId = "regular-bundle-v1";
+        var metabundleBundleId = "metabundle-v1";
         var assetIndex = new AssetBundleIndex
         {
-            BundleIds = new List<string> { "regular-bundle", "metabundle-1" }
+            BundleIds = new List<string> { regularBundleId, metabundleBundleId }
         };
 
         var regularBundle = new BundleMetadata
         {
-            BundleId = "regular-bundle",
+            BundleId = regularBundleId,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/regular.bundle",
@@ -2145,7 +2148,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
@@ -2155,7 +2158,7 @@ public class AssetServiceTests
 
         var metabundle = new BundleMetadata
         {
-            BundleId = "metabundle-1",
+            BundleId = metabundleBundleId,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/metabundle.bundle",
@@ -2163,7 +2166,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
@@ -2177,10 +2180,10 @@ public class AssetServiceTests
             .ReturnsAsync(assetIndex);
 
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("regular-bundle")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(regularBundleId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(regularBundle);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("metabundle-1")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(metabundleBundleId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(metabundle);
 
         _mockStorageProvider
@@ -2200,7 +2203,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Single(result.Bundles);
-        Assert.Equal("metabundle-1", result.Bundles.First().BundleId);
+        Assert.Equal(metabundleBundleId, result.Bundles.First().BundleId);
     }
 
     [Fact]
@@ -2209,21 +2212,24 @@ public class AssetServiceTests
         // Arrange: Multiple assets, one bundle covers most of them
         _configuration.StorageBucket = "test-bucket";
         var service = CreateService();
+        var bigBundleId = "big-bundle-v1";
+        var smallBundle1Id = "small-bundle-1-v1";
+        var smallBundle2Id = "small-bundle-2-v1";
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
-            Realm = Realm.Arcadia
+            Realm = "test-realm"
         };
 
         // Asset indices
-        var asset1Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle", "small-bundle-1" } };
-        var asset2Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle" } };
-        var asset3Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle", "small-bundle-2" } };
+        var asset1Index = new AssetBundleIndex { BundleIds = new List<string> { bigBundleId, smallBundle1Id } };
+        var asset2Index = new AssetBundleIndex { BundleIds = new List<string> { bigBundleId } };
+        var asset3Index = new AssetBundleIndex { BundleIds = new List<string> { bigBundleId, smallBundle2Id } };
 
         // Big bundle contains all 3 assets
         var bigBundle = new BundleMetadata
         {
-            BundleId = "big-bundle",
+            BundleId = bigBundleId,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/big.bundle",
@@ -2231,7 +2237,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
             SizeBytes = 300,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 100 },
@@ -2244,7 +2250,7 @@ public class AssetServiceTests
         // Small bundles contain only 1 asset each
         var smallBundle1 = new BundleMetadata
         {
-            BundleId = "small-bundle-1",
+            BundleId = smallBundle1Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/small1.bundle",
@@ -2252,7 +2258,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
@@ -2262,7 +2268,7 @@ public class AssetServiceTests
 
         var smallBundle2 = new BundleMetadata
         {
-            BundleId = "small-bundle-2",
+            BundleId = smallBundle2Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/small2.bundle",
@@ -2270,7 +2276,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-3" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-3", ContentHash = "h3", Filename = "a3.json", ContentType = "application/json", Size = 100 }
@@ -2291,13 +2297,13 @@ public class AssetServiceTests
 
         // Setup bundle lookups
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("big-bundle")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bigBundleId)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bigBundle);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("small-bundle-1")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle1Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(smallBundle1);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("small-bundle-2")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle2Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(smallBundle2);
 
         _mockStorageProvider
@@ -2317,7 +2323,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Single(result.Bundles);
-        Assert.Equal("big-bundle", result.Bundles.First().BundleId);
+        Assert.Equal(bigBundleId.ToString(), result.Bundles.First().BundleId);
     }
 
     #endregion
@@ -2348,19 +2354,22 @@ public class AssetServiceTests
         // Arrange
         _configuration.StorageBucket = "test-bucket";
         var service = CreateService();
+        var bundle1Id = "test-bundle-1";
+        var bundle2Id = "test-bundle-2";
         var request = new QueryBundlesByAssetRequest
         {
-            AssetId = "test-asset"
+            AssetId = "test-asset",
+            Realm = "test-realm"
         };
 
         var assetIndex = new AssetBundleIndex
         {
-            BundleIds = new List<string> { "bundle-1", "bundle-2" }
+            BundleIds = new List<string> { bundle1Id, bundle2Id }
         };
 
         var bundle1 = new BundleMetadata
         {
-            BundleId = "bundle-1",
+            BundleId = bundle1Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/b1.bundle",
@@ -2368,13 +2377,13 @@ public class AssetServiceTests
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 500,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             CreatedAt = DateTimeOffset.UtcNow
         };
 
         var bundle2 = new BundleMetadata
         {
-            BundleId = "bundle-2",
+            BundleId = bundle2Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/b2.bundle",
@@ -2382,7 +2391,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 300,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -2391,10 +2400,10 @@ public class AssetServiceTests
             .ReturnsAsync(assetIndex);
 
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("bundle-1")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle1Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bundle1);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("bundle-2")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle2Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bundle2);
 
         // Act
@@ -2432,7 +2441,6 @@ public class AssetServiceTests
     public async Task BulkGetAssetsAsync_WithIncludeDownloadUrlsFalse_ShouldNotGenerateUrls()
     {
         // Arrange
-        _configuration.StatestoreName = STATE_STORE;
         _configuration.AssetKeyPrefix = "asset:";
         _configuration.DownloadTokenTtlSeconds = 3600;
         var service = CreateService();
@@ -2447,7 +2455,7 @@ public class AssetServiceTests
             Bucket = "test-bucket",
             StorageKey = "assets/test.json",
             AssetType = AssetType.Model,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Tags = new List<string> { "test" },
             ProcessingStatus = ProcessingStatus.Complete,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -2485,7 +2493,6 @@ public class AssetServiceTests
     public async Task BulkGetAssetsAsync_WithIncludeDownloadUrlsTrue_ShouldGenerateUrls()
     {
         // Arrange
-        _configuration.StatestoreName = STATE_STORE;
         _configuration.AssetKeyPrefix = "asset:";
         _configuration.DownloadTokenTtlSeconds = 3600;
         var service = CreateService();
@@ -2500,7 +2507,7 @@ public class AssetServiceTests
             Bucket = "test-bucket",
             StorageKey = "assets/test.json",
             AssetType = AssetType.Model,
-            Realm = Realm.Arcadia,
+            Realm = "test-realm",
             Tags = new List<string> { "test" },
             ProcessingStatus = ProcessingStatus.Complete,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -2593,7 +2600,7 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var metabundleId = "test-metabundle";
+        var metabundleId = "test-metabundle-queued";
         var request = new GetJobStatusRequest { JobId = jobId };
 
         var job = new MetabundleJob
@@ -2627,7 +2634,9 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var metabundleId = "test-metabundle";
+        var metabundleId = "test-metabundle-v1";
+        var sourceBundleId = "source-bundle-v1";
+        var assetId = "asset-1";
         var storageKey = "bundles/current/test-metabundle.bundle";
         var expectedUrl = "https://storage.example.com/download/test-metabundle.bundle";
         var request = new GetJobStatusRequest { JobId = jobId };
@@ -2649,7 +2658,7 @@ public class AssetServiceTests
                 StorageKey = storageKey,
                 SourceBundles = new List<SourceBundleReferenceInternal>
                 {
-                    new() { BundleId = "source-1", Version = "1.0.0", AssetIds = new List<string> { "asset-1" }, ContentHash = "hash1" }
+                    new() { BundleId = sourceBundleId, Version = "1.0.0", AssetIds = new List<string> { assetId }, ContentHash = "hash1" }
                 }
             }
         };
@@ -2699,12 +2708,12 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Failed,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
             UpdatedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow,
-            ErrorCode = "TIMEOUT",
+            ErrorCode = MetabundleErrorCode.TIMEOUT,
             ErrorMessage = "Job timed out before processing could start"
         };
 
@@ -2775,7 +2784,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Queued,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
@@ -2823,7 +2832,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Ready,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2857,7 +2866,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Cancelled,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2886,13 +2895,13 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var sessionId = "test-session-123";
+        var sessionId = Guid.NewGuid();
         var request = new CancelJobRequest { JobId = jobId };
 
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Queued,
             RequesterSessionId = sessionId,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -2912,9 +2921,9 @@ public class AssetServiceTests
             .ReturnsAsync("etag-456");
 
         _mockAssetEventEmitter.Setup(e => e.EmitMetabundleCreationCompleteAsync(
-            sessionId,
+            sessionId.ToString(),
             jobId,
-            "test-metabundle",
+            It.IsAny<string>(),
             false,
             MetabundleJobStatus.Cancelled,
             null,
@@ -2937,9 +2946,9 @@ public class AssetServiceTests
 
         // Verify completion event was emitted
         _mockAssetEventEmitter.Verify(e => e.EmitMetabundleCreationCompleteAsync(
-            sessionId,
+            sessionId.ToString(),
             jobId,
-            "test-metabundle",
+            It.IsAny<string>(),
             false,
             MetabundleJobStatus.Cancelled,
             null,
@@ -2994,7 +3003,7 @@ public class AssetConfigurationTests
         var config = new AssetServiceConfiguration();
 
         // Assert - verify default values from configuration schema
-        Assert.Equal("minio", config.StorageProvider);
+        Assert.Equal(StorageProvider.Minio, config.StorageProvider);
         Assert.Equal("bannou-assets", config.StorageBucket);
         Assert.Equal("minio:9000", config.StorageEndpoint);
         Assert.Equal(3600, config.TokenTtlSeconds);

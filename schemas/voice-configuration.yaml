@@ -5,7 +5,7 @@ info:
     Configuration schema for Voice service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -34,11 +34,15 @@ x-service-configuration:
       description: Maximum participants in P2P voice sessions
       env: VOICE_P2P_MAX_PARTICIPANTS
       default: 8
+      minimum: 2
+      maximum: 16
     ScaledMaxParticipants:
       type: integer
       description: Maximum participants in scaled tier voice sessions
       env: VOICE_SCALED_MAX_PARTICIPANTS
       default: 100
+      minimum: 1
+      maximum: 500
 
     # STUN/TURN Servers (comma-separated)
     StunServers:
@@ -71,6 +75,11 @@ x-service-configuration:
       description: Kamailio JSON-RPC port (typically 5080, not SIP port 5060)
       env: VOICE_KAMAILIO_RPC_PORT
       default: 5080
+    KamailioSipPort:
+      type: integer
+      description: Kamailio SIP signaling port for client registration
+      env: VOICE_KAMAILIO_SIP_PORT
+      default: 5060
 
     # RTPEngine Configuration
     RtpEngineHost:
@@ -83,3 +92,21 @@ x-service-configuration:
       description: RTPEngine control port
       env: VOICE_RTPENGINE_PORT
       default: 22222
+      minimum: 1
+      maximum: 65535
+
+    # Request Timeout Configuration
+    KamailioRequestTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for Kamailio service requests
+      env: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 300
+
+    # SIP Credential Configuration
+    SipCredentialExpirationHours:
+      type: integer
+      description: Hours until SIP credentials expire (clients should re-authenticate before expiration)
+      env: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
+      default: 24

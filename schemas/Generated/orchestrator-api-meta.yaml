@@ -28,7 +28,7 @@ info:
     bannou so other services can call its APIs via mesh
     service invocation through lib-mesh.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
 servers:
 - url: http://localhost:5012
   description: Service endpoint for service-to-service invocation (orchestrator runs as plugin within bannou)
@@ -120,52 +120,73 @@ paths:
                 $ref: '#/components/schemas/ServiceHealthReport'
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ServiceHealthRequest\"\
         ,\n    \"$defs\": {\n        \"ServiceHealthRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Request to get service health status (empty body allowed)\",\n          \
-        \  \"properties\": {\n                \"serviceFilter\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Optional filter by service name\",\n                    \"nullable\": true\n       \
-        \         }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Request to get service health status.\\nUse 'source' to filter which services
+        are included in the report.\\nNote: A service may appear multiple times if it runs on both control plane\\nand deployed
+        nodes - use appId to distinguish between instances.\\n\",\n            \"properties\": {\n                \"source\"\
+        : {\n                    \"$ref\": \"#/$defs/ServiceHealthSource\",\n                    \"description\": \"Which
+        services to include. Defaults to 'all' which includes both\\ncontrol plane services and deployed services.\\n\"\n\
+        \                },\n                \"serviceFilter\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Optional filter by service name (applied after source filter)\",\n                  \
+        \  \"nullable\": true\n                }\n            }\n        },\n        \"ServiceHealthSource\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Filter for which services to include in health reports.\\
+        n- all: Include both control plane services and deployed services (default)\\n- control_plane_only: Only services
+        running on the control plane (main bannou instance)\\n- deployed_only: Only services running on explicitly deployed
+        nodes (split topology)\\n\",\n            \"enum\": [\n                \"all\",\n                \"control_plane_only\"\
+        ,\n                \"deployed_only\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ServiceHealthReport\"\
         ,\n    \"$defs\": {\n        \"ServiceHealthReport\": {\n            \"description\": \"Aggregated health report for
-        all services based on heartbeat monitoring\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"timestamp\",\n                \"totalServices\",\n      \
-        \          \"healthPercentage\",\n                \"healthyServices\",\n                \"unhealthyServices\"\n  \
+        services based on heartbeat monitoring.\\nServices are categorized as healthy or unhealthy based on heartbeat recency.\\
+        nUse controlPlaneAppId to distinguish control plane services from deployed services.\\n\",\n            \"type\":
+        \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"timestamp\"\
+        ,\n                \"totalServices\",\n                \"healthPercentage\",\n                \"healthyServices\"\
+        ,\n                \"unhealthyServices\",\n                \"controlPlaneAppId\",\n                \"source\"\n  \
         \          ],\n            \"properties\": {\n                \"timestamp\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When report was generated\"\
-        \n                },\n                \"totalServices\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Total number of services\"\n                },\n                \"healthPercentage\"\
+        \n                },\n                \"source\": {\n                    \"$ref\": \"#/$defs/ServiceHealthSource\"\
+        ,\n                    \"description\": \"Which source filter was applied to generate this report\"\n            \
+        \    },\n                \"controlPlaneAppId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"App-id of the control plane (main bannou instance).\\nServices with this appId are running on
+        the control plane.\\nServices with different appIds are running on deployed nodes.\\n\"\n                },\n    \
+        \            \"totalServices\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total number of services (may include duplicates if same service runs on multiple nodes)\"\n                },\n\
+        \                \"healthPercentage\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Percentage of healthy services (0-100)\"\n                },\n\
+        \                \"healthyServices\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/ServiceHealthStatus\"\n                    },\n                   \
+        \ \"description\": \"Services with recent heartbeats (status healthy/degraded)\"\n                },\n           \
+        \     \"unhealthyServices\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/ServiceHealthStatus\"\n                    },\n                    \"description\"\
+        : \"Services with expired heartbeats or unhealthy status\"\n                }\n            }\n        },\n       \
+        \ \"ServiceHealthSource\": {\n            \"type\": \"string\",\n            \"description\": \"Filter for which services
+        to include in health reports.\\n- all: Include both control plane services and deployed services (default)\\n- control_plane_only:
+        Only services running on the control plane (main bannou instance)\\n- deployed_only: Only services running on explicitly
+        deployed nodes (split topology)\\n\",\n            \"enum\": [\n                \"all\",\n                \"control_plane_only\"\
+        ,\n                \"deployed_only\"\n            ]\n        },\n        \"ServiceHealthStatus\": {\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Service health status
+        from heartbeat monitoring.\\nUses ServiceHeartbeatEvent schema from common-events.yaml.\\n\",\n            \"required\"\
+        : [\n                \"serviceId\",\n                \"appId\",\n                \"status\",\n                \"lastSeen\"\
+        \n            ],\n            \"properties\": {\n                \"serviceId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Service ID (e.g., \\\"behavior\\\", \\\"account\\\")\"\n       \
+        \         },\n                \"appId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"App-id for mesh routing (e.g., \\\"bannou\\\", \\\"npc-pool-01\\\")\"\n                },\n                \"\
+        status\": {\n                    \"type\": \"string\",\n                    \"description\": \"Service status from
+        heartbeat\"\n                },\n                \"lastSeen\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"description\": \"Last heartbeat timestamp\"\n \
+        \               },\n                \"capacity\": {\n                    \"description\": \"Current capacity metrics
+        including load and available slots\",\n                    \"$ref\": \"#/$defs/Capacity\",\n                    \"\
+        nullable\": true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n\
+        \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Additional service metadata (null if not provided)\"\n                }\n            }\n   \
+        \     },\n        \"Capacity\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Service capacity metrics from heartbeat monitoring including connection counts and
+        resource usage\",\n            \"properties\": {\n                \"maxConnections\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum number of connections this service can handle\"\n \
+        \               },\n                \"currentConnections\": {\n                    \"type\": \"integer\",\n      \
+        \              \"description\": \"Current number of active connections\"\n                },\n                \"cpuUsage\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        description\": \"Percentage of healthy services (0-100)\"\n                },\n                \"healthyServices\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ServiceHealthStatus\"\n                    },\n                    \"description\": \"Services with recent
-        heartbeats\"\n                },\n                \"unhealthyServices\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ServiceHealthStatus\"\n         \
-        \           },\n                    \"description\": \"Services with expired heartbeats\"\n                }\n   \
-        \         }\n        },\n        \"ServiceHealthStatus\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Service health status from heartbeat monitoring.\\nUses ServiceHeartbeatEvent
-        schema from common-events.yaml.\\n\",\n            \"required\": [\n                \"serviceId\",\n             \
-        \   \"appId\",\n                \"status\",\n                \"lastSeen\"\n            ],\n            \"properties\"\
-        : {\n                \"serviceId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Service ID (e.g., \\\"behavior\\\", \\\"account\\\")\"\n                },\n                \"appId\": {\n   \
-        \                 \"type\": \"string\",\n                    \"description\": \"App-id for mesh routing (e.g., \\\"\
-        bannou\\\", \\\"npc-omega-01\\\")\"\n                },\n                \"status\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Service status from heartbeat\"\n                },\n      \
-        \          \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last heartbeat timestamp\"\n                },\n                \"capacity\"\
-        : {\n                    \"description\": \"Current capacity metrics including load and available slots\",\n     \
-        \               \"$ref\": \"#/$defs/Capacity\",\n                    \"nullable\": true\n                },\n    \
-        \            \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional service metadata
-        (null if not provided)\"\n                }\n            }\n        },\n        \"Capacity\": {\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Service capacity metrics
-        from heartbeat monitoring including connection counts and resource usage\",\n            \"properties\": {\n     \
-        \           \"maxConnections\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum number of connections this service can handle\"\n                },\n                \"currentConnections\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current number of active connections\"\
-        \n                },\n                \"cpuUsage\": {\n                    \"type\": \"number\",\n               \
-        \     \"format\": \"float\",\n                    \"description\": \"CPU usage as a percentage (0.0 to 1.0)\"\n  \
-        \              },\n                \"memoryUsage\": {\n                    \"type\": \"number\",\n               \
-        \     \"format\": \"float\",\n                    \"description\": \"Memory usage as a percentage (0.0 to 1.0)\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        description\": \"CPU usage as a percentage (0.0 to 1.0)\"\n                },\n                \"memoryUsage\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Memory usage as a percentage (0.0 to 1.0)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get health status of all services\",\n    \"description\": \"Retrieves
         health information from all services via Redis heartbeat monitoring.\\nUses existing ServiceHeartbeatEvent schema
         from common-events.yaml.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetServicesHealth\"\
@@ -1487,8 +1508,8 @@ paths:
         a container by its app-id\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
         \          \"required\": [\n                \"appName\",\n                \"reason\"\n            ],\n           \
         \ \"properties\": {\n                \"appName\": {\n                    \"type\": \"string\",\n                 \
-        \   \"description\": \"Container's app-id for mesh routing (e.g., \\\"bannou\\\", \\\"npc-omega\\\")\"\n         \
-        \       },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \   \"description\": \"Container's app-id for mesh routing (e.g., \\\"bannou\\\", \\\"npc-pool-01\\\")\"\n       \
+        \         },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Why restart is needed (for logging/auditing)\",\n                    \"example\": \"configuration_change\"\n \
         \               },\n                \"priority\": {\n                    \"$ref\": \"#/$defs/RestartPriority\",\n\
         \                    \"description\": \"Urgency level for the restart\"\n                },\n                \"shutdownGracePeriod\"\
@@ -1997,14 +2018,34 @@ components:
             type: string
           description: Optional filter for specific components (redis, rabbitmq, placement)
           nullable: true
+    ServiceHealthSource:
+      type: string
+      description: |
+        Filter for which services to include in health reports.
+        - all: Include both control plane services and deployed services (default)
+        - control_plane_only: Only services running on the control plane (main bannou instance)
+        - deployed_only: Only services running on explicitly deployed nodes (split topology)
+      enum:
+      - all
+      - control_plane_only
+      - deployed_only
     ServiceHealthRequest:
       type: object
       additionalProperties: false
-      description: Request to get service health status (empty body allowed)
+      description: |
+        Request to get service health status.
+        Use 'source' to filter which services are included in the report.
+        Note: A service may appear multiple times if it runs on both control plane
+        and deployed nodes - use appId to distinguish between instances.
       properties:
+        source:
+          $ref: '#/components/schemas/ServiceHealthSource'
+          description: |
+            Which services to include. Defaults to 'all' which includes both
+            control plane services and deployed services.
         serviceFilter:
           type: string
-          description: Optional filter by service name
+          description: Optional filter by service name (applied after source filter)
           nullable: true
     GetServiceRoutingRequest:
       type: object
@@ -2118,7 +2159,7 @@ components:
       properties:
         appName:
           type: string
-          description: Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
+          description: Container's app-id for mesh routing (e.g., "bannou", "npc-pool-01")
         reason:
           type: string
           description: Why restart is needed (for logging/auditing)
@@ -2236,7 +2277,10 @@ components:
           type: integer
           description: Number of consecutive health check failures
     ServiceHealthReport:
-      description: Aggregated health report for all services based on heartbeat monitoring
+      description: |
+        Aggregated health report for services based on heartbeat monitoring.
+        Services are categorized as healthy or unhealthy based on heartbeat recency.
+        Use controlPlaneAppId to distinguish control plane services from deployed services.
       type: object
       additionalProperties: false
       required:
@@ -2245,14 +2289,25 @@ components:
       - healthPercentage
       - healthyServices
       - unhealthyServices
+      - controlPlaneAppId
+      - source
       properties:
         timestamp:
           type: string
           format: date-time
           description: When report was generated
+        source:
+          $ref: '#/components/schemas/ServiceHealthSource'
+          description: Which source filter was applied to generate this report
+        controlPlaneAppId:
+          type: string
+          description: |
+            App-id of the control plane (main bannou instance).
+            Services with this appId are running on the control plane.
+            Services with different appIds are running on deployed nodes.
         totalServices:
           type: integer
-          description: Total number of services
+          description: Total number of services (may include duplicates if same service runs on multiple nodes)
         healthPercentage:
           type: number
           format: float
@@ -2261,12 +2316,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ServiceHealthStatus'
-          description: Services with recent heartbeats
+          description: Services with recent heartbeats (status healthy/degraded)
         unhealthyServices:
           type: array
           items:
             $ref: '#/components/schemas/ServiceHealthStatus'
-          description: Services with expired heartbeats
+          description: Services with expired heartbeats or unhealthy status
     ServiceHealthStatus:
       type: object
       additionalProperties: false
@@ -2284,7 +2339,7 @@ components:
           description: Service ID (e.g., "behavior", "account")
         appId:
           type: string
-          description: App-id for mesh routing (e.g., "bannou", "npc-omega-01")
+          description: App-id for mesh routing (e.g., "bannou", "npc-pool-01")
         status:
           type: string
           description: Service status from heartbeat

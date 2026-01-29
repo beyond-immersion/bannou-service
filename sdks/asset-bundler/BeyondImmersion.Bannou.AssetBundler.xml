@@ -865,22 +865,20 @@
             Consolidates common enum parsing and error handling patterns.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseRealm(System.String,System.Nullable{BeyondImmersion.BannouService.Asset.Realm})">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseRealm(System.String)">
             <summary>
-            Parses a realm string to the Realm enum.
+            Passes through a realm string, returning null if empty.
             </summary>
-            <param name="realm">Realm string (case-insensitive).</param>
-            <param name="defaultValue">Value to return if realm is null/empty (default: null).</param>
-            <returns>Parsed realm or default value.</returns>
+            <param name="realm">Realm stub name or ID (nullable).</param>
+            <returns>The realm string, or null if empty.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseRealmRequired(System.String,BeyondImmersion.BannouService.Asset.Realm)">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseRealmRequired(System.String)">
             <summary>
-            Parses a realm string to the Realm enum, throwing on unknown values.
+            Validates and returns a required realm string.
             </summary>
-            <param name="realm">Realm string (case-insensitive).</param>
-            <param name="defaultValue">Value to return if realm is null/empty.</param>
-            <returns>Parsed realm.</returns>
-            <exception cref="T:System.ArgumentException">Thrown if realm string is unrecognized.</exception>
+            <param name="realm">Realm stub name or ID.</param>
+            <returns>The realm string.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if realm is null or empty.</exception>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseBundleType(System.String)">
             <summary>
@@ -980,7 +978,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.Realm">
             <summary>
-            Target realm for the metabundle (omega, arcadia, fantasia, shared).
+            Target realm for the metabundle (e.g., shared, my-realm).
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.Description">

@@ -165,17 +165,17 @@ public partial class MappingService : IMappingService
         var ttl = kind switch
         {
             MapKind.Terrain => _configuration.TtlTerrain,
-            MapKind.Static_geometry => _configuration.TtlStaticGeometry,
+            MapKind.StaticGeometry => _configuration.TtlStaticGeometry,
             MapKind.Navigation => _configuration.TtlNavigation,
             MapKind.Resources => _configuration.TtlResources,
-            MapKind.Spawn_points => _configuration.TtlSpawnPoints,
-            MapKind.Points_of_interest => _configuration.TtlPointsOfInterest,
-            MapKind.Dynamic_objects => _configuration.TtlDynamicObjects,
+            MapKind.SpawnPoints => _configuration.TtlSpawnPoints,
+            MapKind.PointsOfInterest => _configuration.TtlPointsOfInterest,
+            MapKind.DynamicObjects => _configuration.TtlDynamicObjects,
             MapKind.Hazards => _configuration.TtlHazards,
-            MapKind.Weather_effects => _configuration.TtlWeatherEffects,
+            MapKind.WeatherEffects => _configuration.TtlWeatherEffects,
             MapKind.Ownership => _configuration.TtlOwnership,
-            MapKind.Combat_effects => _configuration.TtlCombatEffects,
-            MapKind.Visual_effects => _configuration.TtlVisualEffects,
+            MapKind.CombatEffects => _configuration.TtlCombatEffects,
+            MapKind.VisualEffects => _configuration.TtlVisualEffects,
             _ => _configuration.DefaultLayerCacheTtlSeconds
         };
 
@@ -239,6 +239,8 @@ public partial class MappingService : IMappingService
         }
         catch
         {
+            // Intentionally swallowing: any decode/parse exception means token is invalid
+            // Callers handle the (false, _, _) return and log appropriately
             return (false, Guid.Empty, default);
         }
     }
@@ -313,7 +315,7 @@ public partial class MappingService : IMappingService
                 .SaveAsync(channelKey, channel, cancellationToken: cancellationToken);
 
             // Create authority record with require_consume flag if needed
-            var requiresConsume = takeoverMode == AuthorityTakeoverMode.Require_consume && existingChannel != null;
+            var requiresConsume = takeoverMode == AuthorityTakeoverMode.RequireConsume && existingChannel != null;
             var authority = new AuthorityRecord
             {
                 ChannelId = channelId,
@@ -475,19 +477,20 @@ public partial class MappingService : IMappingService
                 return (StatusCodes.Unauthorized, null);
             }
 
+            // Check remaining time before extension to detect late heartbeats
+            string? warning = null;
+            var remainingBeforeExtend = (authority.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+            if (remainingBeforeExtend < _configuration.AuthorityGracePeriodSeconds)
+            {
+                warning = "Authority expiring soon, increase heartbeat frequency";
+            }
+
             // Extend authority
             var newExpiresAt = DateTimeOffset.UtcNow.AddSeconds(_configuration.AuthorityTimeoutSeconds);
             authority.ExpiresAt = newExpiresAt;
 
             await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
                 .SaveAsync(authorityKey, authority, cancellationToken: cancellationToken);
-
-            string? warning = null;
-            var remainingSeconds = (newExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
-            if (remainingSeconds < _configuration.AuthorityGracePeriodSeconds)
-            {
-                warning = "Authority expiring soon, increase heartbeat frequency";
-            }
 
             return (StatusCodes.OK, new AuthorityHeartbeatResponse
             {
@@ -669,16 +672,16 @@ public partial class MappingService : IMappingService
 
         switch (mode)
         {
-            case NonAuthorityHandlingMode.Reject_silent:
+            case NonAuthorityHandlingMode.RejectSilent:
                 _logger.LogDebug("Non-authority object changes rejected silently for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Reject_and_alert:
+            case NonAuthorityHandlingMode.RejectAndAlert:
                 await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: false, cancellationToken);
                 _logger.LogWarning("Non-authority object changes rejected with alert for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Accept_and_alert:
+            case NonAuthorityHandlingMode.AcceptAndAlert:
                 await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: true, cancellationToken);
                 // Process the changes anyway - use null for sourceAppId since this is unauthorized
                 var (status, response) = await ProcessAuthorizedObjectChangesAsync(channel, changes, null, cancellationToken);
@@ -708,7 +711,7 @@ public partial class MappingService : IMappingService
             .Select(c => c.ObjectType)
             .Where(t => t != null)
             .Distinct()
-            .Take(5);
+            .Take(_configuration.MaxSpatialQueryResults);
         var payloadSummary = alertConfig?.IncludePayloadSummary == true
             ? $"{changes.Count} objects ({string.Join(", ", objectTypes)})"
             : null;
@@ -721,13 +724,7 @@ public partial class MappingService : IMappingService
             Kind = channel.Kind.ToString(),
             AttemptedPublisher = "unknown",
             CurrentAuthority = null,
-            HandlingMode = channel.NonAuthorityHandling switch
-            {
-                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
-                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
-                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
-                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
-            },
+            HandlingMode = channel.NonAuthorityHandling,
             PublishAccepted = accepted,
             PayloadSummary = payloadSummary
         };
@@ -1030,14 +1027,23 @@ public partial class MappingService : IMappingService
                 if (cachedResult != null)
                 {
                     stopwatch.Stop();
-                    cachedResult.QueryMetadata = new AffordanceQueryMetadata
+                    // Preserve original query stats from cached result, update cache-specific fields
+                    if (cachedResult.QueryMetadata != null)
                     {
-                        KindsSearched = new List<string>(),
-                        ObjectsEvaluated = 0,
-                        CandidatesGenerated = 0,
-                        SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
-                        CacheHit = true
-                    };
+                        cachedResult.QueryMetadata.SearchDurationMs = (int)stopwatch.ElapsedMilliseconds;
+                        cachedResult.QueryMetadata.CacheHit = true;
+                    }
+                    else
+                    {
+                        cachedResult.QueryMetadata = new AffordanceQueryMetadata
+                        {
+                            KindsSearched = new List<string>(),
+                            ObjectsEvaluated = 0,
+                            CandidatesGenerated = 0,
+                            SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
+                            CacheHit = true
+                        };
+                    }
                     return (StatusCodes.OK, cachedResult);
                 }
             }
@@ -1067,10 +1073,11 @@ public partial class MappingService : IMappingService
                 // Skip excluded positions
                 if (body.ExcludePositions != null && candidate.Position != null)
                 {
+                    var tolerance = _configuration.AffordanceExclusionToleranceUnits;
                     var excluded = body.ExcludePositions.Any(p =>
-                        Math.Abs(p.X - candidate.Position.X) < 1.0 &&
-                        Math.Abs(p.Y - candidate.Position.Y) < 1.0 &&
-                        Math.Abs(p.Z - candidate.Position.Z) < 1.0);
+                        Math.Abs(p.X - candidate.Position.X) < tolerance &&
+                        Math.Abs(p.Y - candidate.Position.Y) < tolerance &&
+                        Math.Abs(p.Z - candidate.Position.Z) < tolerance);
                     if (excluded)
                     {
                         continue;
@@ -1634,16 +1641,16 @@ public partial class MappingService : IMappingService
 
         switch (mode)
         {
-            case NonAuthorityHandlingMode.Reject_silent:
+            case NonAuthorityHandlingMode.RejectSilent:
                 _logger.LogDebug("Non-authority publish rejected silently for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Reject_and_alert:
+            case NonAuthorityHandlingMode.RejectAndAlert:
                 await PublishUnauthorizedWarningAsync(channel, payload, attemptedPublisher, false, cancellationToken);
                 _logger.LogDebug("Non-authority publish rejected with alert for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Accept_and_alert:
+            case NonAuthorityHandlingMode.AcceptAndAlert:
                 await PublishUnauthorizedWarningAsync(channel, payload, attemptedPublisher, true, cancellationToken);
                 // Process the payload anyway
                 var payloads = new List<MapPayload> { payload };
@@ -1995,7 +2002,7 @@ public partial class MappingService : IMappingService
                 {
                     AssetType = AssetType.Other,
                     Tags = new List<string> { "mapping", "snapshot", regionId.ToString() },
-                    Realm = BeyondImmersion.BannouService.Asset.Realm.Shared
+                    Realm = "shared"
                 }
             };
 
@@ -2024,6 +2031,12 @@ public partial class MappingService : IMappingService
             _logger.LogDebug("Uploaded large payload as asset {AssetId} for region {RegionId}", assetMetadata.AssetId, regionId);
             return assetMetadata.AssetId.ToString();
         }
+        catch (ApiException apiEx)
+        {
+            _logger.LogError(apiEx, "Asset service error uploading large payload for region {RegionId}: {Status}",
+                regionId, apiEx.StatusCode);
+            return null;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading large payload to lib-asset for region {RegionId}", regionId);
@@ -2045,7 +2058,7 @@ public partial class MappingService : IMappingService
                 authority.RequiresConsumeBeforePublish = false;
                 await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
                     .SaveAsync(authorityKey, authority, cancellationToken: cancellationToken);
-                _logger.LogInformation("Cleared RequiresConsumeBeforePublish flag for channel {ChannelId}", channelId);
+                _logger.LogDebug("Cleared RequiresConsumeBeforePublish flag for channel {ChannelId}", channelId);
             }
         }
     }
@@ -2259,7 +2272,7 @@ public partial class MappingService : IMappingService
             ChannelId = channel.ChannelId,
             RegionId = channel.RegionId,
             Kind = channel.Kind.ToString(),
-            NonAuthorityHandling = channel.NonAuthorityHandling.ToString(),
+            NonAuthorityHandling = channel.NonAuthorityHandling,
             Version = channel.Version,
             CreatedAt = channel.CreatedAt,
             UpdatedAt = channel.UpdatedAt
@@ -2285,7 +2298,7 @@ public partial class MappingService : IMappingService
                 Max = new EventPosition3D { X = bounds.Max.X, Y = bounds.Max.Y, Z = bounds.Max.Z }
             } : null,
             Version = version,
-            DeltaType = deltaType == DeltaType.Snapshot ? MapUpdatedEventDeltaType.Snapshot : MapUpdatedEventDeltaType.Delta,
+            DeltaType = deltaType,
             SourceAppId = sourceAppId,
             Payload = payload.Data
         };
@@ -2362,13 +2375,7 @@ public partial class MappingService : IMappingService
             Kind = channel.Kind.ToString(),
             AttemptedPublisher = attemptedPublisher ?? "unknown",
             CurrentAuthority = null,
-            HandlingMode = channel.NonAuthorityHandling switch
-            {
-                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
-                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
-                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
-                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
-            },
+            HandlingMode = channel.NonAuthorityHandling,
             PublishAccepted = accepted,
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? payload.ObjectType : null
         };
@@ -2501,6 +2508,10 @@ public partial class MappingService : IMappingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling ingest event for channel {ChannelId}", channelId);
+            await _messageBus.TryPublishErrorAsync(
+                "mapping", "HandleIngestEvent", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: $"event:map.ingest.{channelId}",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
     }
 
@@ -2510,16 +2521,16 @@ public partial class MappingService : IMappingService
 
         switch (mode)
         {
-            case NonAuthorityHandlingMode.Reject_silent:
+            case NonAuthorityHandlingMode.RejectSilent:
                 _logger.LogDebug("Rejecting non-authority ingest silently for channel {ChannelId}", channel.ChannelId);
                 return;
 
-            case NonAuthorityHandlingMode.Reject_and_alert:
+            case NonAuthorityHandlingMode.RejectAndAlert:
                 _logger.LogWarning("Rejecting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
                 await PublishUnauthorizedIngestWarningAsync(channel, evt, accepted: false, cancellationToken);
                 return;
 
-            case NonAuthorityHandlingMode.Accept_and_alert:
+            case NonAuthorityHandlingMode.AcceptAndAlert:
                 _logger.LogWarning("Accepting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
                 await PublishUnauthorizedIngestWarningAsync(channel, evt, accepted: true, cancellationToken);
                 // Process the ingest anyway (recursively but with force flag would be complex, so inline)
@@ -2600,13 +2611,7 @@ public partial class MappingService : IMappingService
             Kind = channel.Kind.ToString(),
             AttemptedPublisher = "unknown",
             CurrentAuthority = null,
-            HandlingMode = channel.NonAuthorityHandling switch
-            {
-                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
-                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
-                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
-                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
-            },
+            HandlingMode = channel.NonAuthorityHandling,
             PublishAccepted = accepted,
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? $"ingest:{evt.Payloads.Count} payloads" : null
         };
@@ -2656,10 +2661,10 @@ public partial class MappingService : IMappingService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Mapping service permissions...");
-        await MappingPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await MappingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
@@ -9,6 +10,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -49,8 +51,12 @@ public partial class ActorService : IActorService
     private readonly IPersonalityCache _personalityCache;
     private readonly IMeshInvocationClient _meshClient;
 
-    // State store names now come from configuration (TemplateStatestoreName, InstanceStatestoreName)
+    // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
+
+    // Regex cache for auto-spawn patterns to prevent ReDoS and improve performance
+    private static readonly ConcurrentDictionary<string, Regex> _regexCache = new();
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
 
     /// <summary>
     /// Creates a new instance of the ActorService.
@@ -119,7 +125,7 @@ public partial class ActorService : IActorService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             var templateId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
@@ -153,13 +159,18 @@ public partial class ActorService : IActorService
             await templateStore.SaveAsync(templateId.ToString(), template, cancellationToken: cancellationToken);
             await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
 
-            // Add to template index
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
-            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+            // Add to template index with optimistic concurrency
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+            var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
+            allIds ??= new List<string>();
             if (!allIds.Contains(templateId.ToString()))
             {
                 allIds.Add(templateId.ToString());
-                await indexStore.SaveAsync(ALL_TEMPLATES_KEY, allIds, cancellationToken: cancellationToken);
+                var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
+                if (indexResult == null)
+                {
+                    _logger.LogWarning("Concurrent modification on template index during create of {TemplateId}", templateId);
+                }
             }
 
             // Publish created event
@@ -205,7 +216,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             ActorTemplateData? template = null;
 
             if (body.TemplateId.HasValue)
@@ -253,8 +264,8 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
             // Get all template IDs from index
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
@@ -308,8 +319,8 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
-            var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+            var (existing, etag) = await templateStore.GetWithETagAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
             {
@@ -352,8 +363,15 @@ public partial class ActorService : IActorService
 
             existing.UpdatedAt = now;
 
-            // Save updates
-            await templateStore.SaveAsync(body.TemplateId.ToString(), existing, cancellationToken: cancellationToken);
+            // Save updates with optimistic concurrency
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var newEtag = await templateStore.TrySaveAsync(body.TemplateId.ToString(), existing, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for actor template {TemplateId}", body.TemplateId);
+                return (StatusCodes.Conflict, null);
+            }
             await templateStore.SaveAsync($"category:{existing.Category}", existing, cancellationToken: cancellationToken);
 
             // Publish updated event
@@ -400,7 +418,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
@@ -434,12 +452,17 @@ public partial class ActorService : IActorService
             await templateStore.DeleteAsync(body.TemplateId.ToString(), cancellationToken);
             await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
 
-            // Remove from template index
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
-            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+            // Remove from template index with optimistic concurrency
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+            var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
+            allIds ??= new List<string>();
             if (allIds.Remove(body.TemplateId.ToString()))
             {
-                await indexStore.SaveAsync(ALL_TEMPLATES_KEY, allIds, cancellationToken: cancellationToken);
+                var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
+                if (indexResult == null)
+                {
+                    _logger.LogWarning("Concurrent modification on template index during delete of {TemplateId}", body.TemplateId);
+                }
             }
 
             // Publish deleted event
@@ -494,7 +517,7 @@ public partial class ActorService : IActorService
         try
         {
             // Get template
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
             var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (template == null)
@@ -509,14 +532,14 @@ public partial class ActorService : IActorService
                 : $"{template.Category}-{Guid.NewGuid():N}";
 
             // Check for duplicate (local registry - only in bannou mode)
-            if (_configuration.DeploymentMode == "bannou" && _actorRegistry.TryGet(actorId, out _))
+            if (_configuration.DeploymentMode == DeploymentMode.Bannou && _actorRegistry.TryGet(actorId, out _))
             {
                 _logger.LogWarning("Actor {ActorId} already exists", actorId);
                 return (StatusCodes.Conflict, null);
             }
 
             // Check pool assignment for non-bannou modes
-            if (_configuration.DeploymentMode != "bannou")
+            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
             {
                 var existingAssignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
                 if (existingAssignment != null)
@@ -530,7 +553,7 @@ public partial class ActorService : IActorService
             string nodeAppId;
             DateTimeOffset startedAt = DateTimeOffset.UtcNow;
 
-            if (_configuration.DeploymentMode == "bannou")
+            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
             {
                 // Bannou mode: run locally
                 var runner = _actorRunnerFactory.Create(
@@ -547,7 +570,9 @@ public partial class ActorService : IActorService
                     return (StatusCodes.Conflict, null);
                 }
 
-                await runner.StartAsync(cancellationToken);
+                using var startCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                startCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+                await runner.StartAsync(startCts.Token);
                 nodeId = _configuration.LocalModeNodeId;
                 nodeAppId = _configuration.LocalModeAppId;
                 startedAt = runner.StartedAt;
@@ -569,9 +594,9 @@ public partial class ActorService : IActorService
                     ActorId = actorId,
                     NodeId = poolNode.NodeId,
                     NodeAppId = poolNode.AppId,
-                    TemplateId = body.TemplateId.ToString(),
+                    TemplateId = body.TemplateId,
                     Category = template.Category,
-                    Status = "pending",
+                    Status = ActorStatus.Pending,
                     CharacterId = body.CharacterId
                 };
                 await _poolManager.RecordActorAssignmentAsync(assignment, cancellationToken);
@@ -606,7 +631,7 @@ public partial class ActorService : IActorService
                 TemplateId = body.TemplateId,
                 CharacterId = body.CharacterId ?? Guid.Empty,
                 NodeId = nodeId,
-                Status = _configuration.DeploymentMode == "bannou" ? "running" : "pending",
+                Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
                 StartedAt = startedAt
             };
             await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
@@ -622,7 +647,7 @@ public partial class ActorService : IActorService
                 CharacterId = body.CharacterId,
                 NodeId = nodeId,
                 NodeAppId = nodeAppId,
-                Status = _configuration.DeploymentMode == "bannou" ? ActorStatus.Running : ActorStatus.Pending,
+                Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
                 StartedAt = startedAt,
                 LoopIterations = 0
             });
@@ -661,12 +686,12 @@ public partial class ActorService : IActorService
             if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
             {
                 return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null));
+                    nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null));
             }
 
             // In pool mode, check if actor is assigned to a pool node
-            if (_configuration.DeploymentMode != "bannou")
+            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
             {
                 var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
                 if (assignment != null)
@@ -675,14 +700,12 @@ public partial class ActorService : IActorService
                     return (StatusCodes.OK, new ActorInstanceResponse
                     {
                         ActorId = assignment.ActorId,
-                        TemplateId = Guid.TryParse(assignment.TemplateId, out var tid) ? tid : Guid.Empty,
+                        TemplateId = assignment.TemplateId,
                         Category = assignment.Category ?? "unknown",
                         CharacterId = assignment.CharacterId,
                         NodeId = assignment.NodeId,
                         NodeAppId = assignment.NodeAppId,
-                        Status = assignment.Status == "running" ? ActorStatus.Running :
-                                assignment.Status == "stopping" ? ActorStatus.Stopping :
-                                ActorStatus.Pending,
+                        Status = assignment.Status,
                         StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
                         LoopIterations = 0
                     });
@@ -745,8 +768,8 @@ public partial class ActorService : IActorService
         string actorId,
         CancellationToken cancellationToken)
     {
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
         // Get all template IDs
         var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken);
@@ -772,15 +795,25 @@ public partial class ActorService : IActorService
                 continue;
             }
 
-            // Check if actorId matches the pattern
+            // Check if actorId matches the pattern using cached regex with timeout
             Match match;
             try
             {
-                match = Regex.Match(actorId, template.AutoSpawn.IdPattern);
+                var pattern = template.AutoSpawn.IdPattern;
+                var regex = _regexCache.GetOrAdd(pattern, p => new Regex(p, RegexOptions.Compiled, RegexTimeout));
+                match = regex.Match(actorId);
                 if (!match.Success)
                 {
                     continue;
                 }
+            }
+            catch (RegexMatchTimeoutException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Regex pattern timed out in template {TemplateId}: {Pattern}",
+                    template.TemplateId, template.AutoSpawn.IdPattern);
+                continue;
             }
             catch (ArgumentException ex)
             {
@@ -820,7 +853,7 @@ public partial class ActorService : IActorService
                 var currentCount = _actorRegistry.GetByTemplateId(template.TemplateId).Count();
 
                 // In pool mode, also count assigned actors
-                if (_configuration.DeploymentMode != "bannou")
+                if (_configuration.DeploymentMode != DeploymentMode.Bannou)
                 {
                     var assignments = await _poolManager.GetAssignmentsByTemplateAsync(
                         template.TemplateId.ToString(), cancellationToken);
@@ -854,7 +887,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            if (_configuration.DeploymentMode == "bannou")
+            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
             {
                 // Bannou mode: stop locally
                 if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
@@ -862,7 +895,9 @@ public partial class ActorService : IActorService
                     return (StatusCodes.NotFound, null);
                 }
 
-                await runner.StopAsync(body.Graceful, cancellationToken);
+                using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+                await runner.StopAsync(body.Graceful, stopCts.Token);
                 _actorRegistry.TryRemove(body.ActorId, out _);
 
                 // Publish stopped event
@@ -874,7 +909,7 @@ public partial class ActorService : IActorService
                     TemplateId = runner.TemplateId,
                     CharacterId = runner.CharacterId ?? Guid.Empty,
                     NodeId = _configuration.LocalModeNodeId,
-                    Status = runner.Status.ToString().ToLowerInvariant(),
+                    Status = runner.Status,
                     StartedAt = runner.StartedAt,
                     DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
                 };
@@ -968,13 +1003,14 @@ public partial class ActorService : IActorService
 
             // Note: nodeId filtering not applicable in bannou mode
 
-            var total = runners.Count();
-            var actors = runners
+            var filteredRunners = runners.ToList();
+            var total = filteredRunners.Count;
+            var actors = filteredRunners
                 .Skip(body.Offset)
                 .Take(body.Limit)
                 .Select(r => r.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null))
+                    nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
                 .ToList();
 
             return (StatusCodes.OK, new ListActorsResponse
@@ -1045,9 +1081,6 @@ public partial class ActorService : IActorService
 
     #region Query Options
 
-    // Default tick interval for waiting on fresh queries (matches ActorRunner default)
-    private const int DefaultTickIntervalMs = 100;
-
     /// <summary>
     /// Queries an actor for its available options.
     /// </summary>
@@ -1068,7 +1101,7 @@ public partial class ActorService : IActorService
             if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
             {
                 // In pool mode, actor might be on another node
-                if (_configuration.DeploymentMode != "bannou")
+                if (_configuration.DeploymentMode != DeploymentMode.Bannou)
                 {
                     var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
                     if (assignment != null)
@@ -1083,7 +1116,7 @@ public partial class ActorService : IActorService
             }
 
             var freshness = body.Freshness;
-            var maxAgeMs = body.MaxAgeMs ?? 5000;
+            var maxAgeMs = body.MaxAgeMs ?? _configuration.QueryOptionsDefaultMaxAgeMs;
             var optionsKey = $"{body.QueryType.ToString().ToLowerInvariant()}_options";
 
             // Get actor state snapshot
@@ -1097,7 +1130,7 @@ public partial class ActorService : IActorService
                 {
                     PerceptionType = "options_query",
                     SourceId = "query-options-endpoint",
-                    SourceType = "system",
+                    SourceType = PerceptionSourceType.System,
                     Data = new Dictionary<string, object?>
                     {
                         ["queryType"] = body.QueryType.ToString(),
@@ -1108,7 +1141,7 @@ public partial class ActorService : IActorService
                 runner.InjectPerception(queryPerception);
 
                 // Wait briefly for actor to process (one tick)
-                await Task.Delay(DefaultTickIntervalMs, cancellationToken);
+                await Task.Delay(_configuration.DefaultTickIntervalMs, cancellationToken);
 
                 // Re-fetch state after processing
                 stateSnapshot = runner.GetStateSnapshot();
@@ -1624,11 +1657,34 @@ public partial class ActorService : IActorService
         where TResponse : class
     {
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId}", endpoint, nodeId);
-        return await _meshClient.InvokeMethodAsync<TRequest, TResponse>(
-            nodeId,
-            endpoint,
-            request,
-            cancellationToken);
+        try
+        {
+            return await _meshClient.InvokeMethodAsync<TRequest, TResponse>(
+                nodeId,
+                endpoint,
+                request,
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Remote service intentionally returned an error - propagate it
+            _logger.LogDebug("Remote call to {NodeId}/{Endpoint} returned status {Status}: {Message}",
+                nodeId, endpoint, ex.StatusCode, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected failure (network, timeout, etc.) - log and publish error event
+            _logger.LogError(ex, "Unexpected error invoking remote {Endpoint} on node {NodeId}",
+                endpoint, nodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InvokeRemote",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { nodeId, endpoint });
+            throw;
+        }
     }
 
     /// <summary>
@@ -1642,11 +1698,34 @@ public partial class ActorService : IActorService
         where TRequest : class
     {
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId} (no response)", endpoint, nodeId);
-        await _meshClient.InvokeMethodAsync(
-            nodeId,
-            endpoint,
-            request,
-            cancellationToken);
+        try
+        {
+            await _meshClient.InvokeMethodAsync(
+                nodeId,
+                endpoint,
+                request,
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Remote service intentionally returned an error - propagate it
+            _logger.LogDebug("Remote call to {NodeId}/{Endpoint} returned status {Status}: {Message}",
+                nodeId, endpoint, ex.StatusCode, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected failure (network, timeout, etc.) - log and publish error event
+            _logger.LogError(ex, "Unexpected error invoking remote {Endpoint} on node {NodeId}",
+                endpoint, nodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InvokeRemote",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { nodeId, endpoint });
+            throw;
+        }
     }
 
     #endregion
@@ -1657,10 +1736,10 @@ public partial class ActorService : IActorService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Actor service permissions...");
-        await ActorPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await ActorPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

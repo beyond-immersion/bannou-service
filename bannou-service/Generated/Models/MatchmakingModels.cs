@@ -175,8 +175,7 @@ public partial class QueueResponse
     /// Game type for created sessions (maps to game-session service)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionGameType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionGameType SessionGameType { get; set; } = default!;
+    public string SessionGameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable queue name
@@ -348,11 +347,10 @@ public partial class CreateQueueRequest
     public string GameId { get; set; } = default!;
 
     /// <summary>
-    /// Game type for created sessions (maps to game-session service)
+    /// Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionGameType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionGameType SessionGameType { get; set; } = default!;
+    public string? SessionGameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable queue name
@@ -643,23 +641,6 @@ public enum PartySkillAggregation
 #pragma warning restore CS1591
 
 /// <summary>
-/// Game type for created sessions (maps to game-session service GameType)
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionGameType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
-    Generic = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
-    Arcadia = 1,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Request to join a matchmaking queue
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -941,10 +922,10 @@ public enum TicketStatus
     Searching = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"match_found")]
-    Match_found = 1,
+    MatchFound = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"match_accepted")]
-    Match_accepted = 2,
+    MatchAccepted = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
     Cancelled = 3,
@@ -1170,22 +1151,22 @@ public enum CancelReason
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"cancelled_by_user")]
-    Cancelled_by_user = 0,
+    CancelledByUser = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
     Timeout = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"session_disconnected")]
-    Session_disconnected = 2,
+    SessionDisconnected = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"party_disbanded")]
-    Party_disbanded = 3,
+    PartyDisbanded = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"match_declined")]
-    Match_declined = 4,
+    MatchDeclined = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"queue_disabled")]
-    Queue_disabled = 5,
+    QueueDisabled = 5,
 
 }
 #pragma warning restore CS1591

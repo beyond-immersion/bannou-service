@@ -4,7 +4,7 @@ info:
   description: |
     Public-facing website service for registration, information, and account management.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
@@ -122,8 +122,7 @@ paths:
       - name: platform
         in: query
         schema:
-          type: string
-          enum: [windows, macos, linux]
+          $ref: '#/components/schemas/Platform'
         description: Filter by platform
       responses:
         '200':
@@ -397,7 +396,7 @@ paths:
   /website/account/subscription:
     get:
       summary: Get subscription status
-      operationId: getSubscription
+      operationId: getAccountSubscription
       tags:
       - Account
       x-permissions:
@@ -427,6 +426,11 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Platform:
+      type: string
+      enum: [windows, macos, linux]
+      description: Target operating system platform
+
     StatusResponse:
       description: Health and version status information for the website service
       type: object
@@ -462,6 +466,7 @@ components:
       - content
       - contentType
       - published
+      - lastModified
       properties:
         slug:
           type: string
@@ -513,6 +518,7 @@ components:
       - slug
       - title
       - published
+      - lastModified
       properties:
         slug:
           type: string
@@ -833,6 +839,7 @@ components:
       properties:
         realmId:
           type: string
+          format: uuid
           description: Unique identifier for the game realm
         name:
           type: string
@@ -879,9 +886,8 @@ components:
       - checksum
       properties:
         platform:
-          type: string
-          enum: [windows, macos, linux]
-          description: Target operating system platform
+          description: Target platform for this download
+          $ref: '#/components/schemas/Platform'
         version:
           type: string
           description: Version number of the game client

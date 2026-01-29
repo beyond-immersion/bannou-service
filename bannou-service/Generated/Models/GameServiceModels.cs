@@ -74,7 +74,7 @@ public partial class CreateServiceRequest
 {
 
     /// <summary>
-    /// URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+    /// URL-safe identifier for the service (e.g., "my-game", "my-other-game")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -84,7 +84,7 @@ public partial class CreateServiceRequest
     public string StubName { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable name for the service (e.g., "Arcadia Online")
+    /// Human-readable name for the service (e.g., "My Game Online")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -183,7 +183,7 @@ public partial class ServiceInfo
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// URL-safe identifier (e.g., "arcadia")
+    /// URL-safe identifier (e.g., "my-game")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -191,7 +191,7 @@ public partial class ServiceInfo
     public string StubName { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable name (e.g., "Arcadia Online")
+    /// Human-readable name (e.g., "My Game Online")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

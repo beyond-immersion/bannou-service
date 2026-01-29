@@ -146,12 +146,51 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         string etag,
         CancellationToken cancellationToken = default)
     {
-
         using var context = CreateContext();
         var existing = await context.StateEntries
             .Where(e => e.StoreName == _storeName && e.Key == key)
             .FirstOrDefaultAsync(cancellationToken);
 
+        var json = BannouJson.Serialize(value);
+        var newEtag = GenerateETag(json);
+        var now = DateTimeOffset.UtcNow;
+
+        // Empty etag means "create new entry if it doesn't exist"
+        if (string.IsNullOrEmpty(etag))
+        {
+            if (existing != null)
+            {
+                _logger.LogDebug("Key '{Key}' already exists in store '{Store}' but empty etag provided (concurrent create)",
+                    key, _storeName);
+                return null;
+            }
+
+            context.StateEntries.Add(new StateEntry
+            {
+                StoreName = _storeName,
+                Key = key,
+                ValueJson = json,
+                ETag = newEtag,
+                Version = 1,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+                _logger.LogDebug("Created new key '{Key}' in store '{Store}'", key, _storeName);
+                return newEtag;
+            }
+            catch (DbUpdateException)
+            {
+                // Concurrent create - another instance inserted with same PK
+                _logger.LogDebug("Concurrent create conflict for key '{Key}' in store '{Store}'", key, _storeName);
+                return null;
+            }
+        }
+
+        // Non-empty etag means "update existing entry with matching etag"
         if (existing == null || existing.ETag != etag)
         {
             _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
@@ -159,12 +198,9 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return null;
         }
 
-        var json = BannouJson.Serialize(value);
-        var newEtag = GenerateETag(json);
-
         existing.ValueJson = json;
         existing.ETag = newEtag;
-        existing.UpdatedAt = DateTimeOffset.UtcNow;
+        existing.UpdatedAt = now;
         existing.Version++;
 
         try

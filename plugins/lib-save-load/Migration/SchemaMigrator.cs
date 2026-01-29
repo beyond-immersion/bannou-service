@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
 using Json.Patch;
@@ -190,7 +191,7 @@ public sealed class SchemaMigrator
                 return null;
             }
 
-            var patch = JsonSerializer.Deserialize<JsonPatch>(patchJson);
+            var patch = BannouJson.Deserialize<JsonPatch>(patchJson);
             if (patch == null)
             {
                 _logger.LogError("Failed to parse migration patch JSON");

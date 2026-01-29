@@ -139,7 +139,7 @@ public interface IActorPoolManager
     /// <param name="actorId">Actor ID.</param>
     /// <param name="newStatus">New status value.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task UpdateActorStatusAsync(string actorId, string newStatus, CancellationToken ct = default);
+    Task UpdateActorStatusAsync(string actorId, ActorStatus newStatus, CancellationToken ct = default);
 
     #endregion
 

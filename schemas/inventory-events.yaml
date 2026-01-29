@@ -1,0 +1,431 @@
+openapi: 3.0.0
+info:
+  title: Inventory Service Events
+  version: 1.0.0
+  description: |
+    Event models for Inventory service pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **Topic Naming**: Uses kebab-case for multi-word entities (inventory-container, inventory-item).
+
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
+    modifying this schema.
+
+  x-event-subscriptions: []
+
+  x-event-publications:
+    # Container lifecycle (auto-generated from x-lifecycle)
+    - topic: inventory-container.created
+      event: InventoryContainerCreatedEvent
+      description: Published when a container is created
+    - topic: inventory-container.updated
+      event: InventoryContainerUpdatedEvent
+      description: Published when a container is updated
+    - topic: inventory-container.deleted
+      event: InventoryContainerDeletedEvent
+      description: Published when a container is deleted
+
+    # Item placement events
+    - topic: inventory-item.placed
+      event: InventoryItemPlacedEvent
+      description: Published when an item is placed in a container
+    - topic: inventory-item.removed
+      event: InventoryItemRemovedEvent
+      description: Published when an item is removed from a container
+    - topic: inventory-item.moved
+      event: InventoryItemMovedEvent
+      description: Published when an item moves between slots or containers
+    - topic: inventory-item.transferred
+      event: InventoryItemTransferredEvent
+      description: Published when item ownership transfers
+
+    # Stack events
+    - topic: inventory-item.stacked
+      event: InventoryItemStackedEvent
+      description: Published when items are stacked together
+    - topic: inventory-item.split
+      event: InventoryItemSplitEvent
+      description: Published when a stack is split
+
+    # Capacity events
+    - topic: inventory-container.full
+      event: InventoryContainerFullEvent
+      description: Published when container reaches capacity
+
+x-lifecycle:
+  InventoryContainer:
+    model:
+      containerId: { type: string, format: uuid, primary: true, required: true, description: "Container unique identifier" }
+      ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
+      ownerType: { $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType', required: true, description: "Owner type (character, account, location, etc.)" }
+      containerType: { type: string, required: true, description: "Game-defined container type" }
+      constraintModel: { type: string, required: true, description: "Capacity constraint model" }
+      isEquipmentSlot: { type: boolean, required: true, description: "Whether this is an equipment slot" }
+    sensitive: []
+
+components:
+  schemas:
+    # Non-lifecycle events
+
+    InventoryItemPlacedEvent:
+      type: object
+      description: Event when an item is placed in a container
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - containerId
+      - ownerId
+      - ownerType
+      - quantity
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        instanceId:
+          type: string
+          format: uuid
+          description: Placed item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container the item was placed in
+        ownerId:
+          type: string
+          format: uuid
+          description: Container owner ID
+        ownerType:
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          description: Container owner type
+        quantity:
+          type: number
+          format: double
+          description: Quantity placed
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position if applicable
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position if applicable
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position if applicable
+
+    InventoryItemRemovedEvent:
+      type: object
+      description: Event when an item is removed from a container
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - containerId
+      - ownerId
+      - ownerType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        instanceId:
+          type: string
+          format: uuid
+          description: Removed item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container the item was removed from
+        ownerId:
+          type: string
+          format: uuid
+          description: Container owner ID
+        ownerType:
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          description: Container owner type
+        reason:
+          type: string
+          nullable: true
+          description: Reason for removal
+
+    InventoryItemMovedEvent:
+      type: object
+      description: Event when an item moves between slots or containers
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - sourceContainerId
+      - targetContainerId
+      - quantity
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        instanceId:
+          type: string
+          format: uuid
+          description: Moved item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container ID
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container ID
+        sourceContainerType:
+          type: string
+          nullable: true
+          description: Previous container type
+        targetContainerType:
+          type: string
+          nullable: true
+          description: New container type
+        quantity:
+          type: number
+          format: double
+          description: Quantity moved
+        previousSlotIndex:
+          type: integer
+          nullable: true
+          description: Previous slot
+        newSlotIndex:
+          type: integer
+          nullable: true
+          description: New slot
+        previousSlotX:
+          type: integer
+          nullable: true
+          description: Previous grid X
+        previousSlotY:
+          type: integer
+          nullable: true
+          description: Previous grid Y
+        newSlotX:
+          type: integer
+          nullable: true
+          description: New grid X
+        newSlotY:
+          type: integer
+          nullable: true
+          description: New grid Y
+
+    InventoryItemTransferredEvent:
+      type: object
+      description: Event when item ownership transfers
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - sourceContainerId
+      - sourceOwnerId
+      - sourceOwnerType
+      - targetContainerId
+      - targetOwnerId
+      - targetOwnerType
+      - quantityTransferred
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        instanceId:
+          type: string
+          format: uuid
+          description: Transferred item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container ID
+        sourceOwnerId:
+          type: string
+          format: uuid
+          description: Previous owner ID
+        sourceOwnerType:
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          description: Previous owner type
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container ID
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: New owner ID
+        targetOwnerType:
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          description: New owner type
+        quantityTransferred:
+          type: number
+          format: double
+          description: Quantity transferred
+
+    InventoryItemStackedEvent:
+      type: object
+      description: Event when items are stacked together
+      required:
+      - eventId
+      - timestamp
+      - sourceInstanceId
+      - targetInstanceId
+      - templateId
+      - containerId
+      - quantityAdded
+      - newTotalQuantity
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        sourceInstanceId:
+          type: string
+          format: uuid
+          description: Source stack that was merged (destroyed)
+        targetInstanceId:
+          type: string
+          format: uuid
+          description: Target stack that received items
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container where merge occurred
+        quantityAdded:
+          type: number
+          format: double
+          description: Quantity added to target
+        newTotalQuantity:
+          type: number
+          format: double
+          description: New total in target stack
+
+    InventoryItemSplitEvent:
+      type: object
+      description: Event when a stack is split
+      required:
+      - eventId
+      - timestamp
+      - originalInstanceId
+      - newInstanceId
+      - templateId
+      - containerId
+      - quantitySplit
+      - originalRemaining
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        originalInstanceId:
+          type: string
+          format: uuid
+          description: Original stack ID
+        newInstanceId:
+          type: string
+          format: uuid
+          description: New stack ID created
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container where split occurred
+        quantitySplit:
+          type: number
+          format: double
+          description: Quantity moved to new stack
+        originalRemaining:
+          type: number
+          format: double
+          description: Quantity remaining in original
+
+    InventoryContainerFullEvent:
+      type: object
+      description: Event when container reaches capacity
+      required:
+      - eventId
+      - timestamp
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        containerId:
+          type: string
+          format: uuid
+          description: Full container ID
+        ownerId:
+          type: string
+          format: uuid
+          description: Container owner ID
+        ownerType:
+          $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType'
+          description: Container owner type
+        containerType:
+          type: string
+          description: Container type
+        constraintType:
+          $ref: 'inventory-api.yaml#/components/schemas/ConstraintLimitType'
+          description: Which constraint was reached (slots, weight, volume)

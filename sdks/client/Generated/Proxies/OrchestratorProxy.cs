@@ -41,7 +41,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<InfrastructureHealthRequest, InfrastructureHealthResponse>(
-            "POST", "/orchestrator/health/infrastructure", request, channel, timeout, cancellationToken);
+            "/orchestrator/health/infrastructure", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ServiceHealthRequest, ServiceHealthReport>(
-            "POST", "/orchestrator/health/services", request, channel, timeout, cancellationToken);
+            "/orchestrator/health/services", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ServiceRestartRequest, ServiceRestartResult>(
-            "POST", "/orchestrator/services/restart", request, channel, timeout, cancellationToken);
+            "/orchestrator/services/restart", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ShouldRestartServiceRequest, RestartRecommendation>(
-            "POST", "/orchestrator/services/should-restart", request, channel, timeout, cancellationToken);
+            "/orchestrator/services/should-restart", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListBackendsRequest, BackendsResponse>(
-            "POST", "/orchestrator/backends/list", request, channel, timeout, cancellationToken);
+            "/orchestrator/backends/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListPresetsRequest, PresetsResponse>(
-            "POST", "/orchestrator/presets/list", request, channel, timeout, cancellationToken);
+            "/orchestrator/presets/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeployRequest, DeployResponse>(
-            "POST", "/orchestrator/deploy", request, channel, timeout, cancellationToken);
+            "/orchestrator/deploy", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetServiceRoutingRequest, ServiceRoutingResponse>(
-            "POST", "/orchestrator/service-routing", request, channel, timeout, cancellationToken);
+            "/orchestrator/service-routing", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetStatusRequest, EnvironmentStatus>(
-            "POST", "/orchestrator/status", request, channel, timeout, cancellationToken);
+            "/orchestrator/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<TeardownRequest, TeardownResponse>(
-            "POST", "/orchestrator/teardown", request, channel, timeout, cancellationToken);
+            "/orchestrator/teardown", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CleanRequest, CleanResponse>(
-            "POST", "/orchestrator/clean", request, channel, timeout, cancellationToken);
+            "/orchestrator/clean", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetLogsRequest, LogsResponse>(
-            "POST", "/orchestrator/logs", request, channel, timeout, cancellationToken);
+            "/orchestrator/logs", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<TopologyUpdateRequest, TopologyUpdateResponse>(
-            "POST", "/orchestrator/topology", request, channel, timeout, cancellationToken);
+            "/orchestrator/topology", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ContainerRestartRequestBody, ContainerRestartResponse>(
-            "POST", "/orchestrator/containers/request-restart", request, channel, timeout, cancellationToken);
+            "/orchestrator/containers/request-restart", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetContainerStatusRequest, ContainerStatus>(
-            "POST", "/orchestrator/containers/status", request, channel, timeout, cancellationToken);
+            "/orchestrator/containers/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ConfigRollbackRequest, ConfigRollbackResponse>(
-            "POST", "/orchestrator/config/rollback", request, channel, timeout, cancellationToken);
+            "/orchestrator/config/rollback", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetConfigVersionRequest, ConfigVersionResponse>(
-            "POST", "/orchestrator/config/version", request, channel, timeout, cancellationToken);
+            "/orchestrator/config/version", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AcquireProcessorRequest, AcquireProcessorResponse>(
-            "POST", "/orchestrator/processing-pool/acquire", request, channel, timeout, cancellationToken);
+            "/orchestrator/processing-pool/acquire", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -365,7 +365,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ReleaseProcessorRequest, ReleaseProcessorResponse>(
-            "POST", "/orchestrator/processing-pool/release", request, channel, timeout, cancellationToken);
+            "/orchestrator/processing-pool/release", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -383,7 +383,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetPoolStatusRequest, PoolStatusResponse>(
-            "POST", "/orchestrator/processing-pool/status", request, channel, timeout, cancellationToken);
+            "/orchestrator/processing-pool/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -401,7 +401,7 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ScalePoolRequest, ScalePoolResponse>(
-            "POST", "/orchestrator/processing-pool/scale", request, channel, timeout, cancellationToken);
+            "/orchestrator/processing-pool/scale", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -419,6 +419,6 @@ public sealed class OrchestratorProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CleanupPoolRequest, CleanupPoolResponse>(
-            "POST", "/orchestrator/processing-pool/cleanup", request, channel, timeout, cancellationToken);
+            "/orchestrator/processing-pool/cleanup", request, channel, timeout, cancellationToken);
     }
 }

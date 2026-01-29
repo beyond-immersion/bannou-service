@@ -47,6 +47,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             services.AddSingleton<IMeshStateManager, MeshStateManager>();
         }
 
+        // Register active health checking background service
+        services.AddHostedService<MeshHealthCheckService>();
+
         // Register the mesh invocation client for service-to-service calls
         // Uses IMeshStateManager directly (NOT IMeshClient) to avoid circular dependency:
         // - All generated clients (AccountClient, etc.) need IMeshInvocationClient
@@ -54,8 +57,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         services.AddSingleton<IMeshInvocationClient>(sp =>
         {
             var stateManager = sp.GetRequiredService<IMeshStateManager>();
+            var configuration = sp.GetRequiredService<MeshServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-            return new MeshInvocationClient(stateManager, logger);
+            return new MeshInvocationClient(stateManager, configuration, logger);
         });
 
         Logger?.LogDebug("Service dependencies configured");
@@ -104,7 +108,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Use the shared Program.ServiceGUID for consistent instance identification
         // This ensures mesh endpoint and heartbeat use the same instance ID
-        var instanceId = Guid.Parse(Program.ServiceGUID);
+        var instanceId = Program.ServiceGUID;
 
         var endpoint = new MeshEndpoint
         {
@@ -120,7 +124,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             LastSeen = DateTimeOffset.UtcNow
         };
 
-        var registered = await _stateManager.RegisterEndpointAsync(endpoint, 90);
+        var registered = await _stateManager.RegisterEndpointAsync(endpoint, meshConfig.EndpointTtlSeconds);
         if (registered)
         {
             Logger?.LogInformation(

@@ -9,7 +9,7 @@ info:
     All events inherit from BaseClientEvent (common-client-events.yaml) and use
     the "matchmaking.{event_type}" naming convention.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
@@ -239,7 +239,7 @@ components:
           type: string
           description: Queue the ticket was in
         reason:
-          $ref: '#/components/schemas/CancelReason'
+          $ref: 'matchmaking-api.yaml#/components/schemas/CancelReason'
           description: Reason for cancellation
         reasonDetail:
           type: string
@@ -348,15 +348,6 @@ components:
 
     # ============================================
     # Supporting Types
+    # NOTE: CancelReason is defined in matchmaking-api.yaml
+    # and referenced via $ref per IMPLEMENTATION TENETS (T26)
     # ============================================
-
-    CancelReason:
-      type: string
-      description: Reason codes for matchmaking cancellation
-      enum:
-        - cancelled_by_user
-        - timeout
-        - session_disconnected
-        - party_disbanded
-        - match_declined
-        - queue_disabled

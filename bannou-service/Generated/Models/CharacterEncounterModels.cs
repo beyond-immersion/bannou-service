@@ -963,11 +963,11 @@ public partial class RefreshMemoryRequest
     public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
-    /// Amount to boost memory strength (capped at 1.0)
+    /// Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if not provided.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("strengthBoost")]
     [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
-    public float StrengthBoost { get; set; } = 0.2F;
+    public float? StrengthBoost { get; set; } = default!;
 
 }
 

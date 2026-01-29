@@ -26,9 +26,14 @@ public partial class BannouClient
     private CharacterHistoryProxy? _characterHistory;
     private CharacterPersonalityProxy? _characterPersonality;
     private ConnectProxy? _connect;
+    private ContractProxy? _contract;
+    private CurrencyProxy? _currency;
     private DocumentationProxy? _documentation;
+    private EscrowProxy? _escrow;
     private GameServiceProxy? _gameService;
     private GameSessionProxy? _gameSession;
+    private InventoryProxy? _inventory;
+    private ItemProxy? _item;
     private LeaderboardProxy? _leaderboard;
     private LocationProxy? _location;
     private MappingProxy? _mapping;
@@ -123,10 +128,28 @@ public partial class BannouClient
         _connect ??= new ConnectProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Contract Service API operations.
+    /// </summary>
+    public ContractProxy Contract =>
+        _contract ??= new ContractProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Currency Service API operations.
+    /// </summary>
+    public CurrencyProxy Currency =>
+        _currency ??= new CurrencyProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Documentation API operations.
     /// </summary>
     public DocumentationProxy Documentation =>
         _documentation ??= new DocumentationProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Escrow Service API operations.
+    /// </summary>
+    public EscrowProxy Escrow =>
+        _escrow ??= new EscrowProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Game Service API operations.
@@ -139,6 +162,18 @@ public partial class BannouClient
     /// </summary>
     public GameSessionProxy GameSession =>
         _gameSession ??= new GameSessionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Inventory Service API operations.
+    /// </summary>
+    public InventoryProxy Inventory =>
+        _inventory ??= new InventoryProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Item Service API operations.
+    /// </summary>
+    public ItemProxy Item =>
+        _item ??= new ItemProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Leaderboard Service API operations.

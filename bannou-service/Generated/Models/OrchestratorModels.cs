@@ -46,14 +46,51 @@ public partial class InfrastructureHealthRequest
 }
 
 /// <summary>
-/// Request to get service health status (empty body allowed)
+/// Filter for which services to include in health reports.
+/// <br/>- all: Include both control plane services and deployed services (default)
+/// <br/>- control_plane_only: Only services running on the control plane (main bannou instance)
+/// <br/>- deployed_only: Only services running on explicitly deployed nodes (split topology)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServiceHealthSource
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"all")]
+    All = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"control_plane_only")]
+    ControlPlaneOnly = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"deployed_only")]
+    DeployedOnly = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Request to get service health status.
+/// <br/>Use 'source' to filter which services are included in the report.
+/// <br/>Note: A service may appear multiple times if it runs on both control plane
+/// <br/>and deployed nodes - use appId to distinguish between instances.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceHealthRequest
 {
 
     /// <summary>
-    /// Optional filter by service name
+    /// Which services to include. Defaults to 'all' which includes both
+    /// <br/>control plane services and deployed services.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("source")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ServiceHealthSource Source { get; set; } = default!;
+
+    /// <summary>
+    /// Optional filter by service name (applied after source filter)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceFilter")]
     public string? ServiceFilter { get; set; } = default!;
@@ -222,7 +259,7 @@ public partial class ContainerRestartRequestBody
 {
 
     /// <summary>
-    /// Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
+    /// Container's app-id for mesh routing (e.g., "bannou", "npc-pool-01")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -422,7 +459,10 @@ public partial class HealthChecks
 }
 
 /// <summary>
-/// Aggregated health report for all services based on heartbeat monitoring
+/// Aggregated health report for services based on heartbeat monitoring.
+/// <br/>Services are categorized as healthy or unhealthy based on heartbeat recency.
+/// <br/>Use controlPlaneAppId to distinguish control plane services from deployed services.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceHealthReport
@@ -437,7 +477,27 @@ public partial class ServiceHealthReport
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Total number of services
+    /// Which source filter was applied to generate this report
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("source")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ServiceHealthSource Source { get; set; } = default!;
+
+    /// <summary>
+    /// App-id of the control plane (main bannou instance).
+    /// <br/>Services with this appId are running on the control plane.
+    /// <br/>Services with different appIds are running on deployed nodes.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("controlPlaneAppId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ControlPlaneAppId { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of services (may include duplicates if same service runs on multiple nodes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
     public int TotalServices { get; set; } = default!;
@@ -449,7 +509,7 @@ public partial class ServiceHealthReport
     public float HealthPercentage { get; set; } = default!;
 
     /// <summary>
-    /// Services with recent heartbeats
+    /// Services with recent heartbeats (status healthy/degraded)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("healthyServices")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -457,7 +517,7 @@ public partial class ServiceHealthReport
     public System.Collections.Generic.ICollection<ServiceHealthStatus> HealthyServices { get; set; } = new System.Collections.ObjectModel.Collection<ServiceHealthStatus>();
 
     /// <summary>
-    /// Services with expired heartbeats
+    /// Services with expired heartbeats or unhealthy status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("unhealthyServices")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -484,7 +544,7 @@ public partial class ServiceHealthStatus
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// App-id for mesh routing (e.g., "bannou", "npc-omega-01")
+    /// App-id for mesh routing (e.g., "bannou", "npc-pool-01")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

@@ -5,7 +5,7 @@ info:
     Configuration schema for Connect service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -16,11 +16,6 @@ x-service-configuration:
       description: Maximum number of concurrent WebSocket connections
       default: 10000
       env: CONNECT_MAX_CONCURRENT_CONNECTIONS
-    ConnectionTimeoutSeconds:
-      type: integer
-      description: WebSocket connection timeout in seconds
-      default: 300
-      env: CONNECT_CONNECTION_TIMEOUT_SECONDS
     HeartbeatIntervalSeconds:
       type: integer
       description: Interval between heartbeat messages
@@ -31,30 +26,11 @@ x-service-configuration:
       description: Maximum number of queued messages per connection
       default: 1000
       env: CONNECT_MESSAGE_QUEUE_SIZE
-    BinaryProtocolVersion:
-      type: string
-      description: Binary protocol version identifier
-      default: "2.0"
-      env: CONNECT_BINARY_PROTOCOL_VERSION
     BufferSize:
       type: integer
       description: Size of message buffers in bytes
       default: 65536
       env: CONNECT_BUFFER_SIZE
-    DefaultServices:
-      type: array
-      items:
-        type: string
-      description: Services available to unauthenticated connections
-      default: ["auth", "website"]
-      env: CONNECT_DEFAULT_SERVICES
-    AuthenticatedServices:
-      type: array
-      items:
-        type: string
-      description: Additional services available to authenticated connections
-      default: ["account", "behavior", "permission", "gamesession"]
-      env: CONNECT_AUTHENTICATED_SERVICES
     EnableClientToClientRouting:
       type: boolean
       description: Enable routing messages between WebSocket clients
@@ -71,21 +47,11 @@ x-service-configuration:
       default: 1
       env: CONNECT_RATE_LIMIT_WINDOW_MINUTES
     # NOTE: JWT validation is delegated to Auth service via HTTP, no local secret needed
-    RabbitMqConnectionString:
-      type: string
-      description: RabbitMQ connection string for client event subscriptions
-      env: CONNECT_RABBITMQ_CONNECTION_STRING
-      default: "amqp://guest:guest@rabbitmq:5672"
     ServerSalt:
       type: string
       description: Server salt for client GUID generation. Must be shared across all Connect instances for session shortcuts to work correctly. Change in production.
       env: CONNECT_SERVER_SALT
       default: "bannou-dev-connect-salt-change-in-production"
-    ConnectUrl:
-      type: string
-      nullable: true  # NRT: Optional config MUST be nullable (defaults to ServiceDomain if not set)
-      description: WebSocket URL for client reconnection. Defaults to wss://{BANNOU_SERVICE_DOMAIN}/connect if domain set.
-      env: CONNECT_URL
 
     ConnectionMode:
       type: string
@@ -124,6 +90,55 @@ x-service-configuration:
       env: CONNECT_RECONNECTION_WINDOW_SECONDS
       default: 300
       description: Window for client reconnection after disconnect in seconds (default 5 minutes)
+
+    # === HTTP Client Configuration (Tier 2) ===
+    HttpClientTimeoutSeconds:
+      type: integer
+      env: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
+      default: 120
+      description: Timeout in seconds for HTTP client requests to backend services
+
+    # === WebSocket Connection Management (Tier 2) ===
+    RpcCleanupIntervalSeconds:
+      type: integer
+      env: CONNECT_RPC_CLEANUP_INTERVAL_SECONDS
+      default: 30
+      description: Interval in seconds between pending RPC cleanup runs
+
+    DefaultRpcTimeoutSeconds:
+      type: integer
+      env: CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS
+      default: 30
+      description: Default timeout in seconds for RPC calls when not specified
+
+    ConnectionCleanupIntervalSeconds:
+      type: integer
+      env: CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS
+      default: 30
+      description: Interval in seconds between connection cleanup runs
+
+    InactiveConnectionTimeoutMinutes:
+      type: integer
+      env: CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES
+      default: 30
+      description: Timeout in minutes after which inactive connections are cleaned up
+
+    PendingMessageTimeoutSeconds:
+      type: integer
+      env: CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS
+      default: 30
+      description: Timeout in seconds for pending messages awaiting acknowledgment
+
+    ConnectionShutdownTimeoutSeconds:
+      type: integer
+      env: CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS
+      default: 5
+      description: Timeout in seconds when waiting for connection closure during shutdown
+    ReconnectionWindowExtensionMinutes:
+      type: integer
+      env: CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES
+      default: 1
+      description: Additional minutes added to reconnection window on each extension
 
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permission.capabilities-updated

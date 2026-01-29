@@ -9,12 +9,12 @@ public class ConnectionStateData
     /// <summary>
     /// Unique session ID for this connection.
     /// </summary>
-    public string SessionId { get; set; } = string.Empty;
+    public Guid SessionId { get; set; }
 
     /// <summary>
     /// Account ID owning this session.
     /// </summary>
-    public string? AccountId { get; set; }
+    public Guid? AccountId { get; set; }
 
     // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long ConnectedAtUnix { get; set; }
@@ -74,7 +74,7 @@ public class ConnectionStateData
 
     /// <summary>
     /// Authorization strings at time of disconnect (preserved for reconnection).
-    /// Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+    /// Format: "{stubName}:{state}" (e.g., "my-game:authorized")
     /// </summary>
     public List<string>? Authorizations { get; set; }
 
@@ -95,12 +95,12 @@ public class SessionHeartbeat
     /// <summary>
     /// The session ID this heartbeat is for.
     /// </summary>
-    public string SessionId { get; set; } = string.Empty;
+    public Guid SessionId { get; set; }
 
     /// <summary>
     /// The instance ID managing this session.
     /// </summary>
-    public string InstanceId { get; set; } = string.Empty;
+    public Guid InstanceId { get; set; }
 
     // Store as Unix epoch timestamp (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long LastSeenUnix { get; set; }
@@ -134,7 +134,7 @@ public class SessionEvent
     /// <summary>
     /// The session ID this event is for.
     /// </summary>
-    public string SessionId { get; set; } = string.Empty;
+    public Guid SessionId { get; set; }
 
     // Store as Unix epoch timestamp (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long TimestampUnix { get; set; }

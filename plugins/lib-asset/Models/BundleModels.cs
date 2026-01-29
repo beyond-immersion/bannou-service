@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Asset.Models;
 public sealed class BundleMetadata
 {
     /// <summary>
-    /// Unique bundle identifier.
+    /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1").
     /// </summary>
     public required string BundleId { get; init; }
 
@@ -28,9 +28,9 @@ public sealed class BundleMetadata
     public required BundleType BundleType { get; init; }
 
     /// <summary>
-    /// Game realm this bundle belongs to.
+    /// Game realm stub name this bundle belongs to.
     /// </summary>
-    public required Realm Realm { get; init; }
+    public required string Realm { get; init; }
 
     /// <summary>
     /// Human-readable bundle name.
@@ -151,7 +151,7 @@ public sealed class BundleMetadata
             MetadataVersion = MetadataVersion,
             Name = Name,
             Description = Description,
-            Owner = Owner ?? string.Empty,
+            Owner = Owner,
             Realm = Realm,
             Tags = Tags,
             Status = LifecycleStatus switch
@@ -306,7 +306,7 @@ public sealed class BundleCreationJob
     /// <summary>
     /// Unique job identifier.
     /// </summary>
-    public required string JobId { get; init; }
+    public required Guid JobId { get; init; }
 
     /// <summary>
     /// Target bundle identifier.
@@ -393,7 +393,7 @@ public sealed class BundleUploadSession
     /// <summary>
     /// Upload session identifier.
     /// </summary>
-    public required string UploadId { get; init; }
+    public required Guid UploadId { get; init; }
 
     /// <summary>
     /// Expected bundle ID.

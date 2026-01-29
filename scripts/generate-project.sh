@@ -71,9 +71,10 @@ if [ ! -f "$PROJECT_FILE" ]; then
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Add plugin-to-plugin references here as needed -->
-    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
-    <ProjectReference Include="../lib-state/lib-state.csproj" />
+    <!-- Infrastructure libs (lib-state, lib-messaging, lib-mesh) are accessed via DI interfaces -->
+    <!-- from bannou-service (IStateStoreFactory, IMessageBus, I*Client, etc.) -->
+    <!-- DO NOT add ProjectReferences to infrastructure libs - use injected interfaces instead -->
+    <!-- Add plugin-to-plugin references here ONLY for non-infrastructure cross-plugin types -->
   </ItemGroup>
 
   <ItemGroup>

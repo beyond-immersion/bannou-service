@@ -28,7 +28,7 @@ Schema-first development means you write **18-35% of the code** for a typical se
 | ~500-2,000 lines of business logic | Validation, routing, serialization, permissions |
 | ~200-800 lines of tests | Test infrastructure and patterns to follow |
 
-**Key stats across 32 services:**
+**Key stats across 41 services:**
 - **~65%** of service code is auto-generated
 - Schema-to-code amplification: **~4x** (1 YAML line → 4 C# lines)
 - Simple CRUD services: 65-85% generated
@@ -38,7 +38,9 @@ Schema-first development means you write **18-35% of the code** for a typical se
 
 ### Step 1: Define the OpenAPI Schema
 
-Create your API specification in the `/schemas/` directory:
+Create your API specification in the `/schemas/` directory.
+
+> **IMPORTANT**: Before writing any schema, read [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md). It covers NRT compliance, validation keywords, extension attributes (`x-permissions`, `x-lifecycle`, etc.), and 30+ anti-patterns to avoid.
 
 ```yaml
 # schemas/example-api.yaml
@@ -403,7 +405,7 @@ public async Task Greet_ValidName_ReturnsGreeting()
 
 ### Integration Tests
 
-HTTP tests in `http-tester/` verify service-to-service communication:
+HTTP tests in `tools/http-tester/` verify service-to-service communication:
 
 ```csharp
 [Test]
@@ -417,7 +419,7 @@ public async Task Greet_ThroughHttp_ReturnsGreeting()
 
 ### Edge Tests
 
-WebSocket tests in `edge-tester/` verify the full protocol:
+WebSocket tests in `tools/edge-tester/` verify the full protocol:
 
 ```csharp
 [Test]
@@ -455,7 +457,9 @@ This fixes line endings and applies code style rules.
 
 ## Next Steps
 
-- [Testing Guide](TESTING.md) - Detailed testing documentation
+- [Testing Guide](TESTING.md) - Detailed testing documentation (MANDATORY reading for test placement decisions)
 - [Deployment Guide](DEPLOYMENT.md) - Deploy your service to production
+- [Plugin Deep-Dives](../plugins/) - Comprehensive documentation for all 41 services (see how existing services handle similar patterns)
+- [TENETS Reference](../reference/TENETS.md) - Development rules organized by category (Foundation, Implementation, Quality)
 - [Bannou Design](../BANNOU_DESIGN.md) - Understand the architecture
 - [Development Rules](../reference/TENETS.md) - Mandatory development constraints

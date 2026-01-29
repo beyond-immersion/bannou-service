@@ -35,7 +35,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusResponse']>> {
     return this.client.invokeAsync<object, Schemas['StatusResponse']>(
-      'GET',
       '/website/status',
       {},
       channel,
@@ -54,7 +53,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['PageContent']>> {
     return this.client.invokeAsync<object, Schemas['PageContent']>(
-      'GET',
       '/website/content/{slug}',
       {},
       channel,
@@ -73,7 +71,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['NewsResponse']>> {
     return this.client.invokeAsync<object, Schemas['NewsResponse']>(
-      'GET',
       '/website/news',
       {},
       channel,
@@ -92,7 +89,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ServerStatusResponse']>> {
     return this.client.invokeAsync<object, Schemas['ServerStatusResponse']>(
-      'GET',
       '/website/server-status',
       {},
       channel,
@@ -111,7 +107,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DownloadsResponse']>> {
     return this.client.invokeAsync<object, Schemas['DownloadsResponse']>(
-      'GET',
       '/website/downloads',
       {},
       channel,
@@ -132,7 +127,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContactResponse']>> {
     return this.client.invokeAsync<Schemas['ContactRequest'], Schemas['ContactResponse']>(
-      'POST',
       '/website/contact',
       request,
       channel,
@@ -151,7 +145,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AccountProfile']>> {
     return this.client.invokeAsync<object, Schemas['AccountProfile']>(
-      'GET',
       '/website/account/profile',
       {},
       channel,
@@ -170,7 +163,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterListResponse']>> {
     return this.client.invokeAsync<object, Schemas['CharacterListResponse']>(
-      'GET',
       '/website/account/characters',
       {},
       channel,
@@ -191,7 +183,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['PageContent']>> {
     return this.client.invokeAsync<Schemas['PageContent'], Schemas['PageContent']>(
-      'POST',
       '/website/cms/pages',
       request,
       channel,
@@ -212,7 +203,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['PageContent']>> {
     return this.client.invokeAsync<Schemas['PageContent'], Schemas['PageContent']>(
-      'PUT',
       '/website/cms/pages/{slug}',
       request,
       channel,
@@ -231,7 +221,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SiteSettings']>> {
     return this.client.invokeAsync<object, Schemas['SiteSettings']>(
-      'GET',
       '/website/cms/site-settings',
       {},
       channel,
@@ -252,7 +241,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SiteSettings']>> {
     return this.client.invokeAsync<Schemas['SiteSettings'], Schemas['SiteSettings']>(
-      'PUT',
       '/website/cms/site-settings',
       request,
       channel,
@@ -271,7 +259,6 @@ export class WebsiteProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ThemeConfig']>> {
     return this.client.invokeAsync<object, Schemas['ThemeConfig']>(
-      'GET',
       '/website/cms/theme',
       {},
       channel,
@@ -287,7 +274,6 @@ export class WebsiteProxy {
    */
   async updateThemeEventAsync(request: Schemas['ThemeConfig'], channel: number = 0): Promise<void> {
     return this.client.sendEventAsync<Schemas['ThemeConfig']>(
-      'PUT',
       '/website/cms/theme',
       request,
       channel
@@ -300,12 +286,11 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSubscriptionAsync(
+  async getAccountSubscriptionAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SubscriptionResponse']>> {
     return this.client.invokeAsync<object, Schemas['SubscriptionResponse']>(
-      'GET',
       '/website/account/subscription',
       {},
       channel,

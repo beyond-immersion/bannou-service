@@ -1,672 +1,136 @@
-# Economy and Currency Architecture Design
+# Economy Architecture Design: Market, Trade, and NPC Economic Systems
 
 > **Created**: 2026-01-19
-> **Last Updated**: 2026-01-19
-> **Purpose**: Comprehensive architecture for Bannou's economic systems
-> **Scope**: Currency, Items, Markets, NPC Economic Participation, Quest Integration
-> **Dependencies**: Character, Realm, ABML/GOAP, lib-state, lib-messaging, lib-analytics, Actor Service
-
-This document synthesizes research on virtual economies, item systems, and agent-based economics into a concrete architecture for Bannou's economic layer.
+> **Last Updated**: 2026-01-24 (corrected lib-escrow status from COMPLETE to PARTIAL; added Foundation Completion prerequisites)
+> **Purpose**: Architecture for Bannou's higher-level economic systems (market, trade, NPC economy)
+> **Scope**: Markets, NPC Economic Participation, Quest Integration, Trade Routes, Taxation
+> **Dependencies**: lib-currency, lib-item, lib-inventory, lib-contract, lib-escrow, lib-actor, lib-analytics, lib-behavior
 
 ---
 
 ## Executive Summary
 
-Economy is not a single plugin but an **architectural layer** spanning multiple services:
+Economy is not a single plugin but an **architectural layer** spanning multiple services.
+
+### Foundation Layer
+
+These services provide the primitives that planned services build upon:
+
+| Service | Endpoints | Status | Key Features |
+|---------|-----------|--------|--------------|
+| **lib-currency** | 32 | COMPLETE | Multi-currency wallets, credit/debit/transfer, authorization holds, escrow integration, exchange rates, conversion, batch operations, transaction history |
+| **lib-item** | 13 | COMPLETE | Item templates (category, rarity, quantity models, grid dims, weight, soulbinding, durability), item instances (binding, custom stats, origin tracking), batch operations |
+| **lib-inventory** | 16 | COMPLETE | Multi-constraint containers (slot/weight/grid/volumetric/unlimited), nested containers with weight propagation, equipment slots, split/merge/transfer, distributed locking |
+| **lib-contract** | 30 | COMPLETE | Template-based agreements, milestone progression, clause execution via prebound APIs, breach/cure, guardian custody, consent flows |
+| **lib-escrow** | 20 | PARTIAL | State machine, token-based consent, trust modes, handler registration, deposit tracking. **Missing**: actual asset movement, contract integration, periodic validation (see Foundation Completion section below) |
+
+### Foundation Completion: lib-escrow Integration
+
+lib-escrow currently has all 20 endpoints and a working state machine (14 states with enforced transitions), token-based consent (SHA256 hashed, single-use), 3 trust modes, and event publishing. However, it operates as a **state tracking shell** — deposit/release/refund record state transitions and publish events but don't actually move assets via lib-currency/lib-inventory/lib-contract.
+
+The planned services (lib-market, lib-trade) depend on escrow actually performing asset custody. The following must be completed:
+
+#### 1. Per-Party Escrow Infrastructure (on create)
+
+When an escrow is created, lib-escrow should create dedicated infrastructure per party:
+- Call `/currency/wallet/create` to create an escrow wallet for each depositing party (owner = escrow agreement ID, ownerType = escrow)
+- Call `/inventory/container/create` to create an escrow container for each party depositing items
+- Store wallet/container IDs on the party record
+
+#### 2. Asset Movement (on deposit/release/refund)
+
+**Deposit**: When a party deposits:
+- Currency: Call `/currency/debit` from party's wallet, then `/currency/credit` to their escrow wallet
+- Items: Call `/inventory/transfer` from party's container to their escrow container
+- Contracts: Call `/contract/lock` with guardianId=escrowId, guardianType=escrow
+
+**Release** (without bound contract): Transfer assets per ReleaseAllocation:
+- Currency: `/currency/transfer` from escrow wallet to recipient wallet
+- Items: `/inventory/transfer` from escrow container to recipient container
+- Contracts: `/contract/transfer-party` to reassign the contractPartyRole to recipient
+
+**Refund**: Return assets to depositors:
+- Currency: `/currency/transfer` from each party's escrow wallet back to their own wallet
+- Items: `/inventory/transfer` from each party's escrow container back to their own container
+- Contracts: `/contract/unlock` to restore the contract
+
+#### 3. Contract Integration ("Contract as Brain, Escrow as Vault")
+
+When `boundContractId` is set:
+
+**Setup** — after escrow infrastructure creation, call `/contract/instance/set-template-values`:
+```
+EscrowId, PartyA_EscrowWalletId, PartyA_EscrowContainerId,
+PartyB_EscrowWalletId, PartyB_EscrowContainerId,
+PartyA_WalletId, PartyA_ContainerId,
+PartyB_WalletId, PartyB_ContainerId
+```
+
+**Deposit validation** — after each deposit, call `/contract/instance/check-asset-requirements` to verify deposited assets satisfy the contract's asset requirement clauses.
+
+**Finalization** — when conditions are met (contract fulfilled event, or consent reached):
+1. Transition to FINALIZING
+2. Call `/contract/instance/execute` — the contract handles ALL distribution (fee clauses deduct from escrow wallets to fee recipients, distribution clauses move remaining to recipients)
+3. If execution fails → REFUNDING → return all assets to depositors
+4. Handle deposited contracts (transfer-party to recipients)
+5. Verify all escrow wallets/containers are empty
+6. Transition to RELEASED, close escrow wallets, delete escrow containers
+
+**Event listeners** — subscribe to `contract.fulfilled`, `contract.breached` (permanent), and `contract.terminated` for the bound contract.
+
+#### 4. Periodic Validation
+
+Background job (configurable interval) that validates held assets remain intact:
+- Currency: Query each party's escrow wallet balance, verify matches expected deposits
+- Items: Query each party's escrow container, verify expected instances still exist with correct quantities
+- Contracts: Verify still locked and valid (not externally voided)
+- On failure: Transition to VALIDATION_FAILED, publish event, await party re-affirmation or refund
+
+#### 5. Expiration Handling
+
+Background job that checks for expired escrows (past `expiresAt`):
+- Auto-refund all deposited assets to their depositors
+- Transition to EXPIRED
+- If partially funded, refund partial deposits
+
+#### 6. Handler Invocation
+
+Registered asset handlers (via `/escrow/handler/register`) should be called during deposit/release/refund for custom asset types. Currently handlers are registered but never invoked.
+
+#### 7. Configuration Enforcement
+
+Enforce `maxParties` and `maxAssetsPerDeposit` limits from escrow configuration during create and deposit operations.
+
+---
+
+### Planned Layer (THIS DOCUMENT)
 
 | Service | Responsibility | Priority |
 |---------|---------------|----------|
-| **lib-currency** | Wallets, balances, multi-currency, transfers | 1st |
-| **lib-inventory** | Item templates, instances, containers | 1st (parallel) |
-| **lib-market** | Auctions, trading, price discovery | 2nd |
-| **lib-craft** | Recipes, production, skill gating | 2nd (parallel) |
-| **lib-economy** | Orchestration, NPC participation, monitoring | 3rd |
+| **lib-market** | Auctions, trading, vendors, price discovery | Next |
+| **lib-craft** | Recipes, production, skill gating | Parallel with market |
+| **lib-economy** | Orchestration, NPC participation, monitoring | After market |
 
-**Core Architectural Decisions**:
-1. **Template/Instance pattern** for items (memory efficient, clear separation)
-2. **Event-sourced transactions** for audit and rollback capability
-3. **Realm-scoped sharding** with cross-realm capability where needed
-4. **GOAP integration** for NPC economic decision-making
-5. **Faucet/Sink discipline** - every currency source has corresponding removal
-6. **Divine economic intervention** - Specialized gods manipulate velocity via narrative events
+**Core Architectural Decisions** (for planned services):
+1. **Event-sourced transactions** for audit and rollback capability
+2. **GOAP integration** for NPC economic decision-making
+3. **Faucet/Sink discipline** - every currency source has corresponding removal
+4. **Divine economic intervention** - Specialized gods manipulate velocity via narrative events
+5. **Three-tier usage** - Divine oversight / NPC governance / External management
+6. **Declarative shipment lifecycle** - Game drives events, plugin records state
 
 ---
 
-## Part 1: Currency Service (`lib-currency`)
+## Part 1: Market Service (`lib-market`)
 
 ### 1.1 Design Philosophy
-
-Currency is the **medium of exchange**, not the economy itself. The currency service handles:
-- Wallet management (polymorphic ownership)
-- Balance tracking with optional caps
-- Atomic transfers and transactions
-- Multi-currency support with realm scoping
-- Transaction audit trail
-
-### 1.2 Currency Scoping Model
-
-Currencies can exist at different scopes:
-
-| Scope | Description | Example |
-|-------|-------------|---------|
-| **Global** | Available in all realms, account-level | Premium gems, loyalty points |
-| **Realm-Specific** | Only exists in one realm | Eldoria gold, Arcadia credits |
-| **Multi-Realm** | Available in selected realms | Regional alliance tokens |
-
-```yaml
-# Schema: currency-definition
-CurrencyDefinition:
-  id: uuid
-  code: string              # "gold", "arcane_dust", "premium_gems"
-  name: string              # Display name
-  description: string
-
-  # Scoping
-  scope: enum               # global | realm_specific | multi_realm
-  realmsAvailable: [uuid]   # null for global, list for multi_realm
-
-  # Behavior
-  tradeable: boolean        # Can be traded between players
-  transferable: boolean     # Can be transferred (gifted) without trade
-  cappable: boolean         # Supports daily/weekly earn caps
-  dailyCap: decimal         # null if no cap
-  weeklyCap: decimal
-
-  # Display
-  iconAssetId: uuid
-  decimalPlaces: integer    # 0 for whole units, 2 for cents-style
-
-  # Metadata
-  createdAt: timestamp
-  isActive: boolean
-```
-
-### 1.3 Wallet Architecture
-
-Wallets provide polymorphic ownership following Bannou patterns:
-
-```yaml
-# Schema: wallet
-Wallet:
-  id: uuid
-
-  # Polymorphic ownership (per IMPLEMENTATION TENETS)
-  ownerId: uuid
-  ownerType: enum           # account | character | guild | npc | location
-
-  # Realm binding
-  realmId: uuid             # null for account-level wallets
-
-  # Metadata
-  createdAt: timestamp
-
-# Schema: currency-balance
-CurrencyBalance:
-  walletId: uuid
-  currencyDefinitionId: uuid
-
-  amount: decimal           # Current balance
-
-  # Cap tracking (if currency is cappable)
-  dailyEarned: decimal      # Reset daily
-  weeklyEarned: decimal     # Reset weekly
-  dailyResetAt: timestamp
-  weeklyResetAt: timestamp
-
-  lastModified: timestamp
-```
-
-### 1.4 Transaction Model
-
-All currency mutations are recorded as immutable transactions:
-
-```yaml
-# Schema: currency-transaction (event-sourced)
-CurrencyTransaction:
-  id: uuid
-
-  # Parties
-  sourceWalletId: uuid      # null for faucets (currency creation)
-  targetWalletId: uuid      # null for sinks (currency destruction)
-
-  # Currency
-  currencyDefinitionId: uuid
-  amount: decimal           # Always positive
-
-  # Classification
-  transactionType: enum
-    # Faucets (currency enters system)
-    - quest_reward
-    - loot_drop
-    - vendor_sale           # Selling items to NPC
-    - daily_login
-    - admin_grant
-
-    # Sinks (currency leaves system)
-    - vendor_purchase       # Buying items from NPC
-    - repair_cost
-    - fast_travel
-    - auction_fee
-    - crafting_cost
-    - tax
-    - admin_remove
-
-    # Transfers (currency moves between wallets)
-    - player_trade
-    - guild_deposit
-    - guild_withdraw
-    - gift
-    - auction_sale
-    - auction_purchase
-
-  # Reference to source event
-  referenceId: uuid         # Quest ID, Auction ID, etc.
-  referenceType: enum       # quest | auction | trade | admin | etc.
-
-  # Audit
-  timestamp: timestamp
-  sourceBalanceBefore: decimal
-  sourceBalanceAfter: decimal
-  targetBalanceBefore: decimal
-  targetBalanceAfter: decimal
-
-  # Idempotency
-  idempotencyKey: string    # Prevents double-processing
-```
-
-### 1.5 API Endpoints
-
-```yaml
-# Currency Definition Management (admin)
-/currency/definition/create:
-  access: admin
-  request: { code, name, scope, realmsAvailable, ... }
-  response: { currencyDefinition }
-
-/currency/definition/list:
-  access: authenticated
-  request: { realmId? }     # Filter by realm availability
-  response: { definitions[] }
-
-# Wallet Management
-/currency/wallet/get:
-  access: user
-  request: { ownerId, ownerType, realmId? }
-  response: { wallet, balances[] }
-
-/currency/wallet/get-or-create:
-  access: authenticated
-  request: { ownerId, ownerType, realmId? }
-  response: { wallet, balances[], created: boolean }
-
-# Balance Operations
-/currency/balance/get:
-  access: user
-  request: { walletId, currencyDefinitionId }
-  response: { balance, dailyRemaining?, weeklyRemaining? }
-
-/currency/credit:
-  access: authenticated     # Services can credit
-  request:
-    walletId: uuid
-    currencyDefinitionId: uuid
-    amount: decimal
-    transactionType: enum   # Must be a faucet type
-    referenceId: uuid
-    referenceType: enum
-    idempotencyKey: string
-  response: { transaction, newBalance }
-
-/currency/debit:
-  access: authenticated
-  request:
-    walletId: uuid
-    currencyDefinitionId: uuid
-    amount: decimal
-    transactionType: enum   # Must be a sink type
-    referenceId: uuid
-    referenceType: enum
-    idempotencyKey: string
-  response: { transaction, newBalance }
-  errors:
-    - INSUFFICIENT_FUNDS
-
-/currency/transfer:
-  access: authenticated
-  request:
-    sourceWalletId: uuid
-    targetWalletId: uuid
-    currencyDefinitionId: uuid
-    amount: decimal
-    transactionType: enum   # Must be a transfer type
-    referenceId: uuid
-    referenceType: enum
-    idempotencyKey: string
-  response: { transaction }
-  errors:
-    - INSUFFICIENT_FUNDS
-    - CURRENCY_NOT_TRANSFERABLE
-    - CROSS_REALM_NOT_ALLOWED
-
-# History/Audit
-/currency/transaction/history:
-  access: user
-  request: { walletId, currencyDefinitionId?, limit, offset }
-  response: { transactions[], totalCount }
-
-/currency/transaction/get:
-  access: authenticated
-  request: { transactionId }
-  response: { transaction }
-```
-
-### 1.6 Events
-
-```yaml
-# Published to lib-messaging
-currency.credited:
-  walletId: uuid
-  currencyDefinitionId: uuid
-  amount: decimal
-  transactionType: string
-  newBalance: decimal
-
-currency.debited:
-  walletId: uuid
-  currencyDefinitionId: uuid
-  amount: decimal
-  transactionType: string
-  newBalance: decimal
-
-currency.transferred:
-  sourceWalletId: uuid
-  targetWalletId: uuid
-  currencyDefinitionId: uuid
-  amount: decimal
-  transactionType: string
-
-currency.cap.reached:
-  walletId: uuid
-  currencyDefinitionId: uuid
-  capType: daily | weekly
-
-currency.cap.reset:
-  walletId: uuid
-  currencyDefinitionId: uuid
-  capType: daily | weekly
-```
-
-### 1.7 State Stores
-
-```yaml
-# Redis for hot data
-currency-balance-cache:
-  backend: redis
-  prefix: "curr:bal"
-  purpose: Real-time balance lookups
-
-currency-transaction-recent:
-  backend: redis
-  prefix: "curr:txn"
-  ttl: 3600  # 1 hour
-  purpose: Recent transaction deduplication
-
-# MySQL for persistence
-currency-definition-statestore:
-  backend: mysql
-  table: currency_definitions
-  purpose: Currency type registry
-
-currency-wallet-statestore:
-  backend: mysql
-  table: wallets
-  purpose: Wallet ownership records
-
-currency-balance-statestore:
-  backend: mysql
-  table: currency_balances
-  purpose: Authoritative balance records
-
-currency-transaction-statestore:
-  backend: mysql
-  table: currency_transactions
-  purpose: Immutable transaction log (event store)
-```
-
----
-
-## Part 2: Inventory Service (`lib-inventory`)
-
-### 2.1 Design Philosophy
-
-The **Template/Instance pattern** separates static definitions from dynamic state:
-
-- **Item Templates**: Designer-created, shared across all instances, cached globally
-- **Item Instances**: Runtime occurrences with unique state, owned by entities
-
-This is the industry standard (WoW, EVE, RuneScape) for memory efficiency and clean separation.
-
-### 2.2 Item Template Schema
-
-```yaml
-# Schema: item-template
-ItemTemplate:
-  id: uuid
-
-  # Identification
-  code: string              # "iron_sword", "health_potion"
-  name: string
-  description: string
-
-  # Classification
-  category: enum            # weapon, armor, consumable, material, quest, misc
-  subcategory: string       # "sword", "helmet", "food", etc.
-  tags: [string]            # Searchable tags
-
-  # Stacking
-  stackable: boolean
-  maxStackSize: integer     # 1 for non-stackable, 20/100/999 for stackable
-
-  # Value
-  baseValue: decimal        # Vendor buy/sell reference price
-  rarity: enum              # common, uncommon, rare, epic, legendary
-
-  # Physical properties
-  weight: decimal           # For encumbrance systems
-
-  # Realm scoping
-  realmScope: enum          # global | realm_specific | multi_realm
-  realmsAvailable: [uuid]
-
-  # Flags
-  tradeable: boolean
-  destroyable: boolean
-  questItem: boolean        # Cannot be dropped/traded if true
-  soulbound: enum           # none | on_pickup | on_equip | on_use
-
-  # Stats/Effects (JSON for flexibility)
-  stats: object             # { attack: 25, defense: 0, speed: -2 }
-  effects: object           # { on_use: "heal", amount: 50 }
-
-  # Display
-  iconAssetId: uuid
-  modelAssetId: uuid
-
-  # Metadata
-  createdAt: timestamp
-  isActive: boolean
-```
-
-### 2.3 Item Instance Schema
-
-```yaml
-# Schema: item-instance
-ItemInstance:
-  id: uuid
-  templateId: uuid
-
-  # Ownership (polymorphic)
-  ownerId: uuid
-  ownerType: enum           # character | inventory | bank | auction | mail | ground
-
-  # Location specifics
-  containerId: uuid         # For nested containers (bags within bags)
-  slotIndex: integer        # Position in container (null for unslotted)
-
-  # Realm binding
-  realmId: uuid
-
-  # Instance state
-  quantity: integer         # >1 for stackable items
-  currentDurability: integer # null if item has no durability
-  maxDurability: integer
-
-  # Modifications
-  customStats: object       # Enchantments, modifications, random rolls
-  customName: string        # Player-renamed items
-
-  # Binding
-  boundToId: uuid           # Character ID if soulbound
-  boundAt: timestamp
-
-  # Origin tracking
-  originType: enum          # loot, quest, craft, trade, admin
-  originId: uuid            # Quest ID, creature ID, etc.
-  originTimestamp: timestamp
-
-  # Metadata
-  createdAt: timestamp
-  modifiedAt: timestamp
-```
-
-### 2.4 Container Schema
-
-Inventories are containers that hold item instances:
-
-```yaml
-# Schema: container
-Container:
-  id: uuid
-
-  # Ownership
-  ownerId: uuid
-  ownerType: enum           # character | bank | guild | location
-
-  # Container type
-  containerType: enum       # inventory, bank, bag, chest, mailbox
-
-  # Capacity
-  maxSlots: integer
-  usedSlots: integer        # Denormalized for quick checks
-
-  # Weight limit (optional)
-  maxWeight: decimal
-  currentWeight: decimal
-
-  # Realm binding
-  realmId: uuid
-
-  # Metadata
-  createdAt: timestamp
-```
-
-### 2.5 API Endpoints
-
-```yaml
-# Template Management (admin/developer)
-/inventory/template/create:
-  access: developer
-  request: { code, name, category, ... }
-  response: { template }
-
-/inventory/template/get:
-  access: user
-  request: { templateId | code }
-  response: { template }
-
-/inventory/template/list:
-  access: user
-  request: { category?, realmId?, search? }
-  response: { templates[], totalCount }
-
-# Container Management
-/inventory/container/get:
-  access: user
-  request: { ownerId, ownerType, containerType }
-  response: { container, items[] }
-
-/inventory/container/create:
-  access: authenticated
-  request: { ownerId, ownerType, containerType, maxSlots }
-  response: { container }
-
-# Item Operations
-/inventory/add:
-  access: authenticated
-  request:
-    containerId: uuid
-    templateId: uuid
-    quantity: integer
-    originType: enum
-    originId: uuid
-    customStats?: object
-    slotIndex?: integer     # null for auto-placement
-  response: { instance, stacked: boolean }
-  errors:
-    - CONTAINER_FULL
-    - WEIGHT_EXCEEDED
-
-/inventory/remove:
-  access: authenticated
-  request:
-    instanceId: uuid
-    quantity: integer       # For partial stack removal
-    reason: enum            # consumed, destroyed, transferred, sold
-  response: { removed: boolean, remainingQuantity: integer }
-
-/inventory/move:
-  access: authenticated
-  request:
-    instanceId: uuid
-    targetContainerId: uuid
-    targetSlotIndex?: integer
-  response: { instance }
-  errors:
-    - CONTAINER_FULL
-    - INCOMPATIBLE_CONTAINER
-
-/inventory/transfer:
-  access: authenticated
-  request:
-    instanceId: uuid
-    targetOwnerId: uuid
-    targetOwnerType: enum
-    quantity: integer
-  response: { sourceInstance?, targetInstance }
-  errors:
-    - NOT_TRADEABLE
-    - SOULBOUND
-    - TARGET_CONTAINER_FULL
-
-/inventory/split:
-  access: user
-  request:
-    instanceId: uuid
-    quantity: integer       # Amount to split off
-  response: { originalInstance, newInstance }
-
-/inventory/merge:
-  access: user
-  request:
-    sourceInstanceId: uuid
-    targetInstanceId: uuid
-  response: { instance, sourceDestroyed: boolean }
-
-# Queries
-/inventory/query:
-  access: user
-  request:
-    ownerId: uuid
-    ownerType: enum
-    templateId?: uuid
-    category?: enum
-    tags?: [string]
-  response: { instances[] }
-
-/inventory/count:
-  access: user
-  request:
-    ownerId: uuid
-    ownerType: enum
-    templateId: uuid
-  response: { totalQuantity }
-
-/inventory/has:
-  access: authenticated
-  request:
-    ownerId: uuid
-    ownerType: enum
-    templateId: uuid
-    quantity: integer
-  response: { has: boolean, actualQuantity: integer }
-```
-
-### 2.6 Events
-
-```yaml
-inventory.item.added:
-  containerId: uuid
-  instanceId: uuid
-  templateId: uuid
-  quantity: integer
-  originType: string
-
-inventory.item.removed:
-  containerId: uuid
-  instanceId: uuid
-  templateId: uuid
-  quantity: integer
-  reason: string
-
-inventory.item.transferred:
-  sourceOwnerId: uuid
-  targetOwnerId: uuid
-  instanceId: uuid
-  templateId: uuid
-  quantity: integer
-
-inventory.item.modified:
-  instanceId: uuid
-  changes: object           # What changed (durability, customStats, etc.)
-
-inventory.container.full:
-  containerId: uuid
-  ownerId: uuid
-```
-
-### 2.7 State Stores
-
-```yaml
-# Redis for hot data
-inventory-template-cache:
-  backend: redis
-  prefix: "inv:tpl"
-  purpose: Template lookup cache (global)
-
-inventory-instance-cache:
-  backend: redis
-  prefix: "inv:inst"
-  purpose: Hot item instance data
-
-# MySQL for persistence
-inventory-template-statestore:
-  backend: mysql
-  table: item_templates
-  purpose: Item definitions (global)
-
-inventory-instance-statestore:
-  backend: mysql
-  table: item_instances
-  purpose: Item instances (realm-partitioned)
-
-inventory-container-statestore:
-  backend: mysql
-  table: containers
-  purpose: Container definitions
-```
-
----
-
-## Part 3: Market Service (`lib-market`)
-
-### 3.1 Design Philosophy
 
 Markets handle **exchange** - converting items to currency and vice versa. This includes:
 - Auction houses (player-to-player trading via listings)
 - Vendor systems (NPC-to-player fixed-price trading)
 - Trade posts (regional markets with shipping)
 
-### 3.2 Auction House Architecture
+### 1.2 Auction House Architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -681,7 +145,12 @@ Markets handle **exchange** - converting items to currency and vice versa. This 
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-### 3.3 Listing Schema
+**Integration with existing services:**
+- Item escrow: Use `lib-escrow` for safe item/currency holding during auctions
+- Payments: Use `lib-currency` credit/debit/transfer for all financial operations
+- Authorization holds: Use `lib-currency` hold/capture/release for bid reservations
+
+### 1.3 Listing Schema
 
 ```yaml
 # Schema: auction-listing
@@ -732,7 +201,7 @@ AuctionBid:
   status: enum              # active | outbid | won | refunded
 ```
 
-### 3.4 Vendor System
+### 1.4 Vendor System
 
 NPCs as economic actors (not just UI):
 
@@ -773,7 +242,7 @@ VendorBuyback:
   buybackMultiplier: decimal # e.g., 0.25 = 25% of base value
 ```
 
-### 3.5 API Endpoints
+### 1.5 API Endpoints
 
 ```yaml
 # Auction House
@@ -861,7 +330,7 @@ VendorBuyback:
     - VENDOR_DOES_NOT_BUY
 ```
 
-### 3.6 Events
+### 1.6 Events
 
 ```yaml
 market.listing.created:
@@ -896,9 +365,9 @@ market.price.changed:
 
 ---
 
-## Part 4: Economy Orchestration (`lib-economy`)
+## Part 2: Economy Orchestration (`lib-economy`)
 
-### 4.1 Design Philosophy
+### 2.1 Design Philosophy
 
 The economy service is the **intelligence layer** that:
 - Monitors faucet/sink balance
@@ -906,7 +375,7 @@ The economy service is the **intelligence layer** that:
 - Offers analytics and balancing tools
 - Coordinates cross-service economic events
 
-### 4.2 Faucet/Sink Monitoring
+### 2.2 Faucet/Sink Monitoring
 
 Every healthy economy tracks currency flow:
 
@@ -944,7 +413,7 @@ EconomyMetrics:
   wealthGiniCoefficient: decimal
 ```
 
-### 4.3 NPC Economic Participation
+### 2.3 NPC Economic Participation
 
 NPCs participate in economy via GOAP-driven decisions:
 
@@ -973,7 +442,7 @@ NpcEconomicProfile:
     loyaltyFactor: decimal  # Preference for repeat partners
 ```
 
-### 4.4 GOAP Integration for Economic NPCs
+### 2.4 GOAP Integration for Economic NPCs
 
 Economic actions as GOAP flows (integrates with lib-behavior):
 
@@ -1066,7 +535,7 @@ economic_flows:
       cost: 1
 ```
 
-### 4.5 API Endpoints
+### 2.5 API Endpoints
 
 ```yaml
 # Metrics
@@ -1128,29 +597,27 @@ economic_flows:
 
 ---
 
-## Part 5: Quest Integration
+## Part 3: Quest Integration
 
-### 5.1 Quest → Economy Dependencies
+### 3.1 Quest → Economy Dependencies
 
-The Quest service (from ABML planning doc) requires:
+The Quest service requires integration with existing foundation services:
 
 ```yaml
 # Quest Reward Types
 QuestReward:
   type: enum
 
-  # Currency rewards → lib-currency
+  # Currency rewards → lib-currency /currency/credit
   currency_reward:
     currencyDefinitionId: uuid
     amount: decimal
 
-  # Item rewards → lib-inventory
+  # Item rewards → lib-item /item/instance/create + lib-inventory /inventory/add
   item_reward:
     templateId: uuid
     quantity: integer
     selectionGroup: integer   # For "choose one" rewards
-
-  # Reputation (handled by relationships, not economy)
 
 # Quest Prerequisites
 QuestPrerequisite:
@@ -1188,7 +655,7 @@ QuestObjective:
     currencyAmount?: decimal
 ```
 
-### 5.2 Quest Completion Flow
+### 3.2 Quest Completion Flow
 
 ```
 Quest.Completed Event
@@ -1209,19 +676,16 @@ Quest.Completed Event
 
 ---
 
-## Part 6: Scale Considerations
+## Part 4: Scale Considerations
 
-### 6.1 Handling 100K+ NPCs
+### 4.1 Handling 100K+ NPCs
 
 **Key Insight**: Not all NPCs are economically active simultaneously.
 
 **Strategies**:
 
 1. **Lazy Wallet Creation**: NPCs don't get wallets until they transact
-   ```csharp
-   // Only create when needed
-   var wallet = await _currencyService.GetOrCreateWallet(npcId, "npc");
-   ```
+   - lib-currency already provides `/currency/wallet/get-or-create` for this pattern
 
 2. **Template-Based Defaults**: NPCs derive baseline wealth from templates
    ```yaml
@@ -1246,42 +710,41 @@ Quest.Completed Event
    market:eldoria:iron_supply: abundant
    ```
 
-### 6.2 Database Partitioning
+### 4.2 Database Partitioning
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    GLOBAL (Replicated)                       │
 ├─────────────────────────────────────────────────────────────┤
-│  currency_definitions   - Currency types                     │
-│  item_templates         - Item definitions                   │
-│  vendor_catalogs        - Base vendor configs                │
+│  currency_definitions   - Currency types (lib-currency)     │
+│  item_templates         - Item definitions (lib-item)       │
+│  vendor_catalogs        - Base vendor configs (lib-market)  │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                   PER-REALM (Sharded)                        │
 ├─────────────────────────────────────────────────────────────┤
-│  currency_balances      - Realm-specific balances            │
-│  currency_transactions  - Transaction audit log              │
-│  item_instances         - Item occurrences                   │
-│  auction_listings       - Active auctions                    │
-│  economy_metrics        - Time-series metrics                │
+│  currency_balances      - Realm-specific (lib-currency)     │
+│  currency_transactions  - Transaction log (lib-currency)    │
+│  item_instances         - Item occurrences (lib-item)       │
+│  auction_listings       - Active auctions (lib-market)      │
+│  economy_metrics        - Time-series (lib-economy)         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 6.3 Caching Strategy
+### 4.3 Caching Strategy
 
 ```yaml
-# Hot path caching (Redis)
+# Already implemented in foundation services:
 currency_balance:
   key: "curr:bal:{walletId}:{currencyId}"
-  ttl: 300  # 5 minutes
-  invalidate_on: credit, debit, transfer
+  # lib-currency handles caching internally
 
 item_template:
-  key: "inv:tpl:{templateId}"
-  ttl: 3600  # 1 hour (templates rarely change)
-  invalidate_on: template_update
+  key: "item:tpl:{templateId}"
+  ttl: 3600  # 1 hour (lib-item handles internally)
 
+# Planned for lib-market:
 market_price:
   key: "market:price:{realmId}:{templateId}"
   ttl: 60   # 1 minute (prices change frequently)
@@ -1290,54 +753,9 @@ market_price:
 
 ---
 
-## Part 7: Implementation Sequence
+## Part 5: ABML Action Handlers
 
-Based on dependencies:
-
-```
-Week 1-2: Foundation (Parallel)
-├── lib-currency (5-7 days)
-│   ├── Currency definition schema + API
-│   ├── Wallet management
-│   ├── Credit/Debit/Transfer operations
-│   └── Transaction logging
-│
-└── lib-inventory (5-7 days)
-    ├── Item template schema + API
-    ├── Item instance management
-    ├── Container system
-    └── Basic queries
-
-Week 3-4: Exchange (Parallel)
-├── lib-market (5-7 days)
-│   ├── Auction listing/bidding
-│   ├── Settlement system
-│   └── Vendor catalogs
-│
-└── lib-craft (3-5 days) [Optional]
-    ├── Recipe definitions
-    ├── Crafting execution
-    └── Skill integration
-
-Week 5-6: Intelligence
-└── lib-economy (5-7 days)
-    ├── Faucet/sink monitoring
-    ├── NPC economic profiles
-    ├── GOAP action handlers
-    └── Price analytics
-
-Week 7+: Quest Integration
-└── lib-quest economic features
-    ├── Currency rewards
-    ├── Item rewards
-    └── Economic prerequisites/objectives
-```
-
----
-
-## Part 8: ABML Action Handlers
-
-New handlers for economic behaviors:
+New handlers for economic behaviors (integrates with lib-behavior ABML system):
 
 ```yaml
 # Handler: economy_credit
@@ -1411,9 +829,9 @@ market_query:
 
 ---
 
-## Part 9: Money Velocity and Divine Economic Intervention
+## Part 6: Money Velocity and Divine Economic Intervention
 
-### 9.1 Design Philosophy
+### 6.1 Design Philosophy
 
 Traditional game economies use direct manipulation (adjusting drop rates, vendor prices) to control economic health. Bannou takes a different approach: **specialized divine actors observe economic metrics and spawn narrative events** that naturally adjust velocity through NPC reactions.
 
@@ -1423,7 +841,7 @@ This approach:
 - Allows intentional stagnation (dead towns stay dead until revitalized)
 - Enables creative variation (different gods, different intervention styles)
 
-### 9.2 Money Velocity
+### 6.2 Money Velocity
 
 **Definition**: How frequently currency changes hands over time.
 
@@ -1446,7 +864,7 @@ Velocity = Transaction Volume / Average Currency Stock
 | **Per-Location** | Identify dead villages vs. thriving cities |
 | **Global** | Only meaningful for global currencies |
 
-### 9.3 Analytics Integration for Velocity
+### 6.3 Analytics Integration for Velocity
 
 Velocity tracking belongs in `lib-analytics`, not `lib-currency`. The currency service records transactions; analytics aggregates patterns.
 
@@ -1503,9 +921,11 @@ EconomicVelocityEvent:
     wealthPercentiles: object # { p10, p25, p50, p75, p90, p99 }
 ```
 
-### 9.4 Economic Deities (God Actors)
+**Note**: lib-currency already provides `/currency/stats/global-supply` and `/currency/stats/wallet-distribution` endpoints. The analytics extensions above would add time-series velocity tracking and location-scoped analysis.
 
-Economic balance is maintained by **specialized divine actors** - long-running Actor instances that observe analytics and spawn corrective events.
+### 6.4 Economic Deities (God Actors)
+
+Economic balance is maintained by **specialized divine actors** - long-running Actor instances (via lib-actor) that observe analytics and spawn corrective events.
 
 **Key Principles**:
 - Gods are **specialized**, not omnibus (God of Commerce ≠ God of Thieves)
@@ -1530,7 +950,7 @@ Economic balance is maintained by **specialized divine actors** - long-running A
 ```yaml
 # Schema: economic-deity-assignment
 EconomicDeityAssignment:
-  deityActorId: uuid          # The god's Actor instance
+  deityActorId: uuid          # The god's Actor instance (lib-actor)
   deityType: string           # "mercurius", "binbougami", etc.
   realmsManaged: [uuid]       # Which realms this god watches
 
@@ -1542,7 +962,7 @@ EconomicDeityAssignment:
     chaosAffinity: decimal          # 0 = orderly, 1 = loves disruption
 ```
 
-### 9.5 Intervention Event Types
+### 6.5 Intervention Event Types
 
 Most divine interventions are **naturalistic redistribution** - currency/items change hands through believable events, not magical creation/destruction.
 
@@ -1579,7 +999,7 @@ Essential for inflation control:
 | **Offering/Tithe** | Religious NPCs | Currency to temple (sink) | "The gods require their due" |
 | **Lost Forever** | NPC death without heir | Unclaimed wealth vanishes | "Their hidden stash was never found" |
 
-### 9.6 God Actor GOAP Implementation
+### 6.6 God Actor GOAP Implementation
 
 ```yaml
 # Economic Deity World State
@@ -1725,7 +1145,7 @@ flows:
           message: "The god of poverty has taken notice..."
 ```
 
-### 9.7 Spillover Effects
+### 6.7 Spillover Effects
 
 When currency is injected into a location, **spillover is inevitable and desirable**. NPCs don't sit on money; they spend it according to their GOAP goals.
 
@@ -1750,7 +1170,7 @@ Treasure Found in Riverside Village
 - Gods can observe where injected currency ends up
 - Extreme hoarding (breaking the chain) becomes visible and targetable
 
-### 9.8 Intentional Stagnation
+### 6.8 Intentional Stagnation
 
 Not every location should be economically healthy. Dead towns, abandoned quarters, and frontier regions may be **intentionally stagnant** for narrative purposes.
 
@@ -1774,7 +1194,7 @@ LocationEconomicProfile:
 
 **Example**: The old mining district has `divineAttention: abandoned`. Velocity is 0.02. The Economic Deity sees this but takes no action because `allowedToStagnate: true`. Only when players or NPCs take significant action (clearing the monster, reopening the mine) does the `revitalizationTrigger` fire and divine attention return.
 
-### 9.9 God Personality Variations
+### 6.9 God Personality Variations
 
 Different economic deities create different economic "feels" for their realms:
 
@@ -1794,7 +1214,7 @@ Mercurius: "I'll send a wealthy merchant to revitalize this town"
 Laverna: "Oh good, a wealthy target just arrived"
 ```
 
-### 9.10 Integration Points
+### 6.10 Integration Points
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1806,24 +1226,24 @@ Laverna: "Oh good, a wealthy target just arrived"
          │ Reads                          │ Spawns
          ▼                                ▼
 ┌─────────────────────┐          ┌─────────────────────┐
-│   lib-analytics     │          │   Actor Service     │
-│   /economy/velocity │          │   Event dispatch    │
-│   /economy/distrib  │          │                     │
+│   lib-analytics     │          │   lib-actor          │
+│   /economy/velocity │          │   Event dispatch     │
+│   /economy/distrib  │          │                      │
 └─────────────────────┘          └─────────────────────┘
          ▲                                │
          │ Records                        │ Affects
 ┌─────────────────────┐          ┌─────────────────────┐
 │   lib-currency      │          │   NPC GOAP Brains   │
 │   Transactions      │◀─────────│   React to events   │
-│   Event-sourced     │          │   Natural behavior  │
+│   (32 endpoints)    │          │   Natural behavior  │
 └─────────────────────┘          └─────────────────────┘
 ```
 
 ---
 
-## Part 10: Foreign Trade, Exchange Rates, and Taxation
+## Part 7: Foreign Trade, Exchange Rates, and Taxation
 
-### 10.1 Design Philosophy: Three-Tier Usage
+### 7.1 Design Philosophy: Three-Tier Usage
 
 The trade and taxation system must serve three different usage patterns:
 
@@ -1854,7 +1274,7 @@ The trade and taxation system must serve three different usage patterns:
 
 **Key Principle**: The plugin provides primitives and data. It doesn't enforce game-specific rules. Games decide how to use the APIs.
 
-### 10.2 Trade Routes
+### 7.2 Trade Routes
 
 Trade routes are **data constructs** describing paths between locations. The plugin doesn't pathfind - games define routes and the plugin stores them.
 
@@ -1908,8 +1328,6 @@ TradeRouteLeg:
   fromRealmId: uuid
   toRealmId: uuid
   borderType: enum                # none | internal | external
-                                  # internal = within parent realm
-                                  # external = between separate realms
 
   # Customs/checkpoint
   hasCheckpoint: boolean
@@ -2010,11 +1428,11 @@ TradeRouteSummary:
     estimatedDuration: duration
 ```
 
-### 10.3 Shipments (Declarative Lifecycle)
+### 7.3 Shipments (Declarative Lifecycle)
 
 Shipments track goods/currency moving along routes. The plugin **does not automatically progress shipments** - the game server calls APIs to indicate what happened.
 
-This is like `lib-scene`'s instantiate pattern: the plugin records state, the game drives events.
+This follows `lib-scene`'s instantiate pattern: the plugin records state, the game drives events.
 
 #### Shipment Schema
 
@@ -2080,45 +1498,11 @@ Shipment:
 
   createdAt: timestamp
   modifiedAt: timestamp
-
-# Schema: shipment-tariff-record
-ShipmentTariffRecord:
-  shipmentId: uuid
-  legIndex: integer
-  borderCrossingId: uuid
-
-  # What was assessed
-  assessedGoods: [
-    { templateId, quantity, tariffRate, tariffAmount }
-  ]
-  assessedCurrency: [
-    { currencyId, amount, exchangeRate, exchangeFee }
-  ]
-
-  totalTariffDue: decimal
-  tariffCurrencyId: uuid
-
-  # What actually happened
-  collectionMethod: enum          # auto | manual | evaded | partial
-  amountCollected: decimal
-  collectedAt: timestamp
-
-  # For evasion/smuggling
-  undeclaredGoods: [
-    { templateId, quantity, detected: boolean }
-  ]
-  undeclaredCurrency: [
-    { currencyId, amount, detected: boolean }
-  ]
-  smugglingDetected: boolean
-  smugglingPenalty: decimal
 ```
 
 #### Shipment API (Game-Driven)
 
 ```yaml
-# Lifecycle APIs - Game server calls these to indicate what happened
-
 /trade/shipment/create:
   access: authenticated
   request:
@@ -2132,17 +1516,13 @@ ShipmentTariffRecord:
   response: { shipment }
   notes: |
     Items are NOT automatically moved to escrow. Game decides whether
-    to call /inventory/transfer to move items to shipment container.
+    to use lib-escrow for safe holding during transport.
 
 /trade/shipment/depart:
   access: authenticated
-  request:
-    shipmentId: uuid
+  request: { shipmentId: uuid }
   response: { shipment }
   emits: shipment.departed
-  notes: |
-    Game calls this when carrier actually leaves origin.
-    Sets status to in_transit, records departedAt.
 
 /trade/shipment/complete-leg:
   access: authenticated
@@ -2152,72 +1532,42 @@ ShipmentTariffRecord:
     incidents?: [{ incidentType, outcome, losses }]
   response: { shipment }
   emits: shipment.leg_completed
-  notes: |
-    Game calls this when carrier completes a leg.
-    If leg has border crossing, emits border_crossing event.
 
 /trade/shipment/border-crossing:
   access: authenticated
   request:
     shipmentId: uuid
     legIndex: integer
-
-    # Customs declaration
     declaredGoods: [{ templateId, quantity }]
     declaredCurrency: [{ currencyId, amount }]
-
-    # What's actually being carried (game knows the truth)
     actualGoods: [{ templateId, quantity, hidden: boolean }]
     actualCurrency: [{ currencyId, amount, hidden: boolean }]
-
-    # Crossing type
     crossingType: enum            # legal | illegal | attempted_smuggle
-
-    # Detection (game determines this based on inspections, skills, etc.)
     inspectionOccurred: boolean
     smugglingDetected: boolean
-
-    # Tariff handling
     tariffCollection: enum        # auto | manual | evaded | exempt
   response:
     shipment: object
     tariffRecord: object
-    estimatedTariff: decimal      # What WOULD have been owed
+    estimatedTariff: decimal
     actualTariffCollected: decimal
-    seizures: array               # Any confiscated goods
+    seizures: array
   emits: shipment.border_crossed
-  notes: |
-    This is the key event for border economics.
-    - crossingType: legal means proper checkpoint
-    - crossingType: illegal means snuck across
-    - crossingType: attempted_smuggle means legal crossing but hiding goods
-
-    Game provides both declared and actual - plugin records discrepancy.
-    Plugin calculates what tariff SHOULD be (estimatedTariff).
-    tariffCollection determines what happens:
-    - auto: Plugin debits carrier wallet automatically
-    - manual: Plugin records debt, game handles collection
-    - evaded: No collection, but recorded for analytics/consequences
-    - exempt: Diplomatic immunity, guild privileges, etc.
 
 /trade/shipment/arrive:
   access: authenticated
   request:
     shipmentId: uuid
-    actualGoods: [{ templateId, quantity }]  # What actually arrived
+    actualGoods: [{ templateId, quantity }]
     actualCurrency: [{ currencyId, amount }]
   response: { shipment }
   emits: shipment.arrived
-  notes: |
-    Game calls when shipment reaches destination.
-    actualGoods may differ from original if losses occurred.
-    Items are NOT automatically transferred - game decides.
 
 /trade/shipment/lost:
   access: authenticated
   request:
     shipmentId: uuid
-    reason: string                # "bandits", "shipwreck", "confiscated"
+    reason: string
     recoverable: boolean
     lostGoods: [{ templateId, quantity }]
     lostCurrency: [{ currencyId, amount }]
@@ -2225,82 +1575,7 @@ ShipmentTariffRecord:
   emits: shipment.lost
 ```
 
-#### Shipment Events
-
-```yaml
-shipment.departed:
-  shipmentId: uuid
-  routeId: uuid
-  ownerId: uuid
-  carrierId: uuid
-  originLocationId: uuid
-  destinationLocationId: uuid
-  declaredValue: decimal          # Total declared value
-
-shipment.leg_completed:
-  shipmentId: uuid
-  legIndex: integer
-  fromLocationId: uuid
-  toLocationId: uuid
-  incidents: array
-
-shipment.border_crossed:
-  shipmentId: uuid
-  legIndex: integer
-  borderType: internal | external
-  fromRealmId: uuid
-  toRealmId: uuid
-  checkpointLocationId: uuid
-
-  # Tariff info (useful for all consumers)
-  estimatedTariff: decimal
-  actualTariffCollected: decimal
-  tariffCollection: auto | manual | evaded | exempt
-
-  # Smuggling info (if applicable)
-  crossingType: legal | illegal | attempted_smuggle
-  smugglingDetected: boolean
-  undeclaredValue: decimal        # Value of hidden goods/currency
-
-  # For games that want to react
-  carrierCaughtSmuggling: boolean
-
-shipment.arrived:
-  shipmentId: uuid
-  routeId: uuid
-  destinationLocationId: uuid
-  totalDuration: duration
-  totalTariffsPaid: decimal
-  incidentCount: integer
-  lossPercentage: decimal         # What % was lost in transit
-
-shipment.lost:
-  shipmentId: uuid
-  reason: string
-  lostValue: decimal
-  recoverable: boolean
-```
-
-### 10.4 Borders and Tariffs
-
-#### Realm Hierarchy and Border Types
-
-```yaml
-# Border types based on realm relationship
-BorderType:
-  none:           # Same realm, no crossing
-  internal:       # Crossing between territories within a parent realm
-                  # e.g., Duchy A to Duchy B, both in Kingdom X
-                  # Typically no/low tariffs, same currency
-  external:       # Crossing between separate realms
-                  # e.g., Kingdom X to Kingdom Y
-                  # Full tariffs, currency exchange
-
-# The realm hierarchy determines this automatically
-# Parent realm contains child realms
-# Crossing between siblings under same parent = internal
-# Crossing between realms with no common parent = external
-```
+### 7.4 Borders and Tariffs
 
 #### Tariff Definition Schema
 
@@ -2308,88 +1583,40 @@ BorderType:
 # Schema: tariff-policy
 TariffPolicy:
   id: uuid
+  realmId: uuid
 
-  # Where this policy applies
-  realmId: uuid                   # The realm setting this policy
-
-  # Scope
-  scope: enum
-    - realm_wide                  # All borders of this realm
-    - specific_border             # One specific border crossing
-    - category                    # Specific goods categories
-
+  scope: enum                     # realm_wide | specific_border | category
   borderLocationId: uuid          # For specific_border scope
-
-  # Direction
   direction: enum                 # import | export | both
 
   # Rates
   defaultRate: decimal            # e.g., 0.05 = 5%
-
-  # Category-specific rates
   categoryRates: [
-    {
-      category: string            # "weapons", "food", "luxury"
-      rate: decimal
-    }
+    { category: string, rate: decimal }
   ]
-
-  # Item-specific rates (overrides category)
   itemRates: [
-    {
-      templateId: uuid
-      rate: decimal
-    }
+    { templateId: uuid, rate: decimal }
   ]
-
-  # Currency tariffs (for transporting money)
   currencyRate: decimal           # Rate on currency itself
 
   # Exemptions
   exemptions: [
     {
-      entityType: string          # "guild:merchants", "faction:diplomats"
+      entityType: string
       entityId: uuid
       exemptionType: full | partial
-      partialRate: decimal        # If partial
+      partialRate: decimal
     }
   ]
 
-  # Status
   status: enum                    # active | suspended | wartime
   effectiveFrom: timestamp
-  effectiveUntil: timestamp       # null = indefinite
-
-  createdAt: timestamp
-
-# Schema: tariff-calculation (for queries)
-TariffCalculation:
-  goods: [
-    {
-      templateId: uuid
-      quantity: integer
-      unitValue: decimal
-      applicableRate: decimal
-      tariffAmount: decimal
-      exemptionApplied: string    # null or exemption reason
-    }
-  ]
-  currencies: [
-    {
-      currencyId: uuid
-      amount: decimal
-      applicableRate: decimal
-      tariffAmount: decimal
-    }
-  ]
-  totalTariff: decimal
-  tariffCurrencyId: uuid
+  effectiveUntil: timestamp
 ```
 
 #### Tariff API
 
 ```yaml
-# Policy Management
 /trade/tariff/policy/create:
   access: admin
   request: { realmId, scope, direction, rates... }
@@ -2397,56 +1624,36 @@ TariffCalculation:
 
 /trade/tariff/policy/list:
   access: user
-  request:
-    realmId: uuid
-    includeExpired: boolean
+  request: { realmId, includeExpired: boolean }
   response: { policies[] }
 
-/trade/tariff/policy/update:
-  access: admin
-  request:
-    policyId: uuid
-    rates?: object
-    exemptions?: array
-    status?: enum
-  response: { policy }
-
-# Calculation (query only - doesn't collect)
 /trade/tariff/calculate:
   access: user
   request:
     fromRealmId: uuid
     toRealmId: uuid
-    fromLocationId?: uuid         # For location-specific rates
-    toLocationId?: uuid
     goods: [{ templateId, quantity, unitValue? }]
     currencies: [{ currencyId, amount }]
     entityId?: uuid               # For exemption checking
-    entityType?: string
   response: { calculation }
   notes: |
-    This is a pure calculation - it doesn't record or collect anything.
-    Used for:
-    - Tier 3 games that just want data
-    - NPC merchants estimating costs
-    - UI showing "this will cost X in tariffs"
+    Pure calculation - doesn't collect anything.
 
-# Collection (actually moves currency)
 /trade/tariff/collect:
   access: authenticated
   request:
     shipmentId: uuid
     tariffRecordId: uuid
-    walletId: uuid                # Who pays
-    amount: decimal               # Can be partial payment
+    walletId: uuid
+    amount: decimal
   response: { transaction, remainingDue }
   notes: |
-    For games using auto collection (Option A), this is called
-    automatically during border_crossing.
-    For manual collection (Option B/C), game calls this explicitly.
+    Uses lib-currency /currency/debit internally.
 ```
 
-### 10.5 Exchange Rates and Universal Value
+### 7.5 Exchange Rates and Universal Value
+
+**Note**: lib-currency already provides basic exchange rate endpoints (`/currency/exchange-rate/get`, `/currency/exchange-rate/update`) and conversion (`/currency/convert/calculate`, `/currency/convert/execute`). The architecture below describes a more sophisticated system with universal values and location-scoped modifiers that could extend the existing currency service.
 
 #### Universal Value Concept
 
@@ -2456,41 +1663,24 @@ Currencies can optionally have a **universal value** - an intrinsic worth that c
 # Schema: currency-universal-value
 CurrencyUniversalValue:
   currencyId: uuid
-
-  # The value
   universalValue: decimal         # Relative worth (1.0 = baseline)
-
-  # Tracking
   previousValue: decimal
   changedAt: timestamp
   changeReason: string            # "inflation", "gold_discovery", "war_ended"
   changedBy: string               # "admin", "economic_event", "market_algorithm"
-
-# Example values:
-# Eldoria Gold: 1.0 (baseline)
-# Arcane Crystals: 2.5 (rare, valuable)
-# Copper Bits: 0.01 (low-value currency)
-# War Scrip: 0.3 (wartime currency, unstable)
 ```
 
-#### Exchange Rate Schema
+#### Extended Exchange Rate Schema
 
 ```yaml
-# Schema: exchange-rate
-ExchangeRate:
-  id: uuid
-
-  # Currency pair
+# Extends existing lib-currency exchange rate with modifiers and scoping
+ExchangeRateExtended:
   fromCurrencyId: uuid
   toCurrencyId: uuid
 
   # Scope (rates can vary by location)
   scope: enum                     # global | realm | location
-  scopeId: uuid                   # null for global
-
-  # The rate
-  rate: decimal                   # 1 fromCurrency = rate toCurrency
-  inverseRate: decimal            # Computed: 1 toCurrency = inverseRate fromCurrency
+  scopeId: uuid
 
   # How determined
   rateType: enum                  # manual | computed
@@ -2501,145 +1691,20 @@ ExchangeRate:
     {
       modifierType: string        # "tariff", "war", "festival", "shortage"
       modifierValue: decimal      # Multiplier (1.1 = +10%)
-      source: string              # Where this modifier comes from
-      expiresAt: timestamp        # null = permanent until removed
+      source: string
+      expiresAt: timestamp
     }
   ]
 
   # Spread (for currency exchange businesses)
-  buySpread: decimal              # Rate when buying fromCurrency (slightly worse)
-  sellSpread: decimal             # Rate when selling fromCurrency
-
-  effectiveAt: timestamp
-  expiresAt: timestamp
+  buySpread: decimal
+  sellSpread: decimal
 
 # Computed rate formula:
 # rate = (fromCurrency.universalValue / toCurrency.universalValue) * product(modifiers)
 ```
 
-#### Exchange Rate API
-
-```yaml
-# Manual rate setting (simple games)
-/currency/exchange-rate/set:
-  access: admin
-  request:
-    fromCurrencyId: uuid
-    toCurrencyId: uuid
-    scope: global | realm | location
-    scopeId: uuid
-    rate: decimal
-    buySpread?: decimal           # Default 1.0 (no spread)
-    sellSpread?: decimal
-  response: { exchangeRate }
-
-# Query rate
-/currency/exchange-rate/get:
-  access: user
-  request:
-    fromCurrencyId: uuid
-    toCurrencyId: uuid
-    scope: global | realm | location
-    scopeId: uuid
-  response:
-    rate: decimal
-    rateType: manual | computed
-    modifiers: array
-    buyRate: decimal              # Rate with buy spread
-    sellRate: decimal             # Rate with sell spread
-
-# Universal value management
-/currency/universal-value/set:
-  access: admin
-  request:
-    currencyId: uuid
-    value: decimal
-    reason: string
-  response: { universalValue }
-  emits: currency.universal_value.changed
-  notes: |
-    Triggers recalculation of all computed rates involving this currency.
-
-/currency/universal-value/get:
-  access: user
-  request:
-    currencyId: uuid
-  response: { universalValue }
-
-/currency/universal-value/history:
-  access: user
-  request:
-    currencyId: uuid
-    limit: integer
-  response: { history[] }
-
-# Modifier management
-/currency/exchange-modifier/add:
-  access: admin
-  request:
-    fromCurrencyId: uuid
-    toCurrencyId: uuid
-    scope: global | realm | location
-    scopeId: uuid
-    modifierType: string
-    modifierValue: decimal
-    expiresAt?: timestamp
-  response: { exchangeRate }      # Updated rate with new modifier
-  emits: currency.exchange_rate.changed
-
-/currency/exchange-modifier/remove:
-  access: admin
-  request:
-    fromCurrencyId: uuid
-    toCurrencyId: uuid
-    scope: global | realm | location
-    scopeId: uuid
-    modifierType: string
-  response: { exchangeRate }
-  emits: currency.exchange_rate.changed
-
-# Perform exchange
-/currency/exchange:
-  access: authenticated
-  request:
-    fromWalletId: uuid
-    toWalletId: uuid              # Can be same wallet
-    fromCurrencyId: uuid
-    toCurrencyId: uuid
-    fromAmount: decimal
-    locationId?: uuid             # For location-specific rates
-  response:
-    transaction: object
-    fromDebited: decimal
-    toCredited: decimal
-    rateUsed: decimal
-    feesCharged: decimal
-  notes: |
-    Actually performs the exchange, debiting one currency and crediting another.
-```
-
-#### Exchange Rate Events
-
-```yaml
-currency.universal_value.changed:
-  currencyId: uuid
-  previousValue: decimal
-  newValue: decimal
-  percentChange: decimal
-  reason: string
-  # Useful for: NPC merchants adjusting prices, economic gods noticing trends
-
-currency.exchange_rate.changed:
-  fromCurrencyId: uuid
-  toCurrencyId: uuid
-  scope: string
-  scopeId: uuid
-  previousRate: decimal
-  newRate: decimal
-  changeType: manual | modifier_added | modifier_removed | universal_value_change
-```
-
-### 10.6 Contraband and Illegal Crossings
+### 7.6 Contraband and Illegal Crossings
 
 The system explicitly supports smuggling and illegal activity, enabling rich gameplay without prescribing outcomes.
 
@@ -2652,44 +1717,20 @@ The system explicitly supports smuggling and illegal activity, enabling rich gam
 5. **Plugin records everything for analytics** (smuggling rates, contraband value)
 
 ```yaml
-# The border_crossing API accepts both declared and actual:
-border_crossing:
-  declaredGoods: [...]            # What carrier says they have
-  actualGoods: [...]              # What they actually have
-  crossingType: legal | illegal | attempted_smuggle
-  inspectionOccurred: boolean
-  smugglingDetected: boolean
-
-# Plugin calculates:
-# - What tariff SHOULD have been (on actual goods)
-# - What tariff WAS declared (on declared goods)
-# - Discrepancy = smuggled value
-
-# Plugin records but doesn't enforce consequences
-# Game decides: fine, arrest, confiscation, bribe acceptance, etc.
-```
-
-#### Contraband Categories
-
-Games can define what's contraband where:
-
-```yaml
 # Schema: contraband-definition
 ContrabandDefinition:
   id: uuid
-  realmId: uuid                   # Where this is contraband
+  realmId: uuid
 
-  # What's forbidden
   type: enum                      # item_category | item_template | currency
-  targetId: uuid                  # Template ID or currency ID
+  targetId: uuid
   targetCategory: string          # "weapons", "drugs", "religious_artifacts"
 
-  # Severity
   severity: enum                  # restricted | prohibited | capital_offense
 
   # Consequences (advisory - game enforces)
   suggestedFine: decimal
-  suggestedPenalty: string        # "confiscation", "imprisonment", "execution"
+  suggestedPenalty: string
 
   effectiveFrom: timestamp
   effectiveUntil: timestamp
@@ -2702,19 +1743,12 @@ ContrabandDefinition:
     goods: [{ templateId, quantity }]
     currencies: [{ currencyId, amount }]
   response:
-    violations: [
-      {
-        type: string
-        targetId: uuid
-        severity: string
-        suggestedFine: decimal
-      }
-    ]
+    violations: [{ type, targetId, severity, suggestedFine }]
     hasContraband: boolean
     totalContrabandValue: decimal
 ```
 
-### 10.7 Taxation Systems
+### 7.7 Taxation Systems
 
 Taxes are systematic sinks. The plugin provides infrastructure; games decide policy.
 
@@ -2735,53 +1769,30 @@ Taxes are systematic sinks. The plugin provides infrastructure; games decide pol
 # Pattern A: Automatic (simple games)
 # Plugin automatically debits taxes during relevant events
 TaxPolicy:
-  realmId: uuid
-  taxType: transaction | income | sales
-  rate: decimal
   collectionMode: automatic
-
-# When transaction occurs:
-# 1. Plugin calculates tax
-# 2. Plugin debits tax from transactor
-# 3. Tax goes to: void | realm_treasury | faction
+  collectionTarget: void          # Just a sink
 
 # Pattern B: Assessed (complex games)
 # Plugin calculates, game/NPCs collect
 TaxPolicy:
-  taxType: property | wealth
-  rate: decimal
   collectionMode: assessed
-  assessmentFrequency: weekly | monthly | yearly
-
-# Plugin emits tax.assessment.due events
-# Game/NPC tax collectors pursue collection
-# Non-payment creates tax debt record
+  assessmentFrequency: monthly
 
 # Pattern C: Advisory (Arcadia-style)
-# Plugin provides calculation APIs only
-# Game handles everything
+# Plugin provides calculation APIs only, game handles everything
 TaxPolicy:
   collectionMode: advisory
-
-# Plugin provides:
-# - /tax/calculate endpoint
-# - Tax debt tracking
-# - Analytics on tax collection rates
-# Game handles actual collection (or evasion)
 ```
 
 #### Tax Schema
 
 ```yaml
-# Schema: tax-policy
 TaxPolicy:
   id: uuid
   realmId: uuid
-
   taxType: enum                   # transaction | income | property | wealth | sales | custom
-  name: string                    # "Eldoria Sales Tax"
+  name: string
 
-  # Rate
   baseRate: decimal
   progressiveBrackets: [          # Optional for progressive taxation
     { threshold: 1000, rate: 0.05 },
@@ -2789,67 +1800,47 @@ TaxPolicy:
     { threshold: 100000, rate: 0.12 }
   ]
 
-  # Exemptions
   exemptions: [
     { entityType: string, entityId: uuid, reason: string }
   ]
 
-  # Collection
   collectionMode: enum            # automatic | assessed | advisory
   collectionTarget: enum          # void | realm_treasury | faction_id
-  collectionTargetId: uuid        # For faction
+  collectionTargetId: uuid
 
   # For assessed taxes
   assessmentFrequency: duration
-  gracePeriod: duration           # Time to pay before penalties
-  latePenaltyRate: decimal        # Additional rate for late payment
+  gracePeriod: duration
+  latePenaltyRate: decimal
 
   status: active | suspended
   effectiveFrom: timestamp
   effectiveUntil: timestamp
 
-# Schema: tax-assessment
 TaxAssessment:
   id: uuid
   policyId: uuid
-
-  # Who owes
   taxpayerId: uuid
   taxpayerType: enum
-
-  # Assessment
-  assessedValue: decimal          # What the tax is based on
+  assessedValue: decimal
   taxDue: decimal
   dueDate: timestamp
-
-  # Payment tracking
   status: enum                    # pending | partial | paid | overdue | defaulted
   amountPaid: decimal
-  paidAt: timestamp
-
-  # Penalties
   penaltiesAccrued: decimal
 
-  createdAt: timestamp
-
-# Schema: tax-debt
 TaxDebt:
   taxpayerId: uuid
   taxpayerType: enum
   realmId: uuid
-
   totalOwed: decimal
   oldestDueDate: timestamp
-  assessmentIds: [uuid]
-
-  # Consequences (advisory)
-  suggestedConsequences: [string] # "property_seizure", "arrest_warrant"
+  suggestedConsequences: [string]
 ```
 
 #### Tax API
 
 ```yaml
-# Policy Management
 /tax/policy/create:
   access: admin
   request: { realmId, taxType, rate, collectionMode... }
@@ -2860,96 +1851,44 @@ TaxDebt:
   request: { realmId }
   response: { policies[] }
 
-# Calculation (doesn't collect)
 /tax/calculate:
   access: user
   request:
     policyId: uuid
     taxpayerId: uuid
-    taxpayerType: enum
-    baseValue: decimal            # What to tax
-  response:
-    taxDue: decimal
-    effectiveRate: decimal
-    bracketApplied: string
-    exemptionApplied: string
+    baseValue: decimal
+  response: { taxDue, effectiveRate, bracketApplied }
 
-# Assessment (for assessed taxes)
 /tax/assess:
   access: admin
-  request:
-    policyId: uuid
-    taxpayerId: uuid
-    taxpayerType: enum
-    assessedValue: decimal
-    dueDate: timestamp
+  request: { policyId, taxpayerId, assessedValue, dueDate }
   response: { assessment }
   emits: tax.assessment.created
 
-# Payment
 /tax/pay:
   access: authenticated
-  request:
-    assessmentId: uuid
-    walletId: uuid
-    amount: decimal               # Can be partial
+  request: { assessmentId, walletId, amount }
   response: { assessment, transaction, remainingDue }
   emits: tax.payment.received
+  notes: |
+    Uses lib-currency /currency/debit internally.
 
-# Debt queries
 /tax/debt/get:
   access: user
-  request:
-    taxpayerId: uuid
-    taxpayerType: enum
-    realmId?: uuid
+  request: { taxpayerId, realmId? }
   response: { debt, assessments[] }
 
 /tax/debt/list-delinquent:
   access: admin
-  request:
-    realmId: uuid
-    minOwed?: decimal
-    minDaysOverdue?: integer
+  request: { realmId, minOwed?, minDaysOverdue? }
   response: { debts[] }
 ```
 
-#### Tax Events
-
-```yaml
-tax.assessment.created:
-  assessmentId: uuid
-  policyId: uuid
-  taxpayerId: uuid
-  taxDue: decimal
-  dueDate: timestamp
-
-tax.assessment.overdue:
-  assessmentId: uuid
-  taxpayerId: uuid
-  daysOverdue: integer
-  totalOwed: decimal
-  penaltiesAccrued: decimal
-
-tax.payment.received:
-  assessmentId: uuid
-  taxpayerId: uuid
-  amountPaid: decimal
-  remainingDue: decimal
-
-tax.debt.defaulted:
-  taxpayerId: uuid
-  realmId: uuid
-  totalDefaulted: decimal
-  suggestedConsequences: [string]
-```
-
-### 10.8 Integration Examples
+### 7.8 Integration Examples
 
 #### Simple Game: Auto-Everything
 
 ```yaml
-# Configuration for a simple game
 TariffPolicy:
   collectionMode: auto
 
@@ -2962,21 +1901,20 @@ ExchangeRate:
 
 # Game flow:
 # 1. Shipment crosses border
-# 2. Plugin auto-debits tariff
-# 3. Done - game doesn't need to handle
+# 2. Plugin auto-debits tariff via lib-currency
+# 3. Done
 ```
 
 #### Complex Game: NPC Tax Collectors
 
 ```yaml
-# Configuration for NPC-governed economy
 TaxPolicy:
   collectionMode: assessed
   assessmentFrequency: monthly
 
 # Game flow:
 # 1. Plugin emits tax.assessment.created monthly
-# 2. Tax Collector NPC receives event
+# 2. Tax Collector NPC (lib-actor) receives event
 # 3. NPC GOAP: goal = collect_taxes
 # 4. NPC visits taxpayers, calls /tax/pay on their behalf
 # 5. Some taxpayers evade - NPC tracks, reports to authorities
@@ -2986,17 +1924,15 @@ TaxPolicy:
 #### Arcadia: Full Control
 
 ```yaml
-# Arcadia uses advisory mode for everything
 TariffPolicy:
-  collectionMode: advisory        # Plugin calculates, NPCs collect (or don't)
+  collectionMode: advisory
 
 TaxPolicy:
-  collectionMode: advisory        # Same
+  collectionMode: advisory
 
 ExchangeRate:
   rateType: computed
-  # But individual merchants ignore this and set their own prices
-  # The "rate" is just a reference point
+  # Individual merchants ignore this and set their own prices
 
 # Game flow:
 # 1. Player approaches border with goods
@@ -3009,79 +1945,45 @@ ExchangeRate:
 
 ---
 
-## Part 11: Summary
+## Summary
 
-### What We're Building
+### What's Built (Foundation)
+
+| Component | Status | Endpoints |
+|-----------|--------|-----------|
+| **lib-currency** | COMPLETE | 32 |
+| **lib-item** | COMPLETE | 13 |
+| **lib-inventory** | COMPLETE | 16 |
+| **lib-contract** | COMPLETE | 30 |
+| **lib-escrow** | PARTIAL (state machine + tracking only, no asset movement) | 20 |
+
+### What's Planned (This Document)
 
 | Component | Purpose | Status |
 |-----------|---------|--------|
-| **lib-currency** | Multi-currency wallets, transactions, audit trail | Design complete |
-| **lib-inventory** | Item templates/instances, containers | Design complete |
+| **lib-escrow completion** | Asset movement, contract integration, periodic validation | Prerequisite for market/trade |
 | **lib-market** | Auctions, vendors, price discovery | Design complete |
 | **lib-economy** | Monitoring, NPC AI, analytics | Design complete |
 | **Economic Deities** | God Actors that maintain velocity via narrative events | Design complete |
 | **Analytics Extensions** | Velocity tracking at currency/realm/location granularity | Design complete |
 | **Trade Routes** | Route definitions, shipment lifecycle, border crossings | Design complete |
 | **Tariffs/Taxes** | Configurable collection modes, contraband support | Design complete |
-| **Exchange Rates** | Universal values, computed rates, location-scoped | Design complete |
+| **Exchange Rate Extensions** | Universal values, computed rates, location-scoped | Design complete |
+| **ABML Action Handlers** | Economy/inventory handlers for NPC behaviors | Design complete |
+| **Quest Integration** | Currency/item rewards and prerequisites | Design complete |
 
-### Key Architectural Decisions
+### Key Architectural Decisions (Planned Services)
 
-1. **Template/Instance** for items (memory efficient)
-2. **Event-sourced transactions** (audit, rollback, analytics)
-3. **Realm-scoped sharding** (scale)
-4. **GOAP-integrated NPC economy** (believable behavior)
-5. **Faucet/Sink discipline** (inflation control)
-6. **Divine economic intervention** (velocity control via narrative events)
-7. **Redistribution over creation** (most interventions move currency, not create/destroy)
-8. **Three-tier usage pattern** (divine oversight / NPC governance / external management)
-9. **Declarative shipment lifecycle** (game drives events, plugin records state)
-10. **Configurable collection modes** (auto / assessed / advisory for all taxes/tariffs)
-11. **Universal value anchoring** (computed exchange rates from intrinsic currency worth)
-12. **Explicit contraband support** (declared vs actual, detection as game logic)
-
-### Quest System Requirements
-
-- `/currency/credit` for currency rewards
-- `/inventory/add` for item rewards
-- `/inventory/has` for prerequisites
-- Economic objectives tracked via events
-
-### Scale Strategy
-
-- Lazy instantiation for NPC wallets
-- Template-based defaults
-- Tick-based batch processing
-- Regional market aggregation
-- Per-realm sharding
-
-### Velocity Control Strategy
-
-- Analytics tracks velocity at currency/realm/location granularity
-- Economic Deities (God Actors) observe metrics and spawn events
-- Most interventions are redistribution, not creation/destruction
-- Spillover effects are natural and desirable
-- Intentional stagnation supported for narrative purposes
-- Multiple specialized gods per realm create emergent dynamics
-
-### Foreign Trade Strategy
-
-- Trade routes as data constructs (game defines, plugin stores)
-- Shipment lifecycle is declarative (game calls APIs, plugin records)
-- Realm hierarchy affects border types (internal vs external)
-- Tariffs configurable at realm and location level
-- Exchange rates from universal values + modifiers (or manual)
-- Contraband/smuggling explicitly supported (declared vs actual)
-- Three collection modes: auto (simple), assessed (NPC), advisory (full control)
-
-### Taxation Strategy
-
-- Multiple tax types: transaction, income, property, wealth, sales
-- Same three collection modes as tariffs
-- Tax debts tracked for NPC/player collection gameplay
-- Progressive brackets supported
-- Exemptions for diplomatic/guild privileges
-- Events enable tax collector NPCs and consequences for evasion
+1. **Event-sourced transactions** (audit, rollback, analytics)
+2. **GOAP-integrated NPC economy** (believable behavior)
+3. **Faucet/Sink discipline** (inflation control)
+4. **Divine economic intervention** (velocity control via narrative events)
+5. **Redistribution over creation** (most interventions move currency, not create/destroy)
+6. **Three-tier usage pattern** (divine oversight / NPC governance / external management)
+7. **Declarative shipment lifecycle** (game drives events, plugin records state)
+8. **Configurable collection modes** (auto / assessed / advisory for all taxes/tariffs)
+9. **Universal value anchoring** (computed exchange rates from intrinsic currency worth)
+10. **Explicit contraband support** (declared vs actual, detection as game logic)
 
 ---
 
@@ -3106,4 +2008,4 @@ ExchangeRate:
 
 ---
 
-*This document should be updated as implementation progresses and new requirements emerge.*
+*This document covers planned services building on the completed foundation layer (lib-currency, lib-item, lib-inventory, lib-contract, lib-escrow). Update as implementation progresses.*

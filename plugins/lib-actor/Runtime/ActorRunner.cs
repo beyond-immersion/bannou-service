@@ -18,7 +18,7 @@ namespace BeyondImmersion.BannouService.Actor.Runtime;
 /// Core actor runtime that executes behavior loops with bounded channels for perception/message queues.
 /// Each actor instance has one runner that manages its lifecycle.
 /// </summary>
-public class ActorRunner : IActorRunner
+public sealed class ActorRunner : IActorRunner
 {
     private readonly ILogger<ActorRunner> _logger;
     private readonly IMessageBus _messageBus;
@@ -48,7 +48,7 @@ public class ActorRunner : IActorRunner
 
     // NPC Brain integration: subscription to character perception events and source tracking
     private IAsyncDisposable? _perceptionSubscription;
-    private string? _lastSourceAppId;
+    private volatile string? _lastSourceAppId;
 
     // Event Brain encounter state (for actors managing encounters)
     private EncounterStateData? _encounter;
@@ -107,7 +107,7 @@ public class ActorRunner : IActorRunner
     public int PerceptionQueueDepth => _perceptionQueue.Reader.Count;
 
     /// <inheritdoc/>
-    public string? CurrentEncounterId => _encounter?.EncounterId;
+    public Guid? CurrentEncounterId => _encounter?.EncounterId;
 
     /// <summary>
     /// Creates a new actor runner instance.
@@ -246,7 +246,7 @@ public class ActorRunner : IActorRunner
         {
             try
             {
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_config.ActorStopTimeoutSeconds));
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
                 await _loopTask.WaitAsync(linkedCts.Token);
             }
@@ -314,7 +314,7 @@ public class ActorRunner : IActorRunner
     }
 
     /// <inheritdoc/>
-    public bool StartEncounter(string encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null)
+    public bool StartEncounter(Guid encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null)
     {
         if (_disposed)
             return false;
@@ -340,7 +340,7 @@ public class ActorRunner : IActorRunner
         _logger.LogInformation("Actor {ActorId} started encounter {EncounterId} (type: {Type}, participants: {Count})",
             ActorId, encounterId, encounterType, participants.Count);
 
-        // Publish encounter started event (fire-and-forget for monitoring)
+        // Publish encounter started event (fire-and-forget: sync interface method)
         _ = _messageBus.TryPublishAsync(ENCOUNTER_STARTED_TOPIC, new ActorEncounterStartedEvent
         {
             EventId = Guid.NewGuid(),
@@ -366,7 +366,7 @@ public class ActorRunner : IActorRunner
         _logger.LogDebug("Actor {ActorId} encounter {EncounterId} phase changed: {OldPhase} -> {NewPhase}",
             ActorId, _encounter.EncounterId, oldPhase, phase);
 
-        // Publish phase changed event (fire-and-forget for monitoring)
+        // Publish phase changed event (fire-and-forget: sync interface method)
         _ = _messageBus.TryPublishAsync(ENCOUNTER_PHASE_CHANGED_TOPIC, new ActorEncounterPhaseChangedEvent
         {
             EventId = Guid.NewGuid(),
@@ -394,7 +394,7 @@ public class ActorRunner : IActorRunner
         _logger.LogInformation("Actor {ActorId} ended encounter {EncounterId} (duration: {Duration})",
             ActorId, encounterId, duration);
 
-        // Publish encounter ended event (fire-and-forget for monitoring)
+        // Publish encounter ended event (fire-and-forget: sync interface method)
         _ = _messageBus.TryPublishAsync(ENCOUNTER_ENDED_TOPIC, new ActorEncounterEndedEvent
         {
             EventId = Guid.NewGuid(),
@@ -519,7 +519,7 @@ public class ActorRunner : IActorRunner
                     // Wait a bit before retrying
                     try
                     {
-                        await Task.Delay(1000, ct);
+                        await Task.Delay(_config.ErrorRetryDelayMs, ct);
                     }
                     catch (OperationCanceledException)
                     {
@@ -557,10 +557,11 @@ public class ActorRunner : IActorRunner
             // Assess significance and potentially store as memory
             if (perception.Urgency >= (float)_config.PerceptionMemoryThreshold)
             {
-                // High urgency perceptions become memories
+                // High urgency perceptions become memories - store the full perception
+                // for proper serialization (anonymous objects don't serialize correctly)
                 _state.AddMemory(
                     $"recent:{perception.PerceptionType}",
-                    new { perception.SourceId, perception.SourceType, perception.Data, perception.Urgency },
+                    perception,
                     DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes)); // Short-term memory
             }
 
@@ -707,8 +708,15 @@ public class ActorRunner : IActorRunner
         // Working memory (perception-derived data)
         scope.SetValue("working_memory", _state.GetAllWorkingMemory());
 
-        // Template configuration
-        scope.SetValue("config", _template.Configuration);
+        // Template configuration merged with actor service GOAP parameters
+        var templateConfig = _template.Configuration as IDictionary<string, object?>;
+        var mergedConfig = templateConfig != null
+            ? new Dictionary<string, object?>(templateConfig)
+            : new Dictionary<string, object?>();
+        mergedConfig["goap_replan_threshold"] = _config.GoapReplanThreshold;
+        mergedConfig["goap_max_plan_depth"] = _config.GoapMaxPlanDepth;
+        mergedConfig["goap_plan_timeout_ms"] = _config.GoapPlanTimeoutMs;
+        scope.SetValue("config", mergedConfig);
 
         // Current perceptions (collected from queue this tick)
         scope.SetValue("perceptions", CollectCurrentPerceptions());
@@ -851,7 +859,7 @@ public class ActorRunner : IActorRunner
                         var value = memDict.TryGetValue("value", out var v) ? v : null;
                         var expiresMinutes = memDict.TryGetValue("expires_minutes", out var e) && e is double exp
                             ? (int)exp
-                            : 60; // Default 1 hour
+                            : _config.DefaultMemoryExpirationMinutes;
 
                         if (!string.IsNullOrEmpty(key))
                         {
@@ -943,33 +951,48 @@ public class ActorRunner : IActorRunner
     {
         var snapshot = GetStateSnapshot();
 
-        try
+        for (int attempt = 0; attempt <= _config.MemoryStoreMaxRetries; attempt++)
         {
-            await _stateStore.SaveAsync(ActorId, snapshot, cancellationToken: ct);
-            _logger.LogDebug("Actor {ActorId} persisted state", ActorId);
-
-            // Publish state persisted event
-            await _messageBus.TryPublishAsync(ACTOR_STATE_PERSISTED_TOPIC, new ActorStatePersistedEvent
+            try
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ActorId = ActorId,
-                NodeId = NodeId,
-                LoopIterations = LoopIterations
-            }, cancellationToken: ct);
-        }
-        catch (Exception ex)
-        {
-            // Log but don't throw - persistence failure shouldn't kill the actor
-            _logger.LogError(ex, "Actor {ActorId} failed to persist state", ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "PersistState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state",
-                details: new { ActorId },
-                stack: ex.StackTrace);
+                await _stateStore.SaveAsync(ActorId, snapshot, cancellationToken: ct);
+                _logger.LogDebug("Actor {ActorId} persisted state", ActorId);
+
+                // Publish state persisted event
+                await _messageBus.TryPublishAsync(ACTOR_STATE_PERSISTED_TOPIC, new ActorStatePersistedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ActorId = ActorId,
+                    NodeId = NodeId,
+                    LoopIterations = LoopIterations
+                }, cancellationToken: ct);
+                return;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (attempt < _config.MemoryStoreMaxRetries)
+            {
+                _logger.LogWarning(ex, "Actor {ActorId} state persist attempt {Attempt} failed, retrying",
+                    ActorId, attempt + 1);
+                await Task.Delay(_config.StatePersistenceRetryDelayMs * (attempt + 1), ct);
+            }
+            catch (Exception ex)
+            {
+                // Final attempt failed - log but don't throw, persistence failure shouldn't kill the actor
+                _logger.LogError(ex, "Actor {ActorId} failed to persist state after {MaxRetries} retries",
+                    ActorId, _config.MemoryStoreMaxRetries);
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "PersistState",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "state",
+                    details: new { ActorId, Retries = _config.MemoryStoreMaxRetries },
+                    stack: ex.StackTrace);
+            }
         }
     }
 
@@ -1087,6 +1110,7 @@ public class ActorRunner : IActorRunner
         _lastSourceAppId = evt.SourceAppId;
 
         // Convert to PerceptionData and inject into the queue
+        // Use PerceptionData which has proper enum types per IMPLEMENTATION TENETS (Type Safety)
         var perception = new PerceptionData
         {
             PerceptionType = evt.Perception.PerceptionType,

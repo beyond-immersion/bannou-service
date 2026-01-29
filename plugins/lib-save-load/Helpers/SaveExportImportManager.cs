@@ -61,9 +61,10 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             var ownerTypeStr = body.OwnerType.ToString();
 
             // Query slots for this owner
-            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum
+            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var slots = await slotQueryStore.QueryAsync(
-                s => s.GameId == body.GameId && s.OwnerId == ownerIdStr && s.OwnerType == ownerTypeStr,
+                s => s.GameId == body.GameId && s.OwnerId == body.OwnerId && s.OwnerType == body.OwnerType,
                 cancellationToken);
 
             // Filter by specific slot names if provided
@@ -83,7 +84,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             using var memoryStream = new MemoryStream();
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
             {
-                var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+                var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
                 var manifest = new ExportManifest
                 {
                     GameId = body.GameId,
@@ -101,15 +102,16 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                         continue;
                     }
 
-                    var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, slot.LatestVersion.Value);
+                    // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
+                    var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), slot.LatestVersion.Value);
                     var version = await versionStore.GetAsync(versionKey, cancellationToken);
                     if (version == null)
                     {
                         continue;
                     }
 
-                    // Load the data
-                    var data = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId, version, cancellationToken);
+                    // Load the data - SlotId is Guid, convert to string for loader
+                    var data = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId.ToString(), version, cancellationToken);
                     if (data == null)
                     {
                         _logger.LogWarning("Failed to load data for slot {SlotName}", slot.SlotName);
@@ -123,11 +125,12 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                         await entryStream.WriteAsync(data, cancellationToken);
                     }
 
+                    // SlotId is Guid, Category is enum - convert to strings for export
                     manifest.Slots.Add(new ExportSlotEntry
                     {
-                        SlotId = slot.SlotId,
+                        SlotId = slot.SlotId.ToString(),
                         SlotName = slot.SlotName,
-                        Category = slot.Category,
+                        Category = slot.Category.ToString(),
                         DisplayName = slot.SlotName,
                         VersionNumber = version.VersionNumber,
                         SchemaVersion = version.SchemaVersion,
@@ -324,8 +327,8 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             var targetOwnerIdStr = body.TargetOwnerId.ToString();
             var targetOwnerTypeStr = body.TargetOwnerType.ToString();
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
             var importedSlots = 0;
             var importedVersions = 0;
@@ -340,6 +343,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 }
 
                 // Check for existing slot
+                // SaveSlotMetadata.GetStateKey expects strings for ownerType and ownerId
                 var slotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerTypeStr, targetOwnerIdStr, slotEntry.SlotName);
                 var existingSlot = await slotStore.GetAsync(slotKey, cancellationToken);
 
@@ -354,7 +358,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
                         case ConflictResolution.OVERWRITE:
                             // Delete existing slot and versions
-                            var existingVersions = await _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName)
+                            var existingVersions = await _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions)
                                 .QueryAsync(v => v.SlotId == existingSlot.SlotId, cancellationToken);
                             foreach (var existingVersion in existingVersions)
                             {
@@ -377,15 +381,15 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     }
                 }
 
-                // Create slot
+                // Create slot - SaveSlotMetadata fields are now proper types
                 var newSlot = new SaveSlotMetadata
                 {
-                    SlotId = Guid.NewGuid().ToString(),
+                    SlotId = Guid.NewGuid(),
                     GameId = body.TargetGameId,
-                    OwnerId = targetOwnerIdStr,
-                    OwnerType = targetOwnerTypeStr,
+                    OwnerId = body.TargetOwnerId,
+                    OwnerType = body.TargetOwnerType,
                     SlotName = slotEntry.SlotName,
-                    Category = slotEntry.Category ?? "manual",
+                    Category = Enum.TryParse<SaveCategory>(slotEntry.Category, out var cat) ? cat : SaveCategory.MANUAL_SAVE,
                     MaxVersions = _configuration.DefaultMaxVersionsManualSave,
                     LatestVersion = 1,
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -396,9 +400,16 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
                 // Create version
                 var contentHash = Hashing.ContentHasher.ComputeHash(data);
-                var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
-                var compressedData = CompressionHelper.Compress(data, compressionTypeEnum);
+                // Configuration already provides typed enum (T25 compliant)
+                var compressionTypeEnum = _configuration.DefaultCompressionType;
+                var importCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+                    ? _configuration.BrotliCompressionLevel
+                    : compressionTypeEnum == CompressionType.GZIP
+                        ? _configuration.GzipCompressionLevel
+                        : (int?)null;
+                var compressedData = CompressionHelper.Compress(data, compressionTypeEnum, importCompressionLevel);
 
+                // SaveVersionManifest fields are now proper types
                 var newVersion = new SaveVersionManifest
                 {
                     SlotId = newSlot.SlotId,
@@ -406,19 +417,19 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     ContentHash = contentHash,
                     SizeBytes = data.Length,
                     CompressedSizeBytes = compressedData.Length,
-                    CompressionType = compressionTypeEnum.ToString(),
+                    CompressionType = compressionTypeEnum,
                     SchemaVersion = slotEntry.SchemaVersion,
                     CheckpointName = slotEntry.DisplayName,
                     IsPinned = false,
                     IsDelta = false,
-                    UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE",
+                    UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE,
                     CreatedAt = DateTimeOffset.UtcNow
                 };
                 await versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
                 importedVersions++;
 
-                // Store in hot cache
-                var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+                // Store in hot cache - HotSaveEntry fields are now proper types
+                var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
                 var hotEntry = new HotSaveEntry
                 {
                     SlotId = newSlot.SlotId,
@@ -426,7 +437,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     Data = Convert.ToBase64String(compressedData),
                     ContentHash = contentHash,
                     IsCompressed = compressionTypeEnum != CompressionType.NONE,
-                    CompressionType = compressionTypeEnum.ToString(),
+                    CompressionType = compressionTypeEnum,
                     SizeBytes = data.Length,
                     CachedAt = DateTimeOffset.UtcNow
                 };
@@ -437,21 +448,22 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     new StateOptions { Ttl = hotCacheTtlSeconds },
                     cancellationToken);
 
-                // Queue for upload if enabled
+                // Queue for upload if enabled - PendingUploadEntry fields are now proper types
                 if (_configuration.AsyncUploadEnabled)
                 {
-                    var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
-                    var uploadId = Guid.NewGuid().ToString();
+                    var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+                    var uploadId = Guid.NewGuid();
                     var pendingEntry = new PendingUploadEntry
                     {
                         UploadId = uploadId,
                         SlotId = newSlot.SlotId,
                         VersionNumber = 1,
                         GameId = body.TargetGameId,
-                        OwnerId = targetOwnerIdStr,
-                        OwnerType = targetOwnerTypeStr,
+                        OwnerId = body.TargetOwnerId,
+                        OwnerType = body.TargetOwnerType,
                         Data = Convert.ToBase64String(compressedData),
                         ContentHash = contentHash,
+                        CompressionType = compressionTypeEnum,
                         CompressedSizeBytes = compressedData.Length,
                         Priority = 1,
                         QueuedAt = DateTimeOffset.UtcNow
@@ -463,7 +475,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                         new StateOptions { Ttl = pendingTtlSeconds },
                         cancellationToken);
                     // Add to tracking set for Redis-based queue processing
-                    await pendingStore.AddToSetAsync(SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
+                    await pendingStore.AddToSetAsync(SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
                 }
             }
 

@@ -13,7 +13,7 @@ info:
 
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 4.0.0
   # NOTE: Event subscriptions and publications are in auth-events.yaml
 servers:
@@ -388,8 +388,8 @@ components:
   schemas:
     Provider:
       type: string
-      enum: [google, discord, twitch]
-      description: OAuth provider type
+      enum: [google, discord, twitch, steam]
+      description: Authentication provider type
 
     InitOAuthResponse:
       type: object
@@ -622,7 +622,7 @@ components:
           nullable: true
           description: |
             Authorization strings from active subscriptions.
-            Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            Format: "{stubName}:{state}" (e.g., "my-game:authorized")
         remainingTime:
           type: integer
           description: Seconds until expiration

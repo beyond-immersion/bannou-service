@@ -26,8 +26,8 @@ public class CapabilityManifestBuilderTests
     [Fact]
     public void ParseEndpointKey_ValidFormat_ReturnsCorrectParts()
     {
-        // Arrange
-        var endpointKey = "account:POST:/account/get";
+        // Arrange - New format: "service:/path"
+        var endpointKey = "account:/account/get";
 
         // Act
         var result = _builder.ParseEndpointKey(endpointKey);
@@ -35,15 +35,14 @@ public class CapabilityManifestBuilderTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("account", result.ServiceName);
-        Assert.Equal("POST", result.Method);
         Assert.Equal("/account/get", result.Path);
     }
 
     [Fact]
-    public void ParseEndpointKey_GetEndpoint_ReturnsCorrectParts()
+    public void ParseEndpointKey_WebsiteEndpoint_ReturnsCorrectParts()
     {
         // Arrange
-        var endpointKey = "website:GET:/website/status";
+        var endpointKey = "website:/website/status";
 
         // Act
         var result = _builder.ParseEndpointKey(endpointKey);
@@ -51,7 +50,6 @@ public class CapabilityManifestBuilderTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("website", result.ServiceName);
-        Assert.Equal("GET", result.Method);
         Assert.Equal("/website/status", result.Path);
     }
 
@@ -59,7 +57,7 @@ public class CapabilityManifestBuilderTests
     public void ParseEndpointKey_WithTemplateParams_IdentifiesTemplateCorrectly()
     {
         // Arrange
-        var endpointKey = "auth:POST:/auth/oauth/{provider}/callback";
+        var endpointKey = "auth:/auth/oauth/{provider}/callback";
 
         // Act
         var result = _builder.ParseEndpointKey(endpointKey);
@@ -74,7 +72,7 @@ public class CapabilityManifestBuilderTests
     public void ParseEndpointKey_WithoutTemplateParams_IdentifiesCorrectly()
     {
         // Arrange
-        var endpointKey = "account:POST:/account/create";
+        var endpointKey = "account:/account/create";
 
         // Act
         var result = _builder.ParseEndpointKey(endpointKey);
@@ -82,34 +80,6 @@ public class CapabilityManifestBuilderTests
         // Assert
         Assert.NotNull(result);
         Assert.False(result.HasTemplateParams);
-    }
-
-    [Fact]
-    public void ParseEndpointKey_PostEndpoint_IdentifiesAsPost()
-    {
-        // Arrange
-        var endpointKey = "auth:POST:/auth/login";
-
-        // Act
-        var result = _builder.ParseEndpointKey(endpointKey);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.True(result.IsPost);
-    }
-
-    [Fact]
-    public void ParseEndpointKey_GetEndpoint_IdentifiesAsNotPost()
-    {
-        // Arrange
-        var endpointKey = "website:GET:/website/status";
-
-        // Act
-        var result = _builder.ParseEndpointKey(endpointKey);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.False(result.IsPost);
     }
 
     [Fact]
@@ -129,7 +99,7 @@ public class CapabilityManifestBuilderTests
     public void ParseEndpointKey_EmptyServiceName_ReturnsNull()
     {
         // Arrange
-        var endpointKey = ":POST:/path";
+        var endpointKey = ":/path";
 
         // Act
         var result = _builder.ParseEndpointKey(endpointKey);
@@ -139,10 +109,10 @@ public class CapabilityManifestBuilderTests
     }
 
     [Fact]
-    public void ParseEndpointKey_MethodOnly_ReturnsWithEmptyPath()
+    public void ParseEndpointKey_ServiceOnly_ReturnsWithEmptyPath()
     {
-        // Arrange - Edge case: only service and method, no path
-        var endpointKey = "service:POST";
+        // Arrange - Edge case: only service name, no path
+        var endpointKey = "service:";
 
         // Act
         var result = _builder.ParseEndpointKey(endpointKey);
@@ -150,7 +120,6 @@ public class CapabilityManifestBuilderTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("service", result.ServiceName);
-        Assert.Equal("POST", result.Method);
         Assert.Equal("", result.Path);
     }
 
@@ -158,7 +127,7 @@ public class CapabilityManifestBuilderTests
     public void ParseEndpointKey_NestedPath_ParsesCorrectly()
     {
         // Arrange
-        var endpointKey = "character:POST:/character/personality/get";
+        var endpointKey = "character:/character/personality/get";
 
         // Act
         var result = _builder.ParseEndpointKey(endpointKey);
@@ -166,7 +135,6 @@ public class CapabilityManifestBuilderTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("character", result.ServiceName);
-        Assert.Equal("POST", result.Method);
         Assert.Equal("/character/personality/get", result.Path);
     }
 
@@ -175,14 +143,14 @@ public class CapabilityManifestBuilderTests
     #region BuildApiList Tests
 
     [Fact]
-    public void BuildApiList_ValidPostEndpoints_ReturnsAllEndpoints()
+    public void BuildApiList_ValidEndpoints_ReturnsAllEndpoints()
     {
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["account:POST:/account/get"] = Guid.NewGuid(),
-            ["account:POST:/account/create"] = Guid.NewGuid(),
-            ["auth:POST:/auth/login"] = Guid.NewGuid()
+            ["account:/account/get"] = Guid.NewGuid(),
+            ["account:/account/create"] = Guid.NewGuid(),
+            ["auth:/auth/login"] = Guid.NewGuid()
         };
 
         // Act
@@ -198,9 +166,9 @@ public class CapabilityManifestBuilderTests
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["account:POST:/account/get"] = Guid.NewGuid(),
-            ["account:POST:/account/create"] = Guid.NewGuid(),
-            ["auth:POST:/auth/login"] = Guid.NewGuid()
+            ["account:/account/get"] = Guid.NewGuid(),
+            ["account:/account/create"] = Guid.NewGuid(),
+            ["auth:/auth/login"] = Guid.NewGuid()
         };
 
         // Act
@@ -217,8 +185,8 @@ public class CapabilityManifestBuilderTests
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["Account:POST:/account/get"] = Guid.NewGuid(),
-            ["ACCOUNT:POST:/account/create"] = Guid.NewGuid()
+            ["Account:/account/get"] = Guid.NewGuid(),
+            ["ACCOUNT:/account/create"] = Guid.NewGuid()
         };
 
         // Act
@@ -234,9 +202,9 @@ public class CapabilityManifestBuilderTests
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["auth:POST:/auth/login"] = Guid.NewGuid(),
-            ["auth:POST:/auth/oauth/{provider}/callback"] = Guid.NewGuid(),
-            ["website:GET:/website/content/{slug}"] = Guid.NewGuid()
+            ["auth:/auth/login"] = Guid.NewGuid(),
+            ["auth:/auth/oauth/{provider}/callback"] = Guid.NewGuid(),
+            ["website:/website/content/{slug}"] = Guid.NewGuid()
         };
 
         // Act
@@ -248,33 +216,14 @@ public class CapabilityManifestBuilderTests
     }
 
     [Fact]
-    public void BuildApiList_SkipsNonPostEndpoints_ReturnsOnlyPost()
-    {
-        // Arrange
-        var mappings = new Dictionary<string, Guid>
-        {
-            ["auth:POST:/auth/login"] = Guid.NewGuid(),
-            ["website:GET:/website/status"] = Guid.NewGuid(),
-            ["auth:GET:/auth/oauth/google/init"] = Guid.NewGuid()
-        };
-
-        // Act
-        var result = _builder.BuildApiList(mappings);
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("POST", result[0].Method);
-    }
-
-    [Fact]
     public void BuildApiList_SkipsInvalidFormatEndpoints_ReturnsOnlyValid()
     {
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["account:POST:/account/get"] = Guid.NewGuid(),
+            ["account:/account/get"] = Guid.NewGuid(),
             ["invalid-endpoint-key"] = Guid.NewGuid(),
-            [":POST:/orphaned-path"] = Guid.NewGuid()
+            [":/orphaned-path"] = Guid.NewGuid()
         };
 
         // Act
@@ -299,31 +248,13 @@ public class CapabilityManifestBuilderTests
     }
 
     [Fact]
-    public void BuildApiList_SetsCorrectEndpointKey_FormatsAsMethodPath()
-    {
-        // Arrange
-        var guid = Guid.NewGuid();
-        var mappings = new Dictionary<string, Guid>
-        {
-            ["account:POST:/account/get"] = guid
-        };
-
-        // Act
-        var result = _builder.BuildApiList(mappings);
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("POST:/account/get", result[0].EndpointKey);
-    }
-
-    [Fact]
     public void BuildApiList_PreservesServiceGuid_MatchesInputGuid()
     {
         // Arrange
         var expectedGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
         {
-            ["account:POST:/account/get"] = expectedGuid
+            ["account:/account/get"] = expectedGuid
         };
 
         // Act
@@ -340,10 +271,10 @@ public class CapabilityManifestBuilderTests
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["character:POST:/character/get"] = Guid.NewGuid(),
-            ["character-history:POST:/character-history/get-participation"] = Guid.NewGuid(),
-            ["character-personality:POST:/character-personality/get"] = Guid.NewGuid(),
-            ["auth:POST:/auth/login"] = Guid.NewGuid()
+            ["character:/character/get"] = Guid.NewGuid(),
+            ["character-history:/character-history/get-participation"] = Guid.NewGuid(),
+            ["character-personality:/character-personality/get"] = Guid.NewGuid(),
+            ["auth:/auth/login"] = Guid.NewGuid()
         };
 
         // Act
@@ -360,8 +291,8 @@ public class CapabilityManifestBuilderTests
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["account:POST:/account/get"] = Guid.NewGuid(),
-            ["auth:POST:/auth/login"] = Guid.NewGuid()
+            ["account:/account/get"] = Guid.NewGuid(),
+            ["auth:/auth/login"] = Guid.NewGuid()
         };
 
         // Act
@@ -377,8 +308,8 @@ public class CapabilityManifestBuilderTests
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["account:POST:/account/get"] = Guid.NewGuid(),
-            ["auth:POST:/auth/login"] = Guid.NewGuid()
+            ["account:/account/get"] = Guid.NewGuid(),
+            ["auth:/auth/login"] = Guid.NewGuid()
         };
 
         // Act
@@ -394,8 +325,8 @@ public class CapabilityManifestBuilderTests
         // Arrange
         var mappings = new Dictionary<string, Guid>
         {
-            ["account:POST:/account/get"] = Guid.NewGuid(),
-            ["auth:POST:/auth/login"] = Guid.NewGuid()
+            ["account:/account/get"] = Guid.NewGuid(),
+            ["auth:/auth/login"] = Guid.NewGuid()
         };
 
         // Act

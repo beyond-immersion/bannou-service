@@ -48,8 +48,6 @@ public sealed class AssetProcessingWorker : BackgroundService
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ILogger<AssetProcessingWorker> _logger;
 
-    private const string ASSET_PREFIX = "asset:";
-
     // Job tracking for load reporting
     private int _currentJobCount;
     private readonly object _jobCountLock = new();
@@ -88,19 +86,20 @@ public sealed class AssetProcessingWorker : BackgroundService
 
     /// <summary>
     /// Gets the pool type this processor handles.
-    /// Configured via ASSET_PROCESSING_POOL_TYPE (default: "asset-processor").
+    /// Uses WorkerPool override if configured, otherwise falls back to ProcessingPoolType.
     /// </summary>
-    private string PoolType => _configuration.ProcessingPoolType;
+    private string PoolType => !string.IsNullOrEmpty(_configuration.WorkerPool)
+        ? _configuration.WorkerPool
+        : _configuration.ProcessingPoolType;
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Check processing mode from configuration - exit early if "api" mode (HTTP only)
-        var processingMode = _configuration.ProcessingMode;
-        if (processingMode.Equals("api", StringComparison.OrdinalIgnoreCase))
+        if (_configuration.ProcessingMode == ProcessingMode.Api)
         {
             _logger.LogInformation(
-                "Asset processing worker disabled (ProcessingMode={Mode})", processingMode);
+                "Asset processing worker disabled (ProcessingMode={Mode})", _configuration.ProcessingMode);
             return;
         }
 
@@ -109,7 +108,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             // Not running as processor node - just keep alive for local processing
             _logger.LogInformation(
                 "Asset processing worker started in local mode (ProcessingMode={Mode}, no ProcessorNodeId configured)",
-                processingMode);
+                _configuration.ProcessingMode);
 
             await KeepAliveAsync(stoppingToken);
             return;
@@ -159,11 +158,13 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// </summary>
     private async Task KeepAliveAsync(CancellationToken stoppingToken)
     {
+        var checkInterval = TimeSpan.FromSeconds(_configuration.ProcessingQueueCheckIntervalSeconds);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                await Task.Delay(checkInterval, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -274,7 +275,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 // Wait before retrying
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(_configuration.ProcessingBatchIntervalSeconds), stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
@@ -314,7 +315,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             await _poolManager.SetDrainingAsync(nodeId, PoolType);
 
             // Wait for current jobs to complete (with timeout)
-            var drainTimeout = TimeSpan.FromMinutes(2);
+            var drainTimeout = TimeSpan.FromMinutes(_configuration.ShutdownDrainTimeoutMinutes);
             var drainStart = DateTimeOffset.UtcNow;
 
             while (GetCurrentJobCount() > 0)
@@ -331,7 +332,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                     "Waiting for {JobCount} jobs to complete before shutdown",
                     GetCurrentJobCount());
 
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                await Task.Delay(TimeSpan.FromSeconds(_configuration.ShutdownDrainIntervalSeconds));
             }
 
             // Remove node state
@@ -483,7 +484,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {
-        var stateKey = $"{ASSET_PREFIX}{assetId}";
+        var stateKey = $"{_configuration.AssetKeyPrefix}{assetId}";
 
         try
         {

@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Character;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -86,7 +88,8 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     /// Current status of the character (e.g., active, inactive, deceased)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string? Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CharacterStatus? Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -161,7 +164,8 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     /// Current status of the character (e.g., active, inactive, deceased)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string? Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CharacterStatus? Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -244,7 +248,8 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     /// Current status of the character (e.g., active, inactive, deceased)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string? Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CharacterStatus? Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created

@@ -90,6 +90,20 @@ export interface MetaResponse<T> {
 }
 
 /**
+ * Capability entry from the capability manifest.
+ */
+export interface ClientCapabilityEntry {
+  /** Client-salted GUID for binary header routing */
+  serviceId: string;
+  /** API path (e.g., "/account/get") - used as lookup key */
+  endpoint: string;
+  /** Service name (e.g., "account") */
+  service: string;
+  /** Human-readable description */
+  description?: string;
+}
+
+/**
  * Interface for the Bannou WebSocket client.
  */
 export interface IBannouClient {
@@ -105,7 +119,7 @@ export interface IBannouClient {
 
   /**
    * All available API endpoints with their client-salted GUIDs.
-   * Key format: "METHOD:/path" (e.g., "POST:/species/get")
+   * Key format: "/path" (e.g., "/species/get")
    */
   readonly availableApis: ReadonlyMap<string, string>;
 
@@ -172,24 +186,21 @@ export interface IBannouClient {
 
   /**
    * Gets the service GUID for a specific API endpoint.
-   * @param method - HTTP method (GET, POST, etc.)
-   * @param path - API path (e.g., "/account/profile")
+   * @param endpoint - API path (e.g., "/account/get")
    * @returns The client-salted GUID, or undefined if not found
    */
-  getServiceGuid(method: string, path: string): string | undefined;
+  getServiceGuid(endpoint: string): string | undefined;
 
   /**
-   * Invokes a service method by specifying the HTTP method and path.
-   * @param method - HTTP method (GET, POST, PUT, DELETE)
-   * @param path - API path (e.g., "/account/profile")
+   * Invokes a service method by specifying the API endpoint path.
+   * @param endpoint - API path (e.g., "/account/get")
    * @param request - Request payload
    * @param channel - Message channel for ordering (default 0)
    * @param timeout - Request timeout in milliseconds
    * @returns ApiResponse containing either the success result or error details
    */
   invokeAsync<TRequest, TResponse>(
-    method: string,
-    path: string,
+    endpoint: string,
     request: TRequest,
     channel?: number,
     timeout?: number
@@ -197,17 +208,11 @@ export interface IBannouClient {
 
   /**
    * Sends a fire-and-forget event (no response expected).
-   * @param method - HTTP method
-   * @param path - API path
+   * @param endpoint - API path (e.g., "/events/publish")
    * @param request - Request payload
    * @param channel - Message channel for ordering
    */
-  sendEventAsync<TRequest>(
-    method: string,
-    path: string,
-    request: TRequest,
-    channel?: number
-  ): Promise<void>;
+  sendEventAsync<TRequest>(endpoint: string, request: TRequest, channel?: number): Promise<void>;
 
   /**
    * Subscribe to a typed event with automatic deserialization.
@@ -255,41 +260,55 @@ export interface IBannouClient {
    */
   set onEventHandlerFailed(callback: ((error: Error) => void) | null);
 
+  /**
+   * Set callback for when new capabilities are added to the session.
+   * Fires once per capability manifest update with all newly added capabilities.
+   */
+  set onCapabilitiesAdded(callback: ((capabilities: ClientCapabilityEntry[]) => void) | null);
+
+  /**
+   * Set callback for when capabilities are removed from the session.
+   * Fires once per capability manifest update with all removed capabilities.
+   */
+  set onCapabilitiesRemoved(callback: ((capabilities: ClientCapabilityEntry[]) => void) | null);
+
   // Meta requests
 
   /**
    * Requests metadata about an endpoint instead of executing it.
-   * @param method - HTTP method
-   * @param path - API path
+   * @param endpoint - API path (e.g., "/account/get")
    * @param metaType - Type of metadata to request
    * @param timeout - Request timeout in milliseconds
    */
   getEndpointMetaAsync<T>(
-    method: string,
-    path: string,
+    endpoint: string,
     metaType?: MetaType,
     timeout?: number
   ): Promise<MetaResponse<T>>;
 
   /**
    * Gets human-readable endpoint information (summary, description, tags).
+   * @param endpoint - API path (e.g., "/account/get")
    */
-  getEndpointInfoAsync(method: string, path: string): Promise<MetaResponse<EndpointInfoData>>;
+  getEndpointInfoAsync(endpoint: string): Promise<MetaResponse<EndpointInfoData>>;
 
   /**
    * Gets JSON Schema for the request body of an endpoint.
+   * @param endpoint - API path (e.g., "/account/get")
    */
-  getRequestSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+  getRequestSchemaAsync(endpoint: string): Promise<MetaResponse<JsonSchemaData>>;
 
   /**
    * Gets JSON Schema for the response body of an endpoint.
+   * @param endpoint - API path (e.g., "/account/get")
    */
-  getResponseSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+  getResponseSchemaAsync(endpoint: string): Promise<MetaResponse<JsonSchemaData>>;
 
   /**
    * Gets full schema including info, request schema, and response schema.
+   * @param endpoint - API path (e.g., "/account/get")
    */
-  getFullSchemaAsync(method: string, path: string): Promise<MetaResponse<FullSchemaData>>;
+  getFullSchemaAsync(endpoint: string): Promise<MetaResponse<FullSchemaData>>;
 
   // Reconnection
 

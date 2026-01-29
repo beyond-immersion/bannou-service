@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Scene;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -84,7 +86,8 @@ public partial class SceneInstantiatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SceneType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneType SceneType { get; set; } = default!;
 
     /// <summary>
     /// Region where the scene was placed
@@ -132,20 +135,16 @@ public partial class SceneDestroyedEvent : BaseServiceEvent
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Source scene asset ID
+    /// Source scene asset ID (null if not provided by caller)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sceneAssetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SceneAssetId { get; set; } = default!;
+    public System.Guid? SceneAssetId { get; set; } = default!;
 
     /// <summary>
-    /// Region where the instance was located
+    /// Region where the instance was located (null if not provided by caller)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("regionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RegionId { get; set; } = default!;
+    public System.Guid? RegionId { get; set; } = default!;
 
     /// <summary>
     /// App-id of the destroyer
@@ -370,7 +369,8 @@ public partial class SceneValidationRulesUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SceneType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneType SceneType { get; set; } = default!;
 
     /// <summary>
     /// Number of active rules after update

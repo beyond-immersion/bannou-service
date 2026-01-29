@@ -5,7 +5,7 @@ info:
     Configuration schema for Orchestrator service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -28,7 +28,8 @@ x-service-configuration:
     # Backend Configuration
     DefaultBackend:
       type: string
-      description: Default container orchestration backend when not specified in deploy request (compose, swarm, portainer, kubernetes)
+      enum: ["compose", "swarm", "portainer", "kubernetes"]
+      description: Default container orchestration backend when not specified in deploy request
       env: ORCHESTRATOR_DEFAULT_BACKEND
       default: "compose"
 
@@ -64,6 +65,11 @@ x-service-configuration:
       default: 1
 
     # Docker Configuration (Docker Compose backend)
+    DockerImageName:
+      type: string
+      description: Docker image name for deployed Bannou containers
+      env: ORCHESTRATOR_DOCKER_IMAGE_NAME
+      default: "bannou:latest"
     DockerHost:
       type: string
       description: Docker host for direct Docker API access
@@ -101,6 +107,11 @@ x-service-configuration:
       description: OpenResty port for cache invalidation calls
       env: ORCHESTRATOR_OPENRESTY_PORT
       default: 80
+    OpenRestyRequestTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for OpenResty HTTP requests
+      env: ORCHESTRATOR_OPENRESTY_REQUEST_TIMEOUT_SECONDS
+      default: 5
 
     # Kubernetes Configuration
     KubernetesNamespace:
@@ -114,6 +125,47 @@ x-service-configuration:
       description: Path to kubeconfig file (null uses default ~/.kube/config)
       env: ORCHESTRATOR_KUBECONFIG_PATH
       example: "/path/to/.kube/config"
+
+    # State Manager TTL Configuration
+    HeartbeatTtlSeconds:
+      type: integer
+      description: TTL in seconds for service heartbeat entries in state store
+      env: ORCHESTRATOR_HEARTBEAT_TTL_SECONDS
+      default: 90
+    RoutingTtlSeconds:
+      type: integer
+      description: TTL in seconds for service routing entries in state store
+      env: ORCHESTRATOR_ROUTING_TTL_SECONDS
+      default: 300
+    ConfigHistoryTtlDays:
+      type: integer
+      description: TTL in days for configuration history entries in state store
+      env: ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS
+      default: 30
+
+    # Smart Restart Configuration
+    RestartTimeoutSeconds:
+      type: integer
+      description: Default timeout in seconds for container restart operations
+      env: ORCHESTRATOR_RESTART_TIMEOUT_SECONDS
+      default: 120
+    HealthCheckIntervalMs:
+      type: integer
+      description: Interval in milliseconds between health checks during restart
+      env: ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS
+      default: 2000
+    DefaultWaitBeforeKillSeconds:
+      type: integer
+      description: Default seconds to wait before killing a container during stop
+      env: ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS
+      default: 30
+
+    # Polling Configuration
+    ContainerStatusPollIntervalSeconds:
+      type: integer
+      description: Interval in seconds for polling container status during deploy
+      env: ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS
+      default: 2
 
     # Infrastructure Connection Strings
     RedisConnectionString:

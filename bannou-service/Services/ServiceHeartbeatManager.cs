@@ -33,7 +33,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Unique instance identifier for this bannou application instance.
     /// Uses the shared Program.ServiceGUID for consistent identification across mesh and heartbeat.
     /// </summary>
-    public Guid InstanceId => Guid.Parse(Program.ServiceGUID);
+    public Guid InstanceId => Program.ServiceGUID;
 
     /// <summary>
     /// The app-id for this instance. Resolved from configuration.
@@ -241,7 +241,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         try
         {
             _logger.LogDebug("Re-registering permissions as part of heartbeat...");
-            var success = await _pluginLoader.RegisterServicePermissionsAsync();
+            var success = await _pluginLoader.RegisterServicePermissionsAsync(AppId);
             if (success)
             {
                 _logger.LogDebug("Permission heartbeat completed successfully");

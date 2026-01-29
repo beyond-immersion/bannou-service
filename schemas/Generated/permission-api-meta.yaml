@@ -8,7 +8,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 3.0.0
 servers:
 - url: http://localhost:5012
@@ -84,14 +84,14 @@ paths:
                 $ref: '#/components/schemas/ValidationResponse'
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidationRequest\"\
         ,\n    \"$defs\": {\n        \"ValidationRequest\": {\n            \"description\": \"Request to validate whether
-        a session has access to a specific API method\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        a session has access to a specific API endpoint\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"sessionId\",\n                \"serviceId\",\n          \
-        \      \"method\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        \      \"endpoint\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
         Session ID to validate access for\"\n                },\n                \"serviceId\": {\n                    \"\
         type\": \"string\",\n                    \"description\": \"Target service ID\"\n                },\n            \
-        \    \"method\": {\n                    \"type\": \"string\",\n                    \"description\": \"Method name
-        being accessed\"\n                }\n            }\n        }\n    }\n}"
+        \    \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Endpoint path
+        being accessed (e.g., \\\"/account/get\\\")\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidationResponse\"\
         ,\n    \"$defs\": {\n        \"ValidationResponse\": {\n            \"description\": \"Response indicating whether
         access to a specific API method is permitted\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -495,13 +495,13 @@ components:
           format: date-time
           description: When these permissions were compiled
     ValidationRequest:
-      description: Request to validate whether a session has access to a specific API method
+      description: Request to validate whether a session has access to a specific API endpoint
       type: object
       additionalProperties: false
       required:
       - sessionId
       - serviceId
-      - method
+      - endpoint
       properties:
         sessionId:
           type: string
@@ -510,9 +510,9 @@ components:
         serviceId:
           type: string
           description: Target service ID
-        method:
+        endpoint:
           type: string
-          description: Method name being accessed
+          description: Endpoint path being accessed (e.g., "/account/get")
     ValidationResponse:
       description: Response indicating whether access to a specific API method is permitted
       type: object

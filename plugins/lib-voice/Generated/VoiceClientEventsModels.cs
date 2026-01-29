@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Voice;
 
 
 namespace BeyondImmersion.Bannou.Voice.ClientEvents;
@@ -68,14 +69,14 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceRoomStateEventTier Tier { get; set; } = default!;
+    public VoiceTier Tier { get; set; } = default!;
 
     /// <summary>
     /// Audio codec to use
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceRoomStateEventCodec? Codec { get; set; } = default!;
+    public VoiceCodec? Codec { get; set; } = default!;
 
     /// <summary>
     /// List of peers to connect to (P2P mode)
@@ -165,12 +166,12 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// WebSocket session ID of the peer who left (ephemeral identifier)
+    /// WebSocket session ID of the peer who left
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PeerSessionId { get; set; } = default!;
+    public System.Guid PeerSessionId { get; set; } = default!;
 
     /// <summary>
     /// Display name for UI notification
@@ -251,7 +252,8 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// Previous tier (always p2p for upgrade events)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousTier")]
-    public string? PreviousTier { get; set; } = "p2p";
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceTier? PreviousTier { get; set; } = default!;
 
     /// <summary>
     /// New tier after upgrade (always scaled for upgrade events)
@@ -259,7 +261,8 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("newTier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string NewTier { get; set; } = "scaled";
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceTier NewTier { get; set; } = default!;
 
     /// <summary>
     /// RTP server URI to connect to
@@ -329,12 +332,12 @@ public partial class VoicePeerInfo
 {
 
     /// <summary>
-    /// WebSocket session ID for this peer (ephemeral identifier)
+    /// WebSocket session ID for this peer
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PeerSessionId { get; set; } = default!;
+    public System.Guid PeerSessionId { get; set; } = default!;
 
     /// <summary>
     /// Peer's display name
@@ -405,37 +408,6 @@ public partial class SipCredentials
     public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceRoomStateEventTier
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
-    P2p = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
-    Scaled = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceRoomStateEventCodec
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"opus")]
-    Opus = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"g711")]
-    G711 = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"g722")]
-    G722 = 2,
-
-}
-#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

@@ -232,7 +232,8 @@ public class PluginLoader
             string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
         // Get service name from BannouServiceAttribute for ENV prefix
-        var serviceNameUpper = serviceName.ToUpper();
+        // Hyphens replaced with underscores to match orchestrator and configuration conventions
+        var serviceNameUpper = serviceName.ToUpper().Replace("-", "_");
 
         if (globalServicesEnabled)
         {
@@ -271,25 +272,18 @@ public class PluginLoader
         _validEnvironmentPrefixes.Add("BANNOU_");
 
         // Add prefix for each discovered plugin
-        // e.g., "auth" → "AUTH_", "game-session" → "GAMESESSION_" and "GAME_SESSION_"
+        // e.g., "auth" → "AUTH_", "game-session" → "GAME_SESSION_"
+        // Hyphens are always converted to underscores to match schema env: conventions
         foreach (var plugin in _allPlugins)
         {
             var pluginName = plugin.PluginName;
             if (string.IsNullOrWhiteSpace(pluginName))
                 continue;
 
-            // Primary prefix: uppercase with underscores replaced for hyphens, plus trailing underscore
-            // e.g., "game-session" → "GAME_SESSION_"
-            var primaryPrefix = pluginName.ToUpperInvariant().Replace('-', '_') + "_";
-            _validEnvironmentPrefixes.Add(primaryPrefix);
-
-            // Secondary prefix: hyphens removed (no underscore replacement)
-            // e.g., "game-session" → "GAMESESSION_"
-            var secondaryPrefix = pluginName.ToUpperInvariant().Replace("-", "") + "_";
-            if (primaryPrefix != secondaryPrefix)
-            {
-                _validEnvironmentPrefixes.Add(secondaryPrefix);
-            }
+            // Convert plugin name to env prefix: "game-session" → "GAME_SESSION_"
+            // Hyphens are converted to underscores to match schema env: conventions
+            var prefix = pluginName.ToUpperInvariant().Replace('-', '_') + "_";
+            _validEnvironmentPrefixes.Add(prefix);
         }
 
         _logger.LogInformation(
@@ -643,7 +637,11 @@ public class PluginLoader
         {
             services.AddSingleton<AppConfiguration>(serviceProvider =>
             {
-                return IServiceConfiguration.BuildConfiguration<AppConfiguration>(null);
+                var config = IServiceConfiguration.BuildConfiguration<AppConfiguration>(null);
+                // IMPLEMENTATION TENETS: Validate configuration properties at startup.
+                // Cast to interface to access default interface method
+                ((IServiceConfiguration)config).Validate();
+                return config;
             });
             _logger.LogInformation("Registered global configuration: AppConfiguration (Singleton with BuildConfiguration factory)");
         }
@@ -669,8 +667,16 @@ public class PluginLoader
                     Type.DefaultBinder,
                     new Type[] { typeof(string[]) }, // string[]? args = null overload
                     null)?.MakeGenericMethod(configurationType)) ?? throw new InvalidOperationException($"Could not find BuildConfiguration<T>(string[]?) method for type {configurationType.Name}");
-                var configInstance = buildMethod.Invoke(null, new object?[] { null }); // Pass null for args parameter
-                return configInstance ?? throw new InvalidOperationException($"BuildConfiguration returned null for type {configurationType.Name}");
+                var configInstance = buildMethod.Invoke(null, new object?[] { null }) ?? throw new InvalidOperationException($"BuildConfiguration returned null for type {configurationType.Name}"); // Pass null for args parameter
+
+                // IMPLEMENTATION TENETS: Validate configuration properties at startup.
+                // Schema provides defaults - invalid values mean explicit overrides with bad data.
+                if (configInstance is IServiceConfiguration serviceConfig)
+                {
+                    serviceConfig.Validate();
+                }
+
+                return configInstance;
             });
             _logger.LogInformation("Registered configuration: {ConfigType} (Singleton with BuildConfiguration factory)",
                 configurationType.Name);
@@ -961,8 +967,9 @@ public class PluginLoader
     /// Registers service permissions for all enabled plugins with the Permission service.
     /// This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
     /// </summary>
+    /// <param name="appId">The effective app ID for this service instance</param>
     /// <returns>True if all permissions were registered successfully</returns>
-    public async Task<bool> RegisterServicePermissionsAsync()
+    public async Task<bool> RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering service permissions for {ServiceCount} services: {ServiceNames}",
             _resolvedServices.Count, string.Join(", ", _resolvedServices.Keys));
@@ -980,7 +987,7 @@ public class PluginLoader
                     attempt++;
                     try
                     {
-                        await service.RegisterServicePermissionsAsync();
+                        await service.RegisterServicePermissionsAsync(appId);
                         _logger.LogInformation("Permissions registered successfully for service: {PluginName} (attempt {Attempt})", pluginName, attempt);
                         break;
                     }

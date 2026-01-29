@@ -29,7 +29,7 @@ info:
     - AGGRESSION: Pacifist/Avoidant (-1) to Confrontational/Violent (+1)
     - LOYALTY: Self-serving/Mercenary (-1) to Devoted/Faithful (+1)
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
     this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:

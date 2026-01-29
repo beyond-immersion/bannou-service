@@ -88,13 +88,9 @@ interface ErrorResponse {
      */
     messageId: bigint;
     /**
-     * The HTTP method of the original request (e.g., "POST", "GET").
+     * The endpoint path of the original request (e.g., "/subscription/create").
      */
-    method: string;
-    /**
-     * The path of the original request (e.g., "/subscription/create").
-     */
-    path: string;
+    endpoint: string;
 }
 /**
  * Maps internal WebSocket protocol response codes to standard HTTP status codes.
@@ -108,7 +104,7 @@ declare function getErrorName(wsResponseCode: number): string;
 /**
  * Creates an ErrorResponse from protocol response code.
  */
-declare function createErrorResponse(wsResponseCode: number, messageId: bigint, method: string, path: string, message?: string | null): ErrorResponse;
+declare function createErrorResponse(wsResponseCode: number, messageId: bigint, endpoint: string, message?: string | null): ErrorResponse;
 /**
  * Represents the result of an API call, containing either a success response or error details.
  * @typeParam T - The expected response type on success.

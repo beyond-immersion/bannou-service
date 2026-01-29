@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using Markdig;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
 using System.Threading;
@@ -55,6 +56,10 @@ public partial class DocumentationService : IDocumentationService
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string ARCHIVE_KEY_PREFIX = "archive:";
     private const string SYNC_LOCK_PREFIX = "repo-sync:";
+    private const string ALL_NAMESPACES_KEY = "all-namespaces";
+
+    // Static search result cache shared across scoped instances (performance optimization, not authoritative state)
+    private static readonly SearchResultCache _searchCache = new();
 
     /// <summary>
     /// Creates a new instance of the DocumentationService.
@@ -91,10 +96,10 @@ public partial class DocumentationService : IDocumentationService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Documentation service permissions...");
-        await DocumentationPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await DocumentationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     /// <inheritdoc />
@@ -201,8 +206,8 @@ public partial class DocumentationService : IDocumentationService
             }
 
             var namespaceId = body.Namespace;
-            var maxResults = body.MaxResults;
-            var minRelevance = body.MinRelevanceScore;
+            var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
+            var minRelevance = Math.Max(body.MinRelevanceScore, _configuration.MinRelevanceScore);
 
             // Perform natural language query using search index
             // Pass category as string for filtering (or null if default enum value)
@@ -400,10 +405,18 @@ public partial class DocumentationService : IDocumentationService
             }
 
             var namespaceId = body.Namespace;
-            var maxResults = body.MaxResults;
+            var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
+            var categoryFilter = body.Category == default ? null : body.Category.ToString();
+
+            // Check search cache
+            var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter, maxResults);
+            if (_configuration.SearchCacheTtlSeconds > 0 &&
+                _searchCache.TryGet(cacheKey, out var cachedResponse))
+            {
+                return (StatusCodes.OK, cachedResponse);
+            }
 
             // Perform keyword search using search index
-            var categoryFilter = body.Category == default ? null : body.Category.ToString();
             var searchResults = await _searchIndexService.SearchAsync(
                 namespaceId,
                 body.SearchTerm,
@@ -430,9 +443,17 @@ public partial class DocumentationService : IDocumentationService
                         Summary = doc.Summary,
                         VoiceSummary = doc.VoiceSummary,
                         RelevanceScore = (float)result.RelevanceScore,
-                        MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm) }
+                        MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm, _configuration.SearchSnippetLength) }
                     }, doc.CreatedAt));
                 }
+            }
+
+            // Filter out results below minimum relevance score
+            if (_configuration.MinRelevanceScore > 0)
+            {
+                resultsWithMetadata = resultsWithMetadata
+                    .Where(r => r.Result.RelevanceScore >= _configuration.MinRelevanceScore)
+                    .ToList();
             }
 
             // Apply sorting based on request
@@ -452,13 +473,21 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results (sorted by {SortBy})",
                 namespaceId, body.SearchTerm, finalResults.Count, body.SortBy);
 
-            return (StatusCodes.OK, new SearchDocumentationResponse
+            var response = new SearchDocumentationResponse
             {
                 Results = finalResults,
                 TotalResults = finalResults.Count,
                 SearchTerm = body.SearchTerm,
                 Namespace = namespaceId
-            });
+            };
+
+            // Cache results
+            if (_configuration.SearchCacheTtlSeconds > 0)
+            {
+                _searchCache.Set(cacheKey, response, TimeSpan.FromSeconds(_configuration.SearchCacheTtlSeconds));
+            }
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -493,8 +522,8 @@ public partial class DocumentationService : IDocumentationService
             var categoryFilter = body.Category == default ? null : body.Category.ToString();
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
-            // Fetch more documents if we need to filter/sort (max 1000 to prevent memory issues)
-            var fetchLimit = hasTags || body.SortBy != default ? 1000 : pageSize;
+            // Fetch more documents if we need to filter/sort (configurable max to prevent memory issues)
+            var fetchLimit = hasTags || body.SortBy != default ? _configuration.MaxFetchLimit : pageSize;
             var docIds = await _searchIndexService.ListDocumentIdsAsync(
                 namespaceId,
                 categoryFilter,
@@ -542,10 +571,10 @@ public partial class DocumentationService : IDocumentationService
             // Apply sorting
             IEnumerable<(DocumentSummary Summary, StoredDocument Doc)> sortedDocuments = body.SortBy switch
             {
-                ListSortField.Created_at => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                ListSortField.CreatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
                     ? documentsWithMetadata.OrderBy(d => d.Doc.CreatedAt)
                     : documentsWithMetadata.OrderByDescending(d => d.Doc.CreatedAt),
-                ListSortField.Updated_at => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                ListSortField.UpdatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
                     ? documentsWithMetadata.OrderBy(d => d.Doc.UpdatedAt)
                     : documentsWithMetadata.OrderByDescending(d => d.Doc.UpdatedAt),
                 ListSortField.Title => body.SortOrder == ListDocumentsRequestSortOrder.Asc
@@ -665,6 +694,14 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Validate content size against configuration limit
+            if (body.Content != null && System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
+            {
+                _logger.LogWarning("CreateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
+                    _configuration.MaxContentSizeBytes);
+                return (StatusCodes.BadRequest, null);
+            }
+
             // Check if namespace is bound to a repository (403 for manual modifications)
             var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
             if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
@@ -701,7 +738,7 @@ public partial class DocumentationService : IDocumentationService
                 Category = body.Category.ToString(),
                 Content = body.Content,
                 Summary = body.Summary,
-                VoiceSummary = body.VoiceSummary,
+                VoiceSummary = TruncateVoiceSummary(body.VoiceSummary),
                 Tags = body.Tags?.ToList() ?? [],
                 RelatedDocuments = body.RelatedDocuments?.ToList() ?? [],
                 Metadata = body.Metadata,
@@ -821,6 +858,12 @@ public partial class DocumentationService : IDocumentationService
 
             if (!string.IsNullOrEmpty(body.Content) && body.Content != storedDoc.Content)
             {
+                if (System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
+                {
+                    _logger.LogWarning("UpdateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
+                        _configuration.MaxContentSizeBytes);
+                    return (StatusCodes.BadRequest, null);
+                }
                 storedDoc.Content = body.Content;
                 changedFields.Add("content");
             }
@@ -833,7 +876,7 @@ public partial class DocumentationService : IDocumentationService
 
             if (body.VoiceSummary != null && body.VoiceSummary != storedDoc.VoiceSummary)
             {
-                storedDoc.VoiceSummary = body.VoiceSummary;
+                storedDoc.VoiceSummary = TruncateVoiceSummary(body.VoiceSummary);
                 changedFields.Add("voiceSummary");
             }
 
@@ -1116,6 +1159,7 @@ public partial class DocumentationService : IDocumentationService
             var now = DateTimeOffset.UtcNow;
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
+            var batchCounter = 0;
             foreach (var documentId in body.DocumentIds)
             {
                 try
@@ -1183,6 +1227,13 @@ public partial class DocumentationService : IDocumentationService
                 {
                     failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
                 }
+
+                batchCounter++;
+                if (batchCounter >= _configuration.BulkOperationBatchSize)
+                {
+                    batchCounter = 0;
+                    await Task.Yield();
+                }
             }
 
             _logger.LogInformation("BulkUpdate in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
@@ -1218,6 +1269,7 @@ public partial class DocumentationService : IDocumentationService
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
+            var batchCounter = 0;
             foreach (var documentId in body.DocumentIds)
             {
                 try
@@ -1267,6 +1319,13 @@ public partial class DocumentationService : IDocumentationService
                 {
                     failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
                 }
+
+                batchCounter++;
+                if (batchCounter >= _configuration.BulkOperationBatchSize)
+                {
+                    batchCounter = 0;
+                    await Task.Yield();
+                }
             }
 
             _logger.LogInformation("BulkDelete in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
@@ -1313,6 +1372,18 @@ public partial class DocumentationService : IDocumentationService
             {
                 try
                 {
+                    // Validate content size
+                    if (importDoc.Content != null &&
+                        System.Text.Encoding.UTF8.GetByteCount(importDoc.Content) > _configuration.MaxContentSizeBytes)
+                    {
+                        failed.Add(new ImportFailure
+                        {
+                            Slug = importDoc.Slug,
+                            Error = $"Content exceeds maximum size of {_configuration.MaxContentSizeBytes} bytes"
+                        });
+                        continue;
+                    }
+
                     // Check if slug exists
                     var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{importDoc.Slug}";
                     var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
@@ -1340,7 +1411,7 @@ public partial class DocumentationService : IDocumentationService
                                     existingDoc.Category = importDoc.Category.ToString();
                                     existingDoc.Content = importDoc.Content;
                                     existingDoc.Summary = importDoc.Summary;
-                                    existingDoc.VoiceSummary = importDoc.VoiceSummary;
+                                    existingDoc.VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary);
                                     existingDoc.Tags = importDoc.Tags?.ToList() ?? [];
                                     existingDoc.Metadata = importDoc.Metadata;
                                     existingDoc.UpdatedAt = now;
@@ -1366,7 +1437,7 @@ public partial class DocumentationService : IDocumentationService
                         Category = importDoc.Category.ToString(),
                         Content = importDoc.Content,
                         Summary = importDoc.Summary,
-                        VoiceSummary = importDoc.VoiceSummary,
+                        VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary),
                         Tags = importDoc.Tags?.ToList() ?? [],
                         RelatedDocuments = [],
                         Metadata = importDoc.Metadata,
@@ -1504,9 +1575,10 @@ public partial class DocumentationService : IDocumentationService
             var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
             var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
-            // Get trashcan list
+            // Get trashcan list with ETag for optimistic concurrency
             var trashListKey = $"ns-trash:{namespaceId}";
-            var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
+            var (trashedDocIds, trashEtag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
+            trashedDocIds ??= [];
 
             // Determine which documents to purge
             IEnumerable<Guid> docsToPurge;
@@ -1530,12 +1602,19 @@ public partial class DocumentationService : IDocumentationService
                 purgedCount++;
             }
 
-            // Update trashcan list
+            // Update trashcan list with optimistic concurrency
             if (purgedCount > 0)
             {
                 if (trashedDocIds.Count > 0)
                 {
-                    await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                    // GetWithETagAsync returns non-null etag when key exists (loaded above);
+                    // coalesce satisfies compiler's nullable analysis (will never execute)
+                    var saveResult = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken);
+                    if (saveResult == null)
+                    {
+                        _logger.LogWarning("PurgeTrashcan: Concurrent modification on trashcan index for namespace {Namespace}", namespaceId);
+                        return (StatusCodes.Conflict, null);
+                    }
                 }
                 else
                 {
@@ -1586,8 +1665,8 @@ public partial class DocumentationService : IDocumentationService
 
             if (docIds.Count > 0)
             {
-                // Sample a few recent documents to find last updated
-                foreach (var docId in docIds.Take(10))
+                // Sample recent documents to find last updated (configurable sample size)
+                foreach (var docId in docIds.Take(_configuration.StatsSampleSize))
                 {
                     var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
                     var doc = await docStore.GetAsync(docKey, cancellationToken);
@@ -1628,17 +1707,55 @@ public partial class DocumentationService : IDocumentationService
 
     /// <summary>
     /// Adds a document ID to the namespace document list for pagination support.
+    /// Also maintains the global namespace registry for search index rebuild.
     /// </summary>
     private async Task AddDocumentToNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await guidListStore.GetAsync(indexKey, cancellationToken) ?? [];
 
-        if (!docIds.Contains(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            docIds.Add(documentId);
-            await guidListStore.SaveAsync(indexKey, docIds, cancellationToken: cancellationToken);
+            var (docIds, etag) = await guidSetStore.GetWithETagAsync(indexKey, cancellationToken);
+            docIds ??= [];
+
+            if (docIds.Add(documentId))
+            {
+                // etag is null when key doesn't exist yet; passing empty string signals "create new" semantics
+                var result = await guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    break;
+                }
+
+                _logger.LogDebug("Concurrent modification on namespace index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                continue;
+            }
+
+            break;
+        }
+
+        // Track namespace in global registry for search index rebuild on startup
+        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (allNamespaces, nsEtag) = await stringSetStore.GetWithETagAsync(ALL_NAMESPACES_KEY, cancellationToken);
+            allNamespaces ??= [];
+
+            if (allNamespaces.Add(namespaceId))
+            {
+                // nsEtag is null when registry doesn't exist yet; passing empty string signals "create new" semantics
+                var result = await stringSetStore.TrySaveAsync(ALL_NAMESPACES_KEY, allNamespaces, nsEtag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    break;
+                }
+
+                _logger.LogDebug("Concurrent modification on namespace registry, retrying (attempt {Attempt})", attempt + 1);
+                continue;
+            }
+
+            break;
         }
     }
 
@@ -1647,14 +1764,31 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await guidListStore.GetAsync(indexKey, cancellationToken);
 
-        if (docIds != null && docIds.Remove(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            await guidListStore.SaveAsync(indexKey, docIds, cancellationToken: cancellationToken);
+            var (docIds, etag) = await guidSetStore.GetWithETagAsync(indexKey, cancellationToken);
+
+            if (docIds != null && docIds.Remove(documentId))
+            {
+                // GetWithETagAsync returns non-null etag when key exists (checked above);
+                // coalesce satisfies compiler's nullable analysis (will never execute)
+                var result = await guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    return;
+                }
+
+                _logger.LogDebug("Concurrent modification on namespace index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                continue;
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove document {DocumentId} from namespace index {Namespace} after retries", documentId, namespaceId);
     }
 
     /// <summary>
@@ -1664,13 +1798,30 @@ public partial class DocumentationService : IDocumentationService
     {
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
-        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
-        if (!trashedDocIds.Contains(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            trashedDocIds.Add(documentId);
-            await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+            var (trashedDocIds, etag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
+            trashedDocIds ??= [];
+
+            if (!trashedDocIds.Contains(documentId))
+            {
+                trashedDocIds.Add(documentId);
+                // etag is null when trashcan doesn't exist yet; passing empty string signals "create new" semantics
+                var result = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    return;
+                }
+
+                _logger.LogDebug("Concurrent modification on trashcan index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                continue;
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to add document {DocumentId} to trashcan index {Namespace} after retries", documentId, namespaceId);
     }
 
     /// <summary>
@@ -1680,19 +1831,48 @@ public partial class DocumentationService : IDocumentationService
     {
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
-        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken);
 
-        if (trashedDocIds != null && trashedDocIds.Remove(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            if (trashedDocIds.Count > 0)
+            var (trashedDocIds, etag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
+
+            if (trashedDocIds != null && trashedDocIds.Remove(documentId))
             {
-                await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                if (trashedDocIds.Count > 0)
+                {
+                    // GetWithETagAsync returns non-null etag when key exists (checked above);
+                    // coalesce satisfies compiler's nullable analysis (will never execute)
+                    var result = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
+                    if (result != null)
+                    {
+                        return;
+                    }
+
+                    _logger.LogDebug("Concurrent modification on trashcan index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                    continue;
+                }
+                else
+                {
+                    await guidListStore.DeleteAsync(trashListKey, cancellationToken);
+                    return;
+                }
             }
-            else
-            {
-                await guidListStore.DeleteAsync(trashListKey, cancellationToken);
-            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove document {DocumentId} from trashcan index {Namespace} after retries", documentId, namespaceId);
+    }
+
+    /// <summary>
+    /// Truncates a voice summary to the configured maximum length.
+    /// </summary>
+    private string? TruncateVoiceSummary(string? voiceSummary)
+    {
+        if (voiceSummary == null || voiceSummary.Length <= _configuration.VoiceSummaryMaxLength)
+            return voiceSummary;
+
+        return voiceSummary[.._configuration.VoiceSummaryMaxLength];
     }
 
     /// <summary>
@@ -1737,7 +1917,7 @@ public partial class DocumentationService : IDocumentationService
     {
         return source switch
         {
-            SuggestionSource.Document_id => $"Related to document {sourceValue}",
+            SuggestionSource.DocumentId => $"Related to document {sourceValue}",
             SuggestionSource.Slug => $"Similar to '{sourceValue}'",
             SuggestionSource.Topic => $"Covers topic '{sourceValue}'",
             SuggestionSource.Category => $"In category '{doc.Category}'",
@@ -1787,7 +1967,9 @@ public partial class DocumentationService : IDocumentationService
         CancellationToken cancellationToken)
     {
         var summaries = new List<DocumentSummary>();
-        var maxRelated = depth == RelatedDepth.Extended ? 10 : 5;
+        var maxRelated = depth == RelatedDepth.Extended
+            ? _configuration.MaxRelatedDocumentsExtended
+            : _configuration.MaxRelatedDocuments;
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         foreach (var relatedId in relatedIds.Take(maxRelated))
@@ -1927,7 +2109,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationQueriedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = namespaceId,
                 Query = query,
@@ -1960,7 +2142,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationSearchedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = namespaceId,
                 SearchTerm = searchTerm,
@@ -2598,7 +2780,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private string GetLocalRepositoryPath(Guid bindingId)
     {
-        return Path.Combine(_configuration.GitStoragePath ?? "/tmp/bannou-git-repos", bindingId.ToString());
+        return Path.Combine(_configuration.GitStoragePath, bindingId.ToString());
     }
 
     /// <summary>
@@ -2661,7 +2843,7 @@ public partial class DocumentationService : IDocumentationService
             StateStoreDefinitions.Documentation,
             lockResourceId,
             lockOwner,
-            1800, // 30 minutes max sync time
+            _configuration.SyncLockTtlSeconds,
             cancellationToken);
 
         if (!lockResponse.Success)
@@ -2714,11 +2896,23 @@ public partial class DocumentationService : IDocumentationService
             }
 
             // Get matching files
-            var matchingFiles = await _gitSyncService.GetMatchingFilesAsync(
+            var allMatchingFiles = await _gitSyncService.GetMatchingFilesAsync(
                 localPath,
                 binding.FilePatterns,
                 binding.ExcludePatterns,
                 cancellationToken);
+
+            // Apply max documents per sync limit
+            var truncated = _configuration.MaxDocumentsPerSync > 0 && allMatchingFiles.Count > _configuration.MaxDocumentsPerSync;
+            if (truncated)
+            {
+                _logger.LogWarning(
+                    "Repository sync for namespace {Namespace} has {Total} files, limiting to {Max}",
+                    binding.Namespace, allMatchingFiles.Count, _configuration.MaxDocumentsPerSync);
+            }
+            var matchingFiles = truncated
+                ? allMatchingFiles.Take(_configuration.MaxDocumentsPerSync).ToList()
+                : allMatchingFiles;
 
             var documentsCreated = 0;
             var documentsUpdated = 0;
@@ -2775,7 +2969,12 @@ public partial class DocumentationService : IDocumentationService
             }
 
             // Delete orphan documents (documents not in processed slugs)
-            var documentsDeleted = await DeleteOrphanDocumentsAsync(binding.Namespace, processedSlugs, cancellationToken);
+            // Skip orphan deletion if we truncated the file list to avoid incorrectly deleting unprocessed documents
+            var documentsDeleted = 0;
+            if (!truncated)
+            {
+                documentsDeleted = await DeleteOrphanDocumentsAsync(binding.Namespace, processedSlugs, cancellationToken);
+            }
 
             // Update binding state
             binding.Status = Models.BindingStatusInternal.Synced;
@@ -2991,14 +3190,35 @@ public partial class DocumentationService : IDocumentationService
             }
         }
 
-        // Update namespace document list to remove orphan IDs
+        // Update namespace document list to remove orphan IDs (with ETag protection)
         if (orphanIds.Count > 0)
         {
-            foreach (var orphanId in orphanIds)
+            const int maxRetries = 3;
+            for (int retry = 0; retry < maxRetries; retry++)
             {
-                docIds.Remove(orphanId);
+                var (currentIds, etag) = await docsStore.GetWithETagAsync(docsKey, cancellationToken);
+                if (currentIds == null) break;
+
+                foreach (var orphanId in orphanIds)
+                {
+                    currentIds.Remove(orphanId);
+                }
+
+                string? savedEtag;
+                if (etag != null)
+                {
+                    savedEtag = await docsStore.TrySaveAsync(docsKey, currentIds, etag, cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    savedEtag = await docsStore.SaveAsync(docsKey, currentIds, cancellationToken: cancellationToken);
+                }
+
+                if (savedEtag != null) break;
+
+                _logger.LogDebug("Namespace doc list update for {Namespace} had ETag conflict, retrying ({Retry}/{MaxRetries})",
+                    namespaceId, retry + 1, maxRetries);
             }
-            await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
         }
 
         return deletedCount;
@@ -3067,7 +3287,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationBindingCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3091,7 +3311,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationBindingRemovedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3120,7 +3340,7 @@ public partial class DocumentationService : IDocumentationService
             };
             var eventModel = new DocumentationSyncStartedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3151,7 +3371,7 @@ public partial class DocumentationService : IDocumentationService
             };
             var eventModel = new DocumentationSyncCompletedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3284,14 +3504,34 @@ public partial class DocumentationService : IDocumentationService
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
 
-        // Also update the namespace archive list
+        // Also update the namespace archive list (with ETag protection)
         var listKey = $"{ARCHIVE_KEY_PREFIX}list:{archive.Namespace}";
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-        var archiveIds = await listStore.GetAsync(listKey, cancellationToken) ?? [];
-        if (!archiveIds.Contains(archive.ArchiveId))
+
+        const int maxRetries = 3;
+        for (int retry = 0; retry < maxRetries; retry++)
         {
+            var (archiveIds, etag) = await listStore.GetWithETagAsync(listKey, cancellationToken);
+            archiveIds ??= [];
+
+            if (archiveIds.Contains(archive.ArchiveId)) break;
+
             archiveIds.Add(archive.ArchiveId);
-            await listStore.SaveAsync(listKey, archiveIds, cancellationToken: cancellationToken);
+
+            string? savedEtag;
+            if (etag != null)
+            {
+                savedEtag = await listStore.TrySaveAsync(listKey, archiveIds, etag, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                savedEtag = await listStore.SaveAsync(listKey, archiveIds, cancellationToken: cancellationToken);
+            }
+
+            if (savedEtag != null) break;
+
+            _logger.LogDebug("Archive list update for namespace {Namespace} had ETag conflict, retrying ({Retry}/{MaxRetries})",
+                archive.Namespace, retry + 1, maxRetries);
         }
     }
 
@@ -3434,7 +3674,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationArchiveCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = archive.Namespace,
                 ArchiveId = archive.ArchiveId,
@@ -3516,4 +3756,51 @@ public partial class DocumentationService : IDocumentationService
     }
 
     #endregion
+
+    /// <summary>
+    /// Thread-safe in-memory cache for search results.
+    /// Static lifetime shared across scoped service instances (performance optimization, not authoritative state).
+    /// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
+    /// </summary>
+    private sealed class SearchResultCache
+    {
+        private readonly ConcurrentDictionary<string, (SearchDocumentationResponse Response, DateTimeOffset Expiry)> _cache = new();
+
+        /// <summary>
+        /// Builds a deterministic cache key from search parameters.
+        /// </summary>
+        public static string BuildKey(string namespaceId, string searchTerm, string? category, int maxResults)
+        {
+            return $"{namespaceId}:{searchTerm}:{category ?? "_"}:{maxResults}";
+        }
+
+        /// <summary>
+        /// Attempts to retrieve a cached search response. Returns false if not found or expired.
+        /// </summary>
+        public bool TryGet(string key, out SearchDocumentationResponse? response)
+        {
+            if (_cache.TryGetValue(key, out var entry))
+            {
+                if (entry.Expiry > DateTimeOffset.UtcNow)
+                {
+                    response = entry.Response;
+                    return true;
+                }
+
+                // Expired - remove stale entry
+                _cache.TryRemove(key, out _);
+            }
+
+            response = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Stores a search response in the cache with the specified TTL.
+        /// </summary>
+        public void Set(string key, SearchDocumentationResponse response, TimeSpan ttl)
+        {
+            _cache[key] = (response, DateTimeOffset.UtcNow.Add(ttl));
+        }
+    }
 }

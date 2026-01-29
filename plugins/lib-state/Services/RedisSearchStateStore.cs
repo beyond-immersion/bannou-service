@@ -448,7 +448,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             var result = await _searchCommands.SearchAsync(indexName, ftQuery);
 
             // Log search results for debugging
-            _logger.LogInformation("FT.SEARCH on '{Index}' with query '{Query}' found {TotalResults} documents",
+            _logger.LogDebug("FT.SEARCH on '{Index}' with query '{Query}' found {TotalResults} documents",
                 indexName, query, result.TotalResults);
 
             var items = new List<SearchResult<TValue>>();

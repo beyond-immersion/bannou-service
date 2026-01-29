@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Character;
 
 /// <summary>
-/// Implementation of the Character service for Arcadia game world.
+/// Implementation of the Character service for game worlds.
 /// Characters are independent world assets (not owned by accounts).
 /// Uses realm-based partitioning for scalability.
 /// Note: Character relationships are managed by the separate Relationship service.
@@ -49,8 +49,10 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_REALM_LEFT_TOPIC = "character.realm.left";
     private const string CHARACTER_COMPRESSED_TOPIC = "character.compressed";
 
-    // Grace period for cleanup eligibility (30 days in seconds)
-    private const int CLEANUP_GRACE_PERIOD_SECONDS = 30 * 24 * 60 * 60;
+    // Reference type constants
+    private const string REFERENCE_TYPE_RELATIONSHIP = "RELATIONSHIP";
+
+    // Grace period for cleanup eligibility - from configuration in days, converted to seconds at usage
 
     public CharacterService(
         IStateStoreFactory stateStoreFactory,
@@ -88,7 +90,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
+            _logger.LogDebug("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
 
             // Validate realm exists and is active
             var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
@@ -125,10 +127,10 @@ public partial class CharacterService : ICharacterService
             // Create character model
             var character = new CharacterModel
             {
-                CharacterId = characterId.ToString(),
+                CharacterId = characterId,
                 Name = body.Name,
-                RealmId = body.RealmId.ToString(),
-                SpeciesId = body.SpeciesId.ToString(),
+                RealmId = body.RealmId,
+                SpeciesId = body.SpeciesId,
                 BirthDate = body.BirthDate,
                 Status = body.Status,
                 CreatedAt = now,
@@ -156,6 +158,11 @@ public partial class CharacterService : ICharacterService
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
         }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error creating character: {Name}", body.Name);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating character: {Name}", body.Name);
@@ -178,7 +185,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Getting character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Getting character: {CharacterId}", body.CharacterId);
 
             // We need to find the character - scan realm indexes if we don't know the realm
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -191,6 +198,11 @@ public partial class CharacterService : ICharacterService
 
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -214,7 +226,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Updating character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Updating character: {CharacterId}", body.CharacterId);
 
             // Find existing character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -255,16 +267,16 @@ public partial class CharacterService : ICharacterService
             }
 
             // Handle species migration (used for species merge operations)
-            if (body.SpeciesId.HasValue && body.SpeciesId.Value != Guid.Parse(character.SpeciesId))
+            if (body.SpeciesId.HasValue && body.SpeciesId.Value != character.SpeciesId)
             {
                 changedFields.Add("speciesId");
-                character.SpeciesId = body.SpeciesId.Value.ToString();
+                character.SpeciesId = body.SpeciesId.Value;
             }
 
             character.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Save updated character
-            var characterKey = BuildCharacterKey(character.RealmId, character.CharacterId);
+            var characterKey = BuildCharacterKey(character.RealmId.ToString(), character.CharacterId.ToString());
             await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
 
@@ -278,6 +290,11 @@ public partial class CharacterService : ICharacterService
 
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error updating character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -301,7 +318,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Deleting character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Deleting character: {CharacterId}", body.CharacterId);
 
             // Find existing character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -313,27 +330,32 @@ public partial class CharacterService : ICharacterService
             }
 
             var realmId = character.RealmId;
-            var characterKey = BuildCharacterKey(realmId, character.CharacterId);
+            var characterKey = BuildCharacterKey(realmId.ToString(), character.CharacterId.ToString());
 
             // Delete character from state store
             await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .DeleteAsync(characterKey, cancellationToken);
 
             // Remove from realm index
-            await RemoveCharacterFromRealmIndexAsync(realmId, character.CharacterId, cancellationToken);
+            await RemoveCharacterFromRealmIndexAsync(realmId.ToString(), character.CharacterId.ToString(), cancellationToken);
 
             _logger.LogInformation("Character deleted: {CharacterId} from realm: {RealmId}", body.CharacterId, realmId);
 
             // Publish realm left event (reason: deletion)
             await PublishCharacterRealmLeftEventAsync(
                 body.CharacterId,
-                Guid.Parse(realmId),
+                realmId,
                 "deletion");
 
             // Publish character deleted event
             await PublishCharacterDeletedEventAsync(character);
 
             return StatusCodes.OK;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error deleting character: {CharacterId}", body.CharacterId);
+            return StatusCodes.ServiceUnavailable;
         }
         catch (Exception ex)
         {
@@ -360,7 +382,7 @@ public partial class CharacterService : ICharacterService
             var page = body.Page > 0 ? body.Page : 1;
             var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Listing characters - RealmId: {RealmId}, Page: {Page}, PageSize: {PageSize}",
                 body.RealmId,
                 page,
@@ -373,6 +395,11 @@ public partial class CharacterService : ICharacterService
                 page,
                 pageSize,
                 cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error listing characters");
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -399,7 +426,7 @@ public partial class CharacterService : ICharacterService
             var page = body.Page > 0 ? body.Page : 1;
             var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
 
-            _logger.LogInformation("Getting characters by realm: {RealmId} - Page: {Page}, PageSize: {PageSize}",
+            _logger.LogDebug("Getting characters by realm: {RealmId} - Page: {Page}, PageSize: {PageSize}",
                 body.RealmId, page, pageSize);
 
             return await GetCharactersByRealmInternalAsync(
@@ -409,6 +436,11 @@ public partial class CharacterService : ICharacterService
                 page,
                 pageSize,
                 cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting characters by realm: {RealmId}", body.RealmId);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -439,7 +471,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Getting enriched character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Getting enriched character: {CharacterId}", body.CharacterId);
 
             // Get base character data
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -452,10 +484,10 @@ public partial class CharacterService : ICharacterService
 
             var response = new EnrichedCharacterResponse
             {
-                CharacterId = Guid.Parse(character.CharacterId),
+                CharacterId = character.CharacterId,
                 Name = character.Name,
-                RealmId = Guid.Parse(character.RealmId),
-                SpeciesId = Guid.Parse(character.SpeciesId),
+                RealmId = character.RealmId,
+                SpeciesId = character.SpeciesId,
                 BirthDate = character.BirthDate,
                 DeathDate = character.DeathDate,
                 Status = character.Status,
@@ -552,6 +584,11 @@ public partial class CharacterService : ICharacterService
 
             return (StatusCodes.OK, response);
         }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting enriched character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting enriched character: {CharacterId}", body.CharacterId);
@@ -577,7 +614,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Compressing character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Compressing character: {CharacterId}", body.CharacterId);
 
             // Get character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -625,8 +662,8 @@ public partial class CharacterService : ICharacterService
                     new SummarizeHistoryRequest
                     {
                         CharacterId = body.CharacterId,
-                        MaxBackstoryPoints = 5,
-                        MaxLifeEvents = 10
+                        MaxBackstoryPoints = _configuration.CompressionMaxBackstoryPoints,
+                        MaxLifeEvents = _configuration.CompressionMaxLifeEvents
                     },
                     cancellationToken);
 
@@ -648,8 +685,8 @@ public partial class CharacterService : ICharacterService
             {
                 CharacterId = body.CharacterId,
                 Name = character.Name,
-                RealmId = Guid.Parse(character.RealmId),
-                SpeciesId = Guid.Parse(character.SpeciesId),
+                RealmId = character.RealmId,
+                SpeciesId = character.SpeciesId,
                 BirthDate = character.BirthDate,
                 DeathDate = character.DeathDate.Value,
                 CompressedAt = DateTimeOffset.UtcNow,
@@ -673,7 +710,7 @@ public partial class CharacterService : ICharacterService
                         new CharacterPersonality.DeletePersonalityRequest { CharacterId = body.CharacterId },
                         cancellationToken);
                 }
-                catch (ApiException) { /* Ignore if not found */ }
+                catch (ApiException ex) when (ex.StatusCode == 404) { /* Ignore if not found */ }
 
                 try
                 {
@@ -681,11 +718,11 @@ public partial class CharacterService : ICharacterService
                         new DeleteAllHistoryRequest { CharacterId = body.CharacterId },
                         cancellationToken);
                 }
-                catch (ApiException) { /* Ignore if not found */ }
+                catch (ApiException ex) when (ex.StatusCode == 404) { /* Ignore if not found */ }
             }
 
             // Publish compression event
-            await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new
+            await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new CharacterCompressedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -695,6 +732,11 @@ public partial class CharacterService : ICharacterService
 
             _logger.LogInformation("Character compressed: {CharacterId}", body.CharacterId);
             return (StatusCodes.OK, archive);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error compressing character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -721,7 +763,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Getting archive for character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Getting archive for character: {CharacterId}", body.CharacterId);
 
             var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
             var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
@@ -735,6 +777,11 @@ public partial class CharacterService : ICharacterService
 
             var archive = MapFromArchiveModel(archiveModel);
             return (StatusCodes.OK, archive);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting archive for character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -761,7 +808,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Checking references for character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Checking references for character: {CharacterId}", body.CharacterId);
 
             // Check if character exists
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -787,7 +834,7 @@ public partial class CharacterService : ICharacterService
                     new ListRelationshipsByEntityRequest
                     {
                         EntityId = body.CharacterId,
-                        EntityType = EntityType.CHARACTER
+                        EntityType = EntityType.Character
                     },
                     cancellationToken);
 
@@ -797,8 +844,8 @@ public partial class CharacterService : ICharacterService
 
                     // Track that relationships exist (detailed categorization would require
                     // additional calls to RelationshipType service for type codes)
-                    if (!referenceTypes.Contains("RELATIONSHIP"))
-                        referenceTypes.Add("RELATIONSHIP");
+                    if (!referenceTypes.Contains(REFERENCE_TYPE_RELATIONSHIP))
+                        referenceTypes.Add(REFERENCE_TYPE_RELATIONSHIP);
                 }
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -806,28 +853,57 @@ public partial class CharacterService : ICharacterService
                 _logger.LogDebug("No relationships found for character {CharacterId}", body.CharacterId);
             }
 
-            // Get/update reference tracking data
+            // Get/update reference tracking data with optimistic concurrency
             var refCountKey = $"{REF_COUNT_KEY_PREFIX}{body.CharacterId}";
-            var refData = await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
-                .GetAsync(refCountKey, cancellationToken) ?? new RefCountData { CharacterId = body.CharacterId.ToString() };
+            var refCountStore = _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character);
+            var (initialData, initialEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
+            var refData = initialData ?? new RefCountData { CharacterId = body.CharacterId };
 
-            // Track when refCount first hit zero
-            if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
+            const int maxRetries = 3;
+            for (var retry = 0; retry < maxRetries; retry++)
             {
-                refData.ZeroRefSinceUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
-                    .SaveAsync(refCountKey, refData, cancellationToken: cancellationToken);
-            }
-            else if (referenceCount > 0 && refData.ZeroRefSinceUnix != null)
-            {
-                refData.ZeroRefSinceUnix = null;
-                await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
-                    .SaveAsync(refCountKey, refData, cancellationToken: cancellationToken);
+                if (retry > 0)
+                {
+                    // Re-fetch on retry
+                    var (storedData, newEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
+                    refData = storedData ?? new RefCountData { CharacterId = body.CharacterId };
+                    initialEtag = newEtag;
+                }
+
+                // Track when refCount first hit zero
+                bool needsSave = false;
+                if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
+                {
+                    refData.ZeroRefSinceUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    needsSave = true;
+                }
+                else if (referenceCount > 0 && refData.ZeroRefSinceUnix != null)
+                {
+                    refData.ZeroRefSinceUnix = null;
+                    needsSave = true;
+                }
+
+                if (!needsSave)
+                {
+                    break; // No changes needed
+                }
+
+                var savedEtag = await refCountStore.TrySaveAsync(refCountKey, refData, initialEtag ?? string.Empty, cancellationToken);
+                if (savedEtag != null)
+                {
+                    break; // Successfully saved
+                }
+
+                if (retry == maxRetries - 1)
+                {
+                    _logger.LogWarning("RefCount update retry exhausted for character {CharacterId}", body.CharacterId);
+                }
             }
 
-            // Determine cleanup eligibility
+            // Determine cleanup eligibility - grace period from configuration in days, converted to seconds
+            var cleanupGracePeriodSeconds = _configuration.CleanupGracePeriodDays * 24 * 60 * 60;
             var isEligibleForCleanup = isCompressed && referenceCount == 0 && refData.ZeroRefSinceUnix != null &&
-                (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - refData.ZeroRefSinceUnix.Value) >= CLEANUP_GRACE_PERIOD_SECONDS;
+                (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - refData.ZeroRefSinceUnix.Value) >= cleanupGracePeriodSeconds;
 
             var response = new CharacterRefCount
             {
@@ -842,6 +918,11 @@ public partial class CharacterService : ICharacterService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error checking references for character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -874,7 +955,7 @@ public partial class CharacterService : ICharacterService
                 new ListRelationshipsByEntityRequest
                 {
                     EntityId = characterId,
-                    EntityType = EntityType.CHARACTER
+                    EntityType = EntityType.Character
                 },
                 cancellationToken);
 
@@ -1033,22 +1114,24 @@ public partial class CharacterService : ICharacterService
     /// <summary>
     /// Generates a text summary of personality traits.
     /// </summary>
-    private static string GeneratePersonalitySummary(ICollection<CharacterPersonality.TraitValue> traits)
+    private string GeneratePersonalitySummary(ICollection<CharacterPersonality.TraitValue> traits)
     {
         var descriptions = new List<string>();
+        var threshold = (float)_configuration.PersonalityTraitThreshold;
+        var negThreshold = -threshold;
 
         foreach (var trait in traits)
         {
             var desc = trait.Axis.ToString() switch
             {
-                "OPENNESS" => trait.Value > 0.3f ? "creative" : trait.Value < -0.3f ? "traditional" : null,
-                "CONSCIENTIOUSNESS" => trait.Value > 0.3f ? "organized" : trait.Value < -0.3f ? "spontaneous" : null,
-                "EXTRAVERSION" => trait.Value > 0.3f ? "outgoing" : trait.Value < -0.3f ? "reserved" : null,
-                "AGREEABLENESS" => trait.Value > 0.3f ? "cooperative" : trait.Value < -0.3f ? "competitive" : null,
-                "NEUROTICISM" => trait.Value > 0.3f ? "anxious" : trait.Value < -0.3f ? "calm" : null,
-                "HONESTY" => trait.Value > 0.3f ? "sincere" : trait.Value < -0.3f ? "deceptive" : null,
-                "AGGRESSION" => trait.Value > 0.3f ? "confrontational" : trait.Value < -0.3f ? "pacifist" : null,
-                "LOYALTY" => trait.Value > 0.3f ? "devoted" : trait.Value < -0.3f ? "self-serving" : null,
+                "OPENNESS" => trait.Value > threshold ? "creative" : trait.Value < negThreshold ? "traditional" : null,
+                "CONSCIENTIOUSNESS" => trait.Value > threshold ? "organized" : trait.Value < negThreshold ? "spontaneous" : null,
+                "EXTRAVERSION" => trait.Value > threshold ? "outgoing" : trait.Value < negThreshold ? "reserved" : null,
+                "AGREEABLENESS" => trait.Value > threshold ? "cooperative" : trait.Value < negThreshold ? "competitive" : null,
+                "NEUROTICISM" => trait.Value > threshold ? "anxious" : trait.Value < negThreshold ? "calm" : null,
+                "HONESTY" => trait.Value > threshold ? "sincere" : trait.Value < negThreshold ? "deceptive" : null,
+                "AGGRESSION" => trait.Value > threshold ? "confrontational" : trait.Value < negThreshold ? "pacifist" : null,
+                "LOYALTY" => trait.Value > threshold ? "devoted" : trait.Value < negThreshold ? "self-serving" : null,
                 _ => null
             };
 
@@ -1094,10 +1177,10 @@ public partial class CharacterService : ICharacterService
     {
         return new CharacterArchiveModel
         {
-            CharacterId = archive.CharacterId.ToString(),
+            CharacterId = archive.CharacterId,
             Name = archive.Name,
-            RealmId = archive.RealmId.ToString(),
-            SpeciesId = archive.SpeciesId.ToString(),
+            RealmId = archive.RealmId,
+            SpeciesId = archive.SpeciesId,
             BirthDateUnix = archive.BirthDate.ToUnixTimeSeconds(),
             DeathDateUnix = archive.DeathDate.ToUnixTimeSeconds(),
             CompressedAtUnix = archive.CompressedAt.ToUnixTimeSeconds(),
@@ -1112,10 +1195,10 @@ public partial class CharacterService : ICharacterService
     {
         return new CharacterArchive
         {
-            CharacterId = Guid.Parse(model.CharacterId),
+            CharacterId = model.CharacterId,
             Name = model.Name,
-            RealmId = Guid.Parse(model.RealmId),
-            SpeciesId = Guid.Parse(model.SpeciesId),
+            RealmId = model.RealmId,
+            SpeciesId = model.SpeciesId,
             BirthDate = DateTimeOffset.FromUnixTimeSeconds(model.BirthDateUnix),
             DeathDate = DateTimeOffset.FromUnixTimeSeconds(model.DeathDateUnix),
             CompressedAt = DateTimeOffset.FromUnixTimeSeconds(model.CompressedAtUnix),
@@ -1260,7 +1343,7 @@ public partial class CharacterService : ICharacterService
             // Apply filters
             if (statusFilter.HasValue && character.Status != statusFilter.Value)
                 continue;
-            if (speciesFilter.HasValue && character.SpeciesId != speciesFilter.Value.ToString())
+            if (speciesFilter.HasValue && character.SpeciesId != speciesFilter.Value)
                 continue;
 
             filteredCharacters.Add(character);
@@ -1294,7 +1377,7 @@ public partial class CharacterService : ICharacterService
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
         // Retry loop for optimistic concurrency
-        const int maxRetries = 3;
+        var maxRetries = _configuration.RealmIndexUpdateMaxRetries;
         for (int retry = 0; retry < maxRetries; retry++)
         {
             var (characterIds, etag) = await store.GetWithETagAsync(realmIndexKey, cancellationToken);
@@ -1342,7 +1425,7 @@ public partial class CharacterService : ICharacterService
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
         // Retry loop for optimistic concurrency
-        const int maxRetries = 3;
+        var maxRetries = _configuration.RealmIndexUpdateMaxRetries;
         for (int retry = 0; retry < maxRetries; retry++)
         {
             var (characterIds, etag) = await store.GetWithETagAsync(realmIndexKey, cancellationToken);
@@ -1381,10 +1464,10 @@ public partial class CharacterService : ICharacterService
     {
         return new CharacterResponse
         {
-            CharacterId = Guid.Parse(model.CharacterId),
+            CharacterId = model.CharacterId,
             Name = model.Name,
-            RealmId = Guid.Parse(model.RealmId),
-            SpeciesId = Guid.Parse(model.SpeciesId),
+            RealmId = model.RealmId,
+            SpeciesId = model.SpeciesId,
             BirthDate = model.BirthDate,
             DeathDate = model.DeathDate,
             Status = model.Status,
@@ -1406,10 +1489,10 @@ public partial class CharacterService : ICharacterService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            CharacterId = Guid.Parse(character.CharacterId),
+            CharacterId = character.CharacterId,
             Name = character.Name,
-            RealmId = Guid.Parse(character.RealmId),
-            SpeciesId = Guid.Parse(character.SpeciesId),
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate
         };
 
@@ -1426,12 +1509,12 @@ public partial class CharacterService : ICharacterService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            CharacterId = Guid.Parse(character.CharacterId),
+            CharacterId = character.CharacterId,
             Name = character.Name,
-            RealmId = Guid.Parse(character.RealmId),
-            SpeciesId = Guid.Parse(character.SpeciesId),
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
-            Status = character.Status.ToString(),
+            Status = character.Status,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,
             ChangedFields = changedFields.ToList()
@@ -1450,12 +1533,12 @@ public partial class CharacterService : ICharacterService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            CharacterId = Guid.Parse(character.CharacterId),
+            CharacterId = character.CharacterId,
             Name = character.Name,
-            RealmId = Guid.Parse(character.RealmId),
-            SpeciesId = Guid.Parse(character.SpeciesId),
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
-            Status = character.Status.ToString(),
+            Status = character.Status,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,
             DeletedReason = deletedReason
@@ -1508,12 +1591,12 @@ public partial class CharacterService : ICharacterService
     /// <summary>
     /// Registers this service's API permissions with the Permission service on startup.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Character service permissions...");
         try
         {
-            await CharacterPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await CharacterPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("Character service permissions registered via event");
         }
         catch (Exception ex)
@@ -1530,13 +1613,14 @@ public partial class CharacterService : ICharacterService
 
 /// <summary>
 /// Character data model for lib-state storage.
+/// Uses Guid types for type-safe ID handling per IMPLEMENTATION TENETS.
 /// </summary>
 internal class CharacterModel
 {
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid CharacterId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string RealmId { get; set; } = string.Empty;
-    public string SpeciesId { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
+    public Guid SpeciesId { get; set; }
     public CharacterStatus Status { get; set; } = CharacterStatus.Alive;
 
     // Store as DateTimeOffset directly - lib-state handles serialization
@@ -1548,13 +1632,14 @@ internal class CharacterModel
 
 /// <summary>
 /// Archive data model for compressed characters.
+/// Uses Guid types for type-safe ID handling per IMPLEMENTATION TENETS.
 /// </summary>
 internal class CharacterArchiveModel
 {
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid CharacterId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string RealmId { get; set; } = string.Empty;
-    public string SpeciesId { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
+    public Guid SpeciesId { get; set; }
     public long BirthDateUnix { get; set; }
     public long DeathDateUnix { get; set; }
     public long CompressedAtUnix { get; set; }
@@ -1566,10 +1651,11 @@ internal class CharacterArchiveModel
 
 /// <summary>
 /// Reference count tracking data for cleanup eligibility.
+/// Uses Guid type for type-safe ID handling per IMPLEMENTATION TENETS.
 /// </summary>
 internal class RefCountData
 {
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid CharacterId { get; set; }
     public long? ZeroRefSinceUnix { get; set; }
 }
 

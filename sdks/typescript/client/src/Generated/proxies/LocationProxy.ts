@@ -37,7 +37,6 @@ export class LocationProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['LocationResponse']>> {
     return this.client.invokeAsync<Schemas['GetLocationRequest'], Schemas['LocationResponse']>(
-      'POST',
       '/location/get',
       request,
       channel,
@@ -60,7 +59,7 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['GetLocationByCodeRequest'],
       Schemas['LocationResponse']
-    >('POST', '/location/get-by-code', request, channel, timeout);
+    >('/location/get-by-code', request, channel, timeout);
   }
 
   /**
@@ -78,7 +77,7 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['ListLocationsRequest'],
       Schemas['LocationListResponse']
-    >('POST', '/location/list', request, channel, timeout);
+    >('/location/list', request, channel, timeout);
   }
 
   /**
@@ -96,7 +95,7 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['ListLocationsByRealmRequest'],
       Schemas['LocationListResponse']
-    >('POST', '/location/list-by-realm', request, channel, timeout);
+    >('/location/list-by-realm', request, channel, timeout);
   }
 
   /**
@@ -114,7 +113,7 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['ListLocationsByParentRequest'],
       Schemas['LocationListResponse']
-    >('POST', '/location/list-by-parent', request, channel, timeout);
+    >('/location/list-by-parent', request, channel, timeout);
   }
 
   /**
@@ -132,7 +131,7 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['ListRootLocationsRequest'],
       Schemas['LocationListResponse']
-    >('POST', '/location/list-root', request, channel, timeout);
+    >('/location/list-root', request, channel, timeout);
   }
 
   /**
@@ -150,7 +149,7 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['GetLocationAncestorsRequest'],
       Schemas['LocationListResponse']
-    >('POST', '/location/get-ancestors', request, channel, timeout);
+    >('/location/get-ancestors', request, channel, timeout);
   }
 
   /**
@@ -168,7 +167,7 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['GetLocationDescendantsRequest'],
       Schemas['LocationListResponse']
-    >('POST', '/location/get-descendants', request, channel, timeout);
+    >('/location/get-descendants', request, channel, timeout);
   }
 
   /**
@@ -186,6 +185,6 @@ export class LocationProxy {
     return this.client.invokeAsync<
       Schemas['LocationExistsRequest'],
       Schemas['LocationExistsResponse']
-    >('POST', '/location/exists', request, channel, timeout);
+    >('/location/exists', request, channel, timeout);
   }
 }

@@ -209,12 +209,14 @@ AUTH_DISCORD_CLIENT_SECRET=your-client-secret
 ```bash
 AUTH_GOOGLE_CLIENT_ID=your-client-id
 AUTH_GOOGLE_CLIENT_SECRET=your-client-secret
+# Redirect URI auto-configured from BANNOU_SERVICE_DOMAIN
 ```
 
 ### Twitch
 ```bash
 AUTH_TWITCH_CLIENT_ID=your-client-id
 AUTH_TWITCH_CLIENT_SECRET=your-client-secret
+# Redirect URI auto-configured from BANNOU_SERVICE_DOMAIN
 ```
 
 ### Steam

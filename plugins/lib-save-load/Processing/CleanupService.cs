@@ -60,7 +60,7 @@ public class CleanupService : BackgroundService
         }
 
         // Wait for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(_configuration.CleanupStartupDelaySeconds), stoppingToken);
 
         _logger.LogInformation(
             "CleanupService starting with interval of {IntervalMinutes} minutes",
@@ -105,8 +105,8 @@ public class CleanupService : BackgroundService
         var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
         var assetClient = serviceProvider.GetRequiredService<IAssetClient>();
 
-        var slotStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-        var versionStore = stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+        var slotStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+        var versionStore = stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
         // Get all slots
         var slots = await slotStore.QueryAsync(_ => true, cancellationToken);
@@ -116,8 +116,18 @@ public class CleanupService : BackgroundService
         var totalSlotsDeleted = 0;
         long totalBytesFreed = 0;
 
+        var sessionGracePeriod = TimeSpan.FromMinutes(_configuration.SessionCleanupGracePeriodMinutes);
+
         foreach (var slot in slotList)
         {
+            // Skip SESSION-owned slots that are within the grace period
+            // SaveSlotMetadata.OwnerType is now an enum - compare directly
+            if (slot.OwnerType == OwnerType.SESSION &&
+                DateTimeOffset.UtcNow - slot.UpdatedAt < sessionGracePeriod)
+            {
+                continue;
+            }
+
             var (versionsDeleted, bytesFreed) = await CleanupSlotAsync(
                 slot, versionStore, assetClient, cancellationToken);
 
@@ -163,6 +173,7 @@ public class CleanupService : BackgroundService
         CancellationToken cancellationToken)
     {
         // Get versions for this slot
+        // SaveSlotMetadata.SlotId and SaveVersionManifest.SlotId are both Guid - compare directly
         var versions = await versionStore.QueryAsync(v => v.SlotId == slot.SlotId, cancellationToken);
         var versionList = versions.OrderByDescending(v => v.VersionNumber).ToList();
 
@@ -197,39 +208,41 @@ public class CleanupService : BackgroundService
             try
             {
                 // Delete the version from state store
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, version.VersionNumber);
+                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
                 await versionStore.DeleteAsync(versionKey, cancellationToken);
 
                 bytesFreed += version.SizeBytes;
                 versionsDeleted++;
 
                 // Delete asset if exists
-                if (!string.IsNullOrEmpty(version.AssetId))
+                // SaveVersionManifest.AssetId is now Guid?
+                if (version.AssetId.HasValue && version.AssetId.Value != Guid.Empty)
                 {
                     try
                     {
                         await assetClient.DeleteAssetAsync(
-                            new DeleteAssetRequest { AssetId = version.AssetId },
+                            new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() },
                             cancellationToken);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to delete asset {AssetId}", version.AssetId);
+                        _logger.LogWarning(ex, "Failed to delete asset {AssetId}", version.AssetId.Value);
                     }
                 }
 
                 // Delete thumbnail if exists
-                if (!string.IsNullOrEmpty(version.ThumbnailAssetId))
+                // SaveVersionManifest.ThumbnailAssetId is now Guid?
+                if (version.ThumbnailAssetId.HasValue && version.ThumbnailAssetId.Value != Guid.Empty)
                 {
                     try
                     {
                         await assetClient.DeleteAssetAsync(
-                            new DeleteAssetRequest { AssetId = version.ThumbnailAssetId },
+                            new DeleteAssetRequest { AssetId = version.ThumbnailAssetId.Value.ToString() },
                             cancellationToken);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to delete thumbnail asset {AssetId}", version.ThumbnailAssetId);
+                        _logger.LogWarning(ex, "Failed to delete thumbnail asset {AssetId}", version.ThumbnailAssetId.Value);
                     }
                 }
             }
@@ -239,6 +252,19 @@ public class CleanupService : BackgroundService
                     ex,
                     "Failed to delete version {Version} for slot {SlotId}",
                     version.VersionNumber, slot.SlotId);
+            }
+        }
+
+        // Log delta chains that need collapsing (only when auto-collapse is enabled)
+        if (_configuration.AutoCollapseEnabled && versionsDeleted > 0)
+        {
+            var remainingVersions = versionList.Except(versionsToDelete).ToList();
+            var deltaVersions = remainingVersions.Where(v => v.IsDelta).ToList();
+            if (deltaVersions.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Slot {SlotId} has {DeltaCount} delta versions that could be collapsed",
+                    slot.SlotId, deltaVersions.Count);
             }
         }
 
@@ -252,7 +278,7 @@ public class CleanupService : BackgroundService
             using var scope = _serviceProvider.CreateScope();
             var slotStore = scope.ServiceProvider
                 .GetRequiredService<IStateStoreFactory>()
-                .GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+                .GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
         }
 

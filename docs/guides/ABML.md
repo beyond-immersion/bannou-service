@@ -3,9 +3,9 @@
 > **Version**: 2.1
 > **Status**: Implemented (414 tests passing)
 > **Location**: `bannou-service/Abml/`
-> **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR_SYSTEM.md)
+> **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR_SYSTEM.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
 
-ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Arcadia.
+ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Bannou-powered games.
 
 ---
 
@@ -1498,6 +1498,18 @@ bannou-service/Abml/
     ├── ExpressionEvaluator.cs
     └── AbmlTypeCoercion.cs
 ```
+
+### 14.6 Runtime Cognition Pipeline
+
+The Behavior service implements a 5-stage cognition pipeline for NPC perception processing:
+
+1. **Attention Filter** → Budget-limited selection with priority weighting
+2. **Significance Assessment** → Threat detection with fast-track bypass (urgency > 0.8)
+3. **Memory Formation** → Stores memories with significance >= threshold (default 0.7)
+4. **Goal Impact Evaluation** → Determines which goals are affected
+5. **Intention Formation** → Triggers GOAP replan with urgency-based parameters
+
+For complete details on the cognition pipeline, memory relevance scoring (weighted formula), urgency tier configuration, behavior model caching with variant fallbacks, and known caveats, see the [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md).
 
 ---
 

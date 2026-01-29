@@ -13,7 +13,7 @@ info:
 
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 4.0.0
 servers:
 - url: http://localhost:5012
@@ -452,7 +452,7 @@ paths:
         user\"\n                },\n                \"authorizations\": {\n                    \"type\": \"array\",\n    \
         \                \"items\": {\n                        \"type\": \"string\"\n                    },\n            \
         \        \"nullable\": true,\n                    \"description\": \"Authorization strings from active subscriptions.\\
-        nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"arcadia:authorized\\\")\\n\"\n                },\n                \"\
+        nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"my-game:authorized\\\")\\n\"\n                },\n                \"\
         remainingTime\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Seconds until
         expiration\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
@@ -709,7 +709,8 @@ components:
       - google
       - discord
       - twitch
-      description: OAuth provider type
+      - steam
+      description: Authentication provider type
     InitOAuthResponse:
       type: object
       description: Response containing the OAuth authorization URL for redirect
@@ -928,7 +929,7 @@ components:
           nullable: true
           description: |
             Authorization strings from active subscriptions.
-            Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            Format: "{stubName}:{state}" (e.g., "my-game:authorized")
         remainingTime:
           type: integer
           description: Seconds until expiration

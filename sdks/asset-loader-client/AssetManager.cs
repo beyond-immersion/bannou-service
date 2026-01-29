@@ -7,9 +7,6 @@ using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.Bannou.Client;
 using Microsoft.Extensions.Logging;
 
-// Alias to avoid conflict with Bundle.Format.BundleAssetEntry
-using Realm = BeyondImmersion.BannouService.Asset.Realm;
-
 namespace BeyondImmersion.Bannou.AssetLoader.Client;
 
 /// <summary>

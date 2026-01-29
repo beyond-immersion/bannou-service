@@ -41,7 +41,7 @@ public sealed class ConnectProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<InternalProxyRequest, InternalProxyResponse>(
-            "POST", "/internal/proxy", request, channel, timeout, cancellationToken);
+            "/internal/proxy", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class ConnectProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetClientCapabilitiesRequest, ClientCapabilitiesResponse>(
-            "POST", "/client-capabilities", request, channel, timeout, cancellationToken);
+            "/client-capabilities", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -75,7 +75,7 @@ public sealed class ConnectProxy
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<ConnectRequest>(
-            "POST", "/connect", request, channel, cancellationToken);
+            "/connect", request, channel, cancellationToken);
     }
 
     /// <summary>
@@ -93,6 +93,6 @@ public sealed class ConnectProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetAccountSessionsRequest, GetAccountSessionsResponse>(
-            "POST", "/connect/get-account-sessions", request, channel, timeout, cancellationToken);
+            "/connect/get-account-sessions", request, channel, timeout, cancellationToken);
     }
 }

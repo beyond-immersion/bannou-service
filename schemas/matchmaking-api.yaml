@@ -8,7 +8,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
     this schema. Optional reference types require `nullable: true`.
 
     **Features**:
@@ -547,7 +547,8 @@ components:
           description: Game this queue is for
         sessionGameType:
           $ref: '#/components/schemas/SessionGameType'
-          description: Game type for created sessions (maps to game-session service)
+          nullable: true
+          description: Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided.
         displayName:
           type: string
           maxLength: 100
@@ -748,8 +749,7 @@ components:
 
     SessionGameType:
       type: string
-      description: Game type for created sessions (maps to game-session service GameType)
-      enum: [generic, arcadia]
+      description: Game service stub name for created sessions. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions.
       default: generic
 
     # ============================================

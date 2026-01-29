@@ -5,7 +5,7 @@ info:
     Configuration schema for Auth service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -43,6 +43,11 @@ x-service-configuration:
       description: Mock Google user ID for testing
       env: AUTH_MOCK_GOOGLE_ID
       default: "mock-google-123456"
+    MockTwitchId:
+      type: string
+      description: Mock Twitch user ID for testing
+      env: AUTH_MOCK_TWITCH_ID
+      default: "mock-twitch-123456"
     MockSteamId:
       type: string
       description: Mock Steam user ID for testing
@@ -128,3 +133,17 @@ x-service-configuration:
       description: Base URL for password reset page
       env: AUTH_PASSWORD_RESET_BASE_URL
       example: "https://your-domain.com/reset-password"
+
+    # Security
+    BcryptWorkFactor:
+      type: integer
+      description: BCrypt work factor for password hashing. Higher values are more secure but slower. Existing hashes at lower factors continue to validate.
+      env: AUTH_BCRYPT_WORK_FACTOR
+      default: 12
+
+    # Session Configuration
+    SessionTokenTtlDays:
+      type: integer
+      description: Session token TTL in days for persistent sessions
+      env: AUTH_SESSION_TOKEN_TTL_DAYS
+      default: 7

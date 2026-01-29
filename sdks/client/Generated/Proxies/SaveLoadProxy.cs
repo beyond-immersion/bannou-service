@@ -41,7 +41,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateSlotRequest, SlotResponse>(
-            "POST", "/save-load/slot/create", request, channel, timeout, cancellationToken);
+            "/save-load/slot/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetSlotRequest, SlotResponse>(
-            "POST", "/save-load/slot/get", request, channel, timeout, cancellationToken);
+            "/save-load/slot/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListSlotsRequest, ListSlotsResponse>(
-            "POST", "/save-load/slot/list", request, channel, timeout, cancellationToken);
+            "/save-load/slot/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteSlotRequest, DeleteSlotResponse>(
-            "POST", "/save-load/slot/delete", request, channel, timeout, cancellationToken);
+            "/save-load/slot/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RenameSlotRequest, SlotResponse>(
-            "POST", "/save-load/slot/rename", request, channel, timeout, cancellationToken);
+            "/save-load/slot/rename", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BulkDeleteSlotsRequest, BulkDeleteSlotsResponse>(
-            "POST", "/save-load/slot/bulk-delete", request, channel, timeout, cancellationToken);
+            "/save-load/slot/bulk-delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SaveRequest, SaveResponse>(
-            "POST", "/save-load/save", request, channel, timeout, cancellationToken);
+            "/save-load/save", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<LoadRequest, LoadResponse>(
-            "POST", "/save-load/load", request, channel, timeout, cancellationToken);
+            "/save-load/load", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SaveDeltaRequest, SaveDeltaResponse>(
-            "POST", "/save-load/save-delta", request, channel, timeout, cancellationToken);
+            "/save-load/save-delta", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<LoadRequest, LoadResponse>(
-            "POST", "/save-load/load-with-deltas", request, channel, timeout, cancellationToken);
+            "/save-load/load-with-deltas", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CollapseDeltasRequest, SaveResponse>(
-            "POST", "/save-load/collapse-deltas", request, channel, timeout, cancellationToken);
+            "/save-load/collapse-deltas", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListVersionsRequest, ListVersionsResponse>(
-            "POST", "/save-load/version/list", request, channel, timeout, cancellationToken);
+            "/save-load/version/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PinVersionRequest, VersionResponse>(
-            "POST", "/save-load/version/pin", request, channel, timeout, cancellationToken);
+            "/save-load/version/pin", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UnpinVersionRequest, VersionResponse>(
-            "POST", "/save-load/version/unpin", request, channel, timeout, cancellationToken);
+            "/save-load/version/unpin", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteVersionRequest, DeleteVersionResponse>(
-            "POST", "/save-load/version/delete", request, channel, timeout, cancellationToken);
+            "/save-load/version/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QuerySavesRequest, QuerySavesResponse>(
-            "POST", "/save-load/query", request, channel, timeout, cancellationToken);
+            "/save-load/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CopySaveRequest, SaveResponse>(
-            "POST", "/save-load/copy", request, channel, timeout, cancellationToken);
+            "/save-load/copy", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ExportSavesRequest, ExportSavesResponse>(
-            "POST", "/save-load/export", request, channel, timeout, cancellationToken);
+            "/save-load/export", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -365,7 +365,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ImportSavesRequest, ImportSavesResponse>(
-            "POST", "/save-load/import", request, channel, timeout, cancellationToken);
+            "/save-load/import", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -383,7 +383,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<VerifyIntegrityRequest, VerifyIntegrityResponse>(
-            "POST", "/save-load/verify", request, channel, timeout, cancellationToken);
+            "/save-load/verify", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -401,7 +401,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PromoteVersionRequest, SaveResponse>(
-            "POST", "/save-load/version/promote", request, channel, timeout, cancellationToken);
+            "/save-load/version/promote", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -419,7 +419,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<MigrateSaveRequest, MigrateSaveResponse>(
-            "POST", "/save-load/migrate", request, channel, timeout, cancellationToken);
+            "/save-load/migrate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -437,7 +437,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RegisterSchemaRequest, SchemaResponse>(
-            "POST", "/save-load/schema/register", request, channel, timeout, cancellationToken);
+            "/save-load/schema/register", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -455,7 +455,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListSchemasRequest, ListSchemasResponse>(
-            "POST", "/save-load/schema/list", request, channel, timeout, cancellationToken);
+            "/save-load/schema/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -473,7 +473,7 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AdminCleanupRequest, AdminCleanupResponse>(
-            "POST", "/save-load/admin/cleanup", request, channel, timeout, cancellationToken);
+            "/save-load/admin/cleanup", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -491,6 +491,6 @@ public sealed class SaveLoadProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<AdminStatsRequest, AdminStatsResponse>(
-            "POST", "/save-load/admin/stats", request, channel, timeout, cancellationToken);
+            "/save-load/admin/stats", request, channel, timeout, cancellationToken);
     }
 }

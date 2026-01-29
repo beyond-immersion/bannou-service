@@ -37,18 +37,22 @@ public sealed class QueryOptionsHandler : IActionHandler
     private const string ACTION_NAME = "query_options";
     private readonly IActorClient _actorClient;
     private readonly ILogger<QueryOptionsHandler> _logger;
+    private readonly ActorServiceConfiguration _config;
 
     /// <summary>
     /// Creates a new query options handler.
     /// </summary>
     /// <param name="actorClient">Actor client for service calls.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="config">Actor service configuration.</param>
     public QueryOptionsHandler(
         IActorClient actorClient,
-        ILogger<QueryOptionsHandler> logger)
+        ILogger<QueryOptionsHandler> logger,
+        ActorServiceConfiguration config)
     {
         _actorClient = actorClient;
         _logger = logger;
+        _config = config;
     }
 
     /// <inheritdoc/>
@@ -88,7 +92,7 @@ public sealed class QueryOptionsHandler : IActionHandler
             freshness = OptionsFreshness.Cached;
         }
 
-        var maxAgeMs = 5000;
+        var maxAgeMs = _config.QueryOptionsDefaultMaxAgeMs;
         if (evaluatedParams.TryGetValue("max_age_ms", out var maxAgeObj) && maxAgeObj != null)
         {
             maxAgeMs = Convert.ToInt32(maxAgeObj);

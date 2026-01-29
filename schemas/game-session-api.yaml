@@ -2,13 +2,13 @@ openapi: 3.0.0
 info:
   title: Bannou Game Session Service API
   description: |
-    Minimal game session management for Arcadia and other games.
+    Minimal game session management for games.
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 2.0.0
   # NOTE: Event subscriptions moved to game-session-events.yaml (x-event-subscriptions)
 servers:
@@ -328,13 +328,15 @@ components:
       additionalProperties: false
       properties:
         gameType:
-          type: string
-          enum: [arcadia, generic]
+          allOf:
+          - $ref: '#/components/schemas/GameType'
+          nullable: true
           description: Filter by game type
         status:
-          type: string
-          enum: [waiting, active, full]
-          description: Filter by session status
+          allOf:
+          - $ref: '#/components/schemas/SessionStatus'
+          nullable: true
+          description: Filter by session status (finished not included for active filters)
 
     GetGameSessionRequest:
       type: object
@@ -378,9 +380,8 @@ components:
       - maxPlayers
       properties:
         gameType:
-          type: string
-          enum: [arcadia, generic]
-          description: Type of game for this session (arcadia or generic)
+          $ref: '#/components/schemas/GameType'
+          description: Game service stub name for this session
         maxPlayers:
           type: integer
           minimum: 1
@@ -438,8 +439,7 @@ components:
           format: uuid
           description: Unique identifier for the game session
         gameType:
-          type: string
-          enum: [arcadia, generic]
+          $ref: '#/components/schemas/GameType'
           description: Type of game for this session
         sessionType:
           $ref: '#/components/schemas/SessionType'
@@ -449,8 +449,7 @@ components:
           nullable: true
           description: Display name for the session
         status:
-          type: string
-          enum: [waiting, active, full, finished]
+          $ref: '#/components/schemas/SessionStatus'
           description: Current status of the game session
         maxPlayers:
           type: integer
@@ -527,8 +526,7 @@ components:
           description: Account ID of the player joining. Provided by shortcut system.
         gameType:
           type: string
-          description: Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by 
-            shortcut system.
+          description: Game service stub name to join. Determines which lobby to join. Provided by shortcut system.
         password:
           type: string
           nullable: true
@@ -556,8 +554,7 @@ components:
           format: uuid
           description: ID of the joined game session
         playerRole:
-          type: string
-          enum: [player, spectator, moderator]
+          $ref: '#/components/schemas/PlayerRole'
           description: Role assigned to the player in this session
         gameData:
           type: object
@@ -588,6 +585,7 @@ components:
           description: Unique identifier for the player's account
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID that joined the game. Chat and events are delivered to this specific session
             only.
         displayName:
@@ -596,8 +594,7 @@ components:
           nullable: true
           description: Display name shown to other players
         role:
-          type: string
-          enum: [player, spectator, moderator]
+          $ref: '#/components/schemas/PlayerRole'
           description: Role of the player in the game session
         joinedAt:
           type: string
@@ -610,6 +607,7 @@ components:
           description: Game-specific character data for this player (null if none provided)
         voiceSessionId:
           type: string
+          format: uuid
           nullable: true
           description: Voice participant session ID (if player has joined voice)
 
@@ -663,8 +661,8 @@ components:
           maxLength: 500
           description: Content of the chat message
         messageType:
-          type: string
-          enum: [public, whisper, system]
+          allOf:
+          - $ref: '#/components/schemas/ChatMessageType'
           default: public
           description: Type of message (public to all, whisper to one player, or system announcement)
         targetPlayerId:
@@ -697,8 +695,7 @@ components:
           description: Game type for the action. Determines which lobby to apply the action. Provided by shortcut 
             system.
         actionType:
-          type: string
-          enum: [move, interact, attack, cast_spell, use_item]
+          $ref: '#/components/schemas/GameActionType'
           description: Type of game action to perform
         actionData:
           type: object
@@ -780,13 +777,13 @@ components:
           nullable: true
           description: Voice room ID (null until room is created when 2+ participants join with voice)
         tier:
-          type: string
-          enum: [p2p, scaled]
+          allOf:
+          - $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
           nullable: true
           description: Expected voice tier (may change based on participant count)
         codec:
-          type: string
-          enum: [opus, g711, g722]
+          allOf:
+          - $ref: 'voice-api.yaml#/components/schemas/VoiceCodec'
           # NRT: Optional enum MUST be nullable (Rule 2)
           nullable: true
           description: Audio codec to use
@@ -806,6 +803,30 @@ components:
       type: string
       description: Type of game session - determines join behavior
       enum: [lobby, matchmade]
+
+    GameType:
+      type: string
+      description: Game service stub name for this session. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions.
+
+    SessionStatus:
+      type: string
+      description: Current status of the game session
+      enum: [waiting, active, full, finished]
+
+    PlayerRole:
+      type: string
+      description: Role of the player in the game session
+      enum: [player, spectator, moderator]
+
+    ChatMessageType:
+      type: string
+      description: Type of chat message
+      enum: [public, whisper, system]
+
+    GameActionType:
+      type: string
+      description: Type of game action
+      enum: [move, interact, attack, cast_spell, use_item]
 
     # NOTE: PlayerReservation removed - reservations use ReservationInfo for matchmaking integration
 
@@ -885,6 +906,7 @@ components:
       properties:
         targetWebSocketSessionId:
           type: string
+          format: uuid
           description: WebSocket session ID to receive the shortcut
         accountId:
           type: string

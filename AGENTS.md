@@ -41,9 +41,14 @@ instructions when working with Codex or other coding agents.
 | Command | Purpose |
 | --- | --- |
 | `make build` | Build all .NET projects |
+| `make build-tools` | Build development tools |
 | `make generate` | Regenerate services, SDK, docs |
 | `make format` | Fix formatting and line endings |
 | `make test` | Unit tests (run only if requested) |
+| `make inspect-type TYPE="..." PKG="..."` | Inspect type signature and docs |
+| `make inspect-method METHOD="..." PKG="..."` | Inspect method with parameters |
+| `make inspect-search PATTERN="..." PKG="..."` | Search for types by pattern |
+| `make inspect-list PKG="..."` | List all types in a package |
 
 ## Coding Guidelines (short list)
 

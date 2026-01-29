@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.Realm;
 
 /// <summary>
 /// Implementation of the Realm service.
-/// Manages realm definitions - top-level persistent worlds in Arcadia (e.g., Omega, Arcadia, Fantasia).
+/// Manages realm definitions - top-level persistent worlds (e.g., REALM_1, REALM_2).
 /// Each realm operates as an independent peer with distinct characteristics.
 /// </summary>
 [BannouService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]
@@ -44,7 +44,7 @@ public partial class RealmService : IRealmService
 
     #region Key Building Helpers
 
-    private static string BuildRealmKey(string realmId) => $"{REALM_KEY_PREFIX}{realmId}";
+    private static string BuildRealmKey(Guid realmId) => $"{REALM_KEY_PREFIX}{realmId}";
     private static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}";
 
     #endregion
@@ -62,12 +62,12 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Getting realm by ID: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -85,7 +85,7 @@ public partial class RealmService : IRealmService
     }
 
     /// <summary>
-    /// Get realm by unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA").
+    /// Get realm by unique code (e.g., "REALM_1", "REALM_2").
     /// </summary>
     public async Task<(StatusCodes, RealmResponse?)> GetRealmByCodeAsync(
         GetRealmByCodeRequest body,
@@ -96,11 +96,11 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Getting realm by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code);
-            var realmId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+            var realmIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
 
-            if (string.IsNullOrEmpty(realmId))
+            if (string.IsNullOrEmpty(realmIdStr) || !Guid.TryParse(realmIdStr, out var realmId))
             {
-                _logger.LogWarning("Realm not found by code: {Code}", body.Code);
+                _logger.LogDebug("Realm not found by code: {Code}", body.Code);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -138,7 +138,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Listing realms with filters - Category: {Category}, IsActive: {IsActive}, IncludeDeprecated: {IncludeDeprecated}",
                 body.Category, body.IsActive, body.IncludeDeprecated);
 
-            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken);
+            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken);
 
             if (allRealmIds == null || allRealmIds.Count == 0)
             {
@@ -216,7 +216,7 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Checking if realm exists: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
@@ -233,7 +233,7 @@ public partial class RealmService : IRealmService
             {
                 Exists = true,
                 IsActive = model.IsActive && !model.IsDeprecated,
-                RealmId = Guid.Parse(model.RealmId)
+                RealmId = model.RealmId
             });
         }
         catch (Exception ex)
@@ -266,11 +266,11 @@ public partial class RealmService : IRealmService
 
             // Check if code already exists
             var codeIndexKey = BuildCodeIndexKey(code);
-            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+            var existingIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
 
-            if (!string.IsNullOrEmpty(existingId))
+            if (!string.IsNullOrEmpty(existingIdStr))
             {
-                _logger.LogWarning("Realm with code already exists: {Code}", code);
+                _logger.LogDebug("Realm with code already exists: {Code}", code);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -279,9 +279,10 @@ public partial class RealmService : IRealmService
 
             var model = new RealmModel
             {
-                RealmId = realmId.ToString(),
+                RealmId = realmId,
                 Code = code,
                 Name = body.Name,
+                GameServiceId = body.GameServiceId,
                 Description = body.Description,
                 Category = body.Category,
                 IsActive = body.IsActive,
@@ -294,18 +295,18 @@ public partial class RealmService : IRealmService
             };
 
             // Save the model
-            var realmKey = BuildRealmKey(realmId.ToString());
+            var realmKey = BuildRealmKey(realmId);
             await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
-            // Update code index
+            // Update code index (stored as string for state store compatibility)
             await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).SaveAsync(codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
 
             // Update all-realms list
-            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<string>();
-            if (!allRealmIds.Contains(realmId.ToString()))
+            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
+            if (!allRealmIds.Contains(realmId))
             {
-                allRealmIds.Add(realmId.ToString());
-                await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
+                allRealmIds.Add(realmId);
+                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
             }
 
             // Publish realm created event
@@ -336,12 +337,12 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Updating realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for update: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for update: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -367,6 +368,11 @@ public partial class RealmService : IRealmService
             {
                 model.IsActive = body.IsActive.Value;
                 changedFields.Add("isActive");
+            }
+            if (body.GameServiceId.HasValue && body.GameServiceId.Value != model.GameServiceId)
+            {
+                model.GameServiceId = body.GameServiceId.Value;
+                changedFields.Add("gameServiceId");
             }
             if (body.Metadata != null)
             {
@@ -408,19 +414,19 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Deleting realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for deletion: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for deletion: {RealmId}", body.RealmId);
                 return StatusCodes.NotFound;
             }
 
             // Realm should be deprecated before deletion
             if (!model.IsDeprecated)
             {
-                _logger.LogWarning("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
+                _logger.LogDebug("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
                 return StatusCodes.Conflict;
             }
 
@@ -432,10 +438,10 @@ public partial class RealmService : IRealmService
             await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from all-realms list
-            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<string>();
-            if (allRealmIds.Remove(body.RealmId.ToString()))
+            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
+            if (allRealmIds.Remove(body.RealmId))
             {
-                await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
             }
 
             // Publish realm deleted event
@@ -470,18 +476,18 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Deprecating realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for deprecation: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for deprecation: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (model.IsDeprecated)
             {
-                _logger.LogWarning("Realm already deprecated: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm already deprecated: {RealmId}", body.RealmId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -520,18 +526,18 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Undeprecating realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for undeprecation: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for undeprecation: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!model.IsDeprecated)
             {
-                _logger.LogWarning("Realm is not deprecated: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm is not deprecated: {RealmId}", body.RealmId);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -586,9 +592,9 @@ public partial class RealmService : IRealmService
                 {
                     var code = seedRealm.Code.ToUpperInvariant();
                     var codeIndexKey = BuildCodeIndexKey(code);
-                    var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+                    var existingIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
 
-                    if (!string.IsNullOrEmpty(existingId))
+                    if (!string.IsNullOrEmpty(existingIdStr) && Guid.TryParse(existingIdStr, out var existingId))
                     {
                         if (body.UpdateExisting == true)
                         {
@@ -599,6 +605,7 @@ public partial class RealmService : IRealmService
                             if (existingModel != null)
                             {
                                 existingModel.Name = seedRealm.Name;
+                                existingModel.GameServiceId = seedRealm.GameServiceId;
                                 if (seedRealm.Description != null) existingModel.Description = seedRealm.Description;
                                 if (seedRealm.Category != null) existingModel.Category = seedRealm.Category;
                                 existingModel.IsActive = seedRealm.IsActive;
@@ -623,6 +630,7 @@ public partial class RealmService : IRealmService
                         {
                             Code = code,
                             Name = seedRealm.Name,
+                            GameServiceId = seedRealm.GameServiceId,
                             Description = seedRealm.Description,
                             Category = seedRealm.Category,
                             IsActive = seedRealm.IsActive,
@@ -675,7 +683,7 @@ public partial class RealmService : IRealmService
 
     #region Helper Methods
 
-    private async Task<List<RealmModel>> LoadRealmsByIdsAsync(List<string> realmIds, CancellationToken cancellationToken)
+    private async Task<List<RealmModel>> LoadRealmsByIdsAsync(List<Guid> realmIds, CancellationToken cancellationToken)
     {
         if (realmIds.Count == 0)
         {
@@ -701,9 +709,10 @@ public partial class RealmService : IRealmService
     {
         return new RealmResponse
         {
-            RealmId = Guid.Parse(model.RealmId),
+            RealmId = model.RealmId,
             Code = model.Code,
             Name = model.Name,
+            GameServiceId = model.GameServiceId,
             Description = model.Description,
             Category = model.Category,
             IsActive = model.IsActive,
@@ -731,9 +740,10 @@ public partial class RealmService : IRealmService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RealmId = Guid.Parse(model.RealmId),
+                RealmId = model.RealmId,
                 Code = model.Code,
                 Name = model.Name,
+                GameServiceId = model.GameServiceId,
                 Category = model.Category,
                 IsActive = model.IsActive
             };
@@ -758,9 +768,10 @@ public partial class RealmService : IRealmService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RealmId = Guid.Parse(model.RealmId),
+                RealmId = model.RealmId,
                 Code = model.Code,
                 Name = model.Name,
+                GameServiceId = model.GameServiceId,
                 Description = model.Description,
                 Category = model.Category,
                 IsActive = model.IsActive,
@@ -793,9 +804,10 @@ public partial class RealmService : IRealmService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RealmId = Guid.Parse(model.RealmId),
+                RealmId = model.RealmId,
                 Code = model.Code,
                 Name = model.Name,
+                GameServiceId = model.GameServiceId,
                 Description = model.Description,
                 Category = model.Category,
                 IsActive = model.IsActive,
@@ -824,10 +836,10 @@ public partial class RealmService : IRealmService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Realm service permissions...");
-        await RealmPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        _logger.LogDebug("Registering Realm service permissions...");
+        await RealmPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion
@@ -838,9 +850,10 @@ public partial class RealmService : IRealmService
 /// </summary>
 internal class RealmModel
 {
-    public string RealmId { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public Guid GameServiceId { get; set; }
     public string? Description { get; set; }
     public string? Category { get; set; }
     public bool IsActive { get; set; } = true;

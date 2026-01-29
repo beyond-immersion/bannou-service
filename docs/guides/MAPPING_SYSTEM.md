@@ -1,4 +1,4 @@
-# Mapping System - Spatial Intelligence for Arcadia
+# Mapping System - Spatial Intelligence for Game Worlds
 
 > **Version**: 1.0
 > **Status**: Implemented
@@ -32,7 +32,7 @@ The Mapping System (`lib-mapping`) manages spatial data for game worlds. It enab
 
 ### 1.1 What is the Mapping System?
 
-The Mapping System is the spatial intelligence backbone of Arcadia. It answers the fundamental questions that make worlds feel alive:
+The Mapping System is the spatial intelligence backbone of Bannou-powered games. It answers the fundamental questions that make worlds feel alive:
 
 - **Where can things happen?** - Not just "where is the boulder" but "where can an ambush occur"
 - **What does this location afford?** - Cover, shelter, dramatic vistas, chokepoints
@@ -923,6 +923,15 @@ Use affordance queries instead - let lib-mapping do the heavy lifting.
 - **Use bounds in queries**: Don't query entire regions unnecessarily
 - **Cache affordance results**: They can be expensive
 - **Subscribe narrowly**: Avoid `map.*.*` wildcards
+
+### 12.6 Known Limitations
+
+For implementation details and known quirks, see [MAPPING.md](../plugins/MAPPING.md):
+
+- **Event aggregation**: Fire-and-forget with potential silent loss under high load
+- **Spatial index**: Stale entries accumulate indefinitely (no automatic cleanup)
+- **Index operations**: Non-atomic read-modify-write, but mitigated by authority model (single writer per channel); only an issue in `accept_and_alert` mode
+- **Snapshot events**: `MapSnapshotEvent` is defined but not currently published
 
 ---
 

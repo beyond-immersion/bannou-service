@@ -162,6 +162,7 @@ public partial class VoiceController
             "properties": {
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID (unique participant identifier)"
                 },
                 "displayName": {
@@ -354,6 +355,7 @@ public partial class VoiceController
             "properties": {
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID (unique participant identifier)"
                 },
                 "displayName": {
@@ -455,6 +457,7 @@ public partial class VoiceController
                 },
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID (unique participant identifier)"
                 },
                 "sipEndpoint": {
@@ -584,6 +587,7 @@ public partial class VoiceController
             "properties": {
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID for this peer (ephemeral identifier)"
                 },
                 "displayName": {
@@ -709,6 +713,7 @@ public partial class VoiceController
                 },
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID of the leaving participant"
                 }
             }
@@ -886,6 +891,7 @@ public partial class VoiceController
                 },
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID of the peer"
                 }
             }
@@ -977,10 +983,12 @@ public partial class VoiceController
                 },
                 "senderSessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Session ID of the answering peer (caller of this endpoint)"
                 },
                 "targetSessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Session ID of the peer whose offer we're answering"
                 },
                 "sdpAnswer": {

@@ -21,9 +21,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-// Alias to distinguish client events CancelReason from service events
-using ClientCancelReason = BeyondImmersion.Bannou.Matchmaking.ClientEvents.CancelReason;
-using EventCancelReason = BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEventReason;
 
 [assembly: InternalsVisibleTo("lib-matchmaking.tests")]
 
@@ -45,6 +42,7 @@ public partial class MatchmakingService : IMatchmakingService
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IPermissionClient _permissionClient;
     private readonly IMatchmakingAlgorithm _algorithm;
+    private readonly IDistributedLockProvider _lockProvider;
 
     private const string QUEUE_KEY_PREFIX = "queue:";
     private const string QUEUE_LIST_KEY = "queue-list";
@@ -74,7 +72,8 @@ public partial class MatchmakingService : IMatchmakingService
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
         IGameSessionClient gameSessionClient,
-        IPermissionClient permissionClient)
+        IPermissionClient permissionClient,
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -83,6 +82,7 @@ public partial class MatchmakingService : IMatchmakingService
         _clientEventPublisher = clientEventPublisher;
         _gameSessionClient = gameSessionClient;
         _permissionClient = permissionClient;
+        _lockProvider = lockProvider;
         // Instantiate directly since internal types are used
         // Tests can access via InternalsVisibleTo
         _algorithm = new MatchmakingAlgorithm();
@@ -110,7 +110,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Listing matchmaking queues - GameId: {GameId}, IncludeDisabled: {IncludeDisabled}",
+            _logger.LogDebug("Listing matchmaking queues - GameId: {GameId}, IncludeDisabled: {IncludeDisabled}",
                 body.GameId, body.IncludeDisabled);
 
             var queueIds = await GetQueueIdsAsync(cancellationToken);
@@ -167,7 +167,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Getting queue {QueueId}", body.QueueId);
+            _logger.LogDebug("Getting queue {QueueId}", body.QueueId);
 
             var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
             if (queue == null)
@@ -197,7 +197,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Creating queue {QueueId} for game {GameId}", body.QueueId, body.GameId);
+            _logger.LogDebug("Creating queue {QueueId} for game {GameId}", body.QueueId, body.GameId);
 
             // Check if queue already exists
             var existing = await LoadQueueAsync(body.QueueId, cancellationToken);
@@ -211,7 +211,7 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 QueueId = body.QueueId,
                 GameId = body.GameId,
-                SessionGameType = body.SessionGameType,
+                SessionGameType = body.SessionGameType ?? "generic",
                 DisplayName = body.DisplayName,
                 Description = body.Description,
                 Enabled = true,
@@ -284,9 +284,11 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Updating queue {QueueId}", body.QueueId);
+            _logger.LogDebug("Updating queue {QueueId}", body.QueueId);
 
-            var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
+            var queueStore = _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking);
+            var queueKey = QUEUE_KEY_PREFIX + body.QueueId;
+            var (queue, etag) = await queueStore.GetWithETagAsync(queueKey, cancellationToken);
             if (queue == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -315,8 +317,14 @@ public partial class MatchmakingService : IMatchmakingService
 
             queue.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save queue
-            await SaveQueueAsync(queue, cancellationToken);
+            // Save queue with ETag - etag is non-null when queue was successfully loaded above;
+            // null-coalesce satisfies compiler nullable analysis (will never execute)
+            var newEtag = await queueStore.TrySaveAsync(queueKey, queue, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for queue {QueueId}", body.QueueId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync("matchmaking.queue-updated", new MatchmakingQueueUpdatedEvent
@@ -355,7 +363,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Deleting queue {QueueId}", body.QueueId);
+            _logger.LogDebug("Deleting queue {QueueId}", body.QueueId);
 
             var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
             if (queue == null)
@@ -367,7 +375,7 @@ public partial class MatchmakingService : IMatchmakingService
             var ticketIds = await GetQueueTicketIdsAsync(body.QueueId, cancellationToken);
             foreach (var ticketId in ticketIds)
             {
-                await CancelTicketInternalAsync(ticketId, ClientCancelReason.Queue_disabled, cancellationToken);
+                await CancelTicketInternalAsync(ticketId, CancelReason.QueueDisabled, cancellationToken);
             }
 
             // Delete queue
@@ -418,11 +426,11 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            var sessionId = body.WebSocketSessionId.ToString();
+            var sessionId = body.WebSocketSessionId;
             var accountId = body.AccountId;
             var queueId = body.QueueId;
 
-            _logger.LogInformation("Player {AccountId} joining queue {QueueId}", accountId, queueId);
+            _logger.LogDebug("Player {AccountId} joining queue {QueueId}", accountId, queueId);
 
             // Load queue
             var queue = await LoadQueueAsync(queueId, cancellationToken);
@@ -489,7 +497,7 @@ public partial class MatchmakingService : IMatchmakingService
                 PartyMembers = body.PartyMembers?.Select(m => new PartyMemberModel
                 {
                     AccountId = m.AccountId,
-                    WebSocketSessionId = m.WebSocketSessionId.ToString(),
+                    WebSocketSessionId = m.WebSocketSessionId,
                     SkillRating = m.SkillRating
                 }).ToList(),
                 StringProperties = body.StringProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, string>(),
@@ -545,6 +553,16 @@ public partial class MatchmakingService : IMatchmakingService
                     NewState = "in_queue"
                 }, cancellationToken);
             }
+            catch (ApiException apiEx)
+            {
+                _logger.LogWarning(apiEx, "Permission service error setting matchmaking state for session {SessionId}: {Status}",
+                    sessionId, apiEx.StatusCode);
+                // Rollback
+                await DeleteTicketAsync(ticketId, cancellationToken);
+                await RemoveFromPlayerTicketsAsync(accountId, ticketId, cancellationToken);
+                await RemoveFromQueueTicketsAsync(queueId, ticketId, cancellationToken);
+                return ((StatusCodes)apiEx.StatusCode, null);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to set matchmaking state for session {SessionId}", sessionId);
@@ -572,7 +590,7 @@ public partial class MatchmakingService : IMatchmakingService
             }, cancellationToken: cancellationToken);
 
             // Send client event
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new QueueJoinedEvent
+            await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), new QueueJoinedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -621,7 +639,7 @@ public partial class MatchmakingService : IMatchmakingService
             var ticketId = body.TicketId;
             var accountId = body.AccountId;
 
-            _logger.LogInformation("Player {AccountId} leaving matchmaking with ticket {TicketId}",
+            _logger.LogDebug("Player {AccountId} leaving matchmaking with ticket {TicketId}",
                 accountId, ticketId);
 
             var ticket = await LoadTicketAsync(ticketId, cancellationToken);
@@ -637,7 +655,7 @@ public partial class MatchmakingService : IMatchmakingService
                 return StatusCodes.Forbidden;
             }
 
-            await CancelTicketInternalAsync(ticketId, ClientCancelReason.Cancelled_by_user, cancellationToken);
+            await CancelTicketInternalAsync(ticketId, CancelReason.CancelledByUser, cancellationToken);
 
             return StatusCodes.OK;
         }
@@ -709,9 +727,18 @@ public partial class MatchmakingService : IMatchmakingService
         {
             var matchId = body.MatchId;
             var accountId = body.AccountId;
-            var sessionId = body.WebSocketSessionId.ToString();
+            var sessionId = body.WebSocketSessionId;
 
-            _logger.LogInformation("Player {AccountId} accepting match {MatchId}", accountId, matchId);
+            _logger.LogDebug("Player {AccountId} accepting match {MatchId}", accountId, matchId);
+
+            // Acquire lock on match (multiple players accept concurrently)
+            await using var matchLock = await _lockProvider.LockAsync(
+                "matchmaking-match", matchId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!matchLock.Success)
+            {
+                _logger.LogWarning("Could not acquire match lock for {MatchId}", matchId);
+                return (StatusCodes.Conflict, null);
+            }
 
             var match = await LoadMatchAsync(matchId, cancellationToken);
             if (match == null)
@@ -744,7 +771,7 @@ public partial class MatchmakingService : IMatchmakingService
             // Notify all players of acceptance progress
             foreach (var ticket in match.MatchedTickets)
             {
-                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchPlayerAcceptedEvent
+                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchPlayerAcceptedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -803,7 +830,7 @@ public partial class MatchmakingService : IMatchmakingService
             var matchId = body.MatchId;
             var accountId = body.AccountId;
 
-            _logger.LogInformation("Player {AccountId} declining match {MatchId}", accountId, matchId);
+            _logger.LogDebug("Player {AccountId} declining match {MatchId}", accountId, matchId);
 
             var match = await LoadMatchAsync(matchId, cancellationToken);
             if (match == null)
@@ -977,7 +1004,7 @@ public partial class MatchmakingService : IMatchmakingService
         // Update tickets
         foreach (var ticket in tickets)
         {
-            ticket.Status = TicketStatus.Match_found;
+            ticket.Status = TicketStatus.MatchFound;
             ticket.MatchId = matchId;
             await SaveTicketAsync(ticket, cancellationToken);
 
@@ -989,7 +1016,7 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                 {
-                    SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                    SessionId = ticket.WebSocketSessionId,
                     ServiceId = "matchmaking",
                     NewState = "match_pending"
                 }, cancellationToken);
@@ -1003,7 +1030,7 @@ public partial class MatchmakingService : IMatchmakingService
         // Send match found events
         foreach (var ticket in tickets)
         {
-            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchFoundEvent
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchFoundEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1032,7 +1059,7 @@ public partial class MatchmakingService : IMatchmakingService
                 TicketId = t.TicketId,
                 AccountId = t.AccountId,
                 PartyId = t.PartyId,
-                WebSocketSessionId = Guid.Parse(t.WebSocketSessionId),
+                WebSocketSessionId = t.WebSocketSessionId,
                 SkillRating = t.SkillRating,
                 WaitTimeSeconds = t.WaitTimeSeconds
             }).ToList(),
@@ -1056,12 +1083,8 @@ public partial class MatchmakingService : IMatchmakingService
 
         try
         {
-            // Map queue SessionGameType to game-session CreateGameSessionRequestGameType
-            var gameType = queue?.SessionGameType switch
-            {
-                SessionGameType.Arcadia => CreateGameSessionRequestGameType.Arcadia,
-                _ => CreateGameSessionRequestGameType.Generic
-            };
+            // SessionGameType is now a string (game service stub name)
+            var gameType = queue?.SessionGameType ?? "generic";
 
             var sessionResponse = await _gameSessionClient.CreateGameSessionAsync(new CreateGameSessionRequest
             {
@@ -1092,13 +1115,13 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 var reservation = reservations.FirstOrDefault(r => r.AccountId == ticket.AccountId);
 
-                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchConfirmedEvent
+                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchConfirmedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     MatchId = match.MatchId,
                     GameSessionId = sessionResponse.SessionId,
-                    ReservationToken = reservation?.Token ?? string.Empty,
+                    ReservationToken = reservation?.Token,
                     JoinDeadlineSeconds = _configuration.DefaultJoinDeadlineSeconds
                 }, cancellationToken);
 
@@ -1119,7 +1142,7 @@ public partial class MatchmakingService : IMatchmakingService
                 {
                     await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
                     {
-                        SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                        SessionId = ticket.WebSocketSessionId,
                         ServiceId = "matchmaking"
                     }, cancellationToken);
                 }
@@ -1157,6 +1180,12 @@ public partial class MatchmakingService : IMatchmakingService
             _logger.LogInformation("Match {MatchId} finalized with game session {GameSessionId}",
                 match.MatchId, sessionResponse.SessionId);
         }
+        catch (ApiException apiEx)
+        {
+            _logger.LogWarning(apiEx, "Game session service error finalizing match {MatchId}: {Status}",
+                match.MatchId, apiEx.StatusCode);
+            await CancelMatchAsync(match, null, cancellationToken);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error finalizing match {MatchId}", match.MatchId);
@@ -1182,7 +1211,7 @@ public partial class MatchmakingService : IMatchmakingService
         foreach (var ticket in match.MatchedTickets)
         {
             // Send cancelled event
-            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchDeclinedEvent
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchDeclinedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1198,7 +1227,7 @@ public partial class MatchmakingService : IMatchmakingService
             if (ticket.AccountId == declinedBy)
             {
                 // Cancel the decliner's ticket
-                await CancelTicketInternalAsync(ticket.TicketId, ClientCancelReason.Match_declined, cancellationToken);
+                await CancelTicketInternalAsync(ticket.TicketId, CancelReason.MatchDeclined, cancellationToken);
             }
             else if (_configuration.AutoRequeueOnDecline)
             {
@@ -1208,7 +1237,7 @@ public partial class MatchmakingService : IMatchmakingService
             else
             {
                 // Cancel all tickets
-                await CancelTicketInternalAsync(ticket.TicketId, ClientCancelReason.Match_declined, cancellationToken);
+                await CancelTicketInternalAsync(ticket.TicketId, CancelReason.MatchDeclined, cancellationToken);
             }
         }
 
@@ -1227,12 +1256,15 @@ public partial class MatchmakingService : IMatchmakingService
                 {
                     await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                     {
-                        SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                        SessionId = ticket.WebSocketSessionId,
                         ServiceId = "matchmaking",
                         NewState = "in_queue"
                     }, cancellationToken);
                 }
-                catch { /* Ignore */ }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to update permission state for session {SessionId}", ticket.WebSocketSessionId);
+                }
             }
         }
 
@@ -1255,7 +1287,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Cancels a ticket internally with reason.
     /// </summary>
-    private async Task CancelTicketInternalAsync(Guid ticketId, ClientCancelReason reason, CancellationToken cancellationToken)
+    private async Task CancelTicketInternalAsync(Guid ticketId, CancelReason reason, CancellationToken cancellationToken)
     {
         var ticket = await LoadTicketAsync(ticketId, cancellationToken);
         if (ticket == null) return;
@@ -1265,7 +1297,7 @@ public partial class MatchmakingService : IMatchmakingService
         _logger.LogInformation("Cancelling ticket {TicketId} with reason {Reason}", ticketId, reason);
 
         // Send client event
-        await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchmakingCancelledEvent
+        await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchmakingCancelledEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1273,7 +1305,7 @@ public partial class MatchmakingService : IMatchmakingService
             QueueId = ticket.QueueId,
             Reason = reason,
             WaitTimeSeconds = waitTime,
-            CanRequeue = reason != ClientCancelReason.Session_disconnected && reason != ClientCancelReason.Queue_disabled
+            CanRequeue = reason != CancelReason.SessionDisconnected && reason != CancelReason.QueueDisabled
         }, cancellationToken);
 
         // Clear state
@@ -1281,16 +1313,19 @@ public partial class MatchmakingService : IMatchmakingService
         {
             await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
             {
-                SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                SessionId = ticket.WebSocketSessionId,
                 ServiceId = "matchmaking"
             }, cancellationToken);
         }
-        catch { /* Ignore */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to clear permission state for session {SessionId}", ticket.WebSocketSessionId);
+        }
 
         // Clean up ticket
         await CleanupTicketAsync(ticketId, ticket.AccountId, ticket.QueueId, cancellationToken);
 
-        // Publish service event (cast enum - both enums have identical values)
+        // Publish service event (cast from client events enum to API enum - identical values)
         await _messageBus.TryPublishAsync(TICKET_CANCELLED_TOPIC, new MatchmakingTicketCancelledEvent
         {
             EventId = Guid.NewGuid(),
@@ -1299,7 +1334,7 @@ public partial class MatchmakingService : IMatchmakingService
             QueueId = ticket.QueueId,
             AccountId = ticket.AccountId,
             PartyId = ticket.PartyId,
-            Reason = (EventCancelReason)reason,
+            Reason = (CancelReason)reason,
             WaitTimeSeconds = waitTime
         }, cancellationToken: cancellationToken);
     }
@@ -1321,26 +1356,28 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Publishes matchmaking shortcuts (leave, status) after joining queue.
     /// </summary>
-    private async Task PublishMatchmakingShortcutsAsync(string sessionId, Guid accountId, Guid ticketId, CancellationToken cancellationToken)
+    private async Task PublishMatchmakingShortcutsAsync(Guid sessionId, Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
         try
         {
-            // Leave shortcut
-            var leaveRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_leave", "matchmaking", _serverSalt);
-            var leaveTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/leave", _serverSalt);
+            var sessionIdStr = sessionId.ToString();
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            // Leave shortcut
+            var leaveRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_leave", "matchmaking", _serverSalt);
+            var leaveTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/leave", _serverSalt);
+
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = leaveRouteGuid,
                     TargetGuid = leaveTargetGuid,
                     BoundPayload = BannouJson.Serialize(new LeaveMatchmakingRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         TicketId = ticketId
                     }),
@@ -1359,21 +1396,21 @@ public partial class MatchmakingService : IMatchmakingService
             }, cancellationToken);
 
             // Status shortcut
-            var statusRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_status", "matchmaking", _serverSalt);
-            var statusTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/status", _serverSalt);
+            var statusRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_status", "matchmaking", _serverSalt);
+            var statusTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/status", _serverSalt);
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = statusRouteGuid,
                     TargetGuid = statusTargetGuid,
                     BoundPayload = BannouJson.Serialize(new GetMatchmakingStatusRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         TicketId = ticketId
                     }),
@@ -1400,26 +1437,28 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Publishes match shortcuts (accept, decline) after match formation.
     /// </summary>
-    private async Task PublishMatchShortcutsAsync(string sessionId, Guid accountId, Guid matchId, CancellationToken cancellationToken)
+    private async Task PublishMatchShortcutsAsync(Guid sessionId, Guid accountId, Guid matchId, CancellationToken cancellationToken)
     {
         try
         {
-            // Accept shortcut
-            var acceptRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_accept", "matchmaking", _serverSalt);
-            var acceptTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/accept", _serverSalt);
+            var sessionIdStr = sessionId.ToString();
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            // Accept shortcut
+            var acceptRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_accept", "matchmaking", _serverSalt);
+            var acceptTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/accept", _serverSalt);
+
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = acceptRouteGuid,
                     TargetGuid = acceptTargetGuid,
                     BoundPayload = BannouJson.Serialize(new AcceptMatchRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         MatchId = matchId
                     }),
@@ -1438,21 +1477,21 @@ public partial class MatchmakingService : IMatchmakingService
             }, cancellationToken);
 
             // Decline shortcut
-            var declineRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_decline", "matchmaking", _serverSalt);
-            var declineTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/decline", _serverSalt);
+            var declineRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_decline", "matchmaking", _serverSalt);
+            var declineTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/decline", _serverSalt);
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = declineRouteGuid,
                     TargetGuid = declineTargetGuid,
                     BoundPayload = BannouJson.Serialize(new DeclineMatchRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         MatchId = matchId
                     }),
@@ -1488,6 +1527,14 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue list lock");
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (!list.Contains(queueId))
@@ -1499,6 +1546,14 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue list lock");
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (list.Remove(queueId))
@@ -1563,22 +1618,40 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = PLAYER_TICKETS_PREFIX + accountId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
             list.Add(ticketId);
-            await store.SaveAsync(PLAYER_TICKETS_PREFIX + accountId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = PLAYER_TICKETS_PREFIX + accountId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
-            await store.SaveAsync(PLAYER_TICKETS_PREFIX + accountId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 
@@ -1596,22 +1669,40 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = QUEUE_TICKETS_PREFIX + queueId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
             list.Add(ticketId);
-            await store.SaveAsync(QUEUE_TICKETS_PREFIX + queueId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = QUEUE_TICKETS_PREFIX + queueId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
-            await store.SaveAsync(QUEUE_TICKETS_PREFIX + queueId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 
@@ -1767,7 +1858,7 @@ public partial class MatchmakingService : IMatchmakingService
                 ticket.TicketId, ticket.IntervalsElapsed);
             await CancelTicketInternalAsync(
                 ticket.TicketId,
-                ClientCancelReason.Timeout,
+                CancelReason.Timeout,
                 cancellationToken);
         }
 
@@ -1862,10 +1953,10 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Registers service permissions with the Permission service.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Matchmaking service permissions...");
-        await MatchmakingPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await MatchmakingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion
@@ -1880,7 +1971,7 @@ internal class QueueModel
 {
     public string QueueId { get; set; } = string.Empty;
     public string GameId { get; set; } = string.Empty;
-    public SessionGameType SessionGameType { get; set; } = SessionGameType.Generic;
+    public string SessionGameType { get; set; } = "generic";
     public string DisplayName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool Enabled { get; set; } = true;
@@ -1926,7 +2017,7 @@ internal class TicketModel
     public Guid TicketId { get; set; }
     public string QueueId { get; set; } = string.Empty;
     public Guid AccountId { get; set; }
-    public string WebSocketSessionId { get; set; } = string.Empty;
+    public Guid WebSocketSessionId { get; set; }
     public Guid? PartyId { get; set; }
     public List<PartyMemberModel>? PartyMembers { get; set; }
     public Dictionary<string, string> StringProperties { get; set; } = new();
@@ -1943,7 +2034,7 @@ internal class TicketModel
 internal class PartyMemberModel
 {
     public Guid AccountId { get; set; }
-    public string WebSocketSessionId { get; set; } = string.Empty;
+    public Guid WebSocketSessionId { get; set; }
     public double? SkillRating { get; set; }
 }
 
@@ -1980,7 +2071,7 @@ internal class MatchedTicketModel
 {
     public Guid TicketId { get; set; }
     public Guid AccountId { get; set; }
-    public string WebSocketSessionId { get; set; } = string.Empty;
+    public Guid WebSocketSessionId { get; set; }
     public Guid? PartyId { get; set; }
     public double? SkillRating { get; set; }
     public double WaitTimeSeconds { get; set; }

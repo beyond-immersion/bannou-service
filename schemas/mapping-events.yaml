@@ -14,7 +14,7 @@ info:
     - `map.ingest.{channelId}` - High-throughput ingest (service subscribes)
     - `map.warnings.unauthorized_publish` - Non-authority publish attempts
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 
@@ -75,7 +75,7 @@ x-lifecycle:
       authorityAppId: { type: string, nullable: true, description: "App ID of current authority (null if unassigned)" }
       authorityToken: { type: string, nullable: true, description: "Current authority token (null if unassigned)" }
       authorityExpiresAt: { type: string, format: date-time, nullable: true, description: "When current authority expires" }
-      nonAuthorityHandling: { type: string, required: true, description: "How to handle non-authority publishes" }
+      nonAuthorityHandling: { $ref: 'mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode', required: true, description: "How to handle non-authority publishes" }
       version: { type: integer, format: int64, required: true, description: "Current version number" }
       createdAt: { type: string, format: date-time, required: true, description: "When the channel was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "When the channel was last updated" }
@@ -263,10 +263,10 @@ components:
           description: Monotonic version for ordering
           nullable: true
         deltaType:
-          type: string
-          enum: [delta, snapshot]
-          description: Whether this is incremental or full
+          allOf:
+          - $ref: 'mapping-api.yaml#/components/schemas/DeltaType'
           nullable: true
+          description: Whether this is incremental or full
         sourceAppId:
           type: string
           description: App-id of publisher
@@ -458,8 +458,7 @@ components:
           description: App-id that currently has authority
           nullable: true
         handlingMode:
-          type: string
-          enum: [reject_and_alert, accept_and_alert, reject_silent]
+          $ref: 'mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode'
           description: How the attempt was handled
         publishAccepted:
           type: boolean

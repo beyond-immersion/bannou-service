@@ -10,7 +10,7 @@ info:
     - Service events: RabbitMQ pub/sub between services via MassTransit
     - Client events: Services → RabbitMQ → Connect service → WebSocket → Client
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
@@ -102,28 +102,23 @@ components:
       description: Individual API capability entry with routing information
       required:
         - serviceId
-        - serviceName
-        - method
-        - path
-        - endpointKey
+        - endpoint
+        - service
       properties:
         serviceId:
           type: string
           format: uuid
-          description: Client-salted GUID for this endpoint (unique per client)
-        serviceName:
+          description: Client-salted GUID for binary header routing
+        endpoint:
           type: string
-          description: Service name (e.g., "account", "game-session")
-        method:
+          description: API path (e.g., "/account/get") - used as lookup key
+        service:
           type: string
-          enum: [GET, POST]
-          description: HTTP method for WebSocket routing
-        path:
+          description: Service name (e.g., "account")
+        description:
           type: string
-          description: API endpoint path (e.g., "/account/get")
-        endpointKey:
-          type: string
-          description: Full endpoint key for routing (e.g., "account:POST:/account/get")
+          nullable: true
+          description: Human-readable description
 
     DisconnectNotificationEvent:
       allOf:
@@ -225,7 +220,7 @@ components:
             type: array
             items:
               type: string
-          description: Map of ServiceID -> List of available methods (e.g., "account" -> ["POST:/get-account"])
+          description: Map of ServiceID -> List of available endpoints (e.g., "account" -> ["/account/get"])
         reason:
           type: string
           nullable: true
@@ -402,7 +397,7 @@ components:
           maxLength: 128
           description: |
             Machine-readable identifier for this shortcut.
-            Examples: "join_game_arcadia", "get_my_stats"
+            Examples: "join_game_{service}", "get_my_stats"
         description:
           type: string
           maxLength: 500

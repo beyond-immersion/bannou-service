@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: Currency Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for currency service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: currency-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    CurrencyDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to currency-definition.created when a currencydefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - code
+      - name
+      - scope
+      - precision
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: currency-definition.created
+          description: 'Event type identifier: currency-definition.created'
+        definitionId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the currency definition"
+        code: &id002
+          type: string
+          description: "Unique currency code"
+        name: &id003
+          type: string
+          description: "Human-readable currency name"
+        scope: &id004
+          $ref: ../currency-api.yaml#/components/schemas/CurrencyScope
+          description: "Currency scope"
+        precision: &id005
+          $ref: ../currency-api.yaml#/components/schemas/CurrencyPrecision
+          description: "Currency precision type"
+        isActive: &id006
+          type: boolean
+          description: "Whether the definition is active"
+        createdAt: &id007
+          type: string
+          format: date-time
+          description: "When the definition was created"
+        modifiedAt: &id008
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the definition was last modified"
+    CurrencyDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to currency-definition.updated when a currencydefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - code
+      - name
+      - scope
+      - precision
+      - isActive
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: currency-definition.updated
+          description: 'Event type identifier: currency-definition.updated'
+        definitionId: *id001
+        code: *id002
+        name: *id003
+        scope: *id004
+        precision: *id005
+        isActive: *id006
+        createdAt: *id007
+        modifiedAt: *id008
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CurrencyDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to currency-definition.deleted when a currencydefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - code
+      - name
+      - scope
+      - precision
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: currency-definition.deleted
+          description: 'Event type identifier: currency-definition.deleted'
+        definitionId: *id001
+        code: *id002
+        name: *id003
+        scope: *id004
+        precision: *id005
+        isActive: *id006
+        createdAt: *id007
+        modifiedAt: *id008
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    CurrencyWalletCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to currency-wallet.created when a currencywallet is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      - ownerType
+      - status
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: currency-wallet.created
+          description: 'Event type identifier: currency-wallet.created'
+        walletId: &id009
+          type: string
+          format: uuid
+          description: "Unique wallet identifier"
+        ownerId: &id010
+          type: string
+          format: uuid
+          description: "Owner entity ID"
+        ownerType: &id011
+          $ref: ../currency-api.yaml#/components/schemas/WalletOwnerType
+          description: "Owner entity type"
+        realmId: &id012
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm ID for realm-scoped wallets"
+        status: &id013
+          $ref: ../currency-api.yaml#/components/schemas/WalletStatus
+          description: "Wallet status"
+        createdAt: &id014
+          type: string
+          format: date-time
+          description: "When the wallet was created"
+    CurrencyWalletUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to currency-wallet.updated when a currencywallet is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      - ownerType
+      - status
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: currency-wallet.updated
+          description: 'Event type identifier: currency-wallet.updated'
+        walletId: *id009
+        ownerId: *id010
+        ownerType: *id011
+        realmId: *id012
+        status: *id013
+        createdAt: *id014
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CurrencyWalletDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to currency-wallet.deleted when a currencywallet is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      - ownerType
+      - status
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: currency-wallet.deleted
+          description: 'Event type identifier: currency-wallet.deleted'
+        walletId: *id009
+        ownerId: *id010
+        ownerType: *id011
+        realmId: *id012
+        status: *id013
+        createdAt: *id014
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

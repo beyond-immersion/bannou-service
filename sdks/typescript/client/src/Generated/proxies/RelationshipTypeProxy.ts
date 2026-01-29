@@ -39,7 +39,7 @@ export class RelationshipTypeProxy {
     return this.client.invokeAsync<
       Schemas['GetRelationshipTypeRequest'],
       Schemas['RelationshipTypeResponse']
-    >('POST', '/relationship-type/get', request, channel, timeout);
+    >('/relationship-type/get', request, channel, timeout);
   }
 
   /**
@@ -57,7 +57,7 @@ export class RelationshipTypeProxy {
     return this.client.invokeAsync<
       Schemas['GetRelationshipTypeByCodeRequest'],
       Schemas['RelationshipTypeResponse']
-    >('POST', '/relationship-type/get-by-code', request, channel, timeout);
+    >('/relationship-type/get-by-code', request, channel, timeout);
   }
 
   /**
@@ -75,7 +75,7 @@ export class RelationshipTypeProxy {
     return this.client.invokeAsync<
       Schemas['ListRelationshipTypesRequest'],
       Schemas['RelationshipTypeListResponse']
-    >('POST', '/relationship-type/list', request, channel, timeout);
+    >('/relationship-type/list', request, channel, timeout);
   }
 
   /**
@@ -93,7 +93,7 @@ export class RelationshipTypeProxy {
     return this.client.invokeAsync<
       Schemas['GetChildRelationshipTypesRequest'],
       Schemas['RelationshipTypeListResponse']
-    >('POST', '/relationship-type/get-children', request, channel, timeout);
+    >('/relationship-type/get-children', request, channel, timeout);
   }
 
   /**
@@ -111,7 +111,7 @@ export class RelationshipTypeProxy {
     return this.client.invokeAsync<
       Schemas['MatchesHierarchyRequest'],
       Schemas['MatchesHierarchyResponse']
-    >('POST', '/relationship-type/matches-hierarchy', request, channel, timeout);
+    >('/relationship-type/matches-hierarchy', request, channel, timeout);
   }
 
   /**
@@ -129,6 +129,6 @@ export class RelationshipTypeProxy {
     return this.client.invokeAsync<
       Schemas['GetAncestorsRequest'],
       Schemas['RelationshipTypeListResponse']
-    >('POST', '/relationship-type/get-ancestors', request, channel, timeout);
+    >('/relationship-type/get-ancestors', request, channel, timeout);
   }
 }

@@ -39,7 +39,7 @@ export class MappingProxy {
     return this.client.invokeAsync<
       Schemas['RequestSnapshotRequest'],
       Schemas['RequestSnapshotResponse']
-    >('POST', '/mapping/request-snapshot', request, channel, timeout);
+    >('/mapping/request-snapshot', request, channel, timeout);
   }
 
   /**
@@ -55,7 +55,6 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryPointResponse']>> {
     return this.client.invokeAsync<Schemas['QueryPointRequest'], Schemas['QueryPointResponse']>(
-      'POST',
       '/mapping/query/point',
       request,
       channel,
@@ -76,7 +75,6 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryBoundsResponse']>> {
     return this.client.invokeAsync<Schemas['QueryBoundsRequest'], Schemas['QueryBoundsResponse']>(
-      'POST',
       '/mapping/query/bounds',
       request,
       channel,
@@ -99,7 +97,7 @@ export class MappingProxy {
     return this.client.invokeAsync<
       Schemas['QueryObjectsByTypeRequest'],
       Schemas['QueryObjectsByTypeResponse']
-    >('POST', '/mapping/query/objects-by-type', request, channel, timeout);
+    >('/mapping/query/objects-by-type', request, channel, timeout);
   }
 
   /**
@@ -117,7 +115,7 @@ export class MappingProxy {
     return this.client.invokeAsync<
       Schemas['AffordanceQueryRequest'],
       Schemas['AffordanceQueryResponse']
-    >('POST', '/mapping/query/affordance', request, channel, timeout);
+    >('/mapping/query/affordance', request, channel, timeout);
   }
 
   /**
@@ -135,7 +133,7 @@ export class MappingProxy {
     return this.client.invokeAsync<
       Schemas['AuthoringCheckoutRequest'],
       Schemas['AuthoringCheckoutResponse']
-    >('POST', '/mapping/authoring/checkout', request, channel, timeout);
+    >('/mapping/authoring/checkout', request, channel, timeout);
   }
 
   /**
@@ -153,7 +151,7 @@ export class MappingProxy {
     return this.client.invokeAsync<
       Schemas['AuthoringCommitRequest'],
       Schemas['AuthoringCommitResponse']
-    >('POST', '/mapping/authoring/commit', request, channel, timeout);
+    >('/mapping/authoring/commit', request, channel, timeout);
   }
 
   /**
@@ -171,7 +169,7 @@ export class MappingProxy {
     return this.client.invokeAsync<
       Schemas['AuthoringReleaseRequest'],
       Schemas['AuthoringReleaseResponse']
-    >('POST', '/mapping/authoring/release', request, channel, timeout);
+    >('/mapping/authoring/release', request, channel, timeout);
   }
 
   /**
@@ -187,7 +185,6 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MapDefinition']>> {
     return this.client.invokeAsync<Schemas['CreateDefinitionRequest'], Schemas['MapDefinition']>(
-      'POST',
       '/mapping/definition/create',
       request,
       channel,
@@ -208,7 +205,6 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MapDefinition']>> {
     return this.client.invokeAsync<Schemas['GetDefinitionRequest'], Schemas['MapDefinition']>(
-      'POST',
       '/mapping/definition/get',
       request,
       channel,
@@ -231,7 +227,7 @@ export class MappingProxy {
     return this.client.invokeAsync<
       Schemas['ListDefinitionsRequest'],
       Schemas['ListDefinitionsResponse']
-    >('POST', '/mapping/definition/list', request, channel, timeout);
+    >('/mapping/definition/list', request, channel, timeout);
   }
 
   /**
@@ -247,7 +243,6 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MapDefinition']>> {
     return this.client.invokeAsync<Schemas['UpdateDefinitionRequest'], Schemas['MapDefinition']>(
-      'POST',
       '/mapping/definition/update',
       request,
       channel,

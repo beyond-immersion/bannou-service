@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -19,20 +20,18 @@ namespace BeyondImmersion.BannouService.Auth.Tests;
 /// Unit tests for AuthService
 /// This test project can reference other service clients for integration testing.
 /// </summary>
-public class AuthServiceTests : IDisposable
+public class AuthServiceTests
 {
-    private readonly HttpClient _httpClient;
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly Mock<IAccountClient> _mockAccountClient;
     private readonly Mock<ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<AuthService.PasswordResetData>> _mockPasswordResetStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
-    private readonly Mock<IStateStore<StringWrapper>> _mockStringWrapperStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ISessionService> _mockSessionService;
     private readonly Mock<IOAuthProviderService> _mockOAuthService;
@@ -62,15 +61,20 @@ public class AuthServiceTests : IDisposable
             SteamApiKey = "test-steam-api-key",
             SteamAppId = "123456"
         };
+        _appConfiguration = new AppConfiguration
+        {
+            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
+            JwtIssuer = "test-issuer",
+            JwtAudience = "test-audience",
+            ServiceDomain = "localhost"
+        };
         _mockAccountClient = new Mock<IAccountClient>();
         _mockSubscriptionClient = new Mock<ISubscriptionClient>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockPasswordResetStore = new Mock<IStateStore<AuthService.PasswordResetData>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
-        _mockStringWrapperStore = new Mock<IStateStore<StringWrapper>>();
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockTokenService = new Mock<ITokenService>();
         _mockSessionService = new Mock<ISessionService>();
         _mockOAuthService = new Mock<IOAuthProviderService>();
@@ -83,8 +87,6 @@ public class AuthServiceTests : IDisposable
             .Returns(_mockSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(It.IsAny<string>()))
             .Returns(_mockListStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<StringWrapper>(It.IsAny<string>()))
-            .Returns(_mockStringWrapperStore.Object);
 
         // Setup default behavior for state stores
         _mockPasswordResetStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AuthService.PasswordResetData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -93,25 +95,10 @@ public class AuthServiceTests : IDisposable
             .ReturnsAsync("etag");
         _mockListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockStringWrapperStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<StringWrapper>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
         _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-
-        // Setup default HttpClient for mock factory
-        _httpClient = new HttpClient();
-        _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(_httpClient);
-    }
-
-    /// <summary>
-    /// Disposes test resources.
-    /// </summary>
-    public void Dispose()
-    {
-        _httpClient.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -125,8 +112,8 @@ public class AuthServiceTests : IDisposable
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
+            _appConfiguration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -231,7 +218,7 @@ public class AuthServiceTests : IDisposable
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);
@@ -439,7 +426,10 @@ public class AuthServiceTests : IDisposable
     [Fact]
     public async Task ValidateTokenAsync_WithMalformedJwt_ShouldReturnUnauthorized()
     {
-        // Arrange
+        // Arrange - TokenService returns Unauthorized for malformed JWTs
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("not-a-valid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.Unauthorized, (ValidateTokenResponse?)null));
         var service = CreateAuthService();
 
         // Act - pass a clearly invalid JWT format
@@ -557,8 +547,8 @@ public class AuthServiceTests : IDisposable
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             emptyConfig,
+            _appConfiguration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -578,6 +568,9 @@ public class AuthServiceTests : IDisposable
     public async Task InitOAuthAsync_ShouldReturnAuthorizationUrl()
     {
         // Arrange
+        _mockOAuthService
+            .Setup(o => o.GetAuthorizationUrl(Provider.Discord, "https://example.com/callback", "test-state"))
+            .Returns("https://discord.com/oauth2/authorize?client_id=test&state=test-state");
         var service = CreateAuthService();
 
         // Act
@@ -660,102 +653,6 @@ public class AuthServiceTests : IDisposable
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-    }
-
-    #endregion
-
-    #region Session Invalidation Event Tests
-
-    [Fact]
-    public async Task OnEventReceivedAsync_AccountDeleted_ShouldInvalidateSessionsAndPublishEvent()
-    {
-        // Arrange
-        var accountId = Guid.NewGuid();
-        var sessionKey1 = $"session:{Guid.NewGuid()}";
-        var sessionKey2 = $"session:{Guid.NewGuid()}";
-
-        // Mock the account sessions lookup
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                $"account-sessions:{accountId}",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { sessionKey1, sessionKey2 });
-
-        var service = CreateAuthService();
-
-        var accountDeletedEvent = new AccountDeletedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            AccountId = accountId,
-            DeletedReason = "user_requested"
-        };
-
-        // Act
-        await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
-
-        // Assert - verify session invalidation event was published
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "session.invalidated",
-            It.Is<SessionInvalidatedEvent>(e =>
-                e.AccountId == accountId &&
-                e.Reason == SessionInvalidatedEventReason.Account_deleted &&
-                e.DisconnectClients == true),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task OnEventReceivedAsync_AccountDeleted_WithNoSessions_ShouldNotPublishEvent()
-    {
-        // Arrange
-        var accountId = Guid.NewGuid();
-
-        // Mock returns empty session list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                $"account-sessions:{accountId}",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
-
-        var service = CreateAuthService();
-
-        var accountDeletedEvent = new AccountDeletedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            AccountId = accountId,
-            DeletedReason = "user_requested"
-        };
-
-        // Act
-        await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
-
-        // Assert - no event should be published since there were no sessions
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "session.invalidated",
-            It.IsAny<SessionInvalidatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task OnEventReceivedAsync_UnknownEventTopic_ShouldNotThrow()
-    {
-        // Arrange
-        var service = CreateAuthService();
-
-        var unknownEvent = new { SomeProperty = "value" };
-
-        // Act & Assert - should complete without throwing
-        var exception = await Record.ExceptionAsync(() =>
-            service.OnEventReceivedAsync("unknown.topic", unknownEvent));
-
-        Assert.Null(exception);
     }
 
     #endregion
@@ -884,17 +781,16 @@ public class AuthServiceTests : IDisposable
 
         // Mock OAuth service to return/create account
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Discord, // Note: Uses Discord enum with "steam" provider override
+            Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
-            It.IsAny<CancellationToken>(),
-            "steam"))
-            .ReturnsAsync(account);
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, false));
 
         // Mock token service
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("test-access-token", Guid.NewGuid().ToString()));
+            .ReturnsAsync(("test-access-token", Guid.NewGuid()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
             .Returns("test-refresh-token");
 
@@ -913,8 +809,8 @@ public class AuthServiceTests : IDisposable
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
+            _appConfiguration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -953,16 +849,15 @@ public class AuthServiceTests : IDisposable
             .ReturnsAsync(mockSteamInfo);
 
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Discord,
+            Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
-            It.IsAny<CancellationToken>(),
-            "steam"))
-            .ReturnsAsync(account);
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, false));
 
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("mock-token", Guid.NewGuid().ToString()));
+            .ReturnsAsync(("mock-token", Guid.NewGuid()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
             .Returns("mock-refresh");
 
@@ -999,8 +894,8 @@ public class AuthServiceTests : IDisposable
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             configWithoutSteam,
+            _appConfiguration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -1039,8 +934,8 @@ public class AuthServiceTests : IDisposable
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
+            _appConfiguration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -1069,11 +964,10 @@ public class AuthServiceTests : IDisposable
 
         // Account creation fails
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Discord,
+            Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
-            It.IsAny<CancellationToken>(),
-            "steam"))
-            .ReturnsAsync((AccountResponse?)null);
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountResponse?)null, false));
 
         var realConfig = new AuthServiceConfiguration
         {
@@ -1089,8 +983,8 @@ public class AuthServiceTests : IDisposable
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
+            _appConfiguration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -1116,7 +1010,7 @@ public class AuthServiceTests : IDisposable
             It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(),
             It.IsAny<string?>(),
-            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
     }

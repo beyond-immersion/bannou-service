@@ -6,7 +6,7 @@ info:
     Configuration options for the Actor service.
     Controls deployment mode, pool node management, and default behavior parameters.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
 
 servers: []
@@ -18,6 +18,7 @@ x-service-configuration:
     # === Deployment Mode ===
     DeploymentMode:
       type: string
+      enum: [bannou, pool-per-type, shared-pool, auto-scale]
       env: ACTOR_DEPLOYMENT_MODE
       default: "bannou"
       description: "Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale"
@@ -46,12 +47,6 @@ x-service-configuration:
       env: ACTOR_POOL_NODE_CAPACITY
       default: 100
       description: Maximum actors this pool node can run. Overrides DefaultActorsPerNode when set.
-
-    ControlPlaneAppId:
-      type: string
-      env: ACTOR_CONTROL_PLANE_APP_ID
-      default: "bannou"
-      description: App-id of control plane for pool node registration. Pool nodes only.
 
     # === Pool Node Management (control plane settings) ===
     PoolNodeImage:
@@ -111,19 +106,6 @@ x-service-configuration:
       default: 100
       description: Max perceptions queued per actor before dropping oldest
 
-    MessageQueueSize:
-      type: integer
-      env: ACTOR_MESSAGE_QUEUE_SIZE
-      default: 50
-      description: Max messages queued per actor before dropping oldest
-
-    # === State Update Transport ===
-    StateUpdateTransport:
-      type: string
-      env: ACTOR_STATE_UPDATE_TRANSPORT
-      default: "messaging"
-      description: "State update transport: messaging (default, works in bannou mode) or internal-connect (production)"
-
     # === GOAP Configuration ===
     GoapReplanThreshold:
       type: number
@@ -181,24 +163,93 @@ x-service-configuration:
       default: 60
       description: Default expiration time in minutes for actor memories
 
-    # === State Store Configuration (Tier 3) ===
-    TemplateStatestoreName:
-      type: string
-      env: ACTOR_TEMPLATE_STATESTORE_NAME
-      default: "actor-templates"
-      description: Name of the state store for actor templates
+    # === Pool Health Monitoring (Tier 2) ===
+    PoolHealthMonitorStartupDelaySeconds:
+      type: integer
+      env: ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS
+      default: 5
+      description: Delay in seconds before pool health monitor starts checking (allows initial registrations)
+    PoolHealthCheckIntervalSeconds:
+      type: integer
+      env: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
+      default: 15
+      description: Interval in seconds between pool health check operations
 
-    InstanceStatestoreName:
-      type: string
-      env: ACTOR_INSTANCE_STATESTORE_NAME
-      default: "actor-instances"
-      description: Name of the state store for actor instance tracking
+    # === Scheduled Events (Tier 2) ===
+    ScheduledEventCheckIntervalMilliseconds:
+      type: integer
+      env: ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS
+      default: 100
+      description: Interval in milliseconds for checking scheduled events
 
-    ActorStateStoreName:
-      type: string
-      env: ACTOR_STATE_STORE_NAME
-      default: "actor-state"
-      description: Name of the state store for actor state persistence
+    # === Actor Operation Timeouts (Tier 2) ===
+    ActorOperationTimeoutSeconds:
+      type: integer
+      env: ACTOR_OPERATION_TIMEOUT_SECONDS
+      default: 5
+      description: Timeout in seconds for individual actor operations
+
+    ActorStopTimeoutSeconds:
+      type: integer
+      env: ACTOR_STOP_TIMEOUT_SECONDS
+      default: 5
+      description: Timeout in seconds for graceful actor stop operations
+
+    # === Error Recovery (Tier 2) ===
+    ErrorRetryDelayMs:
+      type: integer
+      env: ACTOR_ERROR_RETRY_DELAY_MS
+      default: 1000
+      description: Delay in milliseconds before retrying after behavior loop error
+
+    StatePersistenceRetryDelayMs:
+      type: integer
+      env: ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS
+      default: 50
+      description: Base delay in milliseconds between state persistence retry attempts (multiplied by attempt number)
+
+    # === Default Urgency Values (Tier 2) ===
+    ScheduledEventDefaultUrgency:
+      type: number
+      env: ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY
+      default: 0.7
+      description: Default urgency value for scheduled event perceptions (0.0-1.0)
+
+    EventBrainDefaultUrgency:
+      type: number
+      env: ACTOR_EVENT_BRAIN_DEFAULT_URGENCY
+      default: 0.8
+      description: Default urgency for Event Brain instruction perceptions (0.0-1.0)
+
+    QueryOptionsDefaultMaxAgeMs:
+      type: integer
+      env: ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS
+      default: 5000
+      description: Default max age in milliseconds for cached query options
+
+    # === Actor Data Caching (Tier 2) ===
+    PersonalityCacheTtlMinutes:
+      type: integer
+      env: ACTOR_PERSONALITY_CACHE_TTL_MINUTES
+      default: 5
+      description: TTL in minutes for cached personality data
+    EncounterCacheTtlMinutes:
+      type: integer
+      env: ACTOR_ENCOUNTER_CACHE_TTL_MINUTES
+      default: 5
+      description: TTL in minutes for cached encounter data
+    MaxEncounterResultsPerQuery:
+      type: integer
+      env: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
+      default: 50
+      description: Maximum encounter results returned per query
+
+    # === Memory Store Retry Configuration (Tier 3) ===
+    MemoryStoreMaxRetries:
+      type: integer
+      env: ACTOR_MEMORY_STORE_MAX_RETRIES
+      default: 3
+      description: Maximum retry attempts for memory store operations
 
 components:
   schemas: {}

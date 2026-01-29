@@ -66,7 +66,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -91,15 +91,9 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -366,7 +360,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -410,15 +404,9 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -620,7 +608,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -664,15 +652,9 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -1049,7 +1031,7 @@ public partial class AssetController
                     "description": "Filter by asset type"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Filter by game realm"
                 },
                 "contentType": {
@@ -1082,15 +1064,9 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -1178,7 +1154,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -1222,15 +1198,9 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -1323,7 +1293,7 @@ public partial class AssetController
                 },
                 "bundleId": {
                     "type": "string",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "version": {
                     "type": "string",
@@ -1333,7 +1303,7 @@ public partial class AssetController
                 "realm": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/Realm"
+                            "$ref": "#/$defs/GameRealm"
                         }
                     ],
                     "nullable": true,
@@ -1358,15 +1328,9 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1398,7 +1362,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "status": {
                     "type": "string",
@@ -1492,7 +1456,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier to retrieve"
+                    "description": "Human-readable bundle identifier to retrieve"
                 },
                 "format": {
                     "$ref": "#/$defs/BundleFormat",
@@ -1534,7 +1498,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "version": {
                     "type": "string",
@@ -1688,7 +1652,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier from the manifest"
+                    "description": "Human-readable bundle identifier from the manifest"
                 },
                 "version": {
                     "type": "string",
@@ -1881,7 +1845,7 @@ public partial class AssetController
             "properties": {
                 "metabundleId": {
                     "type": "string",
-                    "description": "Unique identifier for the new metabundle"
+                    "description": "Human-readable identifier for the new metabundle (e.g., \"game-assets-v1\")"
                 },
                 "sourceBundleIds": {
                     "type": "array",
@@ -1889,7 +1853,7 @@ public partial class AssetController
                         "type": "string"
                     },
                     "nullable": true,
-                    "description": "Source bundle IDs to pull assets from. Can cherry-pick specific\nassets using assetFilter, or include all if assetFilter is null.\n"
+                    "description": "Human-readable source bundle IDs (e.g., \"synty/polygon-adventure\") to pull assets from.\nCan cherry-pick specific assets using assetFilter, or include all if assetFilter is null.\n"
                 },
                 "standaloneAssetIds": {
                     "type": "array",
@@ -1909,7 +1873,7 @@ public partial class AssetController
                     "description": "Owner of this metabundle. NOT a session ID.\nFor user-initiated: the accountId (UUID format).\nFor service-initiated: the service name.\n"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm for this metabundle"
                 },
                 "description": {
@@ -1933,15 +1897,9 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -1965,7 +1923,7 @@ public partial class AssetController
             "properties": {
                 "metabundleId": {
                     "type": "string",
-                    "description": "Metabundle identifier"
+                    "description": "Human-readable metabundle identifier"
                 },
                 "jobId": {
                     "type": "string",
@@ -2199,7 +2157,7 @@ public partial class AssetController
                 },
                 "metabundleId": {
                     "type": "string",
-                    "description": "Metabundle identifier being created"
+                    "description": "Human-readable metabundle identifier being created"
                 },
                 "status": {
                     "type": "string",
@@ -2210,7 +2168,7 @@ public partial class AssetController
                         "failed",
                         "cancelled"
                     ],
-                    "description": "Current job status.\n- queued: Waiting for processing resources\n- processing: Actively being processed\n- ready: Completed successfully\n- failed: Creation failed\n- cancelled: Job was cancelled\n"
+                    "description": "Current job status.\n- queued: Waiting for processing resources\n- processing: Actively being processed\n- ready: Completed successfully\n- failed: Creation failed\ n- cancelled: Job was cancelled\n"
                 },
                 "progress": {
                     "type": "integer",
@@ -2519,7 +2477,7 @@ public partial class AssetController
                     "description": "Platform asset IDs to resolve"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm to search within"
                 },
                 "preferMetabundles": {
@@ -2539,15 +2497,9 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -2611,7 +2563,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier"
+                    "description": "Human-readable bundle identifier"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -2805,7 +2757,7 @@ public partial class AssetController
                     "description": "Platform asset ID to search for"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm to search within"
                 },
                 "bundleType": {
@@ -2829,15 +2781,9 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -2845,7 +2791,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         }
     }
 }
@@ -2907,7 +2853,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier"
+                    "description": "Human-readable bundle identifier"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -2928,7 +2874,7 @@ public partial class AssetController
                     "description": "Bundle file size"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm"
                 },
                 "createdAt": {
@@ -2947,15 +2893,9 @@ public partial class AssetController
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -3032,7 +2972,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier to update"
+                    "description": "Human-readable bundle identifier to update"
                 },
                 "name": {
                     "type": "string",
@@ -3097,7 +3037,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Updated bundle identifier"
+                    "description": "Human-readable bundle identifier that was updated"
                 },
                 "version": {
                     "type": "integer",
@@ -3196,7 +3136,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier to delete"
+                    "description": "Human-readable bundle identifier to delete"
                 },
                 "permanent": {
                     "type": "boolean",
@@ -3231,7 +3171,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Deleted bundle identifier"
+                    "description": "Human-readable bundle identifier that was deleted"
                 },
                 "status": {
                     "type": "string",
@@ -3329,7 +3269,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier to restore"
+                    "description": "Human-readable bundle identifier to restore"
                 },
                 "reason": {
                     "type": "string",
@@ -3360,7 +3300,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Restored bundle identifier"
+                    "description": "Human-readable bundle identifier that was restored"
                 },
                 "status": {
                     "type": "string",
@@ -3505,7 +3445,7 @@ public partial class AssetController
                 "realm": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/Realm"
+                            "$ref": "#/$defs/GameRealm"
                         }
                     ],
                     "nullable": true,
@@ -3566,15 +3506,9 @@ public partial class AssetController
             ],
             "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -3582,7 +3516,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\ n- metabundle: Composed from other bundles server-side\n"
         }
     }
 }
@@ -3642,7 +3576,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -3672,7 +3606,7 @@ public partial class AssetController
                     "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm this bundle belongs to"
                 },
                 "tags": {
@@ -3722,17 +3656,11 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -3818,7 +3746,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier to get history for"
+                    "description": "Human-readable bundle identifier to get history for"
                 },
                 "limit": {
                     "type": "integer",
@@ -3854,7 +3782,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle identifier"
+                    "description": "Human-readable bundle identifier"
                 },
                 "currentVersion": {
                     "type": "integer",
@@ -3937,7 +3865,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -3967,7 +3895,7 @@ public partial class AssetController
                     "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm this bundle belongs to"
                 },
                 "tags": {
@@ -4019,15 +3947,9 @@ public partial class AssetController
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -4036,7 +3958,7 @@ public partial class AssetController
                 "deleted",
                 "processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }
@@ -4256,7 +4178,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -4300,15 +4222,9 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",

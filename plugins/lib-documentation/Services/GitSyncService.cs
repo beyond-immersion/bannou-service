@@ -40,26 +40,36 @@ public class GitSyncService : IGitSyncService
         ArgumentException.ThrowIfNullOrWhiteSpace(branch);
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
 
+        // Apply configured timeout to prevent indefinitely hanging git operations
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.GitCloneTimeoutSeconds));
+        var effectiveToken = timeoutCts.Token;
+
         return await Task.Run(async () =>
         {
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                effectiveToken.ThrowIfCancellationRequested();
 
                 // Check if repository already exists
                 if (Repository.IsValid(localPath))
                 {
-                    return PullRepository(localPath, branch, cancellationToken);
+                    return PullRepository(localPath, branch, effectiveToken);
                 }
                 else
                 {
-                    return CloneRepository(repositoryUrl, branch, localPath, cancellationToken);
+                    return CloneRepository(repositoryUrl, branch, localPath, effectiveToken);
                 }
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Git sync operation cancelled for {Repository}", repositoryUrl);
-                return GitSyncResult.Failed("Operation cancelled");
+                var timedOut = !cancellationToken.IsCancellationRequested;
+                var message = timedOut
+                    ? $"Git operation timed out after {_configuration.GitCloneTimeoutSeconds}s"
+                    : "Operation cancelled";
+                _logger.LogInformation("Git sync operation {Reason} for {Repository}",
+                    timedOut ? "timed out" : "cancelled", repositoryUrl);
+                return GitSyncResult.Failed(message);
             }
             catch (LibGit2SharpException ex)
             {
@@ -87,7 +97,7 @@ public class GitSyncService : IGitSyncService
                     stack: ex.StackTrace);
                 return GitSyncResult.Failed($"Unexpected error: {ex.Message}");
             }
-        }, cancellationToken);
+        }, effectiveToken);
     }
 
     /// <inheritdoc />
@@ -249,14 +259,16 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting HEAD commit for repository at {Path}", localPath);
-            _messageBus.TryPublishErrorAsync(
+            // Fire-and-forget error publishing: this is a synchronous method and error is already logged;
+            // per IMPLEMENTATION TENETS, use discard to avoid blocking on async call
+            _ = _messageBus.TryPublishErrorAsync(
                 "documentation",
                 "GetHeadCommit",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "git",
                 details: new { localPath },
-                stack: ex.StackTrace).GetAwaiter().GetResult();
+                stack: ex.StackTrace);
             return null;
         }
     }
@@ -390,14 +402,16 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to clone repository {Url}", repositoryUrl);
-            _messageBus.TryPublishErrorAsync(
+            // Fire-and-forget error publishing: this is a synchronous method and error is already logged;
+            // per IMPLEMENTATION TENETS, use discard to avoid blocking on async call
+            _ = _messageBus.TryPublishErrorAsync(
                 "documentation",
                 "CloneRepository",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "git",
                 details: new { repositoryUrl, branch, localPath },
-                stack: ex.StackTrace).GetAwaiter().GetResult();
+                stack: ex.StackTrace);
             return GitSyncResult.Failed(ex.Message);
         }
     }
@@ -462,14 +476,16 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to pull repository at {Path}", localPath);
-            _messageBus.TryPublishErrorAsync(
+            // Fire-and-forget error publishing: this is a synchronous method and error is already logged;
+            // per IMPLEMENTATION TENETS, use discard to avoid blocking on async call
+            _ = _messageBus.TryPublishErrorAsync(
                 "documentation",
                 "PullRepository",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "git",
                 details: new { localPath, branch },
-                stack: ex.StackTrace).GetAwaiter().GetResult();
+                stack: ex.StackTrace);
             return GitSyncResult.Failed(ex.Message);
         }
     }

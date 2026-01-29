@@ -5,7 +5,7 @@ info:
     Event models for Documentation service RabbitMQ pub/sub via MassTransit.
     Contains documentation-specific events and subscription/publication declarations.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   # Minimal event subscriptions - sessions use TTL cleanup, no external events needed
@@ -116,6 +116,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -158,6 +159,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -193,6 +195,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -225,6 +228,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -257,6 +261,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -294,6 +299,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -355,6 +361,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string

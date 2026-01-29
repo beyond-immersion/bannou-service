@@ -15,7 +15,7 @@ public interface ITokenService
     /// <param name="account">The account to generate the token for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Tuple of (accessToken, sessionId) for event publishing.</returns>
-    Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default);
+    Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Generates a new refresh token.
@@ -29,7 +29,7 @@ public interface ITokenService
     /// <param name="accountId">The account ID.</param>
     /// <param name="refreshToken">The refresh token to store.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken = default);
+    Task StoreRefreshTokenAsync(Guid accountId, string refreshToken, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validates a refresh token and returns the associated account ID.
@@ -37,7 +37,7 @@ public interface ITokenService
     /// <param name="refreshToken">The refresh token to validate.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The account ID if valid, null otherwise.</returns>
-    Task<string?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+    Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a refresh token from storage.
@@ -53,14 +53,6 @@ public interface ITokenService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Tuple of (StatusCode, ValidateTokenResponse) - null response if invalid.</returns>
     Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(string jwt, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Extracts the session key from a JWT without full validation.
-    /// Used for logout operations where we need the session key but don't need full validation.
-    /// </summary>
-    /// <param name="jwt">The JWT token.</param>
-    /// <returns>The session key if found, null otherwise.</returns>
-    Task<string?> ExtractSessionKeyFromJwtAsync(string jwt);
 
     /// <summary>
     /// Generates a cryptographically secure token for password reset.

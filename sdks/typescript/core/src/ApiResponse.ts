@@ -26,14 +26,9 @@ export interface ErrorResponse {
   messageId: bigint;
 
   /**
-   * The HTTP method of the original request (e.g., "POST", "GET").
+   * The endpoint path of the original request (e.g., "/subscription/create").
    */
-  method: string;
-
-  /**
-   * The path of the original request (e.g., "/subscription/create").
-   */
-  path: string;
+  endpoint: string;
 }
 
 /**
@@ -87,8 +82,7 @@ export function getErrorName(wsResponseCode: number): string {
 export function createErrorResponse(
   wsResponseCode: number,
   messageId: bigint,
-  method: string,
-  path: string,
+  endpoint: string,
   message: string | null = null
 ): ErrorResponse {
   return {
@@ -96,8 +90,7 @@ export function createErrorResponse(
     errorName: getErrorName(wsResponseCode),
     message,
     messageId,
-    method,
-    path,
+    endpoint,
   };
 }
 

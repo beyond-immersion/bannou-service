@@ -41,7 +41,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<QueryDocumentationRequest, QueryDocumentationResponse>(
-            "POST", "/documentation/query", request, channel, timeout, cancellationToken);
+            "/documentation/query", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetDocumentRequest, GetDocumentResponse>(
-            "POST", "/documentation/get", request, channel, timeout, cancellationToken);
+            "/documentation/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SearchDocumentationRequest, SearchDocumentationResponse>(
-            "POST", "/documentation/search", request, channel, timeout, cancellationToken);
+            "/documentation/search", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListDocumentsRequest, ListDocumentsResponse>(
-            "POST", "/documentation/list", request, channel, timeout, cancellationToken);
+            "/documentation/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SuggestRelatedRequest, SuggestRelatedResponse>(
-            "POST", "/documentation/suggest", request, channel, timeout, cancellationToken);
+            "/documentation/suggest", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateDocumentRequest, CreateDocumentResponse>(
-            "POST", "/documentation/create", request, channel, timeout, cancellationToken);
+            "/documentation/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateDocumentRequest, UpdateDocumentResponse>(
-            "POST", "/documentation/update", request, channel, timeout, cancellationToken);
+            "/documentation/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteDocumentRequest, DeleteDocumentResponse>(
-            "POST", "/documentation/delete", request, channel, timeout, cancellationToken);
+            "/documentation/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RecoverDocumentRequest, RecoverDocumentResponse>(
-            "POST", "/documentation/recover", request, channel, timeout, cancellationToken);
+            "/documentation/recover", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BulkUpdateRequest, BulkUpdateResponse>(
-            "POST", "/documentation/bulk-update", request, channel, timeout, cancellationToken);
+            "/documentation/bulk-update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BulkDeleteRequest, BulkDeleteResponse>(
-            "POST", "/documentation/bulk-delete", request, channel, timeout, cancellationToken);
+            "/documentation/bulk-delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -239,7 +239,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ImportDocumentationRequest, ImportDocumentationResponse>(
-            "POST", "/documentation/import", request, channel, timeout, cancellationToken);
+            "/documentation/import", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListTrashcanRequest, ListTrashcanResponse>(
-            "POST", "/documentation/trashcan", request, channel, timeout, cancellationToken);
+            "/documentation/trashcan", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<PurgeTrashcanRequest, PurgeTrashcanResponse>(
-            "POST", "/documentation/purge", request, channel, timeout, cancellationToken);
+            "/documentation/purge", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<GetNamespaceStatsRequest, NamespaceStatsResponse>(
-            "POST", "/documentation/stats", request, channel, timeout, cancellationToken);
+            "/documentation/stats", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<BindRepositoryRequest, BindRepositoryResponse>(
-            "POST", "/documentation/repo/bind", request, channel, timeout, cancellationToken);
+            "/documentation/repo/bind", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UnbindRepositoryRequest, UnbindRepositoryResponse>(
-            "POST", "/documentation/repo/unbind", request, channel, timeout, cancellationToken);
+            "/documentation/repo/unbind", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<SyncRepositoryRequest, SyncRepositoryResponse>(
-            "POST", "/documentation/repo/sync", request, channel, timeout, cancellationToken);
+            "/documentation/repo/sync", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -365,7 +365,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RepositoryStatusRequest, RepositoryStatusResponse>(
-            "POST", "/documentation/repo/status", request, channel, timeout, cancellationToken);
+            "/documentation/repo/status", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -383,7 +383,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListRepositoryBindingsRequest, ListRepositoryBindingsResponse>(
-            "POST", "/documentation/repo/list", request, channel, timeout, cancellationToken);
+            "/documentation/repo/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -401,7 +401,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdateRepositoryBindingRequest, UpdateRepositoryBindingResponse>(
-            "POST", "/documentation/repo/update", request, channel, timeout, cancellationToken);
+            "/documentation/repo/update", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -419,7 +419,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<CreateArchiveRequest, CreateArchiveResponse>(
-            "POST", "/documentation/repo/archive/create", request, channel, timeout, cancellationToken);
+            "/documentation/repo/archive/create", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -437,7 +437,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<ListArchivesRequest, ListArchivesResponse>(
-            "POST", "/documentation/repo/archive/list", request, channel, timeout, cancellationToken);
+            "/documentation/repo/archive/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -455,7 +455,7 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<RestoreArchiveRequest, RestoreArchiveResponse>(
-            "POST", "/documentation/repo/archive/restore", request, channel, timeout, cancellationToken);
+            "/documentation/repo/archive/restore", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -473,6 +473,6 @@ public sealed class DocumentationProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<DeleteArchiveRequest, DeleteArchiveResponse>(
-            "POST", "/documentation/repo/archive/delete", request, channel, timeout, cancellationToken);
+            "/documentation/repo/archive/delete", request, channel, timeout, cancellationToken);
     }
 }

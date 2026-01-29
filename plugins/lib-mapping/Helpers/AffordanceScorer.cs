@@ -13,14 +13,14 @@ public class AffordanceScorer : IAffordanceScorer
     {
         return type switch
         {
-            AffordanceType.Ambush => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects, MapKind.Navigation },
-            AffordanceType.Shelter => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects },
-            AffordanceType.Vista => new List<MapKind> { MapKind.Terrain, MapKind.Static_geometry, MapKind.Points_of_interest },
-            AffordanceType.Choke_point => new List<MapKind> { MapKind.Navigation, MapKind.Static_geometry },
-            AffordanceType.Gathering_spot => new List<MapKind> { MapKind.Points_of_interest, MapKind.Static_geometry },
-            AffordanceType.Dramatic_reveal => new List<MapKind> { MapKind.Points_of_interest, MapKind.Terrain },
-            AffordanceType.Hidden_path => new List<MapKind> { MapKind.Navigation, MapKind.Static_geometry },
-            AffordanceType.Defensible_position => new List<MapKind> { MapKind.Static_geometry, MapKind.Terrain, MapKind.Navigation },
+            AffordanceType.Ambush => new List<MapKind> { MapKind.StaticGeometry, MapKind.DynamicObjects, MapKind.Navigation },
+            AffordanceType.Shelter => new List<MapKind> { MapKind.StaticGeometry, MapKind.DynamicObjects },
+            AffordanceType.Vista => new List<MapKind> { MapKind.Terrain, MapKind.StaticGeometry, MapKind.PointsOfInterest },
+            AffordanceType.ChokePoint => new List<MapKind> { MapKind.Navigation, MapKind.StaticGeometry },
+            AffordanceType.GatheringSpot => new List<MapKind> { MapKind.PointsOfInterest, MapKind.StaticGeometry },
+            AffordanceType.DramaticReveal => new List<MapKind> { MapKind.PointsOfInterest, MapKind.Terrain },
+            AffordanceType.HiddenPath => new List<MapKind> { MapKind.Navigation, MapKind.StaticGeometry },
+            AffordanceType.DefensiblePosition => new List<MapKind> { MapKind.StaticGeometry, MapKind.Terrain, MapKind.Navigation },
             AffordanceType.Custom => Enum.GetValues<MapKind>().ToList(),
             _ => Enum.GetValues<MapKind>().ToList()
         };
@@ -37,7 +37,7 @@ public class AffordanceScorer : IAffordanceScorer
             // Check for common affordance-related properties
             if (TryGetJsonDouble(data, "cover_rating", out var cr))
             {
-                if (type == AffordanceType.Ambush || type == AffordanceType.Shelter || type == AffordanceType.Defensible_position)
+                if (type == AffordanceType.Ambush || type == AffordanceType.Shelter || type == AffordanceType.DefensiblePosition)
                 {
                     score += cr * 0.3;
                 }
@@ -45,7 +45,7 @@ public class AffordanceScorer : IAffordanceScorer
 
             if (TryGetJsonDouble(data, "elevation", out var el))
             {
-                if (type == AffordanceType.Vista || type == AffordanceType.Dramatic_reveal)
+                if (type == AffordanceType.Vista || type == AffordanceType.DramaticReveal)
                 {
                     score += Math.Min(el / 100.0, 0.3);
                 }
@@ -106,11 +106,11 @@ public class AffordanceScorer : IAffordanceScorer
                 AffordanceType.Ambush => new[] { "cover_rating", "sightlines", "concealment" },
                 AffordanceType.Shelter => new[] { "cover_rating", "protection", "capacity" },
                 AffordanceType.Vista => new[] { "elevation", "visibility_range", "sightlines" },
-                AffordanceType.Choke_point => new[] { "width", "defensibility", "exit_count" },
-                AffordanceType.Gathering_spot => new[] { "capacity", "comfort", "accessibility" },
-                AffordanceType.Dramatic_reveal => new[] { "elevation", "view_target", "approach_direction" },
-                AffordanceType.Hidden_path => new[] { "concealment", "width", "traversability" },
-                AffordanceType.Defensible_position => new[] { "cover_rating", "sightlines", "exit_count", "elevation" },
+                AffordanceType.ChokePoint => new[] { "width", "defensibility", "exit_count" },
+                AffordanceType.GatheringSpot => new[] { "capacity", "comfort", "accessibility" },
+                AffordanceType.DramaticReveal => new[] { "elevation", "view_target", "approach_direction" },
+                AffordanceType.HiddenPath => new[] { "concealment", "width", "traversability" },
+                AffordanceType.DefensiblePosition => new[] { "cover_rating", "sightlines", "exit_count", "elevation" },
                 _ => Array.Empty<string>()
             };
 

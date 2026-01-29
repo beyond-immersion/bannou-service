@@ -57,15 +57,15 @@ public static class Program
     /// </summary>
     internal static void ResetConfiguration() => _configuration = null;
 
-    private static string? _serviceGUID;
+    private static Guid? _serviceGUID;
 
     /// <summary>
     /// Internal service GUID- largely used for administrative network commands.
     /// Randomly generated on service startup.
     /// </summary>
-    public static string ServiceGUID
+    public static Guid ServiceGUID
     {
-        get => _serviceGUID ??= Configuration.ForceServiceId ?? Guid.NewGuid().ToString().ToLower();
+        get => _serviceGUID ??= Configuration.ForceServiceId ?? Guid.NewGuid();
         internal set => _serviceGUID = value;
     }
 
@@ -206,6 +206,9 @@ public static class Program
             // Add client event publisher (for pushing events to WebSocket clients via Bannou pub/sub)
             webAppBuilder.Services.AddClientEventPublisher();
 
+            // Add control plane service provider for orchestrator to query local services
+            webAppBuilder.Services.AddSingleton<IControlPlaneServiceProvider, ControlPlaneServiceProvider>();
+
             // Configure plugin services (includes centralized client, service, and configuration registration)
             PluginLoader?.ConfigureServices(webAppBuilder.Services);
 
@@ -319,9 +322,12 @@ public static class Program
             }
 
             // enable websocket connections
+            // KeepAliveInterval sourced from ConnectServiceConfiguration.WebSocketKeepAliveIntervalSeconds;
+            // Program.cs (composition root) reads normalized env var since it cannot reference plugin types
+            var wsKeepAliveSeconds = ConfigurationRoot.GetValue<int?>("ConnectWebsocketKeepAliveIntervalSeconds") ?? 30;
             webApp.UseWebSockets(new WebSocketOptions()
             {
-                KeepAliveInterval = TimeSpan.FromMinutes(2)
+                KeepAliveInterval = TimeSpan.FromSeconds(wsKeepAliveSeconds)
             });
 
             // map controller routes
@@ -442,7 +448,7 @@ public static class Program
                 if (PluginLoader != null)
                 {
                     Logger.Log(LogLevel.Information, null, "Registering service permissions with Permission service...");
-                    if (!await PluginLoader.RegisterServicePermissionsAsync())
+                    if (!await PluginLoader.RegisterServicePermissionsAsync(Configuration.EffectiveAppId))
                     {
                         Logger.Log(LogLevel.Error, null, "Service permission registration failed - exiting application.");
                         return 1;

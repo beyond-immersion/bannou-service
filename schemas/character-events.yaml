@@ -5,7 +5,7 @@ info:
     Event models for Character service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Character service doesn't subscribe to external events
@@ -20,6 +20,9 @@ info:
     - topic: character.deleted
       event: CharacterDeletedEvent
       description: Published when a character is soft-deleted
+    - topic: character.compressed
+      event: CharacterCompressedEvent
+      description: Published when a character is compressed to archive format
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/character-lifecycle-events.yaml
@@ -52,7 +55,8 @@ x-lifecycle:
         nullable: true  # NRT: Optional property MUST be nullable
         description: In-game birth date of the character
       status:
-        type: string
+        allOf:
+          - $ref: 'character-api.yaml#/components/schemas/CharacterStatus'
         nullable: true  # NRT: Optional property MUST be nullable
         description: Current status of the character (e.g., active, inactive, deceased)
       createdAt:
@@ -66,8 +70,37 @@ x-lifecycle:
         nullable: true  # NRT: Optional property MUST be nullable
         description: Timestamp when the character was last updated
 
+
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas section - lifecycle events are auto-generated.
+components:
+  schemas:
+    CharacterCompressedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character is compressed to archive format
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - deletedSourceData
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the compression occurred
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the compressed character
+        deletedSourceData:
+          type: boolean
+          description: Whether source data was deleted after compression
+
+# NOTE: Lifecycle events are auto-generated from x-lifecycle definition.
 # CharacterCreatedEvent, CharacterUpdatedEvent, CharacterDeletedEvent
 # are generated to schemas/Generated/character-lifecycle-events.yaml

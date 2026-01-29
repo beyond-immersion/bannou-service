@@ -35,7 +35,6 @@ export class VoiceProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['AnswerPeerRequest']>(
-      'POST',
       '/voice/peer/answer',
       request,
       channel

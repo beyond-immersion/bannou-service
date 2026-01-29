@@ -154,7 +154,7 @@ public class EncounterStateData
     /// <summary>
     /// Gets or sets the unique encounter identifier.
     /// </summary>
-    public string EncounterId { get; set; } = string.Empty;
+    public Guid EncounterId { get; set; }
 
     /// <summary>
     /// Gets or sets the encounter type (e.g., "combat", "conversation", "choreography").

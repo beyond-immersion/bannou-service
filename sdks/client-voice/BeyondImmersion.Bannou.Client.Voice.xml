@@ -1169,7 +1169,7 @@
             </summary>
             <param name="client">The connected BannouClient for receiving voice events.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Voice.VoiceRoomManager.#ctor(BeyondImmersion.Bannou.Client.BannouClient,System.Func{System.String,System.String,System.Collections.Generic.IEnumerable{System.String},BeyondImmersion.Bannou.Client.Voice.IVoicePeerConnection},System.Func{System.Guid,BeyondImmersion.Bannou.Client.Voice.IScaledVoiceConnection})">
+        <member name="M:BeyondImmersion.Bannou.Client.Voice.VoiceRoomManager.#ctor(BeyondImmersion.Bannou.Client.BannouClient,System.Func{System.Guid,System.String,System.Collections.Generic.IEnumerable{System.String},BeyondImmersion.Bannou.Client.Voice.IVoicePeerConnection},System.Func{System.Guid,BeyondImmersion.Bannou.Client.Voice.IScaledVoiceConnection})">
             <summary>
             Creates a new VoiceRoomManager with custom connection factories.
             <para>
@@ -1201,7 +1201,7 @@
             <param name="sampleRate">Sample rate in Hz (typically 48000 for Opus).</param>
             <param name="channels">Number of audio channels (1 for mono, 2 for stereo).</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Voice.VoiceRoomManager.ProcessSdpAnswerAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.Voice.VoiceRoomManager.ProcessSdpAnswerAsync(System.Guid,System.String,System.Threading.CancellationToken)">
             <summary>
             Manually processes an SDP answer received from a peer.
             <para>
@@ -1212,7 +1212,7 @@
             <param name="sdpAnswer">The SDP answer string.</param>
             <param name="cancellationToken">Cancellation token.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Voice.VoiceRoomManager.AddIceCandidateForPeer(System.String,System.String)">
+        <member name="M:BeyondImmersion.Bannou.Client.Voice.VoiceRoomManager.AddIceCandidateForPeer(System.Guid,System.String)">
             <summary>
             Manually adds an ICE candidate received from a peer.
             <para>

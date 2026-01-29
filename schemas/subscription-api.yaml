@@ -9,7 +9,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
@@ -247,7 +247,7 @@ components:
         stubName:
           type: string
           nullable: true
-          description: Stub name of the service to filter by (e.g., "arcadia"). Returns all accounts subscribed to this 
+          description: Stub name of the service to filter by (e.g., "my-game"). Returns all accounts subscribed to this
             service.
 
     GetSubscriptionRequest:

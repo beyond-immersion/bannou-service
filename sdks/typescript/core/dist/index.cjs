@@ -110,14 +110,13 @@ function getErrorName(wsResponseCode) {
       return "UnknownError";
   }
 }
-function createErrorResponse(wsResponseCode, messageId, method, path, message = null) {
+function createErrorResponse(wsResponseCode, messageId, endpoint, message = null) {
   return {
     responseCode: mapToHttpStatusCode(wsResponseCode),
     errorName: getErrorName(wsResponseCode),
     message,
     messageId,
-    method,
-    path
+    endpoint
   };
 }
 var ApiResponse = class _ApiResponse {

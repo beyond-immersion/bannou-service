@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: Contract Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for contract service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: contract-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ContractTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to contract-template.created when a contracttemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - name
+      - minParties
+      - maxParties
+      - defaultEnforcementMode
+      - transferable
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: contract-template.created
+          description: 'Event type identifier: contract-template.created'
+        templateId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the contract template"
+        code: &id002
+          type: string
+          description: "Unique template code (lowercase, underscores)"
+        name: &id003
+          type: string
+          description: "Human-readable template name"
+        description: &id004
+          type: string
+          nullable: true
+          description: "Detailed description of this contract type"
+        realmId: &id005
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm ID if template is realm-specific"
+        minParties: &id006
+          type: integer
+          description: "Minimum number of parties required"
+        maxParties: &id007
+          type: integer
+          description: "Maximum number of parties allowed"
+        defaultEnforcementMode: &id008
+          $ref: ../contract-api.yaml#/components/schemas/EnforcementMode
+          description: "Default enforcement mode for instances"
+        transferable: &id009
+          type: boolean
+          description: "Whether contracts can be transferred"
+        isActive: &id010
+          type: boolean
+          description: "Whether template is active"
+        createdAt: &id011
+          type: string
+          format: date-time
+          description: "Timestamp when the template was created"
+        updatedAt: &id012
+          type: string
+          format: date-time
+          nullable: true
+          description: "Timestamp when the template was last updated"
+    ContractTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to contract-template.updated when a contracttemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - name
+      - minParties
+      - maxParties
+      - defaultEnforcementMode
+      - transferable
+      - isActive
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: contract-template.updated
+          description: 'Event type identifier: contract-template.updated'
+        templateId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        realmId: *id005
+        minParties: *id006
+        maxParties: *id007
+        defaultEnforcementMode: *id008
+        transferable: *id009
+        isActive: *id010
+        createdAt: *id011
+        updatedAt: *id012
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ContractTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to contract-template.deleted when a contracttemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - name
+      - minParties
+      - maxParties
+      - defaultEnforcementMode
+      - transferable
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: contract-template.deleted
+          description: 'Event type identifier: contract-template.deleted'
+        templateId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        realmId: *id005
+        minParties: *id006
+        maxParties: *id007
+        defaultEnforcementMode: *id008
+        transferable: *id009
+        isActive: *id010
+        createdAt: *id011
+        updatedAt: *id012
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ContractInstanceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to contract-instance.created when a contractinstance is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateId
+      - templateCode
+      - status
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: contract-instance.created
+          description: 'Event type identifier: contract-instance.created'
+        contractId: &id013
+          type: string
+          format: uuid
+          description: "Unique identifier for the contract instance"
+        templateId: &id014
+          type: string
+          format: uuid
+          description: "Reference to the source template"
+        templateCode: &id015
+          type: string
+          description: "Template code for reference"
+        status: &id016
+          $ref: ../contract-api.yaml#/components/schemas/ContractStatus
+          description: "Current contract status"
+        proposedAt: &id017
+          type: string
+          format: date-time
+          nullable: true
+          description: "When contract was proposed to parties"
+        acceptedAt: &id018
+          type: string
+          format: date-time
+          nullable: true
+          description: "When all parties consented"
+        effectiveFrom: &id019
+          type: string
+          format: date-time
+          nullable: true
+          description: "When contract became active"
+        effectiveUntil: &id020
+          type: string
+          format: date-time
+          nullable: true
+          description: "When contract expires"
+        terminatedAt: &id021
+          type: string
+          format: date-time
+          nullable: true
+          description: "When contract was terminated early"
+        createdAt: &id022
+          type: string
+          format: date-time
+          description: "Timestamp when the instance was created"
+        updatedAt: &id023
+          type: string
+          format: date-time
+          nullable: true
+          description: "Timestamp when the instance was last updated"
+    ContractInstanceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to contract-instance.updated when a contractinstance is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateId
+      - templateCode
+      - status
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: contract-instance.updated
+          description: 'Event type identifier: contract-instance.updated'
+        contractId: *id013
+        templateId: *id014
+        templateCode: *id015
+        status: *id016
+        proposedAt: *id017
+        acceptedAt: *id018
+        effectiveFrom: *id019
+        effectiveUntil: *id020
+        terminatedAt: *id021
+        createdAt: *id022
+        updatedAt: *id023
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ContractInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to contract-instance.deleted when a contractinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateId
+      - templateCode
+      - status
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: contract-instance.deleted
+          description: 'Event type identifier: contract-instance.deleted'
+        contractId: *id013
+        templateId: *id014
+        templateCode: *id015
+        status: *id016
+        proposedAt: *id017
+        acceptedAt: *id018
+        effectiveFrom: *id019
+        effectiveUntil: *id020
+        terminatedAt: *id021
+        createdAt: *id022
+        updatedAt: *id023
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

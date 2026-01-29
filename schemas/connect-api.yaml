@@ -30,7 +30,7 @@ info:
     - **Bi-directional RPC**: Services can make RPC calls back to connected clients
     - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
 
 servers:
 - url: http://localhost:5012
@@ -324,6 +324,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID to retrieve capabilities for (must have active WebSocket connection)
         serviceFilter:
           type: string
@@ -346,6 +347,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID this capability manifest belongs to
         capabilities:
           type: array
@@ -472,6 +474,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID making the request
         targetService:
           type: string
@@ -732,6 +735,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID affected by the auth event
         eventType:
           $ref: '#/components/schemas/AuthEventType'

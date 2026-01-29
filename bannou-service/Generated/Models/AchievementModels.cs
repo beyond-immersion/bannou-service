@@ -31,32 +31,6 @@ namespace BeyondImmersion.BannouService.Achievement;
 using System = global::System;
 
 /// <summary>
-/// Type of entity that can earn achievements
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum EntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Type of achievement
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -120,7 +94,7 @@ public enum SyncStatus
     Failed = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"not_linked")]
-    Not_linked = 3,
+    NotLinked = 3,
 
 }
 #pragma warning restore CS1591
@@ -205,7 +179,7 @@ public partial class CreateAchievementDefinitionRequest
     /// URL to achievement icon
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
-    public System.Uri? IconUrl { get; set; } = default!;
+    public string? IconUrl { get; set; } = default!;
 
     /// <summary>
     /// Platforms where this achievement exists
@@ -478,7 +452,7 @@ public partial class AchievementDefinitionResponse
     /// Achievement icon URL
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
-    public System.Uri? IconUrl { get; set; } = default!;
+    public string? IconUrl { get; set; } = default!;
 
     /// <summary>
     /// Available platforms
@@ -967,7 +941,7 @@ public partial class UnlockedAchievement
     /// Achievement icon
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
-    public System.Uri? IconUrl { get; set; } = default!;
+    public string? IconUrl { get; set; } = default!;
 
     /// <summary>
     /// When it was unlocked

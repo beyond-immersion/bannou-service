@@ -17,6 +17,7 @@ public class AnalyticsServicePlugin : BaseBannouPlugin
 
     private IAnalyticsService? _service;
     private IServiceProvider? _serviceProvider;
+    private IServiceScope? _serviceScope;
 
     /// <summary>
     /// Configure services for dependency injection - mimics existing [BannouService] registration.
@@ -63,12 +64,15 @@ public class AnalyticsServicePlugin : BaseBannouPlugin
         {
             // Get service instance from DI container with proper scope handling
             // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
-            using var scope = _serviceProvider?.CreateScope();
-            _service = scope?.ServiceProvider.GetService<IAnalyticsService>();
+            // Store the scope so it lives for the plugin's lifetime (disposed in OnShutdownAsync)
+            _serviceScope = _serviceProvider?.CreateScope();
+            _service = _serviceScope?.ServiceProvider.GetService<IAnalyticsService>();
 
             if (_service == null)
             {
                 Logger?.LogError("Failed to resolve IAnalyticsService from DI container");
+                _serviceScope?.Dispose();
+                _serviceScope = null;
                 return false;
             }
 
@@ -136,6 +140,13 @@ public class AnalyticsServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during Analytics service shutdown");
+        }
+        finally
+        {
+            // Dispose the service scope that was created in OnStartAsync
+            _serviceScope?.Dispose();
+            _serviceScope = null;
+            _service = null;
         }
     }
 }

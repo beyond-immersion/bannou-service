@@ -28,9 +28,9 @@ public sealed class PoolHealthMonitor : BackgroundService
     private readonly ActorServiceConfiguration _configuration;
 
     /// <summary>
-    /// Check interval for scanning heartbeats (half of timeout for faster detection).
+    /// Check interval for scanning heartbeats.
     /// </summary>
-    private TimeSpan CheckInterval => TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds / 2.0);
+    private TimeSpan CheckInterval => TimeSpan.FromSeconds(_configuration.PoolHealthCheckIntervalSeconds);
 
     /// <summary>
     /// Heartbeat timeout - nodes without heartbeat for this duration are marked unhealthy.
@@ -57,7 +57,7 @@ public sealed class PoolHealthMonitor : BackgroundService
     {
         // Only run in control plane mode (non-bannou deployment)
         // Pool nodes don't need to monitor other nodes - the control plane does
-        if (_configuration.DeploymentMode == "bannou")
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
             _logger.LogDebug("Pool health monitor disabled in bannou mode (local actors only)");
             return;
@@ -75,7 +75,7 @@ public sealed class PoolHealthMonitor : BackgroundService
             CheckInterval.TotalSeconds, HeartbeatTimeout.TotalSeconds);
 
         // Wait a bit for initial node registrations
-        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(_configuration.PoolHealthMonitorStartupDelaySeconds), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -90,6 +90,11 @@ public sealed class PoolHealthMonitor : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during pool health check");
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "PoolHealthCheck",
+                    ex.GetType().Name,
+                    ex.Message);
             }
 
             try
@@ -150,6 +155,27 @@ public sealed class PoolHealthMonitor : BackgroundService
             _logger.LogInformation(
                 "Pool capacity after health check: {HealthyNodes} healthy, {TotalCapacity} capacity, {TotalLoad} load",
                 summary.HealthyNodes, summary.TotalCapacity, summary.TotalLoad);
+
+            if (summary.HealthyNodes < _configuration.MinPoolNodes)
+            {
+                _logger.LogError(
+                    "Pool below minimum node threshold: {HealthyNodes} healthy < {MinPoolNodes} minimum (image: {PoolNodeImage})",
+                    summary.HealthyNodes, _configuration.MinPoolNodes, _configuration.PoolNodeImage);
+
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "PoolHealthCheck",
+                    "InsufficientPoolNodes",
+                    $"Pool has {summary.HealthyNodes} healthy nodes, minimum is {_configuration.MinPoolNodes}",
+                    details: new
+                    {
+                        summary.HealthyNodes,
+                        _configuration.MinPoolNodes,
+                        _configuration.MaxPoolNodes,
+                        _configuration.PoolNodeImage
+                    },
+                    cancellationToken: ct);
+            }
         }
     }
 }

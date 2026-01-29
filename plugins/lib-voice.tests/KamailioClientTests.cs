@@ -76,7 +76,7 @@ public class KamailioClientTests : IDisposable
 
     private KamailioClient CreateClient(HttpClient httpClient)
     {
-        return new KamailioClient(httpClient, "localhost", 5080, _mockLogger.Object, _mockMessageBus.Object);
+        return new KamailioClient(httpClient, "localhost", 5080, TimeSpan.FromSeconds(5), _mockLogger.Object, _mockMessageBus.Object);
     }
 
     #region Constructor Tests
@@ -87,7 +87,7 @@ public class KamailioClientTests : IDisposable
         ServiceConstructorValidator.ValidateServiceConstructor<KamailioClient>();
         var httpClient = new HttpClient();
         _createdHttpClients.Add(httpClient);
-        var client = new KamailioClient(httpClient, "localhost", 5080, _mockLogger.Object, _mockMessageBus.Object);
+        var client = new KamailioClient(httpClient, "localhost", 5080, TimeSpan.FromSeconds(5), _mockLogger.Object, _mockMessageBus.Object);
         Assert.NotNull(client);
     }
 

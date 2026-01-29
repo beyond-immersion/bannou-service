@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor;
@@ -81,8 +82,8 @@ public partial class ActorService
             }
 
             // Find actors using this behavior
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
             // Get all template IDs from index
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, CancellationToken.None) ?? new List<string>();
@@ -109,12 +110,12 @@ public partial class ActorService
                     foreach (var actor in actors)
                     {
                         // Inject a notification perception to inform the actor
-                        // Use Dictionary<string, object?> instead of anonymous object per FOUNDATION TENETS (T5)
+                        // Use Dictionary<string, object?> instead of anonymous object per FOUNDATION TENETS
                         actor.InjectPerception(new PerceptionData
                         {
                             PerceptionType = "system",
                             SourceId = "behavior-service",
-                            SourceType = "service",
+                            SourceType = PerceptionSourceType.Service,
                             Data = new Dictionary<string, object?>
                             {
                                 ["eventType"] = "behavior_updated",
@@ -211,7 +212,7 @@ public partial class ActorService
     /// <param name="evt">The registration event.</param>
     public async Task HandlePoolNodeRegisteredAsync(PoolNodeRegisteredEvent evt)
     {
-        if (_configuration.DeploymentMode == "bannou")
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.registered event (not in control plane mode)");
             return;
@@ -249,7 +250,7 @@ public partial class ActorService
     /// <param name="evt">The heartbeat event.</param>
     public async Task HandlePoolNodeHeartbeatAsync(PoolNodeHeartbeatEvent evt)
     {
-        if (_configuration.DeploymentMode == "bannou")
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.heartbeat event (not in control plane mode)");
             return;
@@ -283,7 +284,7 @@ public partial class ActorService
     /// <param name="evt">The draining event.</param>
     public async Task HandlePoolNodeDrainingAsync(PoolNodeDrainingEvent evt)
     {
-        if (_configuration.DeploymentMode == "bannou")
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.draining event (not in control plane mode)");
             return;
@@ -317,7 +318,7 @@ public partial class ActorService
     /// <param name="evt">The status changed event.</param>
     public async Task HandleActorStatusChangedAsync(ActorStatusChangedEvent evt)
     {
-        if (_configuration.DeploymentMode == "bannou")
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring actor.instance.status-changed event (not in control plane mode)");
             return;
@@ -351,7 +352,7 @@ public partial class ActorService
     /// <param name="evt">The completed event.</param>
     public async Task HandleActorCompletedAsync(ActorCompletedEvent evt)
     {
-        if (_configuration.DeploymentMode == "bannou")
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring actor.instance.completed event (not in control plane mode)");
             return;

@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -42,7 +43,7 @@ public partial class DocumentationQueriedEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the query was executed
@@ -107,7 +108,7 @@ public partial class DocumentationSearchedEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the search was executed
@@ -160,7 +161,7 @@ public partial class DocumentationBindingCreatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the binding was created
@@ -215,7 +216,7 @@ public partial class DocumentationBindingRemovedEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the binding was removed
@@ -262,7 +263,7 @@ public partial class DocumentationSyncStartedEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the sync operation started
@@ -320,7 +321,7 @@ public partial class DocumentationSyncCompletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the sync operation completed
@@ -414,7 +415,7 @@ public partial class DocumentationArchiveCreatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the archive was created

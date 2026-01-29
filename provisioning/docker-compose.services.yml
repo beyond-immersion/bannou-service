@@ -1,8 +1,32 @@
 # Service Dependencies - WSL2 Compatible
-# Database and caching services using default bridge network
-# All services reachable by service name (bannou-redis, bannou-mysql)
+# Database, caching, and messaging services using default bridge network
+# All services reachable by service name (bannou-redis, bannou-mysql, rabbitmq)
 
 services:
+
+  # Extend bannou with dependencies on backend services
+  bannou:
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # RabbitMQ message broker
+  # Loads definitions.json for client events direct exchange and queue expiry policy
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   # Redis 8+ for state/caching - includes RediSearch, RedisJSON, etc. built-in
   # DO NOT CHANGE TO redis-stack-server - Redis 8.4+ has all modules integrated
@@ -38,5 +62,6 @@ services:
       start_period: 30s
 
 volumes:
+  rabbitmq-data:
   bannou-redis-data:
   bannou-mysql-data:

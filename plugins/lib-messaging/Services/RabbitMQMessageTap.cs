@@ -33,9 +33,8 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ConcurrentDictionary<Guid, TapHandleImpl> _activeTaps = new();
 
-    // Track declared exchanges to avoid redeclaring
-    private readonly HashSet<string> _declaredExchanges = new();
-    private readonly object _exchangeLock = new();
+    // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
+    private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
 
     /// <summary>
     /// Creates a new RabbitMQMessageTap instance.
@@ -59,7 +58,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     {
 
         var tapId = Guid.NewGuid();
-        var effectiveSourceExchange = sourceExchange ?? _configuration.DefaultExchange ?? AppConstants.DEFAULT_APP_NAME;
+        var effectiveSourceExchange = sourceExchange ?? _configuration.DefaultExchange;
         var createdAt = DateTimeOffset.UtcNow;
 
         // Create a unique queue name for this tap's source subscription
@@ -322,12 +321,9 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     {
         // Check if already declared (optimization to avoid redeclaring)
         var key = $"{exchange}:{exchangeType}";
-        lock (_exchangeLock)
+        if (_declaredExchanges.ContainsKey(key))
         {
-            if (_declaredExchanges.Contains(key))
-            {
-                return;
-            }
+            return;
         }
 
         await channel.ExchangeDeclareAsync(
@@ -338,10 +334,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
             arguments: null,
             cancellationToken: cancellationToken);
 
-        lock (_exchangeLock)
-        {
-            _declaredExchanges.Add(key);
-        }
+        _declaredExchanges.TryAdd(key, 0);
 
         _logger.LogDebug("Declared exchange '{Exchange}' of type {Type}", exchange, exchangeType);
     }

@@ -362,7 +362,30 @@ async function reconnect(token) {
       requireNewLogin();
     }
   };
-}
+```
+
+### Detecting Capability Changes
+
+The C# client SDK provides events to detect when capabilities are added or removed (useful for handling permission changes or reconnection):
+
+```csharp
+client.OnCapabilitiesAdded += (added) =>
+{
+    foreach (var cap in added)
+    {
+        Console.WriteLine($"New capability: {cap.Name} -> {cap.Guid}");
+        // Enable newly available features
+    }
+};
+
+client.OnCapabilitiesRemoved += (removed) =>
+{
+    foreach (var cap in removed)
+    {
+        Console.WriteLine($"Lost capability: {cap.Name}");
+        // Disable features that are no longer available
+    }
+};
 ```
 
 ## Error Handling

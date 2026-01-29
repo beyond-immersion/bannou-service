@@ -5,7 +5,7 @@ info:
     Configuration schema for Asset service.
     Properties are bound to environment variables with ASSET_ prefix.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
@@ -14,7 +14,8 @@ x-service-configuration:
     # Storage Provider Configuration
     StorageProvider:
       type: string
-      description: Storage backend type (minio, s3, r2, azure, filesystem)
+      enum: ["minio", "s3", "r2", "azure", "filesystem"]
+      description: Storage backend type
       env: ASSET_STORAGE_PROVIDER
       default: minio
 
@@ -127,7 +128,8 @@ x-service-configuration:
 
     ProcessingMode:
       type: string
-      description: Service mode (api, worker, both)
+      enum: ["api", "worker", "both"]
+      description: Service mode
       env: ASSET_PROCESSING_MODE
       default: both
 
@@ -187,7 +189,8 @@ x-service-configuration:
     # Audio Processing Configuration
     AudioOutputFormat:
       type: string
-      description: Default audio output format (mp3, opus, aac)
+      enum: ["mp3", "opus", "aac"]
+      description: Default audio output format
       env: ASSET_AUDIO_OUTPUT_FORMAT
       default: mp3
 
@@ -206,7 +209,8 @@ x-service-configuration:
     # Bundle Configuration
     BundleCompressionDefault:
       type: string
-      description: Default compression for bundles (lz4, lzma, none)
+      enum: ["lz4", "lzma", "none"]
+      description: Default compression for bundles
       env: ASSET_BUNDLE_COMPRESSION_DEFAULT
       default: lz4
 
@@ -287,19 +291,6 @@ x-service-configuration:
       env: ASSET_PROCESSING_RETRY_DELAY_SECONDS
       default: 30
 
-    # === State Store Configuration (Tier 3) ===
-    StatestoreName:
-      type: string
-      description: Name of the state store for asset metadata
-      env: ASSET_STATESTORE_NAME
-      default: asset-statestore
-
-    ProcessorPoolStoreName:
-      type: string
-      description: Name of the state store for processor pool management
-      env: ASSET_PROCESSOR_POOL_STORE_NAME
-      default: asset-processor-pool
-
     # === Key Prefix Configuration (Tier 3) ===
     UploadSessionKeyPrefix:
       type: string
@@ -369,6 +360,18 @@ x-service-configuration:
       description: Comma-separated list of additional forbidden content types
       env: ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES
 
+    # === Index Optimistic Retry Configuration ===
+    IndexOptimisticRetryMaxAttempts:
+      type: integer
+      description: Maximum retry attempts for optimistic concurrency index updates
+      default: 5
+      env: ASSET_INDEX_OPTIMISTIC_RETRY_MAX_ATTEMPTS
+    IndexOptimisticRetryBaseDelayMs:
+      type: integer
+      description: Base delay in milliseconds between optimistic retry attempts (multiplied by attempt number)
+      default: 10
+      env: ASSET_INDEX_OPTIMISTIC_RETRY_BASE_DELAY_MS
+
     # === Async Metabundle Job Configuration (Tier 2) ===
     MetabundleAsyncSourceBundleThreshold:
       type: integer
@@ -437,3 +440,35 @@ x-service-configuration:
       description: Number of assets to process before updating job progress. Lower values give more frequent updates but add overhead.
       env: ASSET_STREAMING_PROGRESS_UPDATE_INTERVAL_ASSETS
       default: 10
+
+    # === Processing Worker Configuration ===
+    ProcessingJobMaxWaitSeconds:
+      type: integer
+      description: Maximum seconds to wait for a synchronous processing job to complete
+      default: 60
+      env: ASSET_PROCESSING_JOB_MAX_WAIT_SECONDS
+    ProcessingQueueCheckIntervalSeconds:
+      type: integer
+      description: Interval in seconds to check processing queue when no jobs are available
+      default: 30
+      env: ASSET_PROCESSING_QUEUE_CHECK_INTERVAL_SECONDS
+    ProcessingBatchIntervalSeconds:
+      type: integer
+      description: Delay in seconds between batch processing attempts
+      default: 5
+      env: ASSET_PROCESSING_BATCH_INTERVAL_SECONDS
+    ShutdownDrainTimeoutMinutes:
+      type: integer
+      description: Maximum minutes to allow queue draining during graceful shutdown
+      default: 2
+      env: ASSET_SHUTDOWN_DRAIN_TIMEOUT_MINUTES
+    ShutdownDrainIntervalSeconds:
+      type: integer
+      description: Interval in seconds between shutdown drain checks
+      default: 2
+      env: ASSET_SHUTDOWN_DRAIN_INTERVAL_SECONDS
+    DefaultBundleCacheTtlHours:
+      type: integer
+      description: Default TTL in hours for bundle cache entries
+      default: 24
+      env: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS

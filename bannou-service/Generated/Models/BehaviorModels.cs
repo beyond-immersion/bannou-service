@@ -965,7 +965,7 @@ public enum ValidationErrorType
     Context = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"service_dependency")]
-    Service_dependency = 4,
+    ServiceDependency = 4,
 
 }
 #pragma warning restore CS1591

@@ -37,7 +37,6 @@ export class GoapProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GoapPlanResponse']>> {
     return this.client.invokeAsync<Schemas['GoapPlanRequest'], Schemas['GoapPlanResponse']>(
-      'POST',
       '/goap/plan',
       request,
       channel,
@@ -60,6 +59,6 @@ export class GoapProxy {
     return this.client.invokeAsync<
       Schemas['ValidateGoapPlanRequest'],
       Schemas['ValidateGoapPlanResponse']
-    >('POST', '/goap/validate-plan', request, channel, timeout);
+    >('/goap/validate-plan', request, channel, timeout);
   }
 }

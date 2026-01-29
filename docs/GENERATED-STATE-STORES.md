@@ -12,26 +12,53 @@ This document lists all state store components used in Bannou.
 | `account-statestore` | MySQL | Account | Persistent account data |
 | `achievement-definition` | Redis | Achievement | Achievement definitions |
 | `achievement-progress` | Redis | Achievement | Player achievement progress |
-| `achievement-unlock` | Redis | Achievement | Unlocked achievements registry |
 | `actor-assignments` | Redis | Actor | Actor-to-node assignments |
 | `actor-instances` | Redis | Actor | Active actor instance registry |
 | `actor-pool-nodes` | Redis | Actor | Actor pool node assignments |
 | `actor-state` | Redis | Actor | Runtime actor state |
 | `actor-templates` | Redis | Actor | Actor template definitions |
 | `agent-memories` | Redis | Actor | Agent memory and cognitive state |
-| `analytics-history` | Redis | Analytics | Controller possession history |
+| `analytics-history` | Redis | Analytics | Event buffer and legacy controller history (Redis for backward compatibility) |
+| `analytics-history-data` | MySQL | Analytics | Controller possession history for queryable audit trails (MySQL for server-side filtering) |
 | `analytics-rating` | Redis | Analytics | Glicko-2 skill ratings |
-| `analytics-summary` | Redis | Analytics | Entity statistics summaries |
+| `analytics-summary` | Redis | Analytics | Event buffer, session mappings, and resolution caches for analytics ingestion |
+| `analytics-summary-data` | MySQL | Analytics | Entity summary data for queryable analytics (MySQL for server-side filtering) |
+| `asset-processor-pool` | Redis | Asset | Processor pool node state and indexing |
 | `asset-statestore` | Redis | Asset | Asset upload tracking and bundle state |
 | `auth-statestore` | Redis | Auth | Session and token state (ephemeral) |
+| `behavior-statestore` | Redis | Behavior | Behavior metadata and compiled definitions |
 | `character-encounter-statestore` | MySQL | CharacterEncounter | Encounter records and participant perspectives |
 | `character-history-statestore` | MySQL | CharacterHistory | Character historical events and backstory |
 | `character-personality-statestore` | MySQL | CharacterPersonality | Character personality traits and combat preferences |
 | `character-statestore` | MySQL | Character | Persistent character data |
 | `connect-statestore` | Redis | Connect | WebSocket session state |
+| `contract-statestore` | Redis | Contract | Contract templates, instances, breaches, and indexes |
+| `currency-balance-cache` | Redis | Currency | Real-time balance lookups (cached, refreshed on access) |
+| `currency-balances` | MySQL | Currency | Currency balance records per wallet |
+| `currency-definitions` | MySQL | Currency | Currency type definitions and behavior rules |
+| `currency-holds` | MySQL | Currency | Authorization hold records |
+| `currency-holds-cache` | Redis | Currency | Authorization hold state for pre-auth scenarios |
+| `currency-idempotency` | Redis | Currency | Idempotency key deduplication |
+| `currency-transactions` | MySQL | Currency | Immutable transaction history |
+| `currency-wallets` | MySQL | Currency | Wallet ownership and status |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
+| `escrow-active-validation` | Redis | Escrow | Track active escrows requiring periodic validation |
+| `escrow-agreements` | MySQL | Escrow | Main escrow agreement records |
+| `escrow-handler-registry` | MySQL | Escrow | Custom asset type handler registrations |
+| `escrow-idempotency` | Redis | Escrow | Idempotency key deduplication cache |
+| `escrow-party-pending` | Redis | Escrow | Count pending escrows per party for limits |
+| `escrow-status-index` | Redis | Escrow | Escrow IDs by status (sorted set for expiration/validation) |
+| `escrow-tokens` | Redis | Escrow | Token hash validation (hashed tokens to escrow/party info) |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
+| `inventory-container-cache` | Redis | Inventory | Container state and item list cache |
+| `inventory-container-store` | MySQL | Inventory | Container definitions (persistent) |
+| `inventory-lock` | Redis | Inventory | Distributed locks for concurrent modifications |
+| `item-instance-cache` | Redis | Item | Hot item instance data for active gameplay |
+| `item-instance-store` | MySQL | Item | Item instances (persistent, realm-partitioned) |
+| `item-lock` | Redis | Item | Distributed locks for item instance modifications |
+| `item-template-cache` | Redis | Item | Template lookup cache (global, aggressive caching) |
+| `item-template-store` | MySQL | Item | Item template definitions (persistent, queryable) |
 | `leaderboard-definition` | Redis | Leaderboard | Leaderboard definitions and metadata |
 | `leaderboard-ranking` | Redis | Leaderboard | Real-time ranking data (sorted sets) |
 | `leaderboard-season` | MySQL | Leaderboard | Season history and archives |
@@ -64,7 +91,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 54 stores (34 Redis, 20 MySQL)
+**Total**: 81 stores (49 Redis, 32 MySQL)
 
 ## Naming Conventions
 

@@ -6,7 +6,7 @@ info:
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
     Custom events for ticket and match lifecycle are manually defined.
 
-    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
@@ -148,10 +148,10 @@ components:
           format: uuid
           description: ID of the matchmaking ticket
         previousStatus:
-          type: string
+          $ref: 'matchmaking-api.yaml#/components/schemas/TicketStatus'
           description: Status before the change
         newStatus:
-          type: string
+          $ref: 'matchmaking-api.yaml#/components/schemas/TicketStatus'
           description: Status after the change
         intervalsElapsed:
           type: integer
@@ -199,14 +199,7 @@ components:
           nullable: true
           description: Party ID if this was a party ticket
         reason:
-          type: string
-          enum:
-            - cancelled_by_user
-            - timeout
-            - session_disconnected
-            - party_disbanded
-            - match_declined
-            - queue_disabled
+          $ref: 'matchmaking-api.yaml#/components/schemas/CancelReason'
           description: Reason for cancellation
         waitTimeSeconds:
           type: number

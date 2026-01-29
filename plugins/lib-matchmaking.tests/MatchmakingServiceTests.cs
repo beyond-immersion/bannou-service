@@ -37,6 +37,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     private const string STATE_STORE = "matchmaking-statestore";
     private const string QUEUE_PREFIX = "queue:";
@@ -49,7 +50,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
 
     private const string TEST_SERVER_SALT = "test-server-salt-2025";
     private const string TEST_QUEUE_ID = "test-queue";
-    private const string TEST_GAME_ID = "arcadia";
+    private const string TEST_GAME_ID = "test-game";
 
     public MatchmakingServiceTests()
     {
@@ -66,6 +67,15 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockGameSessionClient = new Mock<IGameSessionClient>();
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<QueueModel>(STATE_STORE)).Returns(_mockQueueStore.Object);
@@ -106,7 +116,8 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
             _mockGameSessionClient.Object,
-            _mockPermissionClient.Object);
+            _mockPermissionClient.Object,
+            _mockLockProvider.Object);
     }
 
     /// <summary>
@@ -138,7 +149,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         {
             QueueId = queueId,
             GameId = TEST_GAME_ID,
-            SessionGameType = SessionGameType.Arcadia,
+            SessionGameType = "test-game",
             DisplayName = "Test Queue",
             Description = "A test queue",
             Enabled = true,
@@ -294,7 +305,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         {
             QueueId = TEST_QUEUE_ID,
             GameId = TEST_GAME_ID,
-            SessionGameType = SessionGameType.Arcadia,
+            SessionGameType = "test-game",
             DisplayName = "New Queue",
             MinCount = 2,
             MaxCount = 8,
@@ -370,7 +381,16 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             DisplayName = "Updated Queue Name"
         };
 
-        SetupExistingQueue(TEST_QUEUE_ID, CreateTestQueue());
+        var existingQueue = CreateTestQueue();
+        SetupExistingQueue(TEST_QUEUE_ID, existingQueue);
+
+        _mockQueueStore
+            .Setup(s => s.GetWithETagAsync(QUEUE_PREFIX + TEST_QUEUE_ID, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingQueue, "etag-0"));
+
+        _mockQueueStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<QueueModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (status, response) = await service.UpdateQueueAsync(request, CancellationToken.None);
@@ -380,11 +400,11 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         Assert.NotNull(response);
         Assert.Equal("Updated Queue Name", response.DisplayName);
 
-        // Verify state was saved
-        _mockQueueStore.Verify(s => s.SaveAsync(
+        // Verify state was saved with optimistic concurrency
+        _mockQueueStore.Verify(s => s.TrySaveAsync(
             QUEUE_PREFIX + TEST_QUEUE_ID,
             It.Is<QueueModel>(q => q.DisplayName == "Updated Queue Name"),
-            It.IsAny<StateOptions?>(),
+            "etag-0",
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -635,7 +655,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             TicketId = ticketId,
             AccountId = accountId,
             QueueId = TEST_QUEUE_ID,
-            WebSocketSessionId = sessionId.ToString(),
+            WebSocketSessionId = sessionId,
             Status = TicketStatus.Searching,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -727,8 +747,8 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             AcceptedPlayers = new List<Guid>(),
             MatchedTickets = new List<MatchedTicketModel>
             {
-                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId.ToString() },
-                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid().ToString() }
+                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId },
+                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid() }
             },
             CreatedAt = DateTimeOffset.UtcNow,
             Status = MatchStatus.Pending
@@ -856,8 +876,8 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             AcceptedPlayers = new List<Guid>(),
             MatchedTickets = new List<MatchedTicketModel>
             {
-                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId.ToString() },
-                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid().ToString() }
+                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId },
+                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid() }
             },
             CreatedAt = DateTimeOffset.UtcNow,
             Status = MatchStatus.Pending

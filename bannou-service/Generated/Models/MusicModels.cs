@@ -1464,13 +1464,13 @@ public enum NarrativeOptionsTensionProfile
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"gradual_build")]
-    Gradual_build = 0,
+    GradualBuild = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"early_climax")]
-    Early_climax = 1,
+    EarlyClimax = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"late_climax")]
-    Late_climax = 2,
+    LateClimax = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"sustained")]
     Sustained = 3,

@@ -15,26 +15,34 @@ public class SubscriptionExpirationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SubscriptionExpirationService> _logger;
-
-    /// <summary>
-    /// Interval between expiration checks (default: 5 minutes).
-    /// </summary>
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(5);
-
-    /// <summary>
-    /// Grace period after which a subscription is considered expired (to avoid race conditions).
-    /// </summary>
-    private static readonly TimeSpan ExpirationGracePeriod = TimeSpan.FromSeconds(30);
+    private readonly SubscriptionServiceConfiguration _configuration;
 
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
     private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
+    /// <summary>
+    /// Interval between expiration checks, from configuration.
+    /// </summary>
+    private TimeSpan CheckInterval => TimeSpan.FromMinutes(_configuration.ExpirationCheckIntervalMinutes);
+
+    /// <summary>
+    /// Grace period after which a subscription is considered expired (to avoid race conditions).
+    /// </summary>
+    private TimeSpan ExpirationGracePeriod => TimeSpan.FromSeconds(_configuration.ExpirationGracePeriodSeconds);
+
+    /// <summary>
+    /// Startup delay before first check, from configuration.
+    /// </summary>
+    private TimeSpan StartupDelay => TimeSpan.FromSeconds(_configuration.StartupDelaySeconds);
+
     public SubscriptionExpirationService(
         IServiceProvider serviceProvider,
-        ILogger<SubscriptionExpirationService> logger)
+        ILogger<SubscriptionExpirationService> logger,
+        SubscriptionServiceConfiguration configuration)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -44,7 +52,7 @@ public class SubscriptionExpirationService : BackgroundService
         // Wait a bit before first check to allow other services to start
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(StartupDelay, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -77,9 +85,10 @@ public class SubscriptionExpirationService : BackgroundService
                         ex.Message,
                         severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
                 }
-                catch
+                catch (Exception pubEx)
                 {
                     // Don't let error publishing failures affect the loop
+                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing expiration loop");
                 }
             }
 
@@ -98,6 +107,7 @@ public class SubscriptionExpirationService : BackgroundService
 
     /// <summary>
     /// Checks for expired subscriptions and publishes events for them.
+    /// Removes fully-processed expired subscriptions from the global index to prevent unbounded growth.
     /// </summary>
     private async Task CheckAndExpireSubscriptionsAsync(CancellationToken cancellationToken)
     {
@@ -108,7 +118,7 @@ public class SubscriptionExpirationService : BackgroundService
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
         // Get the subscription index to find all subscription IDs
-        var indexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Subscription);
+        var indexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Subscription);
         var subscriptionIndex = await indexStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
 
         if (subscriptionIndex == null || subscriptionIndex.Count == 0)
@@ -119,7 +129,9 @@ public class SubscriptionExpirationService : BackgroundService
 
         var nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var expiredCount = 0;
+        var idsToRemoveFromIndex = new List<Guid>();
 
+        // Use the shared SubscriptionDataModel from SubscriptionService (same assembly, internal access)
         var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreDefinitions.Subscription);
         foreach (var subscriptionId in subscriptionIndex)
         {
@@ -131,6 +143,22 @@ public class SubscriptionExpirationService : BackgroundService
 
                 if (subscription == null)
                 {
+                    // Subscription was deleted - remove from index
+                    idsToRemoveFromIndex.Add(subscriptionId);
+                    continue;
+                }
+
+                // Already inactive - no longer needs to be in the expiration index
+                if (!subscription.IsActive)
+                {
+                    idsToRemoveFromIndex.Add(subscriptionId);
+                    continue;
+                }
+
+                // No expiration date means unlimited subscription - remove from expiration index
+                if (!subscription.ExpirationDateUnix.HasValue)
+                {
+                    idsToRemoveFromIndex.Add(subscriptionId);
                     continue;
                 }
 
@@ -149,16 +177,15 @@ public class SubscriptionExpirationService : BackgroundService
                     continue;
                 }
 
-                // Check if subscription is active and has expired
-                if (subscription.IsActive &&
-                    subscription.ExpirationDateUnix.HasValue &&
-                    subscription.ExpirationDateUnix.Value <= nowUnix - (long)ExpirationGracePeriod.TotalSeconds)
+                // Check if subscription has expired (with grace period)
+                if (subscription.ExpirationDateUnix.Value <= nowUnix - (long)ExpirationGracePeriod.TotalSeconds)
                 {
                     _logger.LogInformation("Subscription {SubscriptionId} for account {AccountId} has expired",
                         subscription.SubscriptionId, subscription.AccountId);
 
-                    // Mark as inactive
+                    // Mark as inactive and record update timestamp
                     subscription.IsActive = false;
+                    subscription.UpdatedAtUnix = nowUnix;
                     await subscriptionStore.SaveAsync(
                         $"subscription:{subscriptionId}",
                         subscription,
@@ -167,15 +194,16 @@ public class SubscriptionExpirationService : BackgroundService
                     // Publish expiration event
                     var expirationEvent = new SubscriptionUpdatedEvent
                     {
-                        EventName = "subscription.updated",
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         SubscriptionId = subscription.SubscriptionId,
                         AccountId = subscription.AccountId,
                         ServiceId = subscription.ServiceId,
-                        StubName = subscription.StubName, // Validated non-null above
+                        StubName = subscription.StubName,
+                        DisplayName = subscription.DisplayName,
                         Action = SubscriptionUpdatedEventAction.Expired,
-                        IsActive = false
+                        IsActive = false,
+                        ExpirationDate = DateTimeOffset.FromUnixTimeSeconds(subscription.ExpirationDateUnix.Value)
                     };
 
                     await messageBus.TryPublishAsync(
@@ -185,6 +213,7 @@ public class SubscriptionExpirationService : BackgroundService
                     _logger.LogInformation("Published expiration event for subscription {SubscriptionId}",
                         subscription.SubscriptionId);
 
+                    idsToRemoveFromIndex.Add(subscriptionId);
                     expiredCount++;
                 }
             }
@@ -192,6 +221,12 @@ public class SubscriptionExpirationService : BackgroundService
             {
                 _logger.LogWarning(ex, "Failed to process subscription {SubscriptionId}", subscriptionId);
             }
+        }
+
+        // Clean up the subscription index by removing processed entries
+        if (idsToRemoveFromIndex.Count > 0)
+        {
+            await CleanupSubscriptionIndexAsync(indexStore, idsToRemoveFromIndex, cancellationToken);
         }
 
         if (expiredCount > 0)
@@ -205,18 +240,40 @@ public class SubscriptionExpirationService : BackgroundService
     }
 
     /// <summary>
-    /// Internal model for subscription data (matches SubscriptionService storage format).
+    /// Removes processed subscription IDs from the global subscription index.
+    /// Uses optimistic concurrency to handle concurrent modifications safely.
     /// </summary>
-    private class SubscriptionDataModel
+    private async Task CleanupSubscriptionIndexAsync(
+        IStateStore<List<Guid>> indexStore,
+        List<Guid> idsToRemove,
+        CancellationToken cancellationToken)
     {
-        public Guid SubscriptionId { get; set; }
-        public Guid AccountId { get; set; }
-        public Guid ServiceId { get; set; }
-        public string? StubName { get; set; }
-        public long StartDateUnix { get; set; }
-        public long? ExpirationDateUnix { get; set; }
-        public bool IsActive { get; set; }
-        public long CreatedAtUnix { get; set; }
-        public long UpdatedAtUnix { get; set; }
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (currentIndex, etag) = await indexStore.GetWithETagAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
+            if (currentIndex == null || currentIndex.Count == 0)
+            {
+                return;
+            }
+
+            var removeSet = new HashSet<Guid>(idsToRemove);
+            var updatedIndex = currentIndex.Where(id => !removeSet.Contains(id)).ToList();
+
+            if (updatedIndex.Count == currentIndex.Count)
+            {
+                return; // Nothing to remove
+            }
+
+            var result = await indexStore.TrySaveAsync(SUBSCRIPTION_INDEX_KEY, updatedIndex, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                _logger.LogDebug("Cleaned {Count} entries from subscription index", currentIndex.Count - updatedIndex.Count);
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on subscription index during cleanup, retrying (attempt {Attempt})", attempt + 1);
+        }
+
+        _logger.LogWarning("Failed to clean subscription index after retries - will retry next cycle");
     }
 }

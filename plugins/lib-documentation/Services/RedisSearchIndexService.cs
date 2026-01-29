@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 
@@ -16,9 +17,9 @@ public class RedisSearchIndexService : ISearchIndexService
 
     private const string INDEX_PREFIX = "doc-idx:";
 
-    // Track which namespace indexes have been created
-    private readonly HashSet<string> _initializedNamespaces = new();
-    private readonly object _initLock = new();
+    // Track which namespace indexes have been created (performance cache, not authoritative;
+    // EnsureIndexExistsAsync is idempotent so stale entries are safe - uses ConcurrentDictionary per IMPLEMENTATION TENETS)
+    private readonly ConcurrentDictionary<string, bool> _initializedNamespaces = new();
 
     /// <summary>
     /// Schema fields for Redis Search index.
@@ -59,12 +60,10 @@ public class RedisSearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
-        lock (_initLock)
+        // Fast path: already initialized (cache check, not authoritative)
+        if (_initializedNamespaces.ContainsKey(namespaceId))
         {
-            if (_initializedNamespaces.Contains(namespaceId))
-            {
-                return;
-            }
+            return;
         }
 
         var indexName = GetIndexName(namespaceId);
@@ -105,10 +104,8 @@ public class RedisSearchIndexService : ISearchIndexService
                     indexName, indexInfo.DocumentCount);
             }
 
-            lock (_initLock)
-            {
-                _initializedNamespaces.Add(namespaceId);
-            }
+            // Mark as initialized (thread-safe, idempotent)
+            _initializedNamespaces.TryAdd(namespaceId, true);
         }
         catch (Exception ex)
         {
@@ -148,11 +145,8 @@ public class RedisSearchIndexService : ISearchIndexService
             // Drop existing index if it exists
             await searchStore.DropIndexAsync(indexName, deleteDocuments: false, cancellationToken);
 
-            // Remove from initialized set so next operation recreates it
-            lock (_initLock)
-            {
-                _initializedNamespaces.Remove(namespaceId);
-            }
+            // Remove from initialized cache so next operation recreates it (thread-safe)
+            _initializedNamespaces.TryRemove(namespaceId, out _);
 
             // Recreate the index
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
@@ -187,7 +181,9 @@ public class RedisSearchIndexService : ISearchIndexService
     {
         // Redis Search automatically indexes documents stored via ISearchableStateStore
         // when they match the index prefix. No explicit indexing needed - just ensure index exists.
-        Task.Run(async () =>
+        // Fire-and-forget: index creation is best-effort; synchronous interface contract requires this pattern.
+        // Log at Error level per QUALITY TENETS since this is infrastructure failure, not user error.
+        _ = Task.Run(async () =>
         {
             try
             {
@@ -195,7 +191,7 @@ public class RedisSearchIndexService : ISearchIndexService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to ensure index exists for namespace '{Namespace}'", namespaceId);
+                _logger.LogError(ex, "Failed to ensure index exists for namespace '{Namespace}'", namespaceId);
             }
         });
 

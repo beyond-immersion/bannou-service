@@ -1,10 +1,12 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +14,6 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-analytics.tests")]
 
@@ -43,21 +44,26 @@ public partial class AnalyticsService : IAnalyticsService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IGameSessionClient _gameSessionClient;
+    private readonly IRealmClient _realmClient;
+    private readonly ICharacterClient _characterClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<AnalyticsService> _logger;
     private readonly AnalyticsServiceConfiguration _configuration;
 
-    // State store key prefixes
-    private const string SUMMARY_INDEX_PREFIX = "analytics-summary-index";
-    private const string CONTROLLER_INDEX_PREFIX = "analytics-controller-index";
+    // State store key prefixes (controller index prefix removed - MySQL handles queries natively)
     private const string EVENT_BUFFER_INDEX_KEY = "analytics-event-buffer-index";
     private const string EVENT_BUFFER_ENTRY_PREFIX = "analytics-event-buffer-entry";
     private const string SESSION_MAPPING_PREFIX = "analytics-session-mapping";
     private const string GAME_SERVICE_CACHE_PREFIX = "analytics-game-service-cache";
+    private const string REALM_GAME_SERVICE_CACHE_PREFIX = "analytics-realm-game-service-cache";
+    private const string CHARACTER_REALM_CACHE_PREFIX = "analytics-character-realm-cache";
     private const string BUFFER_LOCK_RESOURCE = "analytics-event-buffer-flush";
 
     // Glicko-2 scale conversion constant
     private const double GlickoScale = 173.7178;
+
+    // Cached parsed milestone thresholds from configuration
+    private readonly int[] _milestoneThresholds;
 
     /// <summary>
     /// Initializes a new instance of the AnalyticsService.
@@ -67,6 +73,8 @@ public partial class AnalyticsService : IAnalyticsService
         IStateStoreFactory stateStoreFactory,
         IGameServiceClient gameServiceClient,
         IGameSessionClient gameSessionClient,
+        IRealmClient realmClient,
+        ICharacterClient characterClient,
         IDistributedLockProvider lockProvider,
         ILogger<AnalyticsService> logger,
         AnalyticsServiceConfiguration configuration,
@@ -76,11 +84,34 @@ public partial class AnalyticsService : IAnalyticsService
         _stateStoreFactory = stateStoreFactory;
         _gameServiceClient = gameServiceClient;
         _gameSessionClient = gameSessionClient;
+        _realmClient = realmClient;
+        _characterClient = characterClient;
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
 
+        // Parse milestone thresholds from configuration
+        _milestoneThresholds = ParseMilestoneThresholds(configuration.MilestoneThresholds);
+
         RegisterEventConsumers(eventConsumer);
+    }
+
+    /// <summary>
+    /// Parses comma-separated milestone thresholds from configuration string.
+    /// </summary>
+    private static int[] ParseMilestoneThresholds(string thresholdsConfig)
+    {
+        if (string.IsNullOrWhiteSpace(thresholdsConfig))
+        {
+            return Array.Empty<int>();
+        }
+
+        return thresholdsConfig
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => int.TryParse(s, out var v) ? v : (int?)null)
+            .OfType<int>()  // Filters nulls and unwraps to int in one operation
+            .OrderBy(v => v)
+            .ToArray();
     }
 
     /// <summary>
@@ -105,33 +136,12 @@ public partial class AnalyticsService : IAnalyticsService
         => $"{gameServiceId}:controller:{accountId}:{timestamp:o}";
 
     /// <summary>
-    /// Generates the key for the entity summary index.
-    /// Format: analytics-summary-index:gameServiceId
-    /// </summary>
-    private static string GetSummaryIndexKey(Guid gameServiceId)
-        => $"{SUMMARY_INDEX_PREFIX}:{gameServiceId}";
-
-    /// <summary>
-    /// Generates the key for the controller history index.
-    /// Format: analytics-controller-index:gameServiceId
-    /// </summary>
-    private static string GetControllerIndexKey(Guid gameServiceId)
-        => $"{CONTROLLER_INDEX_PREFIX}:{gameServiceId}";
-
-    /// <summary>
-    /// Generates the key for controller history by account.
-    /// Format: analytics-controller-index:gameServiceId:account:accountId
-    /// </summary>
-    private static string GetControllerAccountIndexKey(Guid gameServiceId, Guid accountId)
-        => $"{CONTROLLER_INDEX_PREFIX}:{gameServiceId}:account:{accountId}";
-
-    /// <summary>
     /// Implementation of IngestEvent operation.
     /// Ingests a single analytics event and updates entity summaries.
     /// </summary>
     public async Task<(StatusCodes, IngestEventResponse?)> IngestEventAsync(IngestEventRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Ingesting analytics event for entity {EntityType}:{EntityId}", body.EntityType, body.EntityId);
+        _logger.LogDebug("Ingesting analytics event for entity {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
         try
         {
@@ -182,7 +192,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, IngestEventBatchResponse?)> IngestEventBatchAsync(IngestEventBatchRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Ingesting batch of {Count} analytics events", body.Events.Count);
+        _logger.LogDebug("Ingesting batch of {Count} analytics events", body.Events.Count);
 
         try
         {
@@ -266,7 +276,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
             var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
@@ -315,19 +325,19 @@ public partial class AnalyticsService : IAnalyticsService
         {
             if (body.Limit <= 0)
             {
-                _logger.LogWarning("Invalid limit {Limit} for analytics summary query", body.Limit);
+                _logger.LogDebug("Invalid limit {Limit} for analytics summary query", body.Limit);
                 return (StatusCodes.BadRequest, null);
             }
 
             if (body.Offset < 0)
             {
-                _logger.LogWarning("Invalid offset {Offset} for analytics summary query", body.Offset);
+                _logger.LogDebug("Invalid offset {Offset} for analytics summary query", body.Offset);
                 return (StatusCodes.BadRequest, null);
             }
 
             if (body.MinEvents < 0)
             {
-                _logger.LogWarning("Invalid minEvents {MinEvents} for analytics summary query", body.MinEvents);
+                _logger.LogDebug("Invalid minEvents {MinEvents} for analytics summary query", body.MinEvents);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -339,77 +349,95 @@ public partial class AnalyticsService : IAnalyticsService
                     sortBy != "lasteventat" &&
                     sortBy != "eventcount")
                 {
-                    _logger.LogWarning("Unsupported sortBy value {SortBy} for analytics summary query", body.SortBy);
+                    _logger.LogDebug("Unsupported sortBy value {SortBy} for analytics summary query", body.SortBy);
                     return (StatusCodes.BadRequest, null);
                 }
             }
 
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
-            var indexKey = GetSummaryIndexKey(body.GameServiceId);
-            var entityKeys = await summaryStore.GetSetAsync<string>(indexKey, cancellationToken);
+            var summaryDataStore = _stateStoreFactory.GetJsonQueryableStore<EntitySummaryData>(
+                StateStoreDefinitions.AnalyticsSummaryData);
 
-            if (entityKeys.Count == 0)
+            var conditions = new List<QueryCondition>
             {
-                return (StatusCodes.OK, new QueryEntitySummariesResponse
+                new QueryCondition
                 {
-                    Summaries = new List<EntitySummaryResponse>(),
-                    Total = 0
+                    Path = "$.GameServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.GameServiceId.ToString()
+                }
+            };
+
+            if (body.EntityType.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.EntityType",
+                    Operator = QueryOperator.Equals,
+                    Value = (int)body.EntityType.Value
                 });
             }
 
-            var summaries = new List<EntitySummaryData>();
-
-            foreach (var entityKey in entityKeys)
+            if (!string.IsNullOrEmpty(body.EventType))
             {
-                var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
-                if (summary == null)
+                conditions.Add(new QueryCondition
                 {
-                    await summaryStore.RemoveFromSetAsync(indexKey, entityKey, cancellationToken);
-                    continue;
-                }
-
-                if (body.EntityType.HasValue && summary.EntityType != body.EntityType.Value)
-                {
-                    continue;
-                }
-
-                if (!string.IsNullOrEmpty(body.EventType))
-                {
-                    if (summary.EventCounts == null || !summary.EventCounts.ContainsKey(body.EventType))
-                    {
-                        continue;
-                    }
-                }
-
-                if (body.MinEvents > 0 && summary.TotalEvents < body.MinEvents)
-                {
-                    continue;
-                }
-
-                summaries.Add(summary);
+                    Path = $"$.EventCounts.{body.EventType}",
+                    Operator = QueryOperator.Exists,
+                    Value = true
+                });
             }
 
-            var total = summaries.Count;
-            var ordered = ApplySummarySort(summaries, body);
-            var paged = ordered
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .Select(summary => new EntitySummaryResponse
+            if (body.MinEvents > 0)
+            {
+                conditions.Add(new QueryCondition
                 {
-                    EntityId = summary.EntityId,
-                    EntityType = summary.EntityType,
-                    TotalEvents = summary.TotalEvents,
-                    FirstEventAt = summary.FirstEventAt,
-                    LastEventAt = summary.LastEventAt,
-                    EventCounts = summary.EventCounts,
-                    Aggregates = summary.Aggregates
+                    Path = "$.TotalEvents",
+                    Operator = QueryOperator.GreaterThanOrEqual,
+                    Value = body.MinEvents
+                });
+            }
+
+            JsonSortSpec? sortSpec = null;
+            if (!string.IsNullOrWhiteSpace(body.SortBy))
+            {
+                var sortPath = body.SortBy.Trim().ToLowerInvariant() switch
+                {
+                    "totalevents" => "$.TotalEvents",
+                    "firsteventat" => "$.FirstEventAt",
+                    "lasteventat" => "$.LastEventAt",
+                    "eventcount" when !string.IsNullOrEmpty(body.EventType) => $"$.EventCounts.{body.EventType}",
+                    _ => (string?)null
+                };
+                if (sortPath != null)
+                {
+                    sortSpec = new JsonSortSpec { Path = sortPath, Descending = body.SortDescending };
+                }
+            }
+
+            var result = await summaryDataStore.JsonQueryPagedAsync(
+                conditions,
+                body.Offset,
+                body.Limit,
+                sortSpec,
+                cancellationToken);
+
+            var mapped = result.Items
+                .Select(item => new EntitySummaryResponse
+                {
+                    EntityId = item.Value.EntityId,
+                    EntityType = item.Value.EntityType,
+                    TotalEvents = item.Value.TotalEvents,
+                    FirstEventAt = item.Value.FirstEventAt,
+                    LastEventAt = item.Value.LastEventAt,
+                    EventCounts = item.Value.EventCounts,
+                    Aggregates = item.Value.Aggregates
                 })
                 .ToList();
 
             return (StatusCodes.OK, new QueryEntitySummariesResponse
             {
-                Summaries = paged,
-                Total = total
+                Summaries = mapped,
+                Total = (int)result.TotalCount
             });
         }
         catch (Exception ex)
@@ -440,7 +468,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(_configuration.RatingStoreName);
+            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
             var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
 
             var rating = await ratingStore.GetAsync(ratingKey, cancellationToken);
@@ -509,11 +537,26 @@ public partial class AnalyticsService : IAnalyticsService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(_configuration.RatingStoreName);
-            var updatedRatings = new List<SkillRatingChange>();
+            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
             var now = DateTimeOffset.UtcNow;
 
-            // Load all current ratings
+            // Acquire distributed lock to serialize rating updates for this game+type combination
+            var lockResourceId = $"rating-update:{body.GameServiceId}:{body.RatingType}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.AnalyticsRating,
+                lockResourceId,
+                Guid.NewGuid().ToString(),
+                _configuration.RatingUpdateLockExpirySeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire rating update lock for {ResourceId} during match {MatchId}",
+                    lockResourceId, body.MatchId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Load all current ratings (no ETags needed - lock provides exclusivity)
             var currentRatings = new Dictionary<string, SkillRatingData>();
             foreach (var result in body.Results)
             {
@@ -532,32 +575,53 @@ public partial class AnalyticsService : IAnalyticsService
                 };
             }
 
-            // Calculate new ratings using Glicko-2
+            // Snapshot pre-match ratings for opponent lookups (prevents mutation bug)
+            var originalRatings = currentRatings.ToDictionary(
+                kvp => kvp.Key,
+                kvp => (Rating: kvp.Value.Rating, RD: kvp.Value.RatingDeviation, Volatility: kvp.Value.Volatility));
+
+            // Calculate ALL new ratings using pre-match snapshots for opponent lookups
+            var calculatedResults = new List<(string Key, MatchResult Result, double NewRating, double NewRD, double NewVolatility, double PreviousRating)>();
             foreach (var result in body.Results)
             {
                 var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
                 var playerRating = currentRatings[key];
                 var previousRating = playerRating.Rating;
 
-                // Calculate opponents' combined effect
+                // Calculate opponents' combined effect using pairwise outcomes and ORIGINAL ratings
                 var opponents = body.Results.Where(r => r.EntityId != result.EntityId).ToList();
-                var (newRating, newRD, newVolatility) = CalculateGlicko2Update(
-                    playerRating,
-                    opponents.Select(o =>
+                var opponentData = opponents.Select(o =>
+                {
+                    var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
+                    var oppOriginal = originalRatings[oppKey];
+                    var opponentSnapshot = new SkillRatingData
                     {
-                        var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
-                        return (currentRatings[oppKey], result.Outcome);
-                    }).ToList()
-                );
+                        Rating = oppOriginal.Rating,
+                        RatingDeviation = oppOriginal.RD,
+                        Volatility = oppOriginal.Volatility
+                    };
+                    var pairwiseOutcome = result.Outcome > o.Outcome ? 1.0
+                        : result.Outcome < o.Outcome ? 0.0
+                        : 0.5;
+                    return (opponentSnapshot, pairwiseOutcome);
+                }).ToList();
 
-                // Update rating data
+                var (newRating, newRD, newVolatility) = CalculateGlicko2Update(playerRating, opponentData);
+                calculatedResults.Add((key, result, newRating, newRD, newVolatility, previousRating));
+            }
+
+            // Apply all calculated values and save (all-or-nothing under lock)
+            var updatedRatings = new List<SkillRatingChange>();
+            foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
+            {
+                var playerRating = currentRatings[key];
                 playerRating.Rating = newRating;
                 playerRating.RatingDeviation = newRD;
                 playerRating.Volatility = newVolatility;
                 playerRating.MatchesPlayed++;
                 playerRating.LastMatchAt = now;
 
-                await ratingStore.SaveAsync(key, playerRating, options: null, cancellationToken);
+                await ratingStore.SaveAsync(key, playerRating, cancellationToken: cancellationToken);
 
                 var ratingChange = newRating - previousRating;
                 updatedRatings.Add(new SkillRatingChange
@@ -568,15 +632,19 @@ public partial class AnalyticsService : IAnalyticsService
                     NewRating = newRating,
                     RatingChange = ratingChange
                 });
+            }
 
-                // Publish rating updated event
+            // Publish all events after all saves complete
+            foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
+            {
+                var ratingChange = newRating - previousRating;
                 var ratingEvent = new AnalyticsRatingUpdatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     GameServiceId = body.GameServiceId,
                     EntityId = result.EntityId,
-                    EntityType = MapToRatingEventEntityType(result.EntityType),
+                    EntityType = result.EntityType,
                     RatingType = body.RatingType,
                     PreviousRating = previousRating,
                     NewRating = newRating,
@@ -621,7 +689,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(_configuration.HistoryStoreName);
+            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
             var eventId = Guid.NewGuid();
             var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
 
@@ -638,15 +706,6 @@ public partial class AnalyticsService : IAnalyticsService
             };
 
             await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
-            await controllerStore.AddToSetAsync(
-                GetControllerIndexKey(body.GameServiceId),
-                key,
-                cancellationToken: cancellationToken);
-            await controllerStore.AddToSetAsync(
-                GetControllerAccountIndexKey(body.GameServiceId, body.AccountId),
-                key,
-                cancellationToken: cancellationToken);
-
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -678,87 +737,105 @@ public partial class AnalyticsService : IAnalyticsService
         {
             if (body.Limit <= 0)
             {
-                _logger.LogWarning("Invalid limit {Limit} for controller history query", body.Limit);
+                _logger.LogDebug("Invalid limit {Limit} for controller history query", body.Limit);
                 return (StatusCodes.BadRequest, null);
             }
 
             if (body.StartTime.HasValue && body.EndTime.HasValue && body.StartTime > body.EndTime)
             {
-                _logger.LogWarning("Invalid controller history time range {StartTime} to {EndTime}",
+                _logger.LogDebug("Invalid controller history time range {StartTime} to {EndTime}",
                     body.StartTime, body.EndTime);
                 return (StatusCodes.BadRequest, null);
             }
 
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(_configuration.HistoryStoreName);
-            var indexKey = body.AccountId.HasValue
-                ? GetControllerAccountIndexKey(body.GameServiceId, body.AccountId.Value)
-                : GetControllerIndexKey(body.GameServiceId);
-            var eventKeys = await controllerStore.GetSetAsync<string>(indexKey, cancellationToken);
+            var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
+                StateStoreDefinitions.AnalyticsHistoryData);
 
-            if (eventKeys.Count == 0)
+            var conditions = new List<QueryCondition>
             {
-                return (StatusCodes.OK, new QueryControllerHistoryResponse
+                new QueryCondition
                 {
-                    Events = new List<ControllerHistoryEvent>()
+                    Path = "$.GameServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.GameServiceId.ToString()
+                }
+            };
+
+            if (body.AccountId.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.AccountId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.AccountId.Value.ToString()
                 });
             }
 
-            var events = new List<ControllerHistoryData>();
-
-            foreach (var eventKey in eventKeys)
+            if (body.TargetEntityId.HasValue)
             {
-                var historyEvent = await controllerStore.GetAsync(eventKey, cancellationToken);
-                if (historyEvent == null)
+                conditions.Add(new QueryCondition
                 {
-                    continue;
-                }
-
-                if (body.AccountId.HasValue && historyEvent.AccountId != body.AccountId.Value)
-                {
-                    continue;
-                }
-
-                if (body.TargetEntityId.HasValue && historyEvent.TargetEntityId != body.TargetEntityId.Value)
-                {
-                    continue;
-                }
-
-                if (body.TargetEntityType.HasValue && historyEvent.TargetEntityType != body.TargetEntityType.Value)
-                {
-                    continue;
-                }
-
-                if (body.StartTime.HasValue && historyEvent.Timestamp < body.StartTime.Value)
-                {
-                    continue;
-                }
-
-                if (body.EndTime.HasValue && historyEvent.Timestamp > body.EndTime.Value)
-                {
-                    continue;
-                }
-
-                events.Add(historyEvent);
+                    Path = "$.TargetEntityId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.TargetEntityId.Value.ToString()
+                });
             }
 
-            var ordered = events
-                .OrderByDescending(e => e.Timestamp)
-                .Take(body.Limit)
-                .Select(evt => new ControllerHistoryEvent
+            if (body.TargetEntityType.HasValue)
+            {
+                conditions.Add(new QueryCondition
                 {
-                    EventId = evt.EventId,
-                    AccountId = evt.AccountId,
-                    TargetEntityId = evt.TargetEntityId,
-                    TargetEntityType = evt.TargetEntityType,
-                    Action = evt.Action,
-                    Timestamp = evt.Timestamp,
-                    SessionId = evt.SessionId
+                    Path = "$.TargetEntityType",
+                    Operator = QueryOperator.Equals,
+                    Value = (int)body.TargetEntityType.Value
+                });
+            }
+
+            if (body.StartTime.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.Timestamp",
+                    Operator = QueryOperator.GreaterThanOrEqual,
+                    Value = body.StartTime.Value.ToString("o")
+                });
+            }
+
+            if (body.EndTime.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.Timestamp",
+                    Operator = QueryOperator.LessThanOrEqual,
+                    Value = body.EndTime.Value.ToString("o")
+                });
+            }
+
+            var sortSpec = new JsonSortSpec { Path = "$.Timestamp", Descending = true };
+
+            var result = await historyStore.JsonQueryPagedAsync(
+                conditions,
+                0,
+                body.Limit,
+                sortSpec,
+                cancellationToken);
+
+            var events = result.Items
+                .Select(item => new ControllerHistoryEvent
+                {
+                    EventId = item.Value.EventId,
+                    AccountId = item.Value.AccountId,
+                    TargetEntityId = item.Value.TargetEntityId,
+                    TargetEntityType = item.Value.TargetEntityType,
+                    Action = item.Value.Action,
+                    Timestamp = item.Value.Timestamp,
+                    SessionId = item.Value.SessionId
                 })
                 .ToList();
 
             return (StatusCodes.OK, new QueryControllerHistoryResponse
             {
-                Events = ordered
+                Events = events
             });
         }
         catch (Exception ex)
@@ -771,6 +848,112 @@ public partial class AnalyticsService : IAnalyticsService
                 ex.Message,
                 dependency: null,
                 endpoint: "post:/analytics/controller-history/query",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Implementation of CleanupControllerHistory operation.
+    /// Deletes controller history records older than the configured retention period.
+    /// </summary>
+    public async Task<(StatusCodes, CleanupControllerHistoryResponse?)> CleanupControllerHistoryAsync(
+        CleanupControllerHistoryRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
+            body.DryRun, body.OlderThanDays, body.GameServiceId);
+
+        try
+        {
+            var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
+            if (retentionDays <= 0)
+            {
+                _logger.LogInformation("Controller history cleanup skipped: retention days is 0 (indefinite retention)");
+                return (StatusCodes.OK, new CleanupControllerHistoryResponse
+                {
+                    RecordsDeleted = 0,
+                    DryRun = body.DryRun
+                });
+            }
+
+            var cutoffTime = DateTimeOffset.UtcNow.AddDays(-retentionDays);
+            var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
+                StateStoreDefinitions.AnalyticsHistoryData);
+
+            var conditions = new List<QueryCondition>
+            {
+                new QueryCondition
+                {
+                    Path = "$.Timestamp",
+                    Operator = QueryOperator.LessThan,
+                    Value = cutoffTime.ToString("o")
+                }
+            };
+
+            if (body.GameServiceId.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.GameServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.GameServiceId.Value.ToString()
+                });
+            }
+
+            if (body.DryRun)
+            {
+                var count = await historyStore.JsonCountAsync(conditions, cancellationToken);
+                _logger.LogInformation("Controller history cleanup dry run: {Count} records would be deleted", count);
+                return (StatusCodes.OK, new CleanupControllerHistoryResponse
+                {
+                    RecordsDeleted = count,
+                    DryRun = true
+                });
+            }
+
+            var batchSize = _configuration.ControllerHistoryCleanupBatchSize;
+            var totalDeleted = 0L;
+            var regularStore = _stateStoreFactory.GetStore<ControllerHistoryData>(
+                StateStoreDefinitions.AnalyticsHistoryData);
+
+            // Delete in batches to avoid overwhelming the database (per IMPLEMENTATION TENETS: use configuration)
+            while (totalDeleted < batchSize)
+            {
+                var batchLimit = Math.Min(_configuration.ControllerHistoryCleanupSubBatchSize, (int)(batchSize - totalDeleted));
+                var batch = await historyStore.JsonQueryPagedAsync(
+                    conditions, 0, batchLimit, null, cancellationToken);
+
+                if (batch.Items.Count == 0)
+                {
+                    break;
+                }
+
+                foreach (var item in batch.Items)
+                {
+                    await regularStore.DeleteAsync(item.Key, cancellationToken);
+                    totalDeleted++;
+                }
+            }
+
+            _logger.LogInformation("Controller history cleanup completed: {DeletedCount} records deleted", totalDeleted);
+            return (StatusCodes.OK, new CleanupControllerHistoryResponse
+            {
+                RecordsDeleted = totalDeleted,
+                DryRun = false
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up controller history");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "CleanupControllerHistory",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/controller-history/cleanup",
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
@@ -838,9 +1021,9 @@ public partial class AnalyticsService : IAnalyticsService
         var newRating = newMu * GlickoScale + baseRating;
         var newRD = newPhiValue * GlickoScale;
 
-        // Clamp values to reasonable ranges
-        newRating = Math.Clamp(newRating, 100, 4000);
-        newRD = Math.Clamp(newRD, 30, maxDeviation);
+        // Clamp values to reasonable ranges (per IMPLEMENTATION TENETS: use configuration, not hardcoded tunables)
+        newRating = Math.Clamp(newRating, _configuration.Glicko2MinRating, _configuration.Glicko2MaxRating);
+        newRD = Math.Clamp(newRD, _configuration.Glicko2MinDeviation, maxDeviation);
 
         return (newRating, newRD, newSigma);
     }
@@ -880,9 +1063,16 @@ public partial class AnalyticsService : IAnalyticsService
             ? Math.Log(deltaSq - phiSq - v)
             : a - tau;
 
+        var iterations = 0;
         while (f(upperBound) < 0)
         {
             upperBound -= tau;
+            iterations++;
+            if (iterations >= _configuration.Glicko2MaxVolatilityIterations)
+            {
+                _logger.LogWarning("Glicko-2 upper bound search did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", _configuration.Glicko2MaxVolatilityIterations, sigma);
+                return sigma;
+            }
         }
 
         var lowerBound = a;
@@ -891,7 +1081,8 @@ public partial class AnalyticsService : IAnalyticsService
         var fA = f(lowerBound);
         var fB = f(upperBound);
 
-        while (Math.Abs(upperBound - lowerBound) > 0.000001)
+        iterations = 0;
+        while (Math.Abs(upperBound - lowerBound) > _configuration.Glicko2VolatilityConvergenceTolerance)
         {
             var c = lowerBound + (lowerBound - upperBound) * fA / (fB - fA);
             var fC = f(c);
@@ -908,6 +1099,13 @@ public partial class AnalyticsService : IAnalyticsService
 
             upperBound = c;
             fB = fC;
+
+            iterations++;
+            if (iterations >= _configuration.Glicko2MaxVolatilityIterations)
+            {
+                _logger.LogWarning("Glicko-2 Illinois algorithm did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", _configuration.Glicko2MaxVolatilityIterations, sigma);
+                return sigma;
+            }
         }
 
         return Math.Exp(upperBound / 2);
@@ -935,21 +1133,31 @@ public partial class AnalyticsService : IAnalyticsService
     private static string GetSessionMappingKey(Guid sessionId)
         => $"{SESSION_MAPPING_PREFIX}:{sessionId}";
 
-    private StateOptions? BuildSummaryCacheOptions()
+    private StateOptions? BuildResolutionCacheOptions()
     {
-        if (_configuration.SummaryCacheTtlSeconds <= 0)
+        if (_configuration.ResolutionCacheTtlSeconds <= 0)
         {
             return null;
         }
 
-        return new StateOptions { Ttl = _configuration.SummaryCacheTtlSeconds };
+        return new StateOptions { Ttl = _configuration.ResolutionCacheTtlSeconds };
+    }
+
+    private StateOptions? BuildSessionMappingCacheOptions()
+    {
+        if (_configuration.SessionMappingTtlSeconds <= 0)
+        {
+            return null;
+        }
+
+        return new StateOptions { Ttl = _configuration.SessionMappingTtlSeconds };
     }
 
     private async Task<bool> EnsureSummaryStoreRedisAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var backend = _stateStoreFactory.GetBackendType(_configuration.SummaryStoreName);
+            var backend = _stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary);
             if (backend == StateBackend.Redis)
             {
                 return true;
@@ -959,7 +1167,7 @@ public partial class AnalyticsService : IAnalyticsService
             _logger.LogError(
                 "{Message} (StoreName: {StoreName}, Backend: {Backend})",
                 message,
-                _configuration.SummaryStoreName,
+                StateStoreDefinitions.AnalyticsSummary,
                 backend);
             await _messageBus.TryPublishErrorAsync(
                 "analytics",
@@ -968,7 +1176,7 @@ public partial class AnalyticsService : IAnalyticsService
                 message,
                 dependency: "state",
                 endpoint: "state:summary",
-                details: $"store:{_configuration.SummaryStoreName};backend:{backend}",
+                details: $"store:{StateStoreDefinitions.AnalyticsSummary};backend:{backend}",
                 stack: null,
                 cancellationToken: cancellationToken);
             return false;
@@ -983,7 +1191,7 @@ public partial class AnalyticsService : IAnalyticsService
                 ex.Message,
                 dependency: "state",
                 endpoint: "state:summary",
-                details: $"store:{_configuration.SummaryStoreName}",
+                details: $"store:{StateStoreDefinitions.AnalyticsSummary}",
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return false;
@@ -1010,10 +1218,10 @@ public partial class AnalyticsService : IAnalyticsService
         }
 
         var stubName = gameType.Trim().ToLowerInvariant();
-        var cacheOptions = BuildSummaryCacheOptions();
+        var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(_configuration.SummaryStoreName);
+            var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
             var cacheKey = GetGameServiceCacheKey(stubName);
             var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
@@ -1031,24 +1239,14 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (response == null)
             {
-                var message = "Game service lookup returned no data";
-                _logger.LogError("{Message} (GameType: {GameType})", message, gameType);
-                await _messageBus.TryPublishErrorAsync(
-                    "analytics",
-                    "ResolveGameServiceId",
-                    "game_service_lookup_empty",
-                    message,
-                    dependency: "game-service",
-                    endpoint: "service:game-service/get",
-                    details: $"gameType:{gameType}",
-                    stack: null,
-                    cancellationToken: cancellationToken);
+                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                _logger.LogWarning("Game service lookup returned no data for game type {GameType}", gameType);
                 return null;
             }
 
             if (cacheOptions != null)
             {
-                var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(_configuration.SummaryStoreName);
+                var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
                 var cacheKey = GetGameServiceCacheKey(stubName);
                 await cacheStore.SaveAsync(cacheKey, new GameServiceCacheEntry
                 {
@@ -1061,17 +1259,8 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            _logger.LogError(ex, "Failed to resolve game service for game type {GameType}", gameType);
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "ResolveGameServiceId",
-                "game_service_lookup_failed",
-                ex.Message,
-                dependency: "game-service",
-                endpoint: "service:game-service/get",
-                details: $"gameType:{gameType}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for game type {GameType}: {Status}", gameType, ex.StatusCode);
             return null;
         }
         catch (Exception ex)
@@ -1095,7 +1284,7 @@ public partial class AnalyticsService : IAnalyticsService
     {
         try
         {
-            var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+            var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
             var mappingKey = GetSessionMappingKey(sessionId);
             var mapping = await mappingStore.GetAsync(mappingKey, cancellationToken);
             if (mapping != null)
@@ -1153,17 +1342,8 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            _logger.LogError(ex, "Failed to resolve game session {SessionId} for analytics event", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "ResolveGameServiceIdForSession",
-                "game_session_lookup_failed",
-                ex.Message,
-                dependency: "game-session",
-                endpoint: "service:game-session/get",
-                details: $"sessionId:{sessionId}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game session {SessionId} for analytics event: {Status}", sessionId, ex.StatusCode);
             return null;
         }
         catch (Exception ex)
@@ -1189,9 +1369,9 @@ public partial class AnalyticsService : IAnalyticsService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
-        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
-        var cacheOptions = BuildSummaryCacheOptions();
+        var cacheOptions = BuildSessionMappingCacheOptions();
         await mappingStore.SaveAsync(mappingKey, new GameSessionMappingData
         {
             SessionId = sessionId,
@@ -1203,9 +1383,146 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task RemoveGameSessionMappingAsync(Guid sessionId, CancellationToken cancellationToken)
     {
-        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
         await mappingStore.DeleteAsync(mappingKey, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolves the game service ID for a given realm by looking up the realm via client.
+    /// Results are cached using the standard summary cache TTL.
+    /// </summary>
+    private async Task<Guid?> ResolveGameServiceIdForRealmAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        var cacheOptions = BuildResolutionCacheOptions();
+        if (cacheOptions != null)
+        {
+            var cacheStore = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+            var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
+            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            if (cached != null)
+            {
+                return cached.GameServiceId;
+            }
+        }
+
+        try
+        {
+            var realm = await _realmClient.GetRealmAsync(new GetRealmRequest
+            {
+                RealmId = realmId
+            }, cancellationToken);
+
+            if (realm == null)
+            {
+                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                _logger.LogWarning("Realm lookup returned no data for realm {RealmId}", realmId);
+                return null;
+            }
+
+            if (cacheOptions != null)
+            {
+                var cacheStore = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+                var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
+                await cacheStore.SaveAsync(cacheKey, new RealmGameServiceCacheEntry
+                {
+                    GameServiceId = realm.GameServiceId,
+                    CachedAt = DateTimeOffset.UtcNow
+                }, cacheOptions, cancellationToken);
+            }
+
+            return realm.GameServiceId;
+        }
+        catch (ApiException ex)
+        {
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for realm {RealmId}: {Status}", realmId, ex.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for realm {RealmId}", realmId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForRealm",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "realm",
+                endpoint: "service:realm/get",
+                details: $"realmId:{realmId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the game service ID for a given character by looking up the character's realm,
+    /// then resolving the realm's game service ID.
+    /// Results are cached using the standard summary cache TTL.
+    /// </summary>
+    private async Task<Guid?> ResolveGameServiceIdForCharacterAsync(Guid characterId, CancellationToken cancellationToken)
+    {
+        var cacheOptions = BuildResolutionCacheOptions();
+        if (cacheOptions != null)
+        {
+            var cacheStore = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+            var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
+            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            if (cached != null)
+            {
+                return await ResolveGameServiceIdForRealmAsync(cached.RealmId, cancellationToken);
+            }
+        }
+
+        try
+        {
+            var character = await _characterClient.GetCharacterAsync(new GetCharacterRequest
+            {
+                CharacterId = characterId
+            }, cancellationToken);
+
+            if (character == null)
+            {
+                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                _logger.LogWarning("Character lookup returned no data for character {CharacterId}", characterId);
+                return null;
+            }
+
+            if (cacheOptions != null)
+            {
+                var cacheStore = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+                var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
+                await cacheStore.SaveAsync(cacheKey, new CharacterRealmCacheEntry
+                {
+                    RealmId = character.RealmId,
+                    CachedAt = DateTimeOffset.UtcNow
+                }, cacheOptions, cancellationToken);
+            }
+
+            return await ResolveGameServiceIdForRealmAsync(character.RealmId, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for character {CharacterId}: {Status}", characterId, ex.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for character {CharacterId}", characterId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForCharacter",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "character",
+                endpoint: "service:character/get",
+                details: $"characterId:{characterId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
     }
 
     private async Task<bool> BufferAnalyticsEventAsync(
@@ -1229,8 +1546,8 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(_configuration.SummaryStoreName);
-            bufferIndexStore = _stateStoreFactory.GetStore<object>(_configuration.SummaryStoreName);
+            bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
+            bufferIndexStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.AnalyticsSummary);
             eventKey = GetEventBufferEntryKey(bufferedEvent.EventId);
 
             await bufferStore.SaveAsync(eventKey, bufferedEvent, options: null, cancellationToken);
@@ -1255,6 +1572,10 @@ public partial class AnalyticsService : IAnalyticsService
                 if (bufferStore != null && eventKey != null)
                 {
                     await bufferStore.DeleteAsync(eventKey, cancellationToken);
+                }
+                if (bufferIndexStore != null && eventKey != null)
+                {
+                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, eventKey, cancellationToken);
                 }
             }
             catch (Exception cleanupException)
@@ -1326,7 +1647,7 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
-        var bufferIndexStore = _stateStoreFactory.GetStore<object>(_configuration.SummaryStoreName);
+        var bufferIndexStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.AnalyticsSummary);
         var bufferCount = await bufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
         if (bufferCount == 0)
         {
@@ -1356,9 +1677,9 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
-        var lockExpirySeconds = Math.Max(10, flushIntervalSeconds > 0 ? flushIntervalSeconds * 2 : 10);
+        var lockExpirySeconds = Math.Max(_configuration.EventBufferLockExpiryBaseSeconds, flushIntervalSeconds > 0 ? flushIntervalSeconds * 2 : _configuration.EventBufferLockExpiryBaseSeconds);
         await using var lockResponse = await _lockProvider.LockAsync(
-            _configuration.SummaryStoreName,
+            StateStoreDefinitions.AnalyticsSummary,
             BUFFER_LOCK_RESOURCE,
             Guid.NewGuid().ToString(),
             lockExpirySeconds,
@@ -1400,7 +1721,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(_configuration.SummaryStoreName);
+            var bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
             await FlushBufferedEventsBatchAsync(bufferIndexStore, bufferStore, cancellationToken);
         }
         catch (Exception ex)
@@ -1424,8 +1745,7 @@ public partial class AnalyticsService : IAnalyticsService
         IStateStore<BufferedAnalyticsEvent> bufferStore,
         CancellationToken cancellationToken)
     {
-        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
-        var summaryOptions = BuildSummaryCacheOptions();
+        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
         var batchSize = Math.Max(1, _configuration.EventBufferSize);
 
         while (true)
@@ -1484,7 +1804,7 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 var entityKey = kvp.Key;
                 var entityEvents = kvp.Value;
-                var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
+                var (summary, summaryEtag) = await summaryStore.GetWithETagAsync(entityKey, cancellationToken);
 
                 if (summary == null)
                 {
@@ -1536,7 +1856,7 @@ public partial class AnalyticsService : IAnalyticsService
                             Timestamp = DateTimeOffset.UtcNow,
                             GameServiceId = bufferedEvent.GameServiceId,
                             EntityId = bufferedEvent.EntityId,
-                            EntityType = MapToScoreEventEntityType(bufferedEvent.EntityType),
+                            EntityType = bufferedEvent.EntityType,
                             ScoreType = bufferedEvent.EventType,
                             PreviousValue = hasPrevious ? previousValue : null,
                             NewValue = newValue,
@@ -1550,7 +1870,14 @@ public partial class AnalyticsService : IAnalyticsService
                 var summarySaved = false;
                 try
                 {
-                    await summaryStore.SaveAsync(entityKey, summary, summaryOptions, cancellationToken);
+                    // GetWithETagAsync returns null ETag for new entities; TrySaveAsync expects
+                    // empty string for create operations - coalesce satisfies compiler's nullable analysis
+                    var newSummaryEtag = await summaryStore.TrySaveAsync(entityKey, summary, summaryEtag ?? string.Empty, cancellationToken);
+                    if (newSummaryEtag == null)
+                    {
+                        _logger.LogWarning("Concurrent modification detected for analytics summary {EntityKey}, skipping batch", entityKey);
+                        continue;
+                    }
                     summarySaved = true;
                 }
                 catch (Exception ex)
@@ -1571,29 +1898,6 @@ public partial class AnalyticsService : IAnalyticsService
                 if (!summarySaved)
                 {
                     continue;
-                }
-
-                try
-                {
-                    await summaryStore.AddToSetAsync(
-                        GetSummaryIndexKey(summary.GameServiceId),
-                        entityKey,
-                        summaryOptions,
-                        cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error updating analytics summary index for {EntityKey}", entityKey);
-                    await _messageBus.TryPublishErrorAsync(
-                        "analytics",
-                        "FlushBufferedEventsBatch",
-                        "analytics_summary_index_failed",
-                        ex.Message,
-                        dependency: "state",
-                        endpoint: "state:summary",
-                        details: $"entityKey:{entityKey}",
-                        stack: ex.StackTrace,
-                        cancellationToken: cancellationToken);
                 }
 
                 foreach (var scoreEvent in scoreEvents)
@@ -1645,10 +1949,7 @@ public partial class AnalyticsService : IAnalyticsService
         double newValue,
         CancellationToken cancellationToken)
     {
-        // Common milestone thresholds
-        int[] milestones = { 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000 };
-
-        foreach (var milestone in milestones)
+        foreach (var milestone in _milestoneThresholds)
         {
             // Check if we just crossed this milestone: was below, now at or above
             if (previousValue < milestone && newValue >= milestone)
@@ -1659,106 +1960,15 @@ public partial class AnalyticsService : IAnalyticsService
                     Timestamp = DateTimeOffset.UtcNow,
                     GameServiceId = gameServiceId,
                     EntityId = entityId,
-                    EntityType = MapToMilestoneEventEntityType(entityType),
+                    EntityType = entityType,
                     MilestoneType = scoreType,
                     MilestoneValue = milestone,
                     MilestoneName = $"{scoreType}_{milestone}"
                 };
                 await _messageBus.TryPublishAsync("analytics.milestone.reached", milestoneEvent, cancellationToken: cancellationToken);
-                break; // Only publish one milestone per event
             }
         }
     }
-
-    /// <summary>
-    /// Applies sorting rules for entity summary queries.
-    /// </summary>
-    private IReadOnlyList<EntitySummaryData> ApplySummarySort(
-        List<EntitySummaryData> summaries,
-        QueryEntitySummariesRequest body)
-    {
-        if (string.IsNullOrWhiteSpace(body.SortBy))
-        {
-            return summaries;
-        }
-
-        var sortBy = body.SortBy.Trim().ToLowerInvariant();
-        var descending = body.SortDescending;
-
-        IEnumerable<EntitySummaryData> ordered = sortBy switch
-        {
-            "totalevents" => descending
-                ? summaries.OrderByDescending(s => s.TotalEvents)
-                : summaries.OrderBy(s => s.TotalEvents),
-            "firsteventat" => descending
-                ? summaries.OrderByDescending(s => s.FirstEventAt)
-                : summaries.OrderBy(s => s.FirstEventAt),
-            "lasteventat" => descending
-                ? summaries.OrderByDescending(s => s.LastEventAt)
-                : summaries.OrderBy(s => s.LastEventAt),
-            "eventcount" => OrderByEventCount(summaries, body.EventType, descending),
-            _ => summaries
-        };
-
-        return ordered.ToList();
-    }
-
-    private static IEnumerable<EntitySummaryData> OrderByEventCount(
-        List<EntitySummaryData> summaries,
-        string? eventType,
-        bool descending)
-    {
-        if (string.IsNullOrWhiteSpace(eventType))
-        {
-            return summaries;
-        }
-
-        return descending
-            ? summaries.OrderByDescending(s => s.EventCounts.GetValueOrDefault(eventType))
-            : summaries.OrderBy(s => s.EventCounts.GetValueOrDefault(eventType));
-    }
-
-    /// <summary>
-    /// Maps EntityType to AnalyticsScoreUpdatedEventEntityType.
-    /// </summary>
-    private static AnalyticsScoreUpdatedEventEntityType MapToScoreEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AnalyticsScoreUpdatedEventEntityType.Account,
-            EntityType.Character => AnalyticsScoreUpdatedEventEntityType.Character,
-            EntityType.Guild => AnalyticsScoreUpdatedEventEntityType.Guild,
-            EntityType.Actor => AnalyticsScoreUpdatedEventEntityType.Actor,
-            EntityType.Custom => AnalyticsScoreUpdatedEventEntityType.Custom,
-            _ => AnalyticsScoreUpdatedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to AnalyticsRatingUpdatedEventEntityType.
-    /// </summary>
-    private static AnalyticsRatingUpdatedEventEntityType MapToRatingEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AnalyticsRatingUpdatedEventEntityType.Account,
-            EntityType.Character => AnalyticsRatingUpdatedEventEntityType.Character,
-            EntityType.Guild => AnalyticsRatingUpdatedEventEntityType.Guild,
-            EntityType.Actor => AnalyticsRatingUpdatedEventEntityType.Actor,
-            EntityType.Custom => AnalyticsRatingUpdatedEventEntityType.Custom,
-            _ => AnalyticsRatingUpdatedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to AnalyticsMilestoneReachedEventEntityType.
-    /// </summary>
-    private static AnalyticsMilestoneReachedEventEntityType MapToMilestoneEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AnalyticsMilestoneReachedEventEntityType.Account,
-            EntityType.Character => AnalyticsMilestoneReachedEventEntityType.Character,
-            EntityType.Guild => AnalyticsMilestoneReachedEventEntityType.Guild,
-            EntityType.Actor => AnalyticsMilestoneReachedEventEntityType.Actor,
-            EntityType.Custom => AnalyticsMilestoneReachedEventEntityType.Custom,
-            _ => AnalyticsMilestoneReachedEventEntityType.Custom
-        };
 
     #endregion
 
@@ -1768,10 +1978,10 @@ public partial class AnalyticsService : IAnalyticsService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Analytics service permissions...");
-        await AnalyticsPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await AnalyticsPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion
@@ -1859,6 +2069,24 @@ internal class ControllerHistoryData
     public ControllerAction Action { get; set; }
     public DateTimeOffset Timestamp { get; set; }
     public Guid? SessionId { get; set; }
+}
+
+/// <summary>
+/// Cached mapping between realm IDs and game service IDs.
+/// </summary>
+internal sealed class RealmGameServiceCacheEntry
+{
+    public Guid GameServiceId { get; set; }
+    public DateTimeOffset CachedAt { get; set; }
+}
+
+/// <summary>
+/// Cached mapping between character IDs and realm IDs.
+/// </summary>
+internal sealed class CharacterRealmCacheEntry
+{
+    public Guid RealmId { get; set; }
+    public DateTimeOffset CachedAt { get; set; }
 }
 
 #endregion
