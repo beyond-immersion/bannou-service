@@ -1,6 +1,10 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Connect.Protocol;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Subscription;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -18,6 +22,11 @@ namespace BeyondImmersion.EdgeTester.Tests;
 ///
 /// IMPORTANT: These tests should run LAST as they modify the deployment topology.
 /// They require admin credentials and a working orchestrator service.
+///
+/// COMPILE-TIME SAFETY: This test uses generated typed proxies and request/response
+/// models for all service API calls. This ensures schema mismatches are caught at
+/// compile time rather than runtime. See BannouClient.Orchestrator, BannouClient.Account,
+/// BannouClient.GameService, and BannouClient.Subscription for the typed APIs.
 ///
 /// Test Dependencies:
 /// - All tests after "Deploy" depend on successful deployment
@@ -163,67 +172,34 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     private async Task<bool> DeploySplitTopologyAsync(BannouClient adminClient)
     {
-        // Find the deploy API in the admin client's available APIs
-        var deployApiKey = adminClient.AvailableApis.Keys
-            .FirstOrDefault(k => k.Contains("/orchestrator/deploy", StringComparison.OrdinalIgnoreCase));
-
-        if (string.IsNullOrEmpty(deployApiKey))
+        // Build typed deploy request
+        var deployRequest = new DeployRequest
         {
-            Console.WriteLine("❌ Deploy API not found in admin capability manifest.");
-            Console.WriteLine($"   Available APIs: {adminClient.AvailableApis.Count}");
-            foreach (var api in adminClient.AvailableApis.Keys.Where(k => k.Contains("orchestrator", StringComparison.OrdinalIgnoreCase)))
-            {
-                Console.WriteLine($"      - {api}");
-            }
-            return false;
-        }
-
-        Console.WriteLine($"   Found deploy API: {deployApiKey}");
-
-        // Get the service GUID for the deploy API
-        if (!adminClient.AvailableApis.TryGetValue(deployApiKey, out var deployGuid))
-        {
-            Console.WriteLine("❌ Could not get GUID for deploy API");
-            return false;
-        }
-
-        Console.WriteLine($"   Deploy API GUID: {deployGuid}");
-
-        // Build deploy request
-        var deployRequest = new
-        {
-            preset = SPLIT_PRESET,
-            backend = "compose",
-            dryRun = false
+            Preset = SPLIT_PRESET,
+            Backend = BackendType.Compose,
+            DryRun = false
         };
 
-        var requestJson = BannouJson.Serialize(deployRequest);
-        Console.WriteLine($"   Request: {requestJson}");
+        Console.WriteLine($"   Request: Preset={deployRequest.Preset}, Backend={deployRequest.Backend}, DryRun={deployRequest.DryRun}");
 
-        // Send via WebSocket binary protocol
-        var response = await SendOrchestratorRequestAsync(adminClient, deployGuid, requestJson);
-
-        if (response == null)
-        {
-            Console.WriteLine("❌ No response received from deploy API");
-            return false;
-        }
-
-        Console.WriteLine($"   Response: {response}");
-
-        // Parse response
         try
         {
-            var responseObj = JsonNode.Parse(response);
-            var success = responseObj?["success"]?.GetValue<bool>() ?? false;
-            var deploymentId = responseObj?["deploymentId"]?.GetValue<string>();
-            var message = responseObj?["message"]?.GetValue<string>();
+            var response = await adminClient.Orchestrator.DeployAsync(
+                deployRequest,
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
-            Console.WriteLine($"   Success: {success}");
-            Console.WriteLine($"   DeploymentId: {deploymentId}");
-            Console.WriteLine($"   Message: {message}");
+            if (!response.IsSuccess)
+            {
+                Console.WriteLine($"   Deploy API returned error: {response.Error?.ResponseCode} - {response.Error?.Message}");
+                return false;
+            }
 
-            if (success)
+            var result = response.Result!;
+            Console.WriteLine($"   Success: {result.Success}");
+            Console.WriteLine($"   DeploymentId: {result.DeploymentId}");
+            Console.WriteLine($"   Message: {result.Message}");
+
+            if (result.Success)
             {
                 // Wait for deployment to complete
                 Console.WriteLine("   Waiting for deployment to stabilize...");
@@ -236,9 +212,15 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             return false;
         }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine("   Deploy endpoint not available in capability manifest");
+            Console.WriteLine($"   Admin user may not have orchestrator permissions");
+            return false;
+        }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Failed to parse deploy response: {ex.Message}");
+            Console.WriteLine($"   Deploy request failed: {ex.Message}");
             return false;
         }
     }
@@ -269,7 +251,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         }
         else
         {
-            Console.WriteLine($"✅ Regular client still connected (session: {client.SessionId})");
+            Console.WriteLine($"   Regular client still connected (session: {client.SessionId})");
         }
 
         if (adminClient == null)
@@ -282,12 +264,12 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         }
         else
         {
-            Console.WriteLine($"✅ Admin client still connected (session: {adminClient.SessionId})");
+            Console.WriteLine($"   Admin client still connected (session: {adminClient.SessionId})");
         }
 
         if (issues.Count > 0)
         {
-            Console.WriteLine($"❌ Connection survival test FAILED:");
+            Console.WriteLine($"   Connection survival test FAILED:");
             foreach (var issue in issues)
             {
                 Console.WriteLine($"   - {issue}");
@@ -295,7 +277,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         }
         else
         {
-            Console.WriteLine("✅ Connection survival test PASSED - both clients still connected");
+            Console.WriteLine("   Connection survival test PASSED - both clients still connected");
         }
     }
 
@@ -313,7 +295,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var adminClient = Program.AdminClient;
         if (adminClient == null || !adminClient.IsConnected)
         {
-            Console.WriteLine("❌ Admin client not connected");
+            Console.WriteLine("   Admin client not connected");
             return;
         }
 
@@ -323,96 +305,47 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("✅ Service mappings updated test PASSED");
+                Console.WriteLine("   Service mappings updated test PASSED");
             }
             else
             {
-                Console.WriteLine("❌ Service mappings updated test FAILED");
+                Console.WriteLine("   Service mappings updated test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Service mappings test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Service mappings test FAILED with exception: {ex.Message}");
         }
     }
 
     private async Task<bool> CheckServiceMappingsAsync(BannouClient adminClient)
     {
-        // Find the service-routing API via WebSocket capability manifest
-        // Service-mappings moved from Connect to Orchestrator (December 2025)
-        // API key format is "POST:/orchestrator/service-routing" (METHOD:/path format)
-        Console.WriteLine("   Looking for service-routing API in capability manifest...");
-
-        var orchestratorApis = adminClient.AvailableApis.Keys
-            .Where(k => k.Contains("/orchestrator/", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        Console.WriteLine($"   Orchestrator APIs available ({orchestratorApis.Count}):");
-        foreach (var api in orchestratorApis)
-        {
-            Console.WriteLine($"      {api}");
-        }
-
-        // Look for the service-routing endpoint (format: POST:/orchestrator/service-routing)
-        var routingApiKey = adminClient.AvailableApis.Keys
-            .FirstOrDefault(k => k.Contains("/orchestrator/service-routing", StringComparison.OrdinalIgnoreCase));
-
-        if (string.IsNullOrEmpty(routingApiKey))
-        {
-            Console.WriteLine("❌ service-routing API not found in capability manifest");
-            Console.WriteLine("   Admin user must have access to POST:/orchestrator/service-routing");
-            return false;
-        }
-
-        if (!adminClient.AvailableApis.TryGetValue(routingApiKey, out var routingGuid))
-        {
-            Console.WriteLine("❌ Could not get GUID for service routing API");
-            return false;
-        }
-
-        Console.WriteLine($"   Found API: {routingApiKey} -> {routingGuid}");
-
-        // Call the orchestrator service-routing API
-        string? response;
-        try
-        {
-            var result = (await adminClient.InvokeAsync<object, JsonElement>(
-                "/orchestrator/service-routing",
-                new { },
-                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
-            response = result.GetRawText();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   service-routing API call failed: {ex.Message}");
-            return false;
-        }
-
-        if (response == null)
-        {
-            Console.WriteLine("❌ No response from service mappings API");
-            return false;
-        }
-
-        Console.WriteLine($"   Routing response: {response}");
+        Console.WriteLine("   Calling orchestrator service-routing API via typed proxy...");
 
         try
         {
-            var responseObj = JsonNode.Parse(response);
-            var mappings = responseObj?["mappings"]?.AsObject();
-            var defaultAppId = responseObj?["defaultAppId"]?.GetValue<string>();
+            var response = await adminClient.Orchestrator.GetServiceRoutingAsync(
+                new GetServiceRoutingRequest(),
+                timeout: TimeSpan.FromSeconds(10));
 
-            Console.WriteLine($"   Default app-id: {defaultAppId ?? "(none)"}");
-
-            if (mappings == null || mappings.Count == 0)
+            if (!response.IsSuccess)
             {
-                Console.WriteLine("❌ No service mappings in response after split deployment");
+                Console.WriteLine($"   service-routing API returned error: {response.Error?.ResponseCode}");
+                return false;
+            }
+
+            var routingInfo = response.Result!;
+            Console.WriteLine($"   Default app-id: {routingInfo.DefaultAppId}");
+
+            if (routingInfo.Mappings == null || routingInfo.Mappings.Count == 0)
+            {
+                Console.WriteLine("   No service mappings in response after split deployment");
                 return false;
             }
 
             // Check for expected split mappings
-            var authMapping = mappings["auth"]?.GetValue<string>();
-            var accountMapping = mappings["account"]?.GetValue<string>();
+            var authMapping = routingInfo.Mappings.TryGetValue("auth", out var authValue) ? authValue : null;
+            var accountMapping = routingInfo.Mappings.TryGetValue("account", out var accountValue) ? accountValue : null;
 
             Console.WriteLine($"   auth -> {authMapping ?? "(not set)"}");
             Console.WriteLine($"   account -> {accountMapping ?? "(not set)"}");
@@ -420,22 +353,28 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             // In split mode, these MUST map to bannou-auth
             if (authMapping != "bannou-auth")
             {
-                Console.WriteLine($"❌ auth should map to 'bannou-auth', got '{authMapping ?? "(null)"}'");
+                Console.WriteLine($"   auth should map to 'bannou-auth', got '{authMapping ?? "(null)"}'");
                 return false;
             }
 
             if (accountMapping != "bannou-auth")
             {
-                Console.WriteLine($"❌ account should map to 'bannou-auth', got '{accountMapping ?? "(null)"}'");
+                Console.WriteLine($"   account should map to 'bannou-auth', got '{accountMapping ?? "(null)"}'");
                 return false;
             }
 
-            Console.WriteLine("✅ Mappings correctly reflect split topology");
+            Console.WriteLine("   Mappings correctly reflect split topology");
             return true;
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine("   service-routing API not available in capability manifest");
+            Console.WriteLine("   Admin user must have access to orchestrator service-routing");
+            return false;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Failed to parse mappings response: {ex.Message}");
+            Console.WriteLine($"   service-routing API call failed: {ex.Message}");
             return false;
         }
     }
@@ -456,16 +395,16 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("✅ Auth routing test PASSED");
+                Console.WriteLine("   Auth routing test PASSED");
             }
             else
             {
-                Console.WriteLine("❌ Auth routing test FAILED");
+                Console.WriteLine("   Auth routing test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Auth routing test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Auth routing test FAILED with exception: {ex.Message}");
         }
     }
 
@@ -495,7 +434,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             using var response = await Program.HttpClient.SendAsync(request);
             var content = await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine($"   Validate response ({response.StatusCode}): {content.Substring(0, Math.Min(200, content.Length))}...");
+            Console.WriteLine($"   Validate response ({response.StatusCode}): {content[..Math.Min(200, content.Length)]}...");
 
             if (response.IsSuccessStatusCode)
             {
@@ -504,11 +443,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
                 if (valid)
                 {
-                    Console.WriteLine("   ✅ Auth validation succeeded - routing works");
+                    Console.WriteLine("   Auth validation succeeded - routing works");
                     return true;
                 }
 
-                Console.WriteLine("   ⚠️ Auth validation returned valid=false");
+                Console.WriteLine("   Auth validation returned valid=false");
             }
 
             return response.IsSuccessStatusCode;
@@ -537,16 +476,16 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("✅ Account routing test PASSED");
+                Console.WriteLine("   Account routing test PASSED");
             }
             else
             {
-                Console.WriteLine("❌ Account routing test FAILED");
+                Console.WriteLine("   Account routing test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Account routing test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Account routing test FAILED with exception: {ex.Message}");
         }
     }
 
@@ -563,22 +502,26 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         // Try to call an account API endpoint that admin has access to
         try
         {
-            // List accounts requires admin role
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "/account/list",
-                new { limit = 1 },
-                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+            // List accounts requires admin role - use typed proxy
+            var response = await adminClient.Account.ListAccountsAsync(
+                new ListAccountsRequest { PageSize = 1 },
+                timeout: TimeSpan.FromSeconds(5));
 
-            var content = response.GetRawText();
-            Console.WriteLine($"   Account API response: {content[..Math.Min(200, content.Length)]}...");
+            if (!response.IsSuccess)
+            {
+                Console.WriteLine($"   Account API returned error: {response.Error?.ResponseCode}");
+                return false;
+            }
+
+            Console.WriteLine($"   Account API response: TotalCount={response.Result.TotalCount}, PageSize={response.Result.PageSize}");
 
             // If we got a response, routing is working
-            Console.WriteLine("   ✅ Account API call succeeded - routing to bannou-auth node works");
+            Console.WriteLine("   Account API call succeeded - routing to bannou-auth node works");
             return true;
         }
         catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
         {
-            Console.WriteLine($"   Account API not available in capability manifest");
+            Console.WriteLine("   Account API not available in capability manifest");
             Console.WriteLine("   Admin may not have access to account list API");
             return false;
         }
@@ -602,7 +545,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var client = Program.Client;
         if (client == null || !client.IsConnected)
         {
-            Console.WriteLine("❌ Client not connected - cannot verify connect routing");
+            Console.WriteLine("   Client not connected - cannot verify connect routing");
             return;
         }
 
@@ -612,7 +555,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         Console.WriteLine($"   Session ID: {client.SessionId}");
         Console.WriteLine($"   Available APIs: {client.AvailableApis.Count}");
 
-        Console.WriteLine("✅ Connect on main node test PASSED - WebSocket still connected");
+        Console.WriteLine("   Connect on main node test PASSED - WebSocket still connected");
     }
 
     /// <summary>
@@ -640,16 +583,16 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("✅ GameSession shortcut test PASSED - shortcut received from bannou-auth");
+                Console.WriteLine("   GameSession shortcut test PASSED - shortcut received from bannou-auth");
             }
             else
             {
-                Console.WriteLine("❌ GameSession shortcut test FAILED");
+                Console.WriteLine("   GameSession shortcut test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ GameSession shortcut test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   GameSession shortcut test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -681,45 +624,38 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         Guid? gameServiceId = null;
         try
         {
-            var createServiceResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "/game-service/services/create",
-                new
+            // Use typed proxy to create game service
+            var createResponse = await adminClient.GameService.CreateServiceAsync(
+                new CreateServiceRequest
                 {
-                    stubName = "test-game",
-                    displayName = "Test Game (Split Routing)",
-                    description = "Test game service for split routing shortcut validation"
+                    StubName = "test-game",
+                    DisplayName = "Test Game (Split Routing)",
+                    Description = "Test game service for split routing shortcut validation"
                 },
                 timeout: TimeSpan.FromSeconds(10));
 
-            if (createServiceResponse.IsSuccess)
+            if (createResponse.IsSuccess)
             {
-                if (createServiceResponse.Result.TryGetProperty("serviceId", out var serviceIdProp))
-                {
-                    gameServiceId = serviceIdProp.GetGuid();
-                }
+                gameServiceId = createResponse.Result.ServiceId;
                 Console.WriteLine($"   Created game service 'test-game': {gameServiceId}");
             }
-            else if (createServiceResponse.Error?.ResponseCode == 409)
+            else if (createResponse.Error?.ResponseCode == 409)
             {
                 Console.WriteLine("   Game service 'test-game' already exists - fetching ID...");
-                // Fetch the existing service by stub name
-                var getServiceResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                    "/game-service/services/get",
-                    new { stubName = "test-game" },
+                // Fetch the existing service by stub name using typed proxy
+                var getResponse = await adminClient.GameService.GetServiceAsync(
+                    new GetServiceRequest { StubName = "test-game" },
                     timeout: TimeSpan.FromSeconds(10));
 
-                if (getServiceResponse.IsSuccess)
+                if (getResponse.IsSuccess)
                 {
-                    if (getServiceResponse.Result.TryGetProperty("serviceId", out var serviceIdProp))
-                    {
-                        gameServiceId = serviceIdProp.GetGuid();
-                    }
+                    gameServiceId = getResponse.Result.ServiceId;
                     Console.WriteLine($"   Found existing game service: {gameServiceId}");
                 }
             }
             else
             {
-                Console.WriteLine($"   Warning: game-service/services/create returned {createServiceResponse.Error?.ResponseCode}");
+                Console.WriteLine($"   Warning: game-service/services/create returned {createResponse.Error?.ResponseCode}");
             }
         }
         catch (Exception ex)
@@ -784,12 +720,12 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         Console.WriteLine("   Step 3: Creating subscription to 'test-game'...");
         try
         {
-            var subscribeResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                "/subscription/create",
-                new
+            // Use typed proxy to create subscription
+            var subscribeResponse = await adminClient.Subscription.CreateSubscriptionAsync(
+                new CreateSubscriptionRequest
                 {
-                    accountId = accountId.Value,
-                    serviceId = gameServiceId.Value
+                    AccountId = accountId.Value,
+                    ServiceId = gameServiceId.Value
                 },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -999,43 +935,6 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Send an orchestrator API request via the shared admin WebSocket.
-    /// Orchestrator APIs are NOT exposed via NGINX, so we must use the admin WebSocket.
-    /// </summary>
-    private async Task<string?> SendOrchestratorRequestAsync(BannouClient client, Guid serviceGuid, string requestJson)
-    {
-        try
-        {
-            // Parse the request JSON to get the actual request object
-            var requestObj = JsonNode.Parse(requestJson);
-            if (requestObj == null)
-            {
-                Console.WriteLine("   Failed to parse request JSON");
-                return null;
-            }
-
-            // Use the shared admin WebSocket to invoke the orchestrator API
-            var response = (await client.InvokeAsync<object, JsonElement>(
-                "/orchestrator/deploy",
-                requestObj,
-                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
-
-            return response.GetRawText();
-        }
-        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
-        {
-            Console.WriteLine($"   Deploy endpoint not available in capability manifest");
-            Console.WriteLine($"   Available APIs: {string.Join(", ", client.AvailableApis.Keys.Where(k => k.Contains("orchestrator")).Take(5))}...");
-            return null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   WebSocket request failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    /// <summary>
     /// CRITICAL CLEANUP TEST: Restore default topology and service mappings.
     /// This MUST run after all split routing tests to ensure subsequent test runs
     /// (like forward compatibility tests) start with a clean state.
@@ -1051,8 +950,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var adminClient = Program.AdminClient;
         if (adminClient == null || !adminClient.IsConnected)
         {
-            Console.WriteLine("❌ Admin client not connected - cannot restore default topology");
-            Console.WriteLine("   ⚠️ WARNING: Subsequent test runs may fail due to stale mappings!");
+            Console.WriteLine("   Admin client not connected - cannot restore default topology");
+            Console.WriteLine("   WARNING: Subsequent test runs may fail due to stale mappings!");
             Console.WriteLine("   Attempting fallback cleanup via Clean API...");
 
             // Fallback: at least try to reset mappings via Clean API
@@ -1061,7 +960,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 var fallbackResult = Task.Run(async () => await CleanupViaCleanApiAsync()).Result;
                 if (fallbackResult)
                 {
-                    Console.WriteLine("✅ Fallback cleanup via Clean API succeeded");
+                    Console.WriteLine("   Fallback cleanup via Clean API succeeded");
                 }
             }
             catch (Exception fallbackEx)
@@ -1077,28 +976,28 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("✅ Default topology restore PASSED - system restored to single-node state");
+                Console.WriteLine("   Default topology restore PASSED - system restored to single-node state");
             }
             else
             {
-                Console.WriteLine("❌ Default topology restore FAILED via deploy, trying Clean API fallback...");
+                Console.WriteLine("   Default topology restore FAILED via deploy, trying Clean API fallback...");
 
                 // Fallback: at least reset the mappings via Clean API
                 var fallbackResult = Task.Run(async () => await CleanupViaCleanApiAsync()).Result;
                 if (fallbackResult)
                 {
-                    Console.WriteLine("✅ Fallback cleanup via Clean API succeeded");
+                    Console.WriteLine("   Fallback cleanup via Clean API succeeded");
                 }
                 else
                 {
-                    Console.WriteLine("   ⚠️ WARNING: Subsequent test runs may fail due to stale mappings!");
+                    Console.WriteLine("   WARNING: Subsequent test runs may fail due to stale mappings!");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Default topology restore FAILED with exception: {ex.Message}");
-            Console.WriteLine("   ⚠️ WARNING: Subsequent test runs may fail due to stale mappings!");
+            Console.WriteLine($"   Default topology restore FAILED with exception: {ex.Message}");
+            Console.WriteLine("   WARNING: Subsequent test runs may fail due to stale mappings!");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -1114,34 +1013,33 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     private async Task<bool> RestoreDefaultTopologyAsync(BannouClient adminClient)
     {
         // Deploy with "default" preset - orchestrator interprets this as reset-to-default
-        var deployRequest = new
+        var deployRequest = new DeployRequest
         {
-            preset = "default",
-            backend = "compose",
-            dryRun = false
+            Preset = "default",
+            Backend = BackendType.Compose,
+            DryRun = false
         };
 
-        Console.WriteLine($"   Deploying preset: default via WebSocket (reset to single-node topology)");
-        Console.WriteLine($"   Request: {BannouJson.Serialize(deployRequest)}");
+        Console.WriteLine($"   Deploying preset: default via typed proxy (reset to single-node topology)");
+        Console.WriteLine($"   Request: Preset={deployRequest.Preset}, Backend={deployRequest.Backend}, DryRun={deployRequest.DryRun}");
 
         try
         {
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "/orchestrator/deploy",
+            var response = await adminClient.Orchestrator.DeployAsync(
                 deployRequest,
-                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
-            var content = response.GetRawText();
-            Console.WriteLine($"   Response: {content}");
+            if (!response.IsSuccess)
+            {
+                Console.WriteLine($"   Deploy API returned error: {response.Error?.ResponseCode} - {response.Error?.Message}");
+                return false;
+            }
 
-            var responseObj = JsonNode.Parse(content);
-            var success = responseObj?["success"]?.GetValue<bool>() ?? false;
-            var message = responseObj?["message"]?.GetValue<string>();
+            var result = response.Result!;
+            Console.WriteLine($"   Success: {result.Success}");
+            Console.WriteLine($"   Message: {result.Message}");
 
-            Console.WriteLine($"   Success: {success}");
-            Console.WriteLine($"   Message: {message}");
-
-            if (success)
+            if (result.Success)
             {
                 // Wait for topology to stabilize
                 Console.WriteLine("   Waiting for topology to stabilize...");
@@ -1153,7 +1051,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         }
         catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
         {
-            Console.WriteLine($"   Deploy endpoint not available in capability manifest");
+            Console.WriteLine("   Deploy endpoint not available in capability manifest");
             return false;
         }
         catch (Exception ex)
@@ -1177,23 +1075,28 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             return false;
         }
 
-        var cleanRequest = new
+        // Use typed proxy for clean API
+        var cleanRequest = new CleanRequest
         {
-            targets = new[] { "containers" },
-            force = true
+            Targets = new List<CleanTarget> { CleanTarget.Containers },
+            Force = true
         };
 
-        Console.WriteLine($"   Clean API request via WebSocket: {BannouJson.Serialize(cleanRequest)}");
+        Console.WriteLine($"   Clean API request via typed proxy: Targets=[{string.Join(",", cleanRequest.Targets)}], Force={cleanRequest.Force}");
 
         try
         {
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "/orchestrator/clean",
+            var response = await adminClient.Orchestrator.CleanAsync(
                 cleanRequest,
-                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10));
 
-            var content = response.GetRawText();
-            Console.WriteLine($"   Clean response: {content}");
+            if (!response.IsSuccess)
+            {
+                Console.WriteLine($"   Clean API returned error: {response.Error?.ResponseCode}");
+                return false;
+            }
+
+            Console.WriteLine($"   Clean response: Success={response.Result.Success}");
 
             // Wait for mapping events to propagate
             await Task.Delay(2000);
@@ -1201,7 +1104,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         }
         catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
         {
-            Console.WriteLine($"   Clean endpoint not available in capability manifest");
+            Console.WriteLine("   Clean endpoint not available in capability manifest");
             return false;
         }
         catch (Exception ex)
@@ -1258,33 +1161,32 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     private async Task<bool> DeployRelayedConnectAsync(BannouClient adminClient)
     {
-        var deployRequest = new
+        var deployRequest = new DeployRequest
         {
-            preset = RELAYED_CONNECT_PRESET,
-            backend = "compose",
-            dryRun = false
+            Preset = RELAYED_CONNECT_PRESET,
+            Backend = BackendType.Compose,
+            DryRun = false
         };
 
-        Console.WriteLine($"   Request: {BannouJson.Serialize(deployRequest)}");
+        Console.WriteLine($"   Request: Preset={deployRequest.Preset}, Backend={deployRequest.Backend}, DryRun={deployRequest.DryRun}");
 
         try
         {
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "/orchestrator/deploy",
+            var response = await adminClient.Orchestrator.DeployAsync(
                 deployRequest,
-                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
-            var content = response.GetRawText();
-            Console.WriteLine($"   Response: {content}");
+            if (!response.IsSuccess)
+            {
+                Console.WriteLine($"   Deploy API returned error: {response.Error?.ResponseCode} - {response.Error?.Message}");
+                return false;
+            }
 
-            var responseObj = JsonNode.Parse(content);
-            var success = responseObj?["success"]?.GetValue<bool>() ?? false;
-            var message = responseObj?["message"]?.GetValue<string>();
+            var result = response.Result!;
+            Console.WriteLine($"   Success: {result.Success}");
+            Console.WriteLine($"   Message: {result.Message}");
 
-            Console.WriteLine($"   Success: {success}");
-            Console.WriteLine($"   Message: {message}");
-
-            if (success)
+            if (result.Success)
             {
                 // Wait for:
                 // 1. New Connect node to start and become healthy
