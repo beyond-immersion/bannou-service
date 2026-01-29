@@ -29,7 +29,7 @@ public class BannouClientGuidLookupTests
     }
 
     /// <summary>
-    /// Tests that GetServiceGuid returns the correct GUID for exact method:path key.
+    /// Tests that GetServiceGuid returns the correct GUID for exact endpoint path.
     /// </summary>
     [Fact]
     public async Task GetServiceGuid_ExactMatch_ReturnsCorrectGuid()
@@ -39,12 +39,12 @@ public class BannouClientGuidLookupTests
         var expectedGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/account/get", expectedGuid }
+            { "/account/get", expectedGuid }
         };
         PopulateApiMappings(client, mappings);
 
         // Act
-        var result = client.GetServiceGuid("POST", "/account/get");
+        var result = client.GetServiceGuid("/account/get");
 
         // Assert
         Assert.NotNull(result);
@@ -61,12 +61,12 @@ public class BannouClientGuidLookupTests
         await using var client = new BannouClient();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/account/get", Guid.NewGuid() }
+            { "/account/get", Guid.NewGuid() }
         };
         PopulateApiMappings(client, mappings);
 
         // Act
-        var result = client.GetServiceGuid("POST", "/nonexistent/endpoint");
+        var result = client.GetServiceGuid("/nonexistent/endpoint");
 
         // Assert
         Assert.Null(result);
@@ -85,14 +85,14 @@ public class BannouClientGuidLookupTests
         var getByCodeGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/species/get", getGuid },
-            { "POST:/species/get-by-code", getByCodeGuid }
+            { "/species/get", getGuid },
+            { "/species/get-by-code", getByCodeGuid }
         };
         PopulateApiMappings(client, mappings);
 
         // Act
-        var getResult = client.GetServiceGuid("POST", "/species/get");
-        var getByCodeResult = client.GetServiceGuid("POST", "/species/get-by-code");
+        var getResult = client.GetServiceGuid("/species/get");
+        var getByCodeResult = client.GetServiceGuid("/species/get-by-code");
 
         // Assert - Each endpoint should return its own GUID, not the other's
         Assert.NotNull(getResult);
@@ -112,79 +112,25 @@ public class BannouClientGuidLookupTests
         await using var client = new BannouClient();
         var endpoints = new Dictionary<string, Guid>
         {
-            { "POST:/location/get", Guid.NewGuid() },
-            { "POST:/location/get-by-code", Guid.NewGuid() },
-            { "POST:/realm/get", Guid.NewGuid() },
-            { "POST:/realm/get-by-code", Guid.NewGuid() },
-            { "POST:/character/get", Guid.NewGuid() },
-            { "POST:/character/get-by-name", Guid.NewGuid() },
-            { "POST:/subscriptions/get", Guid.NewGuid() },
-            { "POST:/subscriptions/get-current", Guid.NewGuid() }
+            { "/location/get", Guid.NewGuid() },
+            { "/location/get-by-code", Guid.NewGuid() },
+            { "/realm/get", Guid.NewGuid() },
+            { "/realm/get-by-code", Guid.NewGuid() },
+            { "/character/get", Guid.NewGuid() },
+            { "/character/get-by-name", Guid.NewGuid() },
+            { "/subscriptions/get", Guid.NewGuid() },
+            { "/subscriptions/get-current", Guid.NewGuid() }
         };
         PopulateApiMappings(client, endpoints);
 
         // Act & Assert - Each endpoint should return its own unique GUID
         foreach (var endpoint in endpoints)
         {
-            var parts = endpoint.Key.Split(':', 2);
-            var method = parts[0];
-            var path = parts[1];
-
-            var result = client.GetServiceGuid(method, path);
+            var result = client.GetServiceGuid(endpoint.Key);
 
             Assert.NotNull(result);
             Assert.Equal(endpoint.Value, result.Value);
         }
-    }
-
-    /// <summary>
-    /// Tests case sensitivity of method matching.
-    /// </summary>
-    [Fact]
-    public async Task GetServiceGuid_MethodCaseSensitive_ReturnsNull()
-    {
-        // Arrange
-        await using var client = new BannouClient();
-        var mappings = new Dictionary<string, Guid>
-        {
-            { "POST:/account/get", Guid.NewGuid() }
-        };
-        PopulateApiMappings(client, mappings);
-
-        // Act - Try with lowercase method (should not match)
-        var result = client.GetServiceGuid("post", "/account/get");
-
-        // Assert - Case mismatch should not find the endpoint
-        Assert.Null(result);
-    }
-
-    /// <summary>
-    /// Tests different HTTP methods for the same path.
-    /// </summary>
-    [Fact]
-    public async Task GetServiceGuid_DifferentMethods_ReturnsCorrectGuid()
-    {
-        // Arrange
-        await using var client = new BannouClient();
-        var postGuid = Guid.NewGuid();
-        var getGuid = Guid.NewGuid();
-        var mappings = new Dictionary<string, Guid>
-        {
-            { "POST:/account/profile", postGuid },
-            { "GET:/account/profile", getGuid }
-        };
-        PopulateApiMappings(client, mappings);
-
-        // Act
-        var postResult = client.GetServiceGuid("POST", "/account/profile");
-        var getResult = client.GetServiceGuid("GET", "/account/profile");
-
-        // Assert
-        Assert.NotNull(postResult);
-        Assert.NotNull(getResult);
-        Assert.Equal(postGuid, postResult.Value);
-        Assert.Equal(getGuid, getResult.Value);
-        Assert.NotEqual(postResult.Value, getResult.Value);
     }
 
     /// <summary>
@@ -198,7 +144,7 @@ public class BannouClientGuidLookupTests
         // Don't populate any mappings
 
         // Act
-        var result = client.GetServiceGuid("POST", "/any/endpoint");
+        var result = client.GetServiceGuid("/any/endpoint");
 
         // Assert
         Assert.Null(result);
@@ -214,12 +160,12 @@ public class BannouClientGuidLookupTests
         await using var client = new BannouClient();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/species/get-by-code", Guid.NewGuid() }
+            { "/species/get-by-code", Guid.NewGuid() }
         };
         PopulateApiMappings(client, mappings);
 
         // Act - Try to match a prefix of the full path
-        var result = client.GetServiceGuid("POST", "/species/get");
+        var result = client.GetServiceGuid("/species/get");
 
         // Assert - Partial match should not find the endpoint
         Assert.Null(result);

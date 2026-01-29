@@ -24,7 +24,7 @@ Bannou is a **schema-driven monoservice platform** designed for multiplayer game
 - **Monoservice**: Single codebase deploys as monolith or distributed microservices
 - **Schema-First**: OpenAPI specifications generate 65-80% of service code
 - **WebSocket-First**: Binary protocol with zero-copy message routing
-- **Plugin Architecture**: 32 independent service plugins, loadable via environment config
+- **Plugin Architecture**: 41 independent service plugins, loadable via environment config
 - **Infrastructure Abstraction**: Portable across Redis, MySQL, RabbitMQ via lib-state, lib-messaging, lib-mesh
 
 ### Why Bannou?
@@ -133,7 +133,7 @@ Expected output: All steps complete with green checkmarks, 3,300+ tests pass.
 
 ### The Monoservice Pattern
 
-Bannou compiles to a single binary that can run all 32 services or a selective subset:
+Bannou compiles to a single binary that can run all 41 services or a selective subset:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -279,7 +279,7 @@ AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
 CONNECT_SERVICE_ENABLED=true
 BEHAVIOR_SERVICE_ENABLED=true
-# ... (32 services total)
+# ... (41 services total)
 ```
 
 ---

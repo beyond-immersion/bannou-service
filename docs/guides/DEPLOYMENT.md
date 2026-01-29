@@ -151,14 +151,15 @@ curl http://localhost:5012/orchestrator/status
 
 Located in `provisioning/orchestrator/presets/`:
 
-| Preset | Description |
-|--------|-------------|
-| `bannou.yaml` | Default monolith - all services |
-| `http-tests.yaml` | HTTP integration testing |
-| `edge-tests.yaml` | WebSocket protocol testing |
-| `auth-only.yaml` | Minimal auth service |
-| `minimal-services.yaml` | Core services only |
-| `local-development.yaml` | Full development stack |
+| Preset | Category | Description |
+|--------|----------|-------------|
+| `auth-only.yaml` | testing | Auth service isolation for focused authentication testing |
+| `relayed-connect.yaml` | testing | Relayed Connect node for peer-to-peer routing tests |
+| `split-auth-routing-test.yaml` | testing | Split topology for auth routing validation |
+| `actor-pools.yaml` | processing | Actor pool configuration for distributed NPC behavior execution |
+| `asset-processing.yaml` | processing | Asset processing pool for distributed heavy processing (textures, models, audio) |
+
+> **Note**: For local development, use `SERVICES_ENABLED=true` (all services). Presets are primarily for distributed deployments and testing specific topologies.
 
 ## Production Deployment Patterns
 

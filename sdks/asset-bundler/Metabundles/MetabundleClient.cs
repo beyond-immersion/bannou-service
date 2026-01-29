@@ -67,7 +67,7 @@ public sealed class MetabundleClient
         };
 
         var apiResponse = await _client.InvokeAsync<CreateMetabundleRequest, CreateMetabundleResponse>(
-            "POST", "/bundles/metabundle/create", apiRequest, cancellationToken: ct);
+            "/bundles/metabundle/create", apiRequest, cancellationToken: ct);
 
         var response = AssetApiHelpers.EnsureSuccess(apiResponse, "create metabundle");
 

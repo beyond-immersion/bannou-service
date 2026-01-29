@@ -1973,27 +1973,22 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.ServiceId">
             <summary>
-            Client-salted GUID for this endpoint (unique per client)
+            Client-salted GUID for binary header routing
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.ServiceName">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Endpoint">
             <summary>
-            Service name (e.g., "account", "game-session")
+            API path (e.g., "/account/get") - used as lookup key
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Method">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service">
             <summary>
-            HTTP method for WebSocket routing
+            Service name (e.g., "account")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Path">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Description">
             <summary>
-            API endpoint path (e.g., "/account/get")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.EndpointKey">
-            <summary>
-            Full endpoint key for routing (e.g., "account:POST:/account/get")
+            Human-readable description
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent">
@@ -2085,7 +2080,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Permissions">
             <summary>
-            Map of ServiceID -&gt; List of available methods (e.g., "account" -&gt; ["POST:/get-account"])
+            Map of ServiceID -&gt; List of available endpoints (e.g., "account" -&gt; ["/account/get"])
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Reason">
@@ -67169,7 +67164,19 @@
         <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.AvailableApis">
             <summary>
             All available API endpoints with their client-salted GUIDs.
-            Key format: "METHOD:/path" (e.g., "POST:/species/get")
+            Key format: "/path" (e.g., "/species/get")
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.IBannouClient.OnCapabilitiesAdded">
+            <summary>
+            Event raised when new capabilities are added to the session.
+            Fires once per capability manifest update with all newly added capabilities.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.IBannouClient.OnCapabilitiesRemoved">
+            <summary>
+            Event raised when capabilities are removed from the session.
+            Fires once per capability manifest update with all removed capabilities.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.AccessToken">
@@ -67227,35 +67234,32 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>True if registration and connection successful</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.GetServiceGuid(System.String,System.String)">
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.GetServiceGuid(System.String)">
             <summary>
             Gets the service GUID for a specific API endpoint.
             </summary>
-            <param name="method">HTTP method (GET, POST, etc.)</param>
-            <param name="path">API path (e.g., "/account/profile")</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <returns>The client-salted GUID, or null if not found</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.InvokeAsync``2(System.String,System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.InvokeAsync``2(System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
-            Invokes a service method by specifying the HTTP method and path.
+            Invokes a service method by specifying the API endpoint path.
             </summary>
             <typeparam name="TRequest">Request model type</typeparam>
             <typeparam name="TResponse">Response model type</typeparam>
-            <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-            <param name="path">API path (e.g., "/account/profile")</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <param name="request">Request payload</param>
             <param name="channel">Message channel for ordering (default 0)</param>
             <param name="timeout">Request timeout</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>ApiResponse containing either the success result or error details</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.SendEventAsync``1(System.String,System.String,``0,System.UInt16,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.SendEventAsync``1(System.String,``0,System.UInt16,System.Threading.CancellationToken)">
             <summary>
             Sends a fire-and-forget event (no response expected).
             </summary>
             <typeparam name="TRequest">Request model type</typeparam>
-            <param name="method">HTTP method</param>
-            <param name="path">API path</param>
+            <param name="endpoint">API path</param>
             <param name="request">Request payload</param>
             <param name="channel">Message channel for ordering</param>
             <param name="cancellationToken">Cancellation token</param>
@@ -67330,7 +67334,7 @@
         <member name="P:BeyondImmersion.Bannou.Client.BannouClient.AvailableApis">
             <summary>
             All available API endpoints with their client-salted GUIDs.
-            Key format: "METHOD:/path" (e.g., "POST:/species/get")
+            Key format: "/path" (e.g., "/species/get")
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.BannouClient.AvailableServices">
@@ -67358,6 +67362,18 @@
             Event raised when an event handler throws an exception during invocation.
             This allows consumers to observe and log handler failures without propagating
             exceptions that could disrupt the event dispatch loop.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.BannouClient.OnCapabilitiesAdded">
+            <summary>
+            Event raised when new capabilities are added to the session.
+            Fires once per capability manifest update with all newly added capabilities.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.BannouClient.OnCapabilitiesRemoved">
+            <summary>
+            Event raised when capabilities are removed from the session.
+            Fires once per capability manifest update with all removed capabilities.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.BannouClient.ConnectAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
@@ -67400,83 +67416,75 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>True if registration and connection successful</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetServiceGuid(System.String,System.String)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetServiceGuid(System.String)">
             <summary>
             Gets the service GUID for a specific API endpoint.
             </summary>
-            <param name="method">HTTP method (GET, POST, etc.)</param>
-            <param name="path">API path (e.g., "/account/profile")</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <returns>The client-salted GUID, or null if not found</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.InvokeAsync``2(System.String,System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.InvokeAsync``2(System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
-            Invokes a service method by specifying the HTTP method and path.
+            Invokes a service method by specifying the API endpoint path.
             </summary>
             <typeparam name="TRequest">Request model type</typeparam>
             <typeparam name="TResponse">Response model type</typeparam>
-            <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-            <param name="path">API path (e.g., "/account/profile")</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <param name="request">Request payload</param>
             <param name="channel">Message channel for ordering (default 0)</param>
             <param name="timeout">Request timeout</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>ApiResponse containing either the success result or error details</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.SendEventAsync``1(System.String,System.String,``0,System.UInt16,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.SendEventAsync``1(System.String,``0,System.UInt16,System.Threading.CancellationToken)">
             <summary>
             Sends a fire-and-forget event (no response expected).
             </summary>
             <typeparam name="TRequest">Request model type</typeparam>
-            <param name="method">HTTP method</param>
-            <param name="path">API path</param>
+            <param name="endpoint">API path (e.g., "/events/publish")</param>
             <param name="request">Request payload</param>
             <param name="channel">Message channel for ordering</param>
             <param name="cancellationToken">Cancellation token</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetEndpointMetaAsync``1(System.String,System.String,BeyondImmersion.Bannou.Client.MetaType,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetEndpointMetaAsync``1(System.String,BeyondImmersion.Bannou.Client.MetaType,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Requests metadata about an endpoint instead of executing it.
             Uses the Meta flag (0x80) which triggers route transformation at Connect service.
             Meta type is encoded in Channel field (Connect never reads payloads - zero-copy principle).
             </summary>
             <typeparam name="T">The expected data type for the meta response (e.g., JsonSchemaData, EndpointInfoData)</typeparam>
-            <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-            <param name="path">API path (e.g., "/account/get")</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <param name="metaType">Type of metadata to request</param>
             <param name="timeout">Request timeout (default 10 seconds)</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>MetaResponse containing the requested metadata</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetEndpointInfoAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetEndpointInfoAsync(System.String,System.Threading.CancellationToken)">
             <summary>
             Gets human-readable endpoint information (summary, description, tags, deprecated status).
             </summary>
-            <param name="method">HTTP method</param>
-            <param name="path">API path</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <param name="cancellationToken">Cancellation token</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetRequestSchemaAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetRequestSchemaAsync(System.String,System.Threading.CancellationToken)">
             <summary>
             Gets JSON Schema for the request body of an endpoint.
             </summary>
-            <param name="method">HTTP method</param>
-            <param name="path">API path</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <param name="cancellationToken">Cancellation token</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetResponseSchemaAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetResponseSchemaAsync(System.String,System.Threading.CancellationToken)">
             <summary>
             Gets JSON Schema for the response body of an endpoint.
             </summary>
-            <param name="method">HTTP method</param>
-            <param name="path">API path</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <param name="cancellationToken">Cancellation token</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetFullSchemaAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetFullSchemaAsync(System.String,System.Threading.CancellationToken)">
             <summary>
             Gets full schema including info, request schema, and response schema.
             </summary>
-            <param name="method">HTTP method</param>
-            <param name="path">API path</param>
+            <param name="endpoint">API path (e.g., "/account/get")</param>
             <param name="cancellationToken">Cancellation token</param>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.BannouClient.OnEvent(System.String,System.Action{System.String})">
@@ -67779,14 +67787,9 @@
             The unique message ID for request/response correlation.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Client.ErrorResponse.Method">
+        <member name="P:BeyondImmersion.Bannou.Client.ErrorResponse.Endpoint">
             <summary>
-            The HTTP method of the original request (e.g., "POST", "GET").
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.ErrorResponse.Path">
-            <summary>
-            The path of the original request (e.g., "/subscription/create").
+            The endpoint path of the original request (e.g., "/subscription/create").
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.ApiResponse`1">
@@ -67913,27 +67916,25 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>True if reconnection succeeded, false otherwise.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouConnectionManager.InvokeAsync``2(System.String,System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouConnectionManager.InvokeAsync``2(System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Invoke a Bannou service API.
             </summary>
             <typeparam name="TRequest">Request type.</typeparam>
             <typeparam name="TResponse">Response type.</typeparam>
-            <param name="method">HTTP method (POST, GET, etc.).</param>
-            <param name="path">API path.</param>
+            <param name="endpoint">API path.</param>
             <param name="request">Request payload.</param>
             <param name="channel">Optional channel for routing.</param>
             <param name="timeout">Optional timeout override.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>API response with success/failure status.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.BannouConnectionManager.SendEventAsync``1(System.String,System.String,``0,System.UInt16,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Client.BannouConnectionManager.SendEventAsync``1(System.String,``0,System.UInt16,System.Threading.CancellationToken)">
             <summary>
             Send a fire-and-forget event to Bannou.
             </summary>
             <typeparam name="TRequest">Request type.</typeparam>
-            <param name="method">HTTP method.</param>
-            <param name="path">API path.</param>
+            <param name="endpoint">API path.</param>
             <param name="request">Request payload.</param>
             <param name="channel">Optional channel for routing.</param>
             <param name="cancellationToken">Cancellation token.</param>

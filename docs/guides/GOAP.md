@@ -3,7 +3,7 @@
 > **Version**: 1.0
 > **Status**: Implemented
 > **Location**: `plugins/lib-behavior/Goap/`
-> **Related**: [ABML Guide](./ABML.md)
+> **Related**: [ABML Guide](./ABML.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
 
 GOAP is an AI planning technique that enables NPCs to autonomously discover sequences of actions to achieve their goals. Instead of hand-crafting behavior trees or state machines, you define **what NPCs want** (goals) and **what they can do** (actions), and the planner figures out **how** to get there.
 
@@ -522,13 +522,17 @@ Stage 5: Trigger GOAP Replan   → trigger_goap_replan handler
 
 Planning parameters adjust based on urgency:
 
-| Urgency | Range | MaxDepth | Timeout | MaxNodes | Use Case |
-|---------|-------|----------|---------|----------|----------|
-| Low | 0 - 0.3 | 10 | 100ms | 1000 | Full deliberation |
+| Urgency | Threshold | MaxDepth | Timeout | MaxNodes | Use Case |
+|---------|-----------|----------|---------|----------|----------|
+| Low | < 0.3 | 10 | 100ms | 1000 | Full deliberation |
 | Medium | 0.3 - 0.7 | 6 | 50ms | 500 | Quick decision |
-| High | 0.7 - 1.0 | 3 | 20ms | 200 | Immediate reaction |
+| High | >= 0.7 | 3 | 20ms | 200 | Immediate reaction |
 
 **High urgency = shallower search** (fight-or-flight decisions need to be fast)
+
+> **Threat Fast-Track**: When urgency > 0.8, threats bypass stages 1-4 and jump directly to stage 5 (GOAP replan). This enables immediate response to critical threats without perception budget filtering.
+
+For complete details on urgency tier configuration, memory relevance scoring weights, and known caveats, see the [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md).
 
 ### 6.3 ABML Cognition Example
 

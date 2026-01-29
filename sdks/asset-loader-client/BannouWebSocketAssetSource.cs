@@ -134,7 +134,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         };
 
         var apiResponse = await _client.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
-            "POST", "/bundles/resolve", request, cancellationToken: ct).ConfigureAwait(false);
+            "/bundles/resolve", request, cancellationToken: ct).ConfigureAwait(false);
 
         if (!apiResponse.IsSuccess || apiResponse.Result == null)
         {
@@ -186,7 +186,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         var request = new GetBundleRequest { BundleId = bundleId };
 
         var apiResponse = await _client.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
-            "POST", "/bundles/get", request, cancellationToken: ct).ConfigureAwait(false);
+            "/bundles/get", request, cancellationToken: ct).ConfigureAwait(false);
 
         if (!apiResponse.IsSuccess)
         {
@@ -225,7 +225,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         };
 
         var apiResponse = await _client.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
-            "POST", "/assets/get", request, cancellationToken: ct).ConfigureAwait(false);
+            "/assets/get", request, cancellationToken: ct).ConfigureAwait(false);
 
         if (!apiResponse.IsSuccess)
         {

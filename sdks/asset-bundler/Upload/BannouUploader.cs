@@ -153,7 +153,7 @@ public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
         };
 
         var uploadApiResponse = await _client.InvokeAsync<BundleUploadRequest, UploadResponse>(
-            "POST", "/bundles/upload/request", uploadRequest, cancellationToken: ct);
+            "/bundles/upload/request", uploadRequest, cancellationToken: ct);
 
         var uploadResponse = AssetApiHelpers.EnsureSuccess(uploadApiResponse, "request upload URL");
 
@@ -193,7 +193,7 @@ public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
         };
 
         var completeApiResponse = await _client.InvokeAsync<CompleteUploadRequest, object>(
-            "POST", "/assets/upload/complete", completeRequest, cancellationToken: ct);
+            "/assets/upload/complete", completeRequest, cancellationToken: ct);
 
         if (!completeApiResponse.IsSuccess)
         {

@@ -173,11 +173,11 @@ Client A: POST:/character/get → GUID abc123...
 Client B: POST:/character/get → GUID xyz789... (different!)
 ```
 
-The BannouClient handles this automatically - you just use method/path pairs:
+The BannouClient handles this automatically - you just use endpoint paths:
 
 ```csharp
 // SDK looks up the correct GUID for your session
-var response = await client.InvokeAsync<Req, Resp>("POST", "/character/get", request);
+var response = await client.InvokeAsync<Req, Resp>("/character/get", request);
 ```
 
 ## Shortcuts
