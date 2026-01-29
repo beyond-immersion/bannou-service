@@ -1,9 +1,12 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Subscription;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -81,9 +84,9 @@ public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
-            var connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
+            var connectUrl = registerResult?.ConnectUrl?.ToString();
 
             if (string.IsNullOrEmpty(accessToken))
             {

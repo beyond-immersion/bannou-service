@@ -1,5 +1,7 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Auth;
 using System.Text;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -176,17 +178,15 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Verify response contains tokens
-        var responseObj = JsonNode.Parse(responseBody)?.AsObject();
-        var accessToken = responseObj?["accessToken"]?.GetValue<string>();
-        var refreshToken = responseObj?["refreshToken"]?.GetValue<string>();
+        var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
 
-        if (string.IsNullOrEmpty(accessToken))
+        if (string.IsNullOrEmpty(registerResult?.AccessToken))
         {
             Console.WriteLine("❌ Registration response missing accessToken");
             return false;
         }
 
-        if (string.IsNullOrEmpty(refreshToken))
+        if (string.IsNullOrEmpty(registerResult?.RefreshToken))
         {
             Console.WriteLine("❌ Registration response missing refreshToken");
             return false;
@@ -230,24 +230,22 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Verify response structure
-        var responseObj = JsonNode.Parse(responseBody)?.AsObject();
-        var accessToken = responseObj?["accessToken"]?.GetValue<string>();
-        var refreshToken = responseObj?["refreshToken"]?.GetValue<string>();
+        var authResult = BannouJson.Deserialize<AuthResponse>(responseBody);
 
-        if (string.IsNullOrEmpty(accessToken))
+        if (string.IsNullOrEmpty(authResult?.AccessToken))
         {
             Console.WriteLine("❌ Login response missing accessToken");
             return false;
         }
 
-        if (string.IsNullOrEmpty(refreshToken))
+        if (string.IsNullOrEmpty(authResult?.RefreshToken))
         {
             Console.WriteLine("❌ Login response missing refreshToken");
             return false;
         }
 
         // Verify access token is a valid JWT format (header.payload.signature)
-        var jwtParts = accessToken.Split('.');
+        var jwtParts = authResult.AccessToken.Split('.');
         if (jwtParts.Length != 3)
         {
             Console.WriteLine($"❌ Access token is not valid JWT format (expected 3 parts, got {jwtParts.Length})");
@@ -286,10 +284,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
-        var refreshToken = loginObj?["refreshToken"]?.GetValue<string>();
+        var loginResult = BannouJson.Deserialize<AuthResponse>(loginBody);
 
-        if (string.IsNullOrEmpty(refreshToken))
+        if (loginResult == null || string.IsNullOrEmpty(loginResult.RefreshToken))
         {
             Console.WriteLine("❌ No refresh token from login");
             return false;
@@ -300,7 +297,7 @@ public class LoginTestHandler : IServiceTestHandler
         Console.WriteLine($"📡 Testing token refresh at: {refreshUrl}");
 
         // Get access token for Authorization header
-        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
+        var accessToken = loginResult.AccessToken;
         if (string.IsNullOrEmpty(accessToken))
         {
             Console.WriteLine("❌ No access token from login for refresh test");
@@ -310,7 +307,7 @@ public class LoginTestHandler : IServiceTestHandler
         // Refresh endpoint expects: Authorization header with JWT + body with refreshToken
         var refreshContent = new JsonObject
         {
-            ["refreshToken"] = refreshToken
+            ["refreshToken"] = loginResult.RefreshToken
         };
 
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, refreshUrl);
@@ -331,10 +328,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Verify new tokens returned
-        var refreshObj = JsonNode.Parse(refreshBody)?.AsObject();
-        var newAccessToken = refreshObj?["accessToken"]?.GetValue<string>();
+        var refreshResult = BannouJson.Deserialize<AuthResponse>(refreshBody);
 
-        if (string.IsNullOrEmpty(newAccessToken))
+        if (string.IsNullOrEmpty(refreshResult?.AccessToken))
         {
             Console.WriteLine("❌ Token refresh response missing new accessToken");
             return false;
@@ -439,10 +435,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
-        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
+        var loginResult = BannouJson.Deserialize<AuthResponse>(loginBody);
 
-        if (string.IsNullOrEmpty(accessToken))
+        if (string.IsNullOrEmpty(loginResult?.AccessToken))
         {
             Console.WriteLine("❌ No access token from login");
             return false;
@@ -455,7 +450,7 @@ public class LoginTestHandler : IServiceTestHandler
         Console.WriteLine($"📡 Testing token validation at: {validateUrl}");
 
         using var validateRequest = new HttpRequestMessage(HttpMethod.Post, validateUrl);
-        validateRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        validateRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult.AccessToken);
 
         using var validateResponse = await Program.HttpClient.SendAsync(validateRequest);
         var validateBody = await validateResponse.Content.ReadAsStringAsync();
@@ -464,14 +459,13 @@ public class LoginTestHandler : IServiceTestHandler
 
         if (validateResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
-            var validateObj = JsonNode.Parse(validateBody)?.AsObject();
-            var valid = validateObj?["valid"]?.GetValue<bool>();
-            if (valid != true)
+            var validateResult = BannouJson.Deserialize<ValidateTokenResponse>(validateBody);
+            if (validateResult?.Valid != true)
             {
-                Console.WriteLine($"❌ Token validation returned valid={valid} (expected true)");
+                Console.WriteLine($"❌ Token validation returned valid={validateResult?.Valid} (expected true)");
                 return false;
             }
-            Console.WriteLine($"✅ Token validation returned valid={valid}");
+            Console.WriteLine($"✅ Token validation returned valid={validateResult.Valid}");
             return true;
         }
 
@@ -530,10 +524,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
-        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
+        var loginResult = BannouJson.Deserialize<AuthResponse>(loginBody);
 
-        if (string.IsNullOrEmpty(accessToken))
+        if (string.IsNullOrEmpty(loginResult?.AccessToken))
         {
             Console.WriteLine("❌ No access token from login");
             return false;
@@ -546,7 +539,7 @@ public class LoginTestHandler : IServiceTestHandler
         Console.WriteLine($"📡 Testing get sessions at: {sessionsUrl}");
 
         using var sessionsRequest = new HttpRequestMessage(HttpMethod.Post, sessionsUrl);
-        sessionsRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        sessionsRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult.AccessToken);
         sessionsRequest.Content = new StringContent("{}", Encoding.UTF8, "application/json");
 
         using var sessionsResponse = await Program.HttpClient.SendAsync(sessionsRequest);
@@ -556,20 +549,19 @@ public class LoginTestHandler : IServiceTestHandler
 
         if (sessionsResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
-            var sessionsObj = JsonNode.Parse(sessionsBody)?.AsObject();
-            var sessions = sessionsObj?["sessions"]?.AsArray();
-            if (sessions == null)
+            var sessionsResult = BannouJson.Deserialize<SessionsResponse>(sessionsBody);
+            if (sessionsResult?.Sessions == null)
             {
                 Console.WriteLine("❌ Get sessions response missing sessions array");
                 return false;
             }
             // Should have at least one session (the one we just logged in with)
-            if (sessions.Count == 0)
+            if (sessionsResult.Sessions.Count == 0)
             {
                 Console.WriteLine("❌ Get sessions returned 0 sessions (expected at least 1)");
                 return false;
             }
-            Console.WriteLine($"✅ Get sessions returned {sessions.Count} session(s)");
+            Console.WriteLine($"✅ Get sessions returned {sessionsResult.Sessions.Count} session(s)");
             return true;
         }
 
@@ -628,10 +620,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
-        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
+        var loginResult = BannouJson.Deserialize<AuthResponse>(loginBody);
 
-        if (string.IsNullOrEmpty(accessToken))
+        if (string.IsNullOrEmpty(loginResult?.AccessToken))
         {
             Console.WriteLine("❌ No access token from login");
             return false;
@@ -646,7 +637,7 @@ public class LoginTestHandler : IServiceTestHandler
         var logoutContent = new JsonObject { ["allSessions"] = false };
 
         using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, logoutUrl);
-        logoutRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        logoutRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult.AccessToken);
         logoutRequest.Content = new StringContent(BannouJson.Serialize(logoutContent), Encoding.UTF8, "application/json");
 
         using var logoutResponse = await Program.HttpClient.SendAsync(logoutRequest);
@@ -828,9 +819,8 @@ public class LoginTestHandler : IServiceTestHandler
         if (steamResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
             // Verify we got tokens back
-            var responseObj = JsonNode.Parse(steamBody)?.AsObject();
-            var accessToken = responseObj?["accessToken"]?.GetValue<string>();
-            if (string.IsNullOrEmpty(accessToken))
+            var authResult = BannouJson.Deserialize<AuthResponse>(steamBody);
+            if (string.IsNullOrEmpty(authResult?.AccessToken))
             {
                 Console.WriteLine("❌ Steam verify returned OK but no access token");
                 return false;

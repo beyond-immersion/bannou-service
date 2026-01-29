@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Matchmaking;
 using System.Text;
 
@@ -70,10 +71,10 @@ public class MatchmakingWebSocketTestHandler : BaseWebSocketTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
-            var connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString();
-            var accountIdString = responseObj.RootElement.GetProperty("accountId").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
+            var connectUrl = registerResult?.ConnectUrl?.ToString();
+            var accountId = registerResult?.AccountId ?? Guid.Empty;
 
             if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(connectUrl))
             {
@@ -81,7 +82,7 @@ public class MatchmakingWebSocketTestHandler : BaseWebSocketTestHandler
                 return null;
             }
 
-            if (string.IsNullOrEmpty(accountIdString) || !Guid.TryParse(accountIdString, out var accountId))
+            if (accountId == Guid.Empty)
             {
                 Console.WriteLine("   Missing or invalid accountId in registration response");
                 return null;

@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Permission;
@@ -53,8 +54,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
 
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -312,8 +313,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse1.Content.ReadAsStringAsync();
-            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
-            accessToken1 = responseObj.RootElement.GetProperty("accessToken").GetString()
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody)
+                ?? throw new InvalidOperationException("Failed to parse registration response");
+            accessToken1 = registerResult.AccessToken
                 ?? throw new InvalidOperationException("No accessToken in response");
             Console.WriteLine($"✅ First test account created: {testEmail1}");
         }
@@ -349,8 +351,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse2.Content.ReadAsStringAsync();
-            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
-            accessToken2 = responseObj.RootElement.GetProperty("accessToken").GetString()
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody)
+                ?? throw new InvalidOperationException("Failed to parse registration response");
+            accessToken2 = registerResult.AccessToken
                 ?? throw new InvalidOperationException("No accessToken in response");
             Console.WriteLine($"✅ Second test account created: {testEmail2}");
         }

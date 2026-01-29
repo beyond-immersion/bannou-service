@@ -106,7 +106,7 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
             var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
             var accessToken = registerResult?.AccessToken;
-            var connectUrl = registerResult?.ConnectUrl;
+            var connectUrl = registerResult?.ConnectUrl?.ToString();
 
             if (string.IsNullOrEmpty(accessToken))
             {

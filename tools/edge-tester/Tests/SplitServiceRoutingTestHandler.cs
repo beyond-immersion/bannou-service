@@ -1,12 +1,14 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Subscription;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -697,9 +699,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 return false;
             }
 
-            var responseObj = JsonDocument.Parse(responseBody);
-            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
-            accountId = responseObj.RootElement.GetProperty("accountId").GetGuid();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            accessToken = registerResult?.AccessToken;
+            accountId = registerResult?.AccountId;
 
             Console.WriteLine($"   Created account: {accountId}");
         }
@@ -1427,8 +1429,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             }
 
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+            var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
+            var accessToken = registerResult?.AccessToken;
 
             if (string.IsNullOrEmpty(accessToken))
             {
