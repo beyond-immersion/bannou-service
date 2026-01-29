@@ -46,6 +46,22 @@ public class InventoryTestHandler : BaseHttpTestHandler
             "Move item from one container to another"),
         new ServiceTest(TestTransferItemToAnotherOwner, "TransferItem", "Inventory",
             "Transfer item to a container owned by another entity"),
+
+        // Additional Coverage Tests
+        new ServiceTest(TestUpdateContainer, "UpdateContainer", "Inventory",
+            "Test updating container constraints"),
+        new ServiceTest(TestDeleteContainer, "DeleteContainer", "Inventory",
+            "Test deleting an empty container"),
+        new ServiceTest(TestRemoveItemFromContainer, "RemoveItem", "Inventory",
+            "Test removing an item from a container"),
+        new ServiceTest(TestQueryItems, "QueryItems", "Inventory",
+            "Test querying items by criteria"),
+        new ServiceTest(TestCountItems, "CountItems", "Inventory",
+            "Test counting items by template"),
+        new ServiceTest(TestHasItems, "HasItems", "Inventory",
+            "Test checking item requirements"),
+        new ServiceTest(TestFindSpace, "FindSpace", "Inventory",
+            "Test finding space for an item"),
     ];
 
     // =========================================================================
@@ -563,4 +579,264 @@ public class InventoryTestHandler : BaseHttpTestHandler
             return TestResult.Successful(
                 $"Transferred {template.Code} (qty=5) from seller={sellerId} to buyer={buyerId}");
         }, "Transfer item to another owner");
+
+    // =========================================================================
+    // Additional Coverage Tests
+    // =========================================================================
+
+    private static async Task<TestResult> TestUpdateContainer(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var characterId = Guid.NewGuid();
+            var inventoryClient = GetServiceClient<IInventoryClient>();
+
+            // Create a container
+            var container = await inventoryClient.CreateContainerAsync(new CreateContainerRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character,
+                ContainerType = "inventory",
+                ConstraintModel = ContainerConstraintModel.SlotOnly,
+                MaxSlots = 10
+            });
+
+            // Update constraints
+            var updated = await inventoryClient.UpdateContainerAsync(new UpdateContainerRequest
+            {
+                ContainerId = container.ContainerId,
+                MaxSlots = 25,
+                MaxWeight = 100.0
+            });
+
+            if (updated.MaxSlots != 25)
+                return TestResult.Failed($"Expected maxSlots=25, got: {updated.MaxSlots}");
+
+            if (updated.MaxWeight != 100.0)
+                return TestResult.Failed($"Expected maxWeight=100, got: {updated.MaxWeight}");
+
+            return TestResult.Successful(
+                $"Updated container {container.ContainerId}: slots 10→25, weight null→100");
+        }, "Update container");
+
+    private static async Task<TestResult> TestDeleteContainer(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var characterId = Guid.NewGuid();
+            var inventoryClient = GetServiceClient<IInventoryClient>();
+
+            // Create an empty container
+            var container = await inventoryClient.CreateContainerAsync(new CreateContainerRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character,
+                ContainerType = "temp",
+                ConstraintModel = ContainerConstraintModel.Unlimited
+            });
+
+            // Delete it
+            var deleted = await inventoryClient.DeleteContainerAsync(new DeleteContainerRequest
+            {
+                ContainerId = container.ContainerId
+            });
+
+            if (!deleted.Deleted)
+                return TestResult.Failed("Delete returned deleted=false");
+
+            // Verify it's gone - should return 404
+            return await ExecuteExpectingAnyStatusAsync(
+                async () => await inventoryClient.GetContainerAsync(new GetContainerRequest
+                {
+                    ContainerId = container.ContainerId
+                }),
+                [404],
+                "Delete container");
+        }, "Delete container");
+
+    private static async Task<TestResult> TestRemoveItemFromContainer(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateInventoryTestRealmAsync("REMOVE");
+            var characterId = Guid.NewGuid();
+            var inventoryClient = GetServiceClient<IInventoryClient>();
+
+            // Create container and add an item
+            var container = await CreateSlotContainerAsync(characterId);
+            var template = await CreateUniqueWeaponTemplateAsync("remove");
+            var addResult = await CreateAndAddItemAsync(
+                template.TemplateId, container.ContainerId, realm.RealmId);
+
+            // Remove the item
+            var removeResult = await inventoryClient.RemoveItemFromContainerAsync(new RemoveItemRequest
+            {
+                InstanceId = addResult.InstanceId
+            });
+
+            if (removeResult.InstanceId != addResult.InstanceId)
+                return TestResult.Failed("Remove returned wrong instance ID");
+
+            // Verify container is empty
+            var contents = await inventoryClient.GetContainerAsync(new GetContainerRequest
+            {
+                ContainerId = container.ContainerId,
+                IncludeContents = true
+            });
+
+            if (contents.Items != null && contents.Items.Count > 0)
+                return TestResult.Failed($"Container still has {contents.Items.Count} items after remove");
+
+            return TestResult.Successful(
+                $"Removed item {addResult.InstanceId} from container {container.ContainerId}");
+        }, "Remove item from container");
+
+    private static async Task<TestResult> TestQueryItems(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateInventoryTestRealmAsync("QUERY");
+            var characterId = Guid.NewGuid();
+            var inventoryClient = GetServiceClient<IInventoryClient>();
+
+            // Create container and add multiple items
+            var container = await CreateSlotContainerAsync(characterId, maxSlots: 20);
+            var template1 = await CreateStackableTemplateAsync("query1");
+            var template2 = await CreateStackableTemplateAsync("query2");
+
+            await CreateAndAddItemAsync(template1.TemplateId, container.ContainerId, realm.RealmId, quantity: 10);
+            await CreateAndAddItemAsync(template2.TemplateId, container.ContainerId, realm.RealmId, quantity: 5);
+
+            // Query all items for this owner
+            var result = await inventoryClient.QueryItemsAsync(new QueryItemsRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character
+            });
+
+            if (result.Items == null || result.Items.Count < 2)
+                return TestResult.Failed($"Expected at least 2 items, got: {result.Items?.Count ?? 0}");
+
+            // Query by specific template
+            var filtered = await inventoryClient.QueryItemsAsync(new QueryItemsRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character,
+                TemplateId = template1.TemplateId
+            });
+
+            if (filtered.Items == null || filtered.Items.Count != 1)
+                return TestResult.Failed($"Filtered query: expected 1 item, got: {filtered.Items?.Count ?? 0}");
+
+            return TestResult.Successful(
+                $"Query returned {result.Items.Count} items total, {filtered.Items.Count} filtered by template");
+        }, "Query items");
+
+    private static async Task<TestResult> TestCountItems(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateInventoryTestRealmAsync("COUNT");
+            var characterId = Guid.NewGuid();
+            var inventoryClient = GetServiceClient<IInventoryClient>();
+
+            // Create container and add stackable items
+            var container = await CreateSlotContainerAsync(characterId);
+            var template = await CreateStackableTemplateAsync("count");
+
+            // Add 25 items across two stacks
+            await CreateAndAddItemAsync(template.TemplateId, container.ContainerId, realm.RealmId, quantity: 15);
+            await CreateAndAddItemAsync(template.TemplateId, container.ContainerId, realm.RealmId, quantity: 10);
+
+            // Count total
+            var count = await inventoryClient.CountItemsAsync(new CountItemsRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character,
+                TemplateId = template.TemplateId
+            });
+
+            if (count.TotalQuantity != 25)
+                return TestResult.Failed($"Expected total 25, got: {count.TotalQuantity}");
+
+            if (count.StackCount < 2)
+                return TestResult.Failed($"Expected at least 2 stacks, got: {count.StackCount}");
+
+            return TestResult.Successful(
+                $"Counted {count.TotalQuantity} items across {count.StackCount} stacks");
+        }, "Count items");
+
+    private static async Task<TestResult> TestHasItems(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateInventoryTestRealmAsync("HAS");
+            var characterId = Guid.NewGuid();
+            var inventoryClient = GetServiceClient<IInventoryClient>();
+
+            // Create container and add items
+            var container = await CreateSlotContainerAsync(characterId);
+            var template = await CreateStackableTemplateAsync("has");
+            await CreateAndAddItemAsync(template.TemplateId, container.ContainerId, realm.RealmId, quantity: 20);
+
+            // Check if we have enough (should pass)
+            var hasEnough = await inventoryClient.HasItemsAsync(new HasItemsRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character,
+                Requirements =
+                [
+                    new ItemRequirement { TemplateId = template.TemplateId, Quantity = 15 }
+                ]
+            });
+
+            if (!hasEnough.HasAll)
+                return TestResult.Failed("HasItems returned false when we have 20 (need 15)");
+
+            // Check if we have more than available (should fail)
+            var notEnough = await inventoryClient.HasItemsAsync(new HasItemsRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character,
+                Requirements =
+                [
+                    new ItemRequirement { TemplateId = template.TemplateId, Quantity = 50 }
+                ]
+            });
+
+            if (notEnough.HasAll)
+                return TestResult.Failed("HasItems returned true when we have 20 (need 50)");
+
+            return TestResult.Successful(
+                $"HasItems correctly: have 20, need 15 = true; need 50 = false");
+        }, "Has items");
+
+    private static async Task<TestResult> TestFindSpace(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var characterId = Guid.NewGuid();
+            var inventoryClient = GetServiceClient<IInventoryClient>();
+
+            // Create a container with space
+            await CreateSlotContainerAsync(characterId, maxSlots: 10);
+
+            // Create a template
+            var template = await CreateStackableTemplateAsync("space");
+
+            // Find space for the item across owner's containers
+            var space = await inventoryClient.FindSpaceAsync(new FindSpaceRequest
+            {
+                OwnerId = characterId,
+                OwnerType = ContainerOwnerType.Character,
+                TemplateId = template.TemplateId,
+                Quantity = 5
+            });
+
+            if (!space.HasSpace)
+                return TestResult.Failed("FindSpace returned hasSpace=false on empty container");
+
+            if (space.Candidates == null || space.Candidates.Count == 0)
+                return TestResult.Failed("FindSpace returned no candidates");
+
+            var totalCanFit = space.Candidates.Sum(c => c.CanFitQuantity);
+            if (totalCanFit < 5)
+                return TestResult.Failed($"Expected canFitQuantity >= 5, got: {totalCanFit}");
+
+            return TestResult.Successful(
+                $"FindSpace: hasSpace={space.HasSpace}, candidates={space.Candidates.Count}, totalCanFit={totalCanFit}");
+        }, "Find space");
 }
