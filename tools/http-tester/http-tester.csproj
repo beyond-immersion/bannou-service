@@ -53,6 +53,7 @@
     <ProjectReference Include="..\..\plugins\lib-escrow\lib-escrow.csproj" />
     <ProjectReference Include="..\..\plugins\lib-character-encounter\lib-character-encounter.csproj" />
     <ProjectReference Include="..\..\plugins\lib-scene\lib-scene.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-character-personality\lib-character-personality.csproj" />
   </ItemGroup>
 
 </Project>
