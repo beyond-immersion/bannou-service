@@ -291,7 +291,7 @@ public static class ActorPermissionRegistration
 
         foreach (var endpoint in GetEndpoints())
         {
-            var methodKey = $"{endpoint.Method}:{endpoint.Path}";
+            var methodKey = endpoint.Path;
 
             foreach (var permission in endpoint.Permissions)
             {

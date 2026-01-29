@@ -1045,7 +1045,12 @@ export class BannouClient implements IBannouClient {
     try {
       const manifest = JSON.parse(json) as {
         sessionId?: string;
-        availableApis?: Array<{ serviceId?: string; endpoint?: string; service?: string; description?: string }>;
+        availableApis?: Array<{
+          serviceId?: string;
+          endpoint?: string;
+          service?: string;
+          description?: string;
+        }>;
       };
 
       // Extract session ID

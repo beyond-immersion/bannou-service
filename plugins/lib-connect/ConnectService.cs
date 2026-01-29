@@ -2294,7 +2294,7 @@ public partial class ConnectService : IConnectService
                 availableApis.Add(new
                 {
                     serviceId = shortcut.RouteGuid.ToString(),
-                    endpoint = $"SHORTCUT:{shortcut.Name}",
+                    endpoint = shortcut.Name,
                     service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
@@ -2426,7 +2426,7 @@ public partial class ConnectService : IConnectService
                 availableApis.Add(new
                 {
                     serviceId = shortcut.RouteGuid.ToString(),
-                    endpoint = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
                     service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
@@ -2871,7 +2871,7 @@ public partial class ConnectService : IConnectService
                 availableApis.Add(new
                 {
                     serviceId = shortcut.RouteGuid.ToString(),
-                    endpoint = $"SHORTCUT:{shortcut.Name}",
+                    endpoint = shortcut.Name,
                     service = "shortcut",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });

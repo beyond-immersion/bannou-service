@@ -147,7 +147,7 @@ Service lifetime is **Singleton** (unique among Bannou services). This is requir
 
 ### Client Capabilities (1 endpoint)
 
-- **ClientCapabilities** (`POST /client-capabilities`): HTTP endpoint that returns the capability manifest for a session. Uses `ICapabilityManifestBuilder.BuildApiList()` to extract POST-only, non-template endpoints from session service mappings. Includes session shortcuts as pseudo-API entries with "SHORTCUT:" prefix.
+- **ClientCapabilities** (`POST /client-capabilities`): HTTP endpoint that returns the capability manifest for a session. Uses `ICapabilityManifestBuilder.BuildApiList()` to extract POST-only, non-template endpoints from session service mappings. Includes session shortcuts as pseudo-API entries.
 
 ### Session Management (1 endpoint)
 

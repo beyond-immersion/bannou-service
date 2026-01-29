@@ -94,7 +94,7 @@ public partial class ClientCapabilityEntry
 {
 
     /// <summary>
-    /// Client-salted GUID for this endpoint (unique per client)
+    /// Client-salted GUID for binary header routing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -102,37 +102,26 @@ public partial class ClientCapabilityEntry
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Service name (e.g., "account", "game-session")
+    /// API path (e.g., "/account/get") - used as lookup key
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
+    public string Endpoint { get; set; } = default!;
 
     /// <summary>
-    /// HTTP method for WebSocket routing
+    /// Service name (e.g., "account")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.Text.Json.Serialization.JsonPropertyName("service")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ClientCapabilityEntryMethod Method { get; set; } = default!;
+    public string Service { get; set; } = default!;
 
     /// <summary>
-    /// API endpoint path (e.g., "/account/get")
+    /// Human-readable description
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("path")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Path { get; set; } = default!;
-
-    /// <summary>
-    /// Full endpoint key for routing (e.g., "account:POST:/account/get")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("endpointKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EndpointKey { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
 
 }
 
@@ -254,7 +243,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Map of ServiceID -&gt; List of available methods (e.g., "account" -&gt; ["POST:/get-account"])
+    /// Map of ServiceID -&gt; List of available endpoints (e.g., "account" -&gt; ["/account/get"])
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -545,20 +534,6 @@ public partial class SessionShortcutMetadata
     public string? DisplayName { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ClientCapabilityEntryMethod
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
-    GET = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
-    POST = 1,
-
-}
-#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

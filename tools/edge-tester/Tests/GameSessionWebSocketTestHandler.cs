@@ -279,10 +279,10 @@ public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
                     while (DateTime.UtcNow < deadline)
                     {
                         // Check if we have a shortcut for join_game_test-game
-                        shortcutGuid = client.GetServiceGuid("SHORTCUT:join_game_test-game");
+                        shortcutGuid = client.GetServiceGuid("join_game_test-game");
                         if (shortcutGuid.HasValue)
                         {
-                            Console.WriteLine($"   Found shortcut: SHORTCUT:join_game_test-game -> {shortcutGuid}");
+                            Console.WriteLine($"   Found shortcut: join_game_test-game -> {shortcutGuid}");
                             break;
                         }
                         await Task.Delay(500);
@@ -299,7 +299,7 @@ public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
                     // Note: Shortcuts use raw InvokeAsync because they're dynamically created
                     Console.WriteLine("   Step 7: Invoking shortcut with empty payload...");
                     var joinResponse = await client.InvokeAsync<object, JsonElement>(
-                        "SHORTCUT:join_game_test-game",
+                        "join_game_test-game",
                         new { }, // Empty payload - server injects the bound data
                         timeout: TimeSpan.FromSeconds(5));
 

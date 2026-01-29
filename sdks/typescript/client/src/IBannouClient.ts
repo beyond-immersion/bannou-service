@@ -198,11 +198,7 @@ export interface IBannouClient {
    * @param request - Request payload
    * @param channel - Message channel for ordering
    */
-  sendEventAsync<TRequest>(
-    endpoint: string,
-    request: TRequest,
-    channel?: number
-  ): Promise<void>;
+  sendEventAsync<TRequest>(endpoint: string, request: TRequest, channel?: number): Promise<void>;
 
   /**
    * Subscribe to a typed event with automatic deserialization.

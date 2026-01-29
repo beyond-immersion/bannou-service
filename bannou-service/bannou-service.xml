@@ -8997,27 +8997,22 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.ServiceId">
             <summary>
-            Client-salted GUID for this endpoint (unique per client)
+            Client-salted GUID for binary header routing
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.ServiceName">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Endpoint">
             <summary>
-            Service name (e.g., "account", "game-session")
+            API path (e.g., "/account/get") - used as lookup key
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Method">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service">
             <summary>
-            HTTP method for WebSocket routing
+            Service name (e.g., "account")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Path">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Description">
             <summary>
-            API endpoint path (e.g., "/account/get")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.EndpointKey">
-            <summary>
-            Full endpoint key for routing (e.g., "account:POST:/account/get")
+            Human-readable description
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent">
@@ -9109,7 +9104,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Permissions">
             <summary>
-            Map of ServiceID -&gt; List of available methods (e.g., "account" -&gt; ["POST:/get-account"])
+            Map of ServiceID -&gt; List of available endpoints (e.g., "account" -&gt; ["/account/get"])
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Reason">

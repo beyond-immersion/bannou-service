@@ -456,7 +456,7 @@ public static class DocumentationPermissionRegistration
 
         foreach (var endpoint in GetEndpoints())
         {
-            var methodKey = $"{endpoint.Method}:{endpoint.Path}";
+            var methodKey = endpoint.Path;
 
             foreach (var permission in endpoint.Permissions)
             {

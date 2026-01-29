@@ -186,18 +186,17 @@ Shortcuts are **pre-bound API calls** pushed to clients. They encapsulate endpoi
 
 Example flow:
 1. User purchases game subscription
-2. GameSession service pushes shortcut: `SHORTCUT:join_game_arcadia`
+2. GameSession service pushes shortcut: `join_game_arcadia`
 3. Client receives shortcut in capability manifest
 4. Client invokes with empty payload - server fills in bound data
 
 ```csharp
 // Wait for shortcut to appear
-var shortcutGuid = client.GetServiceGuid("SHORTCUT", "join_game_arcadia");
+var shortcutGuid = client.GetServiceGuid("join_game_arcadia");
 if (shortcutGuid.HasValue)
 {
     // Invoke shortcut - server injects subscription/account data
     var response = await client.InvokeAsync<object, JoinGameResponse>(
-        "SHORTCUT",
         "join_game_arcadia",
         new { }, // Empty payload - server fills in the rest
         timeout: TimeSpan.FromSeconds(5));
