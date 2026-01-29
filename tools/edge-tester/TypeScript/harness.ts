@@ -8,7 +8,7 @@
  * → {"cmd": "connect", "url": "http://...", "email": "...", "password": "..."}
  * ← {"ok": true, "sessionId": "..."}
  *
- * → {"cmd": "invoke", "method": "POST", "path": "/account/get", "request": {...}}
+ * → {"cmd": "invoke", "path": "/account/get", "request": {...}}
  * ← {"ok": true, "result": {...}} or {"ok": false, "error": {...}}
  *
  * → {"cmd": "disconnect"}
@@ -43,7 +43,6 @@ interface RegisterAndConnectCommand {
 
 interface InvokeCommand {
   cmd: 'invoke';
-  method: string;
   path: string;
   request: unknown;
   channel?: number;
@@ -52,7 +51,6 @@ interface InvokeCommand {
 
 interface SendEventCommand {
   cmd: 'sendEvent';
-  method: string;
   path: string;
   request: unknown;
   channel?: number;
@@ -274,8 +272,7 @@ async function handleInvoke(command: InvokeCommand): Promise<void> {
     return;
   }
 
-  const response = await client.invokeAsync(
-    command.method,
+  const response = await client.invokeAsync<unknown, unknown>(
     command.path,
     command.request,
     command.channel,
@@ -302,7 +299,7 @@ async function handleSendEvent(command: SendEventCommand): Promise<void> {
     return;
   }
 
-  await client.sendEventAsync(command.method, command.path, command.request, command.channel);
+  await client.sendEventAsync<unknown>(command.path, command.request, command.channel);
   respondSuccess();
 }
 
@@ -326,10 +323,9 @@ function handleGetCapabilities(): void {
     return;
   }
 
-  const capabilities: { method: string; path: string; guid: string }[] = [];
-  for (const [key, guid] of client.availableApis) {
-    const [method, path] = key.split(':');
-    capabilities.push({ method, path, guid });
+  const capabilities: { path: string; guid: string }[] = [];
+  for (const [path, guid] of client.availableApis) {
+    capabilities.push({ path, guid });
   }
 
   respondSuccess({ capabilities });

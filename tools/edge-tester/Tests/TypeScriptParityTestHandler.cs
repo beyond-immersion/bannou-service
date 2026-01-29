@@ -171,7 +171,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Calling /realm/list...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/realm/list", new { });
+            var tsResult = await tsHelper.InvokeRawAsync("/realm/list", new { });
 
             if (!tsResult.IsSuccess)
             {
@@ -243,7 +243,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Reading same realm...");
-            var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/realm/get", new { realmId });
+            var tsReadResult = await tsHelper.InvokeRawAsync("/realm/get", new { realmId });
 
             if (!tsReadResult.IsSuccess)
             {
@@ -327,7 +327,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Updating realm...");
-            var tsUpdateResult = await tsHelper.InvokeRawAsync("POST", "/realm/update",
+            var tsUpdateResult = await tsHelper.InvokeRawAsync("/realm/update",
                 new { realmId, name = $"TS Updated Lifecycle {uniqueCode}" });
 
             if (!tsUpdateResult.IsSuccess)
@@ -339,7 +339,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Read and verify both see the TS update
             var csharpReadResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "/realm/get", new { realmId }, timeout: TimeSpan.FromSeconds(10));
-            var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/realm/get", new { realmId });
+            var tsReadResult = await tsHelper.InvokeRawAsync("/realm/get", new { realmId });
 
             var csharpName = GetStringProperty(ParseResponse(csharpReadResponse.Result), "name");
             var tsRealm = tsReadResult.Result.HasValue
@@ -382,7 +382,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Calling /species/list...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/species/list", new { });
+            var tsResult = await tsHelper.InvokeRawAsync("/species/list", new { });
 
             if (!tsResult.IsSuccess)
             {
@@ -440,7 +440,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Reading same species...");
-            var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/species/get", new { speciesId });
+            var tsReadResult = await tsHelper.InvokeRawAsync("/species/get", new { speciesId });
 
             if (!csharpReadResponse.IsSuccess || !tsReadResult.IsSuccess)
             {
@@ -507,7 +507,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Querying location children...");
-            var tsChildrenResult = await tsHelper.InvokeRawAsync("POST", "/location/list-by-parent",
+            var tsChildrenResult = await tsHelper.InvokeRawAsync("/location/list-by-parent",
                 new { parentLocationId = parentLocation.LocationId });
 
             if (!tsChildrenResult.IsSuccess)
@@ -554,7 +554,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine($"   [TS SDK] Requesting same non-existent realm...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/realm/get", new { realmId = fakeRealmId });
+            var tsResult = await tsHelper.InvokeRawAsync("/realm/get", new { realmId = fakeRealmId });
 
             if (tsResult.IsSuccess)
             {
@@ -623,7 +623,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Attempting same duplicate create...");
-            var tsDupeResult = await tsHelper.InvokeRawAsync("POST", "/realm/create",
+            var tsDupeResult = await tsHelper.InvokeRawAsync("/realm/create",
                 new { code = realmCode, name = $"TS Duplicate {uniqueCode}", description = "Should also fail", category = "test", gameServiceId = gameServiceId.Value });
 
             if (tsDupeResult.IsSuccess)
@@ -662,7 +662,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Calling /relationship-type/list...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/relationship-type/list", new { });
+            var tsResult = await tsHelper.InvokeRawAsync("/relationship-type/list", new { });
 
             if (!tsResult.IsSuccess)
             {
@@ -734,7 +734,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Reading same character...");
-            var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/character/get", new { characterId });
+            var tsReadResult = await tsHelper.InvokeRawAsync("/character/get", new { characterId });
 
             if (!csharpReadResponse.IsSuccess || !tsReadResult.IsSuccess)
             {
@@ -843,7 +843,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Reading same relationship...");
-            var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/relationship/get", new { relationshipId });
+            var tsReadResult = await tsHelper.InvokeRawAsync("/relationship/get", new { relationshipId });
 
             if (!csharpReadResponse.IsSuccess || !tsReadResult.IsSuccess)
             {
@@ -902,7 +902,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Calling /realm/list (typed)...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/realm/list", new { });
+            var tsResult = await tsHelper.InvokeRawAsync("/realm/list", new { });
 
             if (!tsResult.IsSuccess)
             {
@@ -989,7 +989,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Reading same relationship type...");
-            var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/relationship-type/get", new { relationshipTypeId });
+            var tsReadResult = await tsHelper.InvokeRawAsync("/relationship-type/get", new { relationshipTypeId });
 
             if (!csharpReadResponse.IsSuccess || !tsReadResult.IsSuccess)
             {
@@ -1050,7 +1050,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Calling /auth/validate...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/auth/validate", new { });
+            var tsResult = await tsHelper.InvokeRawAsync("/auth/validate", new { });
 
             if (!tsResult.IsSuccess)
             {
@@ -1099,7 +1099,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Calling /sessions/list...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/sessions/list", new { });
+            var tsResult = await tsHelper.InvokeRawAsync("/sessions/list", new { });
 
             if (!tsResult.IsSuccess)
             {
@@ -1169,7 +1169,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Reading same location...");
-            var tsReadResult = await tsHelper.InvokeRawAsync("POST", "/location/get", new { locationId });
+            var tsReadResult = await tsHelper.InvokeRawAsync("/location/get", new { locationId });
 
             if (!csharpReadResponse.IsSuccess || !tsReadResult.IsSuccess)
             {
@@ -1223,7 +1223,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             if (tsHelper == null) return false;
 
             Console.WriteLine("   [TS SDK] Calling /permission/capabilities...");
-            var tsResult = await tsHelper.InvokeRawAsync("POST", "/permission/capabilities", new { });
+            var tsResult = await tsHelper.InvokeRawAsync("/permission/capabilities", new { });
 
             if (!tsResult.IsSuccess)
             {

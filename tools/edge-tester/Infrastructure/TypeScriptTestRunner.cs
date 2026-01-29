@@ -193,7 +193,6 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
     /// <typeparam name="TRequest">Request type.</typeparam>
     /// <typeparam name="TResult">Expected result type.</typeparam>
     public async Task<InvokeResult<TResult>> InvokeAsync<TRequest, TResult>(
-        string method,
         string path,
         TRequest request,
         CancellationToken cancellationToken = default)
@@ -201,7 +200,6 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
         var command = new InvokeCommand
         {
             Cmd = "invoke",
-            Method = method,
             Path = path,
             Request = JsonSerializer.SerializeToElement(request, _jsonOptions),
         };
@@ -224,7 +222,6 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
     /// Invokes an API endpoint and returns raw JSON.
     /// </summary>
     public async Task<InvokeResult<JsonElement?>> InvokeRawAsync(
-        string method,
         string path,
         object request,
         CancellationToken cancellationToken = default)
@@ -232,7 +229,6 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
         var command = new InvokeCommand
         {
             Cmd = "invoke",
-            Method = method,
             Path = path,
             Request = JsonSerializer.SerializeToElement(request, _jsonOptions),
         };
@@ -356,7 +352,6 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
     private sealed class InvokeCommand
     {
         public required string Cmd { get; init; }
-        public required string Method { get; init; }
         public required string Path { get; init; }
         public required JsonElement Request { get; init; }
     }

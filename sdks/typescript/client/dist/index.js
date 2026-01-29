@@ -633,25 +633,26 @@ var BannouClient = class {
   }
   /**
    * Gets the service GUID for a specific API endpoint.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  getServiceGuid(method, path) {
-    const key = `${method}:${path}`;
-    return this.apiMappings.get(key);
+  getServiceGuid(endpoint) {
+    return this.apiMappings.get(endpoint);
   }
   /**
-   * Invokes a service method by specifying the HTTP method and path.
+   * Invokes a service method by specifying the API endpoint path.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async invokeAsync(method, path, request, channel = 0, timeout = DEFAULT_TIMEOUT_MS) {
+  async invokeAsync(endpoint, request, channel = 0, timeout = DEFAULT_TIMEOUT_MS) {
     if (!this.isConnected || !this.webSocket) {
       throw new Error("WebSocket is not connected. Call connectAsync first.");
     }
     if (!this.connectionState) {
       throw new Error("Connection state not initialized.");
     }
-    const serviceGuid = this.getServiceGuid(method, path);
+    const serviceGuid = this.getServiceGuid(endpoint);
     if (!serviceGuid) {
       const available = Array.from(this.apiMappings.keys()).slice(0, 10).join(", ");
-      throw new Error(`Unknown endpoint: ${method} ${path}. Available: ${available}...`);
+      throw new Error(`Unknown endpoint: ${endpoint}. Available: ${available}...`);
     }
     const jsonPayload = BannouJson.serialize(request);
     const payloadBytes = new TextEncoder().encode(jsonPayload);
@@ -666,15 +667,15 @@ var BannouClient = class {
       responseCode: 0,
       payload: payloadBytes
     };
-    const responsePromise = this.createResponsePromise(messageId, timeout, method, path);
-    this.connectionState.addPendingMessage(messageId, `${method}:${path}`, /* @__PURE__ */ new Date());
+    const responsePromise = this.createResponsePromise(messageId, timeout, endpoint);
+    this.connectionState.addPendingMessage(messageId, endpoint, /* @__PURE__ */ new Date());
     try {
       const messageBytes = toByteArray(message);
       this.sendBinaryMessage(messageBytes);
       const response = await responsePromise;
       if (response.responseCode !== 0) {
         return ApiResponse.failure(
-          createErrorResponse(response.responseCode, messageId, method, path)
+          createErrorResponse(response.responseCode, messageId, endpoint)
         );
       }
       if (response.payload.length === 0) {
@@ -684,7 +685,7 @@ var BannouClient = class {
       const result = BannouJson.deserialize(responseJson);
       if (result === null) {
         return ApiResponse.failure(
-          createErrorResponse(60, messageId, method, path, "Failed to deserialize response")
+          createErrorResponse(60, messageId, endpoint, "Failed to deserialize response")
         );
       }
       return ApiResponse.success(result);
@@ -695,17 +696,18 @@ var BannouClient = class {
   }
   /**
    * Sends a fire-and-forget event (no response expected).
+   * @param endpoint API path (e.g., "/events/publish")
    */
-  async sendEventAsync(method, path, request, channel = 0) {
+  async sendEventAsync(endpoint, request, channel = 0) {
     if (!this.isConnected || !this.webSocket) {
       throw new Error("WebSocket is not connected. Call connectAsync first.");
     }
     if (!this.connectionState) {
       throw new Error("Connection state not initialized.");
     }
-    const serviceGuid = this.getServiceGuid(method, path);
+    const serviceGuid = this.getServiceGuid(endpoint);
     if (!serviceGuid) {
-      throw new Error(`Unknown endpoint: ${method} ${path}`);
+      throw new Error(`Unknown endpoint: ${endpoint}`);
     }
     const jsonPayload = BannouJson.serialize(request);
     const payloadBytes = new TextEncoder().encode(jsonPayload);
@@ -782,18 +784,19 @@ var BannouClient = class {
   /**
    * Requests metadata about an endpoint instead of executing it.
    * Uses the Meta flag (0x80) which triggers route transformation at Connect service.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getEndpointMetaAsync(method, path, metaType = 3 /* FullSchema */, timeout = 1e4) {
+  async getEndpointMetaAsync(endpoint, metaType = 3 /* FullSchema */, timeout = 1e4) {
     if (!this.isConnected || !this.webSocket) {
       throw new Error("WebSocket is not connected. Call connectAsync first.");
     }
     if (!this.connectionState) {
       throw new Error("Connection state not initialized.");
     }
-    const serviceGuid = this.getServiceGuid(method, path);
+    const serviceGuid = this.getServiceGuid(endpoint);
     if (!serviceGuid) {
       const available = Array.from(this.apiMappings.keys()).slice(0, 10).join(", ");
-      throw new Error(`Unknown endpoint: ${method} ${path}. Available: ${available}...`);
+      throw new Error(`Unknown endpoint: ${endpoint}. Available: ${available}...`);
     }
     const messageId = generateMessageId();
     const sequenceNumber = this.connectionState.getNextSequenceNumber(metaType);
@@ -809,8 +812,8 @@ var BannouClient = class {
       payload: new Uint8Array(0)
       // EMPTY - Connect never reads payloads
     };
-    const responsePromise = this.createResponsePromise(messageId, timeout, `META:${method}`, path);
-    this.connectionState.addPendingMessage(messageId, `META:${method}:${path}`, /* @__PURE__ */ new Date());
+    const responsePromise = this.createResponsePromise(messageId, timeout, `META:${endpoint}`);
+    this.connectionState.addPendingMessage(messageId, `META:${endpoint}`, /* @__PURE__ */ new Date());
     try {
       const messageBytes = toByteArray(message);
       this.sendBinaryMessage(messageBytes);
@@ -831,27 +834,31 @@ var BannouClient = class {
   }
   /**
    * Gets human-readable endpoint information (summary, description, tags).
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getEndpointInfoAsync(method, path) {
-    return this.getEndpointMetaAsync(method, path, 0 /* EndpointInfo */);
+  async getEndpointInfoAsync(endpoint) {
+    return this.getEndpointMetaAsync(endpoint, 0 /* EndpointInfo */);
   }
   /**
    * Gets JSON Schema for the request body of an endpoint.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getRequestSchemaAsync(method, path) {
-    return this.getEndpointMetaAsync(method, path, 1 /* RequestSchema */);
+  async getRequestSchemaAsync(endpoint) {
+    return this.getEndpointMetaAsync(endpoint, 1 /* RequestSchema */);
   }
   /**
    * Gets JSON Schema for the response body of an endpoint.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getResponseSchemaAsync(method, path) {
-    return this.getEndpointMetaAsync(method, path, 2 /* ResponseSchema */);
+  async getResponseSchemaAsync(endpoint) {
+    return this.getEndpointMetaAsync(endpoint, 2 /* ResponseSchema */);
   }
   /**
    * Gets full schema including info, request schema, and response schema.
+   * @param endpoint API path (e.g., "/account/get")
    */
-  async getFullSchemaAsync(method, path) {
-    return this.getEndpointMetaAsync(method, path, 3 /* FullSchema */);
+  async getFullSchemaAsync(endpoint) {
+    return this.getEndpointMetaAsync(endpoint, 3 /* FullSchema */);
   }
   /**
    * Reconnects using a reconnection token from a DisconnectNotificationEvent.
@@ -1227,11 +1234,11 @@ var BannouClient = class {
       if (manifest.sessionId) {
         this._sessionId = manifest.sessionId;
       }
-      if (Array.isArray(manifest.availableAPIs)) {
-        for (const api of manifest.availableAPIs) {
-          if (api.endpointKey && api.serviceGuid) {
-            this.apiMappings.set(api.endpointKey, api.serviceGuid);
-            this.connectionState?.addServiceMapping(api.endpointKey, api.serviceGuid);
+      if (Array.isArray(manifest.availableApis)) {
+        for (const api of manifest.availableApis) {
+          if (api.endpoint && api.serviceId) {
+            this.apiMappings.set(api.endpoint, api.serviceId);
+            this.connectionState?.addServiceMapping(api.endpoint, api.serviceId);
           }
         }
       }
@@ -1276,11 +1283,11 @@ var BannouClient = class {
       }, CAPABILITY_MANIFEST_TIMEOUT_MS);
     });
   }
-  createResponsePromise(messageId, timeout, method, path) {
+  createResponsePromise(messageId, timeout, endpoint) {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         this.pendingRequests.delete(messageId.toString());
-        reject(new Error(`Request to ${method} ${path} timed out after ${timeout}ms`));
+        reject(new Error(`Request to ${endpoint} timed out after ${timeout}ms`));
       }, timeout);
       this.pendingRequests.set(messageId.toString(), {
         resolve,

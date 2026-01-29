@@ -122,46 +122,42 @@ public sealed class TypeScriptParityHelper : IAsyncDisposable
     /// Invokes an API and returns the raw result for comparison.
     /// </summary>
     public async Task<InvokeResult<JsonElement?>> InvokeRawAsync(
-        string method,
         string path,
         object request,
         CancellationToken cancellationToken = default)
     {
-        return await _runner.InvokeRawAsync(method, path, request, cancellationToken);
+        return await _runner.InvokeRawAsync(path, request, cancellationToken);
     }
 
     /// <summary>
     /// Invokes an API with typed request/response.
     /// </summary>
     public async Task<InvokeResult<TResult>> InvokeAsync<TRequest, TResult>(
-        string method,
         string path,
         TRequest request,
         CancellationToken cancellationToken = default)
     {
-        return await _runner.InvokeAsync<TRequest, TResult>(method, path, request, cancellationToken);
+        return await _runner.InvokeAsync<TRequest, TResult>(path, request, cancellationToken);
     }
 
     /// <summary>
     /// Verifies that a C# SDK result matches what the TypeScript SDK produces.
     /// </summary>
     /// <param name="csharpResult">The result from the C# SDK.</param>
-    /// <param name="method">HTTP method.</param>
     /// <param name="path">API path.</param>
     /// <param name="request">The request that was sent.</param>
     /// <param name="extractComparableData">Optional function to extract comparable data from results.</param>
     /// <returns>True if results match, false otherwise.</returns>
     public async Task<bool> VerifyParityAsync<TRequest, TResult>(
         TResult csharpResult,
-        string method,
         string path,
         TRequest request,
         Func<TResult, object>? extractComparableData = null,
         CancellationToken cancellationToken = default)
     {
-        Console.WriteLine($"   [Parity] Verifying {method} {path}...");
+        Console.WriteLine($"   [Parity] Verifying {path}...");
 
-        var tsResult = await _runner.InvokeAsync<TRequest, TResult>(method, path, request, cancellationToken);
+        var tsResult = await _runner.InvokeAsync<TRequest, TResult>(path, request, cancellationToken);
 
         if (!tsResult.IsSuccess)
         {
@@ -196,15 +192,14 @@ public sealed class TypeScriptParityHelper : IAsyncDisposable
     /// Verifies that both SDKs produce the same error for a request expected to fail.
     /// </summary>
     public async Task<bool> VerifyErrorParityAsync<TRequest>(
-        string method,
         string path,
         TRequest request,
         string expectedCsharpError,
         CancellationToken cancellationToken = default)
     {
-        Console.WriteLine($"   [Parity] Verifying error parity for {method} {path}...");
+        Console.WriteLine($"   [Parity] Verifying error parity for {path}...");
 
-        var tsResult = await _runner.InvokeAsync<TRequest, object>(method, path, request, cancellationToken);
+        var tsResult = await _runner.InvokeAsync<TRequest, object>(path, request, cancellationToken);
 
         if (tsResult.IsSuccess)
         {

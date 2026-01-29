@@ -8,7 +8,7 @@
  * → {"cmd": "connect", "url": "http://...", "email": "...", "password": "..."}
  * ← {"ok": true, "sessionId": "..."}
  *
- * → {"cmd": "invoke", "method": "POST", "path": "/account/get", "request": {...}}
+ * → {"cmd": "invoke", "path": "/account/get", "request": {...}}
  * ← {"ok": true, "result": {...}} or {"ok": false, "error": {...}}
  *
  * → {"cmd": "disconnect"}
@@ -115,8 +115,7 @@ async function handleConnectWithToken(command) {
         await client.disconnectAsync();
     }
     client = new BannouClient();
-    const success = await client.connectWithTokenAsync(
-        command.url, command.accessToken, command.refreshToken);
+    const success = await client.connectWithTokenAsync(command.url, command.accessToken, command.refreshToken);
     if (success) {
         respondSuccess({
             sessionId: client.sessionId,
@@ -135,8 +134,7 @@ async function handleRegisterAndConnect(command) {
         await client.disconnectAsync();
     }
     client = new BannouClient();
-    const success = await client.registerAndConnectAsync(
-        command.url, command.username, command.email, command.password);
+    const success = await client.registerAndConnectAsync(command.url, command.username, command.email, command.password);
     if (success) {
         respondSuccess({
             sessionId: client.sessionId,
@@ -157,14 +155,12 @@ async function handleInvoke(command) {
         respondError('Not connected');
         return;
     }
-    const response = await client.invokeAsync(
-        command.method, command.path, command.request, command.channel, command.timeout);
+    const response = await client.invokeAsync(command.path, command.request, command.channel, command.timeout);
     if (response.isSuccess) {
         respondSuccess(response.result);
     }
     else {
-        const err = response.error;
-        respondError(err?.message ?? 'Unknown error', err?.responseCode, err?.errorName);
+        respondError(response.error?.message ?? 'Unknown error', response.error?.responseCode, response.error?.errorName ?? undefined);
     }
 }
 /**
@@ -175,7 +171,7 @@ async function handleSendEvent(command) {
         respondError('Not connected');
         return;
     }
-    await client.sendEventAsync(command.method, command.path, command.request, command.channel);
+    await client.sendEventAsync(command.path, command.request, command.channel);
     respondSuccess();
 }
 /**
@@ -197,9 +193,8 @@ function handleGetCapabilities() {
         return;
     }
     const capabilities = [];
-    for (const [key, guid] of client.availableApis) {
-        const [method, path] = key.split(':');
-        capabilities.push({ method, path, guid });
+    for (const [path, guid] of client.availableApis) {
+        capabilities.push({ path, guid });
     }
     respondSuccess({ capabilities });
 }
