@@ -65,6 +65,34 @@ public class ContractTestHandler : BaseHttpTestHandler
             "Test setting template values on a contract instance"),
         new ServiceTest(TestContractExecutionWithCurrency, "ExecuteWithCurrency", "Contract",
             "Test full contract execution with currency transfer clauses"),
+
+        // Additional Coverage Tests
+        new ServiceTest(TestGetContractTemplate, "GetTemplate", "Contract",
+            "Test getting a contract template by ID and code"),
+        new ServiceTest(TestListContractTemplates, "ListTemplates", "Contract",
+            "Test listing contract templates"),
+        new ServiceTest(TestUpdateContractTemplate, "UpdateTemplate", "Contract",
+            "Test updating a contract template"),
+        new ServiceTest(TestDeleteContractTemplate, "DeleteTemplate", "Contract",
+            "Test deleting a contract template"),
+        new ServiceTest(TestQueryContractInstances, "QueryInstances", "Contract",
+            "Test querying contract instances by party or status"),
+        new ServiceTest(TestGetContractInstanceStatus, "GetInstanceStatus", "Contract",
+            "Test getting contract instance status"),
+        new ServiceTest(TestFailMilestone, "FailMilestone", "Contract",
+            "Test failing a milestone"),
+        new ServiceTest(TestGetMilestone, "GetMilestone", "Contract",
+            "Test getting milestone details"),
+        new ServiceTest(TestGetBreach, "GetBreach", "Contract",
+            "Test getting breach details by ID"),
+        new ServiceTest(TestUpdateContractMetadata, "UpdateMetadata", "Contract",
+            "Test updating contract metadata"),
+        new ServiceTest(TestGetContractMetadata, "GetMetadata", "Contract",
+            "Test getting contract metadata"),
+        new ServiceTest(TestQueryActiveContracts, "QueryActive", "Contract",
+            "Test querying active contracts for an entity"),
+        new ServiceTest(TestCheckAssetRequirements, "CheckAssets", "Contract",
+            "Test checking asset requirements for a contract"),
     ];
 
     // =========================================================================
@@ -1378,4 +1406,478 @@ public class ContractTestHandler : BaseHttpTestHandler
                 $"balances: A={balanceA.Amount}, B={balanceB.Amount}, Fee={balanceFee.Amount}, " +
                 $"distributions: {executeResponse.Distributions?.Count ?? 0}");
         }, "Contract execution with currency");
+
+    // =========================================================================
+    // Additional Coverage Tests
+    // =========================================================================
+
+    private static async Task<TestResult> TestGetContractTemplate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "get_template");
+
+            // Get by ID
+            var byId = await contractClient.GetContractTemplateAsync(new GetContractTemplateRequest
+            {
+                TemplateId = template.TemplateId
+            });
+
+            if (byId.TemplateId != template.TemplateId)
+                return TestResult.Failed("Template ID mismatch on get by ID");
+
+            // Get by code
+            var byCode = await contractClient.GetContractTemplateAsync(new GetContractTemplateRequest
+            {
+                Code = template.Code
+            });
+
+            if (byCode.TemplateId != template.TemplateId)
+                return TestResult.Failed("Template ID mismatch on get by code");
+
+            return TestResult.Successful(
+                $"Template retrieved by ID and code: {template.TemplateId}");
+        }, "Get contract template");
+
+    private static async Task<TestResult> TestListContractTemplates(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+
+            // Create a template to ensure at least one exists
+            var template = await CreateEmploymentTemplateAsync(contractClient, "list_templates");
+
+            var listed = await contractClient.ListContractTemplatesAsync(new ListContractTemplatesRequest
+            {
+                Page = 1,
+                PageSize = 100
+            });
+
+            if (listed.Templates == null || listed.Templates.Count == 0)
+                return TestResult.Failed("No templates returned");
+
+            var found = listed.Templates.Any(t => t.TemplateId == template.TemplateId);
+            if (!found)
+                return TestResult.Failed("Created template not found in list");
+
+            return TestResult.Successful(
+                $"Listed {listed.Templates.Count} templates, found created template");
+        }, "List contract templates");
+
+    private static async Task<TestResult> TestUpdateContractTemplate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "update_template");
+
+            var updated = await contractClient.UpdateContractTemplateAsync(new UpdateContractTemplateRequest
+            {
+                TemplateId = template.TemplateId,
+                Name = "Updated Employment Contract",
+                Description = "Updated description for test"
+            });
+
+            if (updated.Name != "Updated Employment Contract")
+                return TestResult.Failed($"Name not updated: {updated.Name}");
+
+            if (updated.Description != "Updated description for test")
+                return TestResult.Failed($"Description not updated: {updated.Description}");
+
+            return TestResult.Successful(
+                $"Template updated: {template.TemplateId}, name={updated.Name}");
+        }, "Update contract template");
+
+    private static async Task<TestResult> TestDeleteContractTemplate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "delete_template");
+
+            await contractClient.DeleteContractTemplateAsync(new DeleteContractTemplateRequest
+            {
+                TemplateId = template.TemplateId
+            });
+
+            // Verify it's gone
+            try
+            {
+                await contractClient.GetContractTemplateAsync(new GetContractTemplateRequest
+                {
+                    TemplateId = template.TemplateId
+                });
+                return TestResult.Failed("Template still retrievable after delete");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Expected
+            }
+
+            return TestResult.Successful(
+                $"Template deleted: {template.TemplateId}");
+        }, "Delete contract template");
+
+    private static async Task<TestResult> TestQueryContractInstances(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("QUERY_INSTANCES");
+
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "work_task",
+                    Name = "Work Task",
+                    Description = "Complete the work",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "query_instances", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Query by party
+            var byParty = await contractClient.QueryContractInstancesAsync(new QueryContractInstancesRequest
+            {
+                PartyEntityId = charA.CharacterId,
+                PartyEntityType = EntityType.Character,
+                Page = 1,
+                PageSize = 10
+            });
+
+            if (byParty.Contracts == null || byParty.Contracts.Count == 0)
+                return TestResult.Failed("No contracts found for party");
+
+            var found = byParty.Contracts.Any(c => c.ContractId == activeContract.ContractId);
+            if (!found)
+                return TestResult.Failed("Created contract not found in party query");
+
+            // Query by status
+            var byStatus = await contractClient.QueryContractInstancesAsync(new QueryContractInstancesRequest
+            {
+                Statuses = new List<ContractStatus> { ContractStatus.Active },
+                Page = 1,
+                PageSize = 10
+            });
+
+            if (byStatus.Contracts == null || byStatus.Contracts.Count == 0)
+                return TestResult.Failed("No active contracts found");
+
+            return TestResult.Successful(
+                $"Query results: by party={byParty.Contracts.Count}, by status={byStatus.Contracts.Count}");
+        }, "Query contract instances");
+
+    private static async Task<TestResult> TestGetContractInstanceStatus(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("GET_STATUS");
+
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "status_task",
+                    Name = "Status Task",
+                    Description = "Task for status test",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "get_status", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            var status = await contractClient.GetContractInstanceStatusAsync(new GetContractInstanceStatusRequest
+            {
+                ContractId = activeContract.ContractId
+            });
+
+            if (status.ContractId != activeContract.ContractId)
+                return TestResult.Failed("Contract ID mismatch");
+
+            if (status.Status != ContractStatus.Active)
+                return TestResult.Failed($"Expected Active status, got: {status.Status}");
+
+            return TestResult.Successful(
+                $"Status retrieved: contract={status.ContractId}, status={status.Status}, " +
+                $"milestones: {status.MilestoneProgress.Count}");
+        }, "Get contract instance status");
+
+    private static async Task<TestResult> TestFailMilestone(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("FAIL_MILESTONE");
+
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "optional_task",
+                    Name = "Optional Task",
+                    Description = "An optional task that can be skipped",
+                    Sequence = 0,
+                    Required = false
+                },
+                new MilestoneDefinition
+                {
+                    Code = "final_task",
+                    Name = "Final Task",
+                    Description = "Final required task",
+                    Sequence = 1,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "fail_milestone", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Fail the optional milestone
+            var failed = await contractClient.FailMilestoneAsync(new FailMilestoneRequest
+            {
+                ContractId = activeContract.ContractId,
+                MilestoneCode = "optional_task",
+                Reason = "Could not complete optional task"
+            });
+
+            // Optional milestones become Skipped when failed
+            if (failed.Milestone.Status != MilestoneStatus.Skipped)
+                return TestResult.Failed($"Expected Skipped status for optional milestone, got: {failed.Milestone.Status}");
+
+            return TestResult.Successful(
+                $"Optional milestone failed/skipped: {failed.Milestone.Code}, status={failed.Milestone.Status}");
+        }, "Fail milestone");
+
+    private static async Task<TestResult> TestGetMilestone(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("GET_MILESTONE");
+
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "tracked_task",
+                    Name = "Tracked Task",
+                    Description = "A task we will track",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "get_milestone", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            var milestone = await contractClient.GetMilestoneAsync(new GetMilestoneRequest
+            {
+                ContractId = activeContract.ContractId,
+                MilestoneCode = "tracked_task"
+            });
+
+            if (milestone.Milestone.Code != "tracked_task")
+                return TestResult.Failed($"Milestone code mismatch: {milestone.Milestone.Code}");
+
+            if (milestone.Milestone.Status != MilestoneStatus.Pending)
+                return TestResult.Failed($"Expected Pending status, got: {milestone.Milestone.Status}");
+
+            return TestResult.Successful(
+                $"Milestone retrieved: {milestone.Milestone.Code}, status={milestone.Milestone.Status}");
+        }, "Get milestone");
+
+    private static async Task<TestResult> TestGetBreach(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("GET_BREACH");
+
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "breach_task",
+                    Name = "Breach Task",
+                    Description = "Task for breach test",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "get_breach", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId,
+                new ContractTerms
+                {
+                    BreachThreshold = 3,
+                    GracePeriodForCure = "P7D"
+                });
+
+            // Report a breach
+            var reported = await contractClient.ReportBreachAsync(new ReportBreachRequest
+            {
+                ContractId = activeContract.ContractId,
+                BreachingEntityId = charB.CharacterId,
+                BreachingEntityType = EntityType.Character,
+                BreachType = BreachType.TermViolation,
+                Description = "Failed to meet deadline"
+            });
+
+            // Get the breach
+            var retrieved = await contractClient.GetBreachAsync(new GetBreachRequest
+            {
+                BreachId = reported.BreachId
+            });
+
+            if (retrieved.BreachId != reported.BreachId)
+                return TestResult.Failed("Breach ID mismatch");
+
+            if (retrieved.BreachType != BreachType.TermViolation)
+                return TestResult.Failed($"Breach type mismatch: {retrieved.BreachType}");
+
+            return TestResult.Successful(
+                $"Breach retrieved: {retrieved.BreachId}, type={retrieved.BreachType}, status={retrieved.Status}");
+        }, "Get breach");
+
+    private static async Task<TestResult> TestUpdateContractMetadata(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("UPDATE_METADATA");
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "update_metadata", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            var updated = await contractClient.UpdateContractMetadataAsync(new UpdateContractMetadataRequest
+            {
+                ContractId = activeContract.ContractId,
+                MetadataType = MetadataType.InstanceData,
+                Data = new Dictionary<string, object>
+                {
+                    ["priority"] = "high",
+                    ["department"] = "engineering",
+                    ["budget"] = 50000
+                }
+            });
+
+            if (updated.ContractId != activeContract.ContractId)
+                return TestResult.Failed("Contract ID mismatch in update response");
+
+            return TestResult.Successful(
+                $"Metadata updated for contract {updated.ContractId}");
+        }, "Update contract metadata");
+
+    private static async Task<TestResult> TestGetContractMetadata(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("GET_METADATA");
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "get_metadata", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Set some metadata first
+            await contractClient.UpdateContractMetadataAsync(new UpdateContractMetadataRequest
+            {
+                ContractId = activeContract.ContractId,
+                MetadataType = MetadataType.InstanceData,
+                Data = new Dictionary<string, object>
+                {
+                    ["testKey"] = "testValue"
+                }
+            });
+
+            var metadata = await contractClient.GetContractMetadataAsync(new GetContractMetadataRequest
+            {
+                ContractId = activeContract.ContractId
+            });
+
+            if (metadata.ContractId != activeContract.ContractId)
+                return TestResult.Failed("Contract ID mismatch");
+
+            return TestResult.Successful(
+                $"Metadata retrieved for contract {metadata.ContractId}, instanceData={metadata.InstanceData != null}");
+        }, "Get contract metadata");
+
+    private static async Task<TestResult> TestQueryActiveContracts(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("QUERY_ACTIVE");
+
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "active_task",
+                    Name = "Active Task",
+                    Description = "Task for active query test",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "query_active", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            var result = await contractClient.QueryActiveContractsAsync(new QueryActiveContractsRequest
+            {
+                EntityId = charA.CharacterId,
+                EntityType = EntityType.Character
+            });
+
+            if (result.Contracts == null)
+                return TestResult.Failed("Contracts list is null");
+
+            var found = result.Contracts.Any(c => c.ContractId == activeContract.ContractId);
+            if (!found)
+                return TestResult.Failed("Created contract not found in active contracts query");
+
+            return TestResult.Successful(
+                $"Active contracts for entity: {result.Contracts.Count} found");
+        }, "Query active contracts");
+
+    private static async Task<TestResult> TestCheckAssetRequirements(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("CHECK_ASSETS");
+
+            // Create a contract without asset clauses - should return all satisfied
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "check_assets", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            var requirements = await contractClient.CheckAssetRequirementsAsync(new CheckAssetRequirementsRequest
+            {
+                ContractInstanceId = activeContract.ContractId
+            });
+
+            if (!requirements.AllSatisfied)
+                return TestResult.Failed("Expected all satisfied for contract without asset clauses");
+
+            return TestResult.Successful(
+                $"Asset requirements check: allSatisfied={requirements.AllSatisfied}, " +
+                $"parties={requirements.ByParty.Count}");
+        }, "Check asset requirements");
 }
