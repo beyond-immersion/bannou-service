@@ -788,7 +788,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
             var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
             accessToken = registerResult?.AccessToken ?? throw new InvalidOperationException("No access token");
-            connectUrl = registerResult?.ConnectUrl ?? throw new InvalidOperationException("No connect URL");
+            connectUrl = registerResult?.ConnectUrl?.ToString() ?? throw new InvalidOperationException("No connect URL");
 
             Console.WriteLine($"   Registered: {testEmail}");
         }

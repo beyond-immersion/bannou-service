@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
@@ -1064,7 +1065,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             var registerResult = BannouJson.Deserialize<RegisterResponse>(responseBody);
             accessToken = registerResult?.AccessToken;
             accountId = registerResult?.AccountId;
-            connectUrl = registerResult?.ConnectUrl;
+            connectUrl = registerResult?.ConnectUrl?.ToString();
 
             Console.WriteLine($"   Created account: {accountId}");
         }
@@ -1209,17 +1210,17 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
         try
         {
-            var deleteResponse = await adminClient.Subscription.DeleteSubscriptionAsync(
-                new DeleteSubscriptionRequest { SubscriptionId = subscriptionId!.Value },
+            var cancelResponse = await adminClient.Subscription.CancelSubscriptionAsync(
+                new CancelSubscriptionRequest { SubscriptionId = subscriptionId!.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
-            if (!deleteResponse.IsSuccess)
+            if (!cancelResponse.IsSuccess)
             {
-                Console.WriteLine($"   FAILED: Subscription deletion returned error: {deleteResponse.Error?.ResponseCode} - {deleteResponse.Error?.Message}");
+                Console.WriteLine($"   FAILED: Subscription cancellation returned error: {cancelResponse.Error?.ResponseCode} - {cancelResponse.Error?.Message}");
                 return false;
             }
 
-            Console.WriteLine("   Subscription deleted");
+            Console.WriteLine("   Subscription cancelled");
         }
         catch (Exception ex)
         {

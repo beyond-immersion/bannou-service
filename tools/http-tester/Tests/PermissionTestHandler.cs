@@ -86,7 +86,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/test/endpoint" }
+                        ["user"] = new Collection<string> { "/test/endpoint" }
                     }
                 }
             };
@@ -122,7 +122,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/service1/data" }
+                        ["user"] = new Collection<string> { "/service1/data" }
                     }
                 }
             };
@@ -141,7 +141,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/service2/data", "POST:/service2/action" }
+                        ["user"] = new Collection<string> { "/service2/data", "/service2/action" }
                     }
                 }
             };
@@ -170,15 +170,15 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["in_lobby"] = new StatePermissions
                     {
-                        ["guest"] = new Collection<string> { "GET:/public/info" }
+                        ["guest"] = new Collection<string> { "/public/info" }
                     },
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/public/info", "GET:/user/profile" }
+                        ["user"] = new Collection<string> { "/public/info", "/user/profile" }
                     },
                     ["in_game"] = new StatePermissions
                     {
-                        ["admin"] = new Collection<string> { "GET:/public/info", "GET:/user/profile", "DELETE:/admin/data" }
+                        ["admin"] = new Collection<string> { "/public/info", "/user/profile", "/admin/data" }
                     }
                 }
             };
@@ -209,9 +209,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["guest"] = new Collection<string> { "GET:/info" },
-                        ["user"] = new Collection<string> { "GET:/info", "GET:/data", "POST:/data" },
-                        ["admin"] = new Collection<string> { "GET:/info", "GET:/data", "POST:/data", "DELETE:/data", "PUT:/admin/settings" }
+                        ["guest"] = new Collection<string> { "/info" },
+                        ["user"] = new Collection<string> { "/info", "/data", "/data" },
+                        ["admin"] = new Collection<string> { "/info", "/data", "/data", "/data", "/admin/settings" }
                     }
                 }
             };
@@ -244,7 +244,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/cap/test1", "POST:/cap/test2" }
+                        ["user"] = new Collection<string> { "/cap/test1", "/cap/test2" }
                     }
                 }
             };
@@ -334,7 +334,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/svc1/data" }
+                        ["user"] = new Collection<string> { "/svc1/data" }
                     }
                 }
             });
@@ -347,7 +347,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/svc2/data" }
+                        ["user"] = new Collection<string> { "/svc2/data" }
                     }
                 }
             });
@@ -398,7 +398,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             var testPrefix = $"validate-allowed-{Guid.NewGuid():N}";
             var testServiceId = Guid.NewGuid().ToString();
             var testSessionId = Guid.NewGuid();
-            var testMethod = "GET:/allowed/endpoint";
+            var testMethod = "/allowed/endpoint";
 
             // Register service with the method
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -432,7 +432,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             {
                 SessionId = testSessionId,
                 ServiceId = testServiceId,
-                Method = testMethod
+                Endpoint = testMethod
             });
 
             if (validation.Allowed)
@@ -452,8 +452,8 @@ public class PermissionTestHandler : BaseHttpTestHandler
             var testPrefix = $"validate-denied-{Guid.NewGuid():N}";
             var testServiceId = Guid.NewGuid().ToString();
             var testSessionId = Guid.NewGuid();
-            var allowedMethod = "GET:/allowed/endpoint";
-            var deniedMethod = "DELETE:/admin/dangerous";
+            var allowedMethod = "/allowed/endpoint";
+            var deniedMethod = "/admin/dangerous";
 
             // Register service with only one method
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -487,7 +487,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             {
                 SessionId = testSessionId,
                 ServiceId = testServiceId,
-                Method = deniedMethod
+                Endpoint = deniedMethod
             });
 
             if (!validation.Allowed)
@@ -519,7 +519,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             {
                 SessionId = testSessionId,
                 ServiceId = unknownServiceId,
-                Method = "GET:/any/endpoint"
+                Endpoint = "/any/endpoint"
             });
 
             if (!validation.Allowed)
@@ -576,11 +576,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["lobby"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/lobby/info" }
+                        ["user"] = new Collection<string> { "/lobby/info" }
                     },
                     ["in_game"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/lobby/info", "POST:/game/action", "GET:/game/state" }
+                        ["user"] = new Collection<string> { "/lobby/info", "/game/action", "/game/state" }
                     }
                 }
             });
@@ -688,8 +688,8 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/svc1/read" },
-                        ["admin"] = new Collection<string> { "GET:/svc1/read", "DELETE:/svc1/delete" }
+                        ["user"] = new Collection<string> { "/svc1/read" },
+                        ["admin"] = new Collection<string> { "/svc1/read", "/svc1/delete" }
                     }
                 }
             });
@@ -702,8 +702,8 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/svc2/read" },
-                        ["admin"] = new Collection<string> { "GET:/svc2/read", "PUT:/svc2/admin" }
+                        ["user"] = new Collection<string> { "/svc2/read" },
+                        ["admin"] = new Collection<string> { "/svc2/read", "/svc2/admin" }
                     }
                 }
             });
@@ -792,11 +792,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/public" }
+                        ["user"] = new Collection<string> { "/public" }
                     },
                     ["active"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/public", "POST:/active/action" }
+                        ["user"] = new Collection<string> { "/public", "/active/action" }
                     }
                 }
             });
@@ -1024,7 +1024,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["active"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/api/service1" }
+                        ["user"] = new Collection<string> { "/api/service1" }
                     }
                 }
             });
@@ -1037,7 +1037,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["ready"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/api/service2" }
+                        ["user"] = new Collection<string> { "/api/service2" }
                     }
                 }
             });
@@ -1137,7 +1137,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["active"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/info/data" }
+                        ["user"] = new Collection<string> { "/info/data" }
                     }
                 }
             });
@@ -1229,8 +1229,8 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/public" },
-                        ["admin"] = new Collection<string> { "GET:/public", "DELETE:/admin/critical", "PUT:/admin/settings" }
+                        ["user"] = new Collection<string> { "/public" },
+                        ["admin"] = new Collection<string> { "/public", "/admin/critical", "/admin/settings" }
                     }
                 }
             });
@@ -1257,7 +1257,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             if (capabilities.Permissions?.ContainsKey(testServiceId) == true)
             {
                 var methods = capabilities.Permissions[testServiceId];
-                if (methods.Contains("DELETE:/admin/critical"))
+                if (methods.Contains("/admin/critical"))
                 {
                     return TestResult.Successful($"Admin role correctly received admin-level permissions: {methods.Count} methods");
                 }
@@ -1289,8 +1289,8 @@ public class PermissionTestHandler : BaseHttpTestHandler
                     // endpoints should ONLY be listed under admin role
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/public", "POST:/user/action" },
-                        ["admin"] = new Collection<string> { "DELETE:/admin/critical" }  // Admin-ONLY endpoint
+                        ["user"] = new Collection<string> { "/public", "/user/action" },
+                        ["admin"] = new Collection<string> { "/admin/critical" }  // Admin-ONLY endpoint
                     }
                 }
             });
@@ -1317,11 +1317,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
             if (capabilities.Permissions?.ContainsKey(testServiceId) == true)
             {
                 var methods = capabilities.Permissions[testServiceId];
-                if (methods.Contains("DELETE:/admin/critical"))
+                if (methods.Contains("/admin/critical"))
                 {
                     return TestResult.Failed("User role incorrectly received admin-only method");
                 }
-                if (methods.Contains("GET:/public"))
+                if (methods.Contains("/public"))
                 {
                     return TestResult.Successful($"User role correctly received user-level permissions: {methods.Count} methods");
                 }
@@ -1352,8 +1352,8 @@ public class PermissionTestHandler : BaseHttpTestHandler
                     // Admin inherits user permissions via role hierarchy
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/data" },
-                        ["admin"] = new Collection<string> { "POST:/data", "DELETE:/data" }  // Admin-ONLY endpoints
+                        ["user"] = new Collection<string> { "/data" },
+                        ["admin"] = new Collection<string> { "/data", "/data" }  // Admin-ONLY endpoints
                     }
                 }
             });
@@ -1435,12 +1435,12 @@ public class PermissionTestHandler : BaseHttpTestHandler
                     // Default state - always accessible
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/public/data", "GET:/public/info" }
+                        ["user"] = new Collection<string> { "/public/data", "/public/info" }
                     },
                     // game-session:in_game state - requires explicit state set
                     ["game-session:in_game"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "POST:/game/action", "GET:/game/state" }
+                        ["user"] = new Collection<string> { "/game/action", "/game/state" }
                     }
                 }
             });
@@ -1521,7 +1521,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                     // Only game-session:in_game - requires explicit state
                     ["game-session:in_game"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "POST:/game/action", "GET:/game/state" }
+                        ["user"] = new Collection<string> { "/game/action", "/game/state" }
                     }
                 }
             });
@@ -1681,7 +1681,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             if (capabilities.Permissions.ContainsKey(testServiceId))
             {
                 var methods = capabilities.Permissions[testServiceId];
-                if (methods.Contains("GET:/test/pubsub-event-endpoint"))
+                if (methods.Contains("/test/pubsub-event-endpoint"))
                 {
                     return TestResult.Successful(
                         $"Event subscription verified: service {testServiceId} registered via RabbitMQ pubsub event, " +
@@ -1729,11 +1729,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["in_lobby"] = new StatePermissions
                     {
-                        ["guest"] = new Collection<string> { "GET:/public/info" }
+                        ["guest"] = new Collection<string> { "/public/info" }
                     },
                     ["in_game"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/public/info", "GET:/private/data" }
+                        ["user"] = new Collection<string> { "/public/info", "/private/data" }
                     }
                 }
             };
@@ -1812,7 +1812,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             Console.WriteLine($"  Updated capabilities: {updatedMethodCount} methods");
 
             // Verify the state change gave us access to more methods
-            if (updatedMethods != null && updatedMethods.Contains("GET:/private/data"))
+            if (updatedMethods != null && updatedMethods.Contains("/private/data"))
             {
                 return TestResult.Successful(
                     $"Session state change event verified: " +
@@ -1870,7 +1870,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/connected/test" }
+                        ["user"] = new Collection<string> { "/connected/test" }
                     }
                 }
             });
@@ -1956,8 +1956,8 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/user/endpoint" },
-                        ["admin"] = new Collection<string> { "DELETE:/admin/dangerous" }
+                        ["user"] = new Collection<string> { "/user/endpoint" },
+                        ["admin"] = new Collection<string> { "/admin/dangerous" }
                     }
                 }
             });
@@ -1987,14 +1987,14 @@ public class PermissionTestHandler : BaseHttpTestHandler
             if (capabilities.Permissions?.ContainsKey(testServiceId) == true)
             {
                 var methods = capabilities.Permissions[testServiceId];
-                if (methods.Contains("DELETE:/admin/dangerous"))
+                if (methods.Contains("/admin/dangerous"))
                 {
                     return TestResult.Successful(
                         $"session.connected with roles processed: admin role correctly applied, " +
                         $"session has admin-only endpoint access ({methods.Count} methods)");
                 }
 
-                if (methods.Contains("GET:/user/endpoint"))
+                if (methods.Contains("/user/endpoint"))
                 {
                     return TestResult.Failed(
                         $"Roles stored but admin inheritance not working. Got user methods but not admin. " +
@@ -2125,7 +2125,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 {
                     ["default"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "GET:/reconn/test" }
+                        ["user"] = new Collection<string> { "/reconn/test" }
                     }
                 }
             });
