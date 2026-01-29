@@ -6,8 +6,8 @@ This guide covers integrating the Bannou TypeScript SDK into browser and Node.js
 
 The TypeScript SDK provides:
 - WebSocket client with binary protocol support
-- Typed service proxies for all 217 client-accessible endpoints
-- Event subscriptions for 32 server-push event types
+- Typed service proxies for all 309 client-accessible endpoints
+- Event subscriptions for 35 server-push event types
 - Request correlation with timeout handling
 - Automatic capability manifest management
 

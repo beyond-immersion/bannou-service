@@ -930,7 +930,7 @@ For implementation details and known quirks, see [MAPPING.md](../plugins/MAPPING
 
 - **Event aggregation**: Fire-and-forget with potential silent loss under high load
 - **Spatial index**: Stale entries accumulate indefinitely (no automatic cleanup)
-- **Index operations**: Non-atomic; race conditions possible under concurrent updates
+- **Index operations**: Non-atomic read-modify-write, but mitigated by authority model (single writer per channel); only an issue in `accept_and_alert` mode
 - **Snapshot events**: `MapSnapshotEvent` is defined but not currently published
 
 ---

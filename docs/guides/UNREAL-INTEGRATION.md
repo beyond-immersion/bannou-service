@@ -8,8 +8,8 @@ Bannou provides **helper artifacts** for Unreal Engine integration rather than a
 
 - **Generated C++ Headers**: Type definitions for all request/response models
 - **Protocol Constants**: Binary protocol specifications for WebSocket communication
-- **Endpoint Registry**: All 217 client-accessible endpoints with metadata
-- **Event Definitions**: All 32 server-push event types
+- **Endpoint Registry**: All 309 client-accessible endpoints with metadata
+- **Event Definitions**: All 35 server-push event types
 - **Comprehensive Documentation**: Integration guides and code examples
 
 ## Generated Artifacts
@@ -19,7 +19,7 @@ The following files are generated in `sdks/unreal/Generated/`:
 | File | Purpose |
 |------|---------|
 | `BannouProtocol.h` | Binary protocol constants, message flags, response codes |
-| `BannouTypes.h` | All 549 request/response structs with USTRUCT macros |
+| `BannouTypes.h` | All 814 request/response structs with USTRUCT macros |
 | `BannouEnums.h` | All enum types with UENUM macros |
 | `BannouEndpoints.h` | Endpoint constants and metadata registry |
 | `BannouEvents.h` | Event name constants for server-push events |

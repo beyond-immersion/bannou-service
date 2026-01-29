@@ -515,7 +515,7 @@ tournamentIdRequired: true
 | `matchmaking.match-formed` | `MatchmakingMatchFormedEvent` | Match successfully formed |
 | `matchmaking.match-accepted` | `MatchmakingMatchAcceptedEvent` | All players accepted |
 | `matchmaking.match-cancelled` | `MatchmakingMatchCancelledEvent` | Match cancelled (decline/timeout) |
-| `matchmaking.stats` | `MatchmakingStatsEvent` | Queue statistics (placeholder) |
+| `matchmaking.stats` | `MatchmakingStatsEvent` | Queue statistics (basic counts; detailed metrics like avg wait time are placeholder) |
 | `game-session.session-cancelled` | `SessionCancelledServerEvent` | Session cancelled |
 
 ### Client Events (WebSocket Push)
