@@ -36,10 +36,9 @@ export class LeaderboardProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LeaderboardDefinitionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateLeaderboardDefinitionRequest'],
-      Schemas['LeaderboardDefinitionResponse']
-    >('POST', '/leaderboard/definition/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateLeaderboardDefinitionRequest'], Schemas['LeaderboardDefinitionResponse']>(
+      '/leaderboard/definition/create', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class LeaderboardProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LeaderboardDefinitionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateLeaderboardDefinitionRequest'],
-      Schemas['LeaderboardDefinitionResponse']
-    >('POST', '/leaderboard/definition/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateLeaderboardDefinitionRequest'], Schemas['LeaderboardDefinitionResponse']>(
+      '/leaderboard/definition/update', request, channel, timeout
+    );
   }
 
   /**
@@ -71,10 +69,7 @@ export class LeaderboardProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeleteLeaderboardDefinitionRequest']>(
-      'POST',
-      '/leaderboard/definition/delete',
-      request,
-      channel
+      '/leaderboard/definition/delete', request, channel
     );
   }
 
@@ -91,11 +86,7 @@ export class LeaderboardProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['EntityRankResponse']>> {
     return this.client.invokeAsync<Schemas['GetEntityRankRequest'], Schemas['EntityRankResponse']>(
-      'POST',
-      '/leaderboard/rank/get',
-      request,
-      channel,
-      timeout
+      '/leaderboard/rank/get', request, channel, timeout
     );
   }
 
@@ -111,10 +102,9 @@ export class LeaderboardProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LeaderboardEntriesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetTopRanksRequest'],
-      Schemas['LeaderboardEntriesResponse']
-    >('POST', '/leaderboard/rank/top', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetTopRanksRequest'], Schemas['LeaderboardEntriesResponse']>(
+      '/leaderboard/rank/top', request, channel, timeout
+    );
   }
 
   /**
@@ -129,10 +119,9 @@ export class LeaderboardProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LeaderboardEntriesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetRanksAroundRequest'],
-      Schemas['LeaderboardEntriesResponse']
-    >('POST', '/leaderboard/rank/around', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetRanksAroundRequest'], Schemas['LeaderboardEntriesResponse']>(
+      '/leaderboard/rank/around', request, channel, timeout
+    );
   }
 
   /**
@@ -148,11 +137,7 @@ export class LeaderboardProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeasonResponse']>> {
     return this.client.invokeAsync<Schemas['GetSeasonRequest'], Schemas['SeasonResponse']>(
-      'POST',
-      '/leaderboard/season/get',
-      request,
-      channel,
-      timeout
+      '/leaderboard/season/get', request, channel, timeout
     );
   }
 }

@@ -12694,7 +12694,7 @@
     "/website/account/subscription": {
       "get": {
         "summary": "Get subscription status",
-        "operationId": "getSubscription",
+        "operationId": "getAccountSubscription",
         "tags": [
           "Account"
         ],

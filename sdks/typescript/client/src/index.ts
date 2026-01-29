@@ -12,11 +12,14 @@
  * // Connect with credentials
  * await client.connectAsync('http://localhost:5012', 'user@example.com', 'password');
  *
- * // Make API calls
- * const response = await client.invokeAsync('POST', '/account/get', { accountId: '...' });
+ * // Make typed API calls using service proxies
+ * const response = await client.account.getAccountAsync({ accountId: '...' });
  * if (response.isSuccess) {
- *   console.log(response.result);
+ *   console.log(response.result?.username);
  * }
+ *
+ * // Or use invokeAsync directly for dynamic endpoints
+ * const rawResponse = await client.invokeAsync('/account/get', { accountId: '...' });
  *
  * // Subscribe to events
  * const subscription = client.onEvent('game_session.player_joined', (event) => {
@@ -43,7 +46,11 @@ export {
   isBaseClientEvent,
 } from '@beyondimmersion/bannou-core';
 
-// Client exports
+// Apply proxy extensions to BannouClient (side-effect import)
+// This adds typed proxy properties like client.account, client.auth, etc.
+import './Generated/BannouClientExtensions.js';
+
+// Client exports (BannouClient now has proxy properties via extensions)
 export { BannouClient } from './BannouClient.js';
 export type {
   IBannouClient,
@@ -58,6 +65,9 @@ export { DisconnectReason, MetaType } from './IBannouClient.js';
 export { ConnectionState, type PendingMessageInfo } from './ConnectionState.js';
 export { EventSubscription, type IEventSubscription } from './EventSubscription.js';
 export { generateMessageId, generateUuid, resetMessageIdCounter } from './GuidGenerator.js';
+
+// Generated proxy re-exports (for direct proxy access or type imports)
+export * from './Generated/proxies/index.js';
 
 // Protocol re-exports (for advanced use cases)
 export * from './protocol/index.js';

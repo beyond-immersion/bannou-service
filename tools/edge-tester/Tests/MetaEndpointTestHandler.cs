@@ -153,13 +153,13 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                             Console.WriteLine("✅ Received capability manifest");
 
                             // Find a valid API endpoint - look for account/get which should always exist
-                            if (doc.RootElement.TryGetProperty("availableAPIs", out var apis) &&
+                            if (doc.RootElement.TryGetProperty("availableApis", out var apis) &&
                                 apis.ValueKind == JsonValueKind.Array)
                             {
                                 foreach (var api in apis.EnumerateArray())
                                 {
-                                    var key = api.TryGetProperty("endpointKey", out var keyProp) ? keyProp.GetString() : null;
-                                    var guidStr = api.TryGetProperty("serviceGuid", out var guidProp) ? guidProp.GetString() : null;
+                                    var key = api.TryGetProperty("endpoint", out var keyProp) ? keyProp.GetString() : null;
+                                    var guidStr = api.TryGetProperty("serviceId", out var guidProp) ? guidProp.GetString() : null;
 
                                     // Use account/get as our test endpoint
                                     if (key?.Contains("/get") == true && Guid.TryParse(guidStr, out var guid))
@@ -392,14 +392,23 @@ public class MetaEndpointTestHandler : IServiceTestHandler
             }
             Console.WriteLine($"✅ metaType: {expectedMetaType}");
 
-            // Check endpointKey exists
-            if (!root.TryGetProperty("endpointKey", out var endpointKeyProp) ||
-                string.IsNullOrEmpty(endpointKeyProp.GetString()))
+            // Check method exists
+            if (!root.TryGetProperty("method", out var methodProp) ||
+                string.IsNullOrEmpty(methodProp.GetString()))
             {
-                Console.WriteLine("❌ Missing endpointKey");
+                Console.WriteLine("❌ Missing method");
                 return false;
             }
-            Console.WriteLine($"✅ endpointKey: {endpointKeyProp.GetString()}");
+            Console.WriteLine($"✅ method: {methodProp.GetString()}");
+
+            // Check path exists
+            if (!root.TryGetProperty("path", out var pathProp) ||
+                string.IsNullOrEmpty(pathProp.GetString()))
+            {
+                Console.WriteLine("❌ Missing path");
+                return false;
+            }
+            Console.WriteLine($"✅ path: {pathProp.GetString()}");
 
             // Check serviceName exists
             if (!root.TryGetProperty("serviceName", out var serviceNameProp) ||

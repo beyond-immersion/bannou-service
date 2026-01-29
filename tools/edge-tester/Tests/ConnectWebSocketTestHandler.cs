@@ -486,19 +486,18 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine("✅ WebSocket connected for internal API proxy test");
 
             // Use /testing/ping endpoint - designed for testing and accepts empty requests
-            const string apiMethod = "POST";
-            const string apiPath = "/testing/ping";
+            const string apiEndpoint = "/testing/ping";
 
             Console.WriteLine("📥 Waiting for capability manifest...");
-            var serviceGuid = await ReceiveCapabilityManifestAndFindServiceGuid(webSocket, apiMethod, apiPath);
+            var serviceGuid = await ReceiveCapabilityManifestAndFindServiceGuid(webSocket, apiEndpoint);
 
             if (serviceGuid == Guid.Empty)
             {
-                Console.WriteLine($"❌ {apiMethod}:{apiPath} not found in capability manifest");
+                Console.WriteLine($"❌ {apiEndpoint} not found in capability manifest");
                 return false;
             }
 
-            Console.WriteLine($"✅ Found service GUID for {apiMethod}:{apiPath}: {serviceGuid}");
+            Console.WriteLine($"✅ Found service GUID for {apiEndpoint}: {serviceGuid}");
 
             // Create a ping request - the endpoint accepts optional ClientTimestamp and SequenceNumber
             var pingRequest = new
@@ -968,13 +967,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
             // Step 2: Receive capability manifest to confirm connection is working
             Console.WriteLine("📋 Step 2: Waiting for capability manifest...");
-            var (serviceGuid, method, path) = await ReceiveCapabilityManifestAndFindAnyServiceGuid(webSocket);
+            var (serviceGuid, endpoint) = await ReceiveCapabilityManifestAndFindAnyServiceGuid(webSocket);
             if (serviceGuid == Guid.Empty)
             {
                 Console.WriteLine("❌ Failed to receive capability manifest on initial connection");
                 return false;
             }
-            Console.WriteLine($"✅ Received capability manifest with at least {method}:{path}");
+            Console.WriteLine($"✅ Received capability manifest with at least {endpoint}");
 
             // Step 3: Initiate graceful close - server should send disconnect_notification first
             Console.WriteLine("📋 Step 3: Initiating graceful close...");
@@ -1114,7 +1113,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
             // Step 6: Verify session restoration by receiving capability manifest
             Console.WriteLine("📋 Step 6: Verifying session restoration...");
-            var (restoredGuid, restoredMethod, restoredPath) = await ReceiveCapabilityManifestAndFindAnyServiceGuid(webSocket);
+            var (restoredGuid, restoredEndpoint) = await ReceiveCapabilityManifestAndFindAnyServiceGuid(webSocket);
 
             if (restoredGuid == Guid.Empty)
             {
@@ -1122,7 +1121,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 return false;
             }
 
-            Console.WriteLine($"✅ Session restored! Capability manifest received with {restoredMethod}:{restoredPath}");
+            Console.WriteLine($"✅ Session restored! Capability manifest received with {restoredEndpoint}");
 
             await CloseWebSocketSafely(webSocket);
         }
@@ -1413,7 +1412,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Receives capability manifest and finds the POST:/account/delete service GUID.
+    /// Receives capability manifest and finds the /account/delete service GUID.
     /// Waits for capability updates if the endpoint isn't immediately available.
     /// </summary>
     private static async Task<Guid> ReceiveCapabilityManifestAndFindAccountDeleteGuid(ClientWebSocket webSocket)
@@ -1444,25 +1443,23 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                         {
                             Console.WriteLine($"📥 Received capability manifest: {availableApis.Count} APIs available");
 
-                            // Look for POST:/account/delete
+                            // Look for /account/delete
                             foreach (var api in availableApis)
                             {
-                                var method = api?["method"]?.GetValue<string>();
-                                var path = api?["path"]?.GetValue<string>();
-                                var serviceGuidStr = api?["serviceGuid"]?.GetValue<string>();
+                                var endpoint = api?["endpoint"]?.GetValue<string>();
+                                var serviceIdStr = api?["serviceId"]?.GetValue<string>();
 
-                                // Match POST /account/delete
-                                if (method == "POST" && path == "/account/delete")
+                                if (endpoint == "/account/delete")
                                 {
-                                    if (Guid.TryParse(serviceGuidStr, out var guid))
+                                    if (Guid.TryParse(serviceIdStr, out var guid))
                                     {
-                                        Console.WriteLine($"   Found: {method}:{path} -> {guid}");
+                                        Console.WriteLine($"   Found: {endpoint} -> {guid}");
                                         return guid;
                                     }
                                 }
                             }
 
-                            Console.WriteLine("   POST:/account/delete not found in manifest, waiting for updates...");
+                            Console.WriteLine("   /account/delete not found in manifest, waiting for updates...");
                         }
                     }
                 }
@@ -1478,9 +1475,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Receives the capability manifest from the server and extracts ANY available service GUID.
-    /// Returns the first available endpoint (only POST endpoints are exposed in the manifest).
+    /// Returns the first available endpoint.
     /// </summary>
-    private static async Task<(Guid serviceGuid, string method, string path)> ReceiveCapabilityManifestAndFindAnyServiceGuid(
+    private static async Task<(Guid serviceGuid, string endpoint)> ReceiveCapabilityManifestAndFindAnyServiceGuid(
         ClientWebSocket webSocket)
     {
         var overallTimeout = TimeSpan.FromSeconds(5);
@@ -1529,24 +1526,22 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 // Log available APIs
                 foreach (var api in availableApis)
                 {
-                    var debugMethod = api?["method"]?.GetValue<string>();
-                    var debugPath = api?["path"]?.GetValue<string>();
-                    var debugService = api?["serviceName"]?.GetValue<string>();
-                    Console.WriteLine($"      - {debugMethod}:{debugPath} ({debugService})");
+                    var debugEndpoint = api?["endpoint"]?.GetValue<string>();
+                    var debugService = api?["service"]?.GetValue<string>();
+                    Console.WriteLine($"      - {debugEndpoint} ({debugService})");
                 }
 
-                // Return the first available endpoint (only POST endpoints are exposed)
+                // Return the first available endpoint
                 foreach (var api in availableApis)
                 {
-                    var apiMethod = api?["method"]?.GetValue<string>();
-                    var apiPath = api?["path"]?.GetValue<string>();
-                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
+                    var apiEndpoint = api?["endpoint"]?.GetValue<string>();
+                    var apiGuid = api?["serviceId"]?.GetValue<string>();
 
-                    if (!string.IsNullOrEmpty(apiMethod) && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
+                    if (!string.IsNullOrEmpty(apiEndpoint) && !string.IsNullOrEmpty(apiGuid))
                     {
                         if (Guid.TryParse(apiGuid, out var guid))
                         {
-                            return (guid, apiMethod, apiPath);
+                            return (guid, apiEndpoint);
                         }
                     }
                 }
@@ -1559,7 +1554,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
         }
 
-        return (Guid.Empty, "", "");
+        return (Guid.Empty, "");
     }
 
     /// <summary>
@@ -1568,8 +1563,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     /// </summary>
     private static async Task<Guid> ReceiveCapabilityManifestAndFindServiceGuid(
         ClientWebSocket webSocket,
-        string method,
-        string path)
+        string endpoint)
     {
         var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
@@ -1644,48 +1638,29 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 Console.WriteLine($"   Currently available endpoints:");
                 foreach (var api in availableApis)
                 {
-                    var debugMethod = api?["method"]?.GetValue<string>();
-                    var debugPath = api?["path"]?.GetValue<string>();
-                    Console.WriteLine($"      - {debugMethod}:{debugPath}");
+                    var debugEndpoint = api?["endpoint"]?.GetValue<string>();
+                    var debugService = api?["service"]?.GetValue<string>();
+                    Console.WriteLine($"      - {debugEndpoint} ({debugService})");
                 }
 
-                // Try to find the GUID for our endpoint by method and path
+                // Find the GUID for our endpoint
                 foreach (var api in availableApis)
                 {
-                    var apiMethod = api?["method"]?.GetValue<string>();
-                    var apiPath = api?["path"]?.GetValue<string>();
-                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
+                    var apiEndpoint = api?["endpoint"]?.GetValue<string>();
+                    var apiGuid = api?["serviceId"]?.GetValue<string>();
 
-                    if (apiMethod == method && apiPath == path && !string.IsNullOrEmpty(apiGuid))
+                    if (apiEndpoint == endpoint && !string.IsNullOrEmpty(apiGuid))
                     {
                         if (Guid.TryParse(apiGuid, out var guid))
                         {
-                            Console.WriteLine($"   ✅ Found API: {method}:{path}");
-                            return guid;
-                        }
-                    }
-                }
-
-                // Fallback: try by endpointKey (format: "METHOD:/path")
-                foreach (var api in availableApis)
-                {
-                    var endpointKey = api?["endpointKey"]?.GetValue<string>();
-                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
-
-                    // Endpoint key format is now "METHOD:/path" (e.g., "POST:/species/get")
-                    var expectedKey = $"{method}:{path}";
-                    if (endpointKey == expectedKey && !string.IsNullOrEmpty(apiGuid))
-                    {
-                        if (Guid.TryParse(apiGuid, out var guid))
-                        {
-                            Console.WriteLine($"   ✅ Found API by endpointKey: {endpointKey}");
+                            Console.WriteLine($"   ✅ Found API: {endpoint}");
                             return guid;
                         }
                     }
                 }
 
                 // API not found yet - if this is the initial manifest, wait for updates
-                Console.WriteLine($"⚠️ API {method}:{path} not found yet, waiting for capability updates...");
+                Console.WriteLine($"⚠️ API {endpoint} not found yet, waiting for capability updates...");
             }
             catch (OperationCanceledException)
             {
@@ -1698,7 +1673,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
         }
 
-        Console.WriteLine($"❌ Timeout waiting for API {method}:{path} to become available (waited {overallTimeout.TotalSeconds}s)");
+        Console.WriteLine($"❌ Timeout waiting for API {endpoint} to become available (waited {overallTimeout.TotalSeconds}s)");
         return Guid.Empty;
     }
 
@@ -2070,7 +2045,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
         // Request one API - this triggers receiving the manifest
         // Use /auth/validate which is always available to authenticated users
-        var firstGuid = await ReceiveAndCacheAllGuids(webSocket, "POST", "/auth/validate");
+        var firstGuid = await ReceiveAndCacheAllGuids(webSocket, "/auth/validate");
 
         if (firstGuid == Guid.Empty)
         {
@@ -2085,48 +2060,46 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         // These require game-session:in_game state and should NOT be in initial manifest
         var stateGatedApis = new[]
         {
-            ("POST", "/sessions/get"),
-            ("POST", "/sessions/leave"),
-            ("POST", "/sessions/chat"),
-            ("POST", "/sessions/actions")
+            "/sessions/get",
+            "/sessions/leave",
+            "/sessions/chat",
+            "/sessions/actions"
         };
 
         // These are accessed via session shortcuts (pre-bound API calls), not direct permissions
         // They intentionally have no x-permissions in the schema and won't appear in capability manifest
         var shortcutOnlyApis = new[]
         {
-            ("POST", "/sessions/list"),
-            ("POST", "/sessions/create"),
-            ("POST", "/sessions/join")
+            "/sessions/list",
+            "/sessions/create",
+            "/sessions/join"
         };
 
         // Verify state-gated endpoints are correctly NOT in manifest (requires joining session)
-        foreach (var (method, path) in stateGatedApis)
+        foreach (var endpoint in stateGatedApis)
         {
-            var cacheKey = $"{method}:{path}";
-            if (_manifestGuidCache.TryGetValue(cacheKey, out var cachedGuid))
+            if (_manifestGuidCache.TryGetValue(endpoint, out var cachedGuid))
             {
-                Console.WriteLine($"   {cacheKey} unexpectedly cached: {cachedGuid} (should require in_game state)");
+                Console.WriteLine($"   {endpoint} unexpectedly cached: {cachedGuid} (should require in_game state)");
                 // Don't fail - state-gated endpoints appearing is unexpected but not wrong
             }
             else
             {
-                Console.WriteLine($"   {cacheKey} correctly absent (requires game-session:in_game state)");
+                Console.WriteLine($"   {endpoint} correctly absent (requires game-session:in_game state)");
             }
         }
 
         // Verify shortcut-only endpoints are correctly NOT in manifest (accessed via session shortcuts)
-        foreach (var (method, path) in shortcutOnlyApis)
+        foreach (var endpoint in shortcutOnlyApis)
         {
-            var cacheKey = $"{method}:{path}";
-            if (_manifestGuidCache.TryGetValue(cacheKey, out var cachedGuid))
+            if (_manifestGuidCache.TryGetValue(endpoint, out var cachedGuid))
             {
-                Console.WriteLine($"   {cacheKey} unexpectedly cached: {cachedGuid} (should be shortcut-only)");
+                Console.WriteLine($"   {endpoint} unexpectedly cached: {cachedGuid} (should be shortcut-only)");
                 // Don't fail - but this is unexpected
             }
             else
             {
-                Console.WriteLine($"   {cacheKey} correctly absent (accessed via session shortcuts)");
+                Console.WriteLine($"   {endpoint} correctly absent (accessed via session shortcuts)");
             }
         }
 
@@ -2146,7 +2119,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     /// Receives the capability manifest and caches ALL GUIDs from it.
     /// Returns the GUID for the requested endpoint, or Guid.Empty if not found.
     /// </summary>
-    private async Task<Guid> ReceiveAndCacheAllGuids(ClientWebSocket webSocket, string method, string path)
+    private async Task<Guid> ReceiveAndCacheAllGuids(ClientWebSocket webSocket, string endpoint)
     {
         var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
@@ -2210,18 +2183,16 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 var cachedCount = 0;
                 foreach (var api in availableApis)
                 {
-                    var apiMethod = api?["method"]?.GetValue<string>();
-                    var apiPath = api?["path"]?.GetValue<string>();
-                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
+                    var apiEndpoint = api?["endpoint"]?.GetValue<string>();
+                    var apiGuid = api?["serviceId"]?.GetValue<string>();
 
-                    if (!string.IsNullOrEmpty(apiMethod) && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
+                    if (!string.IsNullOrEmpty(apiEndpoint) && !string.IsNullOrEmpty(apiGuid))
                     {
                         if (Guid.TryParse(apiGuid, out var guid))
                         {
-                            var cacheKey = $"{apiMethod}:{apiPath}";
-                            if (!_manifestGuidCache.ContainsKey(cacheKey))
+                            if (!_manifestGuidCache.ContainsKey(apiEndpoint))
                             {
-                                _manifestGuidCache[cacheKey] = guid;
+                                _manifestGuidCache[apiEndpoint] = guid;
                                 cachedCount++;
                             }
                         }
@@ -2234,13 +2205,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Return the requested endpoint's GUID
-                var requestedKey = $"{method}:{path}";
-                if (_manifestGuidCache.TryGetValue(requestedKey, out var requestedGuid))
+                if (_manifestGuidCache.TryGetValue(endpoint, out var requestedGuid))
                 {
                     return requestedGuid;
                 }
 
-                Console.WriteLine($"   API {method}:{path} not found in manifest ({_manifestGuidCache.Count} APIs cached)");
+                Console.WriteLine($"   API {endpoint} not found in manifest ({_manifestGuidCache.Count} APIs cached)");
             }
             catch (OperationCanceledException)
             {
@@ -2252,7 +2222,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
         }
 
-        Console.WriteLine($"   Timeout waiting for API {method}:{path} to become available");
+        Console.WriteLine($"   Timeout waiting for API {endpoint} to become available");
         return Guid.Empty;
     }
 

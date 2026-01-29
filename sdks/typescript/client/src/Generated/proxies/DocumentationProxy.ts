@@ -36,10 +36,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryDocumentationResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['QueryDocumentationRequest'],
-      Schemas['QueryDocumentationResponse']
-    >('POST', '/documentation/query', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['QueryDocumentationRequest'], Schemas['QueryDocumentationResponse']>(
+      '/documentation/query', request, channel, timeout
+    );
   }
 
   /**
@@ -55,11 +54,7 @@ export class DocumentationProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetDocumentResponse']>> {
     return this.client.invokeAsync<Schemas['GetDocumentRequest'], Schemas['GetDocumentResponse']>(
-      'POST',
-      '/documentation/get',
-      request,
-      channel,
-      timeout
+      '/documentation/get', request, channel, timeout
     );
   }
 
@@ -75,10 +70,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SearchDocumentationResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SearchDocumentationRequest'],
-      Schemas['SearchDocumentationResponse']
-    >('POST', '/documentation/search', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SearchDocumentationRequest'], Schemas['SearchDocumentationResponse']>(
+      '/documentation/search', request, channel, timeout
+    );
   }
 
   /**
@@ -93,10 +87,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListDocumentsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListDocumentsRequest'],
-      Schemas['ListDocumentsResponse']
-    >('POST', '/documentation/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListDocumentsRequest'], Schemas['ListDocumentsResponse']>(
+      '/documentation/list', request, channel, timeout
+    );
   }
 
   /**
@@ -111,10 +104,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SuggestRelatedResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SuggestRelatedRequest'],
-      Schemas['SuggestRelatedResponse']
-    >('POST', '/documentation/suggest', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SuggestRelatedRequest'], Schemas['SuggestRelatedResponse']>(
+      '/documentation/suggest', request, channel, timeout
+    );
   }
 
   /**
@@ -129,10 +121,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BindRepositoryResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BindRepositoryRequest'],
-      Schemas['BindRepositoryResponse']
-    >('POST', '/documentation/repo/bind', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['BindRepositoryRequest'], Schemas['BindRepositoryResponse']>(
+      '/documentation/repo/bind', request, channel, timeout
+    );
   }
 
   /**
@@ -147,10 +138,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SyncRepositoryResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SyncRepositoryRequest'],
-      Schemas['SyncRepositoryResponse']
-    >('POST', '/documentation/repo/sync', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SyncRepositoryRequest'], Schemas['SyncRepositoryResponse']>(
+      '/documentation/repo/sync', request, channel, timeout
+    );
   }
 
   /**
@@ -165,10 +155,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RepositoryStatusResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['RepositoryStatusRequest'],
-      Schemas['RepositoryStatusResponse']
-    >('POST', '/documentation/repo/status', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['RepositoryStatusRequest'], Schemas['RepositoryStatusResponse']>(
+      '/documentation/repo/status', request, channel, timeout
+    );
   }
 
   /**
@@ -183,10 +172,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListRepositoryBindingsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListRepositoryBindingsRequest'],
-      Schemas['ListRepositoryBindingsResponse']
-    >('POST', '/documentation/repo/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListRepositoryBindingsRequest'], Schemas['ListRepositoryBindingsResponse']>(
+      '/documentation/repo/list', request, channel, timeout
+    );
   }
 
   /**
@@ -201,10 +189,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['UpdateRepositoryBindingResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateRepositoryBindingRequest'],
-      Schemas['UpdateRepositoryBindingResponse']
-    >('POST', '/documentation/repo/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateRepositoryBindingRequest'], Schemas['UpdateRepositoryBindingResponse']>(
+      '/documentation/repo/update', request, channel, timeout
+    );
   }
 
   /**
@@ -219,10 +206,9 @@ export class DocumentationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CreateArchiveResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateArchiveRequest'],
-      Schemas['CreateArchiveResponse']
-    >('POST', '/documentation/repo/archive/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateArchiveRequest'], Schemas['CreateArchiveResponse']>(
+      '/documentation/repo/archive/create', request, channel, timeout
+    );
   }
 
   /**
@@ -238,11 +224,7 @@ export class DocumentationProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListArchivesResponse']>> {
     return this.client.invokeAsync<Schemas['ListArchivesRequest'], Schemas['ListArchivesResponse']>(
-      'POST',
-      '/documentation/repo/archive/list',
-      request,
-      channel,
-      timeout
+      '/documentation/repo/archive/list', request, channel, timeout
     );
   }
 }

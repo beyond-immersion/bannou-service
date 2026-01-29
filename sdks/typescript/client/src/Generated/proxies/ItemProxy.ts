@@ -36,10 +36,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ItemTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateItemTemplateRequest'],
-      Schemas['ItemTemplateResponse']
-    >('POST', '/item/template/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateItemTemplateRequest'], Schemas['ItemTemplateResponse']>(
+      '/item/template/create', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ItemTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetItemTemplateRequest'],
-      Schemas['ItemTemplateResponse']
-    >('POST', '/item/template/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetItemTemplateRequest'], Schemas['ItemTemplateResponse']>(
+      '/item/template/get', request, channel, timeout
+    );
   }
 
   /**
@@ -72,10 +70,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListItemTemplatesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListItemTemplatesRequest'],
-      Schemas['ListItemTemplatesResponse']
-    >('POST', '/item/template/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListItemTemplatesRequest'], Schemas['ListItemTemplatesResponse']>(
+      '/item/template/list', request, channel, timeout
+    );
   }
 
   /**
@@ -90,10 +87,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ItemTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateItemTemplateRequest'],
-      Schemas['ItemTemplateResponse']
-    >('POST', '/item/template/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateItemTemplateRequest'], Schemas['ItemTemplateResponse']>(
+      '/item/template/update', request, channel, timeout
+    );
   }
 
   /**
@@ -108,10 +104,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ItemInstanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateItemInstanceRequest'],
-      Schemas['ItemInstanceResponse']
-    >('POST', '/item/instance/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateItemInstanceRequest'], Schemas['ItemInstanceResponse']>(
+      '/item/instance/create', request, channel, timeout
+    );
   }
 
   /**
@@ -126,10 +121,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ItemInstanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetItemInstanceRequest'],
-      Schemas['ItemInstanceResponse']
-    >('POST', '/item/instance/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetItemInstanceRequest'], Schemas['ItemInstanceResponse']>(
+      '/item/instance/get', request, channel, timeout
+    );
   }
 
   /**
@@ -144,10 +138,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ItemInstanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ModifyItemInstanceRequest'],
-      Schemas['ItemInstanceResponse']
-    >('POST', '/item/instance/modify', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ModifyItemInstanceRequest'], Schemas['ItemInstanceResponse']>(
+      '/item/instance/modify', request, channel, timeout
+    );
   }
 
   /**
@@ -162,10 +155,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ItemInstanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BindItemInstanceRequest'],
-      Schemas['ItemInstanceResponse']
-    >('POST', '/item/instance/bind', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['BindItemInstanceRequest'], Schemas['ItemInstanceResponse']>(
+      '/item/instance/bind', request, channel, timeout
+    );
   }
 
   /**
@@ -180,10 +172,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DestroyItemInstanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DestroyItemInstanceRequest'],
-      Schemas['DestroyItemInstanceResponse']
-    >('POST', '/item/instance/destroy', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DestroyItemInstanceRequest'], Schemas['DestroyItemInstanceResponse']>(
+      '/item/instance/destroy', request, channel, timeout
+    );
   }
 
   /**
@@ -198,10 +189,9 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListItemsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListItemsByContainerRequest'],
-      Schemas['ListItemsResponse']
-    >('POST', '/item/instance/list-by-container', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListItemsByContainerRequest'], Schemas['ListItemsResponse']>(
+      '/item/instance/list-by-container', request, channel, timeout
+    );
   }
 
   /**
@@ -216,9 +206,8 @@ export class ItemProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BatchGetItemInstancesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BatchGetItemInstancesRequest'],
-      Schemas['BatchGetItemInstancesResponse']
-    >('POST', '/item/instance/batch-get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['BatchGetItemInstancesRequest'], Schemas['BatchGetItemInstancesResponse']>(
+      '/item/instance/batch-get', request, channel, timeout
+    );
   }
 }

@@ -37,11 +37,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CreateEscrowResponse']>> {
     return this.client.invokeAsync<Schemas['CreateEscrowRequest'], Schemas['CreateEscrowResponse']>(
-      'POST',
-      '/escrow/create',
-      request,
-      channel,
-      timeout
+      '/escrow/create', request, channel, timeout
     );
   }
 
@@ -58,11 +54,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetEscrowResponse']>> {
     return this.client.invokeAsync<Schemas['GetEscrowRequest'], Schemas['GetEscrowResponse']>(
-      'POST',
-      '/escrow/get',
-      request,
-      channel,
-      timeout
+      '/escrow/get', request, channel, timeout
     );
   }
 
@@ -79,11 +71,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListEscrowsResponse']>> {
     return this.client.invokeAsync<Schemas['ListEscrowsRequest'], Schemas['ListEscrowsResponse']>(
-      'POST',
-      '/escrow/list',
-      request,
-      channel,
-      timeout
+      '/escrow/list', request, channel, timeout
     );
   }
 
@@ -100,11 +88,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DepositResponse']>> {
     return this.client.invokeAsync<Schemas['DepositRequest'], Schemas['DepositResponse']>(
-      'POST',
-      '/escrow/deposit',
-      request,
-      channel,
-      timeout
+      '/escrow/deposit', request, channel, timeout
     );
   }
 
@@ -120,10 +104,9 @@ export class EscrowProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ValidateDepositResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ValidateDepositRequest'],
-      Schemas['ValidateDepositResponse']
-    >('POST', '/escrow/deposit/validate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ValidateDepositRequest'], Schemas['ValidateDepositResponse']>(
+      '/escrow/deposit/validate', request, channel, timeout
+    );
   }
 
   /**
@@ -138,10 +121,9 @@ export class EscrowProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetDepositStatusResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetDepositStatusRequest'],
-      Schemas['GetDepositStatusResponse']
-    >('POST', '/escrow/deposit/status', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetDepositStatusRequest'], Schemas['GetDepositStatusResponse']>(
+      '/escrow/deposit/status', request, channel, timeout
+    );
   }
 
   /**
@@ -157,11 +139,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ConsentResponse']>> {
     return this.client.invokeAsync<Schemas['ConsentRequest'], Schemas['ConsentResponse']>(
-      'POST',
-      '/escrow/consent',
-      request,
-      channel,
-      timeout
+      '/escrow/consent', request, channel, timeout
     );
   }
 
@@ -177,10 +155,9 @@ export class EscrowProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetConsentStatusResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetConsentStatusRequest'],
-      Schemas['GetConsentStatusResponse']
-    >('POST', '/escrow/consent/status', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetConsentStatusRequest'], Schemas['GetConsentStatusResponse']>(
+      '/escrow/consent/status', request, channel, timeout
+    );
   }
 
   /**
@@ -196,11 +173,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ReleaseResponse']>> {
     return this.client.invokeAsync<Schemas['ReleaseRequest'], Schemas['ReleaseResponse']>(
-      'POST',
-      '/escrow/release',
-      request,
-      channel,
-      timeout
+      '/escrow/release', request, channel, timeout
     );
   }
 
@@ -217,11 +190,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RefundResponse']>> {
     return this.client.invokeAsync<Schemas['RefundRequest'], Schemas['RefundResponse']>(
-      'POST',
-      '/escrow/refund',
-      request,
-      channel,
-      timeout
+      '/escrow/refund', request, channel, timeout
     );
   }
 
@@ -238,11 +207,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CancelResponse']>> {
     return this.client.invokeAsync<Schemas['CancelRequest'], Schemas['CancelResponse']>(
-      'POST',
-      '/escrow/cancel',
-      request,
-      channel,
-      timeout
+      '/escrow/cancel', request, channel, timeout
     );
   }
 
@@ -259,11 +224,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DisputeResponse']>> {
     return this.client.invokeAsync<Schemas['DisputeRequest'], Schemas['DisputeResponse']>(
-      'POST',
-      '/escrow/dispute',
-      request,
-      channel,
-      timeout
+      '/escrow/dispute', request, channel, timeout
     );
   }
 
@@ -280,11 +241,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ResolveResponse']>> {
     return this.client.invokeAsync<Schemas['ResolveRequest'], Schemas['ResolveResponse']>(
-      'POST',
-      '/escrow/resolve',
-      request,
-      channel,
-      timeout
+      '/escrow/resolve', request, channel, timeout
     );
   }
 
@@ -300,10 +257,9 @@ export class EscrowProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['VerifyConditionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['VerifyConditionRequest'],
-      Schemas['VerifyConditionResponse']
-    >('POST', '/escrow/verify-condition', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['VerifyConditionRequest'], Schemas['VerifyConditionResponse']>(
+      '/escrow/verify-condition', request, channel, timeout
+    );
   }
 
   /**
@@ -319,11 +275,7 @@ export class EscrowProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ReaffirmResponse']>> {
     return this.client.invokeAsync<Schemas['ReaffirmRequest'], Schemas['ReaffirmResponse']>(
-      'POST',
-      '/escrow/reaffirm',
-      request,
-      channel,
-      timeout
+      '/escrow/reaffirm', request, channel, timeout
     );
   }
 }
