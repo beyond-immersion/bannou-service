@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Connect.Protocol;
+using BeyondImmersion.BannouService.Permission;
 using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Text;
@@ -613,21 +614,30 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 return false;
             }
 
-            var stateUpdate = new
+            if (string.IsNullOrEmpty(sessionId) || !Guid.TryParse(sessionId, out var sessionGuid))
             {
-                sessionId = sessionId,
-                serviceId = "game-session",
-                newState = "in_game"
-            };
+                Console.WriteLine($"❌ Invalid sessionId from capability manifest: {sessionId}");
+                return false;
+            }
 
             try
             {
-                var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "/permission/update-session-state",
-                    stateUpdate,
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+                var response = await adminClient.Permission.UpdateSessionStateAsync(
+                    new SessionStateUpdate
+                    {
+                        SessionId = sessionGuid,
+                        ServiceId = "game-session",
+                        NewState = "in_game"
+                    },
+                    timeout: TimeSpan.FromSeconds(10));
 
-                Console.WriteLine($"✅ State update succeeded: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}...");
+                if (!response.IsSuccess || response.Result is null)
+                {
+                    Console.WriteLine($"❌ State update failed: {response.Error?.Message}");
+                    return false;
+                }
+
+                Console.WriteLine($"✅ State update succeeded: sessionId={response.Result.SessionId}, permissionsChanged={response.Result.PermissionsChanged}");
             }
             catch (Exception ex)
             {
