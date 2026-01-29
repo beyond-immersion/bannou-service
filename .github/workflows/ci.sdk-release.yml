@@ -31,6 +31,12 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Get Base Version and Last Release Tag
         id: base
         run: |
@@ -252,6 +258,69 @@ jobs:
 
           echo "✅ Stable packages published!"
 
+      - name: Update TypeScript SDK Versions
+        run: |
+          VERSION="${{ steps.release.outputs.release_version }}"
+          echo "📦 Updating TypeScript SDK versions to ${VERSION}..."
+
+          # Update core package.json
+          cd sdks/typescript/core
+          npm version ${VERSION} --no-git-tag-version --allow-same-version
+          echo "  ✓ @beyondimmersion/bannou-core → ${VERSION}"
+
+          # Update client package.json (also update core dependency)
+          cd ../client
+          npm version ${VERSION} --no-git-tag-version --allow-same-version
+          # Update the dependency on core to match
+          npm pkg set "dependencies.@beyondimmersion/bannou-core=^${VERSION}"
+          echo "  ✓ @beyondimmersion/bannou-client → ${VERSION}"
+
+          echo "✅ TypeScript SDK versions updated"
+
+      - name: Build TypeScript SDKs
+        run: |
+          VERSION="${{ steps.release.outputs.release_version }}"
+          echo "📦 Building TypeScript SDKs v${VERSION}..."
+
+          cd sdks/typescript
+
+          # Install workspace dependencies
+          npm install
+
+          # Build core first (client depends on it)
+          echo "  Building @beyondimmersion/bannou-core..."
+          cd core
+          npm run build
+          cd ..
+
+          # Build client
+          echo "  Building @beyondimmersion/bannou-client..."
+          cd client
+          npm run build
+          cd ..
+
+          echo "✅ TypeScript SDKs built"
+
+      - name: Publish TypeScript SDKs to npm
+        if: inputs.dry_run == false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${{ steps.release.outputs.release_version }}"
+          echo "🚀 Publishing TypeScript SDKs v${VERSION} to npm..."
+
+          # Publish core first (client depends on it)
+          cd sdks/typescript/core
+          npm publish --access public
+          echo "  ✅ @beyondimmersion/bannou-core published"
+
+          # Publish client
+          cd ../client
+          npm publish --access public
+          echo "  ✅ @beyondimmersion/bannou-client published"
+
+          echo "✅ TypeScript SDKs published to npm!"
+
       # Update SDK_VERSION to the released version
       # Preview workflow adds +0.0.1 before the -preview suffix, so previews will be higher
       # e.g., SDK_VERSION=1.1.0 → previews are 1.1.1-preview.X (> 1.1.0 stable)
@@ -264,7 +333,13 @@ jobs:
           echo "📦 Updated SDK_VERSION to ${RELEASED_VERSION}"
 
           git add sdks/SDK_VERSION
-          git commit -m "chore: update SDK_VERSION to ${RELEASED_VERSION}
+          git add sdks/typescript/core/package.json
+          git add sdks/typescript/client/package.json
+          git commit -m "chore: update SDK versions to ${RELEASED_VERSION}
+
+          - SDK_VERSION: ${RELEASED_VERSION}
+          - @beyondimmersion/bannou-core: ${RELEASED_VERSION}
+          - @beyondimmersion/bannou-client: ${RELEASED_VERSION}
 
           Previews will now be based on this version (with +0.0.1 patch bump).
           e.g., next preview: ${RELEASED_VERSION%.*}.$((${RELEASED_VERSION##*.} + 1))-preview.X
@@ -306,6 +381,18 @@ jobs:
           **For Voice Communication**:
           \`\`\`bash
           dotnet add package BeyondImmersion.Bannou.Client.Voice --version ${VERSION}
+          \`\`\`
+
+          #### TypeScript SDKs
+
+          **Core Types and Utilities**:
+          \`\`\`bash
+          npm install @beyondimmersion/bannou-core@${VERSION}
+          \`\`\`
+
+          **TypeScript Client** (WebSocket):
+          \`\`\`bash
+          npm install @beyondimmersion/bannou-client@${VERSION}
           \`\`\`
 
           #### Scene Composer SDKs
@@ -386,11 +473,12 @@ jobs:
           echo "PRs included: ${{ steps.analyze.outputs.pr_count }}"
           echo ""
           echo "Actions that would be taken:"
-          echo "  1. Build and pack SDKs with version ${{ steps.release.outputs.release_version }}"
+          echo "  1. Build and pack .NET SDKs with version ${{ steps.release.outputs.release_version }}"
           echo "  2. Create git tag: sdk-v${{ steps.release.outputs.release_version }}"
-          echo "  3. Publish to NuGet"
-          echo "  4. Update SDK_VERSION to ${{ steps.release.outputs.release_version }}"
-          echo "  5. Create GitHub release"
+          echo "  3. Publish .NET SDKs to NuGet"
+          echo "  4. Build and publish TypeScript SDKs to npm"
+          echo "  5. Update SDK_VERSION and package.json files to ${{ steps.release.outputs.release_version }}"
+          echo "  6. Create GitHub release"
           echo ""
           echo "Version calculation: ${{ steps.base.outputs.sdk_version }} + ${{ steps.analyze.outputs.bump_type }} = ${{ steps.release.outputs.release_version }}"
           echo ""

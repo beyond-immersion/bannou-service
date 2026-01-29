@@ -1209,6 +1209,42 @@ check-sdk-ts: ## Check TypeScript SDK formatting (for CI)
 	@echo "✅ TypeScript SDK formatting check passed"
 
 # =============================================================================
+# ⛔ NPM PUBLISHING - AI AGENTS MUST NEVER RUN THIS COMMAND ⛔
+# =============================================================================
+# This command publishes the TypeScript SDK packages to npm. It:
+#   1. Builds both core and client packages
+#   2. Publishes @beyondimmersion/bannou-core to npm
+#   3. Publishes @beyondimmersion/bannou-client to npm
+#
+# AI AGENTS: DO NOT RUN THIS COMMAND. If the developer asks about publishing
+# to npm, return the command for them to run manually:
+#   make publish-sdk-ts
+#
+# A PreToolUse hook blocks Claude from executing this command.
+# =============================================================================
+publish-sdk-ts: build-sdk-ts ## ⛔ NPM PUBLISH - Publish TypeScript SDK packages to npm (AI: DO NOT RUN)
+	@echo ""
+	@echo "⚠️  =========================================="
+	@echo "⚠️  NPM PACKAGE PUBLISHING"
+	@echo "⚠️  =========================================="
+	@echo ""
+	@echo "This will publish the following packages to npm:"
+	@echo "  - @beyondimmersion/bannou-core"
+	@echo "  - @beyondimmersion/bannou-client"
+	@echo ""
+	@read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || (echo "Aborted."; exit 1)
+	@echo ""
+	@echo "📦 Publishing @beyondimmersion/bannou-core..."
+	cd $(TS_SDK_DIR)/core && npm publish --access public
+	@echo "✅ @beyondimmersion/bannou-core published"
+	@echo ""
+	@echo "📦 Publishing @beyondimmersion/bannou-client..."
+	cd $(TS_SDK_DIR)/client && npm publish --access public
+	@echo "✅ @beyondimmersion/bannou-client published"
+	@echo ""
+	@echo "🎉 TypeScript SDK packages published successfully!"
+
+# =============================================================================
 # UNREAL ENGINE SDK
 # =============================================================================
 # Unreal Engine helper files for integrating with Bannou services.
