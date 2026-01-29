@@ -23,29 +23,6 @@ services:
       timeout: 3s
       retries: 5
       start_period: 60s
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # RabbitMQ message broker - uses default bridge network
-  # Loads definitions.json for client events direct exchange and queue expiry policy
-  rabbitmq:
-    image: rabbitmq:4.0-management
-    # No ports exposed - accessed via Docker network
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
 
 volumes:
   logs-data:
-  rabbitmq-data:

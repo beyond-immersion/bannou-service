@@ -6,8 +6,6 @@ services:
 
   bannou:
     env_file: ../.env.test.infrastructure
-    # Override base depends_on - we don't need RabbitMQ for in-memory messaging
-    depends_on: []
 
   # Infrastructure tester - uses Docker DNS to reach bannou
   bannou-infra-tester:

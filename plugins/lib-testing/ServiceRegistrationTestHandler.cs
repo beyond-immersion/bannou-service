@@ -47,10 +47,14 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
             if (registrationMethod.ReturnType != typeof(Task))
                 return new TestResult(false, "RegisterServicePermissionsAsync should return Task");
 
-            if (registrationMethod.GetParameters().Length != 0)
-                return new TestResult(false, "RegisterServicePermissionsAsync should have no parameters");
+            var parameters = registrationMethod.GetParameters();
+            if (parameters.Length != 1)
+                return new TestResult(false, $"RegisterServicePermissionsAsync should have exactly 1 parameter (appId), found {parameters.Length}");
 
-            Console.WriteLine("✓ IBannouService.RegisterServicePermissionsAsync method signature correct");
+            if (parameters[0].ParameterType != typeof(string) || parameters[0].Name != "appId")
+                return new TestResult(false, $"RegisterServicePermissionsAsync parameter should be 'string appId', found '{parameters[0].ParameterType.Name} {parameters[0].Name}'");
+
+            Console.WriteLine("✓ IBannouService.RegisterServicePermissionsAsync(string appId) method signature correct");
 
             // Test that method is virtual
             if (!registrationMethod.IsVirtual)
