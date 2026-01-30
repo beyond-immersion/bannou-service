@@ -198,7 +198,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             It.Is<InventoryContainerCreatedEvent>(e =>
                 e.OwnerId == request.OwnerId &&
                 e.ContainerType == request.ContainerType &&
-                e.ConstraintModel == ContainerConstraintModel.SlotOnly.ToString()),
+                e.ConstraintModel == ContainerConstraintModel.SlotOnly),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

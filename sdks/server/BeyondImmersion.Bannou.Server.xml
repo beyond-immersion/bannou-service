@@ -9439,6 +9439,20 @@
             <returns>Session terminated</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.IAuthClient.GetRevocationListAsync(BeyondImmersion.BannouService.Auth.GetRevocationListRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current token revocation list
+            </summary>
+            <remarks>
+            Returns the current list of revoked tokens and accounts for edge provider synchronization
+            <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+            <br/>revocations (all tokens issued before a timestamp).
+            </remarks>
+            <returns>Revocation list retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Auth.IAuthClient.RequestPasswordResetAsync(BeyondImmersion.BannouService.Auth.PasswordResetRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -9650,6 +9664,20 @@
             Terminate specific session
             </summary>
             <returns>Session terminated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.GetRevocationListAsync(BeyondImmersion.BannouService.Auth.GetRevocationListRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current token revocation list
+            </summary>
+            <remarks>
+            Returns the current list of revoked tokens and accounts for edge provider synchronization
+            <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+            <br/>revocations (all tokens issued before a timestamp).
+            </remarks>
+            <returns>Revocation list retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.RequestPasswordResetAsync(BeyondImmersion.BannouService.Auth.PasswordResetRequest,System.Threading.CancellationToken)">
@@ -10082,6 +10110,106 @@
         <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthUrl">
             <summary>
             URL to initiate OAuth authentication (null for ticket-based auth like Steam)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.GetRevocationListRequest">
+            <summary>
+            Request to get current revocation list for edge provider synchronization or admin monitoring
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.GetRevocationListRequest.IncludeTokens">
+            <summary>
+            Include token-level revocations (by JTI)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.GetRevocationListRequest.IncludeAccounts">
+            <summary>
+            Include account-level revocations (all tokens before timestamp)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.GetRevocationListRequest.Limit">
+            <summary>
+            Maximum entries to return per category
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.RevocationListResponse">
+            <summary>
+            Current revocation list with token and account level entries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.RevokedTokens">
+            <summary>
+            Token-level revocations (individual JTIs)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.RevokedAccounts">
+            <summary>
+            Account-level revocations (all tokens before timestamp)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.FailedPushCount">
+            <summary>
+            Number of pending failed pushes awaiting retry
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.TotalTokenCount">
+            <summary>
+            Total revoked tokens in store (may be null if count unavailable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.RevokedTokenEntry">
+            <summary>
+            A single revoked token entry with expiration tracking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.Jti">
+            <summary>
+            JWT unique identifier (jti claim)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.AccountId">
+            <summary>
+            Account that owned the token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.RevokedAt">
+            <summary>
+            When the token was revoked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.ExpiresAt">
+            <summary>
+            When the revocation entry expires (matches original JWT expiry)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.Reason">
+            <summary>
+            Revocation reason for audit trail
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.RevokedAccountEntry">
+            <summary>
+            Account-level revocation entry that invalidates all tokens issued before a timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.AccountId">
+            <summary>
+            Account ID whose tokens are revoked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.IssuedBefore">
+            <summary>
+            Reject tokens issued before this timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.RevokedAt">
+            <summary>
+            When the revocation was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.Reason">
+            <summary>
+            Revocation reason for audit trail
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IBehaviorClient">
@@ -36825,6 +36953,11 @@
             When endpoint was first registered
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mesh.MeshEndpoint.Issues">
+            <summary>
+            List of non-critical issues reported via heartbeat (null if none)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Mesh.EndpointStatus">
             <summary>
             Health status of an endpoint
@@ -51959,6 +52092,11 @@
             Number of keys (only if includeStats=true)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.ConsistencyLevel">
+            <summary>
+            Consistency level for state operations
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.ISubscriptionClient">
             <summary>
             Client interface for the Subscription service.
@@ -57212,6 +57350,11 @@
             In-game birth date of the character
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.DeathDate">
+            <summary>
+            In-game death timestamp
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.Status">
             <summary>
             Current status of the character (e.g., active, inactive, deceased)
@@ -57260,6 +57403,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.BirthDate">
             <summary>
             In-game birth date of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.DeathDate">
+            <summary>
+            In-game death timestamp
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.Status">
@@ -57315,6 +57463,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.BirthDate">
             <summary>
             In-game birth date of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.DeathDate">
+            <summary>
+            In-game death timestamp
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.Status">
@@ -60737,6 +60890,16 @@
             Whether the game service is currently active
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.CreatedAt">
+            <summary>
+            When the service was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.UpdatedAt">
+            <summary>
+            When the service was last updated
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent">
             <summary>
             Published to game-service.updated when a gameservice is updated
@@ -60770,6 +60933,16 @@
         <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.IsActive">
             <summary>
             Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.CreatedAt">
+            <summary>
+            When the service was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.UpdatedAt">
+            <summary>
+            When the service was last updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.ChangedFields">
@@ -60810,6 +60983,16 @@
         <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.IsActive">
             <summary>
             Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.CreatedAt">
+            <summary>
+            When the service was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.UpdatedAt">
+            <summary>
+            When the service was last updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.DeletedReason">
@@ -60932,6 +61115,11 @@
             Game service stub name for this session
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.SessionType">
+            <summary>
+            Type of session - lobby or matchmade
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.SessionName">
             <summary>
             Human-readable name for the session
@@ -60962,6 +61150,16 @@
             Account ID of the session owner
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.GameSettings">
+            <summary>
+            Game-specific configuration settings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.ReservationExpiresAt">
+            <summary>
+            For matchmade sessions - when reservations expire
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.CreatedAt">
             <summary>
             Timestamp when the session was created
@@ -60985,6 +61183,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.GameType">
             <summary>
             Game service stub name for this session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.SessionType">
+            <summary>
+            Type of session - lobby or matchmade
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.SessionName">
@@ -61017,6 +61220,16 @@
             Account ID of the session owner
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.GameSettings">
+            <summary>
+            Game-specific configuration settings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.ReservationExpiresAt">
+            <summary>
+            For matchmade sessions - when reservations expire
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.CreatedAt">
             <summary>
             Timestamp when the session was created
@@ -61047,6 +61260,11 @@
             Game service stub name for this session
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.SessionType">
+            <summary>
+            Type of session - lobby or matchmade
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.SessionName">
             <summary>
             Human-readable name for the session
@@ -61075,6 +61293,16 @@
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.Owner">
             <summary>
             Account ID of the session owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.GameSettings">
+            <summary>
+            Game-specific configuration settings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.ReservationExpiresAt">
+            <summary>
+            For matchmade sessions - when reservations expire
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.CreatedAt">
@@ -61529,12 +61757,112 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.ConstraintModel">
             <summary>
-            Capacity constraint model
+            Container capacity constraint model
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.IsEquipmentSlot">
             <summary>
             Whether this is an equipment slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.EquipmentSlotName">
+            <summary>
+            Equipment slot name if isEquipmentSlot is true
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.MaxSlots">
+            <summary>
+            Maximum slot count for slot-based constraints
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.UsedSlots">
+            <summary>
+            Current number of used slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.MaxWeight">
+            <summary>
+            Maximum weight capacity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.GridWidth">
+            <summary>
+            Grid width for grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.GridHeight">
+            <summary>
+            Grid height for grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.MaxVolume">
+            <summary>
+            Maximum volume for volumetric containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.CurrentVolume">
+            <summary>
+            Current volume used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.ParentContainerId">
+            <summary>
+            Parent container ID for nested containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.NestingDepth">
+            <summary>
+            Depth level in container hierarchy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.CanContainContainers">
+            <summary>
+            Whether this container can hold other containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.MaxNestingDepth">
+            <summary>
+            Maximum allowed nesting depth for child containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.SelfWeight">
+            <summary>
+            Weight of the empty container itself
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.WeightContribution">
+            <summary>
+            How container weight propagates to parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.SlotCost">
+            <summary>
+            Number of slots this container uses in its parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.ContentsWeight">
+            <summary>
+            Total weight of direct contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.TotalWeight">
+            <summary>
+            Total weight including self and contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.RealmId">
+            <summary>
+            Realm ID this container belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.CreatedAt">
+            <summary>
+            When the container was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.ModifiedAt">
+            <summary>
+            When the container was last modified
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent">
@@ -61569,12 +61897,112 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ConstraintModel">
             <summary>
-            Capacity constraint model
+            Container capacity constraint model
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.IsEquipmentSlot">
             <summary>
             Whether this is an equipment slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.EquipmentSlotName">
+            <summary>
+            Equipment slot name if isEquipmentSlot is true
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.MaxSlots">
+            <summary>
+            Maximum slot count for slot-based constraints
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.UsedSlots">
+            <summary>
+            Current number of used slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.MaxWeight">
+            <summary>
+            Maximum weight capacity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.GridWidth">
+            <summary>
+            Grid width for grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.GridHeight">
+            <summary>
+            Grid height for grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.MaxVolume">
+            <summary>
+            Maximum volume for volumetric containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.CurrentVolume">
+            <summary>
+            Current volume used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ParentContainerId">
+            <summary>
+            Parent container ID for nested containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.NestingDepth">
+            <summary>
+            Depth level in container hierarchy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.CanContainContainers">
+            <summary>
+            Whether this container can hold other containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.MaxNestingDepth">
+            <summary>
+            Maximum allowed nesting depth for child containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.SelfWeight">
+            <summary>
+            Weight of the empty container itself
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.WeightContribution">
+            <summary>
+            How container weight propagates to parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.SlotCost">
+            <summary>
+            Number of slots this container uses in its parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ContentsWeight">
+            <summary>
+            Total weight of direct contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.TotalWeight">
+            <summary>
+            Total weight including self and contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.RealmId">
+            <summary>
+            Realm ID this container belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.CreatedAt">
+            <summary>
+            When the container was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ModifiedAt">
+            <summary>
+            When the container was last modified
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ChangedFields">
@@ -61614,12 +62042,112 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.ConstraintModel">
             <summary>
-            Capacity constraint model
+            Container capacity constraint model
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.IsEquipmentSlot">
             <summary>
             Whether this is an equipment slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.EquipmentSlotName">
+            <summary>
+            Equipment slot name if isEquipmentSlot is true
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.MaxSlots">
+            <summary>
+            Maximum slot count for slot-based constraints
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.UsedSlots">
+            <summary>
+            Current number of used slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.MaxWeight">
+            <summary>
+            Maximum weight capacity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.GridWidth">
+            <summary>
+            Grid width for grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.GridHeight">
+            <summary>
+            Grid height for grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.MaxVolume">
+            <summary>
+            Maximum volume for volumetric containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.CurrentVolume">
+            <summary>
+            Current volume used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.ParentContainerId">
+            <summary>
+            Parent container ID for nested containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.NestingDepth">
+            <summary>
+            Depth level in container hierarchy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.CanContainContainers">
+            <summary>
+            Whether this container can hold other containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.MaxNestingDepth">
+            <summary>
+            Maximum allowed nesting depth for child containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.SelfWeight">
+            <summary>
+            Weight of the empty container itself
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.WeightContribution">
+            <summary>
+            How container weight propagates to parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.SlotCost">
+            <summary>
+            Number of slots this container uses in its parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.ContentsWeight">
+            <summary>
+            Total weight of direct contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.TotalWeight">
+            <summary>
+            Total weight including self and contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.RealmId">
+            <summary>
+            Realm ID this container belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.CreatedAt">
+            <summary>
+            When the container was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.ModifiedAt">
+            <summary>
+            When the container was last modified
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.DeletedReason">
@@ -61937,6 +62465,11 @@
             Human-readable display name
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Description">
+            <summary>
+            Detailed item description
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Category">
             <summary>
             Item classification category
@@ -61952,14 +62485,59 @@
             How quantities are tracked
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.MaxStackSize">
+            <summary>
+            Maximum stack size for this item
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Scope">
             <summary>
             Realm availability scope
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.SoulboundType">
+            <summary>
+            When item becomes bound to a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Tradeable">
+            <summary>
+            Whether item can be traded between characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Destroyable">
+            <summary>
+            Whether item can be destroyed by the owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.HasDurability">
+            <summary>
+            Whether item has durability system
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.MaxDurability">
+            <summary>
+            Maximum durability value (if hasDurability is true)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.IsActive">
             <summary>
             Whether template is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.IsDeprecated">
+            <summary>
+            Whether template is deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.DeprecatedAt">
+            <summary>
+            When the template was deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.MigrationTargetId">
+            <summary>
+            Template ID to migrate existing instances to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.CreatedAt">
@@ -62002,6 +62580,11 @@
             Human-readable display name
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Description">
+            <summary>
+            Detailed item description
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Category">
             <summary>
             Item classification category
@@ -62017,14 +62600,59 @@
             How quantities are tracked
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.MaxStackSize">
+            <summary>
+            Maximum stack size for this item
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Scope">
             <summary>
             Realm availability scope
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.SoulboundType">
+            <summary>
+            When item becomes bound to a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Tradeable">
+            <summary>
+            Whether item can be traded between characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Destroyable">
+            <summary>
+            Whether item can be destroyed by the owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.HasDurability">
+            <summary>
+            Whether item has durability system
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.MaxDurability">
+            <summary>
+            Maximum durability value (if hasDurability is true)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.IsActive">
             <summary>
             Whether template is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.IsDeprecated">
+            <summary>
+            Whether template is deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.DeprecatedAt">
+            <summary>
+            When the template was deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.MigrationTargetId">
+            <summary>
+            Template ID to migrate existing instances to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.CreatedAt">
@@ -62072,6 +62700,11 @@
             Human-readable display name
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Description">
+            <summary>
+            Detailed item description
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Category">
             <summary>
             Item classification category
@@ -62087,14 +62720,59 @@
             How quantities are tracked
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.MaxStackSize">
+            <summary>
+            Maximum stack size for this item
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Scope">
             <summary>
             Realm availability scope
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.SoulboundType">
+            <summary>
+            When item becomes bound to a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Tradeable">
+            <summary>
+            Whether item can be traded between characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Destroyable">
+            <summary>
+            Whether item can be destroyed by the owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.HasDurability">
+            <summary>
+            Whether item has durability system
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.MaxDurability">
+            <summary>
+            Maximum durability value (if hasDurability is true)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.IsActive">
             <summary>
             Whether template is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.IsDeprecated">
+            <summary>
+            Whether template is deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.DeprecatedAt">
+            <summary>
+            When the template was deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.MigrationTargetId">
+            <summary>
+            Template ID to migrate existing instances to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.CreatedAt">
@@ -62147,9 +62825,54 @@
             Item quantity (1 for unique, integer for discrete, decimal for continuous)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.SlotIndex">
+            <summary>
+            Slot position in slot-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.SlotX">
+            <summary>
+            X position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.SlotY">
+            <summary>
+            Y position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.Rotated">
+            <summary>
+            Whether item is rotated in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.CurrentDurability">
+            <summary>
+            Current durability value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.BoundToId">
+            <summary>
+            Character ID this item is bound to (if soulbound)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.BoundAt">
+            <summary>
+            When the item was bound to a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.CustomName">
+            <summary>
+            Player-assigned custom name for this instance
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.OriginType">
             <summary>
             How this item instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.OriginId">
+            <summary>
+            Source entity ID for the origin (e.g., crafting recipe, vendor)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.CreatedAt">
@@ -62197,9 +62920,54 @@
             Item quantity (1 for unique, integer for discrete, decimal for continuous)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.SlotIndex">
+            <summary>
+            Slot position in slot-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.SlotX">
+            <summary>
+            X position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.SlotY">
+            <summary>
+            Y position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.Rotated">
+            <summary>
+            Whether item is rotated in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.CurrentDurability">
+            <summary>
+            Current durability value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.BoundToId">
+            <summary>
+            Character ID this item is bound to (if soulbound)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.BoundAt">
+            <summary>
+            When the item was bound to a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.CustomName">
+            <summary>
+            Player-assigned custom name for this instance
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.OriginType">
             <summary>
             How this item instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.OriginId">
+            <summary>
+            Source entity ID for the origin (e.g., crafting recipe, vendor)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.CreatedAt">
@@ -62252,9 +63020,54 @@
             Item quantity (1 for unique, integer for discrete, decimal for continuous)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.SlotIndex">
+            <summary>
+            Slot position in slot-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.SlotX">
+            <summary>
+            X position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.SlotY">
+            <summary>
+            Y position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.Rotated">
+            <summary>
+            Whether item is rotated in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.CurrentDurability">
+            <summary>
+            Current durability value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.BoundToId">
+            <summary>
+            Character ID this item is bound to (if soulbound)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.BoundAt">
+            <summary>
+            When the item was bound to a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.CustomName">
+            <summary>
+            Player-assigned custom name for this instance
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.OriginType">
             <summary>
             How this item instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.OriginId">
+            <summary>
+            Source entity ID for the origin (e.g., crafting recipe, vendor)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.CreatedAt">
@@ -69673,6 +70486,16 @@
             <param name="channel">Message channel for ordering (default 0).</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AuthProxy.GetRevocationListAsync(BeyondImmersion.BannouService.Auth.GetRevocationListRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get current token revocation list
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing RevocationListResponse on success.</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.AuthProxy.RequestPasswordResetEventAsync(BeyondImmersion.BannouService.Auth.PasswordResetRequest,System.UInt16,System.Threading.CancellationToken)">
             <summary>

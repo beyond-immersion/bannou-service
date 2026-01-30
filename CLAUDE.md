@@ -206,9 +206,8 @@ Reference the Makefile in the repository root for all available commands and est
 
 **Required Workflow**:
 1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory
-2. **Generate**: Run `scripts/generate-all-services.sh` to create controllers/models/clients
+2. **Generate**: Run the appropriate generation script (see Essential Commands below)
 3. **Implement**: Write business logic ONLY in service implementation classes (e.g., `SomeService.cs`)
-4. **Format**: Run `make format` to fix line endings and C# syntax
 
 **Architecture Rules**:
 - **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom enum
@@ -263,17 +262,25 @@ plugins/lib-{service}/                # Single consolidated service plugin
 
 ### Essential Commands
 ```bash
-# Service Development
-scripts/generate-all-services.sh     # Generate controllers/models/clients from schemas
-make format                    # Fix line endings + C# formatting
+# Building
 make build                     # Build all services
-make all                       # Complete dev cycle (clean, generate, build, all tests)
+dotnet build                   # Alternative: direct dotnet build
 
-# Testing
+# Code Generation - USE THE MOST GRANULAR COMMAND POSSIBLE
+# If you only changed ONE schema type, use the specific script:
+scripts/generate-config.sh <service>           # Configuration only (changed *-configuration.yaml)
+scripts/generate-service-events.sh <service>   # Events only (changed *-events.yaml)
+scripts/generate-models.sh <service>           # Models only (changed *-api.yaml models)
+scripts/generate-client-events.sh <service>    # Client events only (changed *-client-events.yaml)
+
+# If you changed multiple schema types for ONE service:
+scripts/generate-service.sh <service>          # All generated code for one service
+
+# ONLY use full regeneration when necessary (e.g., changed common schemas):
+scripts/generate-all-services.sh               # Regenerate ALL services (slow - avoid if possible)
+
+# Unit Testing (the ONLY test command Claude should run)
 make test                      # Run unit tests (dotnet test)
-make test-infrastructure       # Infrastructure validation (Docker health)
-make test-http                 # Service-to-service HTTP testing
-make test-edge                 # WebSocket protocol testing
 
 # Assembly Inspection (for understanding external APIs)
 make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
@@ -282,16 +289,28 @@ make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
 make inspect-list PKG="RabbitMQ.Client"
 ```
 
+**⚠️ Generation Script Selection Guide**:
+- Changed `schemas/foo-configuration.yaml` → run `scripts/generate-config.sh foo`
+- Changed `schemas/foo-events.yaml` → run `scripts/generate-service-events.sh foo`
+- Changed `schemas/foo-api.yaml` (models only) → run `scripts/generate-models.sh foo`
+- Changed `schemas/foo-client-events.yaml` → run `scripts/generate-client-events.sh foo`
+- Changed multiple schema files for `foo` → run `scripts/generate-service.sh foo`
+- Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
+
 ### Code Quality Requirements
 - **XML Documentation**: All public classes/methods must have `<summary>` tags
 - **EditorConfig**: LF line endings enforced across all file types
 - **Generated Code**: Never edit files in `*/Generated/` directories
 
 ### Testing Strategy
-**Three-tier validation** ensures comprehensive coverage:
-1. **Infrastructure** (Tier 1): Basic service availability via Docker Compose
-2. **Service Logic** (Tier 2): HTTP API testing with generated clients  
-3. **Client Experience** (Tier 3): WebSocket binary protocol validation
+**Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
+
+**Three-tier architecture** (for reference - Claude does NOT run tiers 2-3):
+1. **Unit Tests**: Claude writes and runs these (`make test` / `dotnet test`)
+2. **HTTP Integration Tests**: Claude writes these but does NOT run them (user runs `make test-http`)
+3. **WebSocket Edge Tests**: Claude writes these but does NOT run them (user runs `make test-edge`)
+
+**Why Claude only runs unit tests**: Integration tests require Docker containers, take 5-10+ minutes, and are disruptive. The user will run them when needed. A successful `dotnet build` is sufficient verification for most code changes.
 
 ### **MANDATORY**: Reference Detailed Procedures
 **When testing fails or debugging complex issues**, you MUST reference the detailed development procedures documentation in the knowledge base for troubleshooting guides, Docker Compose configurations, and step-by-step debugging procedures.
@@ -367,12 +386,12 @@ await _messageBus.PublishAsync("event.topic", eventModel);
 
 ### Common Issues
 - **Generated file errors**: Fix underlying schema, never edit generated files directly
-- **Line ending issues**: Run `make format` after code generation
+- **Line ending issues**: User runs `make format` (Claude does not run this)
 - **Service registration**: Verify `[BannouService]` and `[ServiceConfiguration]` attributes
 - **Build failures**: Check schema syntax in `/schemas/` directory
 - **Enum duplicate errors**: Use consolidated enum definitions in schema `components/schemas` with `$ref` references
 - **Parameter type mismatches**: Ensure interface generation properly handles `$ref` parameters (Provider not string)
-- **Script not found errors**: All generation scripts moved to `scripts/` directory - use `scripts/generate-all-services.sh`
+- **Script not found errors**: All generation scripts moved to `scripts/` directory - use the appropriate granular script
 
 ### Debugging Tools
 - **Swagger UI**: Available at `/swagger` in development
@@ -384,18 +403,17 @@ await _messageBus.PublishAsync("event.topic", eventModel);
 ### Commit Policy (MANDATORY)
 - **Never commit** unless explicitly instructed by user
 - **Always run `git diff` against last commit** before committing to review all changes
-- **Always format** code with `make format` before committing
-- **Run tests** locally before committing (use `make all`)
 - Present changes for user review and get explicit approval first
+- The user handles formatting and integration testing before commits
 
-### Pre-Commit Checklist
+### Pre-Commit Checklist (User Responsibility)
+The user will run these commands when preparing commits - Claude should NOT run them:
 ```bash
-# Required before every commit:
-make format                    # Fix formatting and line endings
-make all                       # Run full test suite (or individual: make test && make test-http && make test-edge)
-git diff HEAD~1               # Review ALL changes since last commit
-# Only commit after user explicitly requests it
+make format                    # User runs: Fix formatting and line endings
+make all                       # User runs: Full test suite
 ```
+
+**Claude's pre-commit responsibility**: Run `git diff HEAD~1` to review changes before committing.
 
 ### Standard Commit Format
 

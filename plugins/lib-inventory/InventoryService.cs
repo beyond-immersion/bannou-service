@@ -179,7 +179,7 @@ public partial class InventoryService : IInventoryService
                 OwnerId = body.OwnerId,
                 OwnerType = body.OwnerType,
                 ContainerType = body.ContainerType,
-                ConstraintModel = body.ConstraintModel.ToString(),
+                ConstraintModel = body.ConstraintModel,
                 IsEquipmentSlot = body.IsEquipmentSlot
             }, cancellationToken);
 
@@ -440,7 +440,7 @@ public partial class InventoryService : IInventoryService
                 OwnerId = model.OwnerId,
                 OwnerType = model.OwnerType,
                 ContainerType = model.ContainerType,
-                ConstraintModel = model.ConstraintModel.ToString(),
+                ConstraintModel = model.ConstraintModel,
                 IsEquipmentSlot = model.IsEquipmentSlot
             }, cancellationToken);
 
@@ -574,7 +574,7 @@ public partial class InventoryService : IInventoryService
                 OwnerId = model.OwnerId,
                 OwnerType = model.OwnerType,
                 ContainerType = model.ContainerType,
-                ConstraintModel = model.ConstraintModel.ToString(),
+                ConstraintModel = model.ConstraintModel,
                 IsEquipmentSlot = model.IsEquipmentSlot
             }, cancellationToken);
 
