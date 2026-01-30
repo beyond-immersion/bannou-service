@@ -317,20 +317,46 @@ Suppressing warnings hides real issues until they manifest as runtime bugs. The 
 - CS0618 - When testing obsolete API detection, must use obsolete members
 - Suppress with scoped `#pragma warning disable/restore`
 
-**Constructor Ownership Transfer (CA2000 Only)**:
-- CA2000 - When passing a disposable to a constructor that takes ownership
-- The analyzer cannot track ownership transfer through constructor parameters
-- Suppress with **inline** `#pragma warning disable/restore CA2000` around ONLY the constructor call
-- Must include a comment explaining the ownership transfer
+**Ownership Transfer Pattern (CA2000)**:
+- CA2000 - When passing a disposable to a constructor/method that takes ownership
+- Use the **try-finally pattern with null assignment** to signal ownership transfer to the analyzer
+- Declare the nullable variable BEFORE the try block, dispose unconditionally in finally
+- Set the local variable to `null` immediately after ownership transfer to prevent double dispose
 - Example:
   ```csharp
-  // CA2000: Ownership transferred to TapHandleImpl constructor - it will dispose
-  #pragma warning disable CA2000
-  var handle = new TapHandleImpl(subscription, ...);
-  #pragma warning restore CA2000
+  SocketsHttpHandler? handler = null;
+  try
+  {
+      handler = new SocketsHttpHandler { ... };
+      _httpClient = new HttpMessageInvoker(handler);
+      handler = null; // Ownership transferred - prevents dispose in finally
+  }
+  finally
+  {
+      handler?.Dispose(); // Only executes if transfer failed
+  }
   ```
+- For IAsyncDisposable, use the same pattern with `await` in finally:
+  ```csharp
+  IAsyncDisposable? subscription = null;
+  try
+  {
+      subscription = await CreateSubscriptionAsync(...);
+      var owner = new OwnerClass(subscription);
+      subscription = null; // Ownership transferred
+      return owner;
+  }
+  finally
+  {
+      if (subscription != null)
+      {
+          await subscription.DisposeAsync();
+      }
+  }
+  ```
+- **NOT allowed**: `#pragma warning disable CA2000` - use try-finally pattern instead
 - **NOT allowed**: File-level, class-level, or project-level CA2000 suppression
-- **NOT allowed**: Suppressing CA2000 for actual leaks - only for constructor ownership transfer
+- **NOT allowed**: Suppressing CA2000 for actual leaks
 
 **Legacy Binding Redirect Warnings**:
 - CS1701, CS1702 - Assembly version binding redirect warnings

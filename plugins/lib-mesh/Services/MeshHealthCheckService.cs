@@ -45,18 +45,24 @@ public class MeshHealthCheckService : BackgroundService
         _logger = logger;
         _configuration = configuration;
 
-        // CA2000: handler ownership transferred to HttpMessageInvoker
-#pragma warning disable CA2000
-        var handler = new SocketsHttpHandler
+        SocketsHttpHandler? handler = null;
+        try
         {
-            UseProxy = false,
-            AllowAutoRedirect = false,
-            AutomaticDecompression = DecompressionMethods.None,
-            UseCookies = false,
-            ConnectTimeout = TimeSpan.FromSeconds(configuration.HealthCheckTimeoutSeconds)
-        };
-        _httpClient = new HttpMessageInvoker(handler);
-#pragma warning restore CA2000
+            handler = new SocketsHttpHandler
+            {
+                UseProxy = false,
+                AllowAutoRedirect = false,
+                AutomaticDecompression = DecompressionMethods.None,
+                UseCookies = false,
+                ConnectTimeout = TimeSpan.FromSeconds(configuration.HealthCheckTimeoutSeconds)
+            };
+            _httpClient = new HttpMessageInvoker(handler);
+            handler = null; // Ownership transferred to HttpMessageInvoker
+        }
+        finally
+        {
+            handler?.Dispose(); // Only executes if ownership transfer failed
+        }
     }
 
     /// <inheritdoc/>

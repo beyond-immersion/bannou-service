@@ -60,39 +60,36 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
             sourceTopic,
             destinationTopic);
 
-        // CA2000: subscription ownership transferred to TapHandleImpl constructor - it will dispose via DisposeAsync()
-#pragma warning disable CA2000
         // Create dynamic subscription that forwards to destination
-        var subscription = await _messageBus.SubscribeDynamicAsync<IBannouEvent>(
-            sourceTopic,
-            async (bannouEvent, ct) =>
-            {
-                await ForwardMessageAsync(
-                    bannouEvent,
-                    tapId,
-                    sourceTopic,
-                    effectiveSourceExchange,
-                    destination,
-                    destinationTopic,
-                    createdAt,
-                    ct);
-            },
-            exchange: effectiveSourceExchange,
-            cancellationToken: cancellationToken);
-
-        var tapHandle = new TapHandleImpl(
-            tapId,
-            sourceTopic,
-            destination,
-            createdAt,
-            subscription,
-            this);
-#pragma warning restore CA2000
-
-        // TapHandleImpl now owns the subscription - it will dispose it via DisposeAsync()
-        // If anything fails below, tapHandle.DisposeAsync() will clean up
+        IAsyncDisposable? subscription = null;
         try
         {
+            subscription = await _messageBus.SubscribeDynamicAsync<IBannouEvent>(
+                sourceTopic,
+                async (bannouEvent, ct) =>
+                {
+                    await ForwardMessageAsync(
+                        bannouEvent,
+                        tapId,
+                        sourceTopic,
+                        effectiveSourceExchange,
+                        destination,
+                        destinationTopic,
+                        createdAt,
+                        ct);
+                },
+                exchange: effectiveSourceExchange,
+                cancellationToken: cancellationToken);
+
+            var tapHandle = new TapHandleImpl(
+                tapId,
+                sourceTopic,
+                destination,
+                createdAt,
+                subscription,
+                this);
+            subscription = null; // Ownership transferred to TapHandleImpl - prevents dispose in finally
+
             _activeTaps[tapId] = tapHandle;
 
             _logger.LogInformation(
@@ -103,10 +100,12 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
 
             return tapHandle;
         }
-        catch
+        finally
         {
-            await tapHandle.DisposeAsync();
-            throw;
+            if (subscription != null)
+            {
+                await subscription.DisposeAsync();
+            }
         }
     }
 

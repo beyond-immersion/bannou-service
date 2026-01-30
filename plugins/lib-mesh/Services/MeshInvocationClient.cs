@@ -46,20 +46,26 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         _configuration = configuration;
         _logger = logger;
 
-        // CA2000: handler ownership transferred to HttpMessageInvoker - it will dispose the handler
-#pragma warning disable CA2000
-        var handler = new SocketsHttpHandler
+        SocketsHttpHandler? handler = null;
+        try
         {
-            UseProxy = false,
-            AllowAutoRedirect = false,
-            AutomaticDecompression = DecompressionMethods.None,
-            UseCookies = false,
-            EnableMultipleHttp2Connections = true,
-            PooledConnectionLifetime = TimeSpan.FromMinutes(configuration.PooledConnectionLifetimeMinutes),
-            ConnectTimeout = TimeSpan.FromSeconds(configuration.ConnectTimeoutSeconds)
-        };
-        _httpClient = new HttpMessageInvoker(handler);
-#pragma warning restore CA2000
+            handler = new SocketsHttpHandler
+            {
+                UseProxy = false,
+                AllowAutoRedirect = false,
+                AutomaticDecompression = DecompressionMethods.None,
+                UseCookies = false,
+                EnableMultipleHttp2Connections = true,
+                PooledConnectionLifetime = TimeSpan.FromMinutes(configuration.PooledConnectionLifetimeMinutes),
+                ConnectTimeout = TimeSpan.FromSeconds(configuration.ConnectTimeoutSeconds)
+            };
+            _httpClient = new HttpMessageInvoker(handler);
+            handler = null; // Ownership transferred to HttpMessageInvoker
+        }
+        finally
+        {
+            handler?.Dispose(); // Only executes if ownership transfer failed
+        }
 
         _endpointCache = new EndpointCache(TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds));
         _circuitBreaker = new CircuitBreaker(
