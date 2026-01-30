@@ -1576,6 +1576,741 @@ NpcEconomicProfile:
 
 **Key finding for data access**: Economic data should be cached regionally to avoid per-NPC API calls.
 
+### A.10 Findings from docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md
+
+**File**: `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` (393 lines)
+**Status**: Design / Partial Implementation
+**Purpose**: Gods as Regional Watchers - domain-specific Event Actors
+
+This document describes how Event Brain actors (gods) access data from the game world.
+
+#### Core Concept: Gods as Long-Running Event Actors (lines 19-30)
+
+Gods are **long-running network tasks** that:
+- Start lazily when a realm they influence becomes active
+- Listen to event streams for domain-relevant events
+- Execute APIs (game server, other services)
+- Spawn Event Agents for specific situations
+- Trigger encounters for Character Agents
+
+**Each god has:**
+- A domain of responsibility (death, forest, monsters, war, commerce)
+- Event stream subscriptions matching their domain
+- Capabilities specific to their role
+- Realms of influence where they operate
+
+#### God Data Access: Event Subscriptions (lines 45-53)
+
+Gods subscribe to domain-specific event topics:
+```yaml
+subscriptions:
+  - "character.*.died"           # Any character death
+  - "combat.*.fatality"          # Combat fatalities
+  - "ritual.necromancy.*"        # Necromantic rituals
+  - "location.graveyard.*"       # Graveyard events
+  - "undead.*.spawned"           # Undead spawning
+```
+
+**Implementation** (lines 299-305):
+```csharp
+await _messageSubscriber.SubscribeAsync<CharacterDiedEvent>(
+    "character.*.died",
+    async (evt, ct) => await OnCharacterDiedAsync(evt, ct),
+    filterPredicate: evt => IsInMyDomain(evt));
+```
+
+#### God Data Access: API Calls (lines 308-319)
+
+Gods execute capabilities via existing infrastructure:
+```csharp
+// Spawn monsters (God of Monsters)
+await _gameServerClient.SpawnMonstersAsync(region, count, tier);
+
+// Trigger encounter (any god)
+await _actorService.StartActorAsync(eventAgentTemplate, context);
+
+// Call game server API
+await _meshClient.InvokeMethodAsync<Req, Resp>("game-server", "endpoint", request);
+```
+
+#### Relationship to Existing Infrastructure (lines 364-374)
+
+| Existing Component | Role in God Pattern |
+|-------------------|---------------------|
+| `ActorRunner` | Runs god actors (long-running Event Brains) |
+| `IMessageBus` | Gods subscribe to domain event streams |
+| Event Brain handlers | Gods use `emit_perception`, `schedule_event`, etc. |
+| `ActorService.StartActorAsync` | Gods spawn Event Agents |
+| **lib-mesh** | **Gods call game server APIs** |
+| Encounter system | Gods trigger encounters via existing endpoints |
+
+**Key quote (line 373)**: "No new infrastructure needed - gods are Event Brain actors using existing capabilities."
+
+#### Two Actor Patterns (lines 258-268)
+
+| Scenario | Pattern | Data Access |
+|----------|---------|-------------|
+| Monster spawning | God Pattern | Event subscription + API calls |
+| Arena fight | Direct Coordinator | Known participants at spawn |
+| Death events | God Pattern | Domain event subscription |
+| Cutscene | Direct Coordinator | Triggered by game, known context |
+| Duel between players | Direct Coordinator | Explicit trigger |
+
+#### Domain-Specific Filtering (lines 163-198)
+
+The document explicitly rejects generic "interestingness scoring" in favor of domain-specific filters:
+
+**Wrong approach:**
+```yaml
+interestingness:
+  power_proximity: 0.3
+  antagonism: 0.4
+  spawn_threshold: 0.7
+```
+
+**Right approach:**
+```yaml
+god_of_death:
+  cares_about:
+    - deaths (especially dramatic or witnessed)
+    - necromancy
+    - graveyards
+
+god_of_commerce:
+  cares_about:
+    - major transactions
+    - market disruptions
+    - trade route events
+```
+
+**Data access implication**: Each god's evaluation logic determines what data it needs, not a generic system.
+
+#### God Lifecycle (lines 135-161)
+
+```
+Realm Activation
+       │
+       ▼
+God Actor Started (if has influence in realm)
+  1. Subscribe to domain event streams     ← IMessageBus
+  2. Query initial realm state             ← API calls via lib-mesh
+  3. Enter main processing loop
+       │
+       ▼
+Event Processing Loop (long-running)
+  - Receive domain events from subscriptions
+  - Evaluate against god's interests
+  - Execute capabilities (spawn, trigger, call APIs)
+  - Spawn Event Agents for specific situations
+       │
+       ▼
+Realm Deactivation → God Actor Stopped
+```
+
+### A.11 Findings from plugins/lib-actor/Caching/PersonalityCache.cs
+
+**File**: `plugins/lib-actor/Caching/PersonalityCache.cs` (220 lines)
+**Namespace**: `BeyondImmersion.BannouService.Actor.Caching`
+**Plugin**: lib-actor
+
+This file shows the **actual implementation** of how actors access character data from other plugins.
+
+#### Data Access Pattern: Generated Client + In-Memory Cache (lines 62-68, 106-111, 149-154)
+
+```csharp
+using var scope = _scopeFactory.CreateScope();
+var client = scope.ServiceProvider.GetRequiredService<ICharacterPersonalityClient>();
+
+var response = await client.GetPersonalityAsync(
+    new GetPersonalityRequest { CharacterId = characterId },
+    ct);
+```
+
+**Key pattern**: Uses generated service clients (`ICharacterPersonalityClient`, `ICharacterHistoryClient`) via lib-mesh, NOT direct state store access.
+
+#### Three Data Types Cached (lines 25-27)
+
+```csharp
+private readonly ConcurrentDictionary<Guid, CachedPersonality> _personalityCache = new();
+private readonly ConcurrentDictionary<Guid, CachedCombatPreferences> _combatCache = new();
+private readonly ConcurrentDictionary<Guid, CachedBackstory> _backstoryCache = new();
+```
+
+| Data Type | Source Service | Method |
+|-----------|----------------|--------|
+| Personality traits | `ICharacterPersonalityClient` | `GetPersonalityAsync` |
+| Combat preferences | `ICharacterPersonalityClient` | `GetCombatPreferencesAsync` |
+| Backstory elements | `ICharacterHistoryClient` | `GetBackstoryAsync` |
+
+#### TTL-Based Cache (lines 32-33)
+
+```csharp
+private TimeSpan CacheTtl => TimeSpan.FromMinutes(_configuration.PersonalityCacheTtlMinutes);
+```
+
+Configuration: `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` (default: 5 minutes)
+
+#### Stale-If-Error Fallback (lines 86-88, 129-131, 174-175)
+
+```csharp
+catch (Exception ex)
+{
+    _logger.LogWarning(ex, "Failed to load personality for character {CharacterId}", characterId);
+    return cached?.Personality; // Return stale data if available
+}
+```
+
+**Key finding**: If service call fails, returns stale cached data for resilience.
+
+#### Cache Invalidation (lines 178-194)
+
+```csharp
+public void Invalidate(Guid characterId)
+{
+    _personalityCache.TryRemove(characterId, out _);
+    _combatCache.TryRemove(characterId, out _);
+    _backstoryCache.TryRemove(characterId, out _);
+}
+```
+
+Supports per-character invalidation (for event-driven cache refresh) and full cache clear.
+
+#### Implementation Pattern Summary
+
+1. **Check in-memory cache** (ConcurrentDictionary with TTL)
+2. **On miss: Call generated client** (via IServiceScopeFactory for scoped dependency)
+3. **Cache response with TTL**
+4. **On error: Return stale data if available**
+
+This is Pattern 2 (Variable Provider with cached API calls) from the main document, implemented in practice.
+
+### A.12 Findings from plugins/lib-actor/Runtime/PersonalityProvider.cs
+
+**File**: `plugins/lib-actor/Runtime/PersonalityProvider.cs` (95 lines)
+**Namespace**: `BeyondImmersion.BannouService.Actor.Runtime`
+**Plugin**: lib-actor
+
+This file shows how the cache bridges to ABML variable access.
+
+#### IVariableProvider Interface Implementation (lines 15, 21)
+
+```csharp
+public sealed class PersonalityProvider : IVariableProvider
+{
+    public string Name => "personality";
+```
+
+This enables `${personality.*}` access in ABML expressions.
+
+#### Initialization from Cached Response (lines 27-41)
+
+```csharp
+public PersonalityProvider(PersonalityResponse? personality)
+{
+    _traits = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+    _version = personality?.Version ?? 0;
+
+    if (personality?.Traits != null)
+    {
+        foreach (var trait in personality.Traits)
+        {
+            // Store both as lowercase and original enum name for flexible access
+            _traits[trait.Axis.ToString()] = trait.Value;
+            _traits[trait.Axis.ToString().ToLowerInvariant()] = trait.Value;
+        }
+    }
+}
+```
+
+**Key insight**: The provider is constructed from a `PersonalityResponse` (from cache/API), not directly from state store.
+
+#### Path Resolution (lines 44-72)
+
+Supports multiple access patterns:
+| ABML Expression | Returns |
+|-----------------|---------|
+| `${personality.version}` | Version counter (int) |
+| `${personality.traits}` | All traits (Dictionary) |
+| `${personality.traits.AGGRESSION}` | Specific trait value (float) |
+| `${personality.openness}` | Direct trait access (float) |
+| `${personality.OPENNESS}` | Case-insensitive direct access (float) |
+
+#### Data Flow Summary
+
+```
+PersonalityCache (API + TTL cache)
+    │
+    │ GetOrLoadAsync(characterId)
+    ▼
+PersonalityResponse
+    │
+    │ new PersonalityProvider(response)
+    ▼
+PersonalityProvider (IVariableProvider)
+    │
+    │ GetValue(["openness"])
+    ▼
+ABML Expression: ${personality.openness}
+```
+
+This shows the complete data access chain from external service to ABML variable.
+
+### A.13 Findings from plugins/lib-actor/Caching/EncounterCache.cs
+
+**File**: `plugins/lib-actor/Caching/EncounterCache.cs` (323 lines)
+**Namespace**: `BeyondImmersion.BannouService.Actor.Caching`
+**Plugin**: lib-actor
+
+This file shows how actors access character encounter data (relationships, memories of past interactions).
+
+#### Four Types of Cached Encounter Data (lines 23-26)
+
+```csharp
+private readonly ConcurrentDictionary<Guid, CachedEncounterList> _encounterListCache = new();
+private readonly ConcurrentDictionary<string, CachedSentiment> _sentimentCache = new();
+private readonly ConcurrentDictionary<string, CachedHasMet> _hasMetCache = new();
+private readonly ConcurrentDictionary<string, CachedEncounterList> _pairEncounterCache = new();
+```
+
+| Cache | Key Type | API Method | Purpose |
+|-------|----------|------------|---------|
+| `_encounterListCache` | `Guid` (characterId) | `QueryByCharacterAsync` | All encounters for a character |
+| `_sentimentCache` | `string` (pair key) | `GetSentimentAsync` | Character A's sentiment toward B |
+| `_hasMetCache` | `string` (pair key) | `HasMetAsync` | Have characters A and B ever met? |
+| `_pairEncounterCache` | `string` (pair key) | `QueryBetweenAsync` | All encounters between A and B |
+
+#### Consistent Pair Key Generation (lines 293-297)
+
+```csharp
+private static string GetPairKey(Guid charA, Guid charB)
+{
+    // Always put the smaller GUID first for consistent keying
+    return charA < charB ? $"{charA}:{charB}" : $"{charB}:{charA}";
+}
+```
+
+**Important**: Pair keys are order-independent (A→B same key as B→A), matching the bidirectional nature of "has met" checks.
+
+#### Service Client Usage (lines 61-70, 112-121, 165-174, 218-228)
+
+All methods use `ICharacterEncounterClient`:
+```csharp
+using var scope = _scopeFactory.CreateScope();
+var client = scope.ServiceProvider.GetRequiredService<ICharacterEncounterClient>();
+
+var response = await client.GetSentimentAsync(
+    new GetSentimentRequest
+    {
+        CharacterId = characterId,
+        TargetCharacterId = targetCharacterId
+    },
+    ct);
+```
+
+#### Configuration (lines 31, 68, 226)
+
+- `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` (default: 5 minutes)
+- `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` (default: 50)
+
+#### Same Pattern as PersonalityCache
+
+1. Check ConcurrentDictionary cache with TTL
+2. On miss: Call generated client
+3. Cache response
+4. On error: Return stale data
+
+**This confirms the consistent data access pattern**: Actors access cross-plugin data via generated clients with in-memory TTL caching, not direct state store access.
+
+### A.14 Findings from plugins/lib-actor/Runtime/ActorRunner.cs
+
+**File**: `plugins/lib-actor/Runtime/ActorRunner.cs` (1132 lines)
+**Namespace**: `BeyondImmersion.BannouService.Actor.Runtime`
+**Plugin**: lib-actor
+
+This file is the core actor runtime showing how all data access patterns come together.
+
+#### Cache Dependencies (lines 31-36)
+
+```csharp
+private readonly IStateStore<ActorStateSnapshot> _stateStore;
+private readonly IBehaviorDocumentCache _behaviorCache;
+private readonly IPersonalityCache _personalityCache;
+private readonly IEncounterCache _encounterCache;
+private readonly IDocumentExecutor _executor;
+private readonly IExpressionEvaluator _expressionEvaluator;
+```
+
+**Key finding**: ActorRunner depends on TWO cache interfaces:
+- `IPersonalityCache` (personality, combat prefs, backstory)
+- `IEncounterCache` (encounter list, sentiment, has-met)
+
+#### CreateExecutionScopeAsync - The Complete Data Flow (lines 678-769)
+
+```csharp
+private async Task<VariableScope> CreateExecutionScopeAsync(CancellationToken ct)
+{
+    var scope = new VariableScope();
+
+    // Agent identity (from ActorRunner internal state)
+    scope.SetValue("agent", new Dictionary<string, object?>
+    {
+        ["id"] = ActorId,
+        ["behavior_id"] = _template.BehaviorRef,
+        ["character_id"] = CharacterId?.ToString(),
+        ["category"] = Category,
+        ["template_id"] = TemplateId.ToString()
+    });
+
+    // ... more scope setup ...
+
+    // Load personality, combat preferences, backstory, and encounters for character-based actors
+    if (CharacterId.HasValue)
+    {
+        var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
+        scope.RegisterProvider(new PersonalityProvider(personality));
+
+        var combatPrefs = await _personalityCache.GetCombatPreferencesOrLoadAsync(CharacterId.Value, ct);
+        scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
+
+        var backstory = await _personalityCache.GetBackstoryOrLoadAsync(CharacterId.Value, ct);
+        scope.RegisterProvider(new BackstoryProvider(backstory));
+
+        // Load encounter data for the character
+        var encounters = await _encounterCache.GetEncountersOrLoadAsync(CharacterId.Value, ct);
+        scope.RegisterProvider(new EncountersProvider(encounters));
+    }
+    else
+    {
+        // Register empty providers for non-character actors to avoid null reference issues
+        scope.RegisterProvider(new PersonalityProvider(null));
+        scope.RegisterProvider(new CombatPreferencesProvider(null));
+        scope.RegisterProvider(new BackstoryProvider(null));
+        scope.RegisterProvider(new EncountersProvider(null));
+    }
+
+    return scope;
+}
+```
+
+#### Complete Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     ActorRunner.CreateExecutionScopeAsync()             │
+│                                                                         │
+│  1. IPersonalityCache.GetOrLoadAsync(characterId)                       │
+│     └─> ICharacterPersonalityClient.GetPersonalityAsync()               │
+│         └─> PersonalityResponse                                         │
+│             └─> new PersonalityProvider(response)                       │
+│                 └─> scope.RegisterProvider()                            │
+│                     └─> ${personality.openness} in ABML                 │
+│                                                                         │
+│  2. IPersonalityCache.GetCombatPreferencesOrLoadAsync(characterId)      │
+│     └─> ICharacterPersonalityClient.GetCombatPreferencesAsync()         │
+│         └─> CombatPreferencesResponse                                   │
+│             └─> new CombatPreferencesProvider(response)                 │
+│                 └─> scope.RegisterProvider()                            │
+│                     └─> ${combat.preferred_weapon_type} in ABML         │
+│                                                                         │
+│  3. IPersonalityCache.GetBackstoryOrLoadAsync(characterId)              │
+│     └─> ICharacterHistoryClient.GetBackstoryAsync()                     │
+│         └─> BackstoryResponse                                           │
+│             └─> new BackstoryProvider(response)                         │
+│                 └─> scope.RegisterProvider()                            │
+│                     └─> ${backstory.origin} in ABML                     │
+│                                                                         │
+│  4. IEncounterCache.GetEncountersOrLoadAsync(characterId)               │
+│     └─> ICharacterEncounterClient.QueryByCharacterAsync()               │
+│         └─> EncounterListResponse                                       │
+│             └─> new EncountersProvider(response)                        │
+│                 └─> scope.RegisterProvider()                            │
+│                     └─> ${encounters.count} in ABML                     │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### State Update Publishing (lines 894-944)
+
+After behavior execution, state updates are published:
+```csharp
+await _meshClient.InvokeMethodAsync(
+    targetAppId,
+    "character/state-update",
+    evt,
+    ct);
+```
+
+State updates are routed DIRECTLY to the game server via `IMeshInvocationClient`, not via pub/sub (if source app-id is known).
+
+#### Internal State vs External Data (lines 683-736)
+
+The scope contains TWO types of data:
+1. **Internal state** (from ActorState class): `feelings`, `goals`, `memories`, `working_memory`
+2. **External data** (from caches): `personality`, `combat`, `backstory`, `encounters`
+
+```csharp
+// Internal state (ActorState)
+scope.SetValue("feelings", _state.GetAllFeelings());
+scope.SetValue("goals", new Dictionary<string, object?> { ... });
+scope.SetValue("memories", _state.GetAllMemories().ToDictionary(...));
+scope.SetValue("working_memory", _state.GetAllWorkingMemory());
+
+// External data (via IVariableProvider)
+scope.RegisterProvider(new PersonalityProvider(personality));
+scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
+scope.RegisterProvider(new BackstoryProvider(backstory));
+scope.RegisterProvider(new EncountersProvider(encounters));
+```
+
+### A.15 Findings from docs/planning/ITEM_SYSTEM_REFERENCE.md
+
+**File**: `docs/planning/ITEM_SYSTEM_REFERENCE.md` (745 lines)
+**Created**: 2026-01-22
+**Purpose**: Path of Exile item system as complexity benchmark
+
+This document is a reference for future item system complexity but contains relevant architectural insights.
+
+#### Key Insight for GOAP Data Access (lines 11-21)
+
+**Quote** (lines 16-21):
+> "PoE's complexity lives **above** basic item/inventory management:
+> - **lib-item** handles: templates, instances, ownership, basic state
+> - **lib-inventory** handles: containers, placement, movement
+> - **Future plugins** handle: affixes, crafting, sockets, influences
+>
+> Our foundation plugins should be **unopinionated** about what makes items complex - that's for higher-level plugins."
+
+**Implication for actor data access**: GOAP/actors access item data through lib-item and lib-inventory APIs, not lower-level state stores. Complex item logic (affixes, sockets) lives in higher-layer plugins.
+
+#### Future Plugin Hierarchy (lines 649-690)
+
+Shows layered plugin architecture:
+```
+lib-item (foundation)
+└── lib-inventory (foundation)
+    └── lib-affix (builds on lib-item)
+        └── lib-socket (builds on lib-item)
+            └── lib-crafting (builds on lib-affix, lib-socket)
+```
+
+**Implication**: Actors needing item data should call lib-item API, which provides unified access regardless of whether items have affixes, sockets, etc.
+
+#### Caching Strategy (lines 630-644)
+
+```
+Redis Cache:
+├── affix_pool:{item_class}:{influence}:{ilvl} → Valid affixes (TTL: 1h)
+├── base_types:{class} → Base type list (TTL: 24h)
+├── unique_items:all → All uniques (TTL: 24h)
+└── item:{id}:computed_stats → Computed item stats (invalidate on change)
+```
+
+**Note**: This is proposed for future lib-affix, not currently implemented. Shows caching pattern consistent with PersonalityCache/EncounterCache.
+
+### A.16 Findings from plugins/lib-actor/Runtime/EncountersProvider.cs
+
+**File**: `plugins/lib-actor/Runtime/EncountersProvider.cs` (279 lines)
+**Namespace**: `BeyondImmersion.BannouService.Actor.Runtime`
+**Plugin**: lib-actor
+
+This file shows the complete EncountersProvider implementation for ABML variable access.
+
+#### IVariableProvider Implementation (lines 29, 37)
+
+```csharp
+public sealed class EncountersProvider : IVariableProvider
+{
+    public string Name => "encounters";
+```
+
+This enables `${encounters.*}` access in ABML expressions.
+
+#### Supported ABML Paths (lines 15-28)
+
+From XML documentation:
+| ABML Expression | Returns |
+|-----------------|---------|
+| `${encounters.recent}` | List of recent encounters |
+| `${encounters.count}` | Total encounter count |
+| `${encounters.grudges}` | Characters with sentiment < -0.5 |
+| `${encounters.allies}` | Characters with sentiment > 0.5 |
+| `${encounters.has_met.{characterId}}` | Boolean - whether met character |
+| `${encounters.sentiment.{characterId}}` | Float - sentiment toward character |
+| `${encounters.last_context.{characterId}}` | String - last encounter context |
+| `${encounters.last_emotion.{characterId}}` | String - last emotional impact |
+| `${encounters.encounter_count.{characterId}}` | Int - count with character |
+| `${encounters.dominant_emotion.{characterId}}` | String - dominant emotion |
+
+#### Constructor Parameters (lines 46-56)
+
+```csharp
+public EncountersProvider(
+    EncounterListResponse? encounters,
+    Dictionary<Guid, SentimentResponse>? sentiments = null,
+    Dictionary<Guid, HasMetResponse>? hasMet = null,
+    Dictionary<Guid, EncounterListResponse>? pairEncounters = null)
+```
+
+**Note**: Can be pre-loaded with sentiment, has-met, and pair encounter data for characters the NPC knows about. This allows lazy loading of specific character data only when needed.
+
+#### Path Resolution Example (lines 98-135)
+
+```csharp
+// Handle ${encounters.has_met.{characterId}}
+if (firstSegment.Equals("has_met", StringComparison.OrdinalIgnoreCase))
+{
+    return _hasMet.TryGetValue(characterId, out var hasMet) && hasMet.HasMet;
+}
+
+// Handle ${encounters.sentiment.{characterId}}
+if (firstSegment.Equals("sentiment", StringComparison.OrdinalIgnoreCase))
+{
+    return _sentiments.TryGetValue(characterId, out var sentiment) ? sentiment.Sentiment : 0.0f;
+}
+```
+
+#### Computed Properties: Grudges and Allies (lines 211-240)
+
+```csharp
+// Grudges: sentiment < -0.5
+private List<Dictionary<string, object?>> GetGrudges()
+{
+    return _sentiments
+        .Where(kv => kv.Value.Sentiment < -0.5f)
+        .Select(kv => new Dictionary<string, object?>
+        {
+            ["character_id"] = kv.Key.ToString(),
+            ["sentiment"] = kv.Value.Sentiment,
+            ["encounter_count"] = kv.Value.EncounterCount,
+            ["dominant_emotion"] = kv.Value.DominantEmotion?.ToString()
+        })
+        .ToList();
+}
+
+// Allies: sentiment > 0.5
+private List<Dictionary<string, object?>> GetAllies()
+{
+    return _sentiments
+        .Where(kv => kv.Value.Sentiment > 0.5f)
+        // ... same projection
+}
+```
+
+**Key insight**: The provider computes derived properties (grudges, allies) from cached sentiment data. GOAP behaviors can use `${encounters.grudges}` without additional API calls.
+
+#### Complete Variable Provider Pattern Summary
+
+All four providers follow the same pattern:
+
+| Provider | Name | Source Cache | Source Service |
+|----------|------|--------------|----------------|
+| `PersonalityProvider` | `personality` | `IPersonalityCache` | `ICharacterPersonalityClient` |
+| `CombatPreferencesProvider` | `combat` | `IPersonalityCache` | `ICharacterPersonalityClient` |
+| `BackstoryProvider` | `backstory` | `IPersonalityCache` | `ICharacterHistoryClient` |
+| `EncountersProvider` | `encounters` | `IEncounterCache` | `ICharacterEncounterClient` |
+
+### A.17 Findings from plugins/lib-actor/Runtime/BackstoryProvider.cs
+
+**File**: `plugins/lib-actor/Runtime/BackstoryProvider.cs` (150 lines)
+**Namespace**: `BeyondImmersion.BannouService.Actor.Runtime`
+**Plugin**: lib-actor
+
+This file shows the BackstoryProvider implementation for ABML variable access.
+
+#### IVariableProvider Implementation (lines 15, 22)
+
+```csharp
+public sealed class BackstoryProvider : IVariableProvider
+{
+    public string Name => "backstory";
+```
+
+This enables `${backstory.*}` access in ABML expressions.
+
+#### Supported ABML Paths (lines 13, 66-101)
+
+| ABML Expression | Returns |
+|-----------------|---------|
+| `${backstory.elements}` | All elements |
+| `${backstory.elements.TRAUMA}` | All elements of type TRAUMA |
+| `${backstory.origin}` | Value of first ORIGIN element |
+| `${backstory.fear}` | Value of first FEAR element |
+| `${backstory.goal}` | Value of first GOAL element |
+| `${backstory.origin.key}` | Key of ORIGIN element |
+| `${backstory.origin.value}` | Value of ORIGIN element |
+| `${backstory.origin.strength}` | Strength of ORIGIN element |
+| `${backstory.origin.relatedentityid}` | Related entity ID |
+
+#### Element Type Support (from character-history schema)
+
+Nine backstory element types:
+- `ORIGIN` - Where character came from
+- `OCCUPATION` - Current or past profession
+- `TRAINING` - Skills/abilities learned
+- `TRAUMA` - Negative experiences
+- `ACHIEVEMENT` - Positive accomplishments
+- `SECRET` - Hidden knowledge
+- `GOAL` - Character motivations
+- `FEAR` - What character avoids
+- `BELIEF` - Core values
+
+#### Data Structure (lines 17-19)
+
+```csharp
+private readonly Dictionary<string, BackstoryElement> _elementsByType;      // First of each type
+private readonly Dictionary<string, List<BackstoryElement>> _elementGroupsByType; // All of each type
+private readonly List<BackstoryElement> _allElements;                       // Complete list
+```
+
+**Key insight**: Provider supports both "first element of type" (for simple access like `${backstory.origin}`) and "all elements of type" (for iteration like `${backstory.elements.TRAUMA}`).
+
+---
+
+## Appendix B: Summary of Confirmed Patterns
+
+### B.1 Cross-Plugin Data Access Pattern (CONFIRMED)
+
+```
+External Plugin Service
+    │ GetXxxAsync() via lib-mesh
+    ▼
+Generated Client (IXxxClient)
+    │ Call via IServiceScopeFactory
+    ▼
+Cache Layer (ConcurrentDictionary + TTL)
+    │ PersonalityCache, EncounterCache
+    ▼
+Variable Provider (IVariableProvider)
+    │ PersonalityProvider, BackstoryProvider, etc.
+    ▼
+ABML Expression Resolution
+    │ ${personality.openness}, ${encounters.grudges}
+    ▼
+Behavior Execution
+```
+
+### B.2 Confirmed Rules
+
+1. **Actors do NOT access other plugins' state stores directly**
+2. **Actors use generated service clients via lib-mesh**
+3. **Caching is done in-memory with TTL (5 minutes default)**
+4. **Stale-if-error fallback for resilience**
+5. **Variable Providers bridge cached responses to ABML expressions**
+6. **The `agent-memories` store is correctly used by lib-behavior, not lib-actor**
+7. **The `service:` field in state-stores.yaml is documentation only, not access control**
+
+### B.3 Files That Implement This Pattern
+
+| File | Role |
+|------|------|
+| `lib-actor/Caching/PersonalityCache.cs` | Cache for personality/combat/backstory |
+| `lib-actor/Caching/EncounterCache.cs` | Cache for encounters/sentiment/has-met |
+| `lib-actor/Runtime/PersonalityProvider.cs` | `${personality.*}` provider |
+| `lib-actor/Runtime/CombatPreferencesProvider.cs` | `${combat.*}` provider |
+| `lib-actor/Runtime/BackstoryProvider.cs` | `${backstory.*}` provider |
+| `lib-actor/Runtime/EncountersProvider.cs` | `${encounters.*}` provider |
+| `lib-actor/Runtime/ActorRunner.cs` | Orchestrates loading and scope creation |
+| `lib-behavior/Cognition/ActorLocalMemoryStore.cs` | Memory storage (uses agent-memories store) |
+
 ---
 
 *This document establishes the foundational patterns for actor data access. Future implementations should reference these patterns to maintain architectural consistency.*
