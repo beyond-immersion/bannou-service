@@ -198,6 +198,36 @@ Issues that are likely bugs, missing implementation, or design oversights, but w
 
 ---
 
+### 14. Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+#### Marker Format
+
+Work tracking uses HTML comment markers placed immediately after the item being tracked:
+
+```markdown
+- Some bug that needs fixing
+  <!-- AUDIT:IN_PROGRESS:2026-01-29 -->
+
+- Design issue that needs human decisions
+  <!-- AUDIT:NEEDS_DESIGN:2026-01-28:https://github.com/org/repo/issues/42 -->
+
+- Item blocked on external dependency
+  <!-- AUDIT:BLOCKED:2026-01-27:https://github.com/org/repo/issues/41 -->
+```
+
+**Marker statuses:**
+| Status | Meaning | Issue Link |
+|--------|---------|------------|
+| `IN_PROGRESS` | Currently being worked on by automation or developer | Optional |
+| `NEEDS_DESIGN` | Investigated but requires human design decisions | **Required** |
+| `BLOCKED` | Waiting on external dependency or other issue | Optional |
+
+**Important**: These markers are machine-managed. Do not remove or modify them during document maintenance - the `/audit-plugin` workflow manages their lifecycle.
+
+---
+
 ## Rules
 
 1. **One visual aid maximum** per document unless the plugin genuinely has two independent subsystems that cannot be combined into one readable diagram. The visual must add information not already present in the tables.
@@ -207,3 +237,4 @@ Issues that are likely bugs, missing implementation, or design oversights, but w
 5. **Configuration must be complete** - every property in the configuration schema must appear in the configuration table.
 6. **State key patterns must be complete** - every key prefix used in the service code must be documented.
 7. **Event coverage must be complete** - every published and consumed event topic must be listed.
+8. **Preserve AUDIT markers** - Never remove or modify `<!-- AUDIT:... -->` markers during document maintenance. These are managed by the `/audit-plugin` workflow and track active development work.

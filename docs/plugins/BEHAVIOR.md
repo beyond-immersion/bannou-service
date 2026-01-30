@@ -17,9 +17,10 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for behavior metadata, bundle membership, GOAP metadata, memory storage |
+| lib-state (`IStateStoreFactory`) | Redis persistence for behavior metadata, bundle membership, GOAP metadata |
 | lib-messaging (`IMessageBus`) | Publishing behavior lifecycle events, compilation failure events, GOAP plan events, cinematic extension events; error event publishing |
-| lib-mesh (`IMeshInvocationClient`) | Service-to-service calls for asset storage and retrieval of compiled bytecode |
+| lib-asset (`IAssetClient`) | Storing and retrieving compiled bytecode via pre-signed URLs |
+| `IHttpClientFactory` | HTTP client for asset upload operations |
 | bannou-service (ABML Parser: `DocumentParser`) | YAML-to-AST parsing of ABML documents |
 | bannou-service (ABML Documents) | `AbmlDocument`, `Flow`, `ActionNode` and subtypes for AST representation |
 | bannou-service (Runtime types) | `BehaviorOpcode`, `BehaviorModel`, `BehaviorModelInterpreter`, `BehaviorModelType`, `IntentChannel` |
@@ -37,19 +38,22 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 ## State Storage
 
-**Stores**: 1 state store (Redis)
+**Stores**: 1 state store (Redis) + 1 cognition subsystem store
 
-| Store | Backend | Purpose | TTL |
-|-------|---------|---------|-----|
-| `behavior-statestore` | Redis | Behavior metadata, bundle membership, GOAP metadata, memory entries | N/A |
+| Store | Backend | Purpose | TTL | Owner |
+|-------|---------|---------|-----|-------|
+| `behavior-statestore` | Redis | Behavior metadata, bundle membership, GOAP metadata | N/A | lib-behavior |
+| `agent-memories` | Redis | Memory entries for cognition pipeline | N/A | Actor subsystem (implemented by lib-behavior's `ActorLocalMemoryStore`) |
 
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `behavior-metadata:{behaviorId}` | Behavior metadata JSON | Compiled behavior definition metadata |
-| `bundle-membership:{bundleId}` | Bundle membership JSON | Bundle-to-behavior association index |
-| `goap-metadata:{planId}` | GOAP metadata JSON | Generated plan metadata for debugging |
-| `memory:{entityId}:{memoryId}` | Memory JSON | Individual memory entries per agent |
-| `memory-index:{entityId}` | List of memory IDs | Memory index for per-entity retrieval |
+> **Architecture Note**: The `agent-memories` store is part of the Actor/Behavior cognition subsystem. While attributed to `service: Actor` in state-stores.yaml (reflecting the encompassing actor system), all implementation code lives in lib-behavior's `ActorLocalMemoryStore`. This is intentional - lib-actor manages execution infrastructure while lib-behavior manages cognition. See [Actor Data Access Patterns](../planning/ACTOR_DATA_ACCESS_PATTERNS.md) for the architectural rationale and cross-plugin data access guidelines.
+
+| Key Pattern | Store | Data Type | Purpose |
+|-------------|-------|-----------|---------|
+| `behavior-metadata:{behaviorId}` | behavior | Behavior metadata JSON | Compiled behavior definition metadata |
+| `bundle-membership:{bundleId}` | behavior | Bundle membership JSON | Bundle-to-behavior association index |
+| `goap-metadata:{planId}` | behavior | GOAP metadata JSON | Generated plan metadata for debugging |
+| `memory:{entityId}:{memoryId}` | agent-memories | Memory JSON | Individual memory entries per agent |
+| `memory-index:{entityId}` | agent-memories | List of memory IDs | Memory index for per-entity retrieval |
 
 ---
 
@@ -125,14 +129,15 @@ This plugin does not consume external events (confirmed by `x-event-subscription
 | `BehaviorServiceConfiguration` | Singleton | All 33 config properties (urgency, attention, memory, compiler) |
 | `IStateStoreFactory` | Singleton | Access to behavior-statestore |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IMeshInvocationClient` | Scoped | Asset service integration for bytecode storage |
+| `IAssetClient` | Scoped | Asset service integration for bytecode storage |
+| `IHttpClientFactory` | Scoped | HTTP client for asset upload operations |
 | `IEventConsumer` | Scoped | Event consumer registration (lifecycle) |
 | `IGoapPlanner` (via `GoapPlanner`) | Per-use (stateless) | A* search for GOAP planning |
 | `BehaviorCompiler` | Per-use (stateless) | ABML-to-bytecode compilation pipeline |
 | `SemanticAnalyzer` | Per-use (internal to compiler) | Pre-compilation validation pass |
 | `IBehaviorBundleManager` | Scoped | Bundle creation and management |
 | `BehaviorModelCache` | Singleton (in-memory) | Per-character interpreter caching with fallback chains |
-| `IMemoryStore` (via `ActorLocalMemoryStore`) | Scoped | Keyword-based memory storage and retrieval |
+| `IMemoryStore` (via `ActorLocalMemoryStore`) | Scoped | Keyword-based memory storage and retrieval (uses `agent-memories` store owned by Actor) |
 | `CognitionConstants` | Static | Configurable cognition pipeline thresholds (initialized from config) |
 
 Service lifetime is **Scoped** (per-request). `BehaviorModelCache` is a singleton in-memory cache using `ConcurrentDictionary`. `CognitionConstants` is static but initialized from `BehaviorServiceConfiguration` once at service startup.
@@ -474,3 +479,14 @@ No bugs identified.
 
 18. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
 
+---
+
+## Work Tracking
+
+### AUDIT Markers
+
+No AUDIT markers present in this document.
+
+### Implementation Gaps
+
+No implementation gaps identified requiring AUDIT markers.

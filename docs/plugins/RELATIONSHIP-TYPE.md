@@ -3,7 +3,7 @@
 > **Plugin**: lib-relationship-type
 > **Schema**: schemas/relationship-type-api.yaml
 > **Version**: 2.0.0
-> **State Store**: relationship-type (Redis/MySQL)
+> **State Store**: relationship-type-statestore (MySQL)
 
 ---
 
@@ -17,7 +17,7 @@ Hierarchical relationship type definitions for entity-to-entity relationships in
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis/MySQL persistence for type definitions, code indexes, parent indexes |
+| lib-state (`IStateStoreFactory`) | MySQL persistence for type definitions, code indexes, parent indexes |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events; error event publishing |
 | lib-messaging (`IEventConsumer`) | Event handler registration (partial class pattern) |
 | lib-relationship (`IRelationshipClient`) | Listing and migrating relationships during merge operations |
@@ -29,20 +29,22 @@ Hierarchical relationship type definitions for entity-to-entity relationships in
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-character | Uses `IRelationshipTypeClient` for type validation in character relationships |
-| lib-relationship | References type definitions for relationship creation/validation |
+
+Note: lib-relationship does not currently use `IRelationshipTypeClient`. The dependency is inverted - relationship-type depends on lib-relationship (`IRelationshipClient`) for merge operations, not the other way around.
 
 ---
 
 ## State Storage
 
-**Store**: `relationship-type` (via `StateStoreDefinitions.RelationshipType`)
+**Store**: `relationship-type-statestore` (via `StateStoreDefinitions.RelationshipType`)
+**Backend**: MySQL
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `type:{typeId}` | `RelationshipTypeModel` | Individual type definition |
-| `code-index:{CODE}` | `string` | Code → type ID reverse lookup (uppercase) |
-| `parent-index:{parentId}` | `List<string>` | Child type IDs for a parent |
-| `all-types` | `List<string>` | Global index of all type IDs |
+| `code-index:{CODE}` | `string` | Code → type ID reverse lookup (uppercase normalized) |
+| `parent-index:{parentId}` | `List<Guid>` | Child type IDs for a parent |
+| `all-types` | `List<Guid>` | Global index of all type IDs |
 
 ---
 
@@ -95,14 +97,14 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **GetRelationshipTypeByCode** (`/relationship-type/get-by-code`): Code index lookup (uppercase-normalized). Validates data consistency on index miss.
 - **ListRelationshipTypes** (`/relationship-type/list`): Loads all IDs from `all-types`, bulk-loads types. Filters by `category`, `includeDeprecated`. In-memory pagination.
 - **GetChildRelationshipTypes** (`/relationship-type/get-children`): Loads child IDs from parent index. Supports `recursive` flag for full subtree traversal.
-- **MatchesHierarchy** (`/relationship-type/matches-hierarchy`): Checks if a type matches or descends from an ancestor type. Walks parent chain to determine match. Returns boolean + matched ancestor path.
+- **MatchesHierarchy** (`/relationship-type/matches-hierarchy`): Checks if a type matches or descends from an ancestor type. Walks parent chain to determine match. Returns `{ Matches: bool, Depth: int }` where depth is 0 for same type, -1 for no match.
 - **GetAncestors** (`/relationship-type/get-ancestors`): Returns full ancestry chain from type up to root. Walks parent pointers iteratively.
 
 ### Write Operations (7 endpoints)
 
 - **CreateRelationshipType** (`/relationship-type/create`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type by code. Calculates depth from parent. Updates all indexes. Publishes `relationship-type.created`.
 - **UpdateRelationshipType** (`/relationship-type/update`): Partial update with `changedFields` tracking. Code is immutable (uppercase, set at creation). Publishes update event only if changes detected.
-- **DeleteRelationshipType** (`/relationship-type/delete`): Requires type to be deprecated. Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
+- **DeleteRelationshipType** (`/relationship-type/delete`): Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`. **Note**: Despite API schema description stating "only deprecated types can be deleted", the implementation does NOT enforce this check.
 - **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Returns Conflict if already deprecated.
 - **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Restores deprecated type. Returns Conflict if not deprecated.
 - **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated. Paginates through relationships via `IRelationshipClient.ListRelationshipsByTypeAsync`. Updates each to target type. Partial failures tracked (max 100 error details). Publishes error event if failures occur.
@@ -139,11 +141,11 @@ Relationship Type Hierarchy
 MatchesHierarchy Query
 ========================
 
-  MatchesHierarchy(typeId="SON", ancestorCode="FAMILY")
+  MatchesHierarchy(typeId="SON", ancestorTypeId=<FAMILY_GUID>)
        │
        ├── Walk parent chain: SON → CHILD → FAMILY
        ├── Match found at FAMILY
-       └── Returns: { Matches: true, Path: ["CHILD", "FAMILY"] }
+       └── Returns: { Matches: true, Depth: 2 }
 
   Use case: "Find all FAMILY relationships" matches
   SON, DAUGHTER, FATHER, MOTHER, BROTHER, SISTER, etc.
@@ -217,11 +219,11 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-None identified.
+1. **Delete does not enforce deprecation requirement**: The API schema description (line 256-260) states "Only deprecated types with zero references can be deleted", but `DeleteRelationshipTypeAsync` (line 590-641) does NOT check `IsDeprecated` before deletion. Any type without children can be deleted regardless of deprecation status. Fix: Add deprecation check before deletion to match documented behavior.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **Depth auto-calculated but not updated**: Depth is `parent.Depth + 1` at creation time. If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated.
 
@@ -231,14 +233,20 @@ None identified.
 
 4. **Merge page fetch error stops pagination**: If fetching a page of relationships fails during merge, the migration loop terminates. Relationships on subsequent pages are silently un-migrated.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
-1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. Hierarchy traversal methods have a configurable safety limit (`MaxHierarchyDepth`, default 20) to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment.
+1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. Hierarchy traversal methods have a configurable safety limit (`MaxHierarchyDepth`, default 20) to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment. Fix requires deciding on detection strategy (on-write vs on-read) and handling existing circular data.
 
-2. **Code index not cleaned on delete**: When a type is deleted, its code index entry is removed. However, if the code was reassigned between deprecation and deletion (unlikely given code immutability), the index could become stale.
+2. **Recursive child query unbounded**: `GetChildRelationshipTypes` with `recursive=true` traverses the full subtree. Deep hierarchies with many branches could generate many state store calls. The `MaxHierarchyDepth` limit bounds depth but not breadth.
 
-3. **Recursive child query unbounded**: `GetChildRelationshipTypes` with `recursive=true` traverses the full subtree. Deep hierarchies with many branches could generate many state store calls.
+3. **Seed multi-pass has fixed iteration limit**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2`. For a list of N types, max 2N passes. Extremely deep dependency chains could fail to resolve within the limit.
 
-4. **Seed multi-pass has fixed iteration limit**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2`. For a list of N types, max 2N passes. Extremely deep dependency chains could fail to resolve within the limit.
+4. **Read-modify-write without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`) perform read-modify-write without distributed locks. Concurrent operations on the same indexes can cause lost updates.
 
-5. **Read-modify-write without distributed locks**: Index updates have no concurrency protection. Concurrent operations can cause lost updates.
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.
+
+*No active work tracking markers.*

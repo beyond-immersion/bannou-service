@@ -301,6 +301,8 @@ Client                    Asset Service                     MinIO Storage
 
 4. **Bundle ZIP cache cleanup**: `ZipCacheTtlHours` is set but no scheduled task removes expired ZIP cache entries from the `bundles/zip-cache` storage path.
 
+5. **Schema-defined events not implemented**: The `asset-events.yaml` schema declares `asset.processing.queued` and `asset.ready` events that have no corresponding `TryPublishAsync` calls in the service code. These event types exist in generated models but are never emitted.
+
 ---
 
 ## Potential Extensions
@@ -321,9 +323,9 @@ Client                    Asset Service                     MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define an `AssetProcessingErrorCode` enum for compile-time validation.
+1. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` in `Processing/IAssetProcessor.cs` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define a `ProcessingErrorCode` enum for compile-time validation. Note: `MetabundleErrorCode` and client event error codes have been properly typed as enums; only the internal processing result types remain strings.
 
-2. **BundleId incorrectly changed to Guid**: The BundleId fields were changed from `string` to `Guid`, but this was WRONG. BundleId is a human-provided identifier (e.g., `"synty/polygon-adventure"`, `"my-bundle-v1"`) as shown in the SDK documentation. This needs to be reverted to `string`. See `docs/plugins/DEEP_DIVE_CLEANUP.md` for details.
+2. **Schema-code event mismatch**: The events schema (`asset-events.yaml`) declares `asset.processing.queued` and `asset.ready` events that are not actually published anywhere in the service code. These should either be implemented or removed from the schema to prevent downstream consumers from expecting events that never fire.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -360,3 +362,11 @@ Client                    Asset Service                     MinIO Storage
 6. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
 
 7. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+*No items are currently being tracked.*

@@ -20,6 +20,7 @@ The Achievement plugin provides a multi-entity achievement and trophy system wit
 | Account service (IAccountClient) | SteamAchievementSync queries account auth methods to find Steam external IDs |
 | Permission service (via AchievementPermissionRegistration) | Registers its endpoint permission matrix on startup via messaging event |
 | IHttpClientFactory | SteamAchievementSync makes HTTP calls to Steam Partner API (partner.steam-api.com) |
+| bannou-service (MetadataHelper) | Utility class for converting metadata objects between different representations |
 
 ## Dependents (What Relies On This Plugin)
 
@@ -95,7 +96,7 @@ The Achievement plugin is currently a leaf consumer - it reacts to external even
 | `IEnumerable<IPlatformAchievementSync>` | Collection of platform sync providers (Steam, Xbox, PlayStation, Internal). Service checks `IsConfigured` to skip unconfigured providers |
 | `IDistributedLockProvider` | Distributed locks for progress updates and unlock operations (30s TTL) |
 | `RarityCalculationService` (BackgroundService) | Periodically iterates all definitions and recalculates rarity percentages based on TotalEligibleEntities and EarnedCount |
-| `MetadataHelper` | Utility for safe reading of achievement metadata dictionaries (handles JsonElement, primitives, strings) |
+| `MetadataHelper` (bannou-service) | Utility for safe reading of achievement metadata dictionaries (handles JsonElement, primitives, strings) |
 
 ## API Endpoints (Implementation Notes)
 
@@ -160,13 +161,12 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
 | PlayStation sync provider | Stub | `PlayStationAchievementSync` exists but `IsConfigured=false` and returns "not implemented". Skipped by service layer. Configuration properties (`PlayStationClientId`, `PlayStationClientSecret`) are defined in schema but unused - scaffolding for future implementation |
 | Internal sync provider | Active | `InternalAchievementSync` is a no-op provider (`IsConfigured=true`) for internal-only achievements |
 | Per-entity sync history tracking | Not implemented | `GetPlatformSyncStatusAsync` returns hardcoded zeros for synced/pending/failed counts |
-| `achievement-unlock` state store | Defined but unused | Exists in state-stores.yaml and StateStoreDefinitions but never referenced in service code |
 | TotalEligibleEntities population | Not implemented | Field exists on definition but is never written to by any endpoint; rarity calc only works when manually populated |
 | `SetProgressAsync` on platforms | Not called | IPlatformAchievementSync defines it, SteamAchievementSync implements it, but the service only calls `UnlockAsync` (never syncs incremental progress) |
 
 ## Potential Extensions
 
-- **Sync history store**: Use the defined-but-unused `achievement-unlock` store to track per-entity platform sync history, enabling accurate status reporting
+- **Sync history store**: Add a new state store to track per-entity platform sync history, enabling accurate status reporting instead of hardcoded zeros
 - **TotalEligibleEntities automation**: Subscribe to subscription/account lifecycle events to maintain accurate eligible entity counts for rarity
 - **Progressive platform sync**: Call `SetProgressAsync` when progress updates occur (not just on unlock), enabling Steam stats to track incremental progress
 - **Achievement groups/categories**: Schema already has metadata field - could formalize grouping for UI presentation
@@ -176,14 +176,28 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **Dead code: `GetAchievementProgressKey` method is never called**
+   - The method at `AchievementService.cs:95` generates keys in format `{gameServiceId}:{achievementId}:{entityType}:{entityId}` but is never invoked anywhere in the codebase.
+   - Impact: No runtime issue, but represents code bloat/confusion. Should be removed or used if the key pattern was intended for a different purpose.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **Rarity dual-threshold logic**: An achievement is "rare" if EarnedCount < RarityThresholdEarnedCount (100) OR RarityPercent < RareThresholdPercent (5%). A brand-new achievement with 0 earned is always rare regardless of percentage.
 
 2. **Delete preserves progress data**: Deleting a definition removes it from store and index but leaves EntityProgressData intact. Orphaned entries filtered at read time.
 
+3. **Event handlers load all definitions per event**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which iterates the definition index set and loads each definition individually. This is intentional to ensure freshness but creates N+1 query pattern per event.
+
+4. **Progress TTL default is infinite**: ProgressTtlSeconds defaults to 0 meaning progress records never expire. This is intentional for persistent progress tracking but operators should be aware of storage growth.
+
 ### Design Considerations (Requires Planning)
 
-- **Event handler loads all definitions**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which loads every definition individually from Redis. No caching layer exists - high-frequency events could generate significant Redis traffic. A cache with invalidation on definition CRUD would improve this but requires careful design around coherency.
+- **Event handler N+1 query pattern**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which loads every definition individually from Redis (one GetAsync per achievement in the index). No caching layer exists - high-frequency events could generate significant Redis traffic. A cache with invalidation on definition CRUD would improve this but requires careful design around coherency across service instances.
+
+- **Platform sync is fire-and-forget on unlock**: When `AutoSyncOnUnlock=true`, platform syncs happen inline during unlock but failures don't prevent the local unlock from succeeding. Retry logic exists but if all retries fail, the sync is marked failed in the event and the achievement stays locally unlocked but not synced. No retry queue exists for permanently failed syncs.
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.
+
+*No active work tracking markers present.*

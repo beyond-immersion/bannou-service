@@ -23,6 +23,9 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | lib-behavior (`IBehaviorClient`) | Loading compiled ABML behavior documents |
 | lib-character-personality (`ICharacterPersonalityClient`) | Loading personality traits for behavior context |
 | lib-character-history (`ICharacterHistoryClient`) | Loading backstory for behavior context |
+| lib-asset (`IAssetClient`) | Fetching behavior YAML documents via pre-signed URLs |
+| lib-character-encounter (`ICharacterEncounterClient`) | Loading encounter history, sentiment, and has-met data |
+| lib-mesh (`IMeshInvocationClient`) | Forwarding requests to remote pool nodes in distributed mode |
 
 ---
 
@@ -36,7 +39,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 
 ## State Storage
 
-**Stores**: 4 Redis state stores
+**Stores**: 4 Redis state stores (execution infrastructure)
 
 | Store | Purpose |
 |-------|---------|
@@ -44,6 +47,8 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `actor-state` | Runtime actor state snapshots (feelings, goals, memories) |
 | `actor-pool-nodes` | Pool node registration and health status |
 | `actor-assignments` | Actor-to-node assignment tracking |
+
+> **Architecture Note**: The `agent-memories` store (attributed to `service: Actor` in state-stores.yaml) is part of the Actor/Behavior cognition subsystem but is implemented by lib-behavior's `ActorLocalMemoryStore`, not by lib-actor directly. lib-actor manages execution infrastructure while lib-behavior manages cognition (memories, perceptions, planning). See [Actor Data Access Patterns](../planning/ACTOR_DATA_ACCESS_PATTERNS.md) for the architectural rationale.
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -84,6 +89,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
+| `session.disconnected` | `SessionDisconnectedEvent` | Stubbed handler for future session-bound actors |
 | `behavior.updated` | `BehaviorUpdatedEvent` | Invalidates behavior cache, notifies actors for hot-reload |
 | `personality.evolved` | `PersonalityEvolvedEvent` | Invalidates personality cache for character |
 | `combat-preferences.evolved` | `CombatPreferencesEvolvedEvent` | Invalidates personality cache |
@@ -471,3 +477,15 @@ No bugs identified.
 13. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
 
 14. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.
+
+---
+
+## Work Tracking
+
+### AUDIT Markers
+
+No AUDIT markers present in this document.
+
+### Implementation Gaps
+
+No implementation gaps identified requiring AUDIT markers.

@@ -23,8 +23,9 @@ The Account plugin does **not** call any other service via lib-mesh clients. It 
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-auth | Primary consumer. Calls `by-email`, `create`, `get`, `password/update` via IAccountClient for login, registration, token refresh, and password reset flows |
-| lib-auth | Subscribes to `account.deleted` to invalidate all sessions for deleted accounts |
+| lib-auth (AuthService) | Primary consumer. Calls `by-email`, `create`, `get`, `password/update` via IAccountClient for login, registration, token refresh, and password reset flows |
+| lib-auth (OAuthProviderService) | Calls `get`, `create`, `by-email`, `auth-methods/add` via IAccountClient for OAuth account creation and linking |
+| lib-auth | Subscribes to `account.deleted` to invalidate all sessions and cleanup OAuth links for deleted accounts |
 | lib-auth | Subscribes to `account.updated` to propagate role changes to active sessions |
 | lib-achievement (SteamAchievementSync) | Calls `auth-methods/list` via IAccountClient to look up Steam external IDs for platform sync |
 
@@ -142,15 +143,20 @@ On Delete: email-index removed,                         │
 ## Stubs & Unimplemented Features
 
 ### IEventConsumer Registration (no handlers)
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/136 -->
 
 The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but the events schema declares no subscriptions. This is infrastructure wiring that exists for future use if Account needs to react to external events.
 
 ## Potential Extensions
 
 - **Account merge**: No mechanism exists to merge two accounts (e.g., when a user registers with email then later tries to register with the same OAuth provider under a different email). The data model supports multiple auth methods per account, but there's no merge workflow.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/137 -->
 - **Audit trail**: Account mutations publish events but don't maintain a per-account change history. An extension could store a changelog for compliance/debugging.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/138 -->
 - **Email change**: There is no endpoint for changing an account's email address. The email index would need to be atomically swapped (delete old index, create new index, update account record) with proper concurrency handling.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/139 -->
 - **Bulk batch-create/delete**: Batch-get and bulk role update are implemented, but there are no batch create or batch delete endpoints.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/140 -->
 
 ## Known Quirks & Caveats
 
@@ -164,6 +170,18 @@ No bugs identified.
 
 2. **Auto-managed anonymous role**: When `AutoManageAnonymousRole` is true (default), removing roles that would leave zero roles automatically adds "anonymous". Adding a non-anonymous role automatically removes "anonymous" if present. This ensures accounts always have at least one role for permission resolution.
 
+3. **Default "user" role on creation**: When an account is created with no roles specified, the "user" role is automatically assigned (AccountService.cs:299-302). This ensures newly registered accounts have basic authenticated API access.
+
+4. **Password hash exposed in by-email response only**: The `GetAccountByEmailAsync` endpoint includes `PasswordHash` in the response (line 623), while the standard `GetAccountAsync` does not. This is intentional - the Auth service needs the hash for password verification during login, but general account lookups should not expose it.
+
+5. **Provider index key format**: Provider indices use the format `provider-index-{provider}:{externalId}` where provider is the enum value (e.g., `provider-index-Discord:123456`). The colon separator is intentional to create a pseudo-hierarchical key space.
+
 ### Design Considerations (Requires Planning)
 
 None identified.
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items.*

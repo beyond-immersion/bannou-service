@@ -407,9 +407,6 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Docker Swarm backend (`DockerSwarmOrchestrator`) | Stub | All methods throw `NotImplementedException` |
-| Kubernetes backend (`KubernetesOrchestrator`) | Stub | All methods throw `NotImplementedException` |
-| Portainer backend (`PortainerOrchestrator`) | Stub | All methods throw `NotImplementedException` |
 | Network pruning (Clean) | Logged warning | "Network pruning requested but not yet implemented" |
 | Volume pruning (Clean) | Logged warning | "Volume pruning requested but not yet implemented" |
 | Image pruning (Clean) | Logged warning | "Image pruning requested but not yet implemented" |
@@ -423,7 +420,6 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ## Potential Extensions
 
-- **Implement remaining backends**: Docker Swarm, Kubernetes, and Portainer are all defined in the interface but stub-only. Kubernetes is the natural production target.
 - **Auto-scaling background service**: A timer-based service that evaluates pool utilization against `ScaleUpThreshold`/`ScaleDownThreshold` and automatically scales pools.
 - **Idle timeout enforcement**: Background cleanup for pool workers that have been available beyond `IdleTimeoutMinutes`.
 - **Container teardown in CleanupPool**: Currently only removes state entries; should also call `TeardownServiceAsync` to actually stop containers.

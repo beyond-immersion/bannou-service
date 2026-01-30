@@ -178,6 +178,7 @@ account.deleted event ──► SessionService.InvalidateAllSessions ──► s
 ## Stubs & Unimplemented Features
 
 ### Email Sending (SendPasswordResetEmailAsync)
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/141 -->
 
 Password reset generates tokens and constructs reset URLs correctly, but the actual email delivery is a mock that logs to the console. The method signature and flow are complete - only the SMTP/provider integration (SendGrid, AWS SES) is missing. The `PasswordResetBaseUrl` configuration exists for constructing the reset link.
 
@@ -209,10 +210,20 @@ No bugs identified.
 
 4. **RefreshTokenAsync ignores the JWT parameter**: The refresh token alone is the credential for obtaining a new access token. Validating the (possibly expired) JWT would defeat the purpose of the refresh flow.
 
+5. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` exist for future implementation (SessionService.cs:21-23).
+
+6. **SessionDataModel.Email uses empty string default**: The Email property defaults to `string.Empty` rather than being nullable. For OAuth/Steam accounts that don't provide email, this results in an empty string stored in session data. The `= string.Empty` satisfies NRT without requiring nullable handling throughout the codebase.
+
 ### Design Considerations (Requires Planning)
 
-1. **`SessionDataModel.Email` empty string default** - Email uses `= string.Empty` which hides null-source bugs. OAuth/Steam accounts legitimately have no email. Should be `string?` with explicit null handling in consuming code (session creation, login responses). Requires auditing all email usage patterns in auth flows.
+1. **`SessionDataModel.Email` empty string default** - Now documented as an Intentional Quirk (#6). The `= string.Empty` default is acceptable because OAuth/Steam accounts legitimately have no email, and the empty string satisfies NRT without requiring nullable handling.
 
-2. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= ""` default. Email is always populated from account (which may be null for OAuth). Should be nullable with validation before storing. Requires updating `RequestPasswordResetAsync` to handle null case.
+2. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= string.Empty` default. Password reset is only valid for email/password accounts (OAuth accounts don't have passwords), so the email should always be populated from a non-OAuth account. If an OAuth-only account somehow reaches this code path, the validation in `ConfirmPasswordResetAsync` would fail (token not found or invalid).
 
-3. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock). Should be wired through when email integration is added. Low priority until email implementation.
+3. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock with `await Task.CompletedTask`). Should be wired through when email integration is added. Low priority until email implementation.
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items.*

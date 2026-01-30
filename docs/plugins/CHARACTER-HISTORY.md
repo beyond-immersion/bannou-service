@@ -28,7 +28,8 @@ Historical event participation and backstory management for characters. Tracks w
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-character | Fetches backstory for enriched character response; calls `SummarizeHistoryAsync` and `DeleteAllHistoryAsync` during character compression |
-| lib-actor | Reads backstory via `ICharacterHistoryClient` to inform NPC behavior decisions |
+| lib-actor | Reads backstory via `ICharacterHistoryClient` (PersonalityCache) to inform NPC behavior decisions |
+| lib-analytics | Subscribes to `character-history.participation.recorded`, `character-history.backstory.created`, `character-history.backstory.updated` for historical analytics |
 
 ---
 
@@ -49,14 +50,14 @@ Historical event participation and backstory management for characters. Tracks w
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `character-history.participation.recorded` | New participation recorded |
-| `character-history.participation.deleted` | Participation removed |
-| `character-history.backstory.created` | First backstory created for a character |
-| `character-history.backstory.updated` | Existing backstory modified |
-| `character-history.backstory.deleted` | All backstory deleted |
-| `character-history.deleted` | All history (participation + backstory) deleted |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `character-history.participation.recorded` | `CharacterParticipationRecordedEvent` | New participation recorded |
+| `character-history.participation.deleted` | `CharacterParticipationDeletedEvent` | Participation removed |
+| `character-history.backstory.created` | `CharacterBackstoryCreatedEvent` | First backstory created for a character |
+| `character-history.backstory.updated` | `CharacterBackstoryUpdatedEvent` | Existing backstory modified |
+| `character-history.backstory.deleted` | `CharacterBackstoryDeletedEvent` | All backstory deleted |
+| `character-history.deleted` | `CharacterHistoryDeletedEvent` | All history (participation + backstory) deleted |
 
 ### Consumed Events
 
@@ -197,7 +198,7 @@ No bugs identified.
 
 3. **Helper abstractions are inline**: `DualIndexHelper` and `BackstoryStorageHelper` are constructed in the service constructor with configuration objects. Not registered in DI. Makes testing require constructor inspection.
 
-4. **GUID parsing without validation**: `MapToHistoricalParticipation` uses `Guid.Parse()` without try-catch on stored string IDs. If data is corrupted, throws `FormatException` at read time.
+4. **GUID parsing without validation in helper config**: The `BackstoryStorageHelper` configuration uses `Guid.Parse(id)` in `SetEntityId` (line 90) without try-catch. If a backstory record has corrupted characterId data, throws `FormatException` at read time.
 
 5. **DeleteAll is O(n) with secondary index cleanup**: Iterates all participation records for a character, extracting event IDs via lambda, and removes from each event index individually. For characters with hundreds of participations, this generates many state store operations.
 
@@ -209,14 +210,20 @@ No bugs identified.
 
 9. **Summarize doesn't publish any event**: Unlike all other operations which publish typed events (recorded, deleted, created, updated), `SummarizeHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
-10. **Unknown element types fall back to generic format**: Line 813 in `GenerateBackstorySummary` uses `_ => $"{element.Key}: {element.Value}"` for unrecognized element types. If new backstory element types are added to the schema, they'll produce raw key/value summaries until the switch-case is updated.
+10. **Unknown element types fall back to generic format**: `GenerateBackstorySummary` uses `_ => $"{element.Key}: {element.Value}"` for unrecognized element types. If new backstory element types are added to the schema, they'll produce raw key/value summaries until the switch-case is updated.
 
-11. **Unknown participation roles fall back to "participated in"**: Line 829 in `GenerateParticipationSummary` uses `_ => "participated in"` for unrecognized roles. Generic fallback may not reflect actual involvement.
+11. **Unknown participation roles fall back to "participated in"**: `GenerateParticipationSummary` uses `_ => "participated in"` for unrecognized roles. Generic fallback may not reflect actual involvement.
 
-12. **FormatValue is simplistic transformation**: Lines 835-838: `value.Replace("_", " ").ToLowerInvariant()`. Only handles snake_case, doesn't handle camelCase or PascalCase, doesn't capitalize sentences. "NORTHERN_KINGDOM" becomes "northern kingdom" but "NorthernKingdom" stays as-is.
+12. **FormatValue is simplistic transformation**: `value.Replace("_", " ").ToLowerInvariant()` only handles snake_case, doesn't handle camelCase or PascalCase, doesn't capitalize sentences. "NORTHERN_KINGDOM" becomes "northern kingdom" but "NorthernKingdom" stays as-is.
 
-13. **GetBulkAsync results silently drop missing records**: `DualIndexHelper.GetRecordsByIdsAsync` (line 291) returns `.Values` from bulk get - any IDs in the index that no longer exist in the store are silently excluded from results. No logging, no error, just fewer items than expected.
+13. **GetBulkAsync results silently drop missing records**: `DualIndexHelper.GetRecordsByIdsAsync` returns `.Values` from bulk get - any IDs in the index that no longer exist in the store are silently excluded from results. No logging, no error, just fewer items than expected.
 
 14. **Empty/null entityId returns silently without logging**: Multiple helper methods (GetAsync, DeleteAsync, ExistsAsync in BackstoryStorageHelper; GetRecordAsync, GetRecordIdsByPrimaryKeyAsync, etc. in DualIndexHelper) check `string.IsNullOrEmpty(entityId)` and return null/false/0 without any logging. Invalid calls produce no trace.
 
 15. **AddBackstoryElement is upsert**: The doc mentions "Adds or updates single element" at the API level, but note that this means AddBackstoryElement with the same type+key silently replaces the existing element's value and strength. No event distinguishes "added new" from "updated existing" when using this endpoint.
+
+---
+
+## Work Tracking
+
+No active work items tracked for this plugin.

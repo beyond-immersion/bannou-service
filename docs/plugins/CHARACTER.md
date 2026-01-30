@@ -17,7 +17,7 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | MySQL persistence for character data, archives, and indexes |
+| lib-state (`IStateStoreFactory`) | MySQL persistence for character data, archives, indexes, and refcount tracking |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and compression events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-realm (`IRealmClient`) | Validates realm exists and is active before character creation |
@@ -35,11 +35,11 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-analytics | Character lifecycle tracking for skill ratings |
-| lib-species | Species reference updates |
-| lib-character-personality | Character info for personality association |
-| lib-character-history | Character info for historical event tracking |
-| lib-character-encounter | Character data for encounter records and perspectives |
+| lib-analytics | Subscribes to `character.updated` for cache invalidation |
+| lib-character-encounter | Subscribes to `character.deleted` to clean up encounter data |
+| lib-species | Calls `ICharacterClient` to check character references during species deprecation |
+| lib-character-personality | Provides personality data called by Character for enrichment |
+| lib-character-history | Provides backstory/history data called by Character for enrichment |
 
 ---
 
@@ -50,8 +50,8 @@ The Character service manages game world characters for Arcadia. Characters are 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `character:{realmId}:{characterId}` | `CharacterModel` | Full character data (realm-partitioned) |
-| `realm-index:{realmId}` | `List<string>` | Character IDs in a realm (Redis for speed) |
-| `character-global-index:{characterId}` | `string` | Character ID to realm ID mapping (MySQL for durability) |
+| `realm-index:{realmId}` | `List<string>` | Character IDs in a realm (for list queries) |
+| `character-global-index:{characterId}` | `string` | Character ID to realm ID mapping (for ID-only lookups) |
 | `archive:{characterId}` | `CharacterArchiveModel` | Compressed character text summaries |
 | `refcount:{characterId}` | `RefCountData` | Cleanup eligibility tracking (zero-ref timestamp) |
 
@@ -61,14 +61,14 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `character.created` | New character created |
-| `character.updated` | Character metadata modified (includes `changedFields`) |
-| `character.deleted` | Character permanently deleted |
-| `character.realm.joined` | Character created in or transferred to a realm |
-| `character.realm.left` | Character deleted from a realm |
-| `character.compressed` | Dead character archived (includes `DeletedSourceData` flag) |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `character.created` | `CharacterCreatedEvent` | New character created |
+| `character.updated` | `CharacterUpdatedEvent` | Character metadata modified (includes `ChangedFields` list) |
+| `character.deleted` | `CharacterDeletedEvent` | Character permanently deleted |
+| `character.realm.joined` | `CharacterRealmJoinedEvent` | Character created in or transferred to a realm |
+| `character.realm.left` | `CharacterRealmLeftEvent` | Character deleted from a realm |
+| `character.compressed` | `CharacterCompressedEvent` | Dead character archived (includes `DeletedSourceData` flag) |
 
 ### Consumed Events
 
@@ -105,7 +105,7 @@ This plugin does not consume external events.
 | `ICharacterHistoryClient` | Scoped | Enrichment and compression |
 | `IRelationshipClient` | Scoped | Family tree and reference counting |
 | `IRelationshipTypeClient` | Scoped | Relationship code lookup |
-| `IEventConsumer` | Scoped | Event registration (no handlers) |
+| `IEventConsumer` | Scoped | Event registration (no handlers defined) |
 
 Service lifetime is **Scoped** (per-request).
 
@@ -115,11 +115,11 @@ Service lifetime is **Scoped** (per-request).
 
 ### CRUD Operations (5 endpoints)
 
-- **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability. Generates new GUID. Stores with realm-partitioned key. Maintains both realm index (Redis) and global index (MySQL) with optimistic concurrency retries.
+- **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability (throws `InvalidOperationException`). Generates new GUID. Stores with realm-partitioned key. Maintains both realm index and global index with optimistic concurrency retries.
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
-- **Update**: Smart field tracking with changedFields list. Setting DeathDate automatically sets Status to Dead. SpeciesId is mutable (supports species merge migrations).
+- **Update**: Smart field tracking with `ChangedFields` list. Setting `DeathDate` automatically sets `Status` to `Dead`. `SpeciesId` is mutable (supports species merge migrations).
 - **Delete**: Removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates.
-- **List/ByRealm**: Gets realm index, bulk-fetches all characters, filters in-memory (status, species), then paginates. Clamps page size to MaxPageSize.
+- **List/ByRealm**: Gets realm index, bulk-fetches all characters, filters in-memory (status, species), then paginates. Clamps page size to `MaxPageSize`.
 
 ### Enriched Character (`/character/get-enriched`)
 
@@ -127,9 +127,9 @@ Opt-in enrichment via boolean flags to avoid unnecessary service calls:
 
 | Flag | Source Service | Data Retrieved |
 |------|---------------|----------------|
-| `includePersonality` | CharacterPersonality | Trait axes as Dictionary<string, float> |
+| `includePersonality` | CharacterPersonality | Trait axes as `Dictionary<string, float>` |
 | `includeCombatPreferences` | CharacterPersonality | Style, range, role, risk/retreat |
-| `includeBackstory` | CharacterHistory | BackstoryElementSnapshot list |
+| `includeBackstory` | CharacterHistory | `BackstoryElementSnapshot` list |
 | `includeFamilyTree` | Relationship + RelationshipType | Parents, children, siblings, spouse, past lives |
 
 Each enrichment section is independently try-caught. Failures return null for that section (graceful degradation). Main response still returns with available data.
@@ -143,12 +143,12 @@ Each enrichment section is independently try-caught. Failures return null for th
 
 ### Compression (`/character/compress`)
 
-Preconditions: Must be Status=Dead with DeathDate set.
+Preconditions: Must be `Status=Dead` with `DeathDate` set.
 
 Compression steps:
 1. **Personality summary**: Maps trait values to text via threshold logic (>0.3 = "creative", <-0.3 = "traditional")
 2. **History summary**: Calls `SummarizeHistoryAsync()` with configurable max backstory/event limits
-3. **Family summary**: Text like "married to Elena, parent of 3, reincarnated from 2 past lives"
+3. **Family summary**: Text like "married to Elena, parent of 3, reincarnated from 2 past life(s)"
 4. **Archive creation**: Stores text summaries in MySQL under `archive:{characterId}`
 5. **Optional source deletion**: If `DeleteSourceData=true`, deletes personality and history data
 
@@ -159,11 +159,12 @@ Simple lookup of compressed archive data by character ID.
 ### Reference Checking (`/character/check-references`)
 
 Determines cleanup eligibility for compressed characters:
-1. Character must be compressed (archive exists)
-2. Reference count must be 0 (currently only checks relationships)
-3. Must maintain 0 references for grace period (default 30 days)
+1. Character must exist
+2. Check if compressed (archive exists)
+3. Reference count must be 0 (currently only checks relationships)
+4. Must maintain 0 references for grace period (default 30 days)
 
-Tracks `ZeroRefSinceUnix` timestamp in state store for multi-instance safety.
+Tracks `ZeroRefSinceUnix` timestamp in state store with optimistic concurrency for multi-instance safety.
 
 ---
 
@@ -217,7 +218,7 @@ Character Key Architecture (Realm-Partitioned)
 1. **Full reference counting**: Expand to check encounters, history, contracts, and other polymorphic references.
 2. **Realm transfer**: Move characters between realms with event publishing and index updates.
 3. **Batch compression**: Compress multiple dead characters in one operation.
-4. **Typed compression event**: Create `CharacterCompressedEvent` model in events schema.
+4. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
 
 ---
 
@@ -227,21 +228,23 @@ Character Key Architecture (Realm-Partitioned)
 
 No bugs identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
 
-2. **Silent deletion on compression**: When `DeleteSourceData=true`, exceptions from personality/history deletion are caught and ignored. Archive is created even if source data deletion fails.
+2. **Silent deletion on compression**: When `DeleteSourceData=true`, exceptions from personality/history deletion are caught and ignored (only 404s are explicitly handled). Archive is created even if source data deletion fails.
+
+3. **Fail-closed validation**: If realm or species validation services are unavailable, character creation throws `InvalidOperationException` rather than proceeding. This is intentional to prevent data integrity issues.
 
 ### Design Considerations (Requires Planning)
 
-1. **No distributed lock on character update (T9)**: `UpdateCharacterAsync` reads a character, modifies it, and saves it without concurrency protection. Two simultaneous updates result in last-writer-wins. Fix requires: inject `IDistributedLockProvider`, add locking around read-modify-write, or use `GetWithETagAsync`/`TrySaveAsync` with retry-on-conflict.
+1. **No distributed lock on character update (IMPLEMENTATION TENETS)**: `UpdateCharacterAsync` reads a character, modifies it, and saves it without concurrency protection. Two simultaneous updates result in last-writer-wins. Fix requires: inject `IDistributedLockProvider`, add locking around read-modify-write, or use `GetWithETagAsync`/`TrySaveAsync` with retry-on-conflict.
 
-2. **No distributed lock on character compression (T9)**: `CompressCharacterAsync` reads a character, generates summaries, stores archive, and optionally deletes source data without concurrency protection. Fix requires: inject `IDistributedLockProvider`, wrap compression in lock scope.
+2. **No distributed lock on character compression (IMPLEMENTATION TENETS)**: `CompressCharacterAsync` reads a character, generates summaries, stores archive, and optionally deletes source data without concurrency protection. Fix requires: inject `IDistributedLockProvider`, wrap compression in lock scope.
 
 3. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 
-4. **Global index double-write**: Both Redis (realm index) and MySQL (global index) are updated on create/delete. Extra write for resilience across restarts but adds complexity.
+4. **Global index double-write**: Both realm index and global index are updated on create/delete. Extra write for resilience across restarts but adds complexity.
 
 5. **Reference counting only checks relationships**: `CheckCharacterReferences` queries only the Relationship service. Characters referenced by encounters, history events, contracts, or AI agents are not counted, potentially allowing premature cleanup.
 
@@ -258,3 +261,11 @@ No bugs identified.
 11. **"single parent household" is literal**: Adds this label when exactly one parent exists. Doesn't consider whether two parents were expected.
 
 12. **Family tree character lookups are sequential**: Calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.
+
+*No active work items.*

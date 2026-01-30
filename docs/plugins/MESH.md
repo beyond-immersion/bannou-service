@@ -227,11 +227,13 @@ Event-Driven Auto-Registration
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **`ListEndpointsRequest.StatusFilter` not implemented**: The schema defines `statusFilter` on `ListEndpointsRequest` but `ListEndpointsAsync` in `MeshService.cs:121` only passes `body.AppIdFilter` to the state manager - it never filters by status. The filter is declared in the API contract but silently ignored.
 
-### Intentional Quirks
+2. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:173-186` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
+
+### Intentional Quirks (Documented Behavior)
 
 1. **HeartbeatStatus.Overloaded maps to EndpointStatus.Degraded**: The status mapping is lossy - `Overloaded` and `Degraded` heartbeat statuses both become `Degraded` endpoint status. No distinct "overloaded" endpoint state exists.
 
@@ -243,7 +245,7 @@ No bugs identified.
 
 5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop indefinitely until cancellation.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
 1. **EndpointCache uses Dictionary + lock, not ConcurrentDictionary**: The `EndpointCache` inner class in MeshInvocationClient uses a plain `Dictionary<>` with explicit lock statements instead of `ConcurrentDictionary`. Lower overhead for simple get/set but not lock-free.
 
@@ -254,3 +256,11 @@ No bugs identified.
 4. **Static round-robin counter in MeshService**: `_roundRobinCounters` is static, meaning it persists across scoped service instances. The counter can grow unbounded as new app-ids are encountered (no eviction).
 
 5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items.*
