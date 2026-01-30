@@ -230,15 +230,9 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? CloudflareApiToken { get; set; }
 
     /// <summary>
-    /// Enable OpenResty/NGINX edge revocation via Redis pub/sub. Edge servers subscribe to the configured channel and maintain local revocation caches.
+    /// Enable OpenResty/NGINX edge revocation verification. When enabled, the OpenResty Lua scripts read revocation entries directly from Redis (auth:edge prefix) to block revoked tokens at the edge layer before requests reach upstream services.
     /// Environment variable: AUTH_OPENRESTY_EDGE_ENABLED
     /// </summary>
     public bool OpenrestyEdgeEnabled { get; set; } = false;
-
-    /// <summary>
-    /// Redis pub/sub channel for broadcasting revocation events to OpenResty/NGINX edge servers.
-    /// Environment variable: AUTH_OPENRESTY_REDIS_CHANNEL
-    /// </summary>
-    public string OpenrestyRedisChannel { get; set; } = "bannou:edge-revocation";
 
 }

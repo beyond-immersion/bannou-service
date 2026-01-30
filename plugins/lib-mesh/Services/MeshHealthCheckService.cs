@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Net;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
@@ -16,6 +17,8 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// with lightweight health requests and updates their status.
 /// Proactive failure detection ensures the first real request after an endpoint
 /// failure doesn't have to eat the latency penalty.
+/// After consecutive failures (configurable via HealthCheckFailureThreshold),
+/// the endpoint is deregistered and a deregistration event is published.
 /// </summary>
 public class MeshHealthCheckService : BackgroundService
 {
@@ -23,6 +26,12 @@ public class MeshHealthCheckService : BackgroundService
     private readonly ILogger<MeshHealthCheckService> _logger;
     private readonly MeshServiceConfiguration _configuration;
     private readonly HttpMessageInvoker _httpClient;
+
+    /// <summary>
+    /// Tracks consecutive health check failures per endpoint.
+    /// Reset on successful probe, removed on deregistration.
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, int> _failureCounters = new();
 
     /// <summary>
     /// Creates a new MeshHealthCheckService.
@@ -59,9 +68,12 @@ public class MeshHealthCheckService : BackgroundService
             return;
         }
 
+        var deregistrationStatus = _configuration.HealthCheckFailureThreshold > 0
+            ? $"deregister after {_configuration.HealthCheckFailureThreshold} failures"
+            : "deregistration disabled";
         _logger.LogInformation(
-            "Mesh health check service starting, interval: {IntervalSeconds}s, timeout: {TimeoutSeconds}s",
-            _configuration.HealthCheckIntervalSeconds, _configuration.HealthCheckTimeoutSeconds);
+            "Mesh health check service starting, interval: {IntervalSeconds}s, timeout: {TimeoutSeconds}s, {DeregistrationStatus}",
+            _configuration.HealthCheckIntervalSeconds, _configuration.HealthCheckTimeoutSeconds, deregistrationStatus);
 
         // Wait before first check to allow services to register
         try
@@ -126,6 +138,7 @@ public class MeshHealthCheckService : BackgroundService
 
     /// <summary>
     /// Probes a single endpoint and updates its status in state.
+    /// Tracks consecutive failures and deregisters after threshold is exceeded.
     /// </summary>
     private async Task ProbeEndpointAsync(
         MeshEndpoint endpoint,
@@ -151,6 +164,9 @@ public class MeshHealthCheckService : BackgroundService
 
             if (response.IsSuccessStatusCode)
             {
+                // Reset failure counter on successful probe
+                _failureCounters.TryRemove(endpoint.InstanceId, out _);
+
                 // Only update if status was not already Healthy (avoid unnecessary writes)
                 if (endpoint.Status != EndpointStatus.Healthy)
                 {
@@ -175,15 +191,7 @@ public class MeshHealthCheckService : BackgroundService
                     "Endpoint {AppId}@{Host}:{Port} returned {StatusCode}",
                     endpoint.AppId, endpoint.Host, endpoint.Port, (int)response.StatusCode);
 
-                // Preserve existing issues - health checks don't modify issues
-                await stateManager.UpdateHeartbeatAsync(
-                    endpoint.InstanceId,
-                    endpoint.AppId,
-                    EndpointStatus.Unavailable,
-                    endpoint.LoadPercent,
-                    endpoint.CurrentConnections,
-                    endpoint.Issues,
-                    _configuration.HealthCheckIntervalSeconds * 3);
+                await HandleFailedProbeAsync(endpoint, stateManager, cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -192,12 +200,57 @@ public class MeshHealthCheckService : BackgroundService
         }
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
         {
-            // Connection failure or timeout - mark as unavailable
+            // Connection failure or timeout
             _logger.LogWarning(
                 "Endpoint {AppId}@{Host}:{Port} health check failed: {Error}",
                 endpoint.AppId, endpoint.Host, endpoint.Port, ex.Message);
 
-            // Preserve existing issues - health checks don't modify issues
+            await HandleFailedProbeAsync(endpoint, stateManager, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Handles a failed health check probe by incrementing failure counter,
+    /// marking as unavailable, and potentially deregistering.
+    /// </summary>
+    private async Task HandleFailedProbeAsync(
+        MeshEndpoint endpoint,
+        IMeshStateManager stateManager,
+        CancellationToken cancellationToken)
+    {
+        // Increment failure counter
+        var failureCount = _failureCounters.AddOrUpdate(
+            endpoint.InstanceId,
+            1,
+            (_, current) => current + 1);
+
+        var threshold = _configuration.HealthCheckFailureThreshold;
+
+        // Check if we should deregister (threshold > 0 enables deregistration)
+        if (threshold > 0 && failureCount >= threshold)
+        {
+            _logger.LogWarning(
+                "Endpoint {AppId}@{Host}:{Port} reached failure threshold ({FailureCount}/{Threshold}), deregistering",
+                endpoint.AppId, endpoint.Host, endpoint.Port, failureCount, threshold);
+
+            // Deregister the endpoint
+            var deregistered = await stateManager.DeregisterEndpointAsync(endpoint.InstanceId, endpoint.AppId);
+
+            if (deregistered)
+            {
+                // Clean up failure counter
+                _failureCounters.TryRemove(endpoint.InstanceId, out _);
+
+                // Publish deregistration event
+                await PublishDeregistrationEventAsync(
+                    endpoint.InstanceId,
+                    endpoint.AppId,
+                    cancellationToken);
+            }
+        }
+        else
+        {
+            // Mark as unavailable but keep registered (will expire via TTL if threshold=0)
             await stateManager.UpdateHeartbeatAsync(
                 endpoint.InstanceId,
                 endpoint.AppId,
@@ -206,6 +259,51 @@ public class MeshHealthCheckService : BackgroundService
                 endpoint.CurrentConnections,
                 endpoint.Issues,
                 _configuration.HealthCheckIntervalSeconds * 3);
+
+            if (threshold > 0)
+            {
+                _logger.LogDebug(
+                    "Endpoint {AppId}@{Host}:{Port} failure count: {FailureCount}/{Threshold}",
+                    endpoint.AppId, endpoint.Host, endpoint.Port, failureCount, threshold);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Publishes a deregistration event for an endpoint removed due to health check failures.
+    /// </summary>
+    private async Task PublishDeregistrationEventAsync(
+        Guid instanceId,
+        string appId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+
+            var evt = new MeshEndpointDeregisteredEvent
+            {
+                EventName = "mesh.endpoint_deregistered",
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = instanceId,
+                AppId = appId,
+                Reason = MeshEndpointDeregisteredEventReason.HealthCheckFailed
+            };
+
+            await messageBus.TryPublishAsync(
+                "mesh.endpoint.deregistered",
+                evt,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation(
+                "Published deregistration event for endpoint {InstanceId} (app: {AppId}, reason: HealthCheckFailed)",
+                instanceId, appId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish deregistration event for endpoint {InstanceId}", instanceId);
         }
     }
 

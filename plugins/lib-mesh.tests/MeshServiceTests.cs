@@ -483,6 +483,99 @@ public class MeshServiceTests
         Assert.Equal(90, capturedTtl);
     }
 
+    [Fact]
+    public async Task HeartbeatAsync_WithIssues_ShouldPassIssuesToStateManager()
+    {
+        // Arrange
+        var instanceId = Guid.NewGuid();
+        var existingEndpoint = new MeshEndpoint
+        {
+            InstanceId = instanceId,
+            AppId = "bannou",
+            Status = EndpointStatus.Healthy
+        };
+        ICollection<string>? capturedIssues = null;
+
+        _mockStateManager
+            .Setup(x => x.GetEndpointByInstanceIdAsync(instanceId))
+            .ReturnsAsync(existingEndpoint);
+
+        _mockStateManager
+            .Setup(x => x.UpdateHeartbeatAsync(
+                instanceId, "bannou", EndpointStatus.Degraded,
+                It.IsAny<float>(), It.IsAny<int>(), It.IsAny<ICollection<string>?>(), It.IsAny<int>()))
+            .Callback<Guid, string, EndpointStatus, float, int, ICollection<string>?, int>(
+                (_, _, _, _, _, issues, _) => capturedIssues = issues)
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+        var request = new HeartbeatRequest
+        {
+            InstanceId = instanceId,
+            Status = EndpointStatus.Degraded,
+            LoadPercent = 75,
+            CurrentConnections = 200,
+            Issues = new List<string> { "disk space low", "memory pressure" }
+        };
+
+        // Act
+        var (statusCode, response) = await service.HeartbeatAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.NotNull(capturedIssues);
+        Assert.Equal(2, capturedIssues.Count);
+        Assert.Contains("disk space low", capturedIssues);
+        Assert.Contains("memory pressure", capturedIssues);
+    }
+
+    [Fact]
+    public async Task HeartbeatAsync_WithNullIssues_ShouldPassNullToStateManager()
+    {
+        // Arrange
+        var instanceId = Guid.NewGuid();
+        var existingEndpoint = new MeshEndpoint
+        {
+            InstanceId = instanceId,
+            AppId = "bannou",
+            Status = EndpointStatus.Healthy
+        };
+        var issuesCaptured = false;
+        ICollection<string>? capturedIssues = new List<string> { "should be replaced" };
+
+        _mockStateManager
+            .Setup(x => x.GetEndpointByInstanceIdAsync(instanceId))
+            .ReturnsAsync(existingEndpoint);
+
+        _mockStateManager
+            .Setup(x => x.UpdateHeartbeatAsync(
+                instanceId, "bannou", EndpointStatus.Healthy,
+                It.IsAny<float>(), It.IsAny<int>(), It.IsAny<ICollection<string>?>(), It.IsAny<int>()))
+            .Callback<Guid, string, EndpointStatus, float, int, ICollection<string>?, int>(
+                (_, _, _, _, _, issues, _) => { capturedIssues = issues; issuesCaptured = true; })
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+        var request = new HeartbeatRequest
+        {
+            InstanceId = instanceId,
+            Status = EndpointStatus.Healthy,
+            LoadPercent = 50,
+            CurrentConnections = 100
+            // Issues not set - defaults to null
+        };
+
+        // Act
+        var (statusCode, response) = await service.HeartbeatAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(issuesCaptured, "UpdateHeartbeatAsync should have been called");
+        Assert.Null(capturedIssues);
+    }
+
     #endregion
 
     #region GetRouteAsync Tests

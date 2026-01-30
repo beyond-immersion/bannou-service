@@ -146,6 +146,12 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int HealthCheckTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
+    /// Consecutive health check failures before deregistering endpoint (0 disables deregistration)
+    /// Environment variable: MESH_HEALTH_CHECK_FAILURE_THRESHOLD
+    /// </summary>
+    public int HealthCheckFailureThreshold { get; set; } = 3;
+
+    /// <summary>
     /// Whether to enable circuit breaker for failed endpoints
     /// Environment variable: MESH_CIRCUIT_BREAKER_ENABLED
     /// </summary>

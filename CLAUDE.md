@@ -286,7 +286,6 @@ make inspect-list PKG="RabbitMQ.Client"
 - **XML Documentation**: All public classes/methods must have `<summary>` tags
 - **EditorConfig**: LF line endings enforced across all file types
 - **Generated Code**: Never edit files in `*/Generated/` directories
-- **Formatting**: Always run `make format` before changes
 
 ### Testing Strategy
 **Three-tier validation** ensures comprehensive coverage:

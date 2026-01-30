@@ -85,6 +85,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `HealthCheckEnabled` | `MESH_HEALTH_CHECK_ENABLED` | `false` | Enable active health check probing |
 | `HealthCheckIntervalSeconds` | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | `60` | Interval between health probes |
 | `HealthCheckTimeoutSeconds` | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | `5` | Timeout for health check requests |
+| `HealthCheckFailureThreshold` | `MESH_HEALTH_CHECK_FAILURE_THRESHOLD` | `3` | Consecutive failures before deregistering endpoint (0 disables) |
 | `HealthCheckStartupDelaySeconds` | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | `10` | Delay before first health probe |
 | `CircuitBreakerEnabled` | `MESH_CIRCUIT_BREAKER_ENABLED` | `true` | Enable per-appId circuit breaker |
 | `CircuitBreakerThreshold` | `MESH_CIRCUIT_BREAKER_THRESHOLD` | `5` | Consecutive failures before opening circuit |
@@ -212,16 +213,16 @@ Event-Driven Auto-Registration
 ## Stubs & Unimplemented Features
 
 1. **Local routing mode is minimal**: `LocalMeshStateManager` provides in-memory state for testing but does not simulate failure scenarios or load balancing nuances. All calls return the same local endpoint regardless of app-id.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/162 -->
 
-2. **Health check deregistration**: `MeshHealthCheckService` probes endpoints and marks them as unavailable on failure, but does not deregister them or publish deregistration events - they will expire via TTL.
+2. ~~**Health check deregistration**~~: **FIXED** (2026-01-30) - `MeshHealthCheckService` now tracks consecutive failures per endpoint and deregisters after `HealthCheckFailureThreshold` (default 3) consecutive failures, publishing `MeshEndpointDeregisteredEvent` with `HealthCheckFailed` reason. Set threshold to 0 to disable deregistration (TTL expiry behavior).
 
 3. ~~**ListEndpointsRequest.statusFilter**~~: **FIXED** (2026-01-30) - Now implemented in `ListEndpointsAsync`.
 
 4. **RegisterEndpointRequest.metadata**: Defined in schema but never stored - metadata is silently discarded.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
 
-5. **HeartbeatRequest.issues**: Defined in schema but never used - issues array is silently discarded.
-<!-- AUDIT:IN_PROGRESS:2026-01-30 -->
+5. ~~**HeartbeatRequest.issues**~~: **FIXED** (2026-01-30) - Added `issues` field to `MeshEndpoint` schema. Issues are now stored on heartbeat and visible in endpoint queries.
 
 ---
 
@@ -235,7 +236,7 @@ Event-Driven Auto-Registration
 
 4. **Graceful draining**: Endpoint status `ShuttingDown` could actively drain connections before full deregistration.
 
-5. **Health check deregistration**: After N consecutive health check failures, deregister the endpoint and publish an event instead of waiting for TTL expiry.
+5. ~~**Health check deregistration**~~: **IMPLEMENTED** (2026-01-30) - See Stubs section item 2.
 
 ---
 
@@ -248,7 +249,7 @@ Event-Driven Auto-Registration
 2. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:173-186` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
 
-3. **`HeartbeatRequest.Issues` not used**: The schema defines `issues` on `HeartbeatRequest` (line 509-513) but `HeartbeatAsync` in `MeshService.cs:276-331` never reads `body.Issues`. Diagnostic issues reported by clients are silently discarded.
+3. ~~**`HeartbeatRequest.Issues` not used**~~: **FIXED** (2026-01-30) - `HeartbeatAsync` now passes `body.Issues` to `UpdateHeartbeatAsync`, which stores them on the `MeshEndpoint`. Issues are preserved during health checks and event-based heartbeats. Visible via `/mesh/endpoints/get`, `/mesh/endpoints/list`, and `/mesh/route` responses.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -288,3 +289,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-01-30**: Fixed `ListEndpointsRequest.StatusFilter` not being applied. Added LINQ filter in `ListEndpointsAsync` after fetching endpoints from state manager.
 - **2026-01-30**: Created [#161](https://github.com/beyond-immersion/bannou-service/issues/161) for `RegisterEndpointRequest.Metadata` design - needs decision on whether to implement dynamic endpoint introspection (parity with schema-first meta endpoints) or remove the unused field.
+- **2026-01-30**: Fixed `HeartbeatRequest.Issues` not being stored. Added `issues` field to `MeshEndpoint` schema, updated `IMeshStateManager.UpdateHeartbeatAsync` signature, and wired `body.Issues` through `HeartbeatAsync`. Health checks and event-based heartbeats preserve existing issues.
+- **2026-01-30**: Created [#162](https://github.com/beyond-immersion/bannou-service/issues/162) for `LocalMeshStateManager` enhancement - needs design decisions on scope (in-memory state tracking vs. configurable failure simulation) and priority of failure scenarios.
+- **2026-01-30**: Implemented health check deregistration. `MeshHealthCheckService` now tracks consecutive failures per endpoint via `ConcurrentDictionary`, deregisters after `HealthCheckFailureThreshold` (default 3) failures, and publishes `MeshEndpointDeregisteredEvent` with `HealthCheckFailed` reason. Added new config property `MESH_HEALTH_CHECK_FAILURE_THRESHOLD`.
