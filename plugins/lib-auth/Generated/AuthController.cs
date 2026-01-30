@@ -151,6 +151,20 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(string jwt, TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Get current token revocation list
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the current list of revoked tokens and accounts for edge provider synchronization
+    /// <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+    /// <br/>revocations (all tokens issued before a timestamp).
+    /// </remarks>
+
+    /// <returns>Revocation list retrieved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevocationListResponse>> GetRevocationListAsync(GetRevocationListRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Request password reset
     /// </summary>
 
@@ -386,6 +400,24 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         var statusCode = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
         return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Get current token revocation list
+    /// </summary>
+    /// <remarks>
+    /// Returns the current list of revoked tokens and accounts for edge provider synchronization
+    /// <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+    /// <br/>revocations (all tokens issued before a timestamp).
+    /// </remarks>
+    /// <returns>Revocation list retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/revocation-list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevocationListResponse>> GetRevocationList([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRevocationListRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetRevocationListAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
     }
 
     /// <summary>

@@ -181,6 +181,24 @@ public sealed class AuthProxy
     }
 
     /// <summary>
+    /// Get current token revocation list
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RevocationListResponse on success.</returns>
+    public Task<ApiResponse<RevocationListResponse>> GetRevocationListAsync(
+        GetRevocationListRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetRevocationListRequest, RevocationListResponse>(
+            "/auth/revocation-list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Request password reset
     /// </summary>
     /// <param name="request">The request payload.</param>

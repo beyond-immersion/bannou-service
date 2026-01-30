@@ -600,6 +600,161 @@ public partial class ProviderInfo
 
 }
 
+/// <summary>
+/// Request to get current revocation list for edge provider synchronization or admin monitoring
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetRevocationListRequest
+{
+
+    /// <summary>
+    /// Include token-level revocations (by JTI)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeTokens")]
+    public bool IncludeTokens { get; set; } = true;
+
+    /// <summary>
+    /// Include account-level revocations (all tokens before timestamp)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeAccounts")]
+    public bool IncludeAccounts { get; set; } = true;
+
+    /// <summary>
+    /// Maximum entries to return per category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
+    public int Limit { get; set; } = 100;
+
+}
+
+/// <summary>
+/// Current revocation list with token and account level entries
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RevocationListResponse
+{
+
+    /// <summary>
+    /// Token-level revocations (individual JTIs)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedTokens")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<RevokedTokenEntry> RevokedTokens { get; set; } = new System.Collections.ObjectModel.Collection<RevokedTokenEntry>();
+
+    /// <summary>
+    /// Account-level revocations (all tokens before timestamp)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedAccounts")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<RevokedAccountEntry> RevokedAccounts { get; set; } = new System.Collections.ObjectModel.Collection<RevokedAccountEntry>();
+
+    /// <summary>
+    /// Number of pending failed pushes awaiting retry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedPushCount")]
+    public int FailedPushCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total revoked tokens in store (may be null if count unavailable)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalTokenCount")]
+    public int? TotalTokenCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single revoked token entry with expiration tracking
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RevokedTokenEntry
+{
+
+    /// <summary>
+    /// JWT unique identifier (jti claim)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jti")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Jti { get; set; } = default!;
+
+    /// <summary>
+    /// Account that owned the token
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// When the token was revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RevokedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the revocation entry expires (matches original JWT expiry)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Revocation reason for audit trail
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Account-level revocation entry that invalidates all tokens issued before a timestamp
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RevokedAccountEntry
+{
+
+    /// <summary>
+    /// Account ID whose tokens are revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Reject tokens issued before this timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("issuedBefore")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset IssuedBefore { get; set; } = default!;
+
+    /// <summary>
+    /// When the revocation was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RevokedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Revocation reason for audit trail
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DeviceInfoDeviceType

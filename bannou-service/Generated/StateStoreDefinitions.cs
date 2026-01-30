@@ -64,6 +64,8 @@ public static class StateStoreDefinitions
     // Auth Service
     /// <summary>Session and token state (ephemeral)</summary>
     public const string Auth = "auth-statestore";
+    /// <summary>Edge revocation tracking for CDN/firewall layer blocking</summary>
+    public const string EdgeRevocation = "edge-revocation-statestore";
 
     // Behavior Service
     /// <summary>Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)</summary>
@@ -305,6 +307,7 @@ public static class StateStoreDefinitions
             [CurrencyTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_transactions" },
             [CurrencyWallets] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_wallets" },
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
+            [EdgeRevocation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth:edge" },
             [EscrowActiveValidation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:validate" },
             [EscrowAgreements] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_agreements" },
             [EscrowHandlerRegistry] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_handler_registry" },
@@ -398,6 +401,7 @@ public static class StateStoreDefinitions
             [CurrencyTransactions] = new StoreMetadata("Currency", "Immutable transaction history", "mysql"),
             [CurrencyWallets] = new StoreMetadata("Currency", "Wallet ownership and status", "mysql"),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
+            [EdgeRevocation] = new StoreMetadata("Auth", "Edge revocation tracking for CDN/firewall layer blocking", "redis"),
             [EscrowActiveValidation] = new StoreMetadata("Escrow", "Track active escrows requiring periodic validation", "redis"),
             [EscrowAgreements] = new StoreMetadata("Escrow", "Main escrow agreement records", "mysql"),
             [EscrowHandlerRegistry] = new StoreMetadata("Escrow", "Custom asset type handler registrations", "mysql"),

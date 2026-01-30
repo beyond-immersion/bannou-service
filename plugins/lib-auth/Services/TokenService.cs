@@ -91,6 +91,9 @@ public class TokenService : ITokenService
             throw;
         }
 
+        // Generate JTI for edge revocation tracking (used below in claims)
+        var jti = Guid.NewGuid().ToString();
+
         // Store session data in Redis
         var now = DateTimeOffset.UtcNow;
         var sessionData = new SessionDataModel
@@ -101,6 +104,7 @@ public class TokenService : ITokenService
             Roles = account.Roles?.ToList() ?? new List<string>(),
             Authorizations = authorizations,
             SessionId = sessionId,
+            Jti = jti,
             CreatedAt = now,
             LastActiveAt = now,
             ExpiresAt = now.AddMinutes(_configuration.JwtExpirationMinutes)
@@ -125,7 +129,7 @@ public class TokenService : ITokenService
             new Claim("session_key", sessionKey),
             new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
             new Claim(JwtRegisteredClaimNames.Sub, account.AccountId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, jti),
             new Claim(JwtRegisteredClaimNames.Iat,
                 new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64)

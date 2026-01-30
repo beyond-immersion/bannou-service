@@ -158,12 +158,14 @@ public class MeshHealthCheckService : BackgroundService
                         "Endpoint {AppId}@{Host}:{Port} recovered (was {PreviousStatus})",
                         endpoint.AppId, endpoint.Host, endpoint.Port, endpoint.Status);
 
+                    // Preserve existing issues - health checks don't modify issues
                     await stateManager.UpdateHeartbeatAsync(
                         endpoint.InstanceId,
                         endpoint.AppId,
                         EndpointStatus.Healthy,
                         endpoint.LoadPercent,
                         endpoint.CurrentConnections,
+                        endpoint.Issues,
                         _configuration.HealthCheckIntervalSeconds * 3);
                 }
             }
@@ -173,12 +175,14 @@ public class MeshHealthCheckService : BackgroundService
                     "Endpoint {AppId}@{Host}:{Port} returned {StatusCode}",
                     endpoint.AppId, endpoint.Host, endpoint.Port, (int)response.StatusCode);
 
+                // Preserve existing issues - health checks don't modify issues
                 await stateManager.UpdateHeartbeatAsync(
                     endpoint.InstanceId,
                     endpoint.AppId,
                     EndpointStatus.Unavailable,
                     endpoint.LoadPercent,
                     endpoint.CurrentConnections,
+                    endpoint.Issues,
                     _configuration.HealthCheckIntervalSeconds * 3);
             }
         }
@@ -193,12 +197,14 @@ public class MeshHealthCheckService : BackgroundService
                 "Endpoint {AppId}@{Host}:{Port} health check failed: {Error}",
                 endpoint.AppId, endpoint.Host, endpoint.Port, ex.Message);
 
+            // Preserve existing issues - health checks don't modify issues
             await stateManager.UpdateHeartbeatAsync(
                 endpoint.InstanceId,
                 endpoint.AppId,
                 EndpointStatus.Unavailable,
                 endpoint.LoadPercent,
                 endpoint.CurrentConnections,
+                endpoint.Issues,
                 _configuration.HealthCheckIntervalSeconds * 3);
         }
     }

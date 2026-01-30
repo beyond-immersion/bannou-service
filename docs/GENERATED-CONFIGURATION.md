@@ -189,10 +189,17 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `AUTH_BCRYPT_WORK_FACTOR` | int | `12` | BCrypt work factor for password hashing. Higher values are m... |
+| `AUTH_CLOUDFLARE_ACCOUNT_ID` | string | **REQUIRED** | CloudFlare account ID for KV API access. Required when Cloud... |
+| `AUTH_CLOUDFLARE_API_TOKEN` | string | **REQUIRED** | CloudFlare API token with Workers KV write permissions. Use ... |
+| `AUTH_CLOUDFLARE_EDGE_ENABLED` | bool | `false` | Enable CloudFlare Workers KV edge revocation. Requires Cloud... |
+| `AUTH_CLOUDFLARE_KV_NAMESPACE_ID` | string | **REQUIRED** | CloudFlare KV namespace ID where revoked tokens are stored. ... |
 | `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to Connect service for WebSocket connections. Defaults t... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
 | `AUTH_DISCORD_REDIRECT_URI` | string | **REQUIRED** | Discord OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAI... |
+| `AUTH_EDGE_REVOCATION_ENABLED` | bool | `false` | Master switch for edge-layer token revocation. When enabled,... |
+| `AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS` | int | `3` | Maximum retry attempts for failed edge pushes before giving ... |
+| `AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for edge provider push operations. Operat... |
 | `AUTH_GOOGLE_CLIENT_ID` | string | **REQUIRED** | Google OAuth client ID |
 | `AUTH_GOOGLE_CLIENT_SECRET` | string | **REQUIRED** | Google OAuth client secret |
 | `AUTH_GOOGLE_REDIRECT_URI` | string | **REQUIRED** | Google OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN... |
@@ -202,6 +209,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
 | `AUTH_MOCK_STEAM_ID` | string | `76561198000000000` | Mock Steam user ID for testing |
 | `AUTH_MOCK_TWITCH_ID` | string | `mock-twitch-123456` | Mock Twitch user ID for testing |
+| `AUTH_OPENRESTY_EDGE_ENABLED` | bool | `false` | Enable OpenResty/NGINX edge revocation via Redis pub/sub. Ed... |
+| `AUTH_OPENRESTY_REDIS_CHANNEL` | string | `bannou:edge-revocation` | Redis pub/sub channel for broadcasting revocation events to ... |
 | `AUTH_PASSWORD_RESET_BASE_URL` | string | **REQUIRED** | Base URL for password reset page |
 | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | int | `30` | Password reset token expiration time in minutes |
 | `AUTH_SESSION_TOKEN_TTL_DAYS` | int | `7` | Session token TTL in days for persistent sessions |
@@ -764,9 +773,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 585
-- **Required (no default)**: 39
-- **Optional (has default)**: 546
+- **Total properties**: 594
+- **Required (no default)**: 42
+- **Optional (has default)**: 552
 
 ## Environment Variable Naming Convention
 

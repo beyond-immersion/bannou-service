@@ -14,7 +14,7 @@ This document provides a compact reference of all Bannou services.
 | [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Analytics](#analytics) | 1.0.0 | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset](#asset) | 1.0.0 | 20 | Asset management service for storage, versioning, and distri... |
-| [Auth](#auth) | 4.0.0 | 13 | Authentication and session management service (Internet-faci... |
+| [Auth](#auth) | 4.0.0 | 14 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 10 | Character management service for game worlds. |
 | [Character Encounter](#character-encounter) | 1.0.0 | 19 | Character encounter tracking service for memorable interacti... |
@@ -60,7 +60,7 @@ Tracks which ac... |
 
 **Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml` | **Deep Dive**: [docs/plugins/ACCOUNT.md](plugins/ACCOUNT.md)
 
-The Account plugin is an internal-only CRUD service for managing user accounts. It is never exposed directly to the internet - all external account operations go through the Auth service, which calls Account via lib-mesh. The plugin handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers).
+The Account plugin is an internal-only CRUD service for managing user accounts. It is never exposed directly to the internet - all external account operations go through the Auth service, which calls Account via lib-mesh. The plugin handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers). Email is optional - accounts created via OAuth or Steam may have no email address, in which case they are identified solely by their linked authentication methods.
 
 ---
 
@@ -389,7 +389,7 @@ Public-facing website service for browser-based access to registration, news, ac
 ## Summary
 
 - **Total services**: 41
-- **Total endpoints**: 540
+- **Total endpoints**: 541
 
 ---
 

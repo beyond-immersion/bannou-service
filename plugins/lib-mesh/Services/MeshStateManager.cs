@@ -194,6 +194,7 @@ public class MeshStateManager : IMeshStateManager
         EndpointStatus status,
         float loadPercent,
         int currentConnections,
+        ICollection<string>? issues,
         int ttlSeconds)
     {
         if (_endpointStore == null || _appIdIndexStore == null)
@@ -220,6 +221,7 @@ public class MeshStateManager : IMeshStateManager
             endpoint.Status = status;
             endpoint.LoadPercent = loadPercent;
             endpoint.CurrentConnections = currentConnections;
+            endpoint.Issues = issues;
             endpoint.LastSeen = DateTimeOffset.UtcNow;
 
             // Save updated endpoint with TTL
@@ -230,8 +232,8 @@ public class MeshStateManager : IMeshStateManager
             await _appIdIndexStore.RefreshSetTtlAsync(appId, ttlSeconds);
 
             _logger.LogDebug(
-                "Updated heartbeat for {InstanceId}: {Status}, load {LoadPercent}%",
-                instanceId, status, loadPercent);
+                "Updated heartbeat for {InstanceId}: {Status}, load {LoadPercent}%, issues: {IssueCount}",
+                instanceId, status, loadPercent, issues?.Count ?? 0);
 
             return true;
         }

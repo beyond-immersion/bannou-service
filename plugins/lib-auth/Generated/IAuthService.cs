@@ -75,6 +75,11 @@ public partial interface IAuthService : IBannouService
         Task<StatusCodes> TerminateSessionAsync(string jwt, TerminateSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// GetRevocationList operation
+        /// </summary>
+        Task<(StatusCodes, RevocationListResponse?)> GetRevocationListAsync(GetRevocationListRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// RequestPasswordReset operation
         /// </summary>
         Task<StatusCodes> RequestPasswordResetAsync(PasswordResetRequest body, CancellationToken cancellationToken = default(CancellationToken));

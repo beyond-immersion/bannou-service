@@ -398,7 +398,7 @@ public class MeshServiceTests
 
         _mockStateManager
             .Setup(x => x.UpdateHeartbeatAsync(
-                instanceId, "bannou", EndpointStatus.Healthy, 50, 100, 90))
+                instanceId, "bannou", EndpointStatus.Healthy, 50, 100, null, 90))
             .ReturnsAsync(true);
 
         var service = CreateService();
@@ -464,9 +464,9 @@ public class MeshServiceTests
         _mockStateManager
             .Setup(x => x.UpdateHeartbeatAsync(
                 instanceId, "bannou", EndpointStatus.Healthy,
-                It.IsAny<float>(), It.IsAny<int>(), It.IsAny<int>()))
-            .Callback<Guid, string, EndpointStatus, float, int, int>(
-                (_, _, _, _, _, ttl) => capturedTtl = ttl)
+                It.IsAny<float>(), It.IsAny<int>(), It.IsAny<ICollection<string>?>(), It.IsAny<int>()))
+            .Callback<Guid, string, EndpointStatus, float, int, ICollection<string>?, int>(
+                (_, _, _, _, _, _, ttl) => capturedTtl = ttl)
             .ReturnsAsync(true);
 
         var service = CreateService();

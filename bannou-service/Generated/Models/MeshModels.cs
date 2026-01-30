@@ -112,6 +112,12 @@ public partial class MeshEndpoint
     [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
     public System.DateTimeOffset RegisteredAt { get; set; } = default!;
 
+    /// <summary>
+    /// List of non-critical issues reported via heartbeat (null if none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("issues")]
+    public System.Collections.Generic.ICollection<string>? Issues { get; set; } = default!;
+
 }
 
 /// <summary>

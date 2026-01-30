@@ -42,6 +42,7 @@ This document lists all state store components used in Bannou.
 | `currency-transactions` | MySQL | Currency | Immutable transaction history |
 | `currency-wallets` | MySQL | Currency | Wallet ownership and status |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
+| `edge-revocation-statestore` | Redis | Auth | Edge revocation tracking for CDN/firewall layer blocking |
 | `escrow-active-validation` | Redis | Escrow | Track active escrows requiring periodic validation |
 | `escrow-agreements` | MySQL | Escrow | Main escrow agreement records |
 | `escrow-handler-registry` | MySQL | Escrow | Custom asset type handler registrations |
@@ -91,7 +92,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 81 stores (49 Redis, 32 MySQL)
+**Total**: 82 stores (50 Redis, 32 MySQL)
 
 ## Naming Conventions
 

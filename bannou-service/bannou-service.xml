@@ -30411,6 +30411,20 @@
             <returns>Session terminated</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.IAuthClient.GetRevocationListAsync(BeyondImmersion.BannouService.Auth.GetRevocationListRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current token revocation list
+            </summary>
+            <remarks>
+            Returns the current list of revoked tokens and accounts for edge provider synchronization
+            <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+            <br/>revocations (all tokens issued before a timestamp).
+            </remarks>
+            <returns>Revocation list retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Auth.IAuthClient.RequestPasswordResetAsync(BeyondImmersion.BannouService.Auth.PasswordResetRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -30622,6 +30636,20 @@
             Terminate specific session
             </summary>
             <returns>Session terminated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.GetRevocationListAsync(BeyondImmersion.BannouService.Auth.GetRevocationListRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current token revocation list
+            </summary>
+            <remarks>
+            Returns the current list of revoked tokens and accounts for edge provider synchronization
+            <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+            <br/>revocations (all tokens issued before a timestamp).
+            </remarks>
+            <returns>Revocation list retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.RequestPasswordResetAsync(BeyondImmersion.BannouService.Auth.PasswordResetRequest,System.Threading.CancellationToken)">
@@ -31054,6 +31082,106 @@
         <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthUrl">
             <summary>
             URL to initiate OAuth authentication (null for ticket-based auth like Steam)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.GetRevocationListRequest">
+            <summary>
+            Request to get current revocation list for edge provider synchronization or admin monitoring
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.GetRevocationListRequest.IncludeTokens">
+            <summary>
+            Include token-level revocations (by JTI)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.GetRevocationListRequest.IncludeAccounts">
+            <summary>
+            Include account-level revocations (all tokens before timestamp)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.GetRevocationListRequest.Limit">
+            <summary>
+            Maximum entries to return per category
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.RevocationListResponse">
+            <summary>
+            Current revocation list with token and account level entries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.RevokedTokens">
+            <summary>
+            Token-level revocations (individual JTIs)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.RevokedAccounts">
+            <summary>
+            Account-level revocations (all tokens before timestamp)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.FailedPushCount">
+            <summary>
+            Number of pending failed pushes awaiting retry
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevocationListResponse.TotalTokenCount">
+            <summary>
+            Total revoked tokens in store (may be null if count unavailable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.RevokedTokenEntry">
+            <summary>
+            A single revoked token entry with expiration tracking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.Jti">
+            <summary>
+            JWT unique identifier (jti claim)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.AccountId">
+            <summary>
+            Account that owned the token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.RevokedAt">
+            <summary>
+            When the token was revoked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.ExpiresAt">
+            <summary>
+            When the revocation entry expires (matches original JWT expiry)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedTokenEntry.Reason">
+            <summary>
+            Revocation reason for audit trail
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.RevokedAccountEntry">
+            <summary>
+            Account-level revocation entry that invalidates all tokens issued before a timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.AccountId">
+            <summary>
+            Account ID whose tokens are revoked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.IssuedBefore">
+            <summary>
+            Reject tokens issued before this timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.RevokedAt">
+            <summary>
+            When the revocation was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RevokedAccountEntry.Reason">
+            <summary>
+            Revocation reason for audit trail
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.ICharacterClient">
@@ -57830,6 +57958,11 @@
             When endpoint was first registered
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mesh.MeshEndpoint.Issues">
+            <summary>
+            List of non-critical issues reported via heartbeat (null if none)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Mesh.EndpointStatus">
             <summary>
             Health status of an endpoint
@@ -76234,6 +76367,9 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Auth">
             <summary>Session and token state (ephemeral)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EdgeRevocation">
+            <summary>Edge revocation tracking for CDN/firewall layer blocking</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AgentMemories">
             <summary>Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)</summary>

@@ -14,6 +14,7 @@ public class SessionService : ISessionService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly IEdgeRevocationService _edgeRevocationService;
     private readonly ILogger<SessionService> _logger;
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
@@ -29,11 +30,13 @@ public class SessionService : ISessionService
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
+        IEdgeRevocationService edgeRevocationService,
         ILogger<SessionService> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
+        _edgeRevocationService = edgeRevocationService;
         _logger = logger;
     }
 
@@ -353,10 +356,25 @@ public class SessionService : ISessionService
 
             _logger.LogDebug("Invalidating {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 
+            // Collect JTIs from sessions before deleting for edge revocation
+            var sessionsToRevoke = new List<(string jti, TimeSpan ttl)>();
+
             foreach (var sessionKey in sessionKeys)
             {
                 try
                 {
+                    // Get session data to extract JTI before deletion
+                    var sessionData = await GetSessionAsync(sessionKey, cancellationToken);
+                    if (sessionData?.Jti != null)
+                    {
+                        // Calculate remaining TTL for edge revocation
+                        var remainingTtl = sessionData.ExpiresAt - DateTimeOffset.UtcNow;
+                        if (remainingTtl > TimeSpan.Zero)
+                        {
+                            sessionsToRevoke.Add((sessionData.Jti, remainingTtl));
+                        }
+                    }
+
                     await DeleteSessionAsync(sessionKey, cancellationToken);
                 }
                 catch (Exception ex)
@@ -366,6 +384,26 @@ public class SessionService : ISessionService
             }
 
             await DeleteAccountSessionsIndexAsync(accountId, cancellationToken);
+
+            // Push revocations to edge providers (defense-in-depth)
+            if (_edgeRevocationService.IsEnabled && sessionsToRevoke.Count > 0)
+            {
+                _logger.LogDebug("Pushing {Count} token revocations to edge providers for account {AccountId}",
+                    sessionsToRevoke.Count, accountId);
+
+                foreach (var (jti, ttl) in sessionsToRevoke)
+                {
+                    try
+                    {
+                        await _edgeRevocationService.RevokeTokenAsync(jti, accountId, ttl, reason.ToString(), cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Edge revocation failures should not block session invalidation
+                        _logger.LogWarning(ex, "Failed to push edge revocation for JTI {Jti}", jti);
+                    }
+                }
+            }
 
             _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 

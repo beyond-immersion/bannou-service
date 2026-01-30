@@ -150,3 +150,64 @@ x-service-configuration:
       description: Session token TTL in days for persistent sessions
       env: AUTH_SESSION_TOKEN_TTL_DAYS
       default: 7
+
+    # Edge Revocation - Master Switch
+    EdgeRevocationEnabled:
+      type: boolean
+      default: false
+      description: Master switch for edge-layer token revocation. When enabled, revoked tokens are pushed to configured edge providers for CDN/firewall-level blocking. Disabled by default.
+      env: AUTH_EDGE_REVOCATION_ENABLED
+
+    EdgeRevocationTimeoutSeconds:
+      type: integer
+      default: 5
+      minimum: 1
+      maximum: 30
+      description: Timeout in seconds for edge provider push operations. Operations exceeding this timeout are logged and added to the failed-pushes retry set.
+      env: AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS
+
+    EdgeRevocationMaxRetryAttempts:
+      type: integer
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: Maximum retry attempts for failed edge pushes before giving up and logging an error.
+      env: AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS
+
+    # CloudFlare Provider
+    CloudflareEdgeEnabled:
+      type: boolean
+      default: false
+      description: Enable CloudFlare Workers KV edge revocation. Requires CloudflareAccountId, CloudflareKvNamespaceId, and CloudflareApiToken to be configured.
+      env: AUTH_CLOUDFLARE_EDGE_ENABLED
+
+    CloudflareAccountId:
+      type: string
+      nullable: true
+      description: CloudFlare account ID for KV API access. Required when CloudflareEdgeEnabled is true.
+      env: AUTH_CLOUDFLARE_ACCOUNT_ID
+
+    CloudflareKvNamespaceId:
+      type: string
+      nullable: true
+      description: CloudFlare KV namespace ID where revoked tokens are stored. Create via CloudFlare dashboard or API.
+      env: AUTH_CLOUDFLARE_KV_NAMESPACE_ID
+
+    CloudflareApiToken:
+      type: string
+      nullable: true
+      description: CloudFlare API token with Workers KV write permissions. Use a scoped token with only KV Edit permission for security.
+      env: AUTH_CLOUDFLARE_API_TOKEN
+
+    # OpenResty/Redis Provider
+    OpenrestyEdgeEnabled:
+      type: boolean
+      default: false
+      description: Enable OpenResty/NGINX edge revocation via Redis pub/sub. Edge servers subscribe to the configured channel and maintain local revocation caches.
+      env: AUTH_OPENRESTY_EDGE_ENABLED
+
+    OpenrestyRedisChannel:
+      type: string
+      default: "bannou:edge-revocation"
+      description: Redis pub/sub channel for broadcasting revocation events to OpenResty/NGINX edge servers.
+      env: AUTH_OPENRESTY_REDIS_CHANNEL

@@ -1340,6 +1340,208 @@ public partial class AuthController
 
     #endregion
 
+    #region Meta Endpoints for GetRevocationList
+
+    private static readonly string _GetRevocationList_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetRevocationListRequest",
+    "$defs": {
+        "GetRevocationListRequest": {
+            "type": "object",
+            "description": "Request to get current revocation list for edge provider synchronization or admin monitoring",
+            "additionalProperties": false,
+            "properties": {
+                "includeTokens": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include token-level revocations (by JTI)"
+                },
+                "includeAccounts": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include account-level revocations (all tokens before timestamp)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 100,
+                    "description": "Maximum entries to return per category"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRevocationList_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RevocationListResponse",
+    "$defs": {
+        "RevocationListResponse": {
+            "type": "object",
+            "description": "Current revocation list with token and account level entries",
+            "additionalProperties": false,
+            "required": [
+                "revokedTokens",
+                "revokedAccounts",
+                "failedPushCount"
+            ],
+            "properties": {
+                "revokedTokens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RevokedTokenEntry"
+                    },
+                    "description": "Token-level revocations (individual JTIs)"
+                },
+                "revokedAccounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RevokedAccountEntry"
+                    },
+                    "description": "Account-level revocations (all tokens before timestamp)"
+                },
+                "failedPushCount": {
+                    "type": "integer",
+                    "description": "Number of pending failed pushes awaiting retry"
+                },
+                "totalTokenCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Total revoked tokens in store (may be null if count unavailable)"
+                }
+            }
+        },
+        "RevokedTokenEntry": {
+            "type": "object",
+            "description": "A single revoked token entry with expiration tracking",
+            "additionalProperties": false,
+            "required": [
+                "jti",
+                "accountId",
+                "revokedAt",
+                "expiresAt",
+                "reason"
+            ],
+            "properties": {
+                "jti": {
+                    "type": "string",
+                    "description": "JWT unique identifier (jti claim)"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account that owned the token"
+                },
+                "revokedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the token was revoked"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the revocation entry expires (matches original JWT expiry)"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Revocation reason for audit trail"
+                }
+            }
+        },
+        "RevokedAccountEntry": {
+            "type": "object",
+            "description": "Account-level revocation entry that invalidates all tokens issued before a timestamp",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "issuedBefore",
+                "revokedAt",
+                "reason"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID whose tokens are revoked"
+                },
+                "issuedBefore": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Reject tokens issued before this timestamp"
+                },
+                "revokedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the revocation was created"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Revocation reason for audit trail"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRevocationList_Info = """
+{
+    "summary": "Get current token revocation list",
+    "description": "Returns the current list of revoked tokens and accounts for edge provider synchronization\nand administrative monitoring. Includes token-level revocations (by JTI) and account-level\nrevocations (all tokens issued before a timestamp).\n",
+    "tags": [
+        "Token Management"
+    ],
+    "deprecated": false,
+    "operationId": "getRevocationList"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            _GetRevocationList_Info));
+
+    /// <summary>Returns request schema for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            "request-schema",
+            _GetRevocationList_RequestSchema));
+
+    /// <summary>Returns response schema for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            "response-schema",
+            _GetRevocationList_ResponseSchema));
+
+    /// <summary>Returns full schema for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            _GetRevocationList_Info,
+            _GetRevocationList_RequestSchema,
+            _GetRevocationList_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for RequestPasswordReset
 
     private static readonly string _RequestPasswordReset_RequestSchema = """

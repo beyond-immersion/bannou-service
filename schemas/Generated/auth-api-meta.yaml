@@ -594,6 +594,89 @@ paths:
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Terminate specific session\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"terminateSession\"\n}"
+  /auth/revocation-list:
+    post:
+      summary: Get current token revocation list
+      description: |
+        Returns the current list of revoked tokens and accounts for edge provider synchronization
+        and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+        revocations (all tokens issued before a timestamp).
+      operationId: getRevocationList
+      tags:
+      - Token Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRevocationListRequest'
+      responses:
+        '200':
+          description: Revocation list retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevocationListResponse'
+        '403':
+          description: Insufficient permissions
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRevocationListRequest\"\
+        ,\n    \"$defs\": {\n        \"GetRevocationListRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get current revocation list for edge provider synchronization or admin monitoring\",\n            \"\
+        additionalProperties\": false,\n            \"properties\": {\n                \"includeTokens\": {\n            \
+        \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Include
+        token-level revocations (by JTI)\"\n                },\n                \"includeAccounts\": {\n                 \
+        \   \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Include
+        account-level revocations (all tokens before timestamp)\"\n                },\n                \"limit\": {\n    \
+        \                \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n\
+        \                    \"default\": 100,\n                    \"description\": \"Maximum entries to return per category\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RevocationListResponse\"\
+        ,\n    \"$defs\": {\n        \"RevocationListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Current revocation list with token and account level entries\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"revokedTokens\",\n                \"revokedAccounts\",\n         \
+        \       \"failedPushCount\"\n            ],\n            \"properties\": {\n                \"revokedTokens\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/RevokedTokenEntry\"\n                    },\n                    \"description\": \"Token-level revocations
+        (individual JTIs)\"\n                },\n                \"revokedAccounts\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RevokedAccountEntry\"\n  \
+        \                  },\n                    \"description\": \"Account-level revocations (all tokens before timestamp)\"\
+        \n                },\n                \"failedPushCount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"description\": \"Number of pending failed pushes awaiting retry\"\n                },\n          \
+        \      \"totalTokenCount\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Total revoked tokens in store (may be null if count unavailable)\"\n     \
+        \           }\n            }\n        },\n        \"RevokedTokenEntry\": {\n            \"type\": \"object\",\n  \
+        \          \"description\": \"A single revoked token entry with expiration tracking\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"jti\",\n                \"accountId\",\n                \"\
+        revokedAt\",\n                \"expiresAt\",\n                \"reason\"\n            ],\n            \"properties\"\
+        : {\n                \"jti\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        JWT unique identifier (jti claim)\"\n                },\n                \"accountId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account that
+        owned the token\"\n                },\n                \"revokedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the token was revoked\"\
+        \n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the revocation entry expires (matches
+        original JWT expiry)\"\n                },\n                \"reason\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Revocation reason for audit trail\"\n                }\n            }\n\
+        \        },\n        \"RevokedAccountEntry\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        Account-level revocation entry that invalidates all tokens issued before a timestamp\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"issuedBefore\",\n       \
+        \         \"revokedAt\",\n                \"reason\"\n            ],\n            \"properties\": {\n            \
+        \    \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"description\": \"Account ID whose tokens are revoked\"\n                },\n                \"\
+        issuedBefore\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
+        \                 \"description\": \"Reject tokens issued before this timestamp\"\n                },\n          \
+        \      \"revokedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When the revocation was created\"\n                },\n                \"\
+        reason\": {\n                    \"type\": \"string\",\n                    \"description\": \"Revocation reason for
+        audit trail\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get current token revocation list\",\n    \"description\": \"Returns the
+        current list of revoked tokens and accounts for edge provider synchronization\\nand administrative monitoring. Includes
+        token-level revocations (by JTI) and account-level\\nrevocations (all tokens issued before a timestamp).\\n\",\n \
+        \   \"tags\": [\n        \"Token Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRevocationList\"\
+        \n}"
   /auth/password/reset:
     post:
       summary: Request password reset
@@ -1085,3 +1168,102 @@ components:
           nullable: true
           example: "https://discord.com/oauth2/authorize"
           description: URL to initiate OAuth authentication (null for ticket-based auth like Steam)
+    GetRevocationListRequest:
+      type: object
+      description: Request to get current revocation list for edge provider synchronization or admin monitoring
+      additionalProperties: false
+      properties:
+        includeTokens:
+          type: boolean
+          default: true
+          description: Include token-level revocations (by JTI)
+        includeAccounts:
+          type: boolean
+          default: true
+          description: Include account-level revocations (all tokens before timestamp)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Maximum entries to return per category
+    RevocationListResponse:
+      type: object
+      description: Current revocation list with token and account level entries
+      additionalProperties: false
+      required:
+      - revokedTokens
+      - revokedAccounts
+      - failedPushCount
+      properties:
+        revokedTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevokedTokenEntry'
+          description: Token-level revocations (individual JTIs)
+        revokedAccounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevokedAccountEntry'
+          description: Account-level revocations (all tokens before timestamp)
+        failedPushCount:
+          type: integer
+          description: Number of pending failed pushes awaiting retry
+        totalTokenCount:
+          type: integer
+          nullable: true
+          description: Total revoked tokens in store (may be null if count unavailable)
+    RevokedTokenEntry:
+      type: object
+      description: A single revoked token entry with expiration tracking
+      additionalProperties: false
+      required:
+      - jti
+      - accountId
+      - revokedAt
+      - expiresAt
+      - reason
+      properties:
+        jti:
+          type: string
+          description: JWT unique identifier (jti claim)
+        accountId:
+          type: string
+          format: uuid
+          description: Account that owned the token
+        revokedAt:
+          type: string
+          format: date-time
+          description: When the token was revoked
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the revocation entry expires (matches original JWT expiry)
+        reason:
+          type: string
+          description: Revocation reason for audit trail
+    RevokedAccountEntry:
+      type: object
+      description: Account-level revocation entry that invalidates all tokens issued before a timestamp
+      additionalProperties: false
+      required:
+      - accountId
+      - issuedBefore
+      - revokedAt
+      - reason
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID whose tokens are revoked
+        issuedBefore:
+          type: string
+          format: date-time
+          description: Reject tokens issued before this timestamp
+        revokedAt:
+          type: string
+          format: date-time
+          description: When the revocation was created
+        reason:
+          type: string
+          description: Revocation reason for audit trail

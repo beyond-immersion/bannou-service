@@ -14,7 +14,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Actor Service API](#actor) | `client.Actor` | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
-| [Bannou Auth Service API](#auth) | `client.Auth` | 12 | Authentication and session management service (Internet-faci... |
+| [Bannou Auth Service API](#auth) | `client.Auth` | 13 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
@@ -296,6 +296,12 @@ Authentication and session management service (Internet-facing).
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `VerifysteamauthAsync` | `SteamVerifyRequest` | `AuthResponse` | Verify Steam Session Ticket |
+
+### Token Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetRevocationlistAsync` | `GetRevocationListRequest` | `RevocationListResponse` | Get current token revocation list |
 
 ### Tokens
 
@@ -1657,7 +1663,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 40
-- **Total methods**: 534
+- **Total methods**: 535
 
 ---
 

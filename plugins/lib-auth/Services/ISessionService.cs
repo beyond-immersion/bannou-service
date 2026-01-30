@@ -161,6 +161,11 @@ public class SessionDataModel
     public Guid SessionId { get; set; }
 
     /// <summary>
+    /// The JWT unique identifier (jti claim) for edge revocation tracking.
+    /// </summary>
+    public string? Jti { get; set; }
+
+    /// <summary>
     /// Session creation time as Unix timestamp.
     /// Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues.
     /// </summary>

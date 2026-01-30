@@ -34,6 +34,7 @@ public partial class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
+    private readonly IEdgeRevocationService _edgeRevocationService;
 
     public AuthService(
         IAccountClient accountClient,
@@ -46,6 +47,7 @@ public partial class AuthService : IAuthService
         ITokenService tokenService,
         ISessionService sessionService,
         IOAuthProviderService oauthService,
+        IEdgeRevocationService edgeRevocationService,
         IEventConsumer eventConsumer)
     {
         _accountClient = accountClient;
@@ -58,6 +60,7 @@ public partial class AuthService : IAuthService
         _tokenService = tokenService;
         _sessionService = sessionService;
         _oauthService = oauthService;
+        _edgeRevocationService = edgeRevocationService;
 
         // Register event handlers via partial class (AuthServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -996,6 +999,42 @@ public partial class AuthService : IAuthService
         return (StatusCodes.OK, new ProvidersResponse
         {
             Providers = providers
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, RevocationListResponse?)> GetRevocationListAsync(GetRevocationListRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting revocation list: IncludeTokens={IncludeTokens}, IncludeAccounts={IncludeAccounts}, Limit={Limit}",
+            body.IncludeTokens, body.IncludeAccounts, body.Limit);
+
+        if (!_edgeRevocationService.IsEnabled)
+        {
+            _logger.LogInformation("Edge revocation is disabled, returning empty list");
+            return (StatusCodes.OK, new RevocationListResponse
+            {
+                RevokedTokens = new List<RevokedTokenEntry>(),
+                RevokedAccounts = new List<RevokedAccountEntry>(),
+                FailedPushCount = 0,
+                TotalTokenCount = null
+            });
+        }
+
+        var (tokens, accounts, failedCount, totalTokenCount) = await _edgeRevocationService.GetRevocationListAsync(
+            body.IncludeTokens,
+            body.IncludeAccounts,
+            body.Limit,
+            cancellationToken);
+
+        _logger.LogInformation("Returning revocation list: {TokenCount} tokens, {AccountCount} accounts, {FailedCount} failed pushes",
+            tokens.Count, accounts.Count, failedCount);
+
+        return (StatusCodes.OK, new RevocationListResponse
+        {
+            RevokedTokens = tokens,
+            RevokedAccounts = accounts,
+            FailedPushCount = failedCount,
+            TotalTokenCount = totalTokenCount
         });
     }
 

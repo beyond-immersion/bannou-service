@@ -49,6 +49,7 @@ public partial class MeshService
             if (existingEndpoint != null)
             {
                 // Update heartbeat for existing endpoint
+                // Preserve existing issues - event-based heartbeats don't report issues
                 var status = MapHeartbeatStatus(evt.Status);
                 await _stateManager.UpdateHeartbeatAsync(
                     existingEndpoint.InstanceId,
@@ -56,6 +57,7 @@ public partial class MeshService
                     status,
                     evt.Capacity?.CpuUsage ?? 0,
                     evt.Capacity?.CurrentConnections ?? 0,
+                    existingEndpoint.Issues,
                     _configuration.EndpointTtlSeconds);
 
                 _logger.LogDebug(

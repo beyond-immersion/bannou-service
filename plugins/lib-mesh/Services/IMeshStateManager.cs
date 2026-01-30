@@ -49,6 +49,7 @@ public interface IMeshStateManager : IAsyncDisposable
     /// <param name="status">Current health status.</param>
     /// <param name="loadPercent">Current load percentage.</param>
     /// <param name="currentConnections">Current connection count.</param>
+    /// <param name="issues">List of non-critical issues reported by the endpoint.</param>
     /// <param name="ttlSeconds">TTL in seconds for the heartbeat.</param>
     /// <returns>True if heartbeat was recorded.</returns>
     Task<bool> UpdateHeartbeatAsync(
@@ -57,6 +58,7 @@ public interface IMeshStateManager : IAsyncDisposable
         EndpointStatus status,
         float loadPercent,
         int currentConnections,
+        ICollection<string>? issues,
         int ttlSeconds);
 
     /// <summary>

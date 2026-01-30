@@ -148,6 +148,14 @@ public partial class MeshController
                     "type": "string",
                     "format": "date-time",
                     "description": "When endpoint was first registered"
+                },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of non-critical issues reported via heartbeat (null if none)"
                 }
             }
         },
@@ -347,6 +355,14 @@ public partial class MeshController
                     "type": "string",
                     "format": "date-time",
                     "description": "When endpoint was first registered"
+                },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of non-critical issues reported via heartbeat (null if none)"
                 }
             }
         },
@@ -594,6 +610,14 @@ public partial class MeshController
                     "type": "string",
                     "format": "date-time",
                     "description": "When endpoint was first registered"
+                },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of non-critical issues reported via heartbeat (null if none)"
                 }
             }
         },
@@ -1024,6 +1048,14 @@ public partial class MeshController
                     "type": "string",
                     "format": "date-time",
                     "description": "When endpoint was first registered"
+                },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of non-critical issues reported via heartbeat (null if none)"
                 }
             }
         },
@@ -1376,6 +1408,14 @@ public partial class MeshController
                     "type": "string",
                     "format": "date-time",
                     "description": "When endpoint was first registered"
+                },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of non-critical issues reported via heartbeat (null if none)"
                 }
             }
         }

@@ -114,11 +114,19 @@ public partial class MeshService : IMeshService
         ListEndpointsRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Listing all endpoints, filter: {Filter}", body.AppIdFilter);
+        _logger.LogDebug(
+            "Listing all endpoints, appIdFilter: {AppIdFilter}, statusFilter: {StatusFilter}",
+            body.AppIdFilter, body.StatusFilter);
 
         try
         {
             var endpoints = await _stateManager.GetAllEndpointsAsync(body.AppIdFilter);
+
+            // Apply status filter if specified
+            if (body.StatusFilter.HasValue)
+            {
+                endpoints = endpoints.Where(e => e.Status == body.StatusFilter.Value).ToList();
+            }
 
             // Group by status for summary
             var byStatus = endpoints.GroupBy(e => e.Status)
@@ -293,12 +301,20 @@ public partial class MeshService : IMeshService
                 return (StatusCodes.NotFound, null);
             }
 
+            if (body.Issues != null && body.Issues.Count > 0)
+            {
+                _logger.LogDebug(
+                    "Endpoint {InstanceId} reporting {IssueCount} issue(s): {Issues}",
+                    body.InstanceId, body.Issues.Count, string.Join(", ", body.Issues));
+            }
+
             var success = await _stateManager.UpdateHeartbeatAsync(
                 body.InstanceId,
                 endpoint.AppId,
                 body.Status ?? EndpointStatus.Healthy,
                 body.LoadPercent ?? 0,
                 body.CurrentConnections ?? 0,
+                body.Issues,
                 _configuration.EndpointTtlSeconds);
 
             if (!success)

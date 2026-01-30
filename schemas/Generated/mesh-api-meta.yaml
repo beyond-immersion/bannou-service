@@ -97,10 +97,13 @@ paths:
         \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n   \
-        \             \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\
-        \n            ]\n        }\n    }\n}"
+        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
+        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
+        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
+        \ \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get endpoints for a service\",\n    \"description\": \"Returns all healthy
         endpoints for the specified app-id.\\nUsed by IMeshClient to resolve target hosts for service invocation.\\n\",\n\
         \    \"tags\": [\n        \"Service Discovery\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEndpoints\"\
@@ -170,20 +173,23 @@ paths:
         \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n   \
-        \             \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\
-        \n            ]\n        },\n        \"EndpointSummary\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Summary statistics for endpoints\",\n            \"additionalProperties\": false,\n            \"properties\"\
-        : {\n                \"totalEndpoints\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Total number of registered endpoints\"\n                },\n                \"healthyCount\": {\n            \
-        \        \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Healthy status\"\n\
-        \                },\n                \"degradedCount\": {\n                    \"type\": \"integer\",\n          \
-        \          \"description\": \"Number of endpoints with Degraded status\"\n                },\n                \"unavailableCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Unavailable
-        status\"\n                },\n                \"uniqueAppIds\": {\n                    \"type\": \"integer\",\n  \
-        \                  \"description\": \"Number of unique app-ids across all endpoints\"\n                }\n       \
-        \     }\n        }\n    }\n}"
+        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
+        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
+        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
+        \ \"ShuttingDown\"\n            ]\n        },\n        \"EndpointSummary\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Summary statistics for endpoints\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"totalEndpoints\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Total number of registered endpoints\"\n                },\n             \
+        \   \"healthyCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of endpoints with Healthy status\"\n                },\n                \"degradedCount\": {\n                   \
+        \ \"type\": \"integer\",\n                    \"description\": \"Number of endpoints with Degraded status\"\n    \
+        \            },\n                \"unavailableCount\": {\n                    \"type\": \"integer\",\n           \
+        \         \"description\": \"Number of endpoints with Unavailable status\"\n                },\n                \"\
+        uniqueAppIds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of unique
+        app-ids across all endpoints\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all registered endpoints\",\n    \"description\": \"Returns all registered
         service endpoints across all app-ids.\\nAdmin-only endpoint for monitoring and debugging.\\n\",\n    \"tags\": [\n\
         \        \"Service Discovery\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listEndpoints\"\n}"
@@ -262,10 +268,13 @@ paths:
         \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n   \
-        \             \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\
-        \n            ]\n        }\n    }\n}"
+        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
+        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
+        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
+        \ \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a service endpoint\",\n    \"description\": \"Registers this instance's
         endpoint in the service mesh.\\nCalled during service startup to announce availability.\\nEndpoint TTL is refreshed
         on each heartbeat.\\n\",\n    \"tags\": [\n        \"Registration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -425,10 +434,13 @@ paths:
         \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\": [\n   \
-        \             \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n                \"ShuttingDown\"\
-        \n            ]\n        }\n    }\n}"
+        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
+        heartbeat (null if none)\"\n                }\n            }\n        },\n        \"EndpointStatus\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Health status of an endpoint\",\n            \"enum\":
+        [\n                \"Healthy\",\n                \"Degraded\",\n                \"Unavailable\",\n               \
+        \ \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get optimal endpoint for routing\",\n    \"description\": \"Returns a single
         endpoint for the specified app-id, selected by the\\nconfigured load balancing algorithm (round-robin, least-connections,
         weighted).\\n\",\n    \"tags\": [\n        \"Routing\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -558,7 +570,10 @@ paths:
         \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Last heartbeat timestamp\"\n                },\n                \"registeredAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When endpoint
-        was first registered\"\n                }\n            }\n        }\n    }\n}"
+        was first registered\"\n                },\n                \"issues\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"List of non-critical issues reported via
+        heartbeat (null if none)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get mesh health status\",\n    \"description\": \"Returns overall health
         of the service mesh including:\\n- Total registered endpoints\\n- Healthy/degraded/unavailable counts\\n- Redis connectivity
         status\\n\",\n    \"tags\": [\n        \"Diagnostics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -616,6 +631,12 @@ components:
           type: string
           format: date-time
           description: When endpoint was first registered
+        issues:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of non-critical issues reported via heartbeat (null if none)
     EndpointStatus:
       type: string
       description: Health status of an endpoint

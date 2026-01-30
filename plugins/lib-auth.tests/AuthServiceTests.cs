@@ -35,6 +35,7 @@ public class AuthServiceTests
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ISessionService> _mockSessionService;
     private readonly Mock<IOAuthProviderService> _mockOAuthService;
+    private readonly Mock<IEdgeRevocationService> _mockEdgeRevocationService;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public AuthServiceTests()
@@ -78,7 +79,11 @@ public class AuthServiceTests
         _mockTokenService = new Mock<ITokenService>();
         _mockSessionService = new Mock<ISessionService>();
         _mockOAuthService = new Mock<IOAuthProviderService>();
+        _mockEdgeRevocationService = new Mock<IEdgeRevocationService>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup default behavior for edge revocation service (disabled by default)
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
 
         // Setup state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<AuthService.PasswordResetData>(It.IsAny<string>()))
@@ -117,6 +122,7 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
+            _mockEdgeRevocationService.Object,
             _mockEventConsumer.Object);
     }
 
@@ -552,6 +558,7 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
+            _mockEdgeRevocationService.Object,
             _mockEventConsumer.Object);
 
         // Act
@@ -814,6 +821,7 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
+            _mockEdgeRevocationService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "valid-steam-ticket-hex" };
@@ -899,6 +907,7 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
+            _mockEdgeRevocationService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
@@ -939,6 +948,7 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
+            _mockEdgeRevocationService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "invalid-ticket" };
@@ -988,6 +998,7 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
+            _mockEdgeRevocationService.Object,
             _mockEventConsumer.Object);
 
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };

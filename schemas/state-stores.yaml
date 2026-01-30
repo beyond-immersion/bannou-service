@@ -40,6 +40,12 @@ x-state-stores:
     service: Auth
     purpose: Session and token state (ephemeral)
 
+  edge-revocation-statestore:
+    backend: redis
+    prefix: "auth:edge"
+    service: Auth
+    purpose: Edge revocation tracking for CDN/firewall layer blocking
+
   connect-statestore:
     backend: redis
     prefix: connect

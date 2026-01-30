@@ -18,8 +18,18 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
         Logger?.LogDebug("Configuring service dependencies");
 
         // Register HttpClient for OAuth provider communication (Discord, Google, Twitch, Steam)
+        // and CloudFlare edge revocation provider
         services.AddHttpClient();
         Logger?.LogDebug("Registered IHttpClientFactory for OAuth provider HTTP calls");
+
+        // Register edge revocation providers
+        services.AddScoped<IEdgeRevocationProvider, CloudflareEdgeProvider>();
+        services.AddScoped<IEdgeRevocationProvider, OpenrestyEdgeProvider>();
+        Logger?.LogDebug("Registered edge revocation providers (CloudFlare, OpenResty)");
+
+        // Register edge revocation service (must be before SessionService which depends on it)
+        services.AddScoped<IEdgeRevocationService, EdgeRevocationService>();
+        Logger?.LogDebug("Registered EdgeRevocationService");
 
         // Register helper services for better testability and separation of concerns
         services.AddScoped<ISessionService, SessionService>();

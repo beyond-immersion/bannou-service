@@ -323,6 +323,35 @@ paths:
         '404':
           description: Session not found
 
+  /auth/revocation-list:
+    post:
+      summary: Get current token revocation list
+      description: |
+        Returns the current list of revoked tokens and accounts for edge provider synchronization
+        and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+        revocations (all tokens issued before a timestamp).
+      operationId: getRevocationList
+      tags:
+      - Token Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRevocationListRequest'
+      responses:
+        '200':
+          description: Revocation list retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevocationListResponse'
+        '403':
+          description: Insufficient permissions
+
   /auth/password/reset:
     post:
       summary: Request password reset
@@ -777,6 +806,110 @@ components:
           nullable: true
           example: "https://discord.com/oauth2/authorize"
           description: URL to initiate OAuth authentication (null for ticket-based auth like Steam)
+
+    # Edge Revocation Models
+    GetRevocationListRequest:
+      type: object
+      description: Request to get current revocation list for edge provider synchronization or admin monitoring
+      additionalProperties: false
+      properties:
+        includeTokens:
+          type: boolean
+          default: true
+          description: Include token-level revocations (by JTI)
+        includeAccounts:
+          type: boolean
+          default: true
+          description: Include account-level revocations (all tokens before timestamp)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Maximum entries to return per category
+
+    RevocationListResponse:
+      type: object
+      description: Current revocation list with token and account level entries
+      additionalProperties: false
+      required:
+      - revokedTokens
+      - revokedAccounts
+      - failedPushCount
+      properties:
+        revokedTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevokedTokenEntry'
+          description: Token-level revocations (individual JTIs)
+        revokedAccounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevokedAccountEntry'
+          description: Account-level revocations (all tokens before timestamp)
+        failedPushCount:
+          type: integer
+          description: Number of pending failed pushes awaiting retry
+        totalTokenCount:
+          type: integer
+          nullable: true
+          description: Total revoked tokens in store (may be null if count unavailable)
+
+    RevokedTokenEntry:
+      type: object
+      description: A single revoked token entry with expiration tracking
+      additionalProperties: false
+      required:
+      - jti
+      - accountId
+      - revokedAt
+      - expiresAt
+      - reason
+      properties:
+        jti:
+          type: string
+          description: JWT unique identifier (jti claim)
+        accountId:
+          type: string
+          format: uuid
+          description: Account that owned the token
+        revokedAt:
+          type: string
+          format: date-time
+          description: When the token was revoked
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the revocation entry expires (matches original JWT expiry)
+        reason:
+          type: string
+          description: Revocation reason for audit trail
+
+    RevokedAccountEntry:
+      type: object
+      description: Account-level revocation entry that invalidates all tokens issued before a timestamp
+      additionalProperties: false
+      required:
+      - accountId
+      - issuedBefore
+      - revokedAt
+      - reason
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID whose tokens are revoked
+        issuedBefore:
+          type: string
+          format: date-time
+          description: Reject tokens issued before this timestamp
+        revokedAt:
+          type: string
+          format: date-time
+          description: When the revocation was created
+        reason:
+          type: string
+          description: Revocation reason for audit trail
 
     # NOTE: Event models (SessionInvalidatedEvent, SessionUpdatedEvent) are defined in auth-events.yaml
     # and generated separately. They are NOT part of the HTTP API.

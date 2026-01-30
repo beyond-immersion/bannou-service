@@ -215,11 +215,13 @@ Event-Driven Auto-Registration
 
 2. **Health check deregistration**: `MeshHealthCheckService` probes endpoints and marks them as unavailable on failure, but does not deregister them or publish deregistration events - they will expire via TTL.
 
-3. **ListEndpointsRequest.statusFilter**: Defined in schema but `ListEndpointsAsync` ignores it - filtering must be done client-side.
+3. ~~**ListEndpointsRequest.statusFilter**~~: **FIXED** (2026-01-30) - Now implemented in `ListEndpointsAsync`.
 
 4. **RegisterEndpointRequest.metadata**: Defined in schema but never stored - metadata is silently discarded.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
 
 5. **HeartbeatRequest.issues**: Defined in schema but never used - issues array is silently discarded.
+<!-- AUDIT:IN_PROGRESS:2026-01-30 -->
 
 ---
 
@@ -241,9 +243,10 @@ Event-Driven Auto-Registration
 
 ### Bugs (Fix Immediately)
 
-1. **`ListEndpointsRequest.StatusFilter` not implemented**: The schema defines `statusFilter` on `ListEndpointsRequest` but `ListEndpointsAsync` in `MeshService.cs:121` only passes `body.AppIdFilter` to the state manager - it never filters by status. The filter is declared in the API contract but silently ignored.
+1. ~~**`ListEndpointsRequest.StatusFilter` not implemented**~~: **FIXED** (2026-01-30) - `ListEndpointsAsync` now applies `body.StatusFilter` via LINQ after fetching endpoints from the state manager. Filters in-memory since status is not indexed in Redis.
 
 2. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:173-186` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
 
 3. **`HeartbeatRequest.Issues` not used**: The schema defines `issues` on `HeartbeatRequest` (line 509-513) but `HeartbeatAsync` in `MeshService.cs:276-331` never reads `body.Issues`. Diagnostic issues reported by clients are silently discarded.
 
@@ -281,4 +284,7 @@ Event-Driven Auto-Registration
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work items.*
+### Completed
+
+- **2026-01-30**: Fixed `ListEndpointsRequest.StatusFilter` not being applied. Added LINQ filter in `ListEndpointsAsync` after fetching endpoints from state manager.
+- **2026-01-30**: Created [#161](https://github.com/beyond-immersion/bannou-service/issues/161) for `RegisterEndpointRequest.Metadata` design - needs decision on whether to implement dynamic endpoint introspection (parity with schema-first meta endpoints) or remove the unused field.

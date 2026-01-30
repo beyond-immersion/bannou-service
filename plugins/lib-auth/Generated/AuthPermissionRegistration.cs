@@ -217,6 +217,21 @@ public static class AuthPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/auth/revocation-list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getRevocationList",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/auth/password/reset",
             Method = ServiceEndpointMethod.POST,
             Description = "requestPasswordReset",

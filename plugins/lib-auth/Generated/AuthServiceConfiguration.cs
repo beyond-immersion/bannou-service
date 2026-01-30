@@ -185,4 +185,60 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int SessionTokenTtlDays { get; set; } = 7;
 
+    /// <summary>
+    /// Master switch for edge-layer token revocation. When enabled, revoked tokens are pushed to configured edge providers for CDN/firewall-level blocking. Disabled by default.
+    /// Environment variable: AUTH_EDGE_REVOCATION_ENABLED
+    /// </summary>
+    public bool EdgeRevocationEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Timeout in seconds for edge provider push operations. Operations exceeding this timeout are logged and added to the failed-pushes retry set.
+    /// Environment variable: AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 30)]
+    public int EdgeRevocationTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum retry attempts for failed edge pushes before giving up and logging an error.
+    /// Environment variable: AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int EdgeRevocationMaxRetryAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Enable CloudFlare Workers KV edge revocation. Requires CloudflareAccountId, CloudflareKvNamespaceId, and CloudflareApiToken to be configured.
+    /// Environment variable: AUTH_CLOUDFLARE_EDGE_ENABLED
+    /// </summary>
+    public bool CloudflareEdgeEnabled { get; set; } = false;
+
+    /// <summary>
+    /// CloudFlare account ID for KV API access. Required when CloudflareEdgeEnabled is true.
+    /// Environment variable: AUTH_CLOUDFLARE_ACCOUNT_ID
+    /// </summary>
+    public string? CloudflareAccountId { get; set; }
+
+    /// <summary>
+    /// CloudFlare KV namespace ID where revoked tokens are stored. Create via CloudFlare dashboard or API.
+    /// Environment variable: AUTH_CLOUDFLARE_KV_NAMESPACE_ID
+    /// </summary>
+    public string? CloudflareKvNamespaceId { get; set; }
+
+    /// <summary>
+    /// CloudFlare API token with Workers KV write permissions. Use a scoped token with only KV Edit permission for security.
+    /// Environment variable: AUTH_CLOUDFLARE_API_TOKEN
+    /// </summary>
+    public string? CloudflareApiToken { get; set; }
+
+    /// <summary>
+    /// Enable OpenResty/NGINX edge revocation via Redis pub/sub. Edge servers subscribe to the configured channel and maintain local revocation caches.
+    /// Environment variable: AUTH_OPENRESTY_EDGE_ENABLED
+    /// </summary>
+    public bool OpenrestyEdgeEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Redis pub/sub channel for broadcasting revocation events to OpenResty/NGINX edge servers.
+    /// Environment variable: AUTH_OPENRESTY_REDIS_CHANNEL
+    /// </summary>
+    public string OpenrestyRedisChannel { get; set; } = "bannou:edge-revocation";
+
 }
