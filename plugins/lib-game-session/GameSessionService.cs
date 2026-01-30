@@ -357,7 +357,10 @@ public partial class GameSessionService : IGameSessionService
                     CurrentPlayers = session.CurrentPlayers,
                     IsPrivate = session.IsPrivate,
                     Owner = session.Owner,
-                    CreatedAt = session.CreatedAt
+                    CreatedAt = session.CreatedAt,
+                    SessionType = session.SessionType,
+                    GameSettings = session.GameSettings,
+                    ReservationExpiresAt = session.ReservationExpiresAt
                 });
 
             var response = MapModelToResponse(session);

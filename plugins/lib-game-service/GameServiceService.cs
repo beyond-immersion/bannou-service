@@ -482,7 +482,11 @@ public partial class GameServiceService : IGameServiceService
                 StubName = model.StubName,
                 DisplayName = model.DisplayName,
                 Description = model.Description,
-                IsActive = model.IsActive
+                IsActive = model.IsActive,
+                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
+                UpdatedAt = model.UpdatedAtUnix.HasValue
+                    ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
+                    : null
             };
             await _messageBus.TryPublishAsync("game-service.created", eventModel);
         }
@@ -508,6 +512,10 @@ public partial class GameServiceService : IGameServiceService
                 DisplayName = model.DisplayName,
                 Description = model.Description,
                 IsActive = model.IsActive,
+                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
+                UpdatedAt = model.UpdatedAtUnix.HasValue
+                    ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
+                    : null,
                 ChangedFields = changedFields
             };
             await _messageBus.TryPublishAsync("game-service.updated", eventModel);
@@ -534,6 +542,10 @@ public partial class GameServiceService : IGameServiceService
                 DisplayName = model.DisplayName,
                 Description = model.Description,
                 IsActive = model.IsActive,
+                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
+                UpdatedAt = model.UpdatedAtUnix.HasValue
+                    ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
+                    : null,
                 DeletedReason = reason
             };
             await _messageBus.TryPublishAsync("game-service.deleted", eventModel);

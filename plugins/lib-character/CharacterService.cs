@@ -1493,7 +1493,8 @@ public partial class CharacterService : ICharacterService
             Name = character.Name,
             RealmId = character.RealmId,
             SpeciesId = character.SpeciesId,
-            BirthDate = character.BirthDate
+            BirthDate = character.BirthDate,
+            DeathDate = character.DeathDate
         };
 
         await _messageBus.TryPublishAsync(CHARACTER_CREATED_TOPIC, eventModel);
@@ -1514,6 +1515,7 @@ public partial class CharacterService : ICharacterService
             RealmId = character.RealmId,
             SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
+            DeathDate = character.DeathDate,
             Status = character.Status,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,
@@ -1538,6 +1540,7 @@ public partial class CharacterService : ICharacterService
             RealmId = character.RealmId,
             SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
+            DeathDate = character.DeathDate,
             Status = character.Status,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,

@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: Save-Load Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for save-load service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: save-load-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    SaveSlotCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to save-slot.created when a saveslot is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - slotId
+      - gameId
+      - ownerId
+      - ownerType
+      - slotName
+      - category
+      - maxVersions
+      - compressionType
+      - versionCount
+      - totalSizeBytes
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: save-slot.created
+          description: 'Event type identifier: save-slot.created'
+        slotId: &id001
+          type: string
+          format: uuid
+          description: "Unique slot identifier"
+        gameId: &id002
+          type: string
+          description: "Game identifier for namespace isolation"
+        ownerId: &id003
+          type: string
+          format: uuid
+          description: "ID of the owning entity"
+        ownerType: &id004
+          $ref: ../save-load-api.yaml#/components/schemas/OwnerType
+          description: "Type of entity that owns this save slot"
+        slotName: &id005
+          type: string
+          description: "Slot name"
+        category: &id006
+          $ref: ../save-load-api.yaml#/components/schemas/SaveCategory
+          description: "Save category determining retention and cleanup behavior"
+        maxVersions: &id007
+          type: integer
+          description: "Maximum versions to retain"
+        retentionDays: &id008
+          type: integer
+          nullable: true
+          description: "Days to retain versions (null = indefinite)"
+        compressionType: &id009
+          $ref: ../save-load-api.yaml#/components/schemas/CompressionType
+          description: "Compression algorithm used for save data"
+        versionCount: &id010
+          type: integer
+          description: "Current number of versions in slot"
+        latestVersion: &id011
+          type: integer
+          nullable: true
+          description: "Latest version number (null if empty)"
+        totalSizeBytes: &id012
+          type: integer
+          format: int64
+          description: "Total storage used by all versions"
+        createdAt: &id013
+          type: string
+          format: date-time
+          description: "Slot creation timestamp"
+        updatedAt: &id014
+          type: string
+          format: date-time
+          description: "Last modification timestamp"
+    SaveSlotUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to save-slot.updated when a saveslot is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - slotId
+      - gameId
+      - ownerId
+      - ownerType
+      - slotName
+      - category
+      - maxVersions
+      - compressionType
+      - versionCount
+      - totalSizeBytes
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: save-slot.updated
+          description: 'Event type identifier: save-slot.updated'
+        slotId: *id001
+        gameId: *id002
+        ownerId: *id003
+        ownerType: *id004
+        slotName: *id005
+        category: *id006
+        maxVersions: *id007
+        retentionDays: *id008
+        compressionType: *id009
+        versionCount: *id010
+        latestVersion: *id011
+        totalSizeBytes: *id012
+        createdAt: *id013
+        updatedAt: *id014
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    SaveSlotDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to save-slot.deleted when a saveslot is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - slotId
+      - gameId
+      - ownerId
+      - ownerType
+      - slotName
+      - category
+      - maxVersions
+      - compressionType
+      - versionCount
+      - totalSizeBytes
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: save-slot.deleted
+          description: 'Event type identifier: save-slot.deleted'
+        slotId: *id001
+        gameId: *id002
+        ownerId: *id003
+        ownerType: *id004
+        slotName: *id005
+        category: *id006
+        maxVersions: *id007
+        retentionDays: *id008
+        compressionType: *id009
+        versionCount: *id010
+        latestVersion: *id011
+        totalSizeBytes: *id012
+        createdAt: *id013
+        updatedAt: *id014
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

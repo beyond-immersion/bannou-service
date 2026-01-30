@@ -151,12 +151,23 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
+                Description = model.Description,
                 Category = model.Category,
                 Rarity = model.Rarity,
                 QuantityModel = model.QuantityModel,
+                MaxStackSize = model.MaxStackSize,
                 Scope = model.Scope,
+                SoulboundType = model.SoulboundType,
+                Tradeable = model.Tradeable,
+                Destroyable = model.Destroyable,
+                HasDurability = model.HasDurability,
+                MaxDurability = model.MaxDurability,
                 IsActive = model.IsActive,
-                CreatedAt = now
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt,
+                MigrationTargetId = model.MigrationTargetId,
+                CreatedAt = now,
+                UpdatedAt = model.UpdatedAt
             }, cancellationToken);
 
             _logger.LogDebug("Created item template {TemplateId} code={Code}", templateId, body.Code);
@@ -316,11 +327,21 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
+                Description = model.Description,
                 Category = model.Category,
                 Rarity = model.Rarity,
                 QuantityModel = model.QuantityModel,
+                MaxStackSize = model.MaxStackSize,
                 Scope = model.Scope,
+                SoulboundType = model.SoulboundType,
+                Tradeable = model.Tradeable,
+                Destroyable = model.Destroyable,
+                HasDurability = model.HasDurability,
+                MaxDurability = model.MaxDurability,
                 IsActive = model.IsActive,
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt,
+                MigrationTargetId = model.MigrationTargetId,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = now
             }, cancellationToken);
@@ -481,8 +502,18 @@ public partial class ItemService : IItemService
                 ContainerId = body.ContainerId,
                 RealmId = body.RealmId,
                 Quantity = quantity,
+                SlotIndex = model.SlotIndex,
+                SlotX = model.SlotX,
+                SlotY = model.SlotY,
+                Rotated = model.Rotated,
+                CurrentDurability = model.CurrentDurability,
+                BoundToId = model.BoundToId,
+                BoundAt = model.BoundAt,
+                CustomName = model.CustomName,
                 OriginType = body.OriginType,
-                CreatedAt = now
+                OriginId = model.OriginId,
+                CreatedAt = now,
+                ModifiedAt = model.ModifiedAt
             }, cancellationToken);
 
             _logger.LogDebug("Created item instance {InstanceId}", instanceId);

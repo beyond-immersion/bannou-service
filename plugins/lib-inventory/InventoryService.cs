@@ -180,7 +180,27 @@ public partial class InventoryService : IInventoryService
                 OwnerType = body.OwnerType,
                 ContainerType = body.ContainerType,
                 ConstraintModel = body.ConstraintModel,
-                IsEquipmentSlot = body.IsEquipmentSlot
+                IsEquipmentSlot = body.IsEquipmentSlot,
+                EquipmentSlotName = model.EquipmentSlotName,
+                MaxSlots = model.MaxSlots,
+                UsedSlots = model.UsedSlots,
+                MaxWeight = model.MaxWeight,
+                GridWidth = model.GridWidth,
+                GridHeight = model.GridHeight,
+                MaxVolume = model.MaxVolume,
+                CurrentVolume = model.CurrentVolume,
+                ParentContainerId = model.ParentContainerId,
+                NestingDepth = model.NestingDepth,
+                CanContainContainers = model.CanContainContainers,
+                MaxNestingDepth = model.MaxNestingDepth,
+                SelfWeight = model.SelfWeight,
+                WeightContribution = model.WeightContribution,
+                SlotCost = model.SlotCost,
+                ContentsWeight = model.ContentsWeight,
+                TotalWeight = model.SelfWeight + model.ContentsWeight,
+                RealmId = model.RealmId,
+                CreatedAt = model.CreatedAt,
+                ModifiedAt = model.ModifiedAt
             }, cancellationToken);
 
             _logger.LogDebug("Created container {ContainerId} type={Type}", containerId, body.ContainerType);
@@ -441,7 +461,27 @@ public partial class InventoryService : IInventoryService
                 OwnerType = model.OwnerType,
                 ContainerType = model.ContainerType,
                 ConstraintModel = model.ConstraintModel,
-                IsEquipmentSlot = model.IsEquipmentSlot
+                IsEquipmentSlot = model.IsEquipmentSlot,
+                EquipmentSlotName = model.EquipmentSlotName,
+                MaxSlots = model.MaxSlots,
+                UsedSlots = model.UsedSlots,
+                MaxWeight = model.MaxWeight,
+                GridWidth = model.GridWidth,
+                GridHeight = model.GridHeight,
+                MaxVolume = model.MaxVolume,
+                CurrentVolume = model.CurrentVolume,
+                ParentContainerId = model.ParentContainerId,
+                NestingDepth = model.NestingDepth,
+                CanContainContainers = model.CanContainContainers,
+                MaxNestingDepth = model.MaxNestingDepth,
+                SelfWeight = model.SelfWeight,
+                WeightContribution = model.WeightContribution,
+                SlotCost = model.SlotCost,
+                ContentsWeight = model.ContentsWeight,
+                TotalWeight = model.SelfWeight + model.ContentsWeight,
+                RealmId = model.RealmId,
+                CreatedAt = model.CreatedAt,
+                ModifiedAt = model.ModifiedAt
             }, cancellationToken);
 
             _logger.LogDebug("Updated container {ContainerId}", body.ContainerId);
@@ -575,7 +615,27 @@ public partial class InventoryService : IInventoryService
                 OwnerType = model.OwnerType,
                 ContainerType = model.ContainerType,
                 ConstraintModel = model.ConstraintModel,
-                IsEquipmentSlot = model.IsEquipmentSlot
+                IsEquipmentSlot = model.IsEquipmentSlot,
+                EquipmentSlotName = model.EquipmentSlotName,
+                MaxSlots = model.MaxSlots,
+                UsedSlots = model.UsedSlots,
+                MaxWeight = model.MaxWeight,
+                GridWidth = model.GridWidth,
+                GridHeight = model.GridHeight,
+                MaxVolume = model.MaxVolume,
+                CurrentVolume = model.CurrentVolume,
+                ParentContainerId = model.ParentContainerId,
+                NestingDepth = model.NestingDepth,
+                CanContainContainers = model.CanContainContainers,
+                MaxNestingDepth = model.MaxNestingDepth,
+                SelfWeight = model.SelfWeight,
+                WeightContribution = model.WeightContribution,
+                SlotCost = model.SlotCost,
+                ContentsWeight = model.ContentsWeight,
+                TotalWeight = model.SelfWeight + model.ContentsWeight,
+                RealmId = model.RealmId,
+                CreatedAt = model.CreatedAt,
+                ModifiedAt = model.ModifiedAt
             }, cancellationToken);
 
             _logger.LogDebug("Deleted container {ContainerId}", body.ContainerId);
