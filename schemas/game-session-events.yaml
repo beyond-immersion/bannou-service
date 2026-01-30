@@ -59,12 +59,15 @@ x-lifecycle:
     model:
       sessionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the game session" }
       gameType: { type: string, required: true, description: "Game service stub name for this session" }
+      sessionType: { $ref: 'game-session-api.yaml#/components/schemas/SessionType', required: true, description: "Type of session - lobby or matchmade" }
       sessionName: { type: string, nullable: true, description: "Human-readable name for the session" }
       status: { $ref: 'game-session-api.yaml#/components/schemas/SessionStatus', required: true, description: "Current status of the game session" }
       maxPlayers: { type: integer, nullable: true, description: "Maximum number of players allowed in the session" }  # NRT: Optional property MUST be nullable
       currentPlayers: { type: integer, nullable: true, description: "Current number of players in the session" }  # NRT: Optional property MUST be nullable
       isPrivate: { type: boolean, nullable: true, description: "Whether the session is private (invite-only)" }  # NRT: Optional property MUST be nullable
       owner: { type: string, format: uuid, nullable: true, description: "Account ID of the session owner" }  # NRT: Optional property MUST be nullable
+      gameSettings: { type: object, additionalProperties: true, nullable: true, description: "Game-specific configuration settings" }  # NRT: Optional property MUST be nullable
+      reservationExpiresAt: { type: string, format: date-time, nullable: true, description: "For matchmade sessions - when reservations expire" }  # NRT: Optional property MUST be nullable
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the session was created" }
 
 paths: {}  # Events don't have HTTP paths

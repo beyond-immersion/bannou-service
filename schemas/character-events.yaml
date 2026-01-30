@@ -57,6 +57,11 @@ x-lifecycle:
         format: date-time
         nullable: true  # NRT: Optional property MUST be nullable
         description: In-game birth date of the character
+      deathDate:
+        type: string
+        format: date-time
+        nullable: true  # NRT: Optional property MUST be nullable
+        description: In-game death timestamp
       status:
         allOf:
           - $ref: 'character-api.yaml#/components/schemas/CharacterStatus'

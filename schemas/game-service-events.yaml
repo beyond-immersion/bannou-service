@@ -52,6 +52,16 @@ x-lifecycle:
         type: boolean
         required: true
         description: Whether the game service is currently active
+      createdAt:
+        type: string
+        format: date-time
+        required: true
+        description: When the service was created
+      updatedAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: When the service was last updated
 
 components:
   schemas:
