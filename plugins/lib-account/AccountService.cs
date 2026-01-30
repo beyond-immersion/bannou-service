@@ -343,7 +343,7 @@ public partial class AccountService : IAccountService
                 accountId, body.Email ?? "(no email - OAuth/Steam)", string.Join(", ", roles));
 
             // Publish account created event
-            await PublishAccountCreatedEventAsync(account);
+            await PublishAccountCreatedEventAsync(account, cancellationToken);
 
             // Return success response
             var response = new AccountResponse
@@ -545,7 +545,7 @@ public partial class AccountService : IAccountService
             // Publish account updated event if there were changes
             if (changedFields.Count > 0)
             {
-                await PublishAccountUpdatedEventAsync(account, changedFields);
+                await PublishAccountUpdatedEventAsync(account, changedFields, cancellationToken);
             }
 
             // Get auth methods for the account
@@ -768,7 +768,7 @@ public partial class AccountService : IAccountService
                 accountId, methodId, body.Provider);
 
             // Publish account updated event
-            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" });
+            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" }, cancellationToken);
 
             var response = new AuthMethodResponse
             {
@@ -976,7 +976,7 @@ public partial class AccountService : IAccountService
             }
 
             // Publish account updated event (T5: Event-Driven Architecture)
-            await PublishAccountUpdatedEventAsync(account, changedFields);
+            await PublishAccountUpdatedEventAsync(account, changedFields, cancellationToken);
 
             // Get auth methods for the account
             var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
@@ -1065,7 +1065,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Account deleted: {AccountId}", accountId);
 
             // Publish account deleted event
-            await PublishAccountDeletedEventAsync(account, "User requested deletion");
+            await PublishAccountDeletedEventAsync(account, "User requested deletion", cancellationToken);
 
             return StatusCodes.OK;
         }
@@ -1115,6 +1115,19 @@ public partial class AccountService : IAccountService
                 return StatusCodes.NotFound;
             }
 
+            // Safety check: prevent orphaning the account (no way to authenticate)
+            // Account can authenticate if it has: (1) a password, OR (2) at least one OAuth method
+            var hasPassword = !string.IsNullOrEmpty(account.PasswordHash);
+            var remainingAuthMethods = authMethods.Count - 1;
+
+            if (!hasPassword && remainingAuthMethods == 0)
+            {
+                _logger.LogWarning(
+                    "Rejecting auth method removal for account {AccountId}: would orphan account (no password, last OAuth method)",
+                    accountId);
+                return StatusCodes.BadRequest;
+            }
+
             // Remove the auth method
             authMethods.Remove(methodToRemove);
 
@@ -1134,7 +1147,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
                 accountId, methodId);
 
-            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" });
+            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" }, cancellationToken);
 
             return StatusCodes.OK;
         }
@@ -1185,7 +1198,7 @@ public partial class AccountService : IAccountService
             }
 
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
-            await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" });
+            await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" }, cancellationToken);
 
             return StatusCodes.OK;
         }
@@ -1239,7 +1252,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
                 accountId, body.EmailVerified);
 
-            await PublishAccountUpdatedEventAsync(account, new[] { "isVerified" });
+            await PublishAccountUpdatedEventAsync(account, new[] { "isVerified" }, cancellationToken);
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -1259,8 +1272,11 @@ public partial class AccountService : IAccountService
     /// Publish AccountCreatedEvent to RabbitMQ via IMessageBus.
     /// TryPublishAsync handles buffering, retry, and error logging internally.
     /// </summary>
-    private async Task PublishAccountCreatedEventAsync(AccountModel account)
+    private async Task PublishAccountCreatedEventAsync(AccountModel account, CancellationToken cancellationToken = default)
     {
+        // Fetch auth methods to include in the event (events contain same data as Get*Response)
+        var authMethods = await GetAuthMethodsForAccountAsync(account.AccountId.ToString(), cancellationToken);
+
         var eventModel = new AccountCreatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1270,6 +1286,7 @@ public partial class AccountService : IAccountService
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
             Roles = account.Roles ?? [],
+            AuthMethods = authMethods,
             CreatedAt = account.CreatedAt
         };
 
@@ -1282,8 +1299,11 @@ public partial class AccountService : IAccountService
     /// Event contains the current state of the account plus which fields changed.
     /// TryPublishAsync handles buffering, retry, and error logging internally.
     /// </summary>
-    private async Task PublishAccountUpdatedEventAsync(AccountModel account, IEnumerable<string> changedFields)
+    private async Task PublishAccountUpdatedEventAsync(AccountModel account, IEnumerable<string> changedFields, CancellationToken cancellationToken = default)
     {
+        // Fetch auth methods to include in the event (events contain same data as Get*Response)
+        var authMethods = await GetAuthMethodsForAccountAsync(account.AccountId.ToString(), cancellationToken);
+
         var eventModel = new AccountUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1293,6 +1313,7 @@ public partial class AccountService : IAccountService
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
             Roles = account.Roles ?? [],
+            AuthMethods = authMethods,
             CreatedAt = account.CreatedAt,
             UpdatedAt = account.UpdatedAt,
             ChangedFields = changedFields.ToList()
@@ -1307,8 +1328,11 @@ public partial class AccountService : IAccountService
     /// Event contains the final state of the account before deletion.
     /// TryPublishAsync handles buffering, retry, and error logging internally.
     /// </summary>
-    private async Task PublishAccountDeletedEventAsync(AccountModel account, string? deletedReason)
+    private async Task PublishAccountDeletedEventAsync(AccountModel account, string? deletedReason, CancellationToken cancellationToken = default)
     {
+        // Fetch auth methods to include in the event (events contain same data as Get*Response)
+        var authMethods = await GetAuthMethodsForAccountAsync(account.AccountId.ToString(), cancellationToken);
+
         var eventModel = new AccountDeletedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1318,6 +1342,7 @@ public partial class AccountService : IAccountService
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
             Roles = account.Roles ?? [],
+            AuthMethods = authMethods,
             CreatedAt = account.CreatedAt,
             UpdatedAt = account.UpdatedAt,
             DeletedReason = deletedReason
@@ -1602,7 +1627,7 @@ public partial class AccountService : IAccountService
                     succeeded.Add(accountId);
 
                     // Publish event for changed accounts
-                    await PublishAccountUpdatedEventAsync(account, new[] { "roles" });
+                    await PublishAccountUpdatedEventAsync(account, new[] { "roles" }, cancellationToken);
                 }
                 catch (Exception ex)
                 {

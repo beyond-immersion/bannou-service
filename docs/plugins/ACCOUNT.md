@@ -7,7 +7,7 @@
 
 ## Overview
 
-The Account plugin is an internal-only CRUD service for managing user accounts. It is never exposed directly to the internet - all external account operations go through the Auth service, which calls Account via lib-mesh. The plugin handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers).
+The Account plugin is an internal-only CRUD service for managing user accounts. It is never exposed directly to the internet - all external account operations go through the Auth service, which calls Account via lib-mesh. The plugin handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers). Email is optional - accounts created via OAuth or Steam may have no email address, in which case they are identified solely by their linked authentication methods.
 
 ## Dependencies (What This Plugin Relies On)
 
@@ -37,8 +37,8 @@ All data types are stored in the same logical store, differentiated by key prefi
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `account-{accountId}` | `AccountModel` | Primary account record (email, display name, password hash, roles, verification status, timestamps, metadata) |
-| `email-index-{email_lowercase}` | `string` (accountId) | Email-to-account lookup index for login flows |
+| `account-{accountId}` | `AccountModel` | Primary account record (email [nullable], display name, password hash, roles, verification status, timestamps, metadata) |
+| `email-index-{email_lowercase}` | `string` (accountId) | Email-to-account lookup index for login flows. Only created when email is non-null. |
 | `provider-index-{provider}:{externalId}` | `string` (accountId) | OAuth provider-to-account lookup index |
 | `auth-methods-{accountId}` | `List<AuthMethodInfo>` | OAuth methods linked to an account (provider, external ID, method ID, link timestamp) |
 
@@ -48,9 +48,11 @@ All data types are stored in the same logical store, differentiated by key prefi
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `account.created` | `AccountCreatedEvent` | After successful account creation (includes accountId, email, roles, timestamps) |
-| `account.updated` | `AccountUpdatedEvent` | After any field change on an account (includes full current state + changedFields list) |
-| `account.deleted` | `AccountDeletedEvent` | After soft-deletion (includes final account state + deletion reason) |
+| `account.created` | `AccountCreatedEvent` | After successful account creation (includes accountId, email [nullable], roles, authMethods, timestamps) |
+| `account.updated` | `AccountUpdatedEvent` | After any field change on an account (includes full current state, authMethods, + changedFields list) |
+| `account.deleted` | `AccountDeletedEvent` | After soft-deletion (includes final account state, authMethods, + deletion reason) |
+
+All lifecycle events include `authMethods` to enable identification of OAuth/Steam accounts when email is null.
 
 All events are published via `_messageBus.TryPublishAsync()` which handles buffering and retry internally.
 
@@ -86,17 +88,17 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 
 ### Account Management (CRUD)
 
-Standard CRUD operations (`create`, `get`, `update`, `delete`, `list`) on account records with optimistic concurrency via ETags on all mutation operations. The `list` endpoint has two execution paths:
+Standard CRUD operations (`create`, `get`, `update`, `delete`, `list`) on account records with optimistic concurrency via ETags on all mutation operations. Account creation accepts nullable email - when null (for OAuth/Steam accounts), no email index is created and the account is identifiable only via provider lookup or direct ID. The `list` endpoint has two execution paths:
 
 - **Standard path** (no provider filter): Uses `IJsonQueryableStateStore.JsonQueryPagedAsync()` to query account records directly from MySQL with server-side pagination, filtering (email, displayName, verified), and sorting (newest-first via `$.CreatedAtUnix` descending). The `$.AccountId exists` condition acts as a type discriminator to match only account records in the shared store.
 - **Provider-filtered path** (rare admin operation): Queries all matching accounts from MySQL, then loads auth methods for each and filters by provider in-memory. Auth methods are stored in separate keys so provider filtering cannot be a single JSON query.
 
-The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cleans up the email index and provider index entries.
+The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cleans up the email index (if email exists) and provider index entries.
 
 ### Account Lookup
 
-- `by-email`: Looks up via the `email-index-` key, then loads the full account. **Notably includes `PasswordHash` in the response** - this is intentional for the Auth service's password verification flow. The regular `get` endpoint does not expose the password hash.
-- `by-provider`: Looks up via the `provider-index-{provider}:{externalId}` key pattern.
+- `by-email`: Looks up via the `email-index-` key, then loads the full account. **Notably includes `PasswordHash` in the response** - this is intentional for the Auth service's password verification flow. The regular `get` endpoint does not expose the password hash. Only works for accounts with email addresses.
+- `by-provider`: Looks up via the `provider-index-{provider}:{externalId}` key pattern. This is the primary lookup method for OAuth/Steam accounts that may not have email addresses.
 
 ### Authentication Methods
 
@@ -119,11 +121,11 @@ Add/remove OAuth provider links. Adding a method creates both the auth method en
 ```
 account-{id} ──────────────────────────────────────────┐
   ├─ AccountId (Guid)                                   │
-  ├─ Email ──► email-index-{email} ──► account ID      │
-  ├─ PasswordHash                                       │ Same store,
-  ├─ DisplayName                                        │ different
-  ├─ IsVerified                                         │ key prefixes
-  ├─ Roles[]                                            │
+  ├─ Email? ──► email-index-{email} ──► account ID     │  (nullable: OAuth/Steam
+  ├─ PasswordHash?                                      │   accounts may have no email)
+  ├─ DisplayName                                        │ Same store,
+  ├─ IsVerified                                         │ different
+  ├─ Roles[]                                            │ key prefixes
   ├─ Metadata{}                                         │
   └─ CreatedAtUnix / UpdatedAtUnix / DeletedAtUnix      │
                                                         │
@@ -136,7 +138,7 @@ auth-methods-{id}: [ AuthMethodInfo, ... ] ────────────�
 Listing: JsonQueryPagedAsync with $.AccountId exists    │
          discriminator queries account records directly │
                                                         │
-On Delete: email-index removed,                         │
+On Delete: email-index removed (if exists),             │
            provider-index + auth-methods removed ◄──────┘
 ```
 
@@ -166,15 +168,17 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Unix epoch timestamp storage**: `AccountModel` stores timestamps as `long` Unix epoch values with `[JsonIgnore]` computed `DateTimeOffset` properties. Deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization.
+1. **Nullable email for OAuth/Steam accounts**: The `Email` field is nullable to support accounts created solely through OAuth or Steam authentication, which may not provide an email address. When email is null, no `email-index-` entry is created. The `authMethods` field in events enables downstream services to identify such accounts by their linked providers.
 
-2. **Auto-managed anonymous role**: When `AutoManageAnonymousRole` is true (default), removing roles that would leave zero roles automatically adds "anonymous". Adding a non-anonymous role automatically removes "anonymous" if present. This ensures accounts always have at least one role for permission resolution.
+2. **Unix epoch timestamp storage**: `AccountModel` stores timestamps as `long` Unix epoch values with `[JsonIgnore]` computed `DateTimeOffset` properties. Deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization.
 
-3. **Default "user" role on creation**: When an account is created with no roles specified, the "user" role is automatically assigned (AccountService.cs:299-302). This ensures newly registered accounts have basic authenticated API access.
+3. **Auto-managed anonymous role**: When `AutoManageAnonymousRole` is true (default), removing roles that would leave zero roles automatically adds "anonymous". Adding a non-anonymous role automatically removes "anonymous" if present. This ensures accounts always have at least one role for permission resolution.
 
-4. **Password hash exposed in by-email response only**: The `GetAccountByEmailAsync` endpoint includes `PasswordHash` in the response (line 623), while the standard `GetAccountAsync` does not. This is intentional - the Auth service needs the hash for password verification during login, but general account lookups should not expose it.
+4. **Default "user" role on creation**: When an account is created with no roles specified, the "user" role is automatically assigned (AccountService.cs:299-302). This ensures newly registered accounts have basic authenticated API access.
 
-5. **Provider index key format**: Provider indices use the format `provider-index-{provider}:{externalId}` where provider is the enum value (e.g., `provider-index-Discord:123456`). The colon separator is intentional to create a pseudo-hierarchical key space.
+5. **Password hash exposed in by-email response only**: The `GetAccountByEmailAsync` endpoint includes `PasswordHash` in the response (line 623), while the standard `GetAccountAsync` does not. This is intentional - the Auth service needs the hash for password verification during login, but general account lookups should not expose it.
+
+6. **Provider index key format**: Provider indices use the format `provider-index-{provider}:{externalId}` where provider is the enum value (e.g., `provider-index-Discord:123456`). The colon separator is intentional to create a pseudo-hierarchical key space.
 
 ### Design Considerations (Requires Planning)
 

@@ -57,7 +57,7 @@ You are executing the `/investigate-issue` workflow. This is a comprehensive, de
 **These rules apply to ALL code written during implementation:**
 
 1. **Null-Forgiving Operators PROHIBITED**
-   - ❌ `variable!`, `property!`, `method()!`, `null!`, `default!`, `(Type)null`
+   - ❌ variable!, property!, method()!, null!, default!, (Type)null
    - ✅ `variable ?? throw new ArgumentNullException(nameof(variable))`
    - These cause segmentation faults and hide null reference exceptions
 
@@ -343,10 +343,10 @@ Task tool with subagent_type=Plan
 
 **Only enter this phase when the plan is approved.**
 
-**⚠️ REMEMBER THE CODING CONSTRAINTS:**
-- NO null-forgiving operators (`!`) - use null coalescing with exceptions
-- NO integration tests without explicit request - `dotnet build` is sufficient
-- If plan includes tests, you MUST read `docs/guides/TESTING.md` first
+**⚠️ REMEMBER THE CODING CONSTRAINTS (see above for details):**
+- NO null-forgiving operators (the ! suffix) - use null coalescing with exceptions
+- NO running integration tests - dotnet build is sufficient verification
+- If plan includes adding tests, you MUST read docs/guides/TESTING.md first
 
 Execute the plan:
 
@@ -603,5 +603,5 @@ gh issue close {number}
 - **NEVER use destructive git commands** - no checkout/stash/reset/restore/clean
 - **NEVER commit or format** - no git add, git commit, make format (developer handles these)
 - **NEVER run integration tests** - no make test-http/test-edge/all (you may ADD test files)
-- **NEVER use null-forgiving operators** (`!`) - they cause segfaults
+- **NEVER use null-forgiving operators** (the ! suffix) - they cause segfaults
 - **ALWAYS read TESTING.md** before adding tests - plugin isolation is strict

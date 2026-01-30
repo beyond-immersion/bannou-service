@@ -2816,7 +2816,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.CreateAccountRequest.Email">
             <summary>
-            Email address for the new account
+            Email address for the new account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.CreateAccountRequest.PasswordHash">
@@ -2956,7 +2956,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.AccountResponse.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.AccountResponse.DisplayName">
@@ -54240,7 +54240,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.DisplayName">
@@ -54256,6 +54256,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.Roles">
             <summary>
             List of roles assigned to the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.AuthMethods">
+            <summary>
+            Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.CreatedAt">
@@ -54290,7 +54295,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.DisplayName">
@@ -54306,6 +54311,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.Roles">
             <summary>
             List of roles assigned to the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.AuthMethods">
+            <summary>
+            Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.CreatedAt">
@@ -54345,7 +54355,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.DisplayName">
@@ -54361,6 +54371,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.Roles">
             <summary>
             List of roles assigned to the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.AuthMethods">
+            <summary>
+            Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.CreatedAt">
