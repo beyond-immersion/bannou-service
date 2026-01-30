@@ -23,6 +23,14 @@ components:
       - containerType
       - constraintModel
       - isEquipmentSlot
+      - nestingDepth
+      - canContainContainers
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
       properties:
         eventName:
           type: string
@@ -43,11 +51,93 @@ components:
           type: string
           description: "Game-defined container type"
         constraintModel: &id005
-          type: string
-          description: "Capacity constraint model"
+          $ref: ../inventory-api.yaml#/components/schemas/ContainerConstraintModel
+          description: "Container capacity constraint model"
         isEquipmentSlot: &id006
           type: boolean
           description: "Whether this is an equipment slot"
+        equipmentSlotName: &id007
+          type: string
+          nullable: true
+          description: "Equipment slot name if isEquipmentSlot is true"
+        maxSlots: &id008
+          type: integer
+          nullable: true
+          description: "Maximum slot count for slot-based constraints"
+        usedSlots: &id009
+          type: integer
+          nullable: true
+          description: "Current number of used slots"
+        maxWeight: &id010
+          type: number
+          format: double
+          nullable: true
+          description: "Maximum weight capacity"
+        gridWidth: &id011
+          type: integer
+          nullable: true
+          description: "Grid width for grid-based containers"
+        gridHeight: &id012
+          type: integer
+          nullable: true
+          description: "Grid height for grid-based containers"
+        maxVolume: &id013
+          type: number
+          format: double
+          nullable: true
+          description: "Maximum volume for volumetric containers"
+        currentVolume: &id014
+          type: number
+          format: double
+          nullable: true
+          description: "Current volume used"
+        parentContainerId: &id015
+          type: string
+          format: uuid
+          nullable: true
+          description: "Parent container ID for nested containers"
+        nestingDepth: &id016
+          type: integer
+          description: "Depth level in container hierarchy"
+        canContainContainers: &id017
+          type: boolean
+          description: "Whether this container can hold other containers"
+        maxNestingDepth: &id018
+          type: integer
+          nullable: true
+          description: "Maximum allowed nesting depth for child containers"
+        selfWeight: &id019
+          type: number
+          format: double
+          description: "Weight of the empty container itself"
+        weightContribution: &id020
+          $ref: ../inventory-api.yaml#/components/schemas/WeightContribution
+          description: "How container weight propagates to parent"
+        slotCost: &id021
+          type: integer
+          description: "Number of slots this container uses in its parent"
+        contentsWeight: &id022
+          type: number
+          format: double
+          description: "Total weight of direct contents"
+        totalWeight: &id023
+          type: number
+          format: double
+          description: "Total weight including self and contents"
+        realmId: &id024
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm ID this container belongs to"
+        createdAt: &id025
+          type: string
+          format: date-time
+          description: "When the container was created"
+        modifiedAt: &id026
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the container was last modified"
     InventoryContainerUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -64,6 +154,14 @@ components:
       - containerType
       - constraintModel
       - isEquipmentSlot
+      - nestingDepth
+      - canContainContainers
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -76,6 +174,26 @@ components:
         containerType: *id004
         constraintModel: *id005
         isEquipmentSlot: *id006
+        equipmentSlotName: *id007
+        maxSlots: *id008
+        usedSlots: *id009
+        maxWeight: *id010
+        gridWidth: *id011
+        gridHeight: *id012
+        maxVolume: *id013
+        currentVolume: *id014
+        parentContainerId: *id015
+        nestingDepth: *id016
+        canContainContainers: *id017
+        maxNestingDepth: *id018
+        selfWeight: *id019
+        weightContribution: *id020
+        slotCost: *id021
+        contentsWeight: *id022
+        totalWeight: *id023
+        realmId: *id024
+        createdAt: *id025
+        modifiedAt: *id026
         changedFields:
           type: array
           items:
@@ -97,6 +215,14 @@ components:
       - containerType
       - constraintModel
       - isEquipmentSlot
+      - nestingDepth
+      - canContainContainers
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
       properties:
         eventName:
           type: string
@@ -108,6 +234,26 @@ components:
         containerType: *id004
         constraintModel: *id005
         isEquipmentSlot: *id006
+        equipmentSlotName: *id007
+        maxSlots: *id008
+        usedSlots: *id009
+        maxWeight: *id010
+        gridWidth: *id011
+        gridHeight: *id012
+        maxVolume: *id013
+        currentVolume: *id014
+        parentContainerId: *id015
+        nestingDepth: *id016
+        canContainContainers: *id017
+        maxNestingDepth: *id018
+        selfWeight: *id019
+        weightContribution: *id020
+        slotCost: *id021
+        contentsWeight: *id022
+        totalWeight: *id023
+        realmId: *id024
+        createdAt: *id025
+        modifiedAt: *id026
         deletedReason:
           type: string
           nullable: true

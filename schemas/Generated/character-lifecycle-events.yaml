@@ -47,16 +47,21 @@ components:
           format: date-time
           nullable: true
           description: In-game birth date of the character
-        status: &id006
+        deathDate: &id006
+          type: string
+          format: date-time
+          nullable: true
+          description: In-game death timestamp
+        status: &id007
           allOf:
           - $ref: '../character-api.yaml#/components/schemas/CharacterStatus'
           nullable: true
           description: Current status of the character (e.g., active, inactive, deceased)
-        createdAt: &id007
+        createdAt: &id008
           type: string
           format: date-time
           description: Timestamp when the character was created
-        updatedAt: &id008
+        updatedAt: &id009
           type: string
           format: date-time
           nullable: true
@@ -87,9 +92,10 @@ components:
         realmId: *id003
         speciesId: *id004
         birthDate: *id005
-        status: *id006
-        createdAt: *id007
-        updatedAt: *id008
+        deathDate: *id006
+        status: *id007
+        createdAt: *id008
+        updatedAt: *id009
         changedFields:
           type: array
           items:
@@ -120,9 +126,10 @@ components:
         realmId: *id003
         speciesId: *id004
         birthDate: *id005
-        status: *id006
-        createdAt: *id007
-        updatedAt: *id008
+        deathDate: *id006
+        status: *id007
+        createdAt: *id008
+        updatedAt: *id009
         deletedReason:
           type: string
           nullable: true

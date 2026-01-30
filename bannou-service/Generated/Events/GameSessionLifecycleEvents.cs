@@ -63,6 +63,15 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     public string GameType { get; set; } = default!;
 
     /// <summary>
+    /// Type of session - lobby or matchmade
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionType SessionType { get; set; } = default!;
+
+    /// <summary>
     /// Human-readable name for the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
@@ -100,6 +109,18 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid? Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific configuration settings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
+    public object? GameSettings { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - when reservations expire
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationExpiresAt")]
+    public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the session was created
@@ -143,6 +164,15 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     public string GameType { get; set; } = default!;
 
     /// <summary>
+    /// Type of session - lobby or matchmade
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionType SessionType { get; set; } = default!;
+
+    /// <summary>
     /// Human-readable name for the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
@@ -180,6 +210,18 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid? Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific configuration settings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
+    public object? GameSettings { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - when reservations expire
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationExpiresAt")]
+    public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the session was created
@@ -231,6 +273,15 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     public string GameType { get; set; } = default!;
 
     /// <summary>
+    /// Type of session - lobby or matchmade
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionType SessionType { get; set; } = default!;
+
+    /// <summary>
     /// Human-readable name for the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
@@ -268,6 +319,18 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid? Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific configuration settings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
+    public object? GameSettings { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - when reservations expire
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationExpiresAt")]
+    public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the session was created

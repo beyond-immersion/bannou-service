@@ -58,11 +58,21 @@ x-lifecycle:
       code: { type: string, required: true, description: "Unique item code within game" }
       gameId: { type: string, required: true, description: "Game service this template belongs to" }
       name: { type: string, required: true, description: "Human-readable display name" }
+      description: { type: string, nullable: true, description: "Detailed item description" }
       category: { $ref: 'item-api.yaml#/components/schemas/ItemCategory', required: true, description: "Item classification category" }
       rarity: { $ref: 'item-api.yaml#/components/schemas/ItemRarity', required: true, description: "Item rarity tier" }
       quantityModel: { $ref: 'item-api.yaml#/components/schemas/QuantityModel', required: true, description: "How quantities are tracked" }
+      maxStackSize: { type: integer, required: true, description: "Maximum stack size for this item" }
       scope: { $ref: 'item-api.yaml#/components/schemas/ItemScope', required: true, description: "Realm availability scope" }
+      soulboundType: { $ref: 'item-api.yaml#/components/schemas/SoulboundType', required: true, description: "When item becomes bound to a character" }
+      tradeable: { type: boolean, required: true, description: "Whether item can be traded between characters" }
+      destroyable: { type: boolean, required: true, description: "Whether item can be destroyed by the owner" }
+      hasDurability: { type: boolean, required: true, description: "Whether item has durability system" }
+      maxDurability: { type: integer, nullable: true, description: "Maximum durability value (if hasDurability is true)" }
       isActive: { type: boolean, required: true, description: "Whether template is currently active" }
+      isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
+      migrationTargetId: { type: string, format: uuid, nullable: true, description: "Template ID to migrate existing instances to" }
       createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
       updatedAt: { type: string, format: date-time, nullable: true, description: "When the template was last modified" }
     sensitive: []
@@ -74,7 +84,16 @@ x-lifecycle:
       containerId: { type: string, format: uuid, required: true, description: "Container holding this item (ownership derived from container)" }
       realmId: { type: string, format: uuid, required: true, description: "Realm this instance exists in" }
       quantity: { type: number, format: double, required: true, description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)" }
+      slotIndex: { type: integer, nullable: true, description: "Slot position in slot-based containers" }
+      slotX: { type: integer, nullable: true, description: "X position in grid-based containers" }
+      slotY: { type: integer, nullable: true, description: "Y position in grid-based containers" }
+      rotated: { type: boolean, nullable: true, description: "Whether item is rotated in grid-based containers" }
+      currentDurability: { type: integer, nullable: true, description: "Current durability value" }
+      boundToId: { type: string, format: uuid, nullable: true, description: "Character ID this item is bound to (if soulbound)" }
+      boundAt: { type: string, format: date-time, nullable: true, description: "When the item was bound to a character" }
+      customName: { type: string, nullable: true, description: "Player-assigned custom name for this instance" }
       originType: { $ref: 'item-api.yaml#/components/schemas/ItemOriginType', required: true, description: "How this item instance was created" }
+      originId: { type: string, format: uuid, nullable: true, description: "Source entity ID for the origin (e.g., crafting recipe, vendor)" }
       createdAt: { type: string, format: date-time, required: true, description: "When the instance was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the instance was last modified" }
     sensitive: []

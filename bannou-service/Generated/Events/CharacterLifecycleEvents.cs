@@ -85,6 +85,12 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset? BirthDate { get; set; } = default!;
 
     /// <summary>
+    /// In-game death timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
+    public System.DateTimeOffset? DeathDate { get; set; } = default!;
+
+    /// <summary>
     /// Current status of the character (e.g., active, inactive, deceased)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
@@ -159,6 +165,12 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
     public System.DateTimeOffset? BirthDate { get; set; } = default!;
+
+    /// <summary>
+    /// In-game death timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
+    public System.DateTimeOffset? DeathDate { get; set; } = default!;
 
     /// <summary>
     /// Current status of the character (e.g., active, inactive, deceased)
@@ -243,6 +255,12 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
     public System.DateTimeOffset? BirthDate { get; set; } = default!;
+
+    /// <summary>
+    /// In-game death timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
+    public System.DateTimeOffset? DeathDate { get; set; } = default!;
 
     /// <summary>
     /// Current status of the character (e.g., active, inactive, deceased)

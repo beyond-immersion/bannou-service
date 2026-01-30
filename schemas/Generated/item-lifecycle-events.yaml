@@ -24,8 +24,14 @@ components:
       - category
       - rarity
       - quantityModel
+      - maxStackSize
       - scope
+      - soulboundType
+      - tradeable
+      - destroyable
+      - hasDurability
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         eventName:
@@ -45,26 +51,62 @@ components:
         name: &id004
           type: string
           description: "Human-readable display name"
-        category: &id005
+        description: &id005
+          type: string
+          nullable: true
+          description: "Detailed item description"
+        category: &id006
           $ref: ../item-api.yaml#/components/schemas/ItemCategory
           description: "Item classification category"
-        rarity: &id006
+        rarity: &id007
           $ref: ../item-api.yaml#/components/schemas/ItemRarity
           description: "Item rarity tier"
-        quantityModel: &id007
+        quantityModel: &id008
           $ref: ../item-api.yaml#/components/schemas/QuantityModel
           description: "How quantities are tracked"
-        scope: &id008
+        maxStackSize: &id009
+          type: integer
+          description: "Maximum stack size for this item"
+        scope: &id010
           $ref: ../item-api.yaml#/components/schemas/ItemScope
           description: "Realm availability scope"
-        isActive: &id009
+        soulboundType: &id011
+          $ref: ../item-api.yaml#/components/schemas/SoulboundType
+          description: "When item becomes bound to a character"
+        tradeable: &id012
+          type: boolean
+          description: "Whether item can be traded between characters"
+        destroyable: &id013
+          type: boolean
+          description: "Whether item can be destroyed by the owner"
+        hasDurability: &id014
+          type: boolean
+          description: "Whether item has durability system"
+        maxDurability: &id015
+          type: integer
+          nullable: true
+          description: "Maximum durability value (if hasDurability is true)"
+        isActive: &id016
           type: boolean
           description: "Whether template is currently active"
-        createdAt: &id010
+        isDeprecated: &id017
+          type: boolean
+          description: "Whether template is deprecated"
+        deprecatedAt: &id018
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the template was deprecated"
+        migrationTargetId: &id019
+          type: string
+          format: uuid
+          nullable: true
+          description: "Template ID to migrate existing instances to"
+        createdAt: &id020
           type: string
           format: date-time
           description: "When the template was created"
-        updatedAt: &id011
+        updatedAt: &id021
           type: string
           format: date-time
           nullable: true
@@ -86,8 +128,14 @@ components:
       - category
       - rarity
       - quantityModel
+      - maxStackSize
       - scope
+      - soulboundType
+      - tradeable
+      - destroyable
+      - hasDurability
       - isActive
+      - isDeprecated
       - createdAt
       - changedFields
       properties:
@@ -99,13 +147,23 @@ components:
         code: *id002
         gameId: *id003
         name: *id004
-        category: *id005
-        rarity: *id006
-        quantityModel: *id007
-        scope: *id008
-        isActive: *id009
-        createdAt: *id010
-        updatedAt: *id011
+        description: *id005
+        category: *id006
+        rarity: *id007
+        quantityModel: *id008
+        maxStackSize: *id009
+        scope: *id010
+        soulboundType: *id011
+        tradeable: *id012
+        destroyable: *id013
+        hasDurability: *id014
+        maxDurability: *id015
+        isActive: *id016
+        isDeprecated: *id017
+        deprecatedAt: *id018
+        migrationTargetId: *id019
+        createdAt: *id020
+        updatedAt: *id021
         changedFields:
           type: array
           items:
@@ -128,8 +186,14 @@ components:
       - category
       - rarity
       - quantityModel
+      - maxStackSize
       - scope
+      - soulboundType
+      - tradeable
+      - destroyable
+      - hasDurability
       - isActive
+      - isDeprecated
       - createdAt
       properties:
         eventName:
@@ -140,13 +204,23 @@ components:
         code: *id002
         gameId: *id003
         name: *id004
-        category: *id005
-        rarity: *id006
-        quantityModel: *id007
-        scope: *id008
-        isActive: *id009
-        createdAt: *id010
-        updatedAt: *id011
+        description: *id005
+        category: *id006
+        rarity: *id007
+        quantityModel: *id008
+        maxStackSize: *id009
+        scope: *id010
+        soulboundType: *id011
+        tradeable: *id012
+        destroyable: *id013
+        hasDurability: *id014
+        maxDurability: *id015
+        isActive: *id016
+        isDeprecated: *id017
+        deprecatedAt: *id018
+        migrationTargetId: *id019
+        createdAt: *id020
+        updatedAt: *id021
         deletedReason:
           type: string
           nullable: true
@@ -173,34 +247,73 @@ components:
           type: string
           default: item-instance.created
           description: 'Event type identifier: item-instance.created'
-        instanceId: &id012
+        instanceId: &id022
           type: string
           format: uuid
           description: "Unique identifier for this item instance"
-        templateId: &id013
+        templateId: &id023
           type: string
           format: uuid
           description: "Reference to the item template"
-        containerId: &id014
+        containerId: &id024
           type: string
           format: uuid
           description: "Container holding this item (ownership derived from container)"
-        realmId: &id015
+        realmId: &id025
           type: string
           format: uuid
           description: "Realm this instance exists in"
-        quantity: &id016
+        quantity: &id026
           type: number
           format: double
           description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)"
-        originType: &id017
+        slotIndex: &id027
+          type: integer
+          nullable: true
+          description: "Slot position in slot-based containers"
+        slotX: &id028
+          type: integer
+          nullable: true
+          description: "X position in grid-based containers"
+        slotY: &id029
+          type: integer
+          nullable: true
+          description: "Y position in grid-based containers"
+        rotated: &id030
+          type: boolean
+          nullable: true
+          description: "Whether item is rotated in grid-based containers"
+        currentDurability: &id031
+          type: integer
+          nullable: true
+          description: "Current durability value"
+        boundToId: &id032
+          type: string
+          format: uuid
+          nullable: true
+          description: "Character ID this item is bound to (if soulbound)"
+        boundAt: &id033
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the item was bound to a character"
+        customName: &id034
+          type: string
+          nullable: true
+          description: "Player-assigned custom name for this instance"
+        originType: &id035
           $ref: ../item-api.yaml#/components/schemas/ItemOriginType
           description: "How this item instance was created"
-        createdAt: &id018
+        originId: &id036
+          type: string
+          format: uuid
+          nullable: true
+          description: "Source entity ID for the origin (e.g., crafting recipe, vendor)"
+        createdAt: &id037
           type: string
           format: date-time
           description: "When the instance was created"
-        modifiedAt: &id019
+        modifiedAt: &id038
           type: string
           format: date-time
           nullable: true
@@ -228,14 +341,23 @@ components:
           type: string
           default: item-instance.updated
           description: 'Event type identifier: item-instance.updated'
-        instanceId: *id012
-        templateId: *id013
-        containerId: *id014
-        realmId: *id015
-        quantity: *id016
-        originType: *id017
-        createdAt: *id018
-        modifiedAt: *id019
+        instanceId: *id022
+        templateId: *id023
+        containerId: *id024
+        realmId: *id025
+        quantity: *id026
+        slotIndex: *id027
+        slotX: *id028
+        slotY: *id029
+        rotated: *id030
+        currentDurability: *id031
+        boundToId: *id032
+        boundAt: *id033
+        customName: *id034
+        originType: *id035
+        originId: *id036
+        createdAt: *id037
+        modifiedAt: *id038
         changedFields:
           type: array
           items:
@@ -263,14 +385,23 @@ components:
           type: string
           default: item-instance.deleted
           description: 'Event type identifier: item-instance.deleted'
-        instanceId: *id012
-        templateId: *id013
-        containerId: *id014
-        realmId: *id015
-        quantity: *id016
-        originType: *id017
-        createdAt: *id018
-        modifiedAt: *id019
+        instanceId: *id022
+        templateId: *id023
+        containerId: *id024
+        realmId: *id025
+        quantity: *id026
+        slotIndex: *id027
+        slotX: *id028
+        slotY: *id029
+        rotated: *id030
+        currentDurability: *id031
+        boundToId: *id032
+        boundAt: *id033
+        customName: *id034
+        originType: *id035
+        originId: *id036
+        createdAt: *id037
+        modifiedAt: *id038
         deletedReason:
           type: string
           nullable: true

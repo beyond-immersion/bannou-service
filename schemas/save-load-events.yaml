@@ -14,12 +14,20 @@ info:
   x-lifecycle:
     SaveSlot:
       model:
-        slotId: { type: string, format: uuid, primary: true, required: true }
-        gameId: { type: string, required: true }
-        ownerId: { type: string, format: uuid, required: true }
-        ownerType: { $ref: 'save-load-api.yaml#/components/schemas/OwnerType', required: true }
-        slotName: { type: string, required: true }
-        category: { $ref: 'save-load-api.yaml#/components/schemas/SaveCategory', required: true }
+        slotId: { type: string, format: uuid, primary: true, required: true, description: "Unique slot identifier" }
+        gameId: { type: string, required: true, description: "Game identifier for namespace isolation" }
+        ownerId: { type: string, format: uuid, required: true, description: "ID of the owning entity" }
+        ownerType: { $ref: 'save-load-api.yaml#/components/schemas/OwnerType', required: true, description: "Type of entity that owns this save slot" }
+        slotName: { type: string, required: true, description: "Slot name" }
+        category: { $ref: 'save-load-api.yaml#/components/schemas/SaveCategory', required: true, description: "Save category determining retention and cleanup behavior" }
+        maxVersions: { type: integer, required: true, description: "Maximum versions to retain" }
+        retentionDays: { type: integer, nullable: true, description: "Days to retain versions (null = indefinite)" }
+        compressionType: { $ref: 'save-load-api.yaml#/components/schemas/CompressionType', required: true, description: "Compression algorithm used for save data" }
+        versionCount: { type: integer, required: true, description: "Current number of versions in slot" }
+        latestVersion: { type: integer, nullable: true, description: "Latest version number (null if empty)" }
+        totalSizeBytes: { type: integer, format: int64, required: true, description: "Total storage used by all versions" }
+        createdAt: { type: string, format: date-time, required: true, description: "Slot creation timestamp" }
+        updatedAt: { type: string, format: date-time, required: true, description: "Last modification timestamp" }
       sensitive: []
       # Generates: SaveSlotCreatedEvent, SaveSlotUpdatedEvent, SaveSlotDeletedEvent
 

@@ -62,8 +62,28 @@ x-lifecycle:
       ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
       ownerType: { $ref: 'inventory-api.yaml#/components/schemas/ContainerOwnerType', required: true, description: "Owner type (character, account, location, etc.)" }
       containerType: { type: string, required: true, description: "Game-defined container type" }
-      constraintModel: { type: string, required: true, description: "Capacity constraint model" }
+      constraintModel: { $ref: 'inventory-api.yaml#/components/schemas/ContainerConstraintModel', required: true, description: "Container capacity constraint model" }
       isEquipmentSlot: { type: boolean, required: true, description: "Whether this is an equipment slot" }
+      equipmentSlotName: { type: string, nullable: true, description: "Equipment slot name if isEquipmentSlot is true" }
+      maxSlots: { type: integer, nullable: true, description: "Maximum slot count for slot-based constraints" }
+      usedSlots: { type: integer, nullable: true, description: "Current number of used slots" }
+      maxWeight: { type: number, format: double, nullable: true, description: "Maximum weight capacity" }
+      gridWidth: { type: integer, nullable: true, description: "Grid width for grid-based containers" }
+      gridHeight: { type: integer, nullable: true, description: "Grid height for grid-based containers" }
+      maxVolume: { type: number, format: double, nullable: true, description: "Maximum volume for volumetric containers" }
+      currentVolume: { type: number, format: double, nullable: true, description: "Current volume used" }
+      parentContainerId: { type: string, format: uuid, nullable: true, description: "Parent container ID for nested containers" }
+      nestingDepth: { type: integer, required: true, description: "Depth level in container hierarchy" }
+      canContainContainers: { type: boolean, required: true, description: "Whether this container can hold other containers" }
+      maxNestingDepth: { type: integer, nullable: true, description: "Maximum allowed nesting depth for child containers" }
+      selfWeight: { type: number, format: double, required: true, description: "Weight of the empty container itself" }
+      weightContribution: { $ref: 'inventory-api.yaml#/components/schemas/WeightContribution', required: true, description: "How container weight propagates to parent" }
+      slotCost: { type: integer, required: true, description: "Number of slots this container uses in its parent" }
+      contentsWeight: { type: number, format: double, required: true, description: "Total weight of direct contents" }
+      totalWeight: { type: number, format: double, required: true, description: "Total weight including self and contents" }
+      realmId: { type: string, format: uuid, nullable: true, description: "Realm ID this container belongs to" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the container was created" }
+      modifiedAt: { type: string, format: date-time, nullable: true, description: "When the container was last modified" }
     sensitive: []
 
 components:
