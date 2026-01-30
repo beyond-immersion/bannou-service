@@ -194,7 +194,7 @@ public partial class StateOptions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consistency")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public StateOptionsConsistency Consistency { get; set; } = BeyondImmersion.BannouService.State.StateOptionsConsistency.Strong;
+    public ConsistencyLevel Consistency { get; set; } = BeyondImmersion.BannouService.State.ConsistencyLevel.Strong;
 
     /// <summary>
     /// Optimistic concurrency check - save fails if ETag mismatch
@@ -563,9 +563,12 @@ public partial class StoreInfo
 
 }
 
+/// <summary>
+/// Consistency level for state operations
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum StateOptionsConsistency
+public enum ConsistencyLevel
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"strong")]

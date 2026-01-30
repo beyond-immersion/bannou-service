@@ -255,10 +255,8 @@ components:
           nullable: true
           description: TTL in seconds (Redis only)
         consistency:
-          type: string
-          enum:
-          - strong
-          - eventual
+          allOf:
+          - $ref: '#/components/schemas/ConsistencyLevel'
           default: strong
           description: Consistency level
         etag:
@@ -498,3 +496,10 @@ components:
           type: integer
           nullable: true
           description: Number of keys (only if includeStats=true)
+
+    ConsistencyLevel:
+      type: string
+      description: Consistency level for state operations
+      enum:
+      - strong
+      - eventual

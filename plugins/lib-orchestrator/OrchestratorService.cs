@@ -80,14 +80,8 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private BackendType GetConfiguredDefaultBackend()
     {
-        return _configuration.DefaultBackend switch
-        {
-            DefaultBackend.Kubernetes => BackendType.Kubernetes,
-            DefaultBackend.Portainer => BackendType.Portainer,
-            DefaultBackend.Swarm => BackendType.Swarm,
-            DefaultBackend.Compose => BackendType.Compose,
-            _ => BackendType.Compose
-        };
+        // Configuration now directly uses BackendType (via $ref to API schema)
+        return _configuration.DefaultBackend;
     }
 
     public OrchestratorService(

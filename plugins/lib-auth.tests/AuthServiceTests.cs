@@ -168,7 +168,7 @@ public class AuthServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(13, endpoints.Count); // 13 endpoints defined in auth-api.yaml with x-permissions
+        Assert.Equal(14, endpoints.Count); // 14 endpoints defined in auth-api.yaml with x-permissions
     }
 
     [Fact]
@@ -231,7 +231,7 @@ public class AuthServiceTests
         Assert.Equal("auth", registrationEvent.ServiceName);
         Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(13, registrationEvent.Endpoints.Count); // 13 endpoints
+        Assert.Equal(14, registrationEvent.Endpoints.Count); // 14 endpoints
         Assert.NotEmpty(registrationEvent.Version);
     }
 

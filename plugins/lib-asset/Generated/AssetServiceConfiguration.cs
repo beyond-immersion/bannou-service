@@ -73,19 +73,6 @@ public enum AudioOutputFormat
 }
 #pragma warning restore CS1591
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default compression for bundles
-/// </summary>
-public enum BundleCompressionDefault
-{
-    Lz4,
-    Lzma,
-    None,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Asset service.
 /// Properties are automatically bound from environment variables.
@@ -291,7 +278,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Default compression for bundles
     /// Environment variable: ASSET_BUNDLE_COMPRESSION_DEFAULT
     /// </summary>
-    public BundleCompressionDefault BundleCompressionDefault { get; set; } = BundleCompressionDefault.Lz4;
+    public CompressionType BundleCompressionDefault { get; set; } = CompressionType.Lz4;
 
     /// <summary>
     /// TTL for cached ZIP conversions in hours

@@ -12,14 +12,13 @@ namespace BeyondImmersion.BannouService.Auth.Tests;
 /// Unit tests for CloudflareEdgeProvider.
 /// Tests CloudFlare KV API integration for edge revocation.
 /// </summary>
-public class CloudflareEdgeProviderTests : IDisposable
+public class CloudflareEdgeProviderTests
 {
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
     private readonly Mock<ILogger<CloudflareEdgeProvider>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly CloudflareEdgeProvider _provider;
-    private readonly HttpClient _httpClient;
 
     public CloudflareEdgeProviderTests()
     {
@@ -35,23 +34,14 @@ public class CloudflareEdgeProviderTests : IDisposable
             CloudflareApiToken = "test-api-token"
         };
 
-        // Setup HTTP client factory with mocked handler
-        _httpClient = new HttpClient(_mockHttpMessageHandler.Object)
-        {
-            BaseAddress = new Uri("https://api.cloudflare.com")
-        };
-        _mockHttpClientFactory.Setup(f => f.CreateClient("cloudflare-kv")).Returns(_httpClient);
+        // Return new HttpClient each time since the code uses 'using' which disposes after each request
+        _mockHttpClientFactory.Setup(f => f.CreateClient("cloudflare-kv"))
+            .Returns(() => new HttpClient(_mockHttpMessageHandler.Object));
 
         _provider = new CloudflareEdgeProvider(
             _configuration,
             _mockHttpClientFactory.Object,
             _mockLogger.Object);
-    }
-
-    public void Dispose()
-    {
-        _httpClient.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     #region ProviderId Tests

@@ -201,10 +201,10 @@ public partial class StateController
                     "description": "TTL in seconds (Redis only)"
                 },
                 "consistency": {
-                    "type": "string",
-                    "enum": [
-                        "strong",
-                        "eventual"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ConsistencyLevel"
+                        }
                     ],
                     "default": "strong",
                     "description": "Consistency level"
@@ -215,6 +215,14 @@ public partial class StateController
                     "description": "Optimistic concurrency check - save fails if ETag mismatch"
                 }
             }
+        },
+        "ConsistencyLevel": {
+            "type": "string",
+            "description": "Consistency level for state operations",
+            "enum": [
+                "strong",
+                "eventual"
+            ]
         }
     }
 }

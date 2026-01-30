@@ -106,11 +106,13 @@ paths:
         concurrency\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
         : {\n                \"ttl\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"TTL in seconds (Redis only)\"\n                },\n                \"consistency\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"strong\"\
-        ,\n                        \"eventual\"\n                    ],\n                    \"default\": \"strong\",\n  \
-        \                  \"description\": \"Consistency level\"\n                },\n                \"etag\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optimistic concurrency check - save fails if ETag mismatch\"\n                }\n            }\n        }\n  \
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ConsistencyLevel\"\
+        \n                        }\n                    ],\n                    \"default\": \"strong\",\n              \
+        \      \"description\": \"Consistency level\"\n                },\n                \"etag\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optimistic
+        concurrency check - save fails if ETag mismatch\"\n                }\n            }\n        },\n        \"ConsistencyLevel\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Consistency level for state operations\",\n\
+        \            \"enum\": [\n                \"strong\",\n                \"eventual\"\n            ]\n        }\n  \
         \  }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveStateResponse\"\
         ,\n    \"$defs\": {\n        \"SaveStateResponse\": {\n            \"description\": \"Response from a save operation
@@ -426,10 +428,8 @@ components:
           nullable: true
           description: TTL in seconds (Redis only)
         consistency:
-          type: string
-          enum:
-          - strong
-          - eventual
+          allOf:
+          - $ref: '#/components/schemas/ConsistencyLevel'
           default: strong
           description: Consistency level
         etag:
@@ -657,3 +657,9 @@ components:
           type: integer
           nullable: true
           description: Number of keys (only if includeStats=true)
+    ConsistencyLevel:
+      type: string
+      description: Consistency level for state operations
+      enum:
+      - strong
+      - eventual

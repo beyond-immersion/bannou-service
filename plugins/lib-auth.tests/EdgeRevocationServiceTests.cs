@@ -64,9 +64,9 @@ public class EdgeRevocationServiceTests
         _mockProvider.Setup(p => p.PushAccountRevocationAsync(It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        // Setup index store to return empty lists by default
+        // Setup index store to return fresh empty lists by default (factory pattern prevents shared state)
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(() => new List<string>());
 
         _service = new EdgeRevocationService(
             _mockStateStoreFactory.Object,

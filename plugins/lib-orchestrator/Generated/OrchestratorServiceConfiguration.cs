@@ -32,20 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default container orchestration backend when not specified in deploy request
-/// </summary>
-public enum DefaultBackend
-{
-    Compose,
-    Swarm,
-    Portainer,
-    Kubernetes,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Orchestrator service.
 /// Properties are automatically bound from environment variables.
@@ -83,7 +69,7 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Default container orchestration backend when not specified in deploy request
     /// Environment variable: ORCHESTRATOR_DEFAULT_BACKEND
     /// </summary>
-    public DefaultBackend DefaultBackend { get; set; } = DefaultBackend.Compose;
+    public BackendType DefaultBackend { get; set; } = BackendType.Compose;
 
     /// <summary>
     /// Service heartbeat timeout in seconds

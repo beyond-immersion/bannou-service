@@ -43,8 +43,7 @@ x-service-configuration:
       env: STATE_CONNECTION_TIMEOUT_SECONDS
       default: 60
     DefaultConsistency:
-      type: string
-      enum: ["strong", "eventual"]
+      $ref: 'state-api.yaml#/components/schemas/ConsistencyLevel'
       description: Default consistency level for state operations
       env: STATE_DEFAULT_CONSISTENCY
       default: "strong"

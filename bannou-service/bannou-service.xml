@@ -73097,6 +73097,11 @@
             Number of keys (only if includeStats=true)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.ConsistencyLevel">
+            <summary>
+            Consistency level for state operations
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.ISubscriptionClient">
             <summary>
             Client interface for the Subscription service.

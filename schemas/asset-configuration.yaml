@@ -211,8 +211,7 @@ x-service-configuration:
 
     # Bundle Configuration
     BundleCompressionDefault:
-      type: string
-      enum: ["lz4", "lzma", "none"]
+      $ref: 'asset-api.yaml#/components/schemas/CompressionType'
       description: Default compression for bundles
       env: ASSET_BUNDLE_COMPRESSION_DEFAULT
       default: lz4
