@@ -156,9 +156,9 @@ lib-behavior
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Current Variable Providers (lib-behavior)
+### Current Variable Providers (lib-actor)
 
-ABML documents access character data through registered Variable Providers:
+ABML documents access character data through registered Variable Providers (implemented in `lib-actor/Runtime/`):
 
 | Provider | Data Source | Access Pattern |
 |----------|-------------|----------------|
@@ -343,6 +343,8 @@ action: "consider_purchase"
 
 **Implementation**: Batched API calls with parallel execution
 
+> **📋 PROPOSED**: This class does not yet exist. See [GitHub Issue #148](https://github.com/beyond-immersion/bannou-service/issues/148) for implementation tracking.
+
 ```csharp
 public class GoapWorldStateProvider
 {
@@ -377,6 +379,8 @@ public class GoapWorldStateProvider
 **Use case**: High-velocity data like entity positions, combat state, active effects
 
 **Implementation**: Event subscriptions populate local cache
+
+> **📋 PROPOSED**: This class does not yet exist. See [GitHub Issue #145](https://github.com/beyond-immersion/bannou-service/issues/145) for implementation tracking.
 
 ```csharp
 public class ActorPerceptionCache : IEventConsumer
@@ -433,28 +437,31 @@ Is this character attribute data for ABML?
 
 ### Variable Provider Registration
 
-All Variable Providers should be registered in lib-behavior's DI setup:
+All Variable Providers should be registered in lib-actor's DI setup:
 
 ```csharp
-// lib-behavior service registration
+// lib-actor service registration (in ActorRunner)
 services.AddSingleton<IVariableProvider, PersonalityVariableProvider>();
 services.AddSingleton<IVariableProvider, CombatPreferencesVariableProvider>();
 services.AddSingleton<IVariableProvider, BackstoryVariableProvider>();
-services.AddSingleton<IVariableProvider, CurrencyVariableProvider>();      // NEW
-services.AddSingleton<IVariableProvider, InventoryVariableProvider>();     // NEW
-services.AddSingleton<IVariableProvider, RelationshipVariableProvider>();  // NEW
+services.AddSingleton<IVariableProvider, EncountersVariableProvider>();
+// Phase 2 providers - see GitHub Issue #147
+services.AddSingleton<IVariableProvider, CurrencyVariableProvider>();      // PLANNED - NOT YET IMPLEMENTED
+services.AddSingleton<IVariableProvider, InventoryVariableProvider>();     // PLANNED - NOT YET IMPLEMENTED
+services.AddSingleton<IVariableProvider, RelationshipVariableProvider>();  // PLANNED - NOT YET IMPLEMENTED
 ```
 
 ### Cache TTL Guidelines
 
-| Data Type | Recommended TTL | Rationale |
-|-----------|-----------------|-----------|
-| Personality traits | 5 minutes | Changes very slowly |
-| Backstory elements | 10 minutes | Nearly immutable |
-| Currency balances | 30 seconds | May change from player actions |
-| Inventory contents | 1 minute | Changes less frequently than currency |
-| Relationships | 5 minutes | Changes via explicit actions only |
-| Positions (event-driven) | N/A (real-time) | Overwritten on each event |
+| Data Type | Recommended TTL | Rationale | Status |
+|-----------|-----------------|-----------|--------|
+| Personality traits | 5 minutes | Changes very slowly | ✅ Implemented |
+| Backstory elements | 10 minutes | Nearly immutable | ✅ Implemented |
+| Encounter data | 5 minutes | Changes via explicit actions | ✅ Implemented |
+| Currency balances | 30 seconds | May change from player actions | 📋 Planned |
+| Inventory contents | 1 minute | Changes less frequently than currency | 📋 Planned |
+| Relationships | 5 minutes | Changes via explicit actions only | 📋 Planned |
+| Positions (event-driven) | N/A (real-time) | Overwritten on each event | 📋 Planned ([#145](https://github.com/beyond-immersion/bannou-service/issues/145)) |
 
 ### State Store Documentation Update
 
@@ -487,20 +494,20 @@ agent-memories:
 2. Update ACTOR.md and BEHAVIOR.md deep dives to clarify relationship
 3. Document Variable Provider pattern in ABML guide
 
-### Phase 2: Variable Providers (Short-term)
+### Phase 2: Variable Providers (Short-term) — [Issue #147](https://github.com/beyond-immersion/bannou-service/issues/147)
 
 1. Implement `CurrencyVariableProvider` for ABML access to wallet balances
 2. Implement `InventoryVariableProvider` for item/container queries
 3. Implement `RelationshipVariableProvider` for social state
-4. Add cache TTL configuration to `BehaviorServiceConfiguration`
+4. Add cache TTL configuration to `ActorServiceConfiguration`
 
-### Phase 3: GOAP Integration (Medium-term)
+### Phase 3: GOAP Integration (Medium-term) — [Issue #148](https://github.com/beyond-immersion/bannou-service/issues/148)
 
 1. Create `GoapWorldStateProvider` with batched external queries
 2. Integrate with existing GOAP planner in lib-behavior
 3. Add configuration for which data sources to include in world state
 
-### Phase 4: Event-Driven Cache (Future)
+### Phase 4: Event-Driven Cache (Future) — [Issue #145](https://github.com/beyond-immersion/bannou-service/issues/145)
 
 1. Implement `ActorPerceptionCache` for real-time spatial data
 2. Subscribe to position, combat, and effect events
@@ -534,6 +541,23 @@ agent-memories:
 ## Appendix A: Research Findings from Source Files
 
 This appendix contains raw findings from actual source file reads, accumulated during research.
+
+### Appendix Organization
+
+The findings are categorized by source type:
+
+| Category | Sections | Description |
+|----------|----------|-------------|
+| **Active Documentation** | A.1 - A.5 | Current guides and schemas (describes what exists) |
+| **Implementation Code** | A.6 - A.7, A.11 - A.14, A.16 - A.17 | Actual source code findings (verified implementations) |
+| **Planning Documents** | A.8 - A.10, A.15 | Future architecture proposals (describes what's planned) |
+
+> **Note**: Planning document findings (A.8-A.10, A.15) describe **future features that do not yet exist**.
+> Code samples from these sections are aspirational, not implementations.
+
+---
+
+### Active Documentation Findings
 
 ### A.1 Findings from docs/guides/ABML.md
 
@@ -726,7 +750,7 @@ Current implementation uses keyword-based relevance matching:
 - NPCs writing their own memories (consistent terminology)
 - No player-generated content requiring fuzzy matching
 
-**Migration Path (lines 918-922):**
+**Migration Path (lines 918-922):** See [GitHub Issue #146](https://github.com/beyond-immersion/bannou-service/issues/146) for implementation tracking.
 1. `IMemoryStore` interface is already designed for swappable implementations
 2. Create `EmbeddingMemoryStore` implementing the same interface
 3. Configure via `BehaviorServiceConfiguration` which implementation to use
@@ -1087,6 +1111,10 @@ The `service:` field in state-stores.yaml is documented as (line 13):
 
 This is a **documentation/attribution** field, not a runtime access control mechanism. The StateStoreDefinitions.cs generated code makes all stores available to all services - there is no enforcement of ownership at runtime.
 
+---
+
+### Implementation Code Findings (lib-behavior)
+
 ### A.6 Findings from plugins/lib-behavior/Cognition/ActorLocalMemoryStore.cs
 
 **File**: `plugins/lib-behavior/Cognition/ActorLocalMemoryStore.cs` (501 lines)
@@ -1268,6 +1296,13 @@ Built-in categories mentioned in XML doc: `threat`, `novelty`, `social`, `routin
 #### ABML Integration (lines 188-216)
 
 `Perception.FromDictionary()` method for creating perceptions from ABML data structures.
+
+---
+
+### Planning Document Findings (Future Features)
+
+> **⚠️ Important**: The findings in A.8-A.10 describe **planned future features** that do not yet exist.
+> Code samples and architecture diagrams are aspirational, not verified implementations.
 
 ### A.8 Findings from docs/planning/ABML_GOAP_EXPANSION_OPPORTUNITIES.md
 
@@ -1707,6 +1742,10 @@ Event Processing Loop (long-running)
 Realm Deactivation → God Actor Stopped
 ```
 
+---
+
+### Implementation Code Findings (lib-actor)
+
 ### A.11 Findings from plugins/lib-actor/Caching/PersonalityCache.cs
 
 **File**: `plugins/lib-actor/Caching/PersonalityCache.cs` (220 lines)
@@ -2061,6 +2100,10 @@ scope.RegisterProvider(new BackstoryProvider(backstory));
 scope.RegisterProvider(new EncountersProvider(encounters));
 ```
 
+---
+
+### Additional Planning Document (Future)
+
 ### A.15 Findings from docs/planning/ITEM_SYSTEM_REFERENCE.md
 
 **File**: `docs/planning/ITEM_SYSTEM_REFERENCE.md` (745 lines)
@@ -2105,6 +2148,10 @@ Redis Cache:
 ```
 
 **Note**: This is proposed for future lib-affix, not currently implemented. Shows caching pattern consistent with PersonalityCache/EncounterCache.
+
+---
+
+### Implementation Code Findings (Variable Providers)
 
 ### A.16 Findings from plugins/lib-actor/Runtime/EncountersProvider.cs
 

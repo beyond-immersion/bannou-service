@@ -82,9 +82,9 @@ Multi-currency management service for game economies. Handles the full lifecycle
 | `currency-definition.created` | `CurrencyDefinitionCreatedEvent` | New currency definition created |
 | `currency-definition.updated` | `CurrencyDefinitionUpdatedEvent` | Currency definition updated |
 | `currency-wallet.created` | `CurrencyWalletCreatedEvent` | New wallet created |
-| `currency.wallet.frozen` | `CurrencyWalletFrozenEvent` | Wallet frozen |
-| `currency.wallet.unfrozen` | `CurrencyWalletUnfrozenEvent` | Wallet unfrozen |
-| `currency.wallet.closed` | `CurrencyWalletClosedEvent` | Wallet permanently closed |
+| `currency-wallet.frozen` | `CurrencyWalletFrozenEvent` | Wallet frozen |
+| `currency-wallet.unfrozen` | `CurrencyWalletUnfrozenEvent` | Wallet unfrozen |
+| `currency-wallet.closed` | `CurrencyWalletClosedEvent` | Wallet permanently closed |
 | `currency.hold.created` | `CurrencyHoldCreatedEvent` | Authorization hold created |
 | `currency.hold.captured` | `CurrencyHoldCapturedEvent` | Hold captured (funds debited) |
 | `currency.hold.released` | `CurrencyHoldReleasedEvent` | Hold released (funds available again) |
@@ -427,9 +427,7 @@ Escrow Integration Flow
 
 ### Bugs
 
-*T25 enum-as-string violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
-
-No other bugs identified.
+No bugs identified. All enum types are stored as proper enums in models; string conversions occur only for composite state store key construction (which is acceptable per IMPLEMENTATION TENETS).
 
 ### Intentional Quirks
 
@@ -456,3 +454,11 @@ No other bugs identified.
 7. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
 
 8. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+No active work items at this time.

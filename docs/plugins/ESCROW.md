@@ -19,6 +19,7 @@ Full-custody orchestration layer for multi-party asset exchanges. Manages the co
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for agreements and handler registry; Redis for tokens, idempotency, status indexes, party pending counts, and validation tracking |
 | lib-messaging (`IMessageBus`) | Publishing 13 escrow lifecycle events; error event publishing via `TryPublishErrorAsync` |
+| lib-messaging (`IEventConsumer`) | Subscribing to `contract.fulfilled` and `contract.terminated` events for contract-bound escrows |
 
 ---
 
@@ -91,23 +92,23 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 
 ## Configuration
 
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `DefaultTimeout` | `ESCROW_DEFAULT_TIMEOUT` | `P7D` | Default escrow expiration if not specified (ISO 8601 duration) ✓ |
-| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | Maximum allowed escrow duration (stub) |
-| `ExpirationGracePeriod` | `ESCROW_EXPIRATION_GRACE_PERIOD` | `PT1H` | Grace period after expiration before auto-refund (stub) |
-| `TokenAlgorithm` | `ESCROW_TOKEN_ALGORITHM` | `hmac_sha256` | Algorithm used for token generation (stub) |
-| `TokenLength` | `ESCROW_TOKEN_LENGTH` | `32` | Token length in bytes (before encoding) ✓ |
-| `TokenSecret` | `ESCROW_TOKEN_SECRET` | `null` | Token secret for HMAC (stub) |
-| `ExpirationCheckInterval` | `ESCROW_EXPIRATION_CHECK_INTERVAL` | `PT1M` | How often to check for expired escrows (stub) |
-| `ExpirationBatchSize` | `ESCROW_EXPIRATION_BATCH_SIZE` | `100` | Batch size for expiration processing (stub) |
-| `ValidationCheckInterval` | `ESCROW_VALIDATION_CHECK_INTERVAL` | `PT5M` | How often to validate held assets (stub) |
-| `MaxParties` | `ESCROW_MAX_PARTIES` | `10` | Maximum parties per escrow ✓ |
-| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | Maximum asset lines per deposit (stub) |
-| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | Maximum concurrent pending escrows per party (stub) |
-| `IdempotencyTtlHours` | `ESCROW_IDEMPOTENCY_TTL_HOURS` | `24` | TTL in hours for idempotency key storage ✓ |
-| `MaxConcurrencyRetries` | `ESCROW_MAX_CONCURRENCY_RETRIES` | `3` | Max retry attempts for optimistic concurrency operations ✓ |
-| `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | Default limit for listing escrows when not specified ✓
+| Property | Env Var | Default | Used | Purpose |
+|----------|---------|---------|------|---------|
+| `DefaultTimeout` | `ESCROW_DEFAULT_TIMEOUT` | `P7D` | ✓ | Default escrow expiration if not specified (ISO 8601 duration) - used in `CreateEscrowAsync` |
+| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✗ | Maximum allowed escrow duration (not enforced) |
+| `ExpirationGracePeriod` | `ESCROW_EXPIRATION_GRACE_PERIOD` | `PT1H` | ✗ | Grace period after expiration before auto-refund (no background processor) |
+| `TokenAlgorithm` | `ESCROW_TOKEN_ALGORITHM` | `hmac_sha256` | ✗ | Algorithm used for token generation (code uses SHA-256 regardless) |
+| `TokenLength` | `ESCROW_TOKEN_LENGTH` | `32` | ✓ | Token length in bytes - used in `GenerateToken` |
+| `TokenSecret` | `ESCROW_TOKEN_SECRET` | `null` | ✗ | Token secret for HMAC (code uses random bytes, no HMAC) |
+| `ExpirationCheckInterval` | `ESCROW_EXPIRATION_CHECK_INTERVAL` | `PT1M` | ✗ | How often to check for expired escrows (no background processor) |
+| `ExpirationBatchSize` | `ESCROW_EXPIRATION_BATCH_SIZE` | `100` | ✗ | Batch size for expiration processing (no background processor) |
+| `ValidationCheckInterval` | `ESCROW_VALIDATION_CHECK_INTERVAL` | `PT5M` | ✗ | How often to validate held assets (no background processor) |
+| `MaxParties` | `ESCROW_MAX_PARTIES` | `10` | ✓ | Maximum parties per escrow - validated in `CreateEscrowAsync` |
+| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✗ | Maximum asset lines per deposit (not enforced) |
+| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | ✗ | Maximum concurrent pending escrows per party (not enforced) |
+| `IdempotencyTtlHours` | `ESCROW_IDEMPOTENCY_TTL_HOURS` | `24` | ✓ | TTL in hours for idempotency key storage - used in `DepositAsync` |
+| `MaxConcurrencyRetries` | `ESCROW_MAX_CONCURRENCY_RETRIES` | `3` | ✓ | Max retry attempts for optimistic concurrency operations - used throughout |
+| `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | ✓ | Default limit for listing escrows when not specified - used in `ListEscrowsAsync`
 
 ---
 
@@ -119,8 +120,18 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | `EscrowServiceConfiguration` | Singleton | All 15 config properties |
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access (7 stores) |
 | `IMessageBus` | Scoped | Event publishing and error events |
+| `IEventConsumer` | Scoped | Event subscription registration for contract events |
 
 Service lifetime is **Scoped** (per-request). No background services (expiration checking and periodic validation are defined in config but not yet implemented as background loops).
+
+**Internal State Store Accessors** (lazy-initialized):
+- `AgreementStore` - IQueryableStateStore for escrow agreements (MySQL)
+- `TokenStore` - IStateStore for token hashes (Redis)
+- `IdempotencyStore` - IStateStore for idempotency records (Redis)
+- `HandlerStore` - IQueryableStateStore for asset handlers (MySQL)
+- `PartyPendingStore` - IStateStore for party pending counts (Redis)
+- `StatusIndexStore` - IStateStore for status index entries (Redis)
+- `ValidationStore` - IStateStore for validation tracking (Redis)
 
 ---
 
@@ -354,7 +365,12 @@ Dispute Resolution
 
 4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 
-5. **Configuration properties not wired up**: Several configuration properties (`MaxParties`, `MaxAssetsPerDeposit`, `MaxPendingPerParty`, `DefaultTimeout`, `MaxTimeout`, `TokenAlgorithm`, `TokenLength`, `TokenSecret`) are defined but not referenced in the service implementation. Party count validation uses hardcoded `< 2` check. Token generation uses hardcoded 32-byte random regardless of `TokenLength`. No HMAC secret is used despite the `TokenSecret` config.
+5. **Configuration properties not wired up**: Several configuration properties are not enforced:
+   - `MaxTimeout` - not validated against requested timeout
+   - `TokenAlgorithm` - code always uses SHA-256
+   - `TokenSecret` - not used; tokens are random, not HMAC-signed
+   - `MaxAssetsPerDeposit` - no validation on asset count per deposit
+   - `MaxPendingPerParty` - party pending counts tracked but limit not enforced
 
 6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
@@ -384,17 +400,25 @@ Dispute Resolution
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-*T25 enum-as-string violation has been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
+1. **Releasing state is unreachable**: The `ValidTransitions` map includes `Finalizing -> Releasing -> Released`, but `ReleaseAsync` transitions directly from `Finalizing` to `Released`, never using the `Releasing` intermediate state. Either remove `Releasing` from the state machine or implement a two-phase release (start → complete).
 
-No other bugs identified.
+2. **Status index key pattern mismatch**: Status index keys use `{status}:{escrowId}` pattern in some places but the store accessor method `GetStatusIndexKey(EscrowStatus)` only returns `{status}`. The escrow ID is appended manually with `$"{GetStatusIndexKey(status)}:{escrowId}"` - inconsistent key construction could cause lookup failures.
 
-### Intentional Quirks
+3. **Party pending count race on failure**: If escrow creation fails after `IncrementPartyPendingCountAsync` but before `SaveAsync`, pending counts are incorrectly incremented. No rollback mechanism exists.
+
+### Intentional Quirks (Documented Behavior)
 
 1. **Single refund consent triggers refund**: Any consent-required party submitting a `Refund` consent immediately transitions to `Refunding`. Unilateral refund right is a safety mechanism that can surprise developers expecting multi-party consensus.
 
 2. **Release tokens returned on full funding**: When the last required deposit arrives, the `DepositResponse` includes all release tokens for consent-required parties. This is the only time release tokens are proactively delivered (otherwise use `GetMyToken`).
+
+3. **Token hash double-hashing**: Tokens are first generated as SHA-256 hash of random bytes + context, then stored by hashing the token again. Validation requires SHA-256(submitted_token) lookup, providing one-way token storage.
+
+4. **Escrow service is coordination-only**: The service publishes events but never invokes downstream services directly. Asset movements are event-driven: lib-currency and lib-inventory subscribe to `escrow.released`/`escrow.refunded` and execute transfers.
+
+5. **Contract event handlers are best-effort**: `HandleContractFulfilledAsync` and `HandleContractTerminatedAsync` use try-catch with error event emission but don't retry or queue failed operations.
 
 ### Design Considerations
 
@@ -413,3 +437,13 @@ No other bugs identified.
 7. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
 
 8. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
+
+9. **Contract termination refund doesn't verify contract binding**: `RefundForContractTerminationAsync` validates the escrow is bound to the contract via query, but doesn't re-verify the `BoundContractId` matches after loading. The query result is trusted.
+
+10. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
+
+---
+
+## Work Tracking
+
+*No active work items tracked. Use `/audit-plugin` to investigate and track gaps.*

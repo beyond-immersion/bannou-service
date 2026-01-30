@@ -106,8 +106,8 @@ x-state-stores:
   agent-memories:
     backend: redis
     prefix: "agent:mem"
-    service: Actor
-    purpose: Agent memory and cognitive state
+    service: Behavior
+    purpose: Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)
 
   actor-state:
     backend: redis

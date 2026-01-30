@@ -648,6 +648,66 @@ Exposes character backstory elements (9 types):
 "${backstory.elements.TRAUMA}"         # All elements of type TRAUMA
 ```
 
+#### EncountersProvider (`${encounters.*}`)
+
+Exposes character encounter history and relationship sentiment data:
+
+```yaml
+# Aggregate queries
+"${encounters.recent}"               # List of recent encounters
+"${encounters.count}"                # Total encounter count
+"${encounters.grudges}"              # Characters with sentiment < -0.5
+"${encounters.allies}"               # Characters with sentiment > 0.5
+
+# Character-specific queries (replace {characterId} with target GUID)
+"${encounters.has_met.{characterId}}"           # Boolean - have they met?
+"${encounters.sentiment.{characterId}}"         # Float - sentiment toward them
+"${encounters.last_context.{characterId}}"      # String - last encounter context
+"${encounters.last_emotion.{characterId}}"      # String - last emotional impact
+"${encounters.encounter_count.{characterId}}"   # Int - how many times met
+"${encounters.dominant_emotion.{characterId}}"  # String - dominant emotion
+```
+
+**Example usage for encounter-aware dialogue:**
+
+```yaml
+flows:
+  greet_character:
+    - cond:
+        # Recognize someone we've met before
+        if: "${encounters.has_met.${target.id}}"
+        then:
+          - cond:
+              # Negative history - grudge response
+              if: "${encounters.sentiment.${target.id} < -0.5}"
+              then:
+                - speak: "You again. I haven't forgotten what you did."
+              # Positive history - friendly response
+              if: "${encounters.sentiment.${target.id} > 0.5}"
+              then:
+                - speak: "Good to see you, friend!"
+              else:
+                - speak: "We've met before, haven't we?"
+        else:
+          - speak: "I don't believe we've been introduced."
+```
+
+**Example usage for NPC decision-making:**
+
+```yaml
+flows:
+  evaluate_trust:
+    - cond:
+        # Many positive encounters = trusted
+        if: "${encounters.encounter_count.${target.id} > 5 && encounters.sentiment.${target.id} > 0.3}"
+        then:
+          - set: trust_level = "high"
+        # Check for grudges when making alliance decisions
+        if: "${len(encounters.grudges) > 0}"
+        then:
+          - set: has_enemies = true
+```
+
 **Example usage in behavior decisions:**
 
 ```yaml
@@ -1023,6 +1083,12 @@ These are interpreted by the runtime handler:
 ```
 
 #### Service Actions
+
+> **⚠️ NOT YET IMPLEMENTED**: The `service_call` action is documented but not yet implemented.
+> At runtime, it will silently no-op. See [GitHub Issue #144](https://github.com/beyond-immersion/bannou-service/issues/144)
+> for implementation tracking. When implemented, it will use a whitelisted service approach
+> for security (not unrestricted mesh access).
+
 ```yaml
 - service_call:
     service: economy_service

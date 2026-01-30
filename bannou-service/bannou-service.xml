@@ -76196,9 +76196,6 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ActorTemplates">
             <summary>Actor template definitions</summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AgentMemories">
-            <summary>Agent memory and cognitive state</summary>
-        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsHistory">
             <summary>Event buffer and legacy controller history (Redis for backward compatibility)</summary>
         </member>
@@ -76222,6 +76219,9 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Auth">
             <summary>Session and token state (ephemeral)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AgentMemories">
+            <summary>Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Behavior">
             <summary>Behavior metadata and compiled definitions</summary>

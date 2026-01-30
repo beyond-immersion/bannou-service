@@ -361,3 +361,11 @@ No bugs identified.
 8. **FindPerspective scans character index**: Finding a specific perspective by (encounterId, characterId) requires loading the character's entire perspective index and then loading each perspective until finding one matching the encounter. There is no direct encounter-to-perspective index.
 
 9. ~~**Index operations are not atomic**~~: **FIXED**: All index update methods now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry loops. Concurrent modifications are detected via ETag mismatch and retried, preventing lost updates under high concurrency.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+No active work items at this time.

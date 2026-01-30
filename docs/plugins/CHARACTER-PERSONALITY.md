@@ -49,20 +49,20 @@ Both types share the same state store, distinguished by key prefix.
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `personality.created` | New personality created via Set |
-| `personality.updated` | Existing personality modified via Set |
-| `personality.evolved` | Experience causes probabilistic trait evolution |
-| `personality.deleted` | Personality removed |
-| `combat-preferences.created` | New combat preferences created via Set |
-| `combat-preferences.updated` | Existing combat preferences modified via Set |
-| `combat-preferences.evolved` | Combat experience causes preference evolution |
-| `combat-preferences.deleted` | Combat preferences removed |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `personality.created` | `PersonalityCreatedEvent` | New personality created via Set |
+| `personality.updated` | `PersonalityUpdatedEvent` | Existing personality modified via Set |
+| `personality.evolved` | `PersonalityEvolvedEvent` | Experience causes probabilistic trait evolution |
+| `personality.deleted` | `PersonalityDeletedEvent` | Personality removed |
+| `combat-preferences.created` | `CombatPreferencesCreatedEvent` | New combat preferences created via Set |
+| `combat-preferences.updated` | `CombatPreferencesUpdatedEvent` | Existing combat preferences modified via Set |
+| `combat-preferences.evolved` | `CombatPreferencesEvolvedEvent` | Combat experience causes preference evolution |
+| `combat-preferences.deleted` | `CombatPreferencesDeletedEvent` | Combat preferences removed |
 
 ### Consumed Events
 
-This plugin does not consume external events.
+This plugin does not consume external events. `IEventConsumer` is injected but only used for registration pattern compliance; no handlers are registered.
 
 ---
 
@@ -105,7 +105,7 @@ Service lifetime is **Scoped** (per-request).
 ### Personality CRUD
 
 - **Get** (`/character-personality/get`): Simple key lookup. Returns NotFound if no personality exists.
-- **Set** (`/character-personality/set`): Create-or-update with version tracking. Traits stored as `Dictionary<string, float>` keyed by axis name. Publishes created or updated event based on whether record existed.
+- **Set** (`/character-personality/set`): Create-or-update with version tracking. Traits stored as `Dictionary<TraitAxis, float>` keyed by enum. Publishes created or updated event based on whether record existed.
 - **BatchGet** (`/character-personality/batch-get`): Sequential iteration (not parallel) with 100-character limit. Returns partial results with notFound IDs list.
 - **Delete** (`/character-personality/delete`): Simple removal with deletion event.
 
@@ -135,7 +135,7 @@ Probabilistic trait evolution based on experience type and intensity:
 ### Combat CRUD
 
 - **GetCombat** (`/character-personality/get-combat`): Returns combat preferences (style, range, role, risk/retreat thresholds).
-- **SetCombat** (`/character-personality/set-combat`): Create-or-update. Enums stored as strings internally.
+- **SetCombat** (`/character-personality/set-combat`): Create-or-update. Uses proper enum types internally (`CombatStyle`, `PreferredRange`, `GroupRole`).
 - **DeleteCombat** (`/character-personality/delete-combat`): Simple removal.
 
 ### Combat Evolution (`/character-personality/evolve-combat`)
@@ -234,7 +234,7 @@ No bugs identified.
 
 3. **Evolution silently skips missing traits**: If a character's personality doesn't include a trait axis (e.g., no NEUROTICISM key), evolution operations that would modify it are silently skipped. Traits are NOT created by evolution—only pre-existing traits evolve.
 
-4. **AMBUSH_SUCCESS DEFENSIVE→TACTICAL is 100% guaranteed**: Unlike other style transitions that use probability checks (0.2-0.5), the DEFENSIVE→TACTICAL transition on ambush success is deterministic and unconditional.
+4. **AMBUSH_SUCCESS DEFENSIVE→TACTICAL is unconditional**: When `Style == DEFENSIVE`, the ambush success handler unconditionally sets `Style = TACTICAL` via ternary assignment (no probability roll). Other style changes roll against config probabilities, but this one is deterministic.
 
 5. **FAILED_RETREAT can downgrade BERSERKER to AGGRESSIVE**: The 50% "fight instead of flee" branch directly sets `Style = "AGGRESSIVE"` regardless of current style, including BERSERKER (technically a de-escalation).
 
@@ -247,3 +247,15 @@ No bugs identified.
 2. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
 
 3. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires.
+
+4. **Evolution concurrency exhaustion is silent**: If optimistic concurrency retries are exhausted during `RecordExperience` or `EvolveCombatPreferences`, the method returns OK with `evolved=true` but the state was never saved. The evolution rolled successfully but the save failed silently. Consider whether this should return a different status or set `evolved=false`.
+
+5. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.
+
+*No active work items.*

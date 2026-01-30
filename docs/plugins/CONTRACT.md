@@ -120,7 +120,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<ContractService>` | Scoped | Structured logging |
-| `ContractServiceConfiguration` | Singleton | All 9 config properties |
+| `ContractServiceConfiguration` | Singleton | All 12 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access |
 | `IDistributedLockProvider` | Singleton | Contract-instance locks (`contract-instance`, 60s TTL) for mutation serialization; index-level locks (15s TTL) for list operations |
 | `IMessageBus` | Scoped | Event publishing and error events |
@@ -468,3 +468,11 @@ Note: `PartyModel.Role` and similar Role properties are intentionally strings - 
 9. **MaxActiveContractsPerEntity counts all contracts, not just active ones**: The party index accumulates ALL contract IDs ever associated with an entity (including terminated, fulfilled, expired). Party indexes are never pruned. The effective limit is "max total contracts ever" rather than "max active". Fixing requires either pruning indexes on termination/fulfillment, or filtering by status at check time.
 
 10. **ParseClauseAmount percentage mode returns 0 on missing base_amount**: When a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method logs a warning and returns 0. A percentage-typed fee clause executes as a zero-amount transfer. Whether this should fail the clause execution entirely (returning a failure status instead of 0) is a design decision.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items at this time.*

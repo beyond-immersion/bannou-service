@@ -182,7 +182,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **Schema promises 409 Conflict but implementation allows duplicates**: The API schema (`character-history-api.yaml`) documents that `/character-history/record-participation` returns `409 Conflict` when "Participation already recorded for this character and event". However, `RecordParticipationAsync` always generates a new `participationId` and stores the record without checking if the character+event pair already exists. This allows the same character to have multiple participation records for the same event, contradicting the documented API contract.
 
 ### Intentional Quirks
 
@@ -198,7 +198,7 @@ No bugs identified.
 
 3. **Helper abstractions are inline**: `DualIndexHelper` and `BackstoryStorageHelper` are constructed in the service constructor with configuration objects. Not registered in DI. Makes testing require constructor inspection.
 
-4. **GUID parsing without validation in helper config**: The `BackstoryStorageHelper` configuration uses `Guid.Parse(id)` in `SetEntityId` (line 90) without try-catch. If a backstory record has corrupted characterId data, throws `FormatException` at read time.
+4. **GUID parsing without validation in helper config**: The `SetEntityId` delegate passed to `BackstoryStorageHelper` configuration (CharacterHistoryService.cs:90) uses `Guid.Parse(id)` without try-catch. If a backstory record has corrupted characterId data in the state store, throws `FormatException` during backstory operations.
 
 5. **DeleteAll is O(n) with secondary index cleanup**: Iterates all participation records for a character, extracting event IDs via lambda, and removes from each event index individually. For characters with hundreds of participations, this generates many state store operations.
 

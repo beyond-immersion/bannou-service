@@ -42,8 +42,6 @@ public static class StateStoreDefinitions
     public const string ActorState = "actor-state";
     /// <summary>Actor template definitions</summary>
     public const string ActorTemplates = "actor-templates";
-    /// <summary>Agent memory and cognitive state</summary>
-    public const string AgentMemories = "agent-memories";
 
     // Analytics Service
     /// <summary>Event buffer and legacy controller history (Redis for backward compatibility)</summary>
@@ -68,6 +66,8 @@ public static class StateStoreDefinitions
     public const string Auth = "auth-statestore";
 
     // Behavior Service
+    /// <summary>Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)</summary>
+    public const string AgentMemories = "agent-memories";
     /// <summary>Behavior metadata and compiled definitions</summary>
     public const string Behavior = "behavior-statestore";
 
@@ -373,7 +373,7 @@ public static class StateStoreDefinitions
             [ActorPoolNodes] = new StoreMetadata("Actor", "Actor pool node assignments", "redis"),
             [ActorState] = new StoreMetadata("Actor", "Runtime actor state", "redis"),
             [ActorTemplates] = new StoreMetadata("Actor", "Actor template definitions", "redis"),
-            [AgentMemories] = new StoreMetadata("Actor", "Agent memory and cognitive state", "redis"),
+            [AgentMemories] = new StoreMetadata("Behavior", "Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)", "redis"),
             [AnalyticsHistory] = new StoreMetadata("Analytics", "Event buffer and legacy controller history (Redis for backward compatibility)", "redis"),
             [AnalyticsHistoryData] = new StoreMetadata("Analytics", "Controller possession history for queryable audit trails (MySQL for server-side filtering)", "mysql"),
             [AnalyticsRating] = new StoreMetadata("Analytics", "Glicko-2 skill ratings", "redis"),

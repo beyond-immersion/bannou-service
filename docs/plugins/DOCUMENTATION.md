@@ -45,7 +45,7 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 |-------------|-----------|---------|
 | `{namespaceId}:{documentId}` | `StoredDocument` | Document content and metadata (note: DOC_KEY_PREFIX is empty; store adds `doc:` prefix) |
 | `slug-idx:{namespaceId}:{slug}` | `string` (GUID) | Slug-to-document-ID lookup index |
-| `ns-docs:{namespaceId}` | `List<Guid>` / `HashSet<Guid>` | All document IDs in a namespace (for pagination and rebuild). **Note**: add/remove methods use `List<Guid>`, but delete-orphans/restore/count methods use `HashSet<Guid>` — see Bug #4. |
+| `ns-docs:{namespaceId}` | `List<Guid>` / `HashSet<Guid>` | All document IDs in a namespace (for pagination and rebuild). **Bug**: Inconsistent types — see Bugs section #1. |
 | `ns-trash:{namespaceId}` | `List<Guid>` | Trashcan document ID list per namespace |
 | `trash:{namespaceId}:{documentId}` | `TrashedDocument` | Soft-deleted document with TTL metadata |
 | `repo-binding:{namespaceId}` | `RepositoryBinding` | Repository binding configuration for a namespace |
@@ -118,7 +118,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<DocumentationService>` | Scoped | Structured logging |
-| `DocumentationServiceConfiguration` | Singleton | All 27 configuration properties |
+| `DocumentationServiceConfiguration` | Singleton | All 27 configuration properties (26 service-specific + ForceServiceId) |
 | `IStateStoreFactory` | Singleton | Redis state store access for all data |
 | `IDistributedLockProvider` | Singleton | Sync operation locking |
 | `IMessageBus` | Scoped | Event publishing (lifecycle, analytics, errors) |
@@ -409,9 +409,13 @@ Archive System
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **Type mismatch for `ns-docs:{namespaceId}` key**: The namespace document list is accessed using inconsistent types across different methods:
+   - `List<Guid>`: Used in `SearchIndexService.RebuildIndexAsync`, archive listing, trash listing, stats
+   - `HashSet<Guid>`: Used in `AddDocumentToNamespaceIndexAsync`, `RemoveDocumentFromNamespaceIndexAsync`, orphan deletion, restore operations
+
+   Both types serialize to/from JSON arrays, but `HashSet` enforces uniqueness while `List` preserves order and allows duplicates. If a document ID is added twice (e.g., during re-sync), the behavior differs depending on which method reads it. The inconsistency can cause orphan deletion to miss documents or stats to report incorrect counts. **Fix**: Standardize on `HashSet<Guid>` for uniqueness guarantees.
 
 ### Intentional Quirks
 
@@ -448,3 +452,11 @@ No bugs identified.
 11. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. Newer documents further in the list are missed. Consider maintaining a `LastUpdatedAt` field on a namespace metadata record.
 
 12. **Search index retains stale terms on document update**: `NamespaceIndex.AddDocument()` replaces the document and adds new terms, but does NOT remove old terms no longer in the updated content. Searching for removed terms still returns the document. Fix requires maintaining a term-to-document reverse index or removing the old document's terms before re-indexing.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work tracking markers.*

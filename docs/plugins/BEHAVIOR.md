@@ -443,7 +443,7 @@ No bugs identified.
 
 1. **Memory store loads up to DefaultMemoryLimit memories for relevance scoring**: `FindRelevantAsync` calls `GetAllAsync(entityId, _configuration.DefaultMemoryLimit, ct)` which fetches the last N entries from the index (via `TakeLast(limit)`). With default limit of 100 and 10 perceptions, this is 1000 relevance calculations per query. Older memories beyond the limit are never scored for relevance, even if they would be highly relevant - the limit acts as an implicit recency bias independent of the recency bonus in scoring.
 
-2. **Single Redis store for all behavior data**: Behavior metadata, bundle membership, GOAP metadata, and actor memories all share `behavior-statestore`. High-volume memory writes from many concurrent actors could contend with behavior compilation metadata operations.
+2. **Two Redis stores for behavior data**: lib-behavior uses two separate state stores: `behavior-statestore` for behavior metadata, bundle membership, and GOAP metadata; and `agent-memories` for cognition pipeline memory storage (via `ActorLocalMemoryStore`). This separation ensures high-volume memory writes from many concurrent actors don't contend with behavior compilation metadata operations.
 
 3. **No TTL on memory entries**: Memory entries in state have no expiration. Eviction is handled by the per-entity memory limit (default 100): when a new memory is stored and the index exceeds capacity, the oldest entries are automatically trimmed and their state store records deleted.
 
