@@ -43,8 +43,8 @@ Realm-scoped species management for the Arcadia game world. Manages playable and
 |-------------|-----------|---------|
 | `species:{speciesId}` | `SpeciesModel` | Individual species definition |
 | `code-index:{CODE}` | `string` | Code → species ID reverse lookup (uppercase) |
-| `realm-index:{realmId}` | `List<string>` | Species IDs available in a realm |
-| `all-species` | `List<string>` | Global index of all species IDs |
+| `realm-index:{realmId}` | `List<Guid>` | Species IDs available in a realm |
+| `all-species` | `List<Guid>` | Global index of all species IDs |
 
 ---
 
@@ -96,17 +96,17 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **GetSpecies** (`/species/get`): Direct lookup by species ID. Returns full species data with realm associations.
 - **GetSpeciesByCode** (`/species/get-by-code`): Code index lookup (uppercase-normalized). Validates data consistency if index points to missing species (logs warning, returns 404).
 - **ListSpecies** (`/species/list`): Loads all IDs from `all-species` index, bulk-loads species, filters by `isPlayable`, `category`, `includeDeprecated`. In-memory pagination (page/pageSize, max 100).
-- **ListSpeciesByRealm** (`/species/list-by-realm`): Loads realm-specific index. Allows viewing species in deprecated realms (no active check). Same filtering/pagination as List.
+- **ListSpeciesByRealm** (`/species/list-by-realm`): Validates realm exists via `IRealmClient` (404 if not found), but allows viewing species in deprecated realms (no active check). Loads realm-specific index. Same filtering/pagination as List.
 
 ### Write Operations (3 endpoints)
 
 - **CreateSpecies** (`/species/create`): Validates realm existence (if initial realms provided). Normalizes code to uppercase. Checks code index for conflicts. Saves species, updates all indexes (code, realm, all-species). Publishes `species.created`.
 - **UpdateSpecies** (`/species/update`): Partial update tracking via `changedFields` list. Only changed fields included in event. Updates `UpdatedAt` timestamp.
-- **DeleteSpecies** (`/species/delete`): Requires species to be deprecated. Checks character references via `ICharacterClient` (Conflict if characters exist). Removes from all indexes (code, realm, all-species). Publishes `species.deleted`.
+- **DeleteSpecies** (`/species/delete`): Does NOT require species to be deprecated (unlike the schema description implies). Checks character references via `ICharacterClient` (Conflict if characters exist). Removes from all indexes (code, realm, all-species). Publishes `species.deleted`.
 
 ### Deprecation Operations (3 endpoints)
 
-- **DeprecateSpecies** (`/species/deprecate`): Validates realm exists and is active. Sets `IsDeprecated=true`, stores timestamp and optional reason. Publishes update event.
+- **DeprecateSpecies** (`/species/deprecate`): Sets `IsDeprecated=true`, stores timestamp and optional reason. Returns Conflict if already deprecated. Publishes update event.
 - **UndeprecateSpecies** (`/species/undeprecate`): Restores deprecated species to active. Returns Conflict if already active.
 - **MergeSpecies** (`/species/merge`): Source must be deprecated. Paginates through characters via `ICharacterClient.ListCharactersAsync` (page size from config). Updates each character's species. Partial failures continue (logs warning per failed character). Optional `deleteAfterMerge` flag. Publishes `species.merged`.
 
@@ -164,8 +164,8 @@ Deprecation & Merge Flow
             ▼
   DeleteSpecies(speciesId)   [if not auto-deleted by merge]
        │
-       ├── Validate: must be deprecated
        ├── Check: no remaining character references (Conflict if any)
+       ├── NOTE: Does NOT check IsDeprecated (bug - see Quirks)
        ├── Remove from all indexes
        └── Publish: species.deleted
 
@@ -209,21 +209,21 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-None identified.
+1. **species.created event only populates subset of fields**: `PublishSpeciesCreatedEventAsync` only sets EventId, Timestamp, SpeciesId, Code, Name, Category, and IsPlayable. The generated `SpeciesCreatedEvent` model includes all lifecycle fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt, IsDeprecated, DeprecatedAt, DeprecationReason) but these are left at default values. Downstream consumers expecting full state on create will receive incomplete data.
 
-### Intentional Quirks
+2. **Delete endpoint doesn't enforce deprecation requirement**: Schema description says "Only deprecated species with zero references can be deleted" but `DeleteSpeciesAsync` has no check for `IsDeprecated`. Any species without character references can be deleted, bypassing the intended two-step lifecycle (deprecate → merge → delete).
 
-1. **Merge partial failures don't fail the operation**: Individual character update failures during merge increment `failedCount` but don't abort. Returns `StatusCodes.OK` even with failures. Only logs warnings.
+### Intentional Quirks (Documented Behavior)
 
-2. **Realm validation asymmetry**: `CreateSpecies` and `AddSpeciesToRealm` validate realm is active. `RemoveSpeciesFromRealm` only validates realm exists (not active status). `ListSpeciesByRealm` performs no realm validation.
+1. **Merge partial failures don't fail the operation**: Individual character update failures during merge increment `failedCount` but don't abort. Returns `StatusCodes.OK` even with failures. Only logs warnings. The `deleteAfterMerge` flag is skipped if any failures occurred.
 
-3. **Page fetch error during merge stops migration**: If fetching a page of characters fails during merge, `hasMorePages` is set to false which terminates the loop. Characters on subsequent pages are silently un-migrated.
+2. **Realm validation asymmetry**: `CreateSpecies` and `AddSpeciesToRealm` validate realm is active (not deprecated). `RemoveSpeciesFromRealm` doesn't validate realm status at all (only checks species membership). `ListSpeciesByRealm` validates realm exists but allows deprecated realms.
+
+3. **Page fetch error during merge stops migration**: If fetching a page of characters fails during merge, `hasMorePages` is set to false which terminates the loop. Characters on subsequent pages are silently un-migrated. No retry logic.
 
 4. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
-
-5. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
 
 ### Design Considerations
 
@@ -241,5 +241,12 @@ None identified.
 
 7. **Seed with updateExisting duplicates change tracking logic**: Seed duplicates the same `changedFields` tracking pattern from `UpdateSpeciesAsync`. Changes to update logic need to be made in both places.
 
-8. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
+8. **Configuration property naming**: `SeedPageSize` is only used for character migration page size during merge operations (not for seed pagination - seed doesn't paginate). The name is misleading since it's actually a merge operation setting.
 
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No items currently tracked.*

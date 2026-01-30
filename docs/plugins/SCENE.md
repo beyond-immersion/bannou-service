@@ -46,14 +46,16 @@ Hierarchical composition storage for game worlds. Stores and retrieves scene doc
 |-------------|-----------|---------|
 | `scene:index:{sceneId}` | `SceneIndexEntry` | Scene metadata index (name, version, tags, nodeCount, checkout status) |
 | `scene:content:{sceneId}` | `SceneContentEntry` | YAML-serialized scene document content |
-| `scene:global-index` | `HashSet<string>` | Set of all scene IDs in the system |
-| `scene:by-game:{gameId}` | `HashSet<string>` | Scene IDs partitioned by game |
-| `scene:by-type:{gameId}:{sceneType}` | `HashSet<string>` | Scene IDs by game and scene type |
-| `scene:references:{sceneId}` | `HashSet<string>` | Scene IDs that reference the given scene (reverse index) |
-| `scene:assets:{assetId}` | `HashSet<string>` | Scene IDs that use the given asset (reverse index) |
+| `scene:global-index` | `HashSet<Guid>` | Set of all scene IDs in the system |
+| `scene:by-game:{gameId}` | `HashSet<Guid>` | Scene IDs partitioned by game |
+| `scene:by-type:{gameId}:{sceneType}` | `HashSet<Guid>` | Scene IDs by game and scene type |
+| `scene:references:{sceneId}` | `HashSet<Guid>` | Scene IDs that reference the given scene (reverse index) |
+| `scene:assets:{assetId}` | `HashSet<Guid>` | Scene IDs that use the given asset (reverse index) |
 | `scene:checkout:{sceneId}` | `CheckoutState` | Active checkout lock (token, editor, expiry, extension count) |
 | `scene:validation:{gameId}:{sceneType}` | `List<ValidationRule>` | Registered validation rules per game+type |
 | `scene:version-history:{sceneId}` | `List<VersionHistoryEntry>` | Version history entries ordered by creation time |
+| `scene:checkout-ext:{sceneId}` | (unused) | Defined constant `SCENE_CHECKOUT_EXT_PREFIX` but never referenced in code |
+| `scene:version-retention:{sceneId}` | (unused) | Defined constant `VERSION_RETENTION_PREFIX` but never referenced in code |
 
 ---
 
@@ -140,7 +142,7 @@ Extracted from `SceneService` for testability. Handles:
 
 - **CreateScene** (`/scene/create`): Validates structure via `ISceneValidationService.ValidateStructure()`. Validates tag counts (scene-level and per-node) against configuration limits. Checks for existing scene with same ID (returns 409 Conflict). Sets timestamps and default version "1.0.0". Serializes scene to YAML via YamlDotNet and stores in `scene:content:{id}`. Creates `SceneIndexEntry`. Adds to global index. Updates game/type secondary indexes. Extracts and indexes scene references and asset references. Records initial version history entry. Publishes `scene.created`.
 
-- **GetScene** (`/scene/get`): Loads index entry to find asset ID. Loads YAML content from state store and deserializes. If `resolveReferences=true`, recursively resolves reference nodes (nodeType=Reference with annotations containing `reference.sceneAssetId`). Respects `maxReferenceDepth` capped by `MaxReferenceDepthLimit`. Detects circular references via visited set. Returns resolved references, unresolved references (with reason: not_found, circular_reference, depth_exceeded), and error messages.
+- **GetScene** (`/scene/get`): Loads index entry to find asset ID. Loads YAML content from state store and deserializes. If `resolveReferences=true`, recursively resolves reference nodes using `GetReferenceSceneId()` which checks the typed `ReferenceSceneId` field first, then falls back to `annotations.reference.sceneAssetId` for legacy data. Respects `maxReferenceDepth` capped by `MaxReferenceDepthLimit`. Detects circular references via visited set. Returns resolved references, unresolved references (with reason: not_found, circular_reference, depth_exceeded), and error messages.
 
 - **ListScenes** (`/scene/list`): Filters candidates using secondary indexes (game index, type index, multi-type union). Falls back to global index scan when no filters provided. Applies additional in-memory filters: nameContains (case-insensitive), tags (ALL must match). Creates `SceneSummary` objects (excludes full node tree). Sorts by updatedAt descending. Applies pagination with offset/limit capped by `MaxListResults`.
 
@@ -378,7 +380,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 5. **require_annotation and custom_expression validation rules**: The `ValidationRuleType` enum includes these values, but `ApplyValidationRule` in `SceneValidationService` only handles `require_tag`, `forbid_tag`, and `require_node_type`. The other types silently pass.
 
-6. **referenceSceneId field on SceneNode**: The schema defines a `referenceSceneId` field on nodes for reference type, but the implementation reads reference scene IDs from `annotations.reference.sceneAssetId` instead. The generated model field appears unused in business logic.
+6. ~~**referenceSceneId field on SceneNode**~~: **Implemented**. The `GetReferenceSceneId()` helper now uses the typed `ReferenceSceneId` field as the primary source, with `annotations.reference.sceneAssetId` as a fallback for backward compatibility with legacy scene data.
 
 7. **node_name search match type**: The `SearchMatchType` enum includes `node_name`, but the search implementation only checks index-level fields (name, description, tags). Searching node names would require loading full scene content, which is not done for performance.
 
@@ -426,7 +428,7 @@ No bugs identified.
 
 ### Design Considerations
 
-1. **Global index unbounded growth**: The `scene:global-index` key holds ALL scene IDs in a single `HashSet<string>`. At scale (millions of scenes), this set becomes a memory and serialization bottleneck. Consider partitioned indexes or cursor-based iteration.
+1. **Global index unbounded growth**: The `scene:global-index` key holds ALL scene IDs in a single `HashSet<Guid>`. At scale (millions of scenes), this set becomes a memory and serialization bottleneck. Consider partitioned indexes or cursor-based iteration.
 
 2. **N+1 query pattern in ListScenes**: After resolving candidate IDs via secondary indexes, each scene's index entry is loaded individually. A page of 200 results generates 200 state store reads.
 
@@ -444,5 +446,13 @@ No bugs identified.
 
 9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes.
 
-10. **Internal model type safety**: `SceneIndexEntry.SceneType` is stored as `string` instead of the typed `SceneType` enum, requiring `Enum.TryParse` conversions throughout business logic. Refactoring to use the enum type directly would improve type safety and eliminate parsing overhead.
+10. **Unused key prefix constants**: The service defines `SCENE_CHECKOUT_EXT_PREFIX` ("scene:checkout-ext:") and `VERSION_RETENTION_PREFIX` ("scene:version-retention:") but never references them. These appear to be dead code from planned features that were never implemented or were refactored away.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+No active work tracking items.
 

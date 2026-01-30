@@ -56,6 +56,7 @@ Generic save/load system for game state persistence with polymorphic ownership, 
 | `pending:{uploadId}` | `PendingUploadEntry` | Queued upload with data and retry state |
 | `pending-upload-ids` (set) | `Set<string>` | Tracking set of pending upload IDs |
 | `circuit:storage` | `CircuitBreakerState` | Circuit breaker state (Closed/Open/HalfOpen) |
+| `save-rate:{gameId}:{ownerType}:{ownerId}:{minuteBucket}` | `string` (count) | Rate limiting counter (TTL 120s) |
 
 ---
 
@@ -439,15 +440,13 @@ Circuit Breaker State Machine
 
 4. **Auto-collapse during cleanup**: CleanupService logs delta chains that could be collapsed when AutoCollapseEnabled is true, but does not actually perform the collapse. It only identifies candidates.
 
-5. **Rate limiting (MaxSavesPerMinute)**: Configuration property exists but no rate limiting implementation is present in the Save endpoint. The property is defined but not enforced.
+5. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit.
 
-6. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists (line 578 of SaveLoadService.cs) but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit. Also see Bug #4 (raw vs compressed size mismatch in the check).
+6. **Thumbnail upload and storage**: ThumbnailMaxSizeBytes and ThumbnailAllowedFormats are configured, and SaveVersionManifest has ThumbnailAssetId, but no thumbnail validation or upload logic exists in the Save endpoint.
 
-7. **Thumbnail upload and storage**: ThumbnailMaxSizeBytes and ThumbnailAllowedFormats are configured, and SaveVersionManifest has ThumbnailAssetId, but no thumbnail validation or upload logic exists in the Save endpoint.
+7. **Conflict detection flagging**: ConflictDetectionEnabled and ConflictDetectionWindowMinutes are configured, and DeviceId is stored on SaveVersionManifest, but no conflict flag is returned to the client during save or load.
 
-8. **Conflict detection flagging**: ConflictDetectionEnabled and ConflictDetectionWindowMinutes are configured, and DeviceId is stored on SaveVersionManifest, but no conflict flag is returned to the client during save or load.
-
-9. **SlotResponse display name**: ExportSlotEntry has a DisplayName field but SaveSlotMetadata does not store a display name.
+8. **SlotResponse display name**: ExportSlotEntry has a DisplayName field but SaveSlotMetadata does not store a display name.
 
 ---
 
@@ -455,7 +454,7 @@ Circuit Breaker State Machine
 
 1. **Binary delta algorithms**: Implement BSDIFF or XDELTA for binary game state (meshes, textures, compiled world data) where JSON Patch is not applicable.
 
-2. **Rate limiting enforcement**: Use Redis sliding window or token bucket to enforce MaxSavesPerMinute per owner. Return 429 Too Many Requests when exceeded.
+2. **Rate limiting status code**: Rate limiting is implemented but returns 400 Bad Request instead of 429 Too Many Requests. Change to return proper 429 status code for standard HTTP semantics.
 
 3. **Storage quota enforcement**: Track cumulative storage per owner and reject saves that would exceed MaxTotalSizeBytesPerOwner. Could also emit a warning event at 80% threshold.
 
@@ -473,9 +472,7 @@ Circuit Breaker State Machine
 
 ### Bugs
 
-1. **String config properties should use enum references**: Two configuration properties in `save-load-configuration.yaml` are `type: string` but should use `$ref` to their respective enum types:
-   - `DefaultCompressionType` → should reference `CompressionType` enum from save-load-api.yaml
-   - `DefaultDeltaAlgorithm` → should reference `DeltaAlgorithm` enum from save-load-api.yaml
+(None currently identified)
 
 ### Intentional Quirks
 
@@ -490,6 +487,8 @@ Circuit Breaker State Machine
 5. **CleanupControlPlaneOnly uses default app name**: The cleanup service only runs when EffectiveAppId matches "bannou". In distributed deployments with custom app IDs, cleanup will not run automatically.
 
 6. **Asset deletion is best-effort**: When deleting versions or slots, Asset service failures are caught and logged as warnings but do not fail the operation. Orphaned assets may accumulate if the Asset service is repeatedly unavailable.
+
+7. **Rate limiting returns 400 instead of 429**: The rate limiting implementation (SaveLoadService.cs lines 487-505) returns `StatusCodes.BadRequest` when the per-minute limit is exceeded, not the standard HTTP 429 Too Many Requests. Uses Redis counter with key pattern `save-rate:{gameId}:{ownerType}:{ownerId}:{minuteBucket}` and 120-second TTL.
 
 ### Design Considerations
 
@@ -516,3 +515,11 @@ Circuit Breaker State Machine
 11. **Storage quota check mixes raw and compressed sizes**: The save quota check compares `slot.TotalSizeBytes + body.Data.Length` against `MaxTotalSizeBytesPerOwner`. The `slot.TotalSizeBytes` tracks compressed sizes, but `body.Data.Length` is the raw uncompressed data. The check happens pre-compression so the compressed size is unknown. Options: check after compression (changes error timing), use a compression ratio estimate, or accept the conservative over-estimate.
 
 12. **Storage quota check is per-slot, not per-owner**: The quota check only examines the current slot's TotalSizeBytes against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. True per-owner enforcement requires querying all slots for the owner before each save.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+(No active work items)
