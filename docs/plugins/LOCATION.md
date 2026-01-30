@@ -3,7 +3,7 @@
 > **Plugin**: lib-location
 > **Schema**: schemas/location-api.yaml
 > **Version**: 1.0.0
-> **State Store**: location (Redis/MySQL)
+> **State Store**: location-statestore (MySQL)
 
 ---
 
@@ -17,7 +17,7 @@ Hierarchical location management for the Arcadia game world. Manages physical pl
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis/MySQL persistence for locations, code indexes, realm indexes, parent indexes |
+| lib-state (`IStateStoreFactory`) | MySQL persistence for locations, code indexes, realm indexes, parent indexes |
 | lib-messaging (`IMessageBus`) | Publishing location lifecycle events; error event publishing |
 | lib-messaging (`IEventConsumer`) | Event handler registration (partial class pattern, no handlers) |
 | lib-realm (`IRealmClient`) | Realm existence validation on creation; realm code resolution during seed |
@@ -28,23 +28,23 @@ Hierarchical location management for the Arcadia game world. Manages physical pl
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-character | Uses `ILocationClient` for location validation in character placement |
-| lib-mapping | References locations for spatial data anchoring |
-| lib-character-encounter | Queries locations for encounter context |
+| lib-character-encounter | Stores `LocationId` as optional encounter context (stores reference but does not call `ILocationClient`) |
+
+**Note**: No services currently call `ILocationClient`. Location references in other services (character-encounter, mapping) are stored as Guid foreign keys without runtime validation. This is intentional - locations are reference data seeded at startup, not runtime-validated entities.
 
 ---
 
 ## State Storage
 
-**Store**: `location` (via `StateStoreDefinitions.Location`)
+**Store**: `location-statestore` (via `StateStoreDefinitions.Location`) - MySQL backend
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `location:{locationId}` | `LocationModel` | Individual location definition |
 | `code-index:{realmId}:{CODE}` | `string` | Code → location ID (unique per realm) |
-| `realm-index:{realmId}` | `List<string>` | All location IDs in a realm |
-| `parent-index:{realmId}:{parentId}` | `List<string>` | Child location IDs for a parent |
-| `root-locations:{realmId}` | `List<string>` | Location IDs with no parent in a realm |
+| `realm-index:{realmId}` | `List<Guid>` | All location IDs in a realm |
+| `parent-index:{realmId}:{parentId}` | `List<Guid>` | Child location IDs for a parent |
+| `root-locations:{realmId}` | `List<Guid>` | Location IDs with no parent in a realm |
 
 ---
 
@@ -99,7 +99,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **ListLocationsByRealm** (`/location/list-by-realm`): Loads all location IDs from realm index, bulk-loads individually (N+1 pattern). Filters by type and deprecation.
 - **ListLocationsByParent** (`/location/list-by-parent`): Loads parent's child index. Validates parent exists first (404 if missing). Filters by type and deprecation.
 - **ListRootLocations** (`/location/list-root`): Loads `root-locations:{realmId}` index. Returns top-level locations with no parent.
-- **GetLocationAncestors** (`/location/get-ancestors`): Walks parent chain iteratively. Safety limit of 10 iterations to prevent infinite loops from corrupted data.
+- **GetLocationAncestors** (`/location/get-ancestors`): Walks parent chain iteratively. Safety limit via `MaxAncestorDepth` config (default 20) to prevent infinite loops from corrupted data.
 - **GetLocationDescendants** (`/location/get-descendants`): Recursive traversal via `CollectDescendantsAsync`. Safety limit of 20 depth levels. Optional `maxDepth` parameter.
 - **LocationExists** (`/location/exists`): Quick existence check. Returns `Exists` boolean and `IsActive` (not deprecated) flag.
 
@@ -205,16 +205,16 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. **No location type validation**: `LocationType` is stored as a string. Any value is accepted on creation/update. The enum (`LocationType`) is defined in schema but not validated at runtime against the model.
+None. All API endpoints are fully implemented.
 
 ---
 
 ## Potential Extensions
 
-1. **Configurable depth limits**: Move hardcoded depth limits (10, 20) to configuration schema.
-2. **Batch location loading**: Replace N+1 `LoadLocationsByIdsAsync` with bulk state store operation for list endpoints.
-3. **Location type validation**: Validate `LocationType` against the defined enum on creation/update.
-4. **Spatial coordinates**: Add optional latitude/longitude or x/y/z coordinates for mapping integration.
+1. **Batch location loading**: Replace N+1 `LoadLocationsByIdsAsync` with bulk state store operation for list endpoints.
+2. **Spatial coordinates**: Add optional latitude/longitude or x/y/z coordinates for mapping integration.
+3. **Redis caching layer**: Add cache in front of MySQL for frequently-accessed locations (realm capitals, major cities).
+4. **Soft-delete reference tracking**: Track which services reference a location before allowing hard delete.
 
 ---
 
@@ -253,3 +253,9 @@ No bugs identified.
 6. **Empty parent index key not cleaned up**: When the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
 
 7. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
+
+---
+
+## Work Tracking
+
+*No active work items at this time.*

@@ -127,7 +127,7 @@ Login verifies password with `BCrypt.Verify` against the hash stored in Account 
 
 ### Steam
 
-Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOAuthProviderService.ValidateSteamTicketAsync`. Validates the ticket, checks VAC/publisher bans, then finds-or-creates an account. Steam doesn't provide an email, so accounts get a synthetic email like `steam_{steamId}@oauth.local`.
+Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOAuthProviderService.ValidateSteamTicketAsync`. Validates the ticket, checks VAC/publisher bans, then finds-or-creates an account. Steam doesn't provide an email, so accounts are created with `Email = null`.
 
 ### Tokens (validate, refresh)
 
@@ -196,6 +196,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/150 -->
 
 ## Known Quirks & Caveats
 
@@ -215,18 +216,23 @@ No bugs identified.
 
 5. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` exist for future implementation (SessionService.cs:21-23).
 
-6. **SessionDataModel.Email uses empty string default**: The Email property defaults to `string.Empty` rather than being nullable. For OAuth/Steam accounts that don't provide email, this results in an empty string stored in session data. The `= string.Empty` satisfies NRT without requiring nullable handling throughout the codebase.
-
 ### Design Considerations (Requires Planning)
 
-1. **`SessionDataModel.Email` empty string default** - Now documented as an Intentional Quirk (#6). The `= string.Empty` default is acceptable because OAuth/Steam accounts legitimately have no email, and the empty string satisfies NRT without requiring nullable handling.
-
-2. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= string.Empty` default. Password reset is only valid for email/password accounts (OAuth accounts don't have passwords), so the email should always be populated from a non-OAuth account. If an OAuth-only account somehow reaches this code path, the validation in `ConfirmPasswordResetAsync` would fail (token not found or invalid).
-
-3. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock with `await Task.CompletedTask`). Should be wired through when email integration is added. Low priority until email implementation.
+No design considerations pending.
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work items.*
+### Completed
+
+- **2026-01-30**: Removed "SendPasswordResetEmailAsync unused cancellation token" from Design Considerations. This is not a design issue - it's a natural consequence of the synchronous mock implementation and will be addressed when email integration is implemented (tracked by [#141](https://github.com/beyond-immersion/bannou-service/issues/141)).
+
+- **2026-01-30**: Made `Email` properly nullable across Account and Auth services ([#151](https://github.com/beyond-immersion/bannou-service/issues/151)). OAuth/Steam accounts that don't provide email now honestly have `Email = null` instead of synthetic placeholder emails like `steam_123@oauth.local`. Changes:
+  - `AccountResponse.Email` is now `string?` (nullable in schema)
+  - `CreateAccountRequest.email` is now optional
+  - `SessionDataModel.Email` is now `string?`
+  - `AccountModel.Email` is now `string?`
+  - Account lifecycle events (`AccountCreatedEvent`, etc.) have nullable `Email`
+  - Removed synthetic email generation in `OAuthProviderService`
+  - Password reset flow validates email exists before proceeding

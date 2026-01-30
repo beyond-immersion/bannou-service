@@ -425,12 +425,12 @@ public class OAuthProviderService : IOAuthProviderService
                 }
             }
 
-            // Create new account
+            // Create new account - email is null for providers that don't supply it (Steam, some OAuth)
             var createRequest = new CreateAccountRequest
             {
-                Email = userInfo.Email ?? $"{providerName}_{userInfo.ProviderId}@oauth.local",
+                Email = userInfo.Email, // Honest: null if provider doesn't supply email
                 DisplayName = userInfo.DisplayName ?? $"{providerName}_user",
-                EmailVerified = userInfo.Email != null,
+                EmailVerified = userInfo.Email != null, // Can only be verified if we have an email
                 PasswordHash = null
             };
 

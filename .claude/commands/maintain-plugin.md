@@ -22,9 +22,11 @@ This command ensures deep dive documents are:
 
 All builds and tests are assumed passing. You are reading code to update docs, not modifying code.
 
-## Critical Rule: Preserve AUDIT Markers
+## Critical Rules: Markers and Fixed Items
 
-**NEVER remove or modify these markers:**
+### Preserve AUDIT Markers (Active Work)
+
+**NEVER remove or modify these HTML comment markers:**
 ```markdown
 <!-- AUDIT:IN_PROGRESS:... -->
 <!-- AUDIT:NEEDS_DESIGN:...:https://... -->
@@ -32,6 +34,19 @@ All builds and tests are assumed passing. You are reading code to update docs, n
 ```
 
 These are managed by `/audit-plugin` and represent active work tracking.
+
+### Process FIXED Items (Completed Work)
+
+**ALWAYS verify and process these inline markers:**
+```markdown
+N. ~~**Original title**~~: **FIXED** (YYYY-MM-DD) - Description of fix.
+```
+
+These were completed by `/audit-plugin` and need verification:
+1. Verify the fix exists in source code
+2. If fix has non-obvious behavior → Move to "Intentional Quirks"
+3. If fix is clean with no quirks → Remove entirely
+4. If fix is missing (bug still exists!) → Restore as active bug
 
 ## Workflow Phases
 
@@ -193,6 +208,67 @@ Systematically review the code for issues. Check for:
 - Are "intentional quirks" actually intentional? (check comments/tests)
 - Are "design considerations" still relevant?
 
+### Phase 5b: Verify Fixed Items
+
+Scan for items marked with the `/audit-plugin` FIXED format:
+
+```markdown
+N. ~~**Original title**~~: **FIXED** (YYYY-MM-DD) - Description of the fix.
+```
+
+**For each FIXED item, you MUST:**
+
+1. **Verify the fix exists in code**
+   - Read the relevant source code
+   - Confirm the described fix is actually implemented
+   - If the fix is NOT present, remove the FIXED marker and restore it as an active bug
+
+2. **Assess if non-obvious behavior remains**
+   Ask: "Would a developer using this API be surprised by the current behavior?"
+
+   **Non-obvious behavior examples:**
+   - Uses unconventional lock ordering (alphabetical, GUID-based, etc.)
+   - Has unusual error handling (warnings instead of errors, silent failures)
+   - Modifies state in unexpected places
+   - Has performance characteristics worth noting
+   - Behavior differs from similar methods in the same service
+
+   **NOT non-obvious (just remove entirely):**
+   - Standard fix that makes behavior match expectations
+   - Bug was internal implementation detail users never saw
+   - Fix aligns with how other similar code works
+
+3. **Take action:**
+
+   **If fix verified AND no non-obvious behavior remains:**
+   - DELETE the entire line from the Bugs section
+   - This keeps the doc clean - fixed bugs with standard behavior don't need documentation
+
+   **If fix verified AND non-obvious behavior remains:**
+   - MOVE to "Intentional Quirks (Documented Behavior)" section
+   - REWRITE as a quirk (not a bug), explaining the current behavior:
+   ```markdown
+   N. **Descriptive title of current behavior**: {Explanation of what happens and why it matters to developers}
+   ```
+   - Example transformation:
+     - Before (in Bugs): `~~**MergeStacks only locks source container**~~: **FIXED** (2026-01-30) - Now locks both containers using deterministic GUID ordering.`
+     - After (in Quirks): `**MergeStacks uses deterministic lock ordering**: When merging stacks across containers, locks are acquired in GUID order (smaller first) to prevent deadlocks. Operations may briefly conflict if another operation is locking in the opposite order.`
+
+4. **Update Work Tracking:**
+   - Move the "Completed" entry from Work Tracking to a "Historical" subsection if you want to preserve history
+   - Or simply remove it if the doc is getting cluttered
+
+**FIXED Item Verification Report Format:**
+```markdown
+### FIXED Item Verification
+
+| Item | Fix Verified | Has Quirks | Action |
+|------|-------------|------------|--------|
+| MergeStacks locking | Yes | Yes (lock ordering) | Move to Quirks |
+| SplitStack validation | Yes | No | Remove |
+| Cache TTL bug | No (still broken!) | N/A | Restore as Bug |
+```
+
 ### Phase 6: Document Update
 
 Based on Phases 2-5, update the document:
@@ -212,8 +288,8 @@ Based on Phases 2-5, update the document:
 **Quirks updates:**
 - Add newly discovered bugs to "Bugs (Fix Immediately)"
 - Add newly discovered quirks to appropriate section
-- Remove items that have been fixed (verify in code first!)
-- Preserve all AUDIT markers exactly as they are
+- Process FIXED items per Phase 5b (remove clean fixes, move quirky fixes to Intentional Quirks)
+- Preserve all AUDIT markers exactly as they are (IN_PROGRESS, NEEDS_DESIGN, BLOCKED)
 
 **Work Tracking section:**
 - Add section 14 if missing
@@ -248,6 +324,10 @@ Before finalizing, verify:
 - **Bugs discovered:** {count}
 - **Quirks documented:** {count}
 - **AUDIT markers preserved:** {count}
+- **FIXED items processed:** {count}
+  - Removed (clean fixes): {count}
+  - Moved to Quirks: {count}
+  - Restored as bugs (fix missing): {count}
 
 ### Changes Made
 
@@ -259,6 +339,11 @@ Before finalizing, verify:
 
 #### Quirks
 {List of new items added to quirks sections}
+
+#### FIXED Items Processed
+| Item | Action | Notes |
+|------|--------|-------|
+| {title} | {Removed/Moved to Quirks/Restored} | {brief note} |
 
 ### Document Status
 - Template compliance: {Full/Partial}
@@ -275,15 +360,18 @@ Before finalizing, verify:
 - Read every line of service code
 - Verify claims against actual source
 - Add newly discovered issues
-- Preserve existing AUDIT markers
+- Preserve existing AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED)
+- Process FIXED items by verifying the fix exists in code
+- Move FIXED items with non-obvious behavior to Intentional Quirks
+- Remove FIXED items that are clean fixes with no quirks
 - Use tables for structured data
-- Run a build to verify understanding
 
 ### DO NOT:
-- Remove AUDIT markers (ever!)
+- Remove AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED - ever!)
+- Leave FIXED items unprocessed (they must be verified and either removed or moved)
 - Guess at behavior without reading code
 - Copy from generated docs verbatim
-- Remove bug entries without verifying fix
+- Remove bug entries without verifying fix in actual code
 - Add speculative information
 - Skip reading test files
 

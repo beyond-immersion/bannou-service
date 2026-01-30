@@ -54,12 +54,10 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email address associated with the account
+    /// Email address associated with the account. Null for OAuth/Steam accounts without email.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; } = default!;
 
     /// <summary>
     /// User-chosen display name for the account
@@ -125,12 +123,10 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email address associated with the account
+    /// Email address associated with the account. Null for OAuth/Steam accounts without email.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; } = default!;
 
     /// <summary>
     /// User-chosen display name for the account
@@ -204,12 +200,10 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email address associated with the account
+    /// Email address associated with the account. Null for OAuth/Steam accounts without email.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; } = default!;
 
     /// <summary>
     /// User-chosen display name for the account

@@ -10849,7 +10849,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.DisplayName">
@@ -10899,7 +10899,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.DisplayName">
@@ -10954,7 +10954,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.DisplayName">
@@ -23773,7 +23773,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.CreateAccountRequest.Email">
             <summary>
-            Email address for the new account
+            Email address for the new account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.CreateAccountRequest.PasswordHash">
@@ -23913,7 +23913,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.AccountResponse.Email">
             <summary>
-            Email address associated with the account
+            Email address associated with the account. Null for OAuth/Steam accounts without email.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.AccountResponse.DisplayName">

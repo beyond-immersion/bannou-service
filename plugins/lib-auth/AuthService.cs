@@ -726,6 +726,18 @@ public partial class AuthService : IAuthService
 
             if (account != null)
             {
+                // Password reset requires an email. We looked up by email, so account.Email
+                // should match body.Email. If somehow null (data corruption), skip silently
+                // to maintain enumeration protection.
+                var accountEmail = account.Email;
+                if (string.IsNullOrEmpty(accountEmail))
+                {
+                    _logger.LogWarning(
+                        "Account {AccountId} found by email lookup but has null/empty email - possible data corruption",
+                        account.AccountId);
+                    return StatusCodes.OK; // Enumeration protection: always return success
+                }
+
                 // Generate secure reset token
                 var resetToken = _tokenService.GenerateSecureToken();
                 var resetTokenTtlMinutes = _configuration.PasswordResetTokenTtlMinutes;
@@ -733,7 +745,7 @@ public partial class AuthService : IAuthService
                 var resetData = new PasswordResetData
                 {
                     AccountId = account.AccountId,
-                    Email = account.Email,
+                    Email = accountEmail,
                     ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(resetTokenTtlMinutes)
                 };
 
@@ -746,7 +758,7 @@ public partial class AuthService : IAuthService
                     cancellationToken);
 
                 // Send password reset email (mock implementation logs to console)
-                await SendPasswordResetEmailAsync(account.Email, resetToken, resetTokenTtlMinutes, cancellationToken);
+                await SendPasswordResetEmailAsync(accountEmail, resetToken, resetTokenTtlMinutes, cancellationToken);
 
                 _logger.LogInformation("Password reset token generated for account {AccountId}, expires in {Minutes} minutes",
                     account.AccountId, resetTokenTtlMinutes);

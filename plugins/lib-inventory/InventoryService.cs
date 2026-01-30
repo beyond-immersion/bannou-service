@@ -1340,21 +1340,69 @@ public partial class InventoryService : IInventoryService
                 combinedQuantity = template.MaxStackSize;
             }
 
-            // Acquire distributed lock on source container for slot count consistency
+            // Acquire distributed locks for merge operation safety
+            // When items are in different containers, lock both to prevent races with
+            // concurrent operations (e.g., DeleteContainer on target while we modify target item)
+            // Use deterministic ordering (smaller GUID first) to prevent deadlocks
             var lockOwner = $"merge-stack-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
+            var sameContainer = source.ContainerId == target.ContainerId;
+
+            Guid firstLockId, secondLockId;
+            if (sameContainer)
+            {
+                firstLockId = source.ContainerId;
+                secondLockId = Guid.Empty; // Not used
+            }
+            else
+            {
+                // Deterministic ordering: lock smaller GUID first to prevent deadlocks
+                if (source.ContainerId.CompareTo(target.ContainerId) < 0)
+                {
+                    firstLockId = source.ContainerId;
+                    secondLockId = target.ContainerId;
+                }
+                else
+                {
+                    firstLockId = target.ContainerId;
+                    secondLockId = source.ContainerId;
+                }
+            }
+
+            // Acquire first lock
+            await using var firstLock = await _lockProvider.LockAsync(
                 StateStoreDefinitions.InventoryLock,
-                source.ContainerId.ToString(),
+                firstLockId.ToString(),
                 lockOwner,
                 _configuration.LockTimeoutSeconds,
                 cancellationToken);
 
-            if (!lockResponse.Success)
+            if (!firstLock.Success)
             {
-                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during merge", source.ContainerId);
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during merge", firstLockId);
                 return (StatusCodes.Conflict, null);
             }
 
+            // Acquire second lock if items are in different containers
+            IAsyncDisposable? secondLock = null;
+            if (!sameContainer)
+            {
+                var secondLockResponse = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.InventoryLock,
+                    secondLockId.ToString(),
+                    lockOwner,
+                    _configuration.LockTimeoutSeconds,
+                    cancellationToken);
+
+                if (!secondLockResponse.Success)
+                {
+                    _logger.LogWarning("Failed to acquire lock for container {ContainerId} during merge", secondLockId);
+                    return (StatusCodes.Conflict, null);
+                }
+                secondLock = secondLockResponse;
+            }
+
+            try
+            {
             var now = DateTimeOffset.UtcNow;
 
             // Update target quantity first (safer: if this fails, source is unaffected)
@@ -1438,6 +1486,15 @@ public partial class InventoryService : IInventoryService
                 SourceDestroyed = !overflow.HasValue || overflow.Value <= 0,
                 OverflowQuantity = overflow
             });
+            }
+            finally
+            {
+                // Dispose second lock if acquired (first lock disposed via await using)
+                if (secondLock is not null)
+                {
+                    await secondLock.DisposeAsync();
+                }
+            }
         }
         catch (Exception ex)
         {

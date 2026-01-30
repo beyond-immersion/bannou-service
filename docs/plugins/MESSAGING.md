@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`) used by all services for event publishing and subscription, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
+The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`/`IMessageTap`) used by all services for event publishing, subscription, and tapping, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
 
 ---
 
@@ -19,6 +19,8 @@ The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. 
 |------------|-------|
 | RabbitMQ.Client 7.2.0 | Direct AMQP connection for publish/subscribe |
 | lib-state (`IStateStoreFactory`) | Persisting external subscription metadata for recovery |
+| lib-core (`BannouJson`) | Consistent JSON serialization via `BannouJson.Serialize/Deserialize` |
+| lib-core (`IBannouEvent`) | Event interface for generic envelope pattern |
 
 ---
 
@@ -27,9 +29,10 @@ The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. 
 | Dependent | Relationship |
 |-----------|-------------|
 | Every service | Uses `IMessageBus` for event publishing and `IMessageSubscriber` for static subscriptions |
-| lib-connect | Uses `IMessageBus` for client event routing |
+| lib-connect | Uses `IMessageBus` for client event routing; uses `IMessageTap` for session-scoped event forwarding |
 | lib-actor | Uses `IMessageBus` for actor lifecycle, heartbeats, pool management |
 | lib-documentation | Uses `IMessageBus` for git sync and search indexing |
+| lib-permission | Uses `IMessageBus` for permission registration broadcasts |
 
 All services depend on messaging infrastructure. The HTTP API (`IMessagingClient`) is rarely used directly.
 
@@ -41,9 +44,9 @@ All services depend on messaging infrastructure. The HTTP API (`IMessagingClient
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{appId}` | `List<ExternalSubscriptionData>` | Persisted HTTP callback subscriptions for recovery across restarts |
+| `msg:subs:{appId}` | `Set<ExternalSubscriptionData>` | Persisted HTTP callback subscriptions for recovery across restarts |
 
-ExternalSubscriptionData contains: SubscriptionId, Topic, CallbackUrl, CreatedAt.
+ExternalSubscriptionData contains: SubscriptionId (Guid), Topic (string), CallbackUrl (string), CreatedAt (DateTimeOffset).
 
 ---
 
@@ -51,7 +54,7 @@ ExternalSubscriptionData contains: SubscriptionId, Topic, CallbackUrl, CreatedAt
 
 ### Published Events
 
-This service **intentionally publishes no lifecycle events**. It is infrastructure, not a domain service. Debug/monitoring events (MessagePublished, SubscriptionCreated/Removed) were planned but never implemented.
+This service **intentionally publishes no lifecycle events**. It is infrastructure, not a domain service. Debug/monitoring events (MessagePublished, SubscriptionCreated/Removed) were planned but never implemented. The events schema (`schemas/messaging-events.yaml`) documents this explicitly.
 
 ### Consumed Events
 
@@ -93,7 +96,7 @@ This plugin does not consume external events (it IS the event infrastructure).
 | `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Defined but never evaluated |
 | `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `3` | Defined but not used in service code |
 | `RetryDelayMs` | `MESSAGING_RETRY_DELAY_MS` | `5000` | Defined but not used in service code |
-| `UseMassTransit` | `MESSAGING_USE_MASSTRANSIT` | `true` | Feature flag, never checked |
+| `UseMassTransit` | `MESSAGING_USE_MASSTRANSIT` | `true` | Legacy feature flag, never checked |
 | `EnableMetrics` | `MESSAGING_ENABLE_METRICS` | `true` | Feature flag, never implemented |
 | `EnableTracing` | `MESSAGING_ENABLE_TRACING` | `true` | Feature flag, never implemented |
 
@@ -104,15 +107,23 @@ This plugin does not consume external events (it IS the event infrastructure).
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `IMessageBus` | Singleton | Event publishing (RabbitMQ or InMemory) |
-| `IMessageSubscriber` | Singleton | Topic subscriptions |
-| `IMessageTap` | Singleton | Event tapping/observation |
+| `IMessageSubscriber` | Singleton | Topic subscriptions (static and dynamic) |
+| `IMessageTap` | Singleton | Event tapping/forwarding between exchanges |
 | `RabbitMQConnectionManager` | Singleton | Connection pooling (up to 10 channels) |
 | `MessageRetryBuffer` | Singleton | Transient publish failure recovery |
 | `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
-| `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup |
+| `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
 | `MessagingService` | Singleton | HTTP API implementation |
 
 Service lifetime is **Singleton** (infrastructure must persist across requests).
+
+### Helper Classes
+
+| Class | Role |
+|-------|------|
+| `GenericMessageEnvelope` | Wraps arbitrary JSON payloads for MassTransit compatibility; implements `IBannouEvent` |
+| `TappedMessageEnvelope` | Extended envelope with tap routing metadata for multi-stream forwarding |
+| `ExternalSubscriptionData` | Record type for persisting HTTP callback subscriptions |
 
 ---
 
@@ -124,7 +135,7 @@ Wraps arbitrary JSON payloads in `GenericMessageEnvelope` (MassTransit requires 
 
 ### Subscribe (`/messaging/subscribe`)
 
-Creates dynamic HTTP callback subscriptions. Generates unique queue name `bannou-dynamic-{subscriptionId:N}`. Stores subscription in both in-memory dictionary (for disposal) and state store (for recovery). Retry logic: retries on `HttpRequestException` and `TaskCanceledException` only; HTTP 4xx/5xx treated as successful delivery. Subscription options: durable, exclusive, autoAck, prefetchCount, useDeadLetter, consumerGroup.
+Creates dynamic HTTP callback subscriptions. Generates unique queue name `bannou-dynamic-{subscriptionId:N}`. Stores subscription in both in-memory dictionary (for disposal) and state store (for recovery). Retry logic: retries on `HttpRequestException` and `TaskCanceledException` (timeout) only; HTTP 4xx/5xx treated as successful delivery. Subscription options: durable, exclusive, autoAck, prefetchCount, useDeadLetter, consumerGroup.
 
 ### Unsubscribe (`/messaging/unsubscribe`)
 
@@ -170,14 +181,14 @@ Messaging Architecture
               │               │ (per-plugin handlers)   │
               │               └─────────────────────────┘
               │
-    ┌─────────┴─────────┐
-    │ RabbitMQConnection │
-    │ Manager            │
-    │                    │
-    │ Single connection  │
-    │ Channel pool (10)  │
-    │ Auto-recovery      │
-    └────────────────────┘
+    ┌─────────┴─────────┐         ┌──────────────────────┐
+    │ RabbitMQConnection │         │  RabbitMQMessageTap   │
+    │ Manager            │         │  (IMessageTap)        │
+    │                    │         │                       │
+    │ Single connection  │         │ Creates taps that     │
+    │ Channel pool (10)  │         │ forward events from   │
+    │ Auto-recovery      │         │ source to destination │
+    └────────────────────┘         └───────────────────────┘
 ```
 
 ---
@@ -189,6 +200,7 @@ Messaging Architecture
 3. **Distributed tracing**: `EnableTracing` flag exists but no Activity/DiagnosticSource usage.
 4. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
 5. **ListTopics MessageCount**: Always returns 0 (would require RabbitMQ Management HTTP API).
+6. **MassTransit toggle**: `UseMassTransit` flag exists but MassTransit was fully removed; always uses direct RabbitMQ.
 
 ---
 
@@ -198,28 +210,33 @@ Messaging Architecture
 2. **Publisher confirm support**: Add reliability guarantees for critical event publishing.
 3. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
 4. **Dead-letter processing**: Consumer for DLX queue to handle poison messages.
+5. **Configurable channel pool size**: Currently hardcoded at 10 in `RabbitMQConnectionManager.MAX_POOL_SIZE`.
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
 No bugs identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **Crash-fast buffer philosophy**: If the retry buffer exceeds `RetryBufferMaxSize` (10,000) or oldest message exceeds `RetryBufferMaxAgeSeconds` (300s), the node calls `Environment.FailFast()`. Philosophy: better to crash and restart than silently drop events.
 
-2. **HTTP callbacks don't retry on HTTP errors**: Only retries on network failures (`HttpRequestException`, `TaskCanceledException`). HTTP 4xx/5xx is treated as successful delivery. Philosophy: callback endpoint is responsible for its own error handling.
+2. **HTTP callbacks don't retry on HTTP errors**: Only retries on network failures (`HttpRequestException`, `TaskCanceledException` for timeout). HTTP 4xx/5xx is treated as successful delivery. Philosophy: callback endpoint is responsible for its own error handling.
 
 3. **Channel pool size fixed at 10**: `RabbitMQConnectionManager` uses `MAX_POOL_SIZE = 10` hardcoded constant. Not configurable. Consumer channels are separate (not pooled).
 
 4. **Two queue naming schemes**: HTTP API subscriptions use `bannou-dynamic-{id:N}` while internal dynamic subscriptions use `{topic}.dynamic.{id:N}`. Different schemes for different subscription paths.
 
-5. **GetAwaiter().GetResult() in ReturnChannel**: `RabbitMQConnectionManager.ReturnChannel()` uses synchronous blocking on async disposal. Could cause deadlocks in certain synchronization contexts. Requires method signature change to fix properly.
+5. **GetAwaiter().GetResult() in ReturnChannel**: `RabbitMQConnectionManager.ReturnChannel()` uses synchronous blocking on async disposal when the pool is full or channel is closed. Could cause deadlocks in certain synchronization contexts. Requires method signature change to fix properly.
 
-### Design Considerations
+6. **Static subscriptions prevent duplicates**: `RabbitMQMessageSubscriber.SubscribeAsync()` logs a warning and returns early if already subscribed to the same topic. This prevents duplicate handlers but can mask subscription misuse.
+
+7. **Dynamic subscription nack behavior differs from static**: Static subscriptions requeue on first failure, nack without requeue on redelivery. Dynamic subscriptions always nack without requeue. This is intentional: dynamic subscriptions are for external callbacks where requeuing is less useful.
+
+### Design Considerations (Requires Planning)
 
 1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch).
 
@@ -227,8 +244,18 @@ No bugs identified.
 
 3. **ServiceId from global static**: `RabbitMQMessageBus.TryPublishErrorAsync()` accesses `Program.ServiceGUID` directly (global variable) rather than injecting it via configuration.
 
-4. **Six unused config properties**: `EnablePublisherConfirms`, `RetryMaxAttempts`, `RetryDelayMs`, `UseMassTransit`, `EnableMetrics`, `EnableTracing` are all defined but never evaluated. Should be wired up or removed.
+4. **Six unused config properties**: `EnablePublisherConfirms`, `RetryMaxAttempts`, `RetryDelayMs`, `UseMassTransit`, `EnableMetrics`, `EnableTracing` are all defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS (no dead config).
 
 5. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
 
 6. **Non-thread-safe List in NativeEventConsumerBackend**: `List<IAsyncDisposable> _subscriptions` is only written in StartAsync and read in StopAsync. Race between late startup and early shutdown is possible but unlikely in practice.
+
+7. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is powerful but could mask configuration errors where a typo in exchange name silently creates a new exchange instead of failing.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.
+
+*No active work items.*

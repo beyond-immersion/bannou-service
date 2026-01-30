@@ -37,19 +37,19 @@ Spatial data management service for Arcadia game worlds. Handles authority-based
 
 **Stores**: 1 state store (mapping-statestore, Redis, prefix: `mapping`)
 
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `map:channel:{channelId}` | `ChannelRecord` | Channel configuration (region, kind, non-authority handling, takeover mode, alert config) |
-| `map:authority:{channelId}` | `AuthorityRecord` | Current authority grant (token, app-id, expiry, RequiresConsumeBeforePublish flag) |
-| `map:object:{regionId}:{objectId}` | `MapObject` | Individual map objects with position/bounds/data/version (TTL per kind) |
-| `map:index:{regionId}:{kind}:{cellX}_{cellY}_{cellZ}` | `List<Guid>` | Spatial cell index - object IDs within a 3D grid cell |
-| `map:type-index:{regionId}:{objectType}` | `List<Guid>` | Type index - object IDs grouped by publisher-defined type |
-| `map:region-index:{regionId}:{kind}` | `List<Guid>` | Region index - all object IDs in a region+kind (for full-region queries) |
-| `map:checkout:{regionId}:{kind}` | `CheckoutRecord` | Authoring checkout lock (editor ID, authority token, expiry) |
-| `map:version:{channelId}` | `LongWrapper` | Monotonic version counter per channel |
-| `map:affordance-cache:{regionId}:{type}:{boundsHash}` | `CachedAffordanceResult` | Cached affordance query results with timestamp |
-| `map:definition:{definitionId}` | `DefinitionRecord` | Map definition templates (name, layers, default bounds, metadata) |
-| `map:definition-index` | `DefinitionIndexEntry` | Index of all definition IDs for listing |
+| Key Pattern | Data Type | Purpose | TTL |
+|-------------|-----------|---------|-----|
+| `map:channel:{channelId}` | `ChannelRecord` | Channel configuration (region, kind, non-authority handling, takeover mode, alert config) | None |
+| `map:authority:{channelId}` | `AuthorityRecord` | Current authority grant (token, app-id, expiry, RequiresConsumeBeforePublish flag) | None |
+| `map:object:{regionId}:{objectId}` | `MapObject` | Individual map objects with position/bounds/data/version | Per-kind |
+| `map:index:{regionId}:{kind}:{cellX}_{cellY}_{cellZ}` | `List<Guid>` | Spatial cell index - object IDs within a 3D grid cell | None |
+| `map:type-index:{regionId}:{objectType}` | `List<Guid>` | Type index - object IDs grouped by publisher-defined type | None |
+| `map:region-index:{regionId}:{kind}` | `List<Guid>` | Region index - all object IDs in a region+kind (for full-region queries) | None |
+| `map:checkout:{regionId}:{kind}` | `CheckoutRecord` | Authoring checkout lock (editor ID, authority token, expiry) | None |
+| `map:version:{channelId}` | `LongWrapper` | Monotonic version counter per channel | None |
+| `map:affordance-cache:{regionId}:{type}:{boundsHash}` | `CachedAffordanceResult` | Cached affordance query results with timestamp | None (app-level) |
+| `map:definition:{definitionId}` | `DefinitionRecord` | Map definition templates (name, layers, default bounds, metadata) | None |
+| `map:definition-index` | `DefinitionIndexEntry` | Index of all definition IDs for listing | None |
 
 ---
 
@@ -427,3 +427,15 @@ Authoring Workflow
 7. **ExtractFeatures returns null for single-feature results**: The method always adds `objectType` to the features dictionary, then returns `null` if `features.Count <= 1`. When no relevant data properties are found, the result is always null.
 
 8. **Hardcoded affordance scoring magic numbers**: AffordanceScorer contains ~15 hardcoded scoring weights (base score 0.5, cover weight 0.3, elevation divisor 100.0, size modifiers 0.8-1.2, etc.). Should be configuration properties for game-specific tuning.
+
+---
+
+## Work Tracking
+
+### Active Items
+
+*No active audit items.*
+
+### Pending Investigation
+
+*No pending investigation items.*

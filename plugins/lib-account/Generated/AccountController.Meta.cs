@@ -133,7 +133,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -147,7 +146,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -312,14 +312,12 @@ public partial class AccountController
             "type": "object",
             "description": "Request to create a new account",
             "additionalProperties": false,
-            "required": [
-                "email"
-            ],
             "properties": {
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address for the new account"
+                    "nullable": true,
+                    "description": "Email address for the new account. Null for OAuth/Steam accounts without email."
                 },
                 "passwordHash": {
                     "type": "string",
@@ -368,7 +366,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -382,7 +379,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -573,7 +571,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -587,7 +584,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -798,7 +796,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -812,7 +809,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -1087,7 +1085,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -1101,7 +1098,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -1709,7 +1707,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -1723,7 +1720,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -1926,7 +1924,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -1940,7 +1937,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -2259,7 +2257,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -2273,7 +2270,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",

@@ -274,18 +274,21 @@ public partial class AccountService : IAccountService
     {
         try
         {
-            _logger.LogInformation("Creating account for email: {Email}", body.Email);
+            _logger.LogInformation("Creating account for email: {Email}", body.Email ?? "(no email - OAuth/Steam)");
 
-            // Check if email already exists
+            // Check if email already exists (only if email provided)
             var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-            var existingAccountId = await emailIndexStore.GetAsync(
-                $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
-                cancellationToken);
-
-            if (!string.IsNullOrEmpty(existingAccountId))
+            if (!string.IsNullOrEmpty(body.Email))
             {
-                _logger.LogWarning("Account with email {Email} already exists (AccountId: {AccountId})", body.Email, existingAccountId);
-                return (StatusCodes.Conflict, null);
+                var existingAccountId = await emailIndexStore.GetAsync(
+                    $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
+                    cancellationToken);
+
+                if (!string.IsNullOrEmpty(existingAccountId))
+                {
+                    _logger.LogWarning("Account with email {Email} already exists (AccountId: {AccountId})", body.Email, existingAccountId);
+                    return (StatusCodes.Conflict, null);
+                }
             }
 
             // Create account entity
@@ -328,13 +331,16 @@ public partial class AccountService : IAccountService
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
 
-            // Create email index for quick lookup
-            await emailIndexStore.SaveAsync(
-                $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
-                accountId.ToString());
+            // Create email index for quick lookup (only if email provided)
+            if (!string.IsNullOrEmpty(body.Email))
+            {
+                await emailIndexStore.SaveAsync(
+                    $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
+                    accountId.ToString());
+            }
 
             _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
-                accountId, body.Email, string.Join(", ", roles));
+                accountId, body.Email ?? "(no email - OAuth/Steam)", string.Join(", ", roles));
 
             // Publish account created event
             await PublishAccountCreatedEventAsync(account);
@@ -371,7 +377,7 @@ public partial class AccountService : IAccountService
     /// Determines if admin role should be auto-assigned based on email configuration.
     /// Checks AdminEmails (comma-separated list) and AdminEmailDomain settings.
     /// </summary>
-    private bool ShouldAssignAdminRole(string email)
+    private bool ShouldAssignAdminRole(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
             return false;
@@ -1034,9 +1040,12 @@ public partial class AccountService : IAccountService
                 return StatusCodes.Conflict;
             }
 
-            // Remove email index
-            var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-            await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
+            // Remove email index (only if account has email)
+            if (!string.IsNullOrEmpty(account.Email))
+            {
+                var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+                await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
+            }
 
             // Remove provider index entries to prevent orphaned lookups
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
@@ -1771,8 +1780,8 @@ public class AccountModel
     /// <summary>Unique identifier for the account.</summary>
     public Guid AccountId { get; set; }
 
-    /// <summary>Email address used for login and notifications.</summary>
-    public string Email { get; set; } = string.Empty;
+    /// <summary>Email address used for login and notifications. Null for OAuth/Steam accounts without email.</summary>
+    public string? Email { get; set; }
 
     /// <summary>User-visible display name, optional.</summary>
     public string? DisplayName { get; set; }

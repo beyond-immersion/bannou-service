@@ -216,9 +216,9 @@ Season Lifecycle
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **`archivePrevious` request parameter is ignored**: `CreateSeasonRequest.ArchivePrevious` is defined in the schema and exists in the generated model, but the `CreateSeasonAsync` implementation completely ignores it. Instead, it uses the service-wide `_configuration.AutoArchiveOnSeasonEnd` property. Callers have no per-request control over whether previous season data is archived, contrary to what the API contract suggests.
 
 ### Intentional Quirks
 
@@ -239,3 +239,11 @@ No bugs identified.
 2. **Definition index loaded in full**: `ListLeaderboardDefinitions` loads all IDs from the set, then loads each definition individually. With hundreds of leaderboards per game service, this generates O(N) Redis calls.
 
 3. **No pagination for season index**: `GetSetAsync<int>` loads all season numbers into memory. Long-running seasonal leaderboards with many seasons could accumulate significant season index data.
+
+4. **Unused state store `leaderboard-season`**: The `state-stores.yaml` defines a `leaderboard-season` store (MySQL backend) for "Season history and archives", but the service doesn't use it. All season data is stored in the `leaderboard-definition` Redis store instead. Either the store should be removed from the schema, or the service should be updated to use it for proper season archival.
+
+---
+
+## Work Tracking
+
+*No active work items. Use `/audit-plugin leaderboard` to process bugs and design considerations.*

@@ -37,16 +37,16 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 **Stores**: 3 Redis stores (via lib-state `IStateStoreFactory`)
 
-| Store | Prefix | Purpose |
-|-------|--------|---------|
-| `mesh-endpoints` | `mesh:endpoint` | Individual endpoint registration with health/load metadata |
-| `mesh-appid-index` | `mesh:appid` | App-ID to instance-ID mapping for routing queries |
-| `mesh-global-index` | `mesh:idx` | Global endpoint index for discovery (avoids KEYS/SCAN) |
+| Store | Key Pattern | Data Type | Purpose |
+|-------|-------------|-----------|---------|
+| `mesh-endpoints` | `{instanceId}` (GUID string) | `MeshEndpoint` | Individual endpoint registration with health/load metadata |
+| `mesh-appid-index` | `{appId}` (set of instance IDs) | `Set<string>` | App-ID to instance-ID mapping for routing queries |
+| `mesh-global-index` | `_index` (set of instance IDs) | `Set<string>` | Global endpoint index for discovery (avoids KEYS/SCAN) |
 
 **Key Patterns**:
 - Endpoint data keyed by instance ID (GUID)
-- App-ID index lists all instance IDs for a given app-id
-- Global index (`_index` key) tracks all known instance IDs
+- App-ID index lists all instance IDs for a given app-id (with TTL refresh on heartbeat)
+- Global index (`_index` key) tracks all known instance IDs (no TTL - cleaned lazily on access)
 
 ---
 
@@ -54,17 +54,17 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `mesh.endpoint.registered` | New endpoint registered (explicit or auto-discovered from heartbeat) |
-| `mesh.endpoint.deregistered` | Endpoint removed (graceful shutdown or health check failure) |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `mesh.endpoint.registered` | `MeshEndpointRegisteredEvent` | New endpoint registered (explicit or auto-discovered from heartbeat) |
+| `mesh.endpoint.deregistered` | `MeshEndpointDeregisteredEvent` | Endpoint removed (graceful shutdown or health check failure) |
 
 ### Consumed Events
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `bannou.service-heartbeats` | `ServiceHeartbeatEvent` | Updates existing endpoint metrics or auto-registers new endpoints |
-| `bannou.full-service-mappings` | `FullServiceMappingsEvent` | Atomically updates `IServiceAppMappingResolver` for all generated clients |
+| `bannou.service-heartbeats` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeatAsync` - Updates existing endpoint metrics or auto-registers new endpoints |
+| `bannou.full-service-mappings` | `FullServiceMappingsEvent` | `HandleServiceMappingsAsync` - Atomically updates `IServiceAppMappingResolver` for all generated clients (configurable via `EnableServiceMappingSync`) |
 
 ---
 
@@ -122,13 +122,13 @@ Service lifetime is **Scoped** (per-request) for MeshService itself. Infrastruct
 ### Service Discovery (2 endpoints)
 
 - **GetEndpoints** (`/mesh/endpoints/get`): Returns endpoints for an app-id. Filters by health status (default: healthy only) and optional service name. Returns healthy/total counts.
-- **ListEndpoints** (`/mesh/endpoints/list`): Admin-level listing of all endpoints. Groups by status for summary (healthy, degraded, unavailable). Supports app-id prefix filter.
+- **ListEndpoints** (`/mesh/endpoints/list`): Admin-level listing of all endpoints. Groups by status for summary (healthy, degraded, unavailable). Supports app-id prefix filter. **Note**: `statusFilter` parameter is defined in schema but not implemented.
 
 ### Registration (3 endpoints)
 
-- **Register** (`/mesh/register`): Announces instance availability. Generates instance ID if not provided. Stores with configurable TTL. Publishes `mesh.endpoint.registered`.
+- **Register** (`/mesh/register`): Announces instance availability. Generates instance ID if not provided. Stores with configurable TTL. Publishes `mesh.endpoint.registered`. **Note**: `metadata` parameter is defined in schema but not stored.
 - **Deregister** (`/mesh/deregister`): Graceful shutdown removal. Looks up endpoint first (for app-id), removes from store, publishes `mesh.endpoint.deregistered` with reason=Graceful.
-- **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections). Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling.
+- **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections). Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling. **Note**: `issues` parameter is defined in schema but not used.
 
 ### Routing (2 endpoints)
 
@@ -211,17 +211,29 @@ Event-Driven Auto-Registration
 
 ## Stubs & Unimplemented Features
 
-1. **Local routing mode is minimal**: `LocalMeshStateManager` provides in-memory state for testing but does not simulate failure scenarios or load balancing nuances.
-2. **Health check deregistration**: `MeshHealthCheckService` probes endpoints but the failure handling (marking unavailable, deregistering after sustained failure) depends on the full implementation of `ProbeAllEndpointsAsync`.
+1. **Local routing mode is minimal**: `LocalMeshStateManager` provides in-memory state for testing but does not simulate failure scenarios or load balancing nuances. All calls return the same local endpoint regardless of app-id.
+
+2. **Health check deregistration**: `MeshHealthCheckService` probes endpoints and marks them as unavailable on failure, but does not deregister them or publish deregistration events - they will expire via TTL.
+
+3. **ListEndpointsRequest.statusFilter**: Defined in schema but `ListEndpointsAsync` ignores it - filtering must be done client-side.
+
+4. **RegisterEndpointRequest.metadata**: Defined in schema but never stored - metadata is silently discarded.
+
+5. **HeartbeatRequest.issues**: Defined in schema but never used - issues array is silently discarded.
 
 ---
 
 ## Potential Extensions
 
 1. **Weighted round-robin**: Combine round-robin with load-based weighting for predictable but load-aware distribution.
+
 2. **Distributed circuit breaker**: Share circuit breaker state across instances via Redis for cluster-wide protection.
+
 3. **Endpoint affinity**: Sticky routing for stateful services (session affinity based on request metadata).
+
 4. **Graceful draining**: Endpoint status `ShuttingDown` could actively drain connections before full deregistration.
+
+5. **Health check deregistration**: After N consecutive health check failures, deregister the endpoint and publish an event instead of waiting for TTL expiry.
 
 ---
 
@@ -233,17 +245,23 @@ Event-Driven Auto-Registration
 
 2. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:173-186` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
 
+3. **`HeartbeatRequest.Issues` not used**: The schema defines `issues` on `HeartbeatRequest` (line 509-513) but `HeartbeatAsync` in `MeshService.cs:276-331` never reads `body.Issues`. Diagnostic issues reported by clients are silently discarded.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **HeartbeatStatus.Overloaded maps to EndpointStatus.Degraded**: The status mapping is lossy - `Overloaded` and `Degraded` heartbeat statuses both become `Degraded` endpoint status. No distinct "overloaded" endpoint state exists.
 
 2. **GetRoute falls back to all endpoints**: If both degradation-threshold filtering and load-threshold filtering eliminate all endpoints, the algorithm falls back to the original unfiltered list. Prevents total routing failure at the cost of routing to potentially degraded endpoints.
 
-3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem.
+3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem - not a bug, but worth noting.
 
 4. **Circuit breaker is per-instance, not distributed**: Each `MeshInvocationClient` instance maintains its own circuit breaker state. In multi-instance deployments, one instance may have an open circuit while others are still closed.
 
-5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop indefinitely until cancellation.
+5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop until the configured retry attempts are exhausted or cancellation is requested.
+
+6. **Global index has no TTL**: The `mesh-global-index` store adds instance IDs on registration but removal only happens via explicit deregistration or lazy cleanup when `GetAllEndpointsAsync` encounters stale entries. App-id index has TTL refresh on heartbeat, but global index does not.
+
+7. **Empty service mappings reset to default routing**: When `HandleServiceMappingsAsync` receives a `FullServiceMappingsEvent` with empty mappings, it resets all routing to the default app-id ("bannou"). This is intentional for container teardown scenarios.
 
 ### Design Considerations (Requires Planning)
 
@@ -251,11 +269,11 @@ Event-Driven Auto-Registration
 
 2. **MeshInvocationClient is Singleton with mutable state**: The circuit breaker and endpoint cache are instance-level mutable state in a Singleton-lifetime service. Thread-safe by design (ConcurrentDictionary for circuits, lock for cache) but long-lived state accumulates.
 
-3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. The `_initialized` flag prevents re-initialization but doesn't protect against concurrent first-initialization.
+3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. Uses `Interlocked.CompareExchange` for thread-safe first initialization and resets `_initialized` flag on failure to allow retry.
 
 4. **Static round-robin counter in MeshService**: `_roundRobinCounters` is static, meaning it persists across scoped service instances. The counter can grow unbounded as new app-ids are encountered (no eviction).
 
-5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic.
+5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic. This is intentional separation of concerns but requires awareness when debugging routing issues.
 
 ---
 

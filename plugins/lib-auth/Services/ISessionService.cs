@@ -136,9 +136,9 @@ public class SessionDataModel
     public Guid AccountId { get; set; }
 
     /// <summary>
-    /// The account email.
+    /// The account email. Null for OAuth/Steam accounts without email.
     /// </summary>
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
 
     /// <summary>
     /// The account display name. Null if user hasn't set one.

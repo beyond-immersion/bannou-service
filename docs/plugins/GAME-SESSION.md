@@ -60,13 +60,14 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `game-session.created` | `GameSessionCreatedEvent` | New session created (lobby or matchmade) |
-| `game-session.updated` | `GameSessionUpdatedEvent` | Session state changes |
-| `game-session.deleted` | `GameSessionDeletedEvent` | Session removed |
+| `game-session.updated` | `GameSessionUpdatedEvent` | **Not currently published** (constant defined but unused) |
+| `game-session.deleted` | `GameSessionDeletedEvent` | **Not currently published** (constant defined but unused) |
 | `game-session.player-joined` | `GameSessionPlayerJoinedEvent` | Player joins a session |
 | `game-session.player-left` | `GameSessionPlayerLeftEvent` | Player leaves or is kicked (includes `Kicked` flag) |
 | `game-session.action.performed` | `GameSessionActionPerformedEvent` | Game action executed in session |
 | `game-session.session-cancelled` | `SessionCancelledServerEvent` | Matchmade session cancelled due to expired reservations |
-| `permission.session-state-changed` | `SessionStateChangeEvent` | Player enters/exits game session (triggers permission recompilation) |
+
+> **Note**: The `permission.session-state-changed` event is declared in the schema but is published by the **Permission service** (not game-session) when game-session calls `_permissionClient.UpdateSessionStateAsync` or `ClearSessionStateAsync`.
 
 ### Consumed Events
 
@@ -211,7 +212,7 @@ User connects → session.connected event
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<GameSessionService>` | Scoped | Structured logging |
-| `GameSessionServiceConfiguration` | Singleton | All 12 config properties |
+| `GameSessionServiceConfiguration` | Singleton | Typed configuration for all 12 service properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
@@ -219,6 +220,7 @@ User connects → session.connected event
 | `IVoiceClient` | Scoped | Voice room lifecycle |
 | `IPermissionClient` | Scoped | Permission state management |
 | `ISubscriptionClient` | Scoped | Account subscription queries |
+| `IConnectClient` | Scoped | Query connected sessions per account |
 | `IDistributedLockProvider` | Singleton | Session-level distributed locks |
 | `GameSessionStartupService` | Hosted (BackgroundService) | Subscription cache warmup on startup |
 | `ReservationCleanupService` | Hosted (BackgroundService) | Periodic expired reservation cleanup |
@@ -353,6 +355,7 @@ Subscription Cache Architecture
 
 1. **Actions endpoint echoes data**: `PerformGameActionAsync` publishes an event and returns the action data back without any game-specific logic. Actual game state mutation would need to be implemented per game type.
 2. **No player-in-session validation for actions**: The Actions endpoint checks lobby exists and isn't finished, but doesn't verify the requesting player is actually in the session (relies on permission-based access control instead).
+3. **Lifecycle events not published**: `SESSION_UPDATED_TOPIC` and `SESSION_DELETED_TOPIC` constants are defined (lines 50-51) but never used. The `game-session.updated` and `game-session.deleted` events declared in the schema are not published anywhere in the service.
 
 ---
 
@@ -389,16 +392,22 @@ Subscription Cache Architecture
 
 1. **Inline event models not in schema**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined as `internal class` in `ReservationCleanupService.cs` (lines 254-270). Should be defined in schema files and generated per FOUNDATION TENETS. These are used for the `game-session.session-cancelled` server event and the client-facing cancellation notification.
 
-2. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
+2. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
 
-3. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
+3. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 
-4. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
+4. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
 
-5. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
+5. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
-6. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+6. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
 
-7. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
+7. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
 
-8. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
+---
+
+## Work Tracking
+
+*This section tracks active development work. Markers are managed by `/audit-plugin` workflow.*
+
+No active work items.

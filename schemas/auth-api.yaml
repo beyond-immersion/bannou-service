@@ -528,7 +528,6 @@ components:
           type: array
           items:
             type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
           nullable: true
           description: List of roles assigned to the authenticated user
         requiresTwoFactor:
@@ -611,14 +610,12 @@ components:
           type: array
           items:
             type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
           nullable: true
           description: List of roles assigned to the authenticated user
         authorizations:
           type: array
           items:
             type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
           nullable: true
           description: |
             Authorization strings from active subscriptions.
@@ -677,7 +674,6 @@ components:
           description: Timestamp of the last activity in this session
         ipAddress:
           type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           description: IP address from which the session was initiated
         location:
@@ -693,12 +689,10 @@ components:
         deviceType:
           type: string
           enum: [desktop, mobile, tablet, console]
-          # NRT: Optional string/enum MUST be nullable (Rule 2)
           nullable: true
           description: Category of the device
         platform:
           type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           description: Operating system or platform name
         browser:
@@ -776,7 +770,6 @@ components:
         authUrl:
           type: string
           format: uri
-          # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           example: "https://discord.com/oauth2/authorize"
           description: URL to initiate OAuth authentication (null for ticket-based auth like Steam)

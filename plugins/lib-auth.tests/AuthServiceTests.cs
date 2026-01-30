@@ -769,7 +769,7 @@ public class AuthServiceTests
         var account = new AccountResponse
         {
             AccountId = accountId,
-            Email = "steam_345678@oauth.local",
+            Email = null, // Steam accounts have no email
             DisplayName = "Steam_345678"
         };
 

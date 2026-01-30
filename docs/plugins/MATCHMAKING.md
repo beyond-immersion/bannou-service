@@ -65,6 +65,7 @@ Ticket-based matchmaking with skill windows, query matching, party support, and 
 | `matchmaking.queue-created` | `MatchmakingQueueCreatedEvent` | New queue created |
 | `matchmaking.queue-updated` | `MatchmakingQueueUpdatedEvent` | Queue configuration changed |
 | `matchmaking.queue-deleted` | `MatchmakingQueueDeletedEvent` | Queue deleted (all tickets cancelled) |
+| `matchmaking.stats` | `MatchmakingStatsEvent` | Periodic stats snapshot (every `StatsPublishIntervalSeconds`) |
 
 ### Consumed Events
 
@@ -103,7 +104,7 @@ Ticket-based matchmaking with skill windows, query matching, party support, and 
 | `MatchmakingServiceConfiguration` | Singleton | All 12 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Event handler registration |
+| `IEventConsumer` | Scoped | Event handler registration (used in constructor only) |
 | `IClientEventPublisher` | Scoped | WebSocket event push (match found, confirmed, cancelled) |
 | `IGameSessionClient` | Scoped | Create matchmade sessions; publish join shortcuts |
 | `IPermissionClient` | Scoped | Permission state management (in_queue, match_pending) |
@@ -236,8 +237,9 @@ Reconnection Support
 
 ## Stubs & Unimplemented Features
 
-1. **Queue statistics are placeholder**: `MatchesFormedLastHour`, `AverageWaitSeconds`, `MedianWaitSeconds`, `TimeoutRatePercent`, `CancelRatePercent` fields exist on `QueueModel` but are not actively computed or updated during match processing.
+1. **Queue statistics are placeholder**: `MatchesFormedLastHour`, `AverageWaitSeconds`, `MedianWaitSeconds`, `TimeoutRatePercent`, `CancelRatePercent` fields exist on `QueueModel` but are not actively computed or updated during match processing. The `matchmaking.stats` event sets `MatchesFormedSinceLastSnapshot = 0` with a TODO comment.
 2. **Tournament support declared but minimal**: `TournamentIdRequired` and `TournamentId` on tickets exist as fields but no tournament-specific matching logic is implemented.
+3. **MatchmakingTicketUpdatedEvent defined but never published**: The events schema defines `MatchmakingTicketUpdatedEvent` but the service never publishes to `matchmaking.ticket-updated`. Only created and cancelled events fire.
 
 ---
 
@@ -252,9 +254,9 @@ Reconnection Support
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **Reconnection does not republish accept/decline shortcuts**: When a player reconnects to a pending match via `HandleSessionReconnectedAsync`, the service sends `MatchFoundEvent` but does NOT call `PublishMatchShortcutsAsync`. The player receives the match notification but has no pre-bound shortcuts to accept or decline - they must manually call the API endpoints with the full request body.
 
 ### Intentional Quirks
 
@@ -262,7 +264,7 @@ No bugs identified.
 
 2. **Reconnection restores pending matches only**: Reconnection checks for `pending-match:{accountId}` (match in accept phase). It does NOT restore `Searching` tickets - those are cancelled on disconnect.
 
-3. **Auto-requeue creates new tickets**: When `AutoRequeueOnDecline=true` and a match is declined, non-declining players get new tickets (new IDs, reset intervals). Their original tickets are cleaned up.
+3. **Auto-requeue reuses existing tickets**: When `AutoRequeueOnDecline=true` and a match is declined, non-declining players have their EXISTING tickets reset to `Status: Searching` with `MatchId: null`. The tickets keep their original IDs and `IntervalsElapsed` values - intervals are NOT reset.
 
 4. **Lock owner is random GUID per call**: Each lock acquisition uses `Guid.NewGuid().ToString()` as the owner. The same service instance cannot extend or re-acquire its own lock.
 
@@ -279,3 +281,11 @@ No bugs identified.
 4. **Algorithm is internal and inline**: `MatchmakingAlgorithm` is constructed directly in the service constructor (not DI-registered). `InternalsVisibleTo` enables unit testing, but integration tests can't substitute it.
 
 5. **ListQueues loads all queue IDs then fetches each**: `ListQueuesAsync` loads all queue IDs from `queue-list`, then iterates and loads each queue individually. No batch loading. With many queues, this is N+1 database calls.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+*No items currently being tracked.*

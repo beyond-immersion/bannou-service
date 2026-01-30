@@ -37,9 +37,11 @@ You are executing the `/audit-plugin` workflow. This is a structured, predictabl
 
 If an item is listed in ANY of these sections without an `AUDIT:` marker, it is an actionable gap that requires investigation.
 
-## Marker Format
+## Marker Formats
 
-Implementation gaps in deep dive documents use this marker format:
+### In-Progress Work (HTML Comments)
+
+For gaps being actively worked on or pending design review:
 
 ```markdown
 <!-- AUDIT:STATUS:DATE:ISSUE_URL -->
@@ -55,6 +57,31 @@ Where:
 <!-- AUDIT:IN_PROGRESS:2026-01-29 -->
 <!-- AUDIT:NEEDS_DESIGN:2026-01-28:https://github.com/beyond-immersion/bannou-service/issues/42 -->
 ```
+
+### Completed Fixes (Inline Strikethrough)
+
+When you successfully fix a gap during an audit, mark it with this standardized format:
+
+```markdown
+N. ~~**Original bug/gap title**~~: **FIXED** (YYYY-MM-DD) - Brief description of the fix and any non-obvious behavior.
+```
+
+**Key elements:**
+- `~~**Original title**~~` - Strikethrough preserves the original description for history
+- `**FIXED**` - Clearly indicates completion
+- `(YYYY-MM-DD)` - Date of the fix for tracking
+- `- Brief description` - Explains what was done and any quirks introduced
+
+**Example:**
+```markdown
+2. ~~**MergeStacks only locks source container**~~: **FIXED** (2026-01-30) - MergeStacks now acquires locks on both containers when items are in different containers, using deterministic ordering (smaller GUID first) to prevent deadlocks.
+```
+
+**Why this format?**
+- `/maintain-plugin` will later verify these fixes and either:
+  - Remove entirely (if no quirks remain)
+  - Move to "Intentional Quirks" (if the fix has non-obvious behavior developers should know)
+- The description after the dash helps maintain-plugin make this determination
 
 ## Workflow Phases
 
@@ -308,8 +335,12 @@ If determination is EXECUTE:
 4. **Update documentation**
    After successful implementation:
    - Remove the `AUDIT:IN_PROGRESS` marker
-   - Update the gap section (mark complete or remove)
-   - Add to "Recent Changes" if the doc has that section
+   - Mark the gap as fixed using the standardized format:
+     ```markdown
+     N. ~~**Original title**~~: **FIXED** (YYYY-MM-DD) - Brief description of fix and any quirks.
+     ```
+   - Update the "Work Tracking" section with a "Completed" entry
+   - `/maintain-plugin` will later verify and either remove or move to Intentional Quirks
 
 5. **Report completion**
    ```

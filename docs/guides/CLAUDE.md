@@ -81,6 +81,7 @@ This isn't about AI safety or alignment. It's about the mundane reality that LLM
 ├── commands/                  # Custom slash commands
 │   ├── audit-plugin.md
 │   ├── audit-plugins.md
+│   ├── investigate-issue.md
 │   └── maintain-plugin.md
 └── agents/                    # Custom agents for commands
     ├── doc-reviewer.md
@@ -276,6 +277,41 @@ Launches multiple audit agents in parallel, each on a unique plugin.
 
 ---
 
+#### `/investigate-issue [number|random]`
+
+End-to-end GitHub issue investigation and resolution with developer guidance.
+
+```bash
+/investigate-issue               # Pick random open issue
+/investigate-issue 42            # Investigate specific issue #42
+```
+
+**Workflow (10 phases)**:
+1. **Issue Selection** - Fetch from GitHub (random or specific)
+2. **Deep Read** - Read issue, plugin deep dives, source code
+3. **Present to Developer** - Show CONFIRMED/INFERRED/SPECULATIVE info
+4. **Interactive Clarification** - Get explicit decisions (no guessing!)
+5. **Planning** - Launch Plan agent with full context + TENETs
+6. **Implementation** - Execute plan with build verification
+7. **Audit** - Launch code-reviewer against TENETs/plan/issue
+8. **Iterate** - Fix audit findings with approval
+9. **Update Docs** - Use FIXED format for deep dive updates
+10. **Close Issue** - Comment summary and close
+
+**Key behaviors**:
+- NEVER guesses at unanswered questions - must get explicit decisions
+- NEVER assumes "sounds good" is a decision - requires explicit choice
+- Distinguishes CONFIRMED vs INFERRED vs SPECULATIVE information
+- Requires developer approval at each phase checkpoint
+- Instructs Plan and code-reviewer agents to read TENETs first
+
+**Use when**:
+- Starting work on a GitHub issue
+- Need structured approach with clear decision tracking
+- Want audit trail of all decisions made
+
+---
+
 ### Work Tracking Markers
 
 The plugin auditor uses HTML comment markers to track work status:
@@ -315,7 +351,8 @@ Item with NEEDS_DESIGN+URL   → Skipped until issue resolved
 ├── commands/
 │   ├── maintain-plugin.md        # Document maintenance workflow
 │   ├── audit-plugin.md           # Single gap processing
-│   └── audit-plugins.md          # Parallel gap processing
+│   ├── audit-plugins.md          # Parallel gap processing
+│   └── investigate-issue.md      # GitHub issue end-to-end workflow
 └── agents/
     ├── doc-reviewer.md           # Source code review agent
     └── gap-investigator.md       # Gap investigation agent
@@ -354,6 +391,23 @@ These are project-level standalone commands (not a plugin), so they use short na
 dotnet build                     # Verify compilation
 /maintain-plugin {plugin}        # Update documentation
 ```
+
+### For GitHub Issues
+
+```bash
+# Start work on a specific issue
+/investigate-issue 42
+
+# Or pick a random open issue
+/investigate-issue
+```
+
+The investigate-issue workflow provides:
+- Structured decision tracking (no guessing!)
+- Developer approval at each phase
+- Automatic TENET compliance checks
+- Audit before closure
+- Documentation updates using FIXED format
 
 ---
 

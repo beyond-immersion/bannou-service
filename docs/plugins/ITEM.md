@@ -3,7 +3,7 @@
 > **Plugin**: lib-item
 > **Schema**: schemas/item-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: item-template-store (MySQL), item-template-cache (Redis), item-instance-store (MySQL), item-instance-cache (Redis)
+> **State Stores**: item-template-store (MySQL), item-template-cache (Redis), item-instance-store (MySQL), item-instance-cache (Redis), item-lock (Redis)
 
 ---
 
@@ -33,7 +33,7 @@ Dual-model item management with templates (definitions/prototypes) and instances
 
 ## State Storage
 
-**Stores**: 4 state stores (2 persistent MySQL + 2 cache Redis)
+**Stores**: 5 state stores (2 persistent MySQL + 2 cache Redis + 1 lock Redis)
 
 | Store | Backend | Purpose | TTL |
 |-------|---------|---------|-----|
@@ -41,6 +41,7 @@ Dual-model item management with templates (definitions/prototypes) and instances
 | `item-template-cache` | Redis | Template hot cache (read-through) | 3600s (configurable) |
 | `item-instance-store` | MySQL | Instance data (realm-partitioned) | N/A |
 | `item-instance-cache` | Redis | Instance hot cache (active gameplay) | 900s (configurable) |
+| `item-lock` | Redis | Distributed locks for item modifications | N/A (lock timeout 30s) |
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -87,6 +88,7 @@ This plugin does not consume external events.
 | `MaxInstancesPerQuery` | `ITEM_MAX_INSTANCES_PER_QUERY` | `1000` | Safety limit for list operations |
 | `BindingAllowAdminOverride` | `ITEM_BINDING_ALLOW_ADMIN_OVERRIDE` | `true` | Allow rebinding soulbound items |
 | `ListOperationMaxRetries` | `ITEM_LIST_OPERATION_MAX_RETRIES` | `3` | Optimistic concurrency retry budget |
+| `LockTimeoutSeconds` | `ITEM_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout for item modifications |
 
 ---
 
@@ -95,9 +97,10 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<ItemService>` | Scoped | Structured logging |
-| `ItemServiceConfiguration` | Singleton | All 9 config properties |
-| `IStateStoreFactory` | Singleton | Access to 4 state stores |
+| `ItemServiceConfiguration` | Singleton | All 10 config properties |
+| `IStateStoreFactory` | Singleton | Access to 5 state stores (4 data + 1 lock) |
 | `IMessageBus` | Scoped | Event publishing and error events |
+| `IDistributedLockProvider` | Scoped | Distributed locks for container change operations |
 
 Service lifetime is **Scoped** (per-request). No background services.
 
@@ -115,9 +118,9 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ### Instance Operations (5 endpoints)
 
-- **CreateItemInstance** (`/item/instance/create`): Validates template is active and not deprecated. Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item-instance.created`.
+- **CreateItemInstance** (`/item/instance/create`): Validates template exists and is active (but not IsDeprecated - see quirk #9). Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item-instance.created`.
 - **GetItemInstance** (`/item/instance/get`): Cache read-through pattern. Returns instance with template reference.
-- **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), customStats, customName, instanceMetadata. Invalidates instance cache. Publishes `item-instance.modified`.
+- **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item-instance.modified`.
 - **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item-instance.bound`.
 - **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item-instance.destroyed`.
 
@@ -278,3 +281,11 @@ No bugs identified.
 8. **Empty container/template index not cleaned up**: After `RemoveFromListAsync`, if the list becomes empty, it remains as an empty JSON array `[]` in the store rather than being deleted.
 
 9. **ListItemsByTemplate filters AFTER fetching all instances**: All instances are fetched then filtered by RealmId in memory. For templates with many instances, this fetches far more data than needed.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items.*
