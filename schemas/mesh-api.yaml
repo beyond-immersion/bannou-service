@@ -321,6 +321,7 @@ components:
       - RoundRobin
       - LeastConnections
       - Weighted
+      - WeightedRoundRobin
       - Random
 
     # =========================================================================

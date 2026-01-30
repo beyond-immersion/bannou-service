@@ -12,13 +12,14 @@ namespace BeyondImmersion.BannouService.Auth.Tests;
 /// Unit tests for CloudflareEdgeProvider.
 /// Tests CloudFlare KV API integration for edge revocation.
 /// </summary>
-public class CloudflareEdgeProviderTests
+public class CloudflareEdgeProviderTests : IDisposable
 {
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
     private readonly Mock<ILogger<CloudflareEdgeProvider>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly CloudflareEdgeProvider _provider;
+    private readonly HttpClient _httpClient;
 
     public CloudflareEdgeProviderTests()
     {
@@ -35,16 +36,22 @@ public class CloudflareEdgeProviderTests
         };
 
         // Setup HTTP client factory with mocked handler
-        var httpClient = new HttpClient(_mockHttpMessageHandler.Object)
+        _httpClient = new HttpClient(_mockHttpMessageHandler.Object)
         {
             BaseAddress = new Uri("https://api.cloudflare.com")
         };
-        _mockHttpClientFactory.Setup(f => f.CreateClient("cloudflare-kv")).Returns(httpClient);
+        _mockHttpClientFactory.Setup(f => f.CreateClient("cloudflare-kv")).Returns(_httpClient);
 
         _provider = new CloudflareEdgeProvider(
             _configuration,
             _mockHttpClientFactory.Object,
             _mockLogger.Object);
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     #region ProviderId Tests
@@ -185,15 +192,10 @@ public class CloudflareEdgeProviderTests
         var accountId = Guid.NewGuid();
         var ttl = TimeSpan.FromMinutes(60);
 
-        _mockHttpMessageHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Put &&
-                    req.RequestUri != null &&
-                    req.RequestUri.ToString().Contains($"token%3A{jti}")),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+        SetupMockResponse(HttpStatusCode.OK, req =>
+            req.Method == HttpMethod.Put &&
+            req.RequestUri != null &&
+            req.RequestUri.ToString().Contains($"token%3A{jti}"));
 
         // Act
         var result = await _provider.PushTokenRevocationAsync(jti, accountId, ttl);
@@ -208,15 +210,7 @@ public class CloudflareEdgeProviderTests
         // Arrange
         var jti = "test-jti-123";
 
-        _mockHttpMessageHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError)
-            {
-                Content = new StringContent("Internal server error")
-            });
+        SetupMockResponse(HttpStatusCode.InternalServerError, content: "Internal server error");
 
         // Act
         var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60));
@@ -270,15 +264,10 @@ public class CloudflareEdgeProviderTests
         var accountId = Guid.NewGuid();
         var issuedBefore = DateTimeOffset.UtcNow;
 
-        _mockHttpMessageHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Put &&
-                    req.RequestUri != null &&
-                    req.RequestUri.ToString().Contains($"account%3A{accountId}")),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+        SetupMockResponse(HttpStatusCode.OK, req =>
+            req.Method == HttpMethod.Put &&
+            req.RequestUri != null &&
+            req.RequestUri.ToString().Contains($"account%3A{accountId}"));
 
         // Act
         var result = await _provider.PushAccountRevocationAsync(accountId, issuedBefore);
@@ -321,12 +310,7 @@ public class CloudflareEdgeProviderTests
             new FailedEdgePushEntry { Type = "account", AccountId = accountId, IssuedBeforeUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
         };
 
-        _mockHttpMessageHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+        SetupMockResponse(HttpStatusCode.OK);
 
         // Act
         var result = await _provider.PushBatchAsync(entries);
@@ -346,6 +330,38 @@ public class CloudflareEdgeProviderTests
 
         // Assert
         Assert.Equal(0, result);
+    }
+
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    /// Sets up mock HTTP response with proper disposal via ReturnsAsync factory pattern.
+    /// </summary>
+    private void SetupMockResponse(
+        HttpStatusCode statusCode,
+        Func<HttpRequestMessage, bool>? requestFilter = null,
+        string? content = null)
+    {
+        var setup = _mockHttpMessageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                requestFilter != null
+                    ? ItExpr.Is<HttpRequestMessage>(req => requestFilter(req))
+                    : ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+
+        // Use factory to create response - HttpClient disposes response after use
+        setup.ReturnsAsync(() =>
+        {
+            var response = new HttpResponseMessage(statusCode);
+            if (content != null)
+            {
+                response.Content = new StringContent(content);
+            }
+            return response;
+        });
     }
 
     #endregion

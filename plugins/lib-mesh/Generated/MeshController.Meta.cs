@@ -952,6 +952,7 @@ public partial class MeshController
                 "RoundRobin",
                 "LeastConnections",
                 "Weighted",
+                "WeightedRoundRobin",
                 "Random"
             ]
         }

@@ -401,8 +401,8 @@ paths:
         ,\n                    \"description\": \"Load balancing algorithm to use for endpoint selection\"\n             \
         \   }\n            }\n        },\n        \"LoadBalancerAlgorithm\": {\n            \"type\": \"string\",\n      \
         \      \"description\": \"Load balancing algorithm\",\n            \"enum\": [\n                \"RoundRobin\",\n\
-        \                \"LeastConnections\",\n                \"Weighted\",\n                \"Random\"\n            ]\n\
-        \        }\n    }\n}"
+        \                \"LeastConnections\",\n                \"Weighted\",\n                \"WeightedRoundRobin\",\n \
+        \               \"Random\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRouteResponse\"\
         ,\n    \"$defs\": {\n        \"GetRouteResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Selected route for service call\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -652,6 +652,7 @@ components:
       - RoundRobin
       - LeastConnections
       - Weighted
+      - WeightedRoundRobin
       - Random
     GetEndpointsRequest:
       type: object

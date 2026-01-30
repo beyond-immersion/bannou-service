@@ -124,7 +124,7 @@ public class OpenrestyEdgeProviderTests
             .ReturnsAsync(entry);
 
         // Act
-        var result = await provider.PushTokenRevocationAsync(jti, accountId, TimeSpan.FromMinutes(60));
+        var result = await _provider.PushTokenRevocationAsync(jti, accountId, TimeSpan.FromMinutes(60));
 
         // Assert
         Assert.True(result);

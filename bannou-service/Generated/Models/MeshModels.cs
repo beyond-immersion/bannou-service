@@ -160,8 +160,11 @@ public enum LoadBalancerAlgorithm
     [System.Runtime.Serialization.EnumMember(Value = @"Weighted")]
     Weighted = 2,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"WeightedRoundRobin")]
+    WeightedRoundRobin = 3,
+
     [System.Runtime.Serialization.EnumMember(Value = @"Random")]
-    Random = 3,
+    Random = 4,
 
 }
 #pragma warning restore CS1591

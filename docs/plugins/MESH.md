@@ -79,7 +79,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `HeartbeatIntervalSeconds` | `MESH_HEARTBEAT_INTERVAL_SECONDS` | `30` | Recommended interval between heartbeats |
 | `EndpointTtlSeconds` | `MESH_ENDPOINT_TTL_SECONDS` | `90` | TTL for endpoint registration (>2x heartbeat) |
 | `DegradationThresholdSeconds` | `MESH_DEGRADATION_THRESHOLD_SECONDS` | `60` | Time without heartbeat before marking degraded |
-| `DefaultLoadBalancer` | `MESH_DEFAULT_LOAD_BALANCER` | `RoundRobin` | Load balancing algorithm (enum: RoundRobin, LeastConnections, Weighted, Random) |
+| `DefaultLoadBalancer` | `MESH_DEFAULT_LOAD_BALANCER` | `RoundRobin` | Load balancing algorithm (enum: RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random) |
 | `LoadThresholdPercent` | `MESH_LOAD_THRESHOLD_PERCENT` | `80` | Load % above which endpoint is considered high-load |
 | `EnableServiceMappingSync` | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | `true` | Subscribe to FullServiceMappingsEvent for routing updates |
 | `HealthCheckEnabled` | `MESH_HEALTH_CHECK_ENABLED` | `false` | Enable active health check probing |
@@ -189,6 +189,12 @@ Load Balancing Algorithms
        │              weight = max(100 - LoadPercent, 1)
        │              weighted random selection
        │
+       ├── WeightedRoundRobin → Smooth weighted round-robin (nginx-style)
+       │                         effective_weight = max(100 - LoadPercent, 1)
+       │                         current_weight += effective_weight
+       │                         select highest current_weight
+       │                         selected.current_weight -= total_effective_weight
+       │
        └── Random → Random.Shared.Next(endpoints.Count)
 
 
@@ -228,7 +234,7 @@ Event-Driven Auto-Registration
 
 ## Potential Extensions
 
-1. **Weighted round-robin**: Combine round-robin with load-based weighting for predictable but load-aware distribution.
+1. ~~**Weighted round-robin**~~: **IMPLEMENTED** (2026-01-30) - Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum. Uses smooth weighted round-robin algorithm (nginx-style): each endpoint's current_weight is incremented by effective_weight (100 - LoadPercent) each round, highest current_weight wins, then is reduced by total effective weight. Provides predictable distribution proportional to inverse load.
 
 2. **Distributed circuit breaker**: Share circuit breaker state across instances via Redis for cluster-wide protection.
 
@@ -275,7 +281,7 @@ Event-Driven Auto-Registration
 
 3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. Uses `Interlocked.CompareExchange` for thread-safe first initialization and resets `_initialized` flag on failure to allow retry.
 
-4. **Static round-robin counter in MeshService**: `_roundRobinCounters` is static, meaning it persists across scoped service instances. The counter can grow unbounded as new app-ids are encountered (no eviction).
+4. **Static load balancing state in MeshService**: Both `_roundRobinCounters` (for RoundRobin) and `_weightedRoundRobinCurrentWeights` (for WeightedRoundRobin) are static, meaning they persist across scoped service instances. These dictionaries can grow unbounded as new app-ids/endpoints are encountered (no eviction). Use `ResetLoadBalancingStateForTesting()` to clear in tests.
 
 5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic. This is intentional separation of concerns but requires awareness when debugging routing issues.
 
@@ -292,3 +298,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-30**: Fixed `HeartbeatRequest.Issues` not being stored. Added `issues` field to `MeshEndpoint` schema, updated `IMeshStateManager.UpdateHeartbeatAsync` signature, and wired `body.Issues` through `HeartbeatAsync`. Health checks and event-based heartbeats preserve existing issues.
 - **2026-01-30**: Created [#162](https://github.com/beyond-immersion/bannou-service/issues/162) for `LocalMeshStateManager` enhancement - needs design decisions on scope (in-memory state tracking vs. configurable failure simulation) and priority of failure scenarios.
 - **2026-01-30**: Implemented health check deregistration. `MeshHealthCheckService` now tracks consecutive failures per endpoint via `ConcurrentDictionary`, deregisters after `HealthCheckFailureThreshold` (default 3) failures, and publishes `MeshEndpointDeregisteredEvent` with `HealthCheckFailed` reason. Added new config property `MESH_HEALTH_CHECK_FAILURE_THRESHOLD`.
+- **2026-01-30**: Implemented weighted round-robin load balancing. Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum in `mesh-api.yaml`, updated configuration to reference the API enum via `$ref`, and implemented `SelectWeightedRoundRobin` method using nginx-style smooth weighted round-robin algorithm. Static `_weightedRoundRobinCurrentWeights` dictionary tracks current weights per endpoint.

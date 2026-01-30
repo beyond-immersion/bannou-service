@@ -27,6 +27,10 @@ public partial class MeshService : IMeshService
     // Round-robin counter for load balancing (per app-id)
     private static readonly ConcurrentDictionary<string, int> _roundRobinCounters = new();
 
+    // Weighted round-robin current weights (key: "appId:instanceId" -> currentWeight)
+    // Uses smooth weighted round-robin algorithm (nginx-style)
+    private static readonly ConcurrentDictionary<string, double> _weightedRoundRobinCurrentWeights = new();
+
     // Track service start time for uptime
     private static readonly DateTimeOffset _serviceStartTime = DateTimeOffset.UtcNow;
 
@@ -577,6 +581,7 @@ public partial class MeshService : IMeshService
             LoadBalancerAlgorithm.RoundRobin => SelectRoundRobin(endpoints, appId),
             LoadBalancerAlgorithm.LeastConnections => SelectLeastConnections(endpoints),
             LoadBalancerAlgorithm.Weighted => SelectWeighted(endpoints),
+            LoadBalancerAlgorithm.WeightedRoundRobin => SelectWeightedRoundRobin(endpoints, appId),
             LoadBalancerAlgorithm.Random => SelectRandom(endpoints),
             _ => SelectRoundRobin(endpoints, appId)
         };
@@ -618,6 +623,57 @@ public partial class MeshService : IMeshService
         }
 
         return endpoints[0];
+    }
+
+    /// <summary>
+    /// Smooth weighted round-robin algorithm (nginx-style).
+    /// Combines predictable round-robin ordering with load-based weighting.
+    /// Less loaded endpoints receive proportionally more requests while
+    /// maintaining a deterministic distribution pattern.
+    /// </summary>
+    private static MeshEndpoint SelectWeightedRoundRobin(List<MeshEndpoint> endpoints, string appId)
+    {
+        // Calculate effective weights based on inverse of load (less loaded = higher weight)
+        var weighted = endpoints
+            .Select(e => (
+                Endpoint: e,
+                Key: $"{appId}:{e.InstanceId}",
+                EffectiveWeight: Math.Max(100 - e.LoadPercent, 1)))
+            .ToList();
+
+        var totalEffectiveWeight = weighted.Sum(w => w.EffectiveWeight);
+
+        // Update current weights and find the endpoint with highest current weight
+        MeshEndpoint? selected = null;
+        string? selectedKey = null;
+        double highestCurrentWeight = double.MinValue;
+
+        foreach (var (endpoint, key, effectiveWeight) in weighted)
+        {
+            // Increment current weight by effective weight
+            var currentWeight = _weightedRoundRobinCurrentWeights.AddOrUpdate(
+                key,
+                effectiveWeight,
+                (_, current) => current + effectiveWeight);
+
+            if (currentWeight > highestCurrentWeight)
+            {
+                highestCurrentWeight = currentWeight;
+                selected = endpoint;
+                selectedKey = key;
+            }
+        }
+
+        // Reduce selected endpoint's current weight by total effective weight
+        if (selectedKey != null)
+        {
+            _weightedRoundRobinCurrentWeights.AddOrUpdate(
+                selectedKey,
+                0,
+                (_, current) => current - totalEffectiveWeight);
+        }
+
+        return selected ?? endpoints[0];
     }
 
     private static MeshEndpoint SelectRandom(List<MeshEndpoint> endpoints)
@@ -696,12 +752,13 @@ public partial class MeshService : IMeshService
     #region Test Helpers
 
     /// <summary>
-    /// Reset the static round-robin counters for test isolation. For testing purposes only.
+    /// Reset the static load balancing state for test isolation. For testing purposes only.
     /// Service mappings are managed by IServiceAppMappingResolver (use ClearAllMappingsForTests there).
     /// </summary>
-    internal static void ResetRoundRobinForTesting()
+    internal static void ResetLoadBalancingStateForTesting()
     {
         _roundRobinCounters.Clear();
+        _weightedRoundRobinCurrentWeights.Clear();
     }
 
     #endregion

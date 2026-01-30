@@ -209,8 +209,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
 | `AUTH_MOCK_STEAM_ID` | string | `76561198000000000` | Mock Steam user ID for testing |
 | `AUTH_MOCK_TWITCH_ID` | string | `mock-twitch-123456` | Mock Twitch user ID for testing |
-| `AUTH_OPENRESTY_EDGE_ENABLED` | bool | `false` | Enable OpenResty/NGINX edge revocation via Redis pub/sub. Ed... |
-| `AUTH_OPENRESTY_REDIS_CHANNEL` | string | `bannou:edge-revocation` | Redis pub/sub channel for broadcasting revocation events to ... |
+| `AUTH_OPENRESTY_EDGE_ENABLED` | bool | `false` | Enable OpenResty/NGINX edge revocation verification. When en... |
 | `AUTH_PASSWORD_RESET_BASE_URL` | string | **REQUIRED** | Base URL for password reset page |
 | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | int | `30` | Password reset token expiration time in minutes |
 | `AUTH_SESSION_TOKEN_TTL_DAYS` | int | `7` | Session token TTL in days for persistent sessions |
@@ -559,6 +558,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_ENDPOINT_PORT` | int | `80` | Port for mesh endpoint registration. |
 | `MESH_ENDPOINT_TTL_SECONDS` | int | `90` | TTL for endpoint registration (should be > 2x heartbeat inte... |
 | `MESH_HEALTH_CHECK_ENABLED` | bool | `false` | Whether to perform active health checks on endpoints |
+| `MESH_HEALTH_CHECK_FAILURE_THRESHOLD` | int | `3` | Consecutive health check failures before deregistering endpo... |
 | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | int | `60` | Interval between active health checks |
 | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
 | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | int | `5` | Timeout for health check requests |
