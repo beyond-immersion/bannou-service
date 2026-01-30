@@ -8,8 +8,11 @@ info:
 
     **Topic Naming**: Uses kebab-case for multi-word entities (inventory-container, inventory-item).
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 
   x-event-subscriptions: []
 

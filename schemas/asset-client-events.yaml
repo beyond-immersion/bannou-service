@@ -12,8 +12,11 @@ info:
     Event delivery: Published to RabbitMQ channel `CONNECT_{sessionId}`, forwarded
     to client's WebSocket connection with Event flag (0x10).
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   contact:
     name: Bannou Development Team

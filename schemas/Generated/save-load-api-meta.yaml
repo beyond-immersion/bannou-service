@@ -6,8 +6,11 @@ info:
     Generic save/load system for game state persistence.
     Supports polymorphic ownership, versioned saves, and schema migration.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 servers:
 - url: http://localhost:5012
 tags:

@@ -52,7 +52,31 @@ components:
           description: "Authentication methods linked to the account. Useful for identifying OAuth accounts when email is
             null."
           items:
-            $ref: '../account-api.yaml#/components/schemas/AuthMethodInfo'
+          # Inlined to avoid nested $ref resolution issues in NSwag cross-file scenarios
+            type: object
+            additionalProperties: false
+            properties:
+              methodId:
+                type: string
+                format: uuid
+                nullable: true
+                description: Unique identifier for the authentication method
+              provider:
+                type: string
+                enum: [email, google, discord, twitch, steam]
+                description: Authentication provider type
+              externalId:
+                type: string
+                nullable: true
+                description: External user ID from the authentication provider
+              displayName:
+                type: string
+                nullable: true
+                description: Display name from the authentication provider
+              linkedAt:
+                type: string
+                format: date-time
+                description: Timestamp when the authentication method was linked
         createdAt: &id007
           type: string
           format: date-time

@@ -7,7 +7,11 @@ info:
     and other long-running behavior loops. Actors output behavioral state (feelings,
     goals, memories) to characters - NOT physics data.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 servers:
 - url: http://localhost:5012
 paths:
