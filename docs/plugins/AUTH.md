@@ -183,13 +183,14 @@ account.deleted event ──► SessionService.InvalidateAllSessions ──► s
 Password reset generates tokens and constructs reset URLs correctly, but the actual email delivery is a mock that logs to the console. The method signature and flow are complete - only the SMTP/provider integration (SendGrid, AWS SES) is missing. The `PasswordResetBaseUrl` configuration exists for constructing the reset link.
 
 ### Audit Event Consumers
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
 
 Auth publishes 6 audit event types (login successful/failed, registration, OAuth, Steam, password reset) but no service subscribes to them. They exist for future security monitoring (brute force detection, anomaly alerts) but currently publish to topics nobody listens on.
 
 ## Potential Extensions
 
-- **Rate limiting for login attempts**: The `auth.login.failed` events exist for brute force detection, but no service consumes them. A rate-limiting mechanism (per-IP or per-account) could consume these events and block repeated failures.
-- **Email delivery integration**: Replace the mock `SendPasswordResetEmailAsync` with actual SMTP/API-based email delivery.
+- **Rate limiting for login attempts**: Covered by [#142](https://github.com/beyond-immersion/bannou-service/issues/142) (Audit Event Consumers).
+- **Email delivery integration**: Covered by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) (Email Sending).
 - **Token revocation list**: Currently, invalidating a session deletes it from Redis. A revocation list would allow checking validity even if Redis data is lost/expired.
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.

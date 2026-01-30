@@ -39,7 +39,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 
 ## State Storage
 
-**Stores**: 4 Redis state stores (execution infrastructure)
+**Stores**: 4 Redis state stores
 
 | Store | Purpose |
 |-------|---------|
@@ -47,8 +47,6 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `actor-state` | Runtime actor state snapshots (feelings, goals, memories) |
 | `actor-pool-nodes` | Pool node registration and health status |
 | `actor-assignments` | Actor-to-node assignment tracking |
-
-> **Architecture Note**: The `agent-memories` store (attributed to `service: Actor` in state-stores.yaml) is part of the Actor/Behavior cognition subsystem but is implemented by lib-behavior's `ActorLocalMemoryStore`, not by lib-actor directly. lib-actor manages execution infrastructure while lib-behavior manages cognition (memories, perceptions, planning). See [Actor Data Access Patterns](../planning/ACTOR_DATA_ACCESS_PATTERNS.md) for the architectural rationale.
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|

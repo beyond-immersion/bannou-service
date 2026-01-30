@@ -100,20 +100,14 @@ x-state-stores:
     purpose: External subscription recovery data
 
   # ============================================================================
-  # Actor/Behavior Stores - Agent Cognition Subsystem
+  # Actor/Behavior Stores - Agent Cognition Data
   # ============================================================================
-  # These stores support the Actor/Behavior cognition subsystem.
-  # lib-actor manages execution (instances, pools, templates, assignments).
-  # lib-behavior manages cognition (memories, perceptions, GOAP planning).
-  # The agent-memories store is used by lib-behavior's ActorLocalMemoryStore
-  # but attributed to Actor as the encompassing subsystem.
-  # See docs/planning/ACTOR_DATA_ACCESS_PATTERNS.md for architectural context.
 
   agent-memories:
     backend: redis
     prefix: "agent:mem"
     service: Actor
-    purpose: Agent memory and cognitive state (cognition pipeline in lib-behavior)
+    purpose: Agent memory and cognitive state
 
   actor-state:
     backend: redis

@@ -38,14 +38,12 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 ## State Storage
 
-**Stores**: 1 state store (Redis) + 1 cognition subsystem store
+**Stores**: 1 state store (Redis) + 1 cross-service store
 
 | Store | Backend | Purpose | TTL | Owner |
 |-------|---------|---------|-----|-------|
 | `behavior-statestore` | Redis | Behavior metadata, bundle membership, GOAP metadata | N/A | lib-behavior |
-| `agent-memories` | Redis | Memory entries for cognition pipeline | N/A | Actor subsystem (implemented by lib-behavior's `ActorLocalMemoryStore`) |
-
-> **Architecture Note**: The `agent-memories` store is part of the Actor/Behavior cognition subsystem. While attributed to `service: Actor` in state-stores.yaml (reflecting the encompassing actor system), all implementation code lives in lib-behavior's `ActorLocalMemoryStore`. This is intentional - lib-actor manages execution infrastructure while lib-behavior manages cognition. See [Actor Data Access Patterns](../planning/ACTOR_DATA_ACCESS_PATTERNS.md) for the architectural rationale and cross-plugin data access guidelines.
+| `agent-memories` | Redis | Memory entries for cognition pipeline | N/A | lib-actor (used by lib-behavior's `ActorLocalMemoryStore`) |
 
 | Key Pattern | Store | Data Type | Purpose |
 |-------------|-------|-----------|---------|
