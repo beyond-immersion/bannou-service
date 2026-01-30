@@ -22332,14 +22332,9 @@
             Published when a new save version is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.SlotId">
@@ -22392,24 +22387,14 @@
             Checkpoint name if pinned
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.SaveLoadedEvent">
             <summary>
             Published when a save is loaded
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.SlotId">
@@ -22437,24 +22422,14 @@
             Owner entity type
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.SaveMigratedEvent">
             <summary>
             Published when a save is migrated to a new schema version
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.SlotId">
@@ -22497,24 +22472,14 @@
             Owner entity type
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.VersionPinnedEvent">
             <summary>
             Published when a version is pinned as checkpoint
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.SlotId">
@@ -22547,24 +22512,14 @@
             Owner entity type
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent">
             <summary>
             Published when a version is unpinned
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.SlotId">
@@ -22597,24 +22552,14 @@
             Owner entity type
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.VersionDeletedEvent">
             <summary>
             Published when a version is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.SlotId">
@@ -22647,24 +22592,14 @@
             Owner entity type
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.CleanupCompletedEvent">
             <summary>
             Published when automatic cleanup completes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.VersionsDeleted">
@@ -22687,11 +22622,6 @@
             Cleanup duration in milliseconds
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.SaveQueuedEvent">
             <summary>
             Published when a save is queued for async upload.
@@ -22699,14 +22629,9 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SlotId">
@@ -22744,24 +22669,14 @@
             Current number of pending uploads in queue
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent">
             <summary>
             Published when async upload to MinIO completes successfully
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.SlotId">
@@ -22794,11 +22709,6 @@
             Time spent waiting in queue
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent">
             <summary>
             Published when async upload fails after all retry attempts.
@@ -22806,14 +22716,9 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.SlotId">
@@ -22856,24 +22761,14 @@
             Whether more retries will be attempted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent">
             <summary>
             Published when storage circuit breaker changes state
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.EventName">
             <summary>
-            Unique event identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.Timestamp">
-            <summary>
-            Event timestamp
+            Event type identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.PreviousState">
@@ -22901,9 +22796,254 @@
             Current queue depth when state changed
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.AdditionalProperties">
+        <member name="T:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent">
             <summary>
-            Gets or sets additional properties not defined in the schema.
+            Published to save-slot.created when a saveslot is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.EventName">
+            <summary>
+            Event type identifier: save-slot.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.SlotId">
+            <summary>
+            Unique slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.Category">
+            <summary>
+            Save category determining retention and cleanup behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.MaxVersions">
+            <summary>
+            Maximum versions to retain
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.RetentionDays">
+            <summary>
+            Days to retain versions (null = indefinite)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.CompressionType">
+            <summary>
+            Compression algorithm used for save data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.VersionCount">
+            <summary>
+            Current number of versions in slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.LatestVersion">
+            <summary>
+            Latest version number (null if empty)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.TotalSizeBytes">
+            <summary>
+            Total storage used by all versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.CreatedAt">
+            <summary>
+            Slot creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotCreatedEvent.UpdatedAt">
+            <summary>
+            Last modification timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent">
+            <summary>
+            Published to save-slot.updated when a saveslot is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: save-slot.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.SlotId">
+            <summary>
+            Unique slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.Category">
+            <summary>
+            Save category determining retention and cleanup behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.MaxVersions">
+            <summary>
+            Maximum versions to retain
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.RetentionDays">
+            <summary>
+            Days to retain versions (null = indefinite)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.CompressionType">
+            <summary>
+            Compression algorithm used for save data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.VersionCount">
+            <summary>
+            Current number of versions in slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.LatestVersion">
+            <summary>
+            Latest version number (null if empty)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.TotalSizeBytes">
+            <summary>
+            Total storage used by all versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.CreatedAt">
+            <summary>
+            Slot creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.UpdatedAt">
+            <summary>
+            Last modification timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent">
+            <summary>
+            Published to save-slot.deleted when a saveslot is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.EventName">
+            <summary>
+            Event type identifier: save-slot.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.SlotId">
+            <summary>
+            Unique slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.Category">
+            <summary>
+            Save category determining retention and cleanup behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.MaxVersions">
+            <summary>
+            Maximum versions to retain
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.RetentionDays">
+            <summary>
+            Days to retain versions (null = indefinite)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.CompressionType">
+            <summary>
+            Compression algorithm used for save data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.VersionCount">
+            <summary>
+            Current number of versions in slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.LatestVersion">
+            <summary>
+            Latest version number (null if empty)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.TotalSizeBytes">
+            <summary>
+            Total storage used by all versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.CreatedAt">
+            <summary>
+            Slot creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.UpdatedAt">
+            <summary>
+            Last modification timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveSlotDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent">

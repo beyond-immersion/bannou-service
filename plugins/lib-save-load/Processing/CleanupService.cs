@@ -138,6 +138,26 @@ public class CleanupService : BackgroundService
             if (slot.VersionCount == 0 && versionsDeleted > 0)
             {
                 await slotStore.DeleteAsync(slot.GetStateKey(), cancellationToken);
+                await messageBus.TryPublishAsync("save-slot.deleted", new SaveSlotDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SlotId = slot.SlotId,
+                    GameId = slot.GameId,
+                    OwnerId = slot.OwnerId,
+                    OwnerType = slot.OwnerType,
+                    SlotName = slot.SlotName,
+                    Category = slot.Category,
+                    MaxVersions = slot.MaxVersions,
+                    RetentionDays = slot.RetentionDays,
+                    CompressionType = slot.CompressionType,
+                    VersionCount = slot.VersionCount,
+                    LatestVersion = slot.LatestVersion,
+                    TotalSizeBytes = slot.TotalSizeBytes,
+                    CreatedAt = slot.CreatedAt,
+                    UpdatedAt = slot.UpdatedAt,
+                    DeletedReason = "Scheduled cleanup - all versions expired"
+                }, cancellationToken: cancellationToken);
                 totalSlotsDeleted++;
             }
         }
@@ -149,7 +169,7 @@ public class CleanupService : BackgroundService
                 totalVersionsDeleted, totalSlotsDeleted, totalBytesFreed);
 
             await messageBus.TryPublishAsync(
-                "save-load.cleanup.completed",
+                "save.cleanup-completed",
                 new CleanupCompletedEvent
                 {
                     EventId = Guid.NewGuid(),

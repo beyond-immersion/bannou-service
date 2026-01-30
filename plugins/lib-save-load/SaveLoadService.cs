@@ -40,6 +40,17 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 [BannouService("save-load", typeof(ISaveLoadService), lifetime: ServiceLifetime.Scoped)]
 public partial class SaveLoadService : ISaveLoadService
 {
+    // Topic constants for event publishing (per FOUNDATION TENETS - Event-Driven Architecture)
+    private const string SAVE_SLOT_CREATED_TOPIC = "save-slot.created";
+    private const string SAVE_SLOT_UPDATED_TOPIC = "save-slot.updated";
+    private const string SAVE_SLOT_DELETED_TOPIC = "save-slot.deleted";
+    private const string SAVE_CREATED_TOPIC = "save.created";
+    private const string SAVE_LOADED_TOPIC = "save.loaded";
+    private const string SAVE_VERSION_PINNED_TOPIC = "save.version-pinned";
+    private const string SAVE_VERSION_UNPINNED_TOPIC = "save.version-unpinned";
+    private const string SAVE_VERSION_DELETED_TOPIC = "save.version-deleted";
+    private const string SAVE_QUEUED_TOPIC = "save.queued";
+
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDistributedLockProvider _lockProvider;
@@ -145,6 +156,7 @@ public partial class SaveLoadService : ISaveLoadService
             };
 
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
+            await PublishSaveSlotCreatedEventAsync(slot, cancellationToken);
 
             _logger.LogDebug("Created slot {SlotId} for {OwnerType}:{OwnerId}", slotId, ownerType, ownerId);
 
@@ -282,8 +294,8 @@ public partial class SaveLoadService : ISaveLoadService
                 deletedVersions++;
             }
 
-            // Delete the slot
             await slotStore.DeleteAsync(slotKey, cancellationToken);
+            await PublishSaveSlotDeletedEventAsync(slot, "User requested deletion", cancellationToken);
 
             _logger.LogDebug("Deleted slot {SlotId} with {VersionCount} versions", slot.SlotId, deletedVersions);
 
@@ -369,6 +381,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             await slotStore.SaveAsync(newSlotKey, slot, cancellationToken: cancellationToken);
             await slotStore.DeleteAsync(oldSlotKey, cancellationToken);
+            await PublishSaveSlotUpdatedEventAsync(slot, ["slotName"], cancellationToken);
 
             _logger.LogDebug("Renamed slot from {OldName} to {NewName}", body.SlotName, body.NewSlotName);
 
@@ -573,6 +586,7 @@ public partial class SaveLoadService : ISaveLoadService
                     ETag = Guid.NewGuid().ToString()
                 };
                 await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
+                await PublishSaveSlotCreatedEventAsync(slot, cancellationToken);
                 _logger.LogDebug("Auto-created slot {SlotId} for {SlotName}", slot.SlotId, body.SlotName);
             }
 
@@ -713,6 +727,18 @@ public partial class SaveLoadService : ISaveLoadService
                 await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
                 uploadPending = true;
 
+                await _messageBus.TryPublishAsync(SAVE_QUEUED_TOPIC, new SaveQueuedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    SlotId = slot.SlotId,
+                    SlotName = slot.SlotName,
+                    VersionNumber = nextVersion,
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
+                    SizeBytes = compressedSize
+                }, cancellationToken: cancellationToken);
+
                 _logger.LogDebug("Queued async upload {UploadId} for slot {SlotId} version {Version}",
                     uploadId, slot.SlotId, nextVersion);
             }
@@ -724,6 +750,7 @@ public partial class SaveLoadService : ISaveLoadService
             slot.UpdatedAt = now;
             slot.ETag = Guid.NewGuid().ToString();
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
+            await PublishSaveSlotUpdatedEventAsync(slot, ["latestVersion", "versionCount", "totalSizeBytes"], cancellationToken);
 
             // Rolling cleanup if needed
             var versionsCleanedUp = await _versionCleanupManager.PerformRollingCleanupAsync(slot, versionStore, hotCacheStore, cancellationToken);
@@ -1192,7 +1219,7 @@ public partial class SaveLoadService : ISaveLoadService
                 SchemaVersion = body.SchemaVersion,
                 Pinned = false
             };
-            await _messageBus.TryPublishAsync("save-load.save.created", createdEvent, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(SAVE_CREATED_TOPIC, createdEvent, cancellationToken: cancellationToken);
 
             // Calculate compression savings
             var compressionSavings = estimatedFullSize > 0 ? 1.0 - ((double)deltaSize / estimatedFullSize) : 0;
@@ -1309,7 +1336,7 @@ public partial class SaveLoadService : ISaveLoadService
                 OwnerId = body.OwnerId,
                 OwnerType = body.OwnerType
             };
-            await _messageBus.TryPublishAsync("save-load.save.loaded", loadEvent, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(SAVE_LOADED_TOPIC, loadEvent, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, new LoadResponse
             {
@@ -1690,7 +1717,7 @@ public partial class SaveLoadService : ISaveLoadService
                 CheckpointName = body.CheckpointName
             };
             await _messageBus.TryPublishAsync(
-                "save-load.version.pinned",
+                SAVE_VERSION_PINNED_TOPIC,
                 pinnedEvent,
                 cancellationToken: cancellationToken);
 
@@ -1769,7 +1796,7 @@ public partial class SaveLoadService : ISaveLoadService
                 PreviousCheckpointName = previousCheckpointName
             };
             await _messageBus.TryPublishAsync(
-                "save-load.version.unpinned",
+                SAVE_VERSION_UNPINNED_TOPIC,
                 unpinnedEvent,
                 cancellationToken: cancellationToken);
 
@@ -1881,12 +1908,12 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+            await PublishSaveSlotUpdatedEventAsync(slot, ["versionCount", "totalSizeBytes", "latestVersion"], cancellationToken);
 
             _logger.LogDebug(
                 "Deleted version {Version} in slot {SlotId}, freed {BytesFreed} bytes",
                 body.VersionNumber, slot.SlotId, bytesFreed);
 
-            // Publish event
             var deletedEvent = new VersionDeletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1897,7 +1924,7 @@ public partial class SaveLoadService : ISaveLoadService
                 BytesFreed = bytesFreed
             };
             await _messageBus.TryPublishAsync(
-                "save-load.version.deleted",
+                SAVE_VERSION_DELETED_TOPIC,
                 deletedEvent,
                 cancellationToken: cancellationToken);
 
@@ -2542,12 +2569,12 @@ public partial class SaveLoadService : ISaveLoadService
             var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
             await versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
 
-            // Update slot
             slot.LatestVersion = newVersionNumber;
             slot.VersionCount++;
             slot.TotalSizeBytes += sourceVersion.CompressedSizeBytes ?? sourceVersion.SizeBytes;
             slot.UpdatedAt = DateTimeOffset.UtcNow;
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
+            await PublishSaveSlotUpdatedEventAsync(slot, ["latestVersion", "versionCount", "totalSizeBytes"], cancellationToken);
 
             // Run rolling cleanup
             await _versionCleanupManager.CleanupOldVersionsAsync(slot, cancellationToken);
@@ -2567,10 +2594,7 @@ public partial class SaveLoadService : ISaveLoadService
                 OwnerType = slot.OwnerType,
                 SizeBytes = sourceVersion.SizeBytes
             };
-            await _messageBus.TryPublishAsync(
-                "save-load.save.created",
-                createdEvent,
-                cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(SAVE_CREATED_TOPIC, createdEvent, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, new SaveResponse
             {
@@ -2678,15 +2702,16 @@ public partial class SaveLoadService : ISaveLoadService
                     if (!body.DryRun)
                     {
                         await slotStore.DeleteAsync(slot.GetStateKey(), cancellationToken);
+                        await PublishSaveSlotDeletedEventAsync(slot, "Admin cleanup - empty slot", cancellationToken);
                     }
                 }
                 else if (!body.DryRun && versionsToDelete.Count > 0)
                 {
-                    // Update slot metadata with per-slot freed bytes only
                     slot.VersionCount = remainingVersions;
                     slot.TotalSizeBytes -= slotBytesFreed;
                     slot.UpdatedAt = DateTimeOffset.UtcNow;
                     await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+                    await PublishSaveSlotUpdatedEventAsync(slot, ["versionCount", "totalSizeBytes"], cancellationToken);
                 }
             }
 
@@ -2994,6 +3019,90 @@ public partial class SaveLoadService : ISaveLoadService
     {
         _logger.LogDebug("Registering SaveLoad service permissions...");
         await SaveLoadPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
+    }
+
+    #endregion
+
+    #region Lifecycle Event Publishing
+
+    private async Task PublishSaveSlotCreatedEventAsync(SaveSlotMetadata slot, CancellationToken cancellationToken)
+    {
+        var eventModel = new SaveSlotCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SlotId = slot.SlotId,
+            GameId = slot.GameId,
+            OwnerId = slot.OwnerId,
+            OwnerType = slot.OwnerType,
+            SlotName = slot.SlotName,
+            Category = slot.Category,
+            MaxVersions = slot.MaxVersions,
+            RetentionDays = slot.RetentionDays,
+            CompressionType = slot.CompressionType,
+            VersionCount = slot.VersionCount,
+            LatestVersion = slot.LatestVersion,
+            TotalSizeBytes = slot.TotalSizeBytes,
+            CreatedAt = slot.CreatedAt,
+            UpdatedAt = slot.UpdatedAt
+        };
+
+        await _messageBus.TryPublishAsync(SAVE_SLOT_CREATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published SaveSlotCreatedEvent for slot: {SlotId}", slot.SlotId);
+    }
+
+    private async Task PublishSaveSlotUpdatedEventAsync(SaveSlotMetadata slot, IEnumerable<string> changedFields, CancellationToken cancellationToken)
+    {
+        var eventModel = new SaveSlotUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SlotId = slot.SlotId,
+            GameId = slot.GameId,
+            OwnerId = slot.OwnerId,
+            OwnerType = slot.OwnerType,
+            SlotName = slot.SlotName,
+            Category = slot.Category,
+            MaxVersions = slot.MaxVersions,
+            RetentionDays = slot.RetentionDays,
+            CompressionType = slot.CompressionType,
+            VersionCount = slot.VersionCount,
+            LatestVersion = slot.LatestVersion,
+            TotalSizeBytes = slot.TotalSizeBytes,
+            CreatedAt = slot.CreatedAt,
+            UpdatedAt = slot.UpdatedAt,
+            ChangedFields = changedFields.ToList()
+        };
+
+        await _messageBus.TryPublishAsync(SAVE_SLOT_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published SaveSlotUpdatedEvent for slot: {SlotId}, changed: {ChangedFields}", slot.SlotId, string.Join(", ", changedFields));
+    }
+
+    private async Task PublishSaveSlotDeletedEventAsync(SaveSlotMetadata slot, string? deletedReason, CancellationToken cancellationToken)
+    {
+        var eventModel = new SaveSlotDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SlotId = slot.SlotId,
+            GameId = slot.GameId,
+            OwnerId = slot.OwnerId,
+            OwnerType = slot.OwnerType,
+            SlotName = slot.SlotName,
+            Category = slot.Category,
+            MaxVersions = slot.MaxVersions,
+            RetentionDays = slot.RetentionDays,
+            CompressionType = slot.CompressionType,
+            VersionCount = slot.VersionCount,
+            LatestVersion = slot.LatestVersion,
+            TotalSizeBytes = slot.TotalSizeBytes,
+            CreatedAt = slot.CreatedAt,
+            UpdatedAt = slot.UpdatedAt,
+            DeletedReason = deletedReason
+        };
+
+        await _messageBus.TryPublishAsync(SAVE_SLOT_DELETED_TOPIC, eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published SaveSlotDeletedEvent for slot: {SlotId}", slot.SlotId);
     }
 
     #endregion

@@ -263,7 +263,7 @@ public class SaveUploadWorker : BackgroundService
         };
 
         await messageBus.TryPublishAsync(
-            "save-load.upload.completed",
+            "save.upload-completed",
             completedEvent,
             cancellationToken: cancellationToken);
 
@@ -306,7 +306,7 @@ public class SaveUploadWorker : BackgroundService
             };
 
             await messageBus.TryPublishAsync(
-                "save-load.upload.failed",
+                "save.upload-failed",
                 failedEvent,
                 cancellationToken: cancellationToken);
 

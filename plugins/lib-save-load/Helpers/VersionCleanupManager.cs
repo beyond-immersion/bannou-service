@@ -189,7 +189,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             BytesFreed = bytesFreed
         };
         await _messageBus.TryPublishAsync(
-            "save-load.cleanup.completed",
+            "save.cleanup-completed",
             cleanupEvent,
             cancellationToken: cancellationToken);
     }
