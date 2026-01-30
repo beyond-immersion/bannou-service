@@ -122,19 +122,30 @@ fi
 
 # Check for lifecycle events file and generate lifecycle event models if present
 # Lifecycle events are now generated to schemas/Generated/ by generate-lifecycle-events.py
+# If complex cross-file refs exist, a resolved version is created by resolve-event-refs.py
 LIFECYCLE_EVENTS_FILE="../schemas/Generated/${SERVICE_NAME}-lifecycle-events.yaml"
+LIFECYCLE_EVENTS_RESOLVED="../schemas/Generated/${SERVICE_NAME}-lifecycle-events-resolved.yaml"
 LIFECYCLE_OUTPUT_DIR="../bannou-service/Generated/Events"
 LIFECYCLE_OUTPUT_FILE="$LIFECYCLE_OUTPUT_DIR/${SERVICE_PASCAL}LifecycleEvents.cs"
 
 if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     echo -e "${YELLOW}🔄 Found lifecycle events file, generating lifecycle event models...${NC}"
-    echo -e "  📋 Schema: $LIFECYCLE_EVENTS_FILE"
+
+    # Check if a resolved version exists (for schemas with complex cross-file refs)
+    if [ -f "$LIFECYCLE_EVENTS_RESOLVED" ]; then
+        LIFECYCLE_SCHEMA_TO_PROCESS="$LIFECYCLE_EVENTS_RESOLVED"
+        echo -e "  📋 Schema: $LIFECYCLE_EVENTS_FILE (using resolved version)"
+    else
+        LIFECYCLE_SCHEMA_TO_PROCESS="$LIFECYCLE_EVENTS_FILE"
+        echo -e "  📋 Schema: $LIFECYCLE_EVENTS_FILE"
+    fi
     echo -e "  📁 Output: $LIFECYCLE_OUTPUT_FILE"
 
     # Ensure lifecycle events output directory exists
     mkdir -p "$LIFECYCLE_OUTPUT_DIR"
 
-    # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
+    # Extract $refs to API schema types from ORIGINAL file (not resolved)
+    # These types exist in the service's API namespace and should be excluded
     LIFECYCLE_API_REFS=$(extract_api_refs "$LIFECYCLE_EVENTS_FILE" "$SERVICE_NAME")
 
     # Extract $refs to common-api.yaml types (shared types like EntityType)
@@ -142,6 +153,18 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
 
     # Build exclusion list: base exclusions + any API-referenced types + common types
     LIFECYCLE_EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseServiceEvent"
+
+    # If using resolved schema, extract inlined types (API types that were inlined for NSwag)
+    if [ "$LIFECYCLE_SCHEMA_TO_PROCESS" = "$LIFECYCLE_EVENTS_RESOLVED" ]; then
+        echo -e "  ${BLUE}Using resolved schema (complex refs inlined for NSwag)${NC}"
+        LIFECYCLE_INLINED_TYPES=$(extract_inlined_types "$LIFECYCLE_EVENTS_RESOLVED")
+        if [ -n "$LIFECYCLE_INLINED_TYPES" ]; then
+            LIFECYCLE_EXCLUSIONS="${LIFECYCLE_EXCLUSIONS},${LIFECYCLE_INLINED_TYPES}"
+            echo -e "  ${BLUE}Excluding inlined API types: ${LIFECYCLE_INLINED_TYPES}${NC}"
+        fi
+    fi
+
+    # Always exclude API refs (simple types like enums that aren't inlined but are referenced)
     if [ -n "$LIFECYCLE_API_REFS" ]; then
         LIFECYCLE_EXCLUSIONS="${LIFECYCLE_EXCLUSIONS},${LIFECYCLE_API_REFS}"
         echo -e "  ${BLUE}Excluding API types: ${LIFECYCLE_API_REFS}${NC}"
@@ -159,7 +182,7 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     fi
 
     "$NSWAG_EXE" openapi2csclient \
-        "/input:$LIFECYCLE_EVENTS_FILE" \
+        "/input:$LIFECYCLE_SCHEMA_TO_PROCESS" \
         "/output:$LIFECYCLE_OUTPUT_FILE" \
         "/namespace:BeyondImmersion.BannouService.Events" \
         "/generateClientClasses:false" \

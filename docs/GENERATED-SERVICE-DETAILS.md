@@ -270,7 +270,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 **Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md)
 
-The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`) used by all services for event publishing and subscription, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
+The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`/`IMessageTap`) used by all services for event publishing, subscription, and tapping, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
 
 ---
 
@@ -318,7 +318,7 @@ Historical event participation and lore management for realms. Tracks when realm
 
 **Version**: 1.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md)
 
-A generic relationship management service for entity-to-entity relationships (character friendships, alliances, rivalries, etc.). Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, and soft-deletion with the ability to recreate ended relationships. Used by the Character service for managing inter-character bonds.
+A generic relationship management service for entity-to-entity relationships (character friendships, alliances, rivalries, etc.). Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, and soft-deletion with the ability to recreate ended relationships. Used by the Character service for managing inter-character bonds and by the RelationshipType service for type merge migrations.
 
 ---
 
@@ -326,7 +326,7 @@ A generic relationship management service for entity-to-entity relationships (ch
 
 **Version**: 2.0.0 | **Schema**: `schemas/relationship-type-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP-TYPE.md](plugins/RELATIONSHIP-TYPE.md)
 
-Hierarchical relationship type definitions for entity-to-entity relationships in the Arcadia game world. Defines the taxonomy of possible relationships (e.g., PARENT → FATHER/MOTHER, FRIEND, RIVAL) with parent-child hierarchy, inverse type tracking, and bidirectional flags. Supports deprecation with merge capability via `IRelationshipClient` to migrate existing relationships. Provides hierarchy queries (ancestors, children, `matchesHierarchy` for polymorphic matching), code-based lookups, and bulk seeding with dependency-ordered creation.
+Hierarchical relationship type definitions for entity-to-entity relationships in the Arcadia game world. Defines the taxonomy of possible relationships (e.g., PARENT → FATHER/MOTHER, FRIEND, RIVAL) with parent-child hierarchy, inverse type tracking, and bidirectional flags. Supports deprecation with merge capability via `IRelationshipClient` to migrate existing relationships. Provides hierarchy queries (ancestors, children, `matchesHierarchy` for polymorphic matching), code-based lookups, and bulk seeding with dependency-ordered creation. Internal-only service (not internet-facing).
 
 ---
 
@@ -366,7 +366,7 @@ The State service is the infrastructure abstraction layer that provides all Bann
 
 **Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
-The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that Auth and GameSession services consume for real-time authorization updates. Includes a background expiration worker that automatically deactivates expired subscriptions.
+The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that Auth and GameSession services consume for real-time authorization updates. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
 
 ---
 
@@ -382,7 +382,7 @@ The Voice service provides WebRTC-based voice communication for game sessions, s
 
 **Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml` | **Deep Dive**: [docs/plugins/WEBSITE.md](plugins/WEBSITE.md)
 
-Public-facing website service for browser-based access to registration, news, account management, game downloads, CMS page management, and server status. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint returns `StatusCodes.NotImplemented` with a warning log. No business logic, state storage, or cross-service calls are implemented. The schema defines a comprehensive CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account/character/subscription views. When implemented, this service will require integration with account, character, subscription, realm, and potentially auth services via generated clients.
+Public-facing website service for browser-based access to registration, news, account management, game downloads, CMS page management, and server status. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint logs a debug message and returns `StatusCodes.NotImplemented` (except `GetAccountSubscriptionAsync` which throws `NotImplementedException`). No business logic, state storage, or cross-service calls are implemented. The schema defines a comprehensive CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account/character/subscription views. When implemented, this service will require integration with account, character, subscription, realm, and potentially auth services via generated clients.
 
 ---
 

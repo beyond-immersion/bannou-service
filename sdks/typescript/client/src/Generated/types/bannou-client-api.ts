@@ -6403,9 +6403,9 @@ export interface components {
       accountId: string;
       /**
        * Format: email
-       * @description Email address associated with the account
+       * @description Email address associated with the account. Null for OAuth/Steam accounts without email.
        */
-      email: string;
+      email?: string | null;
       /** @description Display name for the account */
       displayName?: string | null;
       /** @description BCrypt hashed password for authentication */

@@ -328,6 +328,107 @@ def resolve_event_schema(events_path: Path, schema_dir: Path) -> Optional[Path]:
     return output_path
 
 
+def resolve_lifecycle_event_schema(lifecycle_path: Path, schema_dir: Path) -> Optional[Path]:
+    """
+    Resolve complex cross-file refs in a lifecycle event schema.
+
+    Lifecycle events are already in Generated/ and have ../ prefixed refs.
+    The resolved output stays in Generated/ with a -resolved suffix.
+
+    Args:
+        lifecycle_path: Path to the lifecycle event schema file (in Generated/)
+        schema_dir: Parent schema directory (for loading referenced files)
+
+    Returns:
+        Path to the resolved schema file, or None if no resolution needed
+    """
+    events_schema = load_yaml(lifecycle_path)
+    if events_schema is None:
+        return None
+
+    # Find all cross-file refs in the lifecycle event schema
+    cross_refs = find_cross_file_refs(events_schema)
+    if not cross_refs:
+        return None  # No cross-file refs, no resolution needed
+
+    # Group refs by source file
+    refs_by_file: Dict[str, Set[str]] = {}
+    for file_path, type_name in cross_refs:
+        if file_path not in refs_by_file:
+            refs_by_file[file_path] = set()
+        refs_by_file[file_path].add(type_name)
+
+    # Check each referenced type for nested refs
+    types_to_inline: Dict[str, Dict[str, Any]] = {}  # type_name -> definition
+
+    for file_path, type_names in refs_by_file.items():
+        # Lifecycle events already have ../ prefix, resolve from schema_dir
+        source_path = schema_dir / file_path.lstrip('../')
+
+        source_schema = load_yaml(source_path)
+        if source_schema is None:
+            print(f"  Warning: Could not load {file_path}")
+            continue
+
+        source_schemas = source_schema.get('components', {}).get('schemas', {})
+
+        for type_name in type_names:
+            if type_name not in source_schemas:
+                continue
+
+            type_def = source_schemas[type_name]
+
+            # Check if this type has nested refs (making it "complex")
+            if has_nested_refs(type_def):
+                print(f"  Found complex type: {type_name} (has nested refs)")
+                # Get this type and all its dependencies
+                deps = get_type_with_dependencies(type_name, source_schemas)
+                types_to_inline.update(deps)
+
+    if not types_to_inline:
+        return None  # No complex types found, no resolution needed
+
+    print(f"  Inlining {len(types_to_inline)} types: {', '.join(sorted(types_to_inline.keys()))}")
+
+    # Create resolved schema
+    resolved = deepcopy(events_schema)
+
+    # Ensure components/schemas exists
+    if 'components' not in resolved:
+        resolved['components'] = {}
+    if 'schemas' not in resolved['components']:
+        resolved['components']['schemas'] = {}
+
+    # Add inlined types to the schema (sorted for deterministic output)
+    for type_name, type_def in sorted(types_to_inline.items()):
+        # Convert any self-qualified refs in the inlined type to local refs
+        type_def = convert_refs_to_local(type_def, set(types_to_inline.keys()))
+        resolved['components']['schemas'][type_name] = type_def
+
+    # Convert cross-file refs to local refs for inlined types
+    resolved = convert_refs_to_local(resolved, set(types_to_inline.keys()))
+
+    # Note: NO path fixing needed - lifecycle events are already in Generated/
+    # and their refs already have ../ prefix which is correct for the output location
+
+    # Update description to note this is a resolved file
+    if 'info' in resolved and 'description' in resolved['info']:
+        original_desc = resolved['info']['description']
+        resolved['info']['description'] = (
+            f"AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\n"
+            f"DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py\n"
+            f"Source: {lifecycle_path.name}\n\n"
+            f"{original_desc}"
+        )
+
+    # Write resolved schema (same directory as input, with -resolved suffix)
+    output_name = lifecycle_path.stem.replace('-lifecycle-events', '-lifecycle-events-resolved') + '.yaml'
+    output_path = lifecycle_path.parent / output_name
+    save_yaml(output_path, resolved)
+
+    return output_path
+
+
 def main():
     """Process all event schemas and resolve complex cross-file refs."""
     script_dir = Path(__file__).parent
@@ -342,8 +443,11 @@ def main():
     # Create Generated directory if needed
     generated_dir.mkdir(exist_ok=True)
 
-    # Clean up old resolved files
+    # Clean up old resolved files (both standard events and lifecycle events)
     for old_file in generated_dir.glob('*-events-resolved.yaml'):
+        old_file.unlink()
+        print(f"  Cleaned up: {old_file.name}")
+    for old_file in generated_dir.glob('*-lifecycle-events-resolved.yaml'):
         old_file.unlink()
         print(f"  Cleaned up: {old_file.name}")
 
@@ -352,6 +456,7 @@ def main():
 
     resolved_files = []
 
+    # Process standard event schemas (in schemas/)
     for events_file in sorted(schema_dir.glob('*-events.yaml')):
         # Skip lifecycle events, client events, and common events
         if any(x in events_file.name for x in ['-lifecycle-events', '-client-events', 'common-events']):
@@ -367,14 +472,36 @@ def main():
             print(f"  No complex refs, using original")
         print()
 
+    # Process lifecycle event schemas (in schemas/Generated/)
+    print("Processing lifecycle events...")
+    print()
+    lifecycle_resolved = []
+
+    for lifecycle_file in sorted(generated_dir.glob('*-lifecycle-events.yaml')):
+        print(f"Processing {lifecycle_file.name}...")
+
+        output_path = resolve_lifecycle_event_schema(lifecycle_file, schema_dir)
+        if output_path:
+            lifecycle_resolved.append(output_path)
+            print(f"  -> {output_path.name}")
+        else:
+            print(f"  No complex refs, using original")
+        print()
+
     # Summary
     print("=" * 60)
     if resolved_files:
-        print(f"Resolved {len(resolved_files)} event schema(s):")
+        print(f"Resolved {len(resolved_files)} standard event schema(s):")
         for f in resolved_files:
             print(f"  - {f.name}")
         print()
-        print("generate-service-events.sh should use resolved files from Generated/")
+    if lifecycle_resolved:
+        print(f"Resolved {len(lifecycle_resolved)} lifecycle event schema(s):")
+        for f in lifecycle_resolved:
+            print(f"  - {f.name}")
+        print()
+    if resolved_files or lifecycle_resolved:
+        print("Generation scripts should use resolved files from Generated/")
     else:
         print("No event schemas required resolution")
 

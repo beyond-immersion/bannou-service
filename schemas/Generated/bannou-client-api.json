@@ -12851,7 +12851,6 @@
         "additionalProperties": false,
         "required": [
           "accountId",
-          "email",
           "createdAt",
           "emailVerified",
           "roles"
@@ -12865,7 +12864,8 @@
           "email": {
             "type": "string",
             "format": "email",
-            "description": "Email address associated with the account"
+            "nullable": true,
+            "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
           },
           "displayName": {
             "type": "string",

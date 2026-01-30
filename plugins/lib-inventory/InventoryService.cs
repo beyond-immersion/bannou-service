@@ -1403,89 +1403,89 @@ public partial class InventoryService : IInventoryService
 
             try
             {
-            var now = DateTimeOffset.UtcNow;
+                var now = DateTimeOffset.UtcNow;
 
-            // Update target quantity first (safer: if this fails, source is unaffected)
-            try
-            {
-                await _itemClient.ModifyItemInstanceAsync(
-                    new ModifyItemInstanceRequest
-                    {
-                        InstanceId = body.TargetInstanceId,
-                        QuantityDelta = quantityToAdd
-                    }, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to update target quantity during merge");
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Then destroy or reduce source
-            if (overflow.HasValue && overflow.Value > 0)
-            {
-                // Partial merge - reduce source quantity
+                // Update target quantity first (safer: if this fails, source is unaffected)
                 try
                 {
                     await _itemClient.ModifyItemInstanceAsync(
                         new ModifyItemInstanceRequest
                         {
-                            InstanceId = body.SourceInstanceId,
-                            QuantityDelta = -quantityToAdd
+                            InstanceId = body.TargetInstanceId,
+                            QuantityDelta = quantityToAdd
                         }, cancellationToken);
                 }
                 catch (ApiException ex)
                 {
-                    _logger.LogWarning(ex, "Failed to reduce source quantity during partial merge: {StatusCode}", ex.StatusCode);
-                }
-            }
-            else
-            {
-                // Full merge - destroy source
-                try
-                {
-                    await _itemClient.DestroyItemInstanceAsync(
-                        new DestroyItemInstanceRequest
-                        {
-                            InstanceId = body.SourceInstanceId,
-                            Reason = "merged"
-                        }, cancellationToken);
-                }
-                catch (ApiException ex)
-                {
-                    _logger.LogWarning(ex, "Failed to destroy source item during merge: {StatusCode}", ex.StatusCode);
+                    _logger.LogError(ex, "Failed to update target quantity during merge");
+                    return (StatusCodes.InternalServerError, null);
                 }
 
-                // Update container slot count since source is gone (lock already held)
-                var container = await GetContainerWithCacheAsync(source.ContainerId, cancellationToken);
-                if (container is not null)
+                // Then destroy or reduce source
+                if (overflow.HasValue && overflow.Value > 0)
                 {
-                    container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
-                    container.ModifiedAt = now;
-                    await SaveContainerWithCacheAsync(container, cancellationToken);
+                    // Partial merge - reduce source quantity
+                    try
+                    {
+                        await _itemClient.ModifyItemInstanceAsync(
+                            new ModifyItemInstanceRequest
+                            {
+                                InstanceId = body.SourceInstanceId,
+                                QuantityDelta = -quantityToAdd
+                            }, cancellationToken);
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to reduce source quantity during partial merge: {StatusCode}", ex.StatusCode);
+                    }
                 }
-            }
+                else
+                {
+                    // Full merge - destroy source
+                    try
+                    {
+                        await _itemClient.DestroyItemInstanceAsync(
+                            new DestroyItemInstanceRequest
+                            {
+                                InstanceId = body.SourceInstanceId,
+                                Reason = "merged"
+                            }, cancellationToken);
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to destroy source item during merge: {StatusCode}", ex.StatusCode);
+                    }
 
-            await _messageBus.TryPublishAsync("inventory-item.stacked", new InventoryItemStackedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                SourceInstanceId = body.SourceInstanceId,
-                TargetInstanceId = body.TargetInstanceId,
-                TemplateId = source.TemplateId,
-                ContainerId = target.ContainerId,
-                QuantityAdded = quantityToAdd,
-                NewTotalQuantity = combinedQuantity
-            }, cancellationToken);
+                    // Update container slot count since source is gone (lock already held)
+                    var container = await GetContainerWithCacheAsync(source.ContainerId, cancellationToken);
+                    if (container is not null)
+                    {
+                        container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
+                        container.ModifiedAt = now;
+                        await SaveContainerWithCacheAsync(container, cancellationToken);
+                    }
+                }
 
-            return (StatusCodes.OK, new MergeStacksResponse
-            {
-                Success = true,
-                TargetInstanceId = body.TargetInstanceId,
-                NewQuantity = combinedQuantity,
-                SourceDestroyed = !overflow.HasValue || overflow.Value <= 0,
-                OverflowQuantity = overflow
-            });
+                await _messageBus.TryPublishAsync("inventory-item.stacked", new InventoryItemStackedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    SourceInstanceId = body.SourceInstanceId,
+                    TargetInstanceId = body.TargetInstanceId,
+                    TemplateId = source.TemplateId,
+                    ContainerId = target.ContainerId,
+                    QuantityAdded = quantityToAdd,
+                    NewTotalQuantity = combinedQuantity
+                }, cancellationToken);
+
+                return (StatusCodes.OK, new MergeStacksResponse
+                {
+                    Success = true,
+                    TargetInstanceId = body.TargetInstanceId,
+                    NewQuantity = combinedQuantity,
+                    SourceDestroyed = !overflow.HasValue || overflow.Value <= 0,
+                    OverflowQuantity = overflow
+                });
             }
             finally
             {

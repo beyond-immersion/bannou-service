@@ -1,8 +1,10 @@
 openapi: 3.0.3
 info:
   title: Account Service Events Lifecycle Events
-  description: "Auto-generated lifecycle event schemas for account service.\nDO NOT EDIT - This file is completely overwritten
-    by generate-lifecycle-events.py.\nSource of truth: account-events.yaml x-lifecycle section."
+  description: "AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\nDO NOT EDIT - Regenerate
+    with scripts/resolve-event-refs.py\nSource: account-lifecycle-events.yaml\n\nAuto-generated lifecycle event schemas for
+    account service.\nDO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\nSource of truth:
+    account-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:
@@ -52,7 +54,7 @@ components:
           description: "Authentication methods linked to the account. Useful for identifying OAuth accounts when email is
             null."
           items:
-            $ref: '../account-api.yaml#/components/schemas/AuthMethodInfo'
+            $ref: '#/components/schemas/AuthMethodInfo'
         createdAt: &id007
           type: string
           format: date-time
@@ -131,3 +133,36 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    AuthMethodInfo:
+      type: object
+      description: Information about a linked authentication method
+      additionalProperties: false
+      required:
+      - provider
+      - linkedAt
+      properties:
+        methodId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier for the authentication method
+        provider:
+          $ref: '#/components/schemas/AuthProvider'
+          description: Authentication provider type
+        externalId:
+          type: string
+          nullable: true
+          description: External user ID from the authentication provider
+        displayName:
+          type: string
+          nullable: true
+          description: Display name from the authentication provider
+        linkedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the authentication method was linked
+
+    AuthProvider:
+      type: string
+      description: All authentication provider types including email
+      enum: [email, google, discord, twitch, steam]

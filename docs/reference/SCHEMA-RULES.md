@@ -728,6 +728,117 @@ components:
 
 ---
 
+## Mandatory Type Reuse via $ref (CRITICAL)
+
+**ALL complex types (enums, objects with nested properties, arrays of objects) MUST be defined once in the service's `-api.yaml` schema and referenced via `$ref` from events, configuration, and lifecycle schemas.**
+
+This rule is **inviolable**. Violating it causes:
+- Duplicate C# classes with different names (e.g., `AuthMethods`, `AuthMethods2`, `AuthMethods3`)
+- Duplicate enums that are incompatible with each other
+- Type mismatches across service boundaries
+- Serialization failures when event consumers expect the API type
+
+### The Principle
+
+**Events should contain the same complex data types as `Get*Response` from the API.**
+
+If your `GetAccountResponse` returns an `AuthMethodInfo` object, then `AccountCreatedEvent` should use the SAME `AuthMethodInfo` type via `$ref`, not a duplicate inline definition.
+
+### What MUST Use $ref
+
+| Type Category | MUST Use $ref? | Reason |
+|---------------|----------------|--------|
+| Enums | **YES** | Avoid duplicate incompatible enum types |
+| Objects with nested properties | **YES** | Complex types generate duplicate classes |
+| Objects with `$ref` to other types | **YES** | Nested refs break NSwag resolution |
+| Simple objects (flat properties, no refs) | Recommended | Consistency, easier maintenance |
+| Primitive types (string, integer, boolean) | No | Inline is fine |
+| Arrays of primitives | No | Inline is fine |
+| Arrays of objects | **YES** | The object type must be shared |
+
+### Correct Pattern
+
+```yaml
+# In account-api.yaml - DEFINE the type once
+components:
+  schemas:
+    AuthMethodInfo:
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/AuthProvider'  # Nested ref
+        linkedAt:
+          type: string
+          format: date-time
+
+    AuthProvider:
+      type: string
+      enum: [email, google, discord, twitch, steam]
+
+# In account-events.yaml x-lifecycle - REFERENCE the type
+x-lifecycle:
+  Account:
+    model:
+      authMethods:
+        type: array
+        items:
+          $ref: 'account-api.yaml#/components/schemas/AuthMethodInfo'  # Use $ref!
+
+# In account-configuration.yaml - REFERENCE enums
+DefaultProvider:
+  $ref: 'account-api.yaml#/components/schemas/AuthProvider'
+  env: ACCOUNT_DEFAULT_PROVIDER
+  default: email
+```
+
+### Wrong Pattern
+
+```yaml
+# WRONG: Inline definition in events (causes duplicate types)
+x-lifecycle:
+  Account:
+    model:
+      authMethods:
+        type: array
+        items:
+          type: object
+          properties:
+            provider:
+              type: string
+              enum: [email, google, discord]  # Duplicates AuthProvider!
+            linkedAt:
+              type: string
+              format: date-time
+
+# WRONG: Enum defined in events schema (should be in -api.yaml)
+# In account-events.yaml components/schemas:
+AuthProvider:  # This duplicates the API definition!
+  type: string
+  enum: [email, google, discord]
+```
+
+### When Inline is Acceptable
+
+Only use inline type definitions when:
+1. The type is **truly unique to this schema** (not used anywhere else)
+2. The type has **no nested `$ref`** references
+3. The type is a **simple flat object** with only primitive properties
+
+Even in these cases, consider defining in `-api.yaml` for consistency.
+
+### Generation Pipeline Support
+
+The code generation pipeline fully supports cross-file `$ref`:
+
+| Schema Type | Refs Supported | How It Works |
+|-------------|----------------|--------------|
+| `*-api.yaml` | `common-api.yaml` | NSwag resolves directly |
+| `*-events.yaml` | `*-api.yaml`, `common-api.yaml`, `common-events.yaml` | `resolve-event-refs.py` inlines complex types, excludes from generation |
+| `*-lifecycle-events.yaml` | `*-api.yaml`, `common-api.yaml`, `common-events.yaml` | `resolve-event-refs.py` processes lifecycle events, inlines complex types |
+| `*-configuration.yaml` | `*-api.yaml`, `common-api.yaml` | `generate-config.sh` extracts type names |
+
+---
+
 ## Common Anti-Patterns
 
 ### Optional String Without Nullable
@@ -795,7 +906,9 @@ TimeoutSeconds:
   default: 30
 ```
 
-### Duplicate Types Across Schemas
+### Duplicate Types Across Schemas (CRITICAL)
+
+**See [Mandatory Type Reuse via $ref](#mandatory-type-reuse-via-ref-critical) for complete guidance.**
 
 ```yaml
 # BAD: Same enum defined in both API and events
@@ -814,6 +927,30 @@ Status:
 properties:
   status:
     $ref: 'my-service-api.yaml#/components/schemas/Status'
+```
+
+**Also bad: Inline complex types in x-lifecycle**
+
+```yaml
+# BAD: Inline object definition in lifecycle (generates AuthMethods, AuthMethods2, AuthMethods3!)
+x-lifecycle:
+  Account:
+    model:
+      authMethods:
+        type: array
+        items:
+          type: object  # WRONG - creates duplicate type per event!
+          properties:
+            provider: { type: string }
+
+# GOOD: Reference API type in lifecycle
+x-lifecycle:
+  Account:
+    model:
+      authMethods:
+        type: array
+        items:
+          $ref: 'account-api.yaml#/components/schemas/AuthMethodInfo'  # Correct!
 ```
 
 ---
@@ -890,9 +1027,13 @@ Before submitting schema changes, verify:
 - [ ] Format patterns use `pattern` with valid regex
 - [ ] Precision requirements use `multipleOf`
 
-### Type References
+### Type References (CRITICAL)
+- [ ] **ALL enums** use `$ref` to `-api.yaml` definitions (never inline in events/config/lifecycle)
+- [ ] **ALL complex objects** (with nested properties or refs) use `$ref` to `-api.yaml`
+- [ ] **x-lifecycle model fields** use `$ref` for objects/enums, not inline definitions
+- [ ] Event properties matching API response types use the **same type** via `$ref`
 - [ ] Shared types defined in `*-api.yaml`, not duplicated across schemas
-- [ ] All `$ref` paths are sibling-relative (no `../` prefix)
+- [ ] All `$ref` paths are sibling-relative (no `../` prefix in source schemas)
 
 ### Final Steps
 - [ ] Run `scripts/generate-all-services.sh` and verify build passes

@@ -39,31 +39,7 @@ x-lifecycle:
         nullable: true
         description: "Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null."
         items:
-          # Inlined to avoid nested $ref resolution issues in NSwag cross-file scenarios
-          type: object
-          additionalProperties: false
-          properties:
-            methodId:
-              type: string
-              format: uuid
-              nullable: true
-              description: Unique identifier for the authentication method
-            provider:
-              type: string
-              enum: [email, google, discord, twitch, steam]
-              description: Authentication provider type
-            externalId:
-              type: string
-              nullable: true
-              description: External user ID from the authentication provider
-            displayName:
-              type: string
-              nullable: true
-              description: Display name from the authentication provider
-            linkedAt:
-              type: string
-              format: date-time
-              description: Timestamp when the authentication method was linked
+          $ref: 'account-api.yaml#/components/schemas/AuthMethodInfo'
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the account was created" }
       updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the account was last updated" }  # NRT: Optional property MUST be nullable
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional metadata associated with the account" }  # NRT: Optional object MUST be nullable

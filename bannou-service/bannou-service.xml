@@ -10867,6 +10867,11 @@
             List of roles assigned to the account
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.AuthMethods">
+            <summary>
+            Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.CreatedAt">
             <summary>
             Timestamp when the account was created
@@ -10915,6 +10920,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.Roles">
             <summary>
             List of roles assigned to the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.AuthMethods">
+            <summary>
+            Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.CreatedAt">
@@ -10970,6 +10980,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.Roles">
             <summary>
             List of roles assigned to the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.AuthMethods">
+            <summary>
+            Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.CreatedAt">
