@@ -194,6 +194,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 - **Token revocation list**: Currently, invalidating a session deletes it from Redis. A revocation list would allow checking validity even if Redis data is lost/expired.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/143 -->
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
 
 ## Known Quirks & Caveats

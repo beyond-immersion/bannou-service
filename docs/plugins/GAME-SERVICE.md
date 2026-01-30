@@ -42,7 +42,7 @@ No services subscribe to game-service events.
 |-------------|-----------|---------|
 | `game-service:{serviceId}` | `GameServiceRegistryModel` | Service data (name, stub, description, active status) |
 | `game-service-stub:{stubName}` | `string` | Stub name → service ID lookup index |
-| `game-service-list` | `List<string>` | Master list of all service IDs |
+| `game-service-list` | `List<Guid>` | Master list of all service IDs |
 
 ---
 
@@ -142,15 +142,15 @@ None. The service is feature-complete for its scope.
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
 No bugs identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **Update cannot set description to null**: Since `null` means "don't change" in the update request, there's no way to explicitly set description back to null once it has a value. Setting to empty string `""` works as a workaround.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
 1. **T19 (param/returns XML docs)**: Public methods have `<summary>` tags but are missing `<param>` and `<returns>` documentation. This is a code quality improvement that could be added for consistency.
 
@@ -160,4 +160,10 @@ No bugs identified.
 
 4. **No concurrency control on updates**: Two simultaneous updates to the same service will both succeed — last writer wins. Acceptable given admin-only access and low write frequency.
 
-5. **Dead event handler comment**: Line 39 references `GameServiceServiceEvents.cs` for event handler registration, but this file doesn't exist. The service is wired to support event consumers but none are defined.
+5. **Event handler comment references non-existent file**: Line 39 references `GameServiceServiceEvents.cs` for event handler registration, but this file doesn't exist because the service has no event subscriptions (`x-event-subscriptions: []` in schema). The call to `RegisterEventConsumers` is harmless (default implementation is a no-op) but the comment is misleading. Either remove the comment or add the file with an empty handler registration to be explicit.
+
+---
+
+## Work Tracking
+
+*No active work items. All quirks and design considerations are documented but not yet scheduled for implementation.*

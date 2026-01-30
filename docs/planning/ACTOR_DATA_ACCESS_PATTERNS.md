@@ -39,7 +39,7 @@ How should actors/behaviors access data from other plugins (currency, inventory,
 | **Cognition data** (memories, perceptions) | Shared datastore (`agent-memories`) | High-frequency, owned by cognition subsystem |
 | **Character traits** (personality, backstory) | Cached via Variable Providers | Read-heavy, changes infrequently |
 | **Game state** (currency, inventory, items) | API calls via lib-mesh | Authoritative source, consistency critical |
-| **Real-time state** (positions, health) | Event subscription + local cache | High-frequency updates, eventual consistency OK |
+| **Spatial context** (zone, region, safety) | Cached Variable Provider | Coarse-grained, refreshed periodically (~10s) |
 
 ### Key Decision: agent-memories Ownership
 
@@ -269,7 +269,7 @@ public class ActorDataCache
 | High-frequency, owned | Shared store | agent-memories |
 | Read-heavy, stable | Variable Provider (cached) | personality traits |
 | Mutation or consistency-critical | API call | currency transactions |
-| Real-time, high-velocity | Event + local cache | entity positions |
+| Spatial context, coarse-grained | Cached Variable Provider | zone, region, safety |
 
 ---
 
@@ -374,38 +374,53 @@ public class GoapWorldStateProvider
 
 **Rationale**: APIs maintain consistency, parallel execution minimizes latency, clear data ownership.
 
-### Pattern 4: Real-Time State (Events + Cache)
+### Pattern 4: Spatial Context (Cached Location Data)
 
-**Use case**: High-velocity data like entity positions, combat state, active effects
+**Use case**: Actors need occasional spatial context for decision-making (zone awareness, proximity, safety)
 
-**Implementation**: Event subscriptions populate local cache
+**Important**: Actors are "souls updating mind state" - they need coarse-grained spatial context for GOAP planning, **not** frame-by-frame position telemetry. The mapping service already handles detailed spatial queries and affordances.
 
-> **📋 PROPOSED**: This class does not yet exist. See [GitHub Issue #145](https://github.com/beyond-immersion/bannou-service/issues/145) for implementation tracking.
+> **📋 PROPOSED**: See [GitHub Issue #145](https://github.com/beyond-immersion/bannou-service/issues/145) for implementation tracking.
 
 ```csharp
-public class ActorPerceptionCache : IEventConsumer
+public class LocationContextProvider : IVariableProvider
 {
-    private readonly ConcurrentDictionary<string, EntityPosition> _positions = new();
+    private readonly ILocationClient _locationClient;
+    private readonly IMemoryCache _cache;
+    private readonly TimeSpan _ttl = TimeSpan.FromSeconds(10);  // Not real-time!
 
-    public void RegisterSubscriptions(IMessageSubscriber subscriber)
+    public string Name => "location";
+
+    public async Task<object?> GetValueAsync(string path, string entityId, CancellationToken ct)
     {
-        subscriber.SubscribeAsync<EntityMovedEvent>("entity.moved", HandleEntityMoved);
-        subscriber.SubscribeAsync<CombatStateChangedEvent>("combat.state.changed", HandleCombatState);
-    }
+        var context = await GetOrLoadContextAsync(entityId, ct);
 
-    private Task HandleEntityMoved(EntityMovedEvent evt, CancellationToken ct)
-    {
-        _positions[evt.EntityId] = new EntityPosition(evt.X, evt.Y, evt.Z, evt.Timestamp);
-        return Task.CompletedTask;
+        return path switch
+        {
+            "zone" => context.ZoneName,           // "tavern_district"
+            "region" => context.RegionName,       // "capital_city"
+            "is_safe" => context.IsSafeZone,      // true (in town, sanctuary)
+            "is_hostile" => context.IsHostile,    // false
+            "nearby_pois" => context.NearbyPOIs,  // ["blacksmith", "inn"]
+            _ => null
+        };
     }
-
-    // GOAP/ABML reads from cache (eventual consistency OK for positions)
-    public EntityPosition? GetPosition(string entityId) =>
-        _positions.TryGetValue(entityId, out var pos) ? pos : null;
 }
 ```
 
-**Rationale**: Real-time data changes too frequently for API polling, eventual consistency is acceptable, events ensure freshness.
+**What actors need:**
+| Need | Example | Frequency |
+|------|---------|-----------|
+| Zone awareness | "I'm in the tavern district" | Every ~10 seconds |
+| Safety context | "Am I in hostile territory?" | On demand (cached) |
+| Significant events | "Enemy entered perception range" | Via perception pipeline |
+
+**What actors do NOT need:**
+- Frame-by-frame X/Y/Z coordinates
+- Real-time velocity vectors
+- Continuous position streams
+
+**Rationale**: Actors make high-level decisions ("should I flee?", "should I trade?"), not physics calculations. Coarse spatial context with caching is sufficient.
 
 ---
 
@@ -422,8 +437,8 @@ Is this data the actor's own cognitive state?
     YES → Pattern 1: Shared Store (agent-memories)
     NO  ↓
 
-Does this data change frequently (>1/sec)?
-    YES → Pattern 4: Event + Cache
+Is this spatial/location context for decision-making?
+    YES → Pattern 4: Spatial Context (cached, coarse-grained)
     NO  ↓
 
 Is consistency critical (currency, ownership)?

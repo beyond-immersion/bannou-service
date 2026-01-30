@@ -24,9 +24,10 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | lib-messaging (`IClientEventPublisher`) | Push shortcuts, chat messages, and cancellation notices to WebSocket sessions |
 | lib-voice (`IVoiceClient`) | Voice room create/join/leave/delete for sessions |
 | lib-permission (`IPermissionClient`) | Set/clear `game-session:in_game` state on join/leave |
-| lib-subscription (`ISubscriptionClient`) | Query account subscriptions for shortcut eligibility |
+| lib-subscription (`ISubscriptionClient`) | Query account subscriptions for shortcut eligibility and startup cache warmup |
+| lib-connect (`IConnectClient`) | Query connected sessions for an account on `subscription.updated` events |
 
-> **Refactoring Consideration**: This plugin injects 3 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+> **Refactoring Consideration**: This plugin injects 4 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ---
 
@@ -34,8 +35,8 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-matchmaking | Creates matchmade sessions with reservations; calls `PublishJoinShortcutAsync` |
-| lib-analytics | References `IGameSessionClient` for session context |
+| lib-matchmaking | Creates matchmade sessions with reservations via `IGameSessionClient.CreateGameSessionAsync`; calls `PublishJoinShortcutAsync` to notify players |
+| lib-analytics | Uses `IGameSessionClient` for session context queries |
 
 ---
 
@@ -69,12 +70,12 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 
 ### Consumed Events
 
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `session.connected` | `SessionConnectedEvent` | Tracks session, publishes join shortcuts for subscribed accounts |
-| `session.disconnected` | `SessionDisconnectedEvent` | Removes session from subscriber tracking |
-| `session.reconnected` | `SessionReconnectedEvent` | Re-publishes shortcuts (treated same as new connection) |
-| `subscription.updated` | `SubscriptionUpdatedEvent` | Updates subscription cache, publishes/revokes shortcuts |
+| Topic | Event Type | Handler | Action |
+|-------|-----------|---------|--------|
+| `session.connected` | `SessionConnectedEvent` | `HandleSessionConnectedAsync` | Tracks session, fetches subscriptions if not cached, publishes join shortcuts for subscribed accounts |
+| `session.disconnected` | `SessionDisconnectedEvent` | `HandleSessionDisconnectedAsync` | Removes session from subscriber tracking (only if authenticated) |
+| `session.reconnected` | `SessionReconnectedEvent` | `HandleSessionReconnectedAsync` | Re-publishes shortcuts (treated same as new connection) |
+| `subscription.updated` | `SubscriptionUpdatedEvent` | `HandleSubscriptionUpdatedAsync` | Updates subscription cache, queries Connect for all account sessions, publishes/revokes shortcuts |
 
 ---
 
@@ -366,11 +367,9 @@ Subscription Cache Architecture
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-*T25 violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
-
-No other bugs identified.
+1. **Kick does not clear permission state**: `KickPlayerAsync` removes the player from the session and publishes the `player-left` event with `Kicked=true`, but does NOT call `_permissionClient.ClearSessionStateAsync` for the kicked player's WebSocket session. The kicked player retains `game-session:in_game` permission state until session expiry. Compare to `LeaveGameSessionAsync` (line 751) and `LeaveGameSessionByIdAsync` (line 1162) which both clear state. Fix: Add permission state clearing to `KickPlayerAsync` matching the leave operations.
 
 ### Intentional Quirks
 
@@ -386,9 +385,9 @@ No other bugs identified.
 
 6. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
-1. **T5 (Inline event models)**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline. Should be defined in schema files and generated.
+1. **Inline event models not in schema**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined as `internal class` in `ReservationCleanupService.cs` (lines 254-270). Should be defined in schema files and generated per FOUNDATION TENETS. These are used for the `game-session.session-cancelled` server event and the client-facing cancellation notification.
 
 2. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
 
