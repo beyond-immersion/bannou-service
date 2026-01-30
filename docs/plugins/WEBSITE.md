@@ -9,7 +9,7 @@
 
 ## Overview
 
-Public-facing website service for browser-based access to registration, news, account management, game downloads, CMS page management, and server status. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint returns `StatusCodes.NotImplemented` with a warning log. No business logic, state storage, or cross-service calls are implemented. The schema defines a comprehensive CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account/character/subscription views. When implemented, this service will require integration with account, character, subscription, realm, and potentially auth services via generated clients.
+Public-facing website service for browser-based access to registration, news, account management, game downloads, CMS page management, and server status. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint logs a debug message and returns `StatusCodes.NotImplemented` (except `GetAccountSubscriptionAsync` which throws `NotImplementedException`). No business logic, state storage, or cross-service calls are implemented. The schema defines a comprehensive CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account/character/subscription views. When implemented, this service will require integration with account, character, subscription, realm, and potentially auth services via generated clients.
 
 ---
 
@@ -94,7 +94,7 @@ Service lifetime is **Scoped** (per-request). No background services. Plugin dis
 
 ## API Endpoints (Implementation Notes)
 
-**CRITICAL: ALL 17 endpoints are stubs.** Every method logs a warning and returns `(StatusCodes.NotImplemented, null)`. The error handling catch blocks call `TryPublishErrorAsync` but can never be reached because the try blocks contain only a log statement and return.
+**CRITICAL: ALL 17 endpoints are stubs.** Most methods log a debug message and return `(StatusCodes.NotImplemented, null)`. The one exception is `GetAccountSubscriptionAsync` which throws `NotImplementedException` directly (a bug). The error handling catch blocks call `TryPublishErrorAsync` but can never be reached because the try blocks contain only a log statement and return.
 
 ### Status Endpoints (2 endpoints)
 
@@ -122,7 +122,7 @@ Service lifetime is **Scoped** (per-request). No background services. Plugin dis
 
 - **GetAccountCharacters** (`GET /website/account/characters`): Lists characters for the logged-in user. Access: user (requires BearerAuth). **Stub** -- returns NotImplemented. When implemented, will need to call `ICharacterClient` to list characters owned by the authenticated account.
 
-- **GetSubscription** (`GET /website/account/subscription`): Returns subscription status and plan details. Access: user (requires BearerAuth). **Stub** -- returns NotImplemented. When implemented, will need to call `ISubscriptionClient` for the user's active subscription.
+- **GetAccountSubscription** (`GET /website/account/subscription`): Returns subscription status and plan details. Access: user (requires BearerAuth). **BUG** -- throws `NotImplementedException` instead of returning `(StatusCodes.NotImplemented, null)` like all other stubs. When implemented, will need to call `ISubscriptionClient` for the user's active subscription.
 
 ### CMS Endpoints (7 endpoints)
 
@@ -265,7 +265,7 @@ Generated Model Hierarchy
 
 ## Stubs & Unimplemented Features
 
-1. **ALL 17 endpoints are stubs**: Every method in `WebsiteService.cs` immediately logs a warning and returns `(StatusCodes.NotImplemented, null)`. There is zero business logic.
+1. **ALL 17 endpoints are stubs**: Every method in `WebsiteService.cs` immediately logs a debug message and returns `(StatusCodes.NotImplemented, null)` (except `GetAccountSubscriptionAsync` which throws `NotImplementedException`). There is zero business logic.
 
 2. **No state store**: The `schemas/state-stores.yaml` has no website entries. CMS pages, news items, site settings, and theme configuration have nowhere to persist.
 
@@ -273,7 +273,7 @@ Generated Model Hierarchy
 
 4. **No authentication context**: The service has no mechanism to identify the authenticated user (no `IHttpContextAccessor`, no JWT claims extraction). The `user`-role endpoints cannot determine whose profile/characters/subscription to return.
 
-5. **Dead error handling**: The catch blocks in every method call `TryPublishErrorAsync` but can never be reached -- the preceding try block contains only a log statement and a return. The async warning pattern (`LogWarning` then return) cannot throw.
+5. **Dead error handling**: The catch blocks in every method call `TryPublishErrorAsync` but can never be reached -- the preceding try block contains only a log statement and a return. The pattern (`LogDebug` then return) cannot throw.
 
 6. **No event publishing for domain actions**: When implemented, CMS page creation/update/deletion should publish domain events. No events schema exists (`schemas/website-events.yaml` is missing).
 
@@ -311,17 +311,19 @@ Generated Model Hierarchy
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-1. **Unreachable catch blocks**: Every endpoint method has a try-catch where the try block cannot throw (contains only `LogWarning` + return). The catch blocks with `TryPublishErrorAsync` are dead code. When real logic is added, the error handling structure is already in place but the current code is misleading.
+1. **`GetAccountSubscriptionAsync` throws `NotImplementedException`**: Unlike all other stub methods which return `(StatusCodes.NotImplemented, null)`, this method throws `NotImplementedException` directly at line 465. This causes a 500 Internal Server Error instead of the expected NotImplemented response, breaking consistency with the other 16 endpoints.
 
-### Intentional Quirks
+2. **Unreachable catch blocks**: Every endpoint method has a try-catch where the try block cannot throw (contains only `LogDebug` + return). The catch blocks with `TryPublishErrorAsync` are dead code. When real logic is added, the error handling structure is already in place but the current code is misleading.
+
+### Intentional Quirks (Documented Behavior)
 
 1. **Path params on GET endpoints**: The `content/{slug}` and `cms/pages/{slug}` endpoints use path parameters, which means they cannot be routed via the WebSocket binary protocol (which requires static POST paths for GUID mapping). This service is accessed directly via HTTP, not through the Connect gateway.
 
 2. **No NotImplemented mapping in ConvertToActionResult**: The generated `ConvertToActionResult` switch expression has no case for `StatusCodes.NotImplemented`. Since all stubs currently return NotImplemented, the controller will fall through to the `_ => StatusCode(500, result)` default case, meaning clients receive 500 Internal Server Error instead of 501 Not Implemented.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
 1. **No WebSocket access**: Because this service uses REST HTTP methods, it cannot be accessed via the Connect WebSocket gateway. This means browser clients must make direct HTTP requests to the Bannou service, which has implications for authentication (must use Bearer tokens, not WebSocket session tokens).
 
@@ -337,7 +339,7 @@ Generated Model Hierarchy
 
 7. **Schema defines `additionalProperties: false` globally**: All response models forbid additional properties. This means future schema evolution (adding fields) requires client updates -- no backwards-compatible field additions are possible without a version bump.
 
-8. **GetSubscription overlaps with Subscription service**: The website's `GetSubscription` endpoint essentially duplicates what the dedicated Subscription service provides (`/subscription/get`). The intent is to aggregate subscription data with a web-friendly response shape, but care must be taken to avoid divergence.
+8. **GetAccountSubscription overlaps with Subscription service**: The website's `GetAccountSubscription` endpoint essentially duplicates what the dedicated Subscription service provides (`/subscription/get`). The intent is to aggregate subscription data with a web-friendly response shape, but care must be taken to avoid divergence.
 
 9. **Non-nullable collection fields default to null**: Multiple `ICollection<T>` fields like `Keywords`, `SupportedLanguages`, `SocialLinks`, `Navigation`, `Tags`, `Benefits`, and `Children` are typed as non-nullable but assigned `= default!` in the generated models. Accessing these without initialization throws `NullReferenceException`.
 
@@ -352,3 +354,11 @@ Generated Model Hierarchy
 14. **Dead configuration reference**: The `_configuration` field is assigned but never used. Acceptable for a stub service, but should be wired up when implementing.
 
 15. **Missing XML documentation**: Several public methods lack `<param>` and `<returns>` tags. Acceptable for a stub service, but should be completed when implementing.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items tracked.*
