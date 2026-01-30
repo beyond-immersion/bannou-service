@@ -17,16 +17,16 @@ Central intelligence for Bannou environment management and service orchestration
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for heartbeats, routing, configuration versioning, and processing pool state |
+| lib-state (`IStateStoreFactory`) | Redis persistence for heartbeats, routing, configuration versioning, and processing pool state (via `IOrchestratorStateManager`) |
 | lib-state (`IDistributedLockProvider`) | Pool-level locks for atomic acquire/release operations (15-second TTL) |
-| lib-messaging (`IMessageBus`) | Publishing health pings, service mapping broadcasts, deployment events, processor released events, and error events |
-| lib-mesh (`IServiceNavigator`) | Cross-service invocation (permission registration) |
+| lib-messaging (`IMessageBus`) | Publishing health pings, service mapping broadcasts, deployment events, processor released events, error events, and permission registration |
+| lib-messaging (`IEventConsumer`) | Registering event handlers (heartbeat consumer) |
+| `IHttpClientFactory` (Microsoft.Extensions.Http) | HTTP client for OpenResty cache invalidation requests |
 | `IContainerOrchestrator` (internal) | Backend abstraction for container lifecycle: deploy, teardown, scale, restart, logs, status |
 | `IBackendDetector` (internal) | Detects available container backends (Docker socket, Portainer, Kubernetes) |
 | `IOrchestratorStateManager` (internal) | Encapsulates all Redis state operations with index-based patterns |
 | `IOrchestratorEventManager` (internal) | Encapsulates event publishing logic (deployment events, health pings) |
-| `IServiceHealthMonitor` (internal) | Manages service routing tables and heartbeat-based health status; supports source filtering (all/control_plane_only/deployed_only) |
-| `IControlPlaneServiceProvider` (bannou-service) | Exposes control plane service information (enabled plugins, effective app-id) for health reporting |
+| `IServiceHealthMonitor` (internal) | Manages service routing tables and heartbeat-based health status; consumes `IControlPlaneServiceProvider` for control plane introspection |
 | `ISmartRestartManager` (internal) | Evaluates whether services need restart based on configuration changes |
 | `PresetLoader` (internal) | Loads deployment preset YAML files from filesystem |
 
@@ -78,7 +78,8 @@ Central intelligence for Bannou environment management and service orchestration
 |-------|-----------|---------|
 | `orchestrator.health-ping` | `OrchestratorHealthPingEvent` | Infrastructure health check verifies pub/sub path |
 | `bannou.full-service-mappings` | `FullServiceMappingsEvent` | After any routing change (deploy, teardown, topology update, reset) |
-| `orchestrator.deployment` | `DeploymentEvent` | Deploy/teardown started, completed, or failed |
+| `bannou.deployment-events` | `DeploymentEvent` | Deploy/teardown started, completed, failed, or topology changed |
+| `bannou.service-restart` | `ServiceRestartEvent` | Service restart requested via SmartRestartManager |
 | `orchestrator.processor.released` | `ProcessorReleasedEvent` | Processor released back to pool (includes pool type, success/failure, lease duration) |
 | `permission.service-registered` | `ServiceRegistrationEvent` | Service startup: registers permissions (or blank in secure mode) |
 | (error topic via `TryPublishErrorAsync`) | Error event | Any unexpected internal failure |
@@ -130,19 +131,20 @@ Central intelligence for Bannou environment management and service orchestration
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<OrchestratorService>` | Scoped | Structured logging |
-| `OrchestratorServiceConfiguration` | Singleton | All 27 config properties |
-| `IStateStoreFactory` | Singleton | Redis state store access (via IOrchestratorStateManager) |
+| `ILoggerFactory` | Singleton | Creates loggers for internal helpers (PresetLoader) |
+| `OrchestratorServiceConfiguration` | Singleton | All 25 config properties |
+| `AppConfiguration` | Singleton | Global app configuration (DEFAULT_APP_NAME, etc.) |
 | `IDistributedLockProvider` | Singleton | Pool-level distributed locks (`orchestrator-pool`, 15s TTL) |
 | `IMessageBus` | Scoped | Event publishing |
-| `IServiceNavigator` | Scoped | Cross-service communication |
+| `IEventConsumer` | Scoped | Event subscription registration |
+| `IHttpClientFactory` | Singleton | HTTP client for OpenResty cache invalidation |
 | `IOrchestratorStateManager` | Singleton | State operations: heartbeats, routings, config versions, pool data |
 | `IOrchestratorEventManager` | Singleton | Deployment/health event publishing |
-| `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation, source-filtered health reports |
-| `IControlPlaneServiceProvider` | Singleton | Control plane app-id and enabled service list (from PluginLoader) |
+| `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation, source-filtered health reports (injects IControlPlaneServiceProvider) |
 | `ISmartRestartManager` | Singleton | Configuration-based restart determination |
 | `IContainerOrchestrator` | (resolved at runtime) | Backend-specific container operations |
 | `IBackendDetector` | Singleton | Backend availability detection |
-| `PresetLoader` | Singleton | Filesystem preset YAML loading |
+| `PresetLoader` | (created in ctor) | Filesystem preset YAML loading |
 
 Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
@@ -209,7 +211,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Pool Cleanup (1 endpoint)
 
-- **CleanupPool** (`/orchestrator/processing-pool/cleanup`): Gets available instances and pool config. If `preserveMinimum=true`, keeps minInstances alive. Removes excess idle instances from both instance and available lists. Does NOT tear down containers (only cleans state). Returns removed count.
+- **CleanupPool** (`/orchestrator/processing-pool/cleanup`): Gets available instances and pool config. If `preserveMinimum=true`, keeps minInstances alive. For each excess idle instance: calls `TeardownServiceAsync` to stop the container, then removes from both instance and available lists. Returns removed count.
 
 ### Discovery & Routing (3 endpoints)
 
@@ -221,7 +223,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Logs (1 endpoint)
 
-- **GetLogs** (`/orchestrator/logs`): Resolves target from service name or container name (falls back to "bannou"). Calls `GetContainerLogsAsync` with tail count and optional since timestamp. Parses log text into `LogEntry` objects. Note: timestamps are currently set to UtcNow rather than parsed from log lines (see Known Quirks).
+- **GetLogs** (`/orchestrator/logs`): Resolves target from service name or container name (falls back to "bannou"). Calls `GetContainerLogsAsync` with tail count and optional since timestamp. Parses log text into `LogEntry` objects. Attempts to parse Docker timestamp prefix (ISO 8601 with nanoseconds) from each line; falls back to UtcNow if parsing fails. Handles `[STDERR]` markers to distinguish stream types.
 
 ---
 
@@ -275,16 +277,16 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
          |                  | (cleanup)       | (release)
     (deploy)                v                 v
          |            +-----------+     +-----------+
-    +----+----+       | Removed   |     | Metrics   |
-    | Orch.   |       | (state    |     | Updated   |
-    | Deploy  |       |  only)    |     +-----------+
+    +----+----+       | Teardown  |     | Metrics   |
+    | Orch.   |       | + Remove  |     | Updated   |
+    | Deploy  |       | state     |     +-----------+
     +---------+       +-----------+
 
     Scale Up:  Deploy new containers --> Pending --> Available (after self-reg)
     Scale Down: Available --> Teardown container --> Remove from state
     Acquire:    Lock(pool) --> Available.pop() --> Create Lease --> Return processor info
     Release:    Find pool --> Lock(pool) --> Remove Lease --> Available.push() --> Update metrics --> Publish event
-    Cleanup:    Available.excess(minInstances) --> Remove from state
+    Cleanup:    Available.excess(minInstances) --> Teardown container --> Remove from state
 ```
 
 ### Backend Abstraction
@@ -413,8 +415,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 | Queue depth tracking (pool status) | Hardcoded 0 | Comment: "We don't have a queue yet" |
 | Auto-scaling (pool) | No trigger | Thresholds are stored but no background job evaluates them |
 | Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored but no background timer |
-| Processing pool container teardown on cleanup | State-only | `CleanupPoolAsync` removes from state lists but does not call `TeardownServiceAsync` |
-| Log timestamp parsing | Hardcoded UtcNow | Log entries use current time, not parsed from log line |
+| Log timestamp parsing | Partial | Attempts to parse timestamps from log lines but falls back to UtcNow |
 
 ---
 
@@ -422,13 +423,11 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 - **Auto-scaling background service**: A timer-based service that evaluates pool utilization against `ScaleUpThreshold`/`ScaleDownThreshold` and automatically scales pools.
 - **Idle timeout enforcement**: Background cleanup for pool workers that have been available beyond `IdleTimeoutMinutes`.
-- **Container teardown in CleanupPool**: Currently only removes state entries; should also call `TeardownServiceAsync` to actually stop containers.
 - **Multi-version rollback**: Currently only rolls back to version N-1. Could support rollback to arbitrary historical versions.
 - **Deploy validation**: Pre-flight checks before deployment (disk space, network reachability, image pull verification).
 - **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old.
 - **Canary deployments**: Route percentage of traffic to new version, monitor health, then promote or rollback.
 - **Network/volume/image pruning**: Extend `IContainerOrchestrator` with prune methods for Docker system cleanup.
-- **Log timestamp parsing**: Parse actual timestamps from Docker log output format.
 - **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
 - **Lease expiry enforcement**: Background timer to reclaim expired leases and return processors to available pool.
 
@@ -465,6 +464,14 @@ None identified.
 4. **GetOrchestratorAsync TTL check is ineffective for scoped service**: Since `OrchestratorService` is scoped (per-request), the `_orchestrator` field starts null every request. The TTL-based cache invalidation logic can never trigger - the caching only provides within-request reuse.
 
 5. **`_lastKnownDeployment` in-memory state**: Orchestrator is typically single-instance, but this field could diverge across instances if multiple were ever deployed. Should read from Redis state manager.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+*No active work items.*
 
 ---
 

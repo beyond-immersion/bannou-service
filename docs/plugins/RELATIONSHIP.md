@@ -9,7 +9,7 @@
 
 ## Overview
 
-A generic relationship management service for entity-to-entity relationships (character friendships, alliances, rivalries, etc.). Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, and soft-deletion with the ability to recreate ended relationships. Used by the Character service for managing inter-character bonds.
+A generic relationship management service for entity-to-entity relationships (character friendships, alliances, rivalries, etc.). Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, and soft-deletion with the ability to recreate ended relationships. Used by the Character service for managing inter-character bonds and by the RelationshipType service for type merge migrations.
 
 ---
 
@@ -19,7 +19,7 @@ A generic relationship management service for entity-to-entity relationships (ch
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Persistence for relationship records and indexes |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
-| lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-messaging (`IEventConsumer`) | Event registration infrastructure (no current handlers) |
 
 ---
 
@@ -27,8 +27,8 @@ A generic relationship management service for entity-to-entity relationships (ch
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-character | Calls `IRelationshipClient` to manage character relationships; deletes relationships on character delete/compress |
-| lib-relationship-type | Calls `IRelationshipClient` for type merge migrations (updates relationship types during deprecation merges) |
+| lib-character | Calls `IRelationshipClient.ListRelationshipsByEntityAsync` for family tree building and reference counting during compression eligibility checks |
+| lib-relationship-type | Calls `IRelationshipClient.ListRelationshipsByTypeAsync` and `UpdateRelationshipAsync` for type merge migrations (updates relationship types during deprecation merges) |
 
 No services subscribe to relationship events.
 
@@ -41,9 +41,10 @@ No services subscribe to relationship events.
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `rel:{relationshipId}` | `RelationshipModel` | Full relationship record |
-| `entity-idx:{entityType}:{entityId}` | `List<string>` | Relationship IDs involving this entity |
-| `type-idx:{relationshipTypeId}` | `List<string>` | Relationship IDs of this type |
-| `composite:{entity1}:{entity2}:{typeId}` | `string` | Uniqueness constraint (normalized bidirectional key → relationship ID) |
+| `entity-idx:{entityType}:{entityId}` | `List<Guid>` | Relationship IDs involving this entity |
+| `type-idx:{relationshipTypeId}` | `List<Guid>` | Relationship IDs of this type |
+| `composite:{entity1}:{entity2}:{typeId}` | `string` | Uniqueness constraint (normalized bidirectional key -> relationship ID) |
+| `all-relationships` | `List<Guid>` | Master list of all relationship IDs (maintained but never queried) |
 
 ---
 
@@ -91,7 +92,7 @@ Service lifetime is **Scoped** (per-request).
 
 ## API Endpoints (Implementation Notes)
 
-- **Create**: Validates entities are not the same (prevents self-relationships). Normalizes composite key bidirectionally (`A→B` and `B→A` produce the same key via string sort). Stores four keys: relationship data, two entity indexes, composite uniqueness key. Publishes `relationship.created`.
+- **Create**: Validates entities are not the same (prevents self-relationships). Normalizes composite key bidirectionally (`A->B` and `B->A` produce the same key via string sort). Stores five keys: relationship data, two entity indexes, type index, composite uniqueness key, and all-relationships list. Publishes `relationship.created`.
 
 - **Get**: Simple key lookup by relationship ID.
 
@@ -101,7 +102,7 @@ Service lifetime is **Scoped** (per-request).
 
 - **ListByType**: Loads from type index, bulk-fetches, applies in-memory filtering and pagination.
 
-- **Update**: Can modify metadata and relationship type. When type changes, updates type indexes (removes from old, adds to new). Immutable fields: entity1, entity2 (cannot change participants). Publishes `relationship.updated` with `changedFields`.
+- **Update**: Can modify metadata and relationship type. When type changes, updates type indexes (removes from old, adds to new). Immutable fields: entity1, entity2 (cannot change participants). Ended relationships cannot be updated (returns Conflict). Publishes `relationship.updated` with `changedFields`.
 
 - **End**: Soft-deletes by setting `EndedAt` timestamp. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted`.
 
@@ -113,33 +114,33 @@ Service lifetime is **Scoped** (per-request).
 Composite Key Normalization (Bidirectional Uniqueness)
 =======================================================
 
-Create: Entity A (character) → Entity B (character), Type: FRIEND
+Create: Entity A (character) -> Entity B (character), Type: FRIEND
 
   Step 1: Build composite components
-    key1 = "character:A"
-    key2 = "character:B"
+    key1 = "Character:A"
+    key2 = "Character:B"
 
-  Step 2: Normalize via string sort
-    "character:A" < "character:B" → no swap needed
-    composite = "composite:character:A:character:B:FRIEND"
+  Step 2: Normalize via string sort (Ordinal comparison)
+    "Character:A" < "Character:B" -> no swap needed
+    composite = "composite:Character:A:Character:B:FRIEND"
 
   Step 3: Check uniqueness
-    IF composite key exists → 409 Conflict
-    ELSE → create relationship
+    IF composite key exists -> 409 Conflict
+    ELSE -> create relationship
 
-Create: Entity B (character) → Entity A (character), Type: FRIEND
-  → Same composite key (sorted) → 409 Conflict (already exists)
+Create: Entity B (character) -> Entity A (character), Type: FRIEND
+  -> Same composite key (sorted) -> 409 Conflict (already exists)
 
 End relationship:
-  → Composite key DELETED
-  → Relationship can be recreated
+  -> Composite key DELETED
+  -> Relationship can be recreated
 ```
 
 ---
 
 ## Stubs & Unimplemented Features
 
-1. **`all-relationships` master list key**: The constant is defined and maintained during create but never queried in any endpoint. Likely vestigial from early development.
+1. **`all-relationships` master list key**: The constant is defined and maintained during create (line 443) but never queried in any endpoint. Likely vestigial from early development or intended for future admin queries.
 
 ---
 
@@ -154,13 +155,13 @@ End relationship:
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
 No bugs identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
-1. **Self-relationship with different types allowed**: The self-relationship check compares both ID and type. Entity A (type: character) → Entity A (type: npc) is allowed. This supports entities that span multiple type classifications.
+1. **Self-relationship with different types allowed**: The self-relationship check compares both ID and type. Entity A (type: character) -> Entity A (type: npc) is allowed. This supports entities that span multiple type classifications.
 
 2. **Ended relationships remain in indexes**: When a relationship ends, entity and type indexes retain the relationship ID. This preserves queryability of historical relationships but requires filtering in read paths.
 
@@ -168,7 +169,9 @@ No bugs identified.
 
 4. **GetBetween only checks entity1's index**: Looks up entity1's relationships and filters for entity2. If entity1's index is corrupted but entity2's is correct, the relationship won't be found. No cross-validation against entity2's index.
 
-### Design Considerations
+5. **Update rejects ended relationships**: Attempting to update a relationship that has `EndedAt` set returns `StatusCodes.Conflict`. This prevents modifications to historical records.
+
+### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
 
@@ -178,6 +181,14 @@ No bugs identified.
 
 4. **Type migration during merge**: The update endpoint allows changing `RelationshipTypeId`, which is used by the RelationshipType service during type merges. This modifies type indexes atomically but without distributed transaction guarantees — a crash between removing from old index and adding to new could leave the relationship in neither index.
 
-5. **Read-modify-write without distributed locks**: Index updates and composite key checks have no concurrency protection. Requires IDistributedLockProvider integration.
+5. **Read-modify-write without distributed locks**: Index updates (add/remove from list) and composite key checks have no concurrency protection. Two concurrent creates with the same composite key could both pass the uniqueness check if timed precisely. Requires IDistributedLockProvider integration.
 
-6. **Data inconsistency logging without error events**: Error logging when index contains ID but model not found, without publishing error event. Could add TryPublishErrorAsync for monitoring.
+6. **Data inconsistency logging without error events**: When bulk-fetch finds an ID in the index but the model doesn't exist, the service logs an error but does not publish an error event via `TryPublishErrorAsync`. This makes orphaned references harder to detect via monitoring.
+
+---
+
+## Work Tracking
+
+*This section tracks active development work. Markers are managed by `/audit-plugin`.*
+
+No items currently being tracked.

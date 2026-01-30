@@ -181,11 +181,11 @@ EmotionalState Dimensions
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+None identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **Storyteller always used for Generate**: Even when no mood or narrative options are provided, the Storyteller SDK is invoked with default parameters (neutral mood → `simple_arc` template).
 
@@ -195,14 +195,31 @@ No bugs identified.
 
 4. **SDK types cross the API boundary**: Several types (PitchClass, Pitch, PitchRange, VoiceLeadingViolation) use `x-sdk-type` annotations meaning the API models are the actual SDK types. Changes to SDK types directly affect the API contract.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
 1. **Unused state store (music-styles)**: The MySQL store is defined in `state-stores.yaml` but never accessed. All styles come from hardcoded `BuiltInStyles`. Either implement CreateStyle persistence or remove the store from schema.
 
-2. **Hardcoded tunables throughout**: Multiple hardcoded values (480 TPB, 0.2 syncopation, 0.7 density, 4 voices, 8 progression length, 0.2 tension threshold, emotional state defaults). Requires ~13 new configuration properties to fully address.
+2. **Hardcoded tunables throughout**: Multiple hardcoded values scattered through the code:
+   - `ticksPerBeat = 480` (line 112)
+   - `chordsPerBar = 1` (line 128)
+   - `voiceCount = 4` (line 135)
+   - `Syncopation = 0.2` (lines 144, 616)
+   - `beatsPerChord = 4.0` (line 517)
+   - `Density = 0.7` (line 615)
+   - Emotional state defaults: tension=0.2, brightness=0.5, energy=0.5, warmth=0.5, stability=0.8, valence=0.5 (lines 839-844)
 
-3. **MusicServicePlugin scope lifecycle**: Plugin creates DI scope in `OnStartAsync`, disposes it, but keeps service reference. Subsequent lifecycle calls may use disposed dependencies. Requires architectural fix.
+   Requires ~10 new configuration properties to fully address.
+
+3. **MusicServicePlugin scope lifecycle**: The plugin creates a scoped DI container in `OnStartAsync` (line 66), resolves `IMusicService`, then disposes the scope at the end of the `using` block. The `_service` reference is retained but never used after initial startup (subsequent requests create their own scopes via controller DI). This is not a bug but could be confusing—the `_service` field could be removed or the pattern simplified.
 
 4. **No event publishing for compositions**: Generated compositions are not tracked. No analytics on what styles/moods are popular, no composition history per user.
 
 5. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items.*

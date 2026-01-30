@@ -30,8 +30,7 @@ The Realm service manages top-level persistent worlds in the Arcadia game system
 | lib-location | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before location creation |
 | lib-species | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before species operations |
 | lib-character | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before character creation |
-
-No services subscribe to realm events.
+| lib-analytics | Subscribes to `realm.updated` event for cache invalidation (realm-to-gameService resolution cache) |
 
 ---
 
@@ -43,7 +42,7 @@ No services subscribe to realm events.
 |-------------|-----------|---------|
 | `realm:{realmId}` | `RealmModel` | Full realm definition (name, code, game service, deprecation state) |
 | `code-index:{CODE}` | `string` | Code → realm ID lookup (uppercase normalized) |
-| `all-realms` | `List<string>` | Master list of all realm IDs |
+| `all-realms` | `List<Guid>` | Master list of all realm IDs |
 
 ---
 
@@ -51,11 +50,11 @@ No services subscribe to realm events.
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `realm.created` | New realm created |
-| `realm.updated` | Realm metadata modified, deprecated, or undeprecated (includes `changedFields`) |
-| `realm.deleted` | Realm permanently deleted |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `realm.created` | `RealmCreatedEvent` | New realm created |
+| `realm.updated` | `RealmUpdatedEvent` | Realm metadata modified, deprecated, or undeprecated (includes `changedFields`) |
+| `realm.deleted` | `RealmDeletedEvent` | Realm permanently deleted |
 
 Events are auto-generated from `x-lifecycle` in `realm-events.yaml`.
 
@@ -193,3 +192,11 @@ None identified.
 4. **Event publishing non-transactional**: State store writes and event publishing are separate operations. A crash between writing state and publishing the event would leave dependent services unaware of the change until they directly query.
 
 5. **Read-modify-write without distributed locks**: Create/Delete modify the all-realms list, Update modifies realm model. Requires ETag-based optimistic concurrency or distributed locks.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+*No active work items.*

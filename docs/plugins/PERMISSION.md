@@ -30,6 +30,9 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-connect | Validates API access for WebSocket messages; receives capability updates for connected sessions |
+| lib-game-session | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_game` state when players join/leave |
+| lib-matchmaking | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_match` state during matchmaking |
+| lib-voice | Calls `IPermissionClient.UpdateSessionStateAsync` to set voice call states (`ringing`, `in_call`) |
 | All services (via generated permission registration) | Register their x-permissions matrix on startup via `ServiceRegistrationEvent` |
 
 ---
@@ -238,4 +241,8 @@ None identified.
 
 3. **Read-modify-write on session sets**: `activeConnections`/`activeSessions` set operations without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
 
-4. **Anonymous type for registration info**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. Should define a typed `ServiceRegistrationInfo` POCO class.
+---
+
+## Work Tracking
+
+None tracked.

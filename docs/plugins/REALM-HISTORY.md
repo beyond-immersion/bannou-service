@@ -20,6 +20,8 @@ Historical event participation and lore management for realms. Tracks when realm
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and lore |
 | lib-messaging (`IMessageBus`) | Publishing participation and lore lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| `PaginationHelper` | Calculates skip/take for pagination (from `bannou-service/History/`) |
+| `TimestampHelper` | Unix timestamp conversion utilities (from `bannou-service/History/`) |
 
 ---
 
@@ -27,7 +29,7 @@ Historical event participation and lore management for realms. Tracks when realm
 
 | Dependent | Relationship |
 |-----------|-------------|
-| (none identified) | No services currently call `IRealmHistoryClient` in production code |
+| lib-analytics | Subscribes to `realm-history.participation.recorded`, `realm-history.lore.created`, `realm-history.lore.updated` events to ingest realm history data for analytics aggregation |
 
 ---
 
@@ -48,14 +50,14 @@ Historical event participation and lore management for realms. Tracks when realm
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `realm-history.participation.recorded` | New participation recorded |
-| `realm-history.participation.deleted` | Participation removed |
-| `realm-history.lore.created` | First lore created for a realm |
-| `realm-history.lore.updated` | Existing lore modified |
-| `realm-history.lore.deleted` | All lore deleted for a realm |
-| `realm-history.deleted` | All history (participation + lore) deleted |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `realm-history.participation.recorded` | `RealmParticipationRecordedEvent` | New participation recorded |
+| `realm-history.participation.deleted` | `RealmParticipationDeletedEvent` | Participation removed |
+| `realm-history.lore.created` | `RealmLoreCreatedEvent` | First lore created for a realm |
+| `realm-history.lore.updated` | `RealmLoreUpdatedEvent` | Existing lore modified |
+| `realm-history.lore.deleted` | `RealmLoreDeletedEvent` | All lore deleted for a realm |
+| `realm-history.deleted` | `RealmHistoryDeletedEvent` | All history (participation + lore) deleted |
 
 ### Consumed Events
 
@@ -67,9 +69,9 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| --- | --- | --- | No service-specific configuration properties |
+| `ForceServiceId` | `REALM_HISTORY_FORCE_SERVICE_ID` | null | Framework-level override for service ID |
 
-The generated `RealmHistoryServiceConfiguration` contains only the framework-level `ForceServiceId` property.
+The generated `RealmHistoryServiceConfiguration` contains only the framework-level `ForceServiceId` property. No service-specific configuration is defined.
 
 ---
 
@@ -78,10 +80,10 @@ The generated `RealmHistoryServiceConfiguration` contains only the framework-lev
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RealmHistoryService>` | Scoped | Structured logging |
-| `RealmHistoryServiceConfiguration` | Singleton | Framework config (empty) |
+| `RealmHistoryServiceConfiguration` | Singleton | Framework config (minimal) |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Event registration (no handlers) |
+| `IEventConsumer` | Scoped | Event registration (no handlers currently) |
 
 Service lifetime is **Scoped** (per-request).
 
@@ -91,21 +93,21 @@ Service lifetime is **Scoped** (per-request).
 
 ### Participation Operations (4 endpoints)
 
-- **Record** (`/realm-history/record-participation`): Creates unique participation ID. Stores record and updates both realm and event indexes. Publishes recorded event.
-- **GetParticipation** (`/realm-history/get-participation`): Fetches all records for a realm, filters by event category and minimum impact, sorts by event date descending, paginates (default page size 20).
-- **GetEventParticipants** (`/realm-history/get-event-participants`): Inverse query using secondary index. Filters by role, sorts by impact descending.
-- **DeleteParticipation** (`/realm-history/delete-participation`): Removes record and updates both indexes atomically. Publishes deletion event.
+- **Record** (`/realm-history/record-participation`): Creates unique participation ID. Stores record and updates both realm and event indexes. Uses `GetBulkAsync` for efficient bulk fetching. Publishes recorded event.
+- **GetParticipation** (`/realm-history/get-participation`): Fetches all records for a realm using bulk fetch, filters by event category and minimum impact, sorts by event date descending, paginates via `PaginationHelper` (default page size 20).
+- **GetEventParticipants** (`/realm-history/get-event-participants`): Inverse query using secondary index with bulk fetch. Filters by role, sorts by impact descending.
+- **DeleteParticipation** (`/realm-history/delete-participation`): Removes record and updates both indexes. Does not delete empty index documents. Publishes deletion event.
 
 ### Lore Operations (4 endpoints)
 
-- **GetLore** (`/realm-history/get-lore`): Returns OK with empty list if no lore exists (never 404). Filters by element type and strength threshold. Converts timestamps from Unix.
+- **GetLore** (`/realm-history/get-lore`): Returns OK with empty list if no lore exists (never 404). Filters by element type and strength threshold. Converts timestamps via `TimestampHelper.FromUnixSeconds`.
 - **SetLore** (`/realm-history/set-lore`): Merge-or-replace semantics controlled by `replaceExisting` flag. Merge updates existing elements by type+key pair and adds new ones. Publishes created or updated event.
-- **AddLoreElement** (`/realm-history/add-lore-element`): Adds single element. Updates if type+key match exists. Creates lore document if none exists.
+- **AddLoreElement** (`/realm-history/add-lore-element`): Adds single element. Updates if type+key match exists. Creates lore document if none exists. Publishes created or updated event.
 - **DeleteLore** (`/realm-history/delete-lore`): Removes entire lore document. Returns NotFound if no lore exists.
 
 ### Management Operations (2 endpoints)
 
-- **DeleteAll** (`/realm-history/delete-all`): Comprehensive cleanup. Iterates all realm participations, removes from event indexes, deletes records. Also deletes lore. Returns counts of deleted items.
+- **DeleteAll** (`/realm-history/delete-all`): Comprehensive cleanup. Iterates all realm participations, removes from event indexes, deletes records. Also deletes lore. Deletes the realm index after cleanup. Returns counts of deleted items.
 - **Summarize** (`/realm-history/summarize`): Generates human-readable text summaries from machine-readable data. Selects top N elements by strength for lore summaries. Selects top N events by impact for participation summaries. Configurable limits (maxLorePoints: 1-20, default 5; maxHistoricalEvents: 1-20, default 10).
 
 ---
@@ -130,7 +132,7 @@ Dual-Index Storage Pattern
        └──► realm-participation-index-R1 → [id1, id2, id3]
                 │
                 ▼
-            Fetch each: realm-participation-{id1}, {id2}, {id3}
+            GetBulkAsync: realm-participation-{id1}, {id2}, {id3}
                 │
                 ▼
             Filter (category, minImpact) → Sort (date desc) → Paginate
@@ -141,7 +143,7 @@ Dual-Index Storage Pattern
        └──► realm-participation-event-E1 → [id1, id4, id5]
                 │
                 ▼
-            Fetch each: realm-participation-{id1}, {id4}, {id5}
+            GetBulkAsync: realm-participation-{id1}, {id4}, {id5}
                 │
                 ▼
             Filter (role) → Sort (impact desc) → Paginate
@@ -161,30 +163,33 @@ None. The service is feature-complete for its scope.
 2. **Lore inheritance**: Child realms inheriting lore elements from parent realms (if realm hierarchy is added).
 3. **AI-powered summarization**: Replace template-based summaries with LLM-generated narrative text.
 4. **Realm timeline visualization**: Chronological event data suitable for timeline UI rendering.
+5. **Shared helper migration**: Migrate to use `IDualIndexHelper` and `IBackstoryStorageHelper` from `bannou-service/History/` for consistency with character-history.
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+None identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict.
 
-2. **Event index `RealmId` field is misleading**: When creating an event index, the code sets `RealmId = body.EventId.ToString()`. The field name is `RealmId` but stores an EventId. The `RealmParticipationIndexData` class is reused for both realm and event indices with confusing field naming.
+2. **Event index `RealmId` field stores EventId**: When creating an event index, the code sets `RealmId = body.EventId` (line 124). The `RealmParticipationIndexData` class is reused for both realm and event indices - the field named `RealmId` actually stores an EventId for event indexes. This is confusing but not a bug.
 
-3. **GetLore always returns both timestamps**: Unlike character-history which returns `UpdatedAt=null` if backstory was never modified after creation, realm-history always populates both timestamps.
+3. **Summarize doesn't publish any event**: `SummarizeRealmHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
-4. **Summarize doesn't publish any event**: `SummarizeRealmHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
+4. **Unknown lore element types display raw enum string**: The `GenerateLoreSummary` method uses `_ => element.ElementType.ToString()` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
 
-### Design Considerations
+5. **Unknown participation roles default to "participated in"**: The `GenerateEventSummary` method uses `_ => "participated in"` for unrecognized roles.
 
-1. **In-memory filtering and pagination**: All list operations load full indexes, fetch all records, filter in memory, then paginate. For realms with very high participation counts, this loads everything into memory.
+### Design Considerations (Requires Planning)
 
-2. **No index cleanup on orphaned events**: Event indexes accumulate participation IDs. If a realm is deleted but its participations aren't cleaned up, event indexes contain stale entries.
+1. **In-memory filtering and pagination**: All list operations load full indexes, fetch all records via bulk fetch, filter in memory, then paginate. For realms with very high participation counts (thousands of events), this loads everything into memory.
+
+2. **No index cleanup on orphaned events**: Event indexes accumulate participation IDs. If a realm is deleted but its participations aren't cleaned up through `DeleteAll`, event indexes contain stale entries pointing to deleted records.
 
 3. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
 
@@ -192,16 +197,16 @@ No bugs identified.
 
 5. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
 
-6. **DeleteParticipation doesn't delete empty indices**: Realm and event indices are updated by removing the participation ID but don't delete the index documents when they become empty.
+6. **DeleteParticipation doesn't delete empty indices**: Realm and event indices are updated by removing the participation ID but don't delete the index documents when they become empty. This leaves empty index documents in the database.
 
-7. **DeleteAll is O(n)**: Iterates through all participations for the realm, removing each from event indexes individually. For realms with thousands of events, this could be slow.
+7. **DeleteAll is O(n) with N+1 queries**: Iterates through all participations for the realm individually, fetching each to find its eventId, then updating each event index separately. For realms with thousands of events, this could be slow. Uses bulk operations for participation records but not for event index updates.
 
-10. **ORIGIN and INSTIGATOR roles both map to "instigated"**: Lines 1005 and 1011 in `GenerateEventSummary` both produce "instigated" - semantically different roles with identical summary text.
+8. **Doesn't use shared helper classes**: Unlike character-history which uses `IDualIndexHelper` and `IBackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
 
-11. **Unknown lore element types display raw enum string**: Line 995 uses `_ => element.ElementType` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
+9. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries.
 
-12. **Unknown participation roles default to "participated in"**: Line 1013 uses `_ => "participated in"` for unrecognized roles.
+---
 
-13. **Doesn't use shared helper classes**: Unlike character-history which uses `DualIndexHelper` and `BackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
+## Work Tracking
 
-14. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection.
+*No active work items.*
