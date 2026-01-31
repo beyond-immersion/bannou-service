@@ -330,6 +330,12 @@ x-state-stores:
     service: Location
     purpose: Location lookup cache for frequently-accessed locations
 
+  location-lock:
+    backend: redis
+    prefix: "location:lock"
+    service: Location
+    purpose: Distributed locks for concurrent index modifications
+
   realm-statestore:
     backend: mysql
     service: Realm

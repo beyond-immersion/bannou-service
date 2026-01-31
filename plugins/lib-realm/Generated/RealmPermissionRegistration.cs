@@ -202,6 +202,21 @@ public static class RealmPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/realm/exists-batch",
+            Method = ServiceEndpointMethod.POST,
+            Description = "realmsExistBatch",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/realm/seed",
             Method = ServiceEndpointMethod.POST,
             Description = "seedRealms",

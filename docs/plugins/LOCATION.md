@@ -18,6 +18,7 @@ Hierarchical location management for the Arcadia game world. Manages physical pl
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for locations, code indexes, realm indexes, parent indexes |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for concurrent index modifications |
 | lib-messaging (`IMessageBus`) | Publishing location lifecycle events; error event publishing |
 | lib-messaging (`IEventConsumer`) | Event handler registration (partial class pattern, no handlers) |
 | lib-realm (`IRealmClient`) | Realm existence validation on creation; realm code resolution during seed |
@@ -39,6 +40,7 @@ Hierarchical location management for the Arcadia game world. Manages physical pl
 **Stores**:
 - `location-statestore` (via `StateStoreDefinitions.Location`) - MySQL backend (persistent)
 - `location-cache` (via `StateStoreDefinitions.LocationCache`) - Redis backend (cache)
+- `location-lock` (via `StateStoreDefinitions.LocationLock`) - Redis backend (distributed locks)
 
 | Key Pattern | Data Type | Store | Purpose |
 |-------------|-----------|-------|---------|
@@ -75,6 +77,7 @@ This plugin does not consume external events.
 | `DefaultDescendantMaxDepth` | `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | `10` | Default max depth when listing descendants |
 | `MaxDescendantDepth` | `LOCATION_MAX_DESCENDANT_DEPTH` | `20` | Safety limit for descendant/circular reference checks |
 | `CacheTtlSeconds` | `LOCATION_CACHE_TTL_SECONDS` | `3600` | TTL for location cache entries (locations change infrequently) |
+| `IndexLockTimeoutSeconds` | `LOCATION_INDEX_LOCK_TIMEOUT_SECONDS` | `5` | Timeout for acquiring distributed locks on index operations |
 
 ---
 
@@ -83,8 +86,9 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<LocationService>` | Scoped | Structured logging |
-| `LocationServiceConfiguration` | Singleton | All 3 config properties |
+| `LocationServiceConfiguration` | Singleton | All 5 config properties |
 | `IStateStoreFactory` | Singleton | State store access |
+| `IDistributedLockProvider` | Singleton | Distributed locks for index concurrency |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
 | `IRealmClient` | Scoped | Realm validation |
@@ -254,11 +258,12 @@ No bugs identified.
 
 4. ~~**Seed realm code resolution is serial**~~: **VERIFIED** (2026-01-31) - Each unique realm code triggers one `IRealmClient.GetRealmByCodeAsync` call serially, but a local `realmCodeToId` dictionary caches results so each realm is only fetched once per seed operation. Seeding 100 locations in 3 realms = 3 realm lookups (not 100). This is optimized for the common case; parallelizing for edge cases (10+ realms) adds complexity without meaningful benefit.
 
-5. **Index updates lack optimistic concurrency**: Index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
+5. ~~**Index updates lack optimistic concurrency**~~: **FIXED** (2026-01-31) - All six index helper methods (`AddToRealmIndexAsync`, `RemoveFromRealmIndexAsync`, `AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToRootLocationsAsync`, `RemoveFromRootLocationsAsync`) now use `IDistributedLockProvider` with per-key locking via `StateStoreDefinitions.LocationLock`. Lock timeout is configurable via `LOCATION_INDEX_LOCK_TIMEOUT_SECONDS` (default 5s). On lock failure, logs warning and returns without modifying the index (follows lib-inventory pattern).
 
-6. **Empty parent index key not cleaned up**: When the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
+6. ~~**Empty parent index key not cleaned up**~~: **FIXED** (2026-01-31) - `RemoveFromParentIndexAsync` now deletes the parent index key when the last child is removed instead of saving an empty list.
 
 7. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/168 -->
 
 ---
 
@@ -269,3 +274,5 @@ No bugs identified.
 - **2026-01-31**: Redis caching layer - Added `location-cache` store with read-through caching for all read operations, cache invalidation/population on writes.
 - **2026-01-31**: Root-locations index maintenance - Verified implementation is correct; index is properly maintained in all four scenarios (create, set-parent, remove-parent, delete).
 - **2026-01-31**: Seed realm code resolution - Verified implementation is correct; local dictionary caching ensures each realm code is only fetched once per seed operation.
+- **2026-01-31**: Index concurrency protection - Added distributed locking to all six index helper methods using `IDistributedLockProvider` via new `location-lock` state store. Configurable timeout via `IndexLockTimeoutSeconds` config property.
+- **2026-01-31**: Empty parent index cleanup - `RemoveFromParentIndexAsync` now deletes the key when the last child is removed instead of saving an empty list.

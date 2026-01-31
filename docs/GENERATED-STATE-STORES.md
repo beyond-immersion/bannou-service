@@ -64,6 +64,7 @@ This document lists all state store components used in Bannou.
 | `leaderboard-ranking` | Redis | Leaderboard | Real-time ranking data (sorted sets) |
 | `leaderboard-season` | MySQL | Leaderboard | Season history and archives |
 | `location-cache` | Redis | Location | Location lookup cache for frequently-accessed locations |
+| `location-lock` | Redis | Location | Distributed locks for concurrent index modifications |
 | `location-statestore` | MySQL | Location | Location hierarchy and metadata |
 | `mapping-statestore` | Redis | Mapping | Spatial map data and channels |
 | `matchmaking-statestore` | Redis | Matchmaking | Matchmaking queue and ticket state |
@@ -93,7 +94,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 83 stores (51 Redis, 32 MySQL)
+**Total**: 84 stores (52 Redis, 32 MySQL)
 
 ## Naming Conventions
 

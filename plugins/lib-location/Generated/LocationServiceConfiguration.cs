@@ -77,4 +77,10 @@ public class LocationServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int CacheTtlSeconds { get; set; } = 3600;
 
+    /// <summary>
+    /// Timeout for acquiring distributed locks on index operations (realm, parent, root indexes)
+    /// Environment variable: LOCATION_INDEX_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int IndexLockTimeoutSeconds { get; set; } = 5;
+
 }

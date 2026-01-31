@@ -268,17 +268,20 @@ make build                     # Build all services
 dotnet build                   # Alternative: direct dotnet build
 
 # Code Generation - USE THE MOST GRANULAR COMMAND POSSIBLE
+# ⚠️ Some scripts must be run FROM the scripts/ directory (they use relative paths).
+# Scripts marked with † below auto-cd and can be run from anywhere.
+
 # If you only changed ONE schema type, use the specific script:
-scripts/generate-config.sh <service>           # Configuration only (changed *-configuration.yaml)
-scripts/generate-service-events.sh <service>   # Events only (changed *-events.yaml)
-scripts/generate-models.sh <service>           # Models only (changed *-api.yaml models)
-scripts/generate-client-events.sh <service>    # Client events only (changed *-client-events.yaml)
+cd scripts && ./generate-config.sh <service>   # Configuration only (changed *-configuration.yaml)
+scripts/generate-service-events.sh <service>   # † Events only (changed *-events.yaml)
+cd scripts && ./generate-models.sh <service>   # Models only (changed *-api.yaml models)
+scripts/generate-client-events.sh <service>    # † Client events only (changed *-client-events.yaml)
 
 # If you changed multiple schema types for ONE service:
-scripts/generate-service.sh <service>          # All generated code for one service
+cd scripts && ./generate-service.sh <service>  # All generated code for one service
 
 # ONLY use full regeneration when necessary (e.g., changed common schemas):
-scripts/generate-all-services.sh               # Regenerate ALL services (slow - avoid if possible)
+scripts/generate-all-services.sh               # † Regenerate ALL services (slow - avoid if possible)
 
 # Unit Testing (the ONLY test command Claude should run)
 make test                      # Run unit tests (dotnet test)
@@ -291,11 +294,11 @@ make inspect-list PKG="RabbitMQ.Client"
 ```
 
 **⚠️ Generation Script Selection Guide**:
-- Changed `schemas/foo-configuration.yaml` → run `scripts/generate-config.sh foo`
+- Changed `schemas/foo-configuration.yaml` → run `cd scripts && ./generate-config.sh foo`
 - Changed `schemas/foo-events.yaml` → run `scripts/generate-service-events.sh foo`
-- Changed `schemas/foo-api.yaml` (models only) → run `scripts/generate-models.sh foo`
+- Changed `schemas/foo-api.yaml` (models only) → run `cd scripts && ./generate-models.sh foo`
 - Changed `schemas/foo-client-events.yaml` → run `scripts/generate-client-events.sh foo`
-- Changed multiple schema files for `foo` → run `scripts/generate-service.sh foo`
+- Changed multiple schema files for `foo` → run `cd scripts && ./generate-service.sh foo`
 - Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
 
 ### Code Quality Requirements

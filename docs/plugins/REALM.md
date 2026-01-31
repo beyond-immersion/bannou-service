@@ -90,9 +90,9 @@ Service lifetime is **Scoped** (per-request).
 
 ## API Endpoints (Implementation Notes)
 
-### Read Operations (4 endpoints)
+### Read Operations (5 endpoints)
 
-Standard read operations with two lookup strategies. **GetByCode** uses a two-step lookup: code index → realm ID → realm data. **Exists** returns an `exists` + `isActive` pair (always returns 200, never 404) for fast validation by dependent services. **List** supports filtering by category, active status, and deprecation, with pagination.
+Standard read operations with two lookup strategies. **GetByCode** uses a two-step lookup: code index → realm ID → realm data. **Exists** returns an `exists` + `isActive` pair (always returns 200, never 404) for fast validation by dependent services. **ExistsBatch** validates multiple realm IDs in a single call using `GetBulkAsync`, returning per-realm results plus convenience flags (`allExist`, `allActive`) and lists of invalid/deprecated IDs. **List** supports filtering by category, active status, and deprecation, with pagination.
 
 ### Write Operations (3 endpoints)
 
@@ -153,8 +153,10 @@ None identified.
 ## Potential Extensions
 
 1. **Realm merge**: Consolidate deprecated realms into active ones, migrating all associated entities (characters, locations, species).
-2. **Batch exists check**: Validate multiple realm IDs in one call for services creating multi-realm entities.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/167 -->
+2. ~~**Batch exists check**~~: **FIXED** (2026-01-31) - Added `/realm/exists-batch` endpoint that validates multiple realm IDs in a single call using `GetBulkAsync`. Returns per-realm results plus convenience flags `allExist`, `allActive`, and lists of `invalidRealmIds`/`deprecatedRealmIds`.
 3. **Realm statistics**: Track entity counts per realm (characters, locations, species) for capacity planning.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/169 -->
 4. **Event consumption for cascade**: Listen to character/location deletion events to track reference counts for safe deletion.
 
 ---
@@ -201,6 +203,12 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
+### In Progress
+
+- **2026-01-31**: Realm merge feature requires design decisions. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) for open questions about entity migration ordering, species realm association handling, location hierarchy treatment, and partial failure policies.
+- **2026-01-31**: Realm statistics feature requires design decisions. See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) for open questions about synchronous vs event-driven counting, species multi-realm membership handling, historical tracking, and potential overlap with Analytics service.
+
 ### Completed
 
+- **2026-01-31**: Added `/realm/exists-batch` endpoint for batch realm validation. Uses `GetBulkAsync` for efficient single-call validation of multiple realm IDs. Returns per-realm results with `allExist`/`allActive` convenience flags.
 - **2026-01-31**: Reclassified "VOID realm pattern" from Stubs to Intentional Quirks. The VOID realm is intentionally a convention (like Species/RelationshipType VOID entries), not service-enforced logic. Created `provisioning/seed-data/realms.yaml` to provide seed data with VOID realm, paralleling the existing species.yaml and relationship-types.yaml files.

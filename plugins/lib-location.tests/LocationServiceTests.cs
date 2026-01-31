@@ -31,6 +31,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<ILogger<LocationService>> _mockLogger;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     private const string STATE_STORE = "location-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -50,6 +51,15 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockLogger = new Mock<ILogger<LocationService>>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        // Default lock provider behavior - always succeed with proper disposable
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(r => r.Success).Returns(true);
+        mockLockResponse.Setup(r => r.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -82,7 +92,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             Configuration,
             _mockRealmClient.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockLockProvider.Object);
     }
 
     /// <summary>

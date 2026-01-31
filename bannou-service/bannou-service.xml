@@ -64398,6 +64398,20 @@
             <returns>Validation result</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.IRealmClient.RealmsExistBatchAsync(BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if multiple realms exist and are active
+            </summary>
+            <remarks>
+            Batch validation endpoint for services creating multi-realm entities.
+            <br/>Returns validation results for each realm ID in a single call, avoiding
+            <br/>N+1 API calls when validating multiple realms.
+            </remarks>
+            <returns>Validation results for all requested realms</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Realm.IRealmClient.SeedRealmsAsync(BeyondImmersion.BannouService.Realm.SeedRealmsRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -64591,6 +64605,20 @@
             <br/>Returns true if realm exists and is not deprecated, false otherwise.
             </remarks>
             <returns>Validation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.RealmsExistBatchAsync(BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if multiple realms exist and are active
+            </summary>
+            <remarks>
+            Batch validation endpoint for services creating multi-realm entities.
+            <br/>Returns validation results for each realm ID in a single call, avoiding
+            <br/>N+1 API calls when validating multiple realms.
+            </remarks>
+            <returns>Validation results for all requested realms</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.SeedRealmsAsync(BeyondImmersion.BannouService.Realm.SeedRealmsRequest,System.Threading.CancellationToken)">
@@ -64839,6 +64867,46 @@
         <member name="P:BeyondImmersion.BannouService.Realm.RealmExistsResponse.RealmId">
             <summary>
             The realm ID if found
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest">
+            <summary>
+            Request to check if multiple realms exist and are available for use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest.RealmIds">
+            <summary>
+            List of realm IDs to validate (max 100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse">
+            <summary>
+            Batch validation results for multiple realms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.Results">
+            <summary>
+            Validation result for each requested realm ID (in same order as request)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.AllExist">
+            <summary>
+            True if all requested realms exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.AllActive">
+            <summary>
+            True if all requested realms exist AND are active (not deprecated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.InvalidRealmIds">
+            <summary>
+            List of realm IDs that do not exist (empty if all exist)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.DeprecatedRealmIds">
+            <summary>
+            List of realm IDs that exist but are deprecated (empty if none deprecated)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Realm.SeedRealmsRequest">
@@ -77304,6 +77372,9 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.LocationCache">
             <summary>Location lookup cache for frequently-accessed locations</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.LocationLock">
+            <summary>Distributed locks for concurrent index modifications</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Location">
             <summary>Location hierarchy and metadata</summary>

@@ -23,6 +23,7 @@ public partial class LocationService : ILocationService
     private readonly ILogger<LocationService> _logger;
     private readonly LocationServiceConfiguration _configuration;
     private readonly IRealmClient _realmClient;
+    private readonly IDistributedLockProvider _lockProvider;
 
     private const string LOCATION_KEY_PREFIX = "location:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -36,13 +37,15 @@ public partial class LocationService : ILocationService
         ILogger<LocationService> logger,
         LocationServiceConfiguration configuration,
         IRealmClient realmClient,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IDistributedLockProvider lockProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _realmClient = realmClient;
+        _lockProvider = lockProvider;
 
         // Register event handlers via partial class (LocationServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -1306,6 +1309,21 @@ public partial class LocationService : ILocationService
     private async Task AddToRealmIndexAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            realmIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for realm index {RealmIndexKey}", realmIndexKey);
+            return;
+        }
+
         var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
         if (!locationIds.Contains(locationId))
         {
@@ -1317,6 +1335,21 @@ public partial class LocationService : ILocationService
     private async Task RemoveFromRealmIndexAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            realmIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for realm index {RealmIndexKey}", realmIndexKey);
+            return;
+        }
+
         var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
         if (locationIds.Remove(locationId))
         {
@@ -1327,6 +1360,21 @@ public partial class LocationService : ILocationService
     private async Task AddToParentIndexAsync(Guid realmId, Guid parentId, Guid locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            parentIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
+            return;
+        }
+
         var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
         if (!childIds.Contains(locationId))
         {
@@ -1338,16 +1386,55 @@ public partial class LocationService : ILocationService
     private async Task RemoveFromParentIndexAsync(Guid realmId, Guid parentId, Guid locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
-        var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            parentIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
+            return;
+        }
+
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location);
+        var childIds = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
         if (childIds.Remove(locationId))
         {
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
+            if (childIds.Count == 0)
+            {
+                // Clean up empty index key to prevent accumulation
+                await store.DeleteAsync(parentIndexKey, cancellationToken);
+            }
+            else
+            {
+                await store.SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
+            }
         }
     }
 
     private async Task AddToRootLocationsAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            rootKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for root locations {RootKey}", rootKey);
+            return;
+        }
+
         var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
         if (!rootIds.Contains(locationId))
         {
@@ -1359,6 +1446,21 @@ public partial class LocationService : ILocationService
     private async Task RemoveFromRootLocationsAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            rootKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for root locations {RootKey}", rootKey);
+            return;
+        }
+
         var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
         if (rootIds.Remove(locationId))
         {

@@ -247,6 +247,88 @@ public partial class RealmService : IRealmService
         }
     }
 
+    /// <summary>
+    /// Batch validation endpoint to check if multiple realms exist and are active.
+    /// Uses bulk state store operations for efficient validation.
+    /// </summary>
+    public async Task<(StatusCodes, RealmsExistBatchResponse?)> RealmsExistBatchAsync(
+        RealmsExistBatchRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Checking existence of {Count} realms", body.RealmIds.Count);
+
+            if (body.RealmIds.Count == 0)
+            {
+                return (StatusCodes.OK, new RealmsExistBatchResponse
+                {
+                    Results = new List<RealmExistsResponse>(),
+                    AllExist = true,
+                    AllActive = true,
+                    InvalidRealmIds = new List<Guid>(),
+                    DeprecatedRealmIds = new List<Guid>()
+                });
+            }
+
+            // Use bulk loading for efficiency (single state store call)
+            var realmModels = await LoadRealmsByIdsAsync(body.RealmIds.ToList(), cancellationToken);
+            var modelLookup = realmModels.ToDictionary(m => m.RealmId);
+
+            var results = new List<RealmExistsResponse>();
+            var invalidRealmIds = new List<Guid>();
+            var deprecatedRealmIds = new List<Guid>();
+
+            // Build results in same order as request
+            foreach (var realmId in body.RealmIds)
+            {
+                if (modelLookup.TryGetValue(realmId, out var model))
+                {
+                    var isActive = model.IsActive && !model.IsDeprecated;
+                    results.Add(new RealmExistsResponse
+                    {
+                        Exists = true,
+                        IsActive = isActive,
+                        RealmId = model.RealmId
+                    });
+
+                    if (!isActive)
+                    {
+                        deprecatedRealmIds.Add(realmId);
+                    }
+                }
+                else
+                {
+                    results.Add(new RealmExistsResponse
+                    {
+                        Exists = false,
+                        IsActive = false,
+                        RealmId = null
+                    });
+                    invalidRealmIds.Add(realmId);
+                }
+            }
+
+            return (StatusCodes.OK, new RealmsExistBatchResponse
+            {
+                Results = results,
+                AllExist = invalidRealmIds.Count == 0,
+                AllActive = invalidRealmIds.Count == 0 && deprecatedRealmIds.Count == 0,
+                InvalidRealmIds = invalidRealmIds,
+                DeprecatedRealmIds = deprecatedRealmIds
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking batch realm existence for {Count} realms", body.RealmIds.Count);
+            await _messageBus.TryPublishErrorAsync(
+                "realm", "RealmsExistBatch", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/realm/exists-batch",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
     #endregion
 
     #region Write Operations

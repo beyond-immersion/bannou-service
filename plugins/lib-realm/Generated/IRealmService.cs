@@ -75,6 +75,11 @@ public partial interface IRealmService : IBannouService
         Task<(StatusCodes, RealmExistsResponse?)> RealmExistsAsync(RealmExistsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// RealmsExistBatch operation
+        /// </summary>
+        Task<(StatusCodes, RealmsExistBatchResponse?)> RealmsExistBatchAsync(RealmsExistBatchRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// SeedRealms operation
         /// </summary>
         Task<(StatusCodes, SeedRealmsResponse?)> SeedRealmsAsync(SeedRealmsRequest body, CancellationToken cancellationToken = default(CancellationToken));

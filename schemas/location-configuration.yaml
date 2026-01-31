@@ -34,3 +34,8 @@ x-service-configuration:
       description: TTL for location cache entries in seconds (locations change infrequently)
       default: 3600
       env: LOCATION_CACHE_TTL_SECONDS
+    IndexLockTimeoutSeconds:
+      type: integer
+      description: Timeout for acquiring distributed locks on index operations (realm, parent, root indexes)
+      default: 5
+      env: LOCATION_INDEX_LOCK_TIMEOUT_SECONDS
