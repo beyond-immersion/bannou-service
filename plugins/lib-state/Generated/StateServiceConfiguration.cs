@@ -83,16 +83,4 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// </summary>
     public ConsistencyLevel DefaultConsistency { get; set; } = ConsistencyLevel.Strong;
 
-    /// <summary>
-    /// Enable metrics collection for state operations
-    /// Environment variable: STATE_ENABLE_METRICS
-    /// </summary>
-    public bool EnableMetrics { get; set; } = true;
-
-    /// <summary>
-    /// Enable distributed tracing for state operations
-    /// Environment variable: STATE_ENABLE_TRACING
-    /// </summary>
-    public bool EnableTracing { get; set; } = true;
-
 }

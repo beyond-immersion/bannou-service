@@ -78,6 +78,12 @@ public class CharacterServiceConfiguration : IServiceConfiguration
     public int RealmIndexUpdateMaxRetries { get; set; } = 3;
 
     /// <summary>
+    /// Timeout in seconds for acquiring distributed locks during character updates and compression
+    /// Environment variable: CHARACTER_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int LockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
     /// Grace period in days before cleanup of dead character references (default 30 days)
     /// Environment variable: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
     /// </summary>

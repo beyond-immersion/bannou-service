@@ -74,6 +74,8 @@ public static class StateStoreDefinitions
     public const string Behavior = "behavior-statestore";
 
     // Character Service
+    /// <summary>Distributed locks for character update and compression operations</summary>
+    public const string CharacterLock = "character-lock";
     /// <summary>Persistent character data</summary>
     public const string Character = "character-statestore";
 
@@ -298,6 +300,7 @@ public static class StateStoreDefinitions
             [Behavior] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "behavior" },
             [CharacterEncounter] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_encounter_statestore" },
             [CharacterHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_history_statestore" },
+            [CharacterLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character:lock" },
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
@@ -394,6 +397,7 @@ public static class StateStoreDefinitions
             [Behavior] = new StoreMetadata("Behavior", "Behavior metadata and compiled definitions", "redis"),
             [CharacterEncounter] = new StoreMetadata("CharacterEncounter", "Encounter records and participant perspectives", "mysql"),
             [CharacterHistory] = new StoreMetadata("CharacterHistory", "Character historical events and backstory", "mysql"),
+            [CharacterLock] = new StoreMetadata("Character", "Distributed locks for character update and compression operations", "redis"),
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql"),
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql"),
             [Connect] = new StoreMetadata("Connect", "WebSocket session state", "redis"),

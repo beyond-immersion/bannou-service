@@ -186,18 +186,6 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public bool UseMassTransit { get; set; } = true;
 
     /// <summary>
-    /// Enable message bus metrics collection
-    /// Environment variable: MESSAGING_ENABLE_METRICS
-    /// </summary>
-    public bool EnableMetrics { get; set; } = true;
-
-    /// <summary>
-    /// Enable distributed tracing for messages
-    /// Environment variable: MESSAGING_ENABLE_TRACING
-    /// </summary>
-    public bool EnableTracing { get; set; } = true;
-
-    /// <summary>
     /// Interval in hours between subscription TTL refresh operations
     /// Environment variable: MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS
     /// </summary>

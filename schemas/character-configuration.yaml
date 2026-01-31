@@ -38,6 +38,11 @@ x-service-configuration:
       description: Maximum retry attempts when updating realm character index (optimistic concurrency)
       env: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
       default: 3
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for acquiring distributed locks during character updates and compression
+      env: CHARACTER_LOCK_TIMEOUT_SECONDS
+      default: 30
     # Cleanup Configuration
     CleanupGracePeriodDays:
       type: integer

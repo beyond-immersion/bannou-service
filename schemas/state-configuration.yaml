@@ -47,13 +47,6 @@ x-service-configuration:
       description: Default consistency level for state operations
       env: STATE_DEFAULT_CONSISTENCY
       default: "strong"
-    EnableMetrics:
-      type: boolean
-      description: Enable metrics collection for state operations
-      env: STATE_ENABLE_METRICS
-      default: true
-    EnableTracing:
-      type: boolean
-      description: Enable distributed tracing for state operations
-      env: STATE_ENABLE_TRACING
-      default: true
+    # Note: Telemetry (metrics/tracing) is controlled centrally via lib-telemetry configuration.
+    # When lib-telemetry is enabled, it automatically instruments state operations via ITelemetryProvider.
+    # When disabled or not loaded, instrumentation is skipped entirely (zero overhead).

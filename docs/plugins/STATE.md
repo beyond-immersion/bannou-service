@@ -214,6 +214,7 @@ State Store Architecture
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/182 -->
 3. ~~**Bulk save operation**~~: **IMPLEMENTED** - `SaveBulkAsync()` exists on `IStateStore<T>` and is exposed via `/state/bulk-save` endpoint.
 4. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/190 -->
 5. **Prefix query support**: Add SCAN-based prefix queries for Redis (with careful iteration limits).
 
 ---

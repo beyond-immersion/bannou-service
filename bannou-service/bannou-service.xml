@@ -77690,6 +77690,9 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Behavior">
             <summary>Behavior metadata and compiled definitions</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.CharacterLock">
+            <summary>Distributed locks for character update and compression operations</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Character">
             <summary>Persistent character data</summary>
         </member>

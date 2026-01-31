@@ -60,28 +60,33 @@ Launching {N} agents in parallel...
 Use the Task tool to launch multiple agents **in a single message** (parallel execution).
 
 For each selected plugin, launch with:
-- `subagent_type`: `"Explore"` or appropriate agent type
-- `prompt`: The full audit-plugin workflow instructions for that specific plugin
+- `subagent_type`: `"general-purpose"` (must have access to Skill tool)
+- `prompt`: Tell the agent to invoke the audit-plugin skill (see Agent Prompt section below)
 - `description`: `"Audit {plugin-name} plugin"`
 - `run_in_background`: `true` (so they run in parallel)
 
 **Critical: Launch ALL agents in ONE message with multiple Task tool calls.**
 
+**Critical: Use the EXACT prompt format from the Agent Prompt section - do NOT summarize or paraphrase the audit-plugin instructions yourself.**
+
 Example (for 3 plugins):
 ```
 <Task 1>
+  subagent_type: "general-purpose"
   description: "Audit account plugin"
-  prompt: "Execute /audit-plugin workflow for the 'account' plugin. [full instructions]"
+  prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'account'"
   run_in_background: true
 
 <Task 2>
+  subagent_type: "general-purpose"
   description: "Audit auth plugin"
-  prompt: "Execute /audit-plugin workflow for the 'auth' plugin. [full instructions]"
+  prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'auth'"
   run_in_background: true
 
 <Task 3>
+  subagent_type: "general-purpose"
   description: "Audit connect plugin"
-  prompt: "Execute /audit-plugin workflow for the 'connect' plugin. [full instructions]"
+  prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'connect'"
   run_in_background: true
 ```
 
@@ -121,36 +126,24 @@ If you're still in context when agents complete, or if user asks for status:
 - No gaps found: {N}
 ```
 
-## Agent Prompt Template
+## Agent Prompt
 
-Each launched agent should receive this prompt (with plugin name filled in):
+Each agent should invoke the actual `/audit-plugin` skill - do NOT summarize or paraphrase the skill instructions.
+
+**The prompt for each agent is exactly this (with plugin name filled in):**
 
 ```
-You are running the /audit-plugin workflow for the '{PLUGIN_NAME}' plugin.
-
-## Your Task
-1. Read `docs/plugins/{PLUGIN_NAME}.md`
-2. Find the FIRST actionable gap (no AUDIT marker, no issue link)
-3. If no gaps found, report "No actionable gaps" and finish
-4. If gap found, investigate thoroughly:
-   - Read all relevant source code in `plugins/lib-{service}/`
-   - Check integration points, TENET compliance, scope
-5. Make determination: EXECUTE or CREATE_ISSUE
-6. Take action:
-   - EXECUTE: Mark doc, implement fix, verify build
-   - CREATE_ISSUE: Mark doc, create GitHub issue with investigation
-7. Report results
-
-## Critical Rules
-- Handle ONE gap only
-- Preserve existing AUDIT markers
-- Follow all Bannou TENETs
-- Verify build after any code changes
-
-## Reference Files
-- Template: docs/plugins/DEEP_DIVE_TEMPLATE.md
-- TENETs: docs/reference/TENETS.md
+Use the Skill tool to invoke the 'audit-plugin' skill with args '{PLUGIN_NAME}'
 ```
+
+**Example for 3 plugins:**
+```
+Agent 1 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'account'"
+Agent 2 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'auth'"
+Agent 3 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'connect'"
+```
+
+**Why this matters:** The `/audit-plugin` skill has 469 lines of detailed instructions including EXECUTE vs CREATE_ISSUE criteria, forbidden escape hatches, and investigation requirements. Summarizing loses critical context. Let the skill speak for itself.
 
 ## Important Notes
 

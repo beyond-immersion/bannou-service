@@ -1,5 +1,16 @@
 # Bannou Service Development Instructions
 
+## ⚠️ GitHub Issues Reference
+
+**When "Issues" or "GH Issues" is mentioned, this ALWAYS refers to the bannou-service repository issues.** Use the GH CLI to check issues:
+```bash
+gh issue list                  # List open issues
+gh issue view <number>         # View specific issue
+```
+This is NOT a reference to claude-code's issues or any other repository.
+
+---
+
 ## ⛔ TENETS ARE LAW ⛔
 
 **ALWAYS REFER TO AND FOLLOW THE TENETS WITHOUT EXCEPTION. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**

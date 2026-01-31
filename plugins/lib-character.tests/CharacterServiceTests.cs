@@ -36,6 +36,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<CharacterService>> _mockLogger;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<ISpeciesClient> _mockSpeciesClient;

@@ -299,6 +299,12 @@ x-state-stores:
     service: Character
     purpose: Persistent character data
 
+  character-lock:
+    backend: redis
+    prefix: "character:lock"
+    service: Character
+    purpose: Distributed locks for character update and compression operations
+
   character-history-statestore:
     backend: mysql
     service: CharacterHistory

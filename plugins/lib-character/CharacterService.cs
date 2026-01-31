@@ -26,6 +26,7 @@ public partial class CharacterService : ICharacterService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<CharacterService> _logger;
     private readonly CharacterServiceConfiguration _configuration;
     private readonly IRealmClient _realmClient;
@@ -57,6 +58,7 @@ public partial class CharacterService : ICharacterService
     public CharacterService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
+        IDistributedLockProvider lockProvider,
         ILogger<CharacterService> logger,
         CharacterServiceConfiguration configuration,
         IRealmClient realmClient,
@@ -69,6 +71,7 @@ public partial class CharacterService : ICharacterService
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
+        _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
         _realmClient = realmClient;
@@ -227,6 +230,21 @@ public partial class CharacterService : ICharacterService
         try
         {
             _logger.LogDebug("Updating character: {CharacterId}", body.CharacterId);
+
+            // Acquire distributed lock for character modification (per IMPLEMENTATION TENETS)
+            var lockOwner = $"update-character-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.CharacterLock,
+                body.CharacterId.ToString(),
+                lockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Find existing character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -615,6 +633,21 @@ public partial class CharacterService : ICharacterService
         try
         {
             _logger.LogDebug("Compressing character: {CharacterId}", body.CharacterId);
+
+            // Acquire distributed lock for character compression (per IMPLEMENTATION TENETS)
+            var lockOwner = $"compress-character-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.CharacterLock,
+                body.CharacterId.ToString(),
+                lockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for character compression {CharacterId}", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Get character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
