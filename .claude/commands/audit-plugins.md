@@ -1,17 +1,21 @@
 ---
-description: Launch multiple audit-plugin agents in parallel, each auditing a different plugin. Orchestrates parallel gap processing across the codebase.
-argument-hint: "<count> - Number of plugins to audit in parallel (e.g., '3', '5'). Each agent gets a unique plugin."
+description: Launch multiple audit-plugin agents sequentially, each auditing a different plugin. Orchestrates batch gap processing across the codebase.
+argument-hint: "<count> - Number of plugins to audit sequentially (e.g., '3', '5'). Each agent gets a unique plugin."
 ---
 
-# Parallel Plugin Auditor Command
+# Sequential Plugin Auditor Command
 
-You are executing the `/audit-plugins` workflow. This orchestrates multiple `/audit-plugin` runs in parallel, each targeting a unique plugin.
+You are executing the `/audit-plugins` workflow. This orchestrates multiple `/audit-plugin` runs sequentially, each targeting a unique plugin.
+
+## Why Sequential (Not Parallel)
+
+Background agents cannot use the Skill tool - it gets auto-denied with "prompts unavailable". This is a Claude Code architectural limitation. Foreground agents work correctly, so we run them one at a time.
 
 ## Purpose
 
-When you want to make progress on multiple plugins simultaneously, this command:
+When you want to make progress on multiple plugins in a batch, this command:
 1. Selects N unique plugins at random
-2. Launches N agents in parallel
+2. Launches N agents sequentially (one completes before the next starts)
 3. Each agent runs the full `/audit-plugin` workflow on its assigned plugin
 
 ## Workflow
@@ -21,8 +25,8 @@ When you want to make progress on multiple plugins simultaneously, this command:
 The argument MUST be a positive integer.
 
 ```
-/audit-plugins 3    → Launch 3 agents
-/audit-plugins 5    → Launch 5 agents
+/audit-plugins 3    → Audit 3 plugins sequentially
+/audit-plugins 5    → Audit 5 plugins sequentially
 ```
 
 If no argument or invalid argument:
@@ -40,11 +44,11 @@ Where `{N}` is the requested count from the argument.
 
 If requested count > available plugins:
 - The `shuf` command will return all available (fewer than requested)
-- Report: "Requested {N} but only {M} plugins available. Launching {M} agents."
+- Report: "Requested {N} but only {M} plugins available. Auditing {M} plugins."
 
 **Report selection:**
 ```
-## Parallel Audit: {N} Plugins
+## Sequential Audit: {N} Plugins
 
 Selected plugins:
 1. {plugin-1}
@@ -52,73 +56,67 @@ Selected plugins:
 3. {plugin-3}
 ...
 
-Launching {N} agents in parallel...
+Auditing sequentially...
 ```
 
-### Step 4: Launch Agents
+### Step 3: Launch Agents Sequentially
 
-Use the Task tool to launch multiple agents **in a single message** (parallel execution).
+For each selected plugin, launch ONE agent at a time and wait for it to complete before launching the next.
 
-For each selected plugin, launch with:
+For each plugin, launch with:
 - `subagent_type`: `"general-purpose"` (must have access to Skill tool)
-- `mode`: `"acceptEdits"` (REQUIRED - agents must be able to edit files)
+- `mode`: `"bypassPermissions"` (REQUIRED - agents need full permissions)
 - `prompt`: Tell the agent to invoke the audit-plugin skill (see Agent Prompt section below)
 - `description`: `"Audit {plugin-name} plugin"`
-- `run_in_background`: `true` (so they run in parallel)
+- `run_in_background`: `false` (REQUIRED - Skill tool only works in foreground)
 
-**Critical: Launch ALL agents in ONE message with multiple Task tool calls.**
+**Critical: Launch ONE agent, wait for completion, then launch the next.**
 
-**Critical: Use the EXACT prompt format from the Agent Prompt section - do NOT summarize or paraphrase the audit-plugin instructions yourself.**
+**Critical: Do NOT use `run_in_background: true` - the Skill tool will be denied.**
 
-**Critical: Always include `mode: "acceptEdits"` - without this, agents cannot do their job and will fail.**
-
-Example (for 3 plugins):
+Example (for 3 plugins - run these ONE AT A TIME):
 ```
-<Task 1>
+<Task 1 - wait for completion>
   subagent_type: "general-purpose"
-  mode: "acceptEdits"
+  mode: "bypassPermissions"
   description: "Audit account plugin"
   prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'account'"
-  run_in_background: true
+  run_in_background: false
 
-<Task 2>
+<Task 2 - after Task 1 completes>
   subagent_type: "general-purpose"
-  mode: "acceptEdits"
+  mode: "bypassPermissions"
   description: "Audit auth plugin"
   prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'auth'"
-  run_in_background: true
+  run_in_background: false
 
-<Task 3>
+<Task 3 - after Task 2 completes>
   subagent_type: "general-purpose"
-  mode: "acceptEdits"
+  mode: "bypassPermissions"
   description: "Audit connect plugin"
   prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'connect'"
-  run_in_background: true
+  run_in_background: false
 ```
 
-### Step 5: Monitor Progress
+### Step 4: Track Results
 
-After launching, report:
-
-```
-## Agents Launched
-
-| Agent | Plugin | Status | Output File |
-|-------|--------|--------|-------------|
-| 1 | {name} | Running | {path} |
-| 2 | {name} | Running | {path} |
-| 3 | {name} | Running | {path} |
-
-Use `Read` tool on output files to check progress.
-Agents will complete independently.
-```
-
-### Step 6: Summary (When All Complete)
-
-If you're still in context when agents complete, or if user asks for status:
+After each agent completes, record its result before launching the next:
 
 ```
-## Parallel Audit Complete
+## Progress
+
+| # | Plugin | Result | Action Taken |
+|---|--------|--------|--------------|
+| 1 | {name} | {EXECUTED/ISSUE_CREATED/NO_GAPS} | {details} |
+| 2 | {name} | (running...) | |
+```
+
+### Step 5: Final Summary
+
+After all agents complete:
+
+```
+## Sequential Audit Complete
 
 | Plugin | Result | Action Taken |
 |--------|--------|--------------|
@@ -149,26 +147,25 @@ Agent 2 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args
 Agent 3 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'connect'"
 ```
 
-**Why this matters:** The `/audit-plugin` skill has 469 lines of detailed instructions including EXECUTE vs CREATE_ISSUE criteria, forbidden escape hatches, and investigation requirements. Summarizing loses critical context. Let the skill speak for itself.
+**Why this matters:** The `/audit-plugin` skill has detailed instructions including EXECUTE vs CREATE_ISSUE criteria, forbidden escape hatches, and investigation requirements. Summarizing loses critical context. Let the skill speak for itself.
 
 ## Important Notes
 
-- **Parallel execution**: All agents run simultaneously, not sequentially
+- **Sequential execution**: Agents run one at a time, each completing before the next starts
 - **Unique plugins**: Each agent gets a different plugin - no overlap
-- **Independent results**: Each agent succeeds or fails independently
-- **Background mode**: Agents run in background so you can check on them later
-- **Resource consideration**: Don't launch too many (3-5 is reasonable)
+- **Foreground mode required**: Background agents cannot use Skill tool
+- **Full permissions**: `bypassPermissions` mode ensures Edit/Bash/etc work without prompting
 
 ## Error Handling
 
 - If a plugin has no gaps: Agent reports "no gaps" and finishes (not an error)
-- If an agent fails: Other agents continue independently
-- If build fails in one agent: That agent stops, others continue
+- If an agent fails: Report the failure, continue with next plugin
+- If build fails in one agent: That agent stops, continue with next plugin
 - If all plugins already have markers: Report "all plugins have active work"
 
 ## Limits
 
 Recommended limits:
 - **Minimum**: 2 (otherwise just use `/audit-plugin`)
-- **Maximum**: 5-7 (resource constraints, parallel context limits)
+- **Maximum**: 5-7 (diminishing returns, context limits)
 - **Default suggestion**: 3 if user asks "how many?"

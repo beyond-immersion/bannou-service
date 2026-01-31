@@ -260,20 +260,22 @@ Finds and handles ONE implementation gap from a plugin's deep dive document.
 
 #### `/audit-plugins <count>`
 
-Launches multiple audit agents in parallel, each on a unique plugin.
+Launches multiple audit agents sequentially, each on a unique plugin.
 
 ```bash
-/audit-plugins 3                 # Launch 3 agents on 3 different plugins
-/audit-plugins 5                 # Launch 5 agents
+/audit-plugins 3                 # Audit 3 different plugins sequentially
+/audit-plugins 5                 # Audit 5 plugins sequentially
 ```
 
 **How it works**:
 1. Randomly selects N unique plugins
-2. Launches N background agents in parallel
+2. Launches agents one at a time (foreground mode)
 3. Each agent runs full `/audit-plugin` workflow
-4. Agents complete independently
+4. Waits for completion before launching next
 
-**Recommended**: 3-5 agents at a time
+**Why sequential?** See [Task Tool Limitations](#task-tool-limitations) below.
+
+**Recommended**: 3-5 plugins per batch
 
 ---
 
@@ -380,7 +382,7 @@ These are project-level standalone commands (not a plugin), so they use short na
 ### For Bulk Progress
 
 ```bash
-# Launch parallel agents on multiple plugins
+# Audit multiple plugins sequentially (parallel not possible due to Skill tool limitation)
 /audit-plugins 3
 ```
 
@@ -408,6 +410,59 @@ The investigate-issue workflow provides:
 - Automatic TENET compliance checks
 - Audit before closure
 - Documentation updates using FIXED format
+
+---
+
+## Task Tool Limitations
+
+The Task tool spawns subagents to handle complex work. However, there are architectural limitations that affect how agents can be configured.
+
+### Background Agents Cannot Use Skill Tool
+
+**The Problem**: When spawning agents with `run_in_background: true`, the Skill tool is automatically denied with "prompts unavailable". This is a Claude Code architectural limitation, not a permissions issue.
+
+**Evidence**:
+```
+# Background agent (run_in_background: true):
+"Permission to use Skill has been auto-denied (prompts unavailable)"
+
+# Foreground agent (run_in_background: false):
+Skill tool works correctly
+```
+
+**Root Cause**: The Skill tool requires real-time decision-making (discovering skills, loading content, deciding relevance). Background agents cannot perform interactive operations.
+
+**What DOES NOT Work**:
+- `mode: "bypassPermissions"` does NOT bypass this limitation
+- `mode: "acceptEdits"` does NOT help
+- Pre-approving "Skill" in settings does NOT help
+- Any background agent configuration - Skill is always denied
+
+**What DOES Work**:
+- `run_in_background: false` (foreground mode) with any permission mode
+- Agents that don't need Skill tool can run in background
+
+**Impact on Commands**:
+- `/audit-plugins` must run sequentially (foreground) instead of in parallel
+- Any command that spawns agents needing Skill must use foreground mode
+
+### Permission Modes Reference
+
+| Mode | Behavior |
+|------|----------|
+| `default` | Standard permission checking with interactive prompts |
+| `acceptEdits` | Auto-accept file edit permissions |
+| `bypassPermissions` | Skip all permission checks (still doesn't help Skill in background) |
+| `dontAsk` | Auto-deny permission prompts |
+| `plan` | Read-only exploration mode |
+
+### Designing Agent Workflows
+
+When creating commands that spawn agents:
+
+1. **If agents need Skill tool**: Use `run_in_background: false` (sequential execution)
+2. **If agents only need Edit/Bash/Read**: Can use `run_in_background: true` (parallel execution)
+3. **Always use `mode: "bypassPermissions"`**: Prevents permission prompts for tools that can be pre-approved
 
 ---
 
