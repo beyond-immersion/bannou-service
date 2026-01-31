@@ -652,13 +652,6 @@ public partial class ContractService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Check if template values are set
-            if (model.TemplateValues == null || model.TemplateValues.Count == 0)
-            {
-                _logger.LogWarning("Template values not set for contract: {ContractId}", body.ContractInstanceId);
-                return (StatusCodes.BadRequest, null);
-            }
-
             // Load template for clause definitions
             var templateKey = $"{TEMPLATE_PREFIX}{model.TemplateId}";
             var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
@@ -668,6 +661,18 @@ public partial class ContractService
             {
                 _logger.LogError("Template not found for contract: {ContractId}", body.ContractInstanceId);
                 return (StatusCodes.InternalServerError, null);
+            }
+
+            // Check if there are any asset requirement clauses that need template values
+            var clauses = ParseClausesFromTemplate(template);
+            var hasAssetClauses = clauses.Any(c =>
+                string.Equals(c.Type, "asset_requirement", StringComparison.OrdinalIgnoreCase));
+
+            // Only require template values if there are asset requirement clauses
+            if (hasAssetClauses && (model.TemplateValues == null || model.TemplateValues.Count == 0))
+            {
+                _logger.LogWarning("Template values not set for contract with asset clauses: {ContractId}", body.ContractInstanceId);
+                return (StatusCodes.BadRequest, null);
             }
 
             // Get asset requirement clauses from template's custom terms

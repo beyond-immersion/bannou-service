@@ -288,25 +288,23 @@ public class AchievementTestHandler : BaseHttpTestHandler
         }, "Update achievement definition");
 
     private static async Task<TestResult> TestSyncPlatformAchievements(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var achievementClient = GetServiceClient<IAchievementClient>();
-            var entityId = Guid.NewGuid();
-
-            // Platform sync requires Account entity type and a platform
-            // This tests the basic API call - actual sync depends on platform provider configuration
-            var response = await achievementClient.SyncPlatformAchievementsAsync(new SyncPlatformAchievementsRequest
+        // Without Steam provider configured, sync returns 400 (platform not supported/configured)
+        await ExecuteExpectingStatusAsync(
+            async () =>
             {
-                GameServiceId = TestGameServiceId,
-                EntityId = entityId,
-                EntityType = EntityType.Account,
-                Platform = Platform.Steam
-            });
+                var achievementClient = GetServiceClient<IAchievementClient>();
+                var entityId = Guid.NewGuid();
 
-            // Without Steam provider configured, this should indicate no provider
-            return TestResult.Successful(
-                $"Platform sync called: synced={response.Synced}, platform={response.Platform}");
-        }, "Sync platform achievements");
+                await achievementClient.SyncPlatformAchievementsAsync(new SyncPlatformAchievementsRequest
+                {
+                    GameServiceId = TestGameServiceId,
+                    EntityId = entityId,
+                    EntityType = EntityType.Account,
+                    Platform = Platform.Steam
+                });
+            },
+            400, // Expected: Steam provider not configured in test environment
+            "Sync platform achievements (no provider)");
 
     private static async Task<TestResult> TestGetPlatformSyncStatus(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>

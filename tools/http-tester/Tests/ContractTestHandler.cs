@@ -1691,8 +1691,9 @@ public class ContractTestHandler : BaseHttpTestHandler
             if (milestone.Milestone.Code != "tracked_task")
                 return TestResult.Failed($"Milestone code mismatch: {milestone.Milestone.Code}");
 
-            if (milestone.Milestone.Status != MilestoneStatus.Pending)
-                return TestResult.Failed($"Expected Pending status, got: {milestone.Milestone.Status}");
+            // First milestone becomes Active when contract activates (all parties consent)
+            if (milestone.Milestone.Status != MilestoneStatus.Active)
+                return TestResult.Failed($"Expected Active status for first milestone, got: {milestone.Milestone.Status}");
 
             return TestResult.Successful(
                 $"Milestone retrieved: {milestone.Milestone.Code}, status={milestone.Milestone.Status}");

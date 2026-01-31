@@ -1005,4 +1005,161 @@ The type system catches mistakes at compile time. String-based tests would compi
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*
+## Tenet 26: No Sentinel Values (MANDATORY)
+
+**Rule**: Never use "magic values" to represent absence or special states. If a value can be absent, make it nullable. Period.
+
+### What Are Sentinel Values?
+
+Sentinel values are special values within a type's normal range that are given a "magic" meaning:
+
+- `Guid.Empty` meaning "no GUID assigned"
+- `-1` meaning "no index" or "invalid"
+- `string.Empty` meaning "no value"
+- `DateTime.MinValue` meaning "not set"
+- `0` meaning "none" when 0 could be valid
+
+### Why Sentinel Values Are Forbidden
+
+1. **They circumvent NRT (Nullable Reference Types)**: NRT exists so the compiler can tell you when something might be null. Sentinel values bypass this by pretending a non-nullable type can represent absence.
+
+2. **They hide bugs**: Code that forgets to check for the sentinel compiles and runs - it just produces wrong results. Nullable types make absence explicit and compiler-enforced.
+
+3. **They're ambiguous**: Is `Guid.Empty` "not assigned yet" or "explicitly cleared" or "a bug"? A nullable `Guid?` with `null` is unambiguous: it has no value.
+
+4. **They pollute business logic**: Every piece of code must remember the magic value convention. With nullable types, the type system enforces it.
+
+5. **They break serialization semantics**: `null` in JSON means "absent". An empty GUID serializes as `"00000000-0000-0000-0000-000000000000"` - a value, not absence.
+
+### The Correct Pattern: Use Nullable Types
+
+```csharp
+// CORRECT: Nullable type when value can be absent
+public Guid? ContainerId { get; set; }  // null means "no container"
+public int? SlotIndex { get; set; }      // null means "no slot assigned"
+public DateTimeOffset? ExpiresAt { get; set; }  // null means "never expires"
+
+// Usage is explicit and compiler-checked
+if (item.ContainerId.HasValue)
+{
+    await ProcessContainer(item.ContainerId.Value);
+}
+else
+{
+    // Item has no container - handle appropriately
+}
+```
+
+### Forbidden Patterns
+
+```csharp
+// FORBIDDEN: Guid.Empty as sentinel
+public Guid ContainerId { get; set; }  // Uses Guid.Empty to mean "none"
+if (item.ContainerId == Guid.Empty) { ... }  // Magic value check
+
+// FORBIDDEN: -1 as sentinel
+public int SlotIndex { get; set; } = -1;  // -1 means "no slot"
+if (item.SlotIndex == -1) { ... }  // Magic value check
+
+// FORBIDDEN: Empty string as sentinel
+public string Category { get; set; } = string.Empty;  // Empty means "uncategorized"
+if (string.IsNullOrEmpty(item.Category)) { ... }  // Conflates empty with absent
+
+// FORBIDDEN: MinValue as sentinel
+public DateTime CreatedAt { get; set; }  // MinValue means "not created"
+if (item.CreatedAt == DateTime.MinValue) { ... }  // Magic value check
+```
+
+### Schema Implications
+
+If a field can be absent, the OpenAPI schema must declare it nullable:
+
+```yaml
+# CORRECT: Nullable in schema
+properties:
+  containerId:
+    type: string
+    format: uuid
+    nullable: true
+    description: Container holding this item, null if unplaced
+
+# WRONG: Non-nullable with implicit sentinel convention
+properties:
+  containerId:
+    type: string
+    format: uuid
+    description: Container ID (empty GUID if unplaced)  # NO!
+```
+
+### Internal Models Must Match
+
+If the API schema has a nullable field, the internal storage model MUST also be nullable:
+
+```csharp
+// API schema has nullable containerId
+// Internal model MUST match:
+internal class ItemInstanceModel
+{
+    public Guid? ContainerId { get; set; }  // Nullable - matches schema
+}
+
+// NOT this:
+internal class ItemInstanceModel
+{
+    public Guid ContainerId { get; set; }  // Non-nullable with Guid.Empty convention - WRONG
+}
+```
+
+### Migration Path
+
+If existing code uses sentinel values, the fix is:
+
+1. Update the schema to make the field nullable
+2. Regenerate models
+3. Update internal POCOs to use nullable types
+4. Update service logic to use `HasValue`/null checks instead of sentinel comparisons
+5. Handle data migration for existing stored values (convert sentinels to null)
+
+---
+
+## Quick Reference: Implementation Violations (Updated)
+
+| Violation | Tenet | Fix |
+|-----------|-------|-----|
+| Missing event consumer registration | T3 | Add RegisterEventConsumers call |
+| Using IErrorEventEmitter | T7 | Use IMessageBus.TryPublishErrorAsync instead |
+| Generic catch returning 500 | T7 | Catch ApiException specifically |
+| Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
+| Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
+| Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
+| Per-instance salt/key generation | T9 | Use shared/deterministic values |
+| Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
+| Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
+| Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
+| Hardcoded credential fallback | T21 | Remove default, require configuration |
+| Unused configuration property | T21 | Wire up in service or remove from schema |
+| Hardcoded magic number for tunable | T21 | Define in configuration schema |
+| Defined cache store not used | T21 | Implement cache read-through or remove store |
+| Secondary fallback for schema-defaulted property | T21 | Remove fallback; throw exception if null (indicates infrastructure failure) |
+| Non-async Task-returning method | T23 | Add async keyword and await |
+| `Task.FromResult` without async | T23 | Use async method with await |
+| `.Result` or `.Wait()` on Task | T23 | Use await instead |
+| Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
+| try/finally for disposal | T24 | Use `using` statement instead |
+| String field for enum in ANY model | T25 | Use the generated enum type |
+| String field for GUID in ANY model | T25 | Use `Guid` type |
+| `Enum.Parse` anywhere in service code | T25 | Your model is wrong - fix the type |
+| `.ToString()` when assigning enum | T25 | Assign enum directly |
+| String comparison for enum value | T25 | Use enum equality operator |
+| Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
+| String in request/response/event model | T25 | Schema should define enum type |
+| String in configuration class | T25 | Config schema should define enum type |
+| Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
+| Using `-1` to mean "no index" | T26 | Make field `int?` nullable |
+| Using empty string for "absent" | T26 | Make field `string?` nullable |
+| Using `DateTime.MinValue` for "not set" | T26 | Make field `DateTime?` nullable |
+| Non-nullable internal model field when schema is nullable | T26 | Match nullability in internal model |
+
+---
+
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*

@@ -255,7 +255,7 @@ Stack Operations
 
 3. **Equipment slot specialization**: `IsEquipmentSlot` and `EquipmentSlotName` fields exist on containers but no special equipment-only validation logic (e.g., only allow weapons in weapon slot) is implemented.
 
-4. **RemoveItem does not clear item's ContainerId**: When RemoveItemFromContainer is called, the item's ContainerId field in lib-item is not cleared. The item still references the container it was removed from until AddItemToContainer places it elsewhere.
+4. **RemoveItem does not clear item's ContainerId**: When RemoveItemFromContainer is called, the item's ContainerId field in lib-item is not cleared. The item still references the container it was removed from until AddItemToContainer places it elsewhere. See [#164](https://github.com/beyond-immersion/bannou-service/issues/164) for the design discussion on configurable drop behavior.
 
 5. **Partial quantity transfer not implemented**: TransferItemAsync accepts `quantity` parameter but always transfers `body.Quantity ?? item.Quantity` (full item if null). Partial quantity transfer would require splitting before moving.
 
@@ -322,6 +322,9 @@ Stack Operations
 ---
 
 ## Work Tracking
+
+### Active
+- **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Design and implementation of configurable drop behavior for removed items. Current `RemoveItemFromContainer` leaves items in limbo (container counters updated but item's ContainerId unchanged). Issue tracks adding per-container drop configuration, a `/inventory/drop` endpoint, and location-owned ground containers.
 
 ### Completed
 - **2026-01-30**: Fixed MergeStacks race condition - now locks both containers with deterministic ordering

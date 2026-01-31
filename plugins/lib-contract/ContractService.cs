@@ -252,9 +252,9 @@ public partial class ContractService : IContractService
             var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
                 .GetAsync(templateKey, cancellationToken);
 
-            if (model == null)
+            if (model == null || !model.IsActive)
             {
-                _logger.LogWarning("Template not found: {TemplateId}", templateId);
+                _logger.LogWarning("Template not found or inactive: {TemplateId}", templateId);
                 return (StatusCodes.NotFound, null);
             }
 

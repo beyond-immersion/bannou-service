@@ -1159,16 +1159,19 @@ public partial class CharacterService : ICharacterService
         if (familyTree.Spouse != null)
             parts.Add($"married to {familyTree.Spouse.Name ?? "unknown"}");
 
-        if (familyTree.Children.Count > 0)
-            parts.Add($"parent of {familyTree.Children.Count}");
+        var childCount = familyTree.Children?.Count ?? 0;
+        if (childCount > 0)
+            parts.Add($"parent of {childCount}");
 
-        if (familyTree.Parents.Count == 0)
+        var parentCount = familyTree.Parents?.Count ?? 0;
+        if (parentCount == 0)
             parts.Add("orphaned");
-        else if (familyTree.Parents.Count == 1)
+        else if (parentCount == 1)
             parts.Add("single parent household");
 
-        if (familyTree.PastLives.Count > 0)
-            parts.Add($"reincarnated from {familyTree.PastLives.Count} past life(s)");
+        var pastLivesCount = familyTree.PastLives?.Count ?? 0;
+        if (pastLivesCount > 0)
+            parts.Add($"reincarnated from {pastLivesCount} past life(s)");
 
         return parts.Count > 0 ? string.Join(", ", parts) : null;
     }
