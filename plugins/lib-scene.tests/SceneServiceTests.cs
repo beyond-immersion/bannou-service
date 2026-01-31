@@ -34,7 +34,6 @@ public class SceneServiceTests
 
         // Assert
         Assert.NotNull(config);
-        Assert.Equal("scenes", config.AssetBucket);
         Assert.Equal(60, config.DefaultCheckoutTtlMinutes);
         Assert.Equal(10000, config.MaxNodeCount);
     }
@@ -46,7 +45,6 @@ public class SceneServiceTests
         var config = new SceneServiceConfiguration();
 
         // Assert - verify all configuration defaults
-        Assert.Equal("application/x-bannou-scene+yaml", config.AssetContentType);
         Assert.Equal(10, config.MaxCheckoutExtensions);
         Assert.Equal(3, config.DefaultMaxReferenceDepth);
         Assert.Equal(10, config.MaxReferenceDepthLimit);
@@ -58,10 +56,10 @@ public class SceneServiceTests
     }
 
     [Fact]
-    public void SceneServiceConfiguration_AssetBucket_DefaultsToScenes()
+    public void SceneServiceConfiguration_CheckoutTtlBuffer_DefaultsTo5()
     {
         var config = new SceneServiceConfiguration();
-        Assert.Equal("scenes", config.AssetBucket);
+        Assert.Equal(5, config.CheckoutTtlBufferMinutes);
     }
 
     [Fact]

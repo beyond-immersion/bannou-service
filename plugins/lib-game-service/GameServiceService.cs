@@ -441,6 +441,8 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Map internal storage model to API response model.
     /// </summary>
+    /// <param name="model">The internal storage model to convert.</param>
+    /// <returns>A ServiceInfo response model with all fields mapped and timestamps converted from Unix.</returns>
     private static ServiceInfo MapToServiceInfo(GameServiceRegistryModel model)
     {
         return new ServiceInfo
@@ -465,6 +467,7 @@ public partial class GameServiceService : IGameServiceService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
+    /// <param name="appId">The application ID to register permissions under.</param>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Game Service service permissions...");
@@ -479,6 +482,11 @@ public partial class GameServiceService : IGameServiceService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
+    /// <param name="operation">The operation that failed (e.g., "CreateService").</param>
+    /// <param name="errorType">The type of error (e.g., exception type name).</param>
+    /// <param name="message">The error message.</param>
+    /// <param name="dependency">Optional dependency that caused the failure (e.g., "state").</param>
+    /// <param name="details">Optional additional details about the error.</param>
     private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
@@ -502,6 +510,7 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Publishes a GameServiceCreatedEvent when a new game service is registered.
     /// </summary>
+    /// <param name="model">The created service model to include in the event.</param>
     private async Task PublishServiceCreatedEventAsync(GameServiceRegistryModel model)
     {
         try
@@ -531,6 +540,8 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Publishes a GameServiceUpdatedEvent when a game service is modified.
     /// </summary>
+    /// <param name="model">The updated service model to include in the event.</param>
+    /// <param name="changedFields">List of field names that were modified.</param>
     private async Task PublishServiceUpdatedEventAsync(GameServiceRegistryModel model, List<string> changedFields)
     {
         try
@@ -561,6 +572,8 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Publishes a GameServiceDeletedEvent when a game service is removed.
     /// </summary>
+    /// <param name="model">The deleted service model to include in the event.</param>
+    /// <param name="reason">Optional reason for deletion provided by the caller.</param>
     private async Task PublishServiceDeletedEventAsync(GameServiceRegistryModel model, string? reason)
     {
         try

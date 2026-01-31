@@ -19,6 +19,12 @@ info:
     - topic: session.disconnected
       event: SessionDisconnectedEvent
       handler: HandleSessionDisconnected
+    - topic: personality.evolved
+      event: PersonalityEvolvedEvent
+      handler: HandlePersonalityEvolved
+    - topic: combat-preferences.evolved
+      event: CombatPreferencesEvolvedEvent
+      handler: HandleCombatPreferencesEvolved
     - topic: actor.pool-node.registered
       event: PoolNodeRegisteredEvent
       handler: HandlePoolNodeRegistered

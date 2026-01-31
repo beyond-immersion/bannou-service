@@ -87,8 +87,6 @@ This plugin does not currently consume external events. The `IEventConsumer` is 
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `AssetBucket` | `SCENE_ASSET_BUCKET` | `"scenes"` | lib-asset bucket name (not currently used; content stored in state store) |
-| `AssetContentType` | `SCENE_ASSET_CONTENT_TYPE` | `"application/x-bannou-scene+yaml"` | Content type identifier (not currently used; content stored in state store) |
 | `DefaultCheckoutTtlMinutes` | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | `60` | Default checkout lock TTL in minutes |
 | `CheckoutTtlBufferMinutes` | `SCENE_CHECKOUT_TTL_BUFFER_MINUTES` | `5` | Buffer time added to TTL for state store expiry |
 | `MaxCheckoutExtensions` | `SCENE_MAX_CHECKOUT_EXTENSIONS` | `10` | Maximum heartbeat extensions per checkout |
@@ -370,7 +368,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 ## Stubs & Unimplemented Features
 
-1. **lib-asset integration**: The configuration has `AssetBucket` and `AssetContentType` properties suggesting scene content should be stored in lib-asset. The actual implementation stores YAML content directly in the state store (`scene:content:{id}` key). The asset integration is stubbed out.
+1. ~~**lib-asset integration**~~: **RESOLVED** (2026-01-31) - Removed dead config properties `AssetBucket` and `AssetContentType` per IMPLEMENTATION TENETS (T21 Configuration-First: no dead config). Scene content is stored directly in the state store via `scene:content:{id}` key. If lib-asset integration is needed in the future (e.g., for version content snapshots), the config properties can be re-added at that time.
 
 2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained.
 
@@ -455,6 +453,8 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-01-31**: Removed dead config properties `AssetBucket` and `AssetContentType` from scene-configuration.yaml per IMPLEMENTATION TENETS (T21 Configuration-First). These were never used in SceneService.cs - scene content is stored directly in state store. Updated tests accordingly.
 
 - **2026-01-31**: N+1 bulk loading optimization - Replaced N+1 `GetAsync` calls with `GetBulkAsync` in `ListScenesAsync`, `SearchScenesAsync`, `FindReferencesAsync`, and `FindAssetUsageAsync`. Index entry loading now uses single database round-trips. See Issue #168 for `IStateStore` bulk operations.
 

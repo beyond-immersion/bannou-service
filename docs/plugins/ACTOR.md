@@ -482,7 +482,11 @@ No bugs identified.
 
 ### AUDIT Markers
 
-No AUDIT markers present in this document.
+- **AUDIT[2026-01-31]: Schema-code mismatch for personality/combat-preferences event subscriptions**
+  - **Status**: FIXED
+  - **Issue**: `actor-events.yaml` x-event-subscriptions was missing `personality.evolved` and `combat-preferences.evolved` entries that were implemented in `ActorServiceEvents.cs`
+  - **Fix**: Added missing event subscriptions to schema, regenerated service events
+  - **Verification**: Build passes, schema now matches implementation
 
 ### Implementation Gaps
 

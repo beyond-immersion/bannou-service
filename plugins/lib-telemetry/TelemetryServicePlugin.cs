@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -65,18 +66,40 @@ public class TelemetryServicePlugin : BaseBannouPlugin
     /// </summary>
     private void ConfigureOpenTelemetry(IServiceCollection services)
     {
-        // We need to build a temporary service provider to get configuration
-        // This is a common pattern for OpenTelemetry SDK setup
-        services.AddOpenTelemetry()
+        // Build temporary service provider to access configuration
+        // This is the standard pattern for OpenTelemetry SDK setup when config is needed
+        using var tempProvider = services.BuildServiceProvider();
+        var config = tempProvider.GetService<TelemetryServiceConfiguration>() ?? new TelemetryServiceConfiguration();
+        var appConfig = tempProvider.GetService<AppConfiguration>();
+
+        // Determine service name from config or fall back to effective app-id
+        var serviceName = !string.IsNullOrWhiteSpace(config.ServiceName)
+            ? config.ServiceName
+            : appConfig?.EffectiveAppId ?? "bannou";
+
+        Logger?.LogDebug(
+            "Configuring OpenTelemetry: serviceName={ServiceName}, tracing={TracingEnabled}, metrics={MetricsEnabled}",
+            serviceName, config.TracingEnabled, config.MetricsEnabled);
+
+        var otelBuilder = services.AddOpenTelemetry()
             .ConfigureResource(resource =>
             {
-                // Resource configuration will be finalized after service provider is built
                 resource.AddService(
-                    serviceName: "bannou", // Default, will be overridden at runtime
-                    serviceNamespace: "bannou",
+                    serviceName: serviceName,
+                    serviceNamespace: config.ServiceNamespace,
                     serviceVersion: "1.0.0");
-            })
-            .WithTracing(tracing =>
+
+                // Add deployment environment as resource attribute
+                resource.AddAttributes(new[]
+                {
+                    new KeyValuePair<string, object>("deployment.environment", config.DeploymentEnvironment)
+                });
+            });
+
+        // Configure tracing if enabled
+        if (config.TracingEnabled)
+        {
+            otelBuilder.WithTracing(tracing =>
             {
                 tracing
                     // Add auto-instrumentation for ASP.NET Core
@@ -85,7 +108,8 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                         // Filter out health check endpoints to reduce noise
                         options.Filter = context =>
                             !context.Request.Path.StartsWithSegments("/health") &&
-                            !context.Request.Path.StartsWithSegments("/telemetry/health");
+                            !context.Request.Path.StartsWithSegments("/telemetry/health") &&
+                            !context.Request.Path.StartsWithSegments("/metrics");
                     })
                     // Add auto-instrumentation for HttpClient
                     .AddHttpClientInstrumentation(options =>
@@ -97,9 +121,30 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                     // Add our custom activity sources for infrastructure libs
                     .AddSource(TelemetryComponents.State)
                     .AddSource(TelemetryComponents.Messaging)
-                    .AddSource(TelemetryComponents.Mesh);
-            })
-            .WithMetrics(metrics =>
+                    .AddSource(TelemetryComponents.Mesh)
+                    // Configure OTLP exporter for trace export
+                    .AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri(config.OtlpEndpoint);
+                        options.Protocol = config.OtlpProtocol == OtlpProtocol.Grpc
+                            ? OtlpExportProtocol.Grpc
+                            : OtlpExportProtocol.HttpProtobuf;
+                    });
+
+                Logger?.LogInformation(
+                    "Tracing enabled: endpoint={Endpoint}, protocol={Protocol}",
+                    config.OtlpEndpoint, config.OtlpProtocol);
+            });
+        }
+        else
+        {
+            Logger?.LogInformation("Tracing disabled via configuration");
+        }
+
+        // Configure metrics if enabled
+        if (config.MetricsEnabled)
+        {
+            otelBuilder.WithMetrics(metrics =>
             {
                 metrics
                     // Add ASP.NET Core metrics
@@ -109,12 +154,19 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                     // Add our custom meters for infrastructure libs
                     .AddMeter(TelemetryComponents.State)
                     .AddMeter(TelemetryComponents.Messaging)
-                    .AddMeter(TelemetryComponents.Mesh);
-            });
+                    .AddMeter(TelemetryComponents.Mesh)
+                    // Add Prometheus exporter for /metrics endpoint scraping
+                    .AddPrometheusExporter();
 
-        // We defer actual exporter configuration to initialization time
-        // when we have access to the full configuration
-        Logger?.LogInformation("OpenTelemetry SDK base configuration applied");
+                Logger?.LogInformation("Metrics enabled with Prometheus exporter");
+            });
+        }
+        else
+        {
+            Logger?.LogInformation("Metrics disabled via configuration");
+        }
+
+        Logger?.LogInformation("OpenTelemetry SDK configuration applied");
     }
 
     /// <summary>
@@ -127,30 +179,25 @@ public class TelemetryServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        // Finalize OpenTelemetry configuration with actual config values
-        FinalizeOpenTelemetryConfiguration(app);
-
-        Logger?.LogInformation("Telemetry service application pipeline configured");
-    }
-
-    /// <summary>
-    /// Finalize OpenTelemetry configuration with actual runtime values.
-    /// </summary>
-    private void FinalizeOpenTelemetryConfiguration(WebApplication app)
-    {
+        // Map Prometheus metrics endpoint if metrics are enabled
         var config = app.Services.GetRequiredService<TelemetryServiceConfiguration>();
-        var appConfig = app.Services.GetRequiredService<AppConfiguration>();
+        if (config.MetricsEnabled)
+        {
+            // Map Prometheus scraping endpoint at /metrics
+            // This exposes all registered meters for Prometheus to scrape
+            app.MapPrometheusScrapingEndpoint("/metrics");
+            Logger?.LogInformation("Prometheus metrics endpoint mapped at /metrics");
+        }
 
+        // Log final configuration summary
+        var appConfig = app.Services.GetRequiredService<AppConfiguration>();
         var serviceName = !string.IsNullOrWhiteSpace(config.ServiceName)
             ? config.ServiceName
             : appConfig.EffectiveAppId;
 
         Logger?.LogInformation(
-            "OpenTelemetry configured: serviceName={ServiceName}, tracing={TracingEnabled}, metrics={MetricsEnabled}, endpoint={Endpoint}",
+            "OpenTelemetry finalized: serviceName={ServiceName}, tracing={TracingEnabled}, metrics={MetricsEnabled}, endpoint={Endpoint}",
             serviceName, config.TracingEnabled, config.MetricsEnabled, config.OtlpEndpoint);
-
-        // Note: OpenTelemetry SDK configuration is already done in ConfigureServices.
-        // Additional runtime configuration (like dynamic sampling) would go here.
     }
 
     /// <summary>
