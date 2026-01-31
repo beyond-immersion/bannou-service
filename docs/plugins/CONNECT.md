@@ -411,13 +411,13 @@ Connection Mode Behavior Matrix
 5. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/178 -->
 
-6. **DefaultServices/AuthenticatedServices config**: These arrays are defined in configuration but capability determination is entirely event-driven from Permission service. The config values are not used in the current implementation.
+6. ~~**DefaultServices/AuthenticatedServices config**~~: **REMOVED** (2026-01-31) - Documentation error: these configuration properties never existed in the schema or implementation. Capability determination has always been event-driven from the Permission service.
 
 ---
 
 ## Potential Extensions
 
-1. **Connection count enforcement**: Add a semaphore or gate to `WebSocketConnectionManager` that rejects connections when `MaxConcurrentConnections` is reached, returning a 503 Service Unavailable.
+1. ~~**Connection count enforcement**~~: **FIXED** (2026-01-31) - Connection limit check moved from `HandleWebSocketCommunicationAsync` to `ConnectController.HandleWebSocketConnectionAsync` BEFORE `AcceptWebSocketAsync()`. Now returns 503 Service Unavailable instead of accepting then immediately closing. Secondary check retained in service as defense-in-depth for race conditions.
 
 2. **Server-initiated heartbeats**: Implement a background timer that sends periodic binary ping messages to clients, using `HeartbeatIntervalSeconds` configuration. Detect dead connections via missed pong responses.
 
@@ -426,6 +426,7 @@ Connection Mode Behavior Matrix
 4. **Payload compression**: Implement gzip decompression when `MessageFlags.Compressed` is set, decompress before routing to backend. Compress responses when client indicates support.
 
 5. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/181 -->
 
 6. **Pending RPC timeout cleanup**: The `_pendingRPCs` dictionary grows without cleanup. Add a background timer that removes expired entries (where `TimeoutAt` has passed).
 
@@ -487,9 +488,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 - **Rate limit window enforcement** - Fixed 2026-01-31 - Added dedicated `RateLimitTimestamps` queue to track ALL incoming messages
+- **DefaultServices/AuthenticatedServices config** - Removed 2026-01-31 - Documentation error: these config properties never existed
+- **Connection count enforcement** - Fixed 2026-01-31 - Moved check before WebSocket accept, now returns 503 instead of accepting then closing
 
 ### Pending Design Review
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - Requires design decisions on key exchange protocol, algorithm selection, and client SDK coordination (2026-01-31)
 - **Compressed flag (0x04)** - [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) - Requires design decisions on bidirectionality, algorithm flexibility, and client capability negotiation (2026-01-31)
 - **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - Requires design decisions on ping mechanism type, pong tracking, timer architecture, and client SDK coordination (2026-01-31)
 - **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - Requires design decisions on queue architecture, concurrency model changes, and whether this feature is even needed (2026-01-31)
+- **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)

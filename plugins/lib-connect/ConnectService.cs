@@ -581,6 +581,25 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
+    /// Checks if the server can accept additional WebSocket connections.
+    /// Returns true if current connection count is below MaxConcurrentConnections.
+    /// </summary>
+    public bool CanAcceptNewConnection()
+    {
+        return _connectionManager.ConnectionCount < _configuration.MaxConcurrentConnections;
+    }
+
+    /// <summary>
+    /// Gets the current connection count for monitoring purposes.
+    /// </summary>
+    public int CurrentConnectionCount => _connectionManager.ConnectionCount;
+
+    /// <summary>
+    /// Gets the maximum allowed concurrent connections from configuration.
+    /// </summary>
+    public int MaxConcurrentConnections => _configuration.MaxConcurrentConnections;
+
+    /// <summary>
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
@@ -596,10 +615,13 @@ public partial class ConnectService : IConnectService
         // Create connection state with service mappings from discovery
         var connectionState = new ConnectionState(sessionId);
 
-        // Check connection limit before accepting
+        // Note: Connection limit check is performed in ConnectController.HandleWebSocketConnectionAsync
+        // BEFORE accepting the WebSocket upgrade, allowing proper 503 response instead of accepting
+        // then immediately closing. A secondary check is retained here as defense-in-depth for
+        // race conditions where multiple connections pass the controller check simultaneously.
         if (_connectionManager.ConnectionCount >= _configuration.MaxConcurrentConnections)
         {
-            _logger.LogWarning("Maximum concurrent connections ({MaxConnections}) reached, rejecting session {SessionId}",
+            _logger.LogWarning("Connection limit race condition: Maximum concurrent connections ({MaxConnections}) reached after WebSocket accepted, closing session {SessionId}",
                 _configuration.MaxConcurrentConnections, sessionId);
             await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation,
                 "Maximum connections exceeded", cancellationToken);
