@@ -277,6 +277,105 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, string>> SaveBulkAsync(
+        IEnumerable<KeyValuePair<string, TValue>> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var itemList = items.ToList();
+        if (itemList.Count == 0)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        using var context = CreateContext();
+        var keys = itemList.Select(i => i.Key).ToList();
+        var existing = await context.StateEntries
+            .Where(e => e.StoreName == _storeName && keys.Contains(e.Key))
+            .ToDictionaryAsync(e => e.Key, cancellationToken);
+
+        var result = new Dictionary<string, string>();
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var (key, value) in itemList)
+        {
+            var json = BannouJson.Serialize(value);
+            var etag = GenerateETag(json);
+
+            if (existing.TryGetValue(key, out var entry))
+            {
+                entry.ValueJson = json;
+                entry.Version++;
+                entry.ETag = etag;
+                entry.UpdatedAt = now;
+            }
+            else
+            {
+                context.StateEntries.Add(new StateEntry
+                {
+                    StoreName = _storeName,
+                    Key = key,
+                    ValueJson = json,
+                    Version = 1,
+                    ETag = etag,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                });
+            }
+            result[key] = etag;
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogDebug("Bulk save {Count} items to store '{Store}'", itemList.Count, _storeName);
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlySet<string>> ExistsBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return new HashSet<string>();
+        }
+
+        using var context = CreateContext();
+        var existing = await context.StateEntries
+            .AsNoTracking()
+            .Where(e => e.StoreName == _storeName && keyList.Contains(e.Key))
+            .Select(e => e.Key)
+            .ToListAsync(cancellationToken);
+
+        _logger.LogDebug("Bulk exists check {RequestedCount} keys from store '{Store}', found {FoundCount}",
+            keyList.Count, _storeName, existing.Count);
+        return existing.ToHashSet();
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> DeleteBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return 0;
+        }
+
+        using var context = CreateContext();
+        var deletedCount = await context.StateEntries
+            .Where(e => e.StoreName == _storeName && keyList.Contains(e.Key))
+            .ExecuteDeleteAsync(cancellationToken);
+
+        _logger.LogDebug("Bulk delete {RequestedCount} keys from store '{Store}', deleted {DeletedCount}",
+            keyList.Count, _storeName, deletedCount);
+        return deletedCount;
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<TValue>> QueryAsync(
         Expression<Func<TValue, bool>> predicate,
         CancellationToken cancellationToken = default)

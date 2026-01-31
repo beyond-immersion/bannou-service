@@ -113,6 +113,38 @@ public interface IStateStore<TValue>
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Bulk save multiple key-value pairs.
+    /// </summary>
+    /// <param name="items">Key-value pairs to save.</param>
+    /// <param name="options">Optional state options (TTL, consistency).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dictionary of key to ETag for successful saves.</returns>
+    Task<IReadOnlyDictionary<string, string>> SaveBulkAsync(
+        IEnumerable<KeyValuePair<string, TValue>> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Check existence of multiple keys.
+    /// </summary>
+    /// <param name="keys">Keys to check.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Set of keys that exist.</returns>
+    Task<IReadOnlySet<string>> ExistsBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete multiple keys.
+    /// </summary>
+    /// <param name="keys">Keys to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Count of keys actually deleted.</returns>
+    Task<int> DeleteBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default);
+
     // ==================== Set Operations ====================
     // Sets are collections of unique items stored under a single key.
     // Supported by Redis (native sets) and InMemory backends.

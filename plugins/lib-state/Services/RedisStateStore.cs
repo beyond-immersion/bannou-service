@@ -280,6 +280,127 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         return result;
     }
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, string>> SaveBulkAsync(
+        IEnumerable<KeyValuePair<string, TValue>> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var itemList = items.ToList();
+        if (itemList.Count == 0)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        // Use a transaction for atomicity
+        var transaction = _database.CreateTransaction();
+        var versionTasks = new List<(string Key, Task<long> VersionTask)>();
+
+        foreach (var (key, value) in itemList)
+        {
+            var fullKey = GetFullKey(key);
+            var metaKey = GetMetaKey(key);
+            var json = BannouJson.Serialize(value);
+
+            // Set the value
+            if (ttl.HasValue)
+            {
+                _ = transaction.StringSetAsync(fullKey, json, ttl.Value);
+            }
+            else
+            {
+                _ = transaction.StringSetAsync(fullKey, json);
+            }
+
+            // Update metadata
+            var versionTask = transaction.HashIncrementAsync(metaKey, "version", 1);
+            _ = transaction.HashSetAsync(metaKey, new HashEntry[]
+            {
+                new("updated", now)
+            });
+
+            // Set TTL on metadata too
+            if (ttl.HasValue)
+            {
+                _ = transaction.KeyExpireAsync(metaKey, ttl);
+            }
+
+            versionTasks.Add((key, versionTask));
+        }
+
+        await transaction.ExecuteAsync();
+
+        var result = new Dictionary<string, string>();
+        foreach (var (key, versionTask) in versionTasks)
+        {
+            result[key] = (await versionTask).ToString();
+        }
+
+        _logger.LogDebug("Bulk save {Count} items to store '{Store}'", itemList.Count, _keyPrefix);
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlySet<string>> ExistsBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return new HashSet<string>();
+        }
+
+        // Pipeline exists checks for efficiency
+        var tasks = keyList.Select(k => _database.KeyExistsAsync(GetFullKey(k))).ToArray();
+        var results = await Task.WhenAll(tasks);
+
+        var existing = new HashSet<string>();
+        for (var i = 0; i < keyList.Count; i++)
+        {
+            if (results[i])
+            {
+                existing.Add(keyList[i]);
+            }
+        }
+
+        _logger.LogDebug("Bulk exists check {RequestedCount} keys from store '{Store}', found {FoundCount}",
+            keyList.Count, _keyPrefix, existing.Count);
+        return existing;
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> DeleteBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return 0;
+        }
+
+        // Delete both value keys and metadata keys
+        var allKeys = new List<RedisKey>();
+        foreach (var key in keyList)
+        {
+            allKeys.Add(GetFullKey(key));
+            allKeys.Add(GetMetaKey(key));
+        }
+
+        var totalDeleted = await _database.KeyDeleteAsync(allKeys.ToArray());
+        // Each logical delete is 2 keys (value + meta), return logical count
+        // But only count those that actually existed (value key)
+        var deletedCount = (int)(totalDeleted / 2);
+
+        _logger.LogDebug("Bulk delete {RequestedCount} keys from store '{Store}', deleted {DeletedCount}",
+            keyList.Count, _keyPrefix, deletedCount);
+        return deletedCount;
+    }
+
     // ==================== Set Operations ====================
 
     private string GetSetKey(string key) => $"{_keyPrefix}:set:{key}";

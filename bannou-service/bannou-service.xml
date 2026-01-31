@@ -73464,6 +73464,33 @@
             <returns>Bulk results</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.State.IStateClient.BulkSaveStateAsync(BeyondImmersion.BannouService.State.BulkSaveStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk save multiple key-value pairs
+            </summary>
+            <returns>Bulk save results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.IStateClient.BulkExistsStateAsync(BeyondImmersion.BannouService.State.BulkExistsStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check existence of multiple keys
+            </summary>
+            <returns>Bulk exists results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.IStateClient.BulkDeleteStateAsync(BeyondImmersion.BannouService.State.BulkDeleteStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete multiple keys
+            </summary>
+            <returns>Bulk delete results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.State.IStateClient.ListStoresAsync(BeyondImmersion.BannouService.State.ListStoresRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -73589,6 +73616,33 @@
             Bulk get multiple keys
             </summary>
             <returns>Bulk results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.BulkSaveStateAsync(BeyondImmersion.BannouService.State.BulkSaveStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk save multiple key-value pairs
+            </summary>
+            <returns>Bulk save results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.BulkExistsStateAsync(BeyondImmersion.BannouService.State.BulkExistsStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check existence of multiple keys
+            </summary>
+            <returns>Bulk exists results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.BulkDeleteStateAsync(BeyondImmersion.BannouService.State.BulkDeleteStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete multiple keys
+            </summary>
+            <returns>Bulk delete results</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.State.StateClient.ListStoresAsync(BeyondImmersion.BannouService.State.ListStoresRequest,System.Threading.CancellationToken)">
@@ -73933,6 +73987,116 @@
         <member name="P:BeyondImmersion.BannouService.State.BulkStateItem.Found">
             <summary>
             Whether the key was found
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveStateRequest">
+            <summary>
+            Request to save multiple key-value pairs in a single operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateRequest.StoreName">
+            <summary>
+            Name of the state store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateRequest.Items">
+            <summary>
+            Items to save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateRequest.Options">
+            <summary>
+            Optional settings applied to all items
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveItem">
+            <summary>
+            A single item to save in a bulk operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveItem.Key">
+            <summary>
+            The key to save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveItem.Value">
+            <summary>
+            The value to store
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveStateResponse">
+            <summary>
+            Response from a bulk save operation with ETags for each saved item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateResponse.Results">
+            <summary>
+            Results for each saved item
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveResult">
+            <summary>
+            Result for a single item in a bulk save operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveResult.Key">
+            <summary>
+            The key that was saved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveResult.Etag">
+            <summary>
+            New ETag after save
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkExistsStateRequest">
+            <summary>
+            Request to check existence of multiple keys
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkExistsStateRequest.StoreName">
+            <summary>
+            Name of the state store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkExistsStateRequest.Keys">
+            <summary>
+            Keys to check for existence
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkExistsStateResponse">
+            <summary>
+            Response indicating which keys exist in the store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkExistsStateResponse.ExistingKeys">
+            <summary>
+            Keys that exist in the store
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkDeleteStateRequest">
+            <summary>
+            Request to delete multiple keys
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkDeleteStateRequest.StoreName">
+            <summary>
+            Name of the state store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkDeleteStateRequest.Keys">
+            <summary>
+            Keys to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkDeleteStateResponse">
+            <summary>
+            Response from a bulk delete operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkDeleteStateResponse.DeletedCount">
+            <summary>
+            Number of keys actually deleted
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.State.ListStoresRequest">
@@ -78776,6 +78940,31 @@
             <param name="keys">The keys to retrieve.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Dictionary of key to value (missing keys are excluded).</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.SaveBulkAsync(System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,`0}},BeyondImmersion.BannouService.State.StateOptions,System.Threading.CancellationToken)">
+            <summary>
+            Bulk save multiple key-value pairs.
+            </summary>
+            <param name="items">Key-value pairs to save.</param>
+            <param name="options">Optional state options (TTL, consistency).</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Dictionary of key to ETag for successful saves.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.ExistsBulkAsync(System.Collections.Generic.IEnumerable{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Check existence of multiple keys.
+            </summary>
+            <param name="keys">Keys to check.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Set of keys that exist.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.DeleteBulkAsync(System.Collections.Generic.IEnumerable{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Delete multiple keys.
+            </summary>
+            <param name="keys">Keys to delete.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Count of keys actually deleted.</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.AddToSetAsync``1(System.String,``0,BeyondImmersion.BannouService.State.StateOptions,System.Threading.CancellationToken)">
             <summary>

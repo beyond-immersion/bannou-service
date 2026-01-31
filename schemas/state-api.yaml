@@ -131,6 +131,69 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkGetStateResponse'
 
+  /state/bulk-save:
+    post:
+      operationId: bulkSaveState
+      summary: Bulk save multiple key-value pairs
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSaveStateRequest'
+      responses:
+        '200':
+          description: Bulk save results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkSaveStateResponse'
+
+  /state/bulk-exists:
+    post:
+      operationId: bulkExistsState
+      summary: Check existence of multiple keys
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkExistsStateRequest'
+      responses:
+        '200':
+          description: Bulk exists results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkExistsStateResponse'
+
+  /state/bulk-delete:
+    post:
+      operationId: bulkDeleteState
+      summary: Delete multiple keys
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteStateRequest'
+      responses:
+        '200':
+          description: Bulk delete results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteStateResponse'
+
   /state/list-stores:
     post:
       operationId: listStores
@@ -449,6 +512,130 @@ components:
         found:
           type: boolean
           description: Whether the key was found
+
+    BulkSaveStateRequest:
+      description: Request to save multiple key-value pairs in a single operation
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - items
+      properties:
+        storeName:
+          type: string
+          description: Name of the state store
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSaveItem'
+          description: Items to save
+        options:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/StateOptions'
+          description: Optional settings applied to all items
+
+    BulkSaveItem:
+      description: A single item to save in a bulk operation
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - value
+      properties:
+        key:
+          type: string
+          description: The key to save
+        value:
+          type: object
+          additionalProperties: true
+          description: The value to store
+
+    BulkSaveStateResponse:
+      description: Response from a bulk save operation with ETags for each saved item
+      type: object
+      additionalProperties: false
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSaveResult'
+          description: Results for each saved item
+
+    BulkSaveResult:
+      description: Result for a single item in a bulk save operation
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - etag
+      properties:
+        key:
+          type: string
+          description: The key that was saved
+        etag:
+          type: string
+          description: New ETag after save
+
+    BulkExistsStateRequest:
+      description: Request to check existence of multiple keys
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - keys
+      properties:
+        storeName:
+          type: string
+          description: Name of the state store
+        keys:
+          type: array
+          items:
+            type: string
+          description: Keys to check for existence
+
+    BulkExistsStateResponse:
+      description: Response indicating which keys exist in the store
+      type: object
+      additionalProperties: false
+      required:
+      - existingKeys
+      properties:
+        existingKeys:
+          type: array
+          items:
+            type: string
+          description: Keys that exist in the store
+
+    BulkDeleteStateRequest:
+      description: Request to delete multiple keys
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - keys
+      properties:
+        storeName:
+          type: string
+          description: Name of the state store
+        keys:
+          type: array
+          items:
+            type: string
+          description: Keys to delete
+
+    BulkDeleteStateResponse:
+      description: Response from a bulk delete operation
+      type: object
+      additionalProperties: false
+      required:
+      - deletedCount
+      properties:
+        deletedCount:
+          type: integer
+          description: Number of keys actually deleted
 
     ListStoresRequest:
       type: object

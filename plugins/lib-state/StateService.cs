@@ -408,6 +408,133 @@ public partial class StateService : IStateService
     }
 
     /// <inheritdoc />
+    public async Task<(StatusCodes, BulkSaveStateResponse?)> BulkSaveStateAsync(
+        BulkSaveStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Bulk saving {Count} items to store {StoreName}", body.Items.Count, body.StoreName);
+
+        try
+        {
+            if (!_stateStoreFactory.HasStore(body.StoreName))
+            {
+                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+            var items = body.Items.Select(i => new KeyValuePair<string, object>(i.Key, i.Value));
+            var etags = await store.SaveBulkAsync(items, body.Options, cancellationToken);
+
+            var results = etags.Select(kv => new BulkSaveResult
+            {
+                Key = kv.Key,
+                Etag = kv.Value
+            }).ToList();
+
+            _logger.LogDebug("Bulk save completed {Count} items to store {StoreName}",
+                results.Count, body.StoreName);
+
+            return (StatusCodes.OK, new BulkSaveStateResponse { Results = results });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to bulk save to store {StoreName}", body.StoreName);
+            await _messageBus.TryPublishErrorAsync(
+                "state",
+                "BulkSaveState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: body.StoreName,
+                endpoint: "post:/state/bulk-save",
+                details: new { StoreName = body.StoreName, ItemCount = body.Items.Count },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, BulkExistsStateResponse?)> BulkExistsStateAsync(
+        BulkExistsStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Bulk checking existence of {Count} keys in store {StoreName}", body.Keys.Count, body.StoreName);
+
+        try
+        {
+            if (!_stateStoreFactory.HasStore(body.StoreName))
+            {
+                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+            var existingKeys = await store.ExistsBulkAsync(body.Keys, cancellationToken);
+
+            _logger.LogDebug("Bulk exists check returned {Found}/{Total} keys from store {StoreName}",
+                existingKeys.Count, body.Keys.Count, body.StoreName);
+
+            return (StatusCodes.OK, new BulkExistsStateResponse { ExistingKeys = existingKeys.ToList() });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to bulk check existence in store {StoreName}", body.StoreName);
+            await _messageBus.TryPublishErrorAsync(
+                "state",
+                "BulkExistsState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: body.StoreName,
+                endpoint: "post:/state/bulk-exists",
+                details: new { StoreName = body.StoreName, KeyCount = body.Keys.Count },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, BulkDeleteStateResponse?)> BulkDeleteStateAsync(
+        BulkDeleteStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Bulk deleting {Count} keys from store {StoreName}", body.Keys.Count, body.StoreName);
+
+        try
+        {
+            if (!_stateStoreFactory.HasStore(body.StoreName))
+            {
+                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+            var deletedCount = await store.DeleteBulkAsync(body.Keys, cancellationToken);
+
+            _logger.LogDebug("Bulk delete removed {Deleted}/{Total} keys from store {StoreName}",
+                deletedCount, body.Keys.Count, body.StoreName);
+
+            return (StatusCodes.OK, new BulkDeleteStateResponse { DeletedCount = deletedCount });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to bulk delete from store {StoreName}", body.StoreName);
+            await _messageBus.TryPublishErrorAsync(
+                "state",
+                "BulkDeleteState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: body.StoreName,
+                endpoint: "post:/state/bulk-delete",
+                details: new { StoreName = body.StoreName, KeyCount = body.Keys.Count },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<(StatusCodes, ListStoresResponse?)> ListStoresAsync(
         ListStoresRequest? body,
         CancellationToken cancellationToken)

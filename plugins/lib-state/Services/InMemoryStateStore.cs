@@ -272,6 +272,111 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         return result;
     }
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, string>> SaveBulkAsync(
+        IEnumerable<KeyValuePair<string, TValue>> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var itemList = items.ToList();
+        if (itemList.Count == 0)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        var result = new Dictionary<string, string>();
+        var ttl = options?.Ttl;
+        DateTimeOffset? expiresAt = ttl.HasValue
+            ? DateTimeOffset.UtcNow.AddSeconds(ttl.Value)
+            : null;
+
+        foreach (var (key, value) in itemList)
+        {
+            var json = BannouJson.Serialize(value);
+            var entry = _store.AddOrUpdate(
+                key,
+                _ => new StoreEntry
+                {
+                    Json = json,
+                    Version = 1,
+                    ExpiresAt = expiresAt
+                },
+                (_, existing) => new StoreEntry
+                {
+                    Json = json,
+                    Version = existing.Version + 1,
+                    ExpiresAt = expiresAt
+                });
+            result[key] = entry.Version.ToString();
+        }
+
+        _logger.LogDebug("Bulk save {Count} items to store '{Store}'", itemList.Count, _storeName);
+
+        await Task.CompletedTask;
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlySet<string>> ExistsBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return new HashSet<string>();
+        }
+
+        var existing = new HashSet<string>();
+        foreach (var key in keyList)
+        {
+            if (_store.TryGetValue(key, out var entry))
+            {
+                if (IsExpired(entry))
+                {
+                    _store.TryRemove(key, out _); // Lazy cleanup
+                }
+                else
+                {
+                    existing.Add(key);
+                }
+            }
+        }
+
+        _logger.LogDebug("Bulk exists check {RequestedCount} keys from store '{Store}', found {FoundCount}",
+            keyList.Count, _storeName, existing.Count);
+
+        await Task.CompletedTask;
+        return existing;
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> DeleteBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return 0;
+        }
+
+        var deletedCount = 0;
+        foreach (var key in keyList)
+        {
+            if (_store.TryRemove(key, out _))
+            {
+                deletedCount++;
+            }
+        }
+
+        _logger.LogDebug("Bulk delete {RequestedCount} keys from store '{Store}', deleted {DeletedCount}",
+            keyList.Count, _storeName, deletedCount);
+
+        await Task.CompletedTask;
+        return deletedCount;
+    }
+
     /// <summary>
     /// Clear all entries in this store (useful for testing).
     /// </summary>

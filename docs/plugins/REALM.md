@@ -158,6 +158,7 @@ None identified.
 3. **Realm statistics**: Track entity counts per realm (characters, locations, species) for capacity planning.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/169 -->
 4. **Event consumption for cascade**: Listen to character/location deletion events to track reference counts for safe deletion.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/170 -->
 
 ---
 
@@ -183,17 +184,34 @@ None identified.
 
 7. **Deprecate is not idempotent**: Returns `StatusCodes.Conflict` if realm is already deprecated. Calling deprecate twice fails the second time rather than being a no-op.
 
-8. **Event publishing failures are swallowed**: Event publishing exceptions are caught and logged as warnings, but don't fail the operation. State changes succeed even if events fail to publish.
+8. **Event publishing uses aggressive retry with fail-loud crash semantics**: State store writes and event publishing are separate operations (no transactional outbox). However, lib-messaging's `TryPublishAsync` implements a sophisticated retry system via `MessageRetryBuffer`:
+   - **On publish failure**: Messages are buffered in-memory and `TryPublishAsync` returns `true` (because delivery WILL be retried)
+   - **Retry processing**: Every 5 seconds (configurable), the buffer is processed and failed messages are re-attempted
+   - **Fail-loud thresholds**: If RabbitMQ stays down too long, the node **intentionally crashes** via `Environment.FailFast()`:
+     - Buffer exceeds 10,000 messages (default `MESSAGING_RETRY_BUFFER_MAX_SIZE`)
+     - Oldest message exceeds 5 minutes (default `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS`)
+   - **Why crash?**: Crashing triggers orchestrator restart, makes the failure visible in monitoring, and prevents silent data loss or unbounded memory growth
+
+   **True loss scenarios** (rare):
+   - Node dies (power failure, OOM kill) before buffer flushes
+   - Clean shutdown with non-empty buffer (logged as warning)
+   - Serialization failure (programming error, not retryable)
+
+   The `PublishRealm*EventAsync` wrapper methods add an extra try/catch that logs warnings, but the underlying `TryPublishAsync` handles retry automatically. This is the **standard Bannou architecture** used by all services.
+
+9. **GameServiceId is mutable**: `UpdateRealmRequest` allows changing `GameServiceId`, which reassigns the realm to a different game service. This is intentional - realms can be reorganized (e.g., game service consolidation, re-branding). Dependent services handle this via event-driven cache invalidation: Analytics subscribes to `realm.updated` and invalidates its `realm-to-gameService` cache, ensuring subsequent lookups fetch the new `GameServiceId`. Other services (Location, Species, Character) validate realm existence on creation but don't cache `GameServiceId`, so they're unaffected.
+
+10. **All-realms list stored as single key**: The `all-realms` key stores a `List<Guid>` of all realm IDs. Create/Delete operations read the entire list, modify it, and write it back. This is intentional: realms are top-level game worlds (expected count: single-digit to ~50 max), not high-volume entities. The list serializes to <5KB even at 100 realms, and realm creation/deletion are rare administrative operations. Alternative patterns (Redis SCAN, secondary index tables) would add complexity without benefit at this scale. The pattern matches game-service which has similar constraints.
 
 ### Design Considerations
 
-1. **GameServiceId mutability**: `UpdateRealmRequest` allows changing `GameServiceId`. This could break the game-service → realm relationship if not handled carefully by dependent systems that assume realm ownership is immutable.
+1. ~~**GameServiceId mutability**~~: **MOVED TO QUIRKS** (2026-01-31) - Not a gap; event-driven cache invalidation handles this. See Intentional Quirks #9.
 
-2. **All-realms list as single key**: Like game-service, the master list grows linearly. Delete operations read the full list, filter, and rewrite. Not a concern with expected realm counts (dozens) but architecturally identical to the game-service concern.
+2. ~~**All-realms list as single key**~~: **MOVED TO QUIRKS** (2026-01-31) - Intentional optimization for expected scale. See Intentional Quirks #10.
 
 3. **No reference counting for delete**: The delete endpoint does not verify that no entities (characters, locations, species) reference the realm. Dependent services call `RealmExistsAsync` on creation but nothing prevents deleting a realm that still has active entities.
 
-4. **Event publishing non-transactional**: State store writes and event publishing are separate operations. A crash between writing state and publishing the event would leave dependent services unaware of the change until they directly query.
+4. ~~**Event publishing non-transactional**~~: **MERGED WITH QUIRK #8** (2026-01-31) - This describes the standard Bannou architecture, not a Realm-specific gap. See expanded Intentional Quirk #8.
 
 5. **Read-modify-write without distributed locks**: Create/Delete modify the all-realms list, Update modifies realm model. Requires ETag-based optimistic concurrency or distributed locks.
 
@@ -207,8 +225,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-01-31**: Realm merge feature requires design decisions. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) for open questions about entity migration ordering, species realm association handling, location hierarchy treatment, and partial failure policies.
 - **2026-01-31**: Realm statistics feature requires design decisions. See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) for open questions about synchronous vs event-driven counting, species multi-realm membership handling, historical tracking, and potential overlap with Analytics service.
+- **2026-01-31**: Reference counting for safe deletion requires design decisions. See [#170](https://github.com/beyond-immersion/bannou-service/issues/170) for open questions about counter granularity, species multi-realm handling, startup synchronization, and enforcement mode. Note: Overlaps significantly with #169 - may be combined.
 
 ### Completed
 
 - **2026-01-31**: Added `/realm/exists-batch` endpoint for batch realm validation. Uses `GetBulkAsync` for efficient single-call validation of multiple realm IDs. Returns per-realm results with `allExist`/`allActive` convenience flags.
 - **2026-01-31**: Reclassified "VOID realm pattern" from Stubs to Intentional Quirks. The VOID realm is intentionally a convention (like Species/RelationshipType VOID entries), not service-enforced logic. Created `provisioning/seed-data/realms.yaml` to provide seed data with VOID realm, paralleling the existing species.yaml and relationship-types.yaml files.
+- **2026-01-31**: Reclassified "GameServiceId mutability" from Design Considerations to Intentional Quirks. Investigation confirmed Analytics service handles this via `realm.updated` event-driven cache invalidation. Other dependent services (Location, Species, Character) don't cache GameServiceId so are unaffected.
+- **2026-01-31**: Reclassified "All-realms list as single key" from Design Considerations to Intentional Quirks. Analysis confirmed this is an appropriate optimization for the expected realm count (single-digit to ~50 max). The list stays under 5KB even at extreme counts, and realm create/delete are rare operations.
+- **2026-01-31**: Merged "Event publishing non-transactional" Design Consideration into Intentional Quirk #8. Investigated lib-messaging's `MessageRetryBuffer` implementation and documented the actual behavior: aggressive in-memory retry with fail-loud crash semantics (not simple "best-effort"). Documented retry intervals (5s), buffer thresholds (10k messages, 5min max age), and true loss scenarios.
