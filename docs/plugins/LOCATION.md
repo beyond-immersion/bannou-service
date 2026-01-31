@@ -252,7 +252,7 @@ No bugs identified.
 
 3. ~~**Root-locations index maintenance**~~: **VERIFIED** (2026-01-31) - The `root-locations:{realmId}` index IS correctly maintained in all four scenarios: CreateLocation (adds to roots if no parent), SetLocationParent (removes from roots when going from root→child), RemoveLocationParent (adds to roots), DeleteLocation (removes from roots). No gap exists.
 
-4. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
+4. ~~**Seed realm code resolution is serial**~~: **VERIFIED** (2026-01-31) - Each unique realm code triggers one `IRealmClient.GetRealmByCodeAsync` call serially, but a local `realmCodeToId` dictionary caches results so each realm is only fetched once per seed operation. Seeding 100 locations in 3 realms = 3 realm lookups (not 100). This is optimized for the common case; parallelizing for edge cases (10+ realms) adds complexity without meaningful benefit.
 
 5. **Index updates lack optimistic concurrency**: Index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
 
@@ -268,3 +268,4 @@ No bugs identified.
 - **2026-01-31**: Batch location loading - Replaced N+1 `LoadLocationsByIdsAsync` with `GetBulkAsync` for O(1) database round-trips.
 - **2026-01-31**: Redis caching layer - Added `location-cache` store with read-through caching for all read operations, cache invalidation/population on writes.
 - **2026-01-31**: Root-locations index maintenance - Verified implementation is correct; index is properly maintained in all four scenarios (create, set-parent, remove-parent, delete).
+- **2026-01-31**: Seed realm code resolution - Verified implementation is correct; local dictionary caching ensures each realm code is only fetched once per seed operation.

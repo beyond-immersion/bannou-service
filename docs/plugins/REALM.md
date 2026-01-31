@@ -146,7 +146,7 @@ Realm Deletion Safety Chain
 
 ## Stubs & Unimplemented Features
 
-1. **VOID realm pattern**: The API schema documents a "VOID realm" concept as a sink for entities whose realm should be removed, but this is not enforced in service code — it's a convention for client implementations.
+None identified.
 
 ---
 
@@ -167,19 +167,21 @@ None identified.
 
 ### Intentional Quirks
 
-1. **Exists endpoint never returns 404**: Always returns `StatusCodes.OK` with `exists: true/false` and `isActive: true/false`. Callers must check both flags to determine usability. This avoids 404 semantics for a "check" operation.
+1. **VOID realm is a convention, not enforced**: The API schema documents a "VOID realm" concept as a sink for entities whose realm should be removed. This is **intentionally not enforced** in realm service code — it's a seeding convention parallel to Species (VOID species) and RelationshipType (VOID type). The VOID realm should be seeded via `/realm/seed` with metadata `isSystemType: true`. Enforcement of VOID semantics (e.g., preventing new character creation in VOID realm) belongs to consuming services (Character, Location, Species), not the realm registry itself.
 
-2. **IsActive in Exists response is computed**: Returns `IsActive = model.IsActive && !model.IsDeprecated`. A realm with `IsActive=true` and `IsDeprecated=true` will return `IsActive=false` in the Exists response. The two properties are conflated.
+2. **Exists endpoint never returns 404**: Always returns `StatusCodes.OK` with `exists: true/false` and `isActive: true/false`. Callers must check both flags to determine usability. This avoids 404 semantics for a "check" operation.
 
-3. **Metadata update has no equality check**: Unlike Name/Description/Category which check `body.X != model.X`, Metadata only checks `body.Metadata != null`. Sending identical metadata still triggers an update event with "metadata" in changedFields.
+3. **IsActive in Exists response is computed**: Returns `IsActive = model.IsActive && !model.IsDeprecated`. A realm with `IsActive=true` and `IsDeprecated=true` will return `IsActive=false` in the Exists response. The two properties are conflated.
 
-4. **Seed updates are silent (no events)**: When `UpdateExisting=true`, seed operations directly update the model without calling `PublishRealmUpdatedEventAsync`. Regular updates publish events; seed updates don't.
+4. **Metadata update has no equality check**: Unlike Name/Description/Category which check `body.X != model.X`, Metadata only checks `body.Metadata != null`. Sending identical metadata still triggers an update event with "metadata" in changedFields.
 
-5. **LoadRealmsByIdsAsync silently drops missing realms**: If the all-realms list contains an ID that doesn't exist in data store, it's silently excluded from results.
+5. **Seed updates are silent (no events)**: When `UpdateExisting=true`, seed operations directly update the model without calling `PublishRealmUpdatedEventAsync`. Regular updates publish events; seed updates don't.
 
-6. **Deprecate is not idempotent**: Returns `StatusCodes.Conflict` if realm is already deprecated. Calling deprecate twice fails the second time rather than being a no-op.
+6. **LoadRealmsByIdsAsync silently drops missing realms**: If the all-realms list contains an ID that doesn't exist in data store, it's silently excluded from results.
 
-7. **Event publishing failures are swallowed**: Event publishing exceptions are caught and logged as warnings, but don't fail the operation. State changes succeed even if events fail to publish.
+7. **Deprecate is not idempotent**: Returns `StatusCodes.Conflict` if realm is already deprecated. Calling deprecate twice fails the second time rather than being a no-op.
+
+8. **Event publishing failures are swallowed**: Event publishing exceptions are caught and logged as warnings, but don't fail the operation. State changes succeed even if events fail to publish.
 
 ### Design Considerations
 
@@ -199,4 +201,6 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-*No active work items.*
+### Completed
+
+- **2026-01-31**: Reclassified "VOID realm pattern" from Stubs to Intentional Quirks. The VOID realm is intentionally a convention (like Species/RelationshipType VOID entries), not service-enforced logic. Created `provisioning/seed-data/realms.yaml` to provide seed data with VOID realm, paralleling the existing species.yaml and relationship-types.yaml files.

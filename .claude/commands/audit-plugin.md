@@ -329,7 +329,7 @@ If determination is EXECUTE:
    - Make schema changes first if needed (`scripts/generate-all-services.sh`)
    - Edit service implementation files
    - Update tests if required
-   - Run `dotnet build` to verify
+   - **Only if code was changed:** Run `dotnet build` to verify (do NOT build for documentation-only changes)
    - Follow all TENETS (especially schema-first, infrastructure libs, error handling)
 
 4. **Update documentation**
@@ -349,7 +349,7 @@ If determination is EXECUTE:
    - **Gap addressed:** {title}
    - **Files modified:** {list}
    - **Tests added/updated:** {Yes/No}
-   - **Build status:** {Pass/Fail}
+   - **Build status:** {Pass/Fail/N/A (doc-only)}
    ```
 
 ### Phase 6b: Create Issue Path
@@ -447,7 +447,7 @@ If any phase fails:
 
 - **Never skip the investigation phase** - superficial analysis leads to bad issues or broken implementations
 - **Be conservative with EXECUTE** - when in doubt, create an issue
-- **Always verify build after changes** - run `dotnet build` before declaring success
+- **Verify build only when code changes** - run `dotnet build` after code changes, but NOT for documentation-only fixes (markdown, yaml seed data, etc.)
 - **Follow all TENETS** - especially schema-first development
 - **Preserve existing markers** - don't remove IN_PROGRESS markers from other developers
 - **Stubs and Potential Extensions ARE gaps** - they describe incomplete/missing functionality
