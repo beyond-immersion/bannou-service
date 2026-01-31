@@ -25,6 +25,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<LocationService.LocationModel>> _mockLocationStore;
+    private readonly Mock<IStateStore<LocationService.LocationModel>> _mockLocationCacheStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
@@ -34,6 +35,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     private const string STATE_STORE = "location-statestore";
+    private const string CACHE_STORE = "location-cache";
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string LOCATION_KEY_PREFIX = "location:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -45,6 +47,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockLocationStore = new Mock<IStateStore<LocationService.LocationModel>>();
+        _mockLocationCacheStore = new Mock<IStateStore<LocationService.LocationModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
@@ -66,11 +69,30 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .Setup(f => f.GetStore<LocationService.LocationModel>(STATE_STORE))
             .Returns(_mockLocationStore.Object);
         _mockStateStoreFactory
+            .Setup(f => f.GetStore<LocationService.LocationModel>(CACHE_STORE))
+            .Returns(_mockLocationCacheStore.Object);
+        _mockStateStoreFactory
             .Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
+
+        // Default bulk operation behaviors for location store
+        _mockLocationStore
+            .Setup(s => s.SaveBulkAsync(It.IsAny<IEnumerable<KeyValuePair<string, LocationService.LocationModel>>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+        _mockLocationStore
+            .Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        // Default bulk operation behaviors for cache store
+        _mockLocationCacheStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, LocationService.LocationModel>());
+        _mockLocationCacheStore
+            .Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
 
         // Default message bus behavior - 3-param convenience overload (what services actually call)
         // Moq doesn't call through default interface implementations, so we must mock this overload

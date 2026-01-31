@@ -444,7 +444,7 @@ No bugs identified.
 
 3. **Error recovery in behavior loop**: If the behavior tick throws, the actor enters `Error` status for 1 second, then resumes `Running`. Self-healing prevents permanent actor death from transient failures.
 
-4. **Encounter event publishing is fire-and-forget**: `StartEncounter`/`SetEncounterPhase`/`EndEncounter` use fire-and-forget publishing because the `IActorRunner` interface defines these methods as synchronous. Publishing failures are logged internally but cannot be awaited.
+4. **Encounter event publishing uses discard pattern**: `StartEncounter`/`SetEncounterPhase`/`EndEncounter` use `_ = _messageBus.TryPublishAsync(...)` because the `IActorRunner` interface defines these methods as **synchronous** (`bool` return type). Changing to `Task<bool>` would be a breaking interface change. Note that `TryPublishAsync` still buffers and retries internally if RabbitMQ is unavailable - events WILL be delivered eventually (see MESSAGING.md Quirk #1). The discard means the caller can't await completion or check the return value, but the underlying retry mechanism ensures delivery.
 
 ### Design Considerations (Requires Planning)
 
@@ -452,7 +452,7 @@ No bugs identified.
 
 2. **ActorRegistry is instance-local for bannou mode**: Pool mode uses Redis-backed `ActorPoolManager`, but bannou mode uses in-memory `ConcurrentDictionary`. Bannou mode is designed for single-instance operation.
 
-3. **ScheduledEventManager Timer uses fire-and-forget**: `CheckEvents` callback discards Tasks via `_ = FireEventAsync()`. Exceptions silently lost. Requires scheduler architecture redesign.
+3. **ScheduledEventManager Timer uses discard pattern**: `CheckEvents` callback discards Tasks via `_ = FireEventAsync()`. If `FireEventAsync` throws, the exception is unobserved (no crash, but no logging). This is a timer callback constraint - the callback must be synchronous. Note: if `FireEventAsync` uses `TryPublishAsync` internally, the retry buffer handles RabbitMQ failures; other exceptions would be lost.
 
 4. **ActorRunner._encounter field lacks synchronization**: Field accessed from behavior loop thread and external callers without lock protection. `_statusLock` only protects `_status`.
 

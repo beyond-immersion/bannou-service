@@ -1503,15 +1503,34 @@ public partial class LocationService : ILocationService
         var descendants = new List<LocationModel>();
         await CollectDescendantsAsync(parentId, realmId, descendants, 0, _configuration.MaxDescendantDepth, cancellationToken);
 
+        if (descendants.Count == 0)
+        {
+            return;
+        }
+
+        // Update depths in memory and prepare bulk operations
+        var now = DateTimeOffset.UtcNow;
+        var itemsToSave = new List<KeyValuePair<string, LocationModel>>();
+        var cacheKeysToInvalidate = new List<string>();
+
         foreach (var descendant in descendants)
         {
             descendant.Depth += depthChange;
-            descendant.UpdatedAt = DateTimeOffset.UtcNow;
+            descendant.UpdatedAt = now;
             var key = BuildLocationKey(descendant.LocationId);
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(key, descendant, cancellationToken: cancellationToken);
-            // Invalidate cache for updated descendant
-            await InvalidateLocationCacheAsync(key, cancellationToken);
+            itemsToSave.Add(new KeyValuePair<string, LocationModel>(key, descendant));
+            cacheKeysToInvalidate.Add(key);
         }
+
+        // Bulk save all descendants to state store (single database call)
+        var locationStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+        await locationStore.SaveBulkAsync(itemsToSave, cancellationToken: cancellationToken);
+
+        // Bulk invalidate cache for all updated descendants (single cache call)
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        await cacheStore.DeleteBulkAsync(cacheKeysToInvalidate, cancellationToken);
+
+        _logger.LogDebug("Updated depths for {Count} descendants of location {ParentId}", descendants.Count, parentId);
     }
 
     private LocationResponse MapToResponse(LocationModel model)

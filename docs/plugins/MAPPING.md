@@ -408,7 +408,7 @@ Authoring Workflow
 
 7. **Unknown affordance types search all map kinds**: The `Custom` type and the fallback case both return ALL `MapKind` values. An unknown affordance type triggers the most expensive possible query, searching every kind.
 
-8. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Exceptions are silently lost.
+8. **Authority expiry event uses discard pattern**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` which discards the returned Task. This is intentional: the event is for **monitoring only** (non-critical), and the calling code path doesn't need to await it. Note that `TryPublishAsync` still buffers and retries internally if RabbitMQ is unavailable - the event WILL be delivered eventually (see MESSAGING.md Quirk #1). The discard means the caller doesn't check the return value, but since this is a monitoring event, that's acceptable.
 
 ### Design Considerations
 
