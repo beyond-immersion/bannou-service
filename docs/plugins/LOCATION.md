@@ -220,6 +220,7 @@ None. All API endpoints are fully implemented.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/165 -->
 3. ~~**Redis caching layer**~~: **FIXED** (2026-01-31) - Added `location-cache` Redis store with read-through caching. All read operations check cache first, write operations invalidate/populate cache. Configurable TTL via `LOCATION_CACHE_TTL_SECONDS` (default 3600s).
 4. **Soft-delete reference tracking**: Track which services reference a location before allowing hard delete.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/166 -->
 
 ---
 
@@ -249,7 +250,7 @@ No bugs identified.
 
 2. ~~**No caching layer**~~: **FIXED** (2026-01-31) - Added Redis caching with read-through pattern matching lib-item.
 
-3. **Root-locations index maintenance**: The `root-locations:{realmId}` index must be updated whenever a location gains or loses a parent. Missing updates could cause roots to be missed in `ListRootLocations`.
+3. ~~**Root-locations index maintenance**~~: **VERIFIED** (2026-01-31) - The `root-locations:{realmId}` index IS correctly maintained in all four scenarios: CreateLocation (adds to roots if no parent), SetLocationParent (removes from roots when going from root→child), RemoveLocationParent (adds to roots), DeleteLocation (removes from roots). No gap exists.
 
 4. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
 
@@ -266,3 +267,4 @@ No bugs identified.
 ### Completed
 - **2026-01-31**: Batch location loading - Replaced N+1 `LoadLocationsByIdsAsync` with `GetBulkAsync` for O(1) database round-trips.
 - **2026-01-31**: Redis caching layer - Added `location-cache` store with read-through caching for all read operations, cache invalidation/population on writes.
+- **2026-01-31**: Root-locations index maintenance - Verified implementation is correct; index is properly maintained in all four scenarios (create, set-parent, remove-parent, delete).
