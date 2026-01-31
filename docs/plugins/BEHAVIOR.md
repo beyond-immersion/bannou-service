@@ -148,7 +148,7 @@ Service lifetime is **Scoped** (per-request). `BehaviorModelCache` is a singleto
 
 - **CompileAbmlBehavior** (`/compile`): Accepts ABML YAML string with optional compilation options (debug info, optimizations, skip semantic analysis, model ID, max constants/strings). Invokes the multi-phase compiler pipeline: YAML parsing via `DocumentParser`, semantic analysis (unless skipped), variable registration from context block, flow compilation with action compiler registry, bytecode emission with label patching. On success: returns compiled bytecode (base64), model metadata (inputs, outputs, continuation points, debug line map), and bytecode size. On failure: returns error list with messages and optional line numbers. Publishes `behavior.compilation-failed` event with content hash for deduplication on compilation errors. Stores compiled behavior metadata in state store. For successful compilation: publishes `behavior.created` or `behavior.updated` lifecycle event.
 
-- **ValidateAbml** (`/validate`): Validates ABML YAML by running the full compilation pipeline (including bytecode emission) then discarding the bytecode and returning only the error/success status. Despite the "validate-only" intent, calls `_compiler.CompileYaml()` which performs the same multi-phase pipeline as `/compile`. Returns validation result with `isValid` flag and error list (undefined flows, empty conditionals, invalid continuation points, type mismatches). **Note**: The `SemanticWarnings` field in the response is always returned as an empty list (hardcoded `new List<string>()`) - compiler warnings about unreachable code, unused flows, etc. are never propagated to the response. When `StrictMode=false` (default), semantic analysis is skipped entirely. Does not modify state or publish events.
+- **ValidateAbml** (`/validate`): Validates ABML YAML by running the full compilation pipeline (including bytecode emission) then discarding the bytecode and returning only the error/success status. Despite the "validate-only" intent, calls `_compiler.CompileYaml()` which performs the same multi-phase pipeline as `/compile`. Returns validation result with `isValid` flag and error list (undefined flows, empty conditionals, invalid continuation points, type mismatches). Semantic warnings (unreachable code, unused flows, etc.) are propagated via `result.Warnings` when `StrictMode=true` enables semantic analysis. When `StrictMode=false` (default), semantic analysis is skipped entirely and no warnings are produced. Does not modify state or publish events.
 
 ### Cache Operations (2 endpoints)
 
@@ -407,7 +407,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 5. **Compiler optimizations**: `CompilationOptions.EnableOptimizations` flag exists and `CompilationOptions.Release` preset enables it, but no optimization passes are currently implemented in the compiler pipeline. The flag is a placeholder for future dead-code elimination, constant folding, etc.
 
-6. **Vocalization intent channel**: The `IntentChannel.Vocalization` enum value (0x04) is defined in the opcode set but the `SemanticAnalyzer.ValidateEmitIntent` only validates `action`, `locomotion`, `attention`, and `stance` channels - vocalization is not in the valid channels list and will produce a warning.
+6. ~~**Vocalization intent channel**~~: **FIXED**: The `SemanticAnalyzer.ValidateEmitIntent` now validates all five intent channels including `vocalization`. The valid channels list is `["action", "locomotion", "attention", "stance", "vocalization"]`.
 
 ---
 
@@ -483,7 +483,12 @@ No bugs identified.
 
 ### AUDIT Markers
 
-No AUDIT markers present in this document.
+<!-- AUDIT:2026-01-31:documentation-accuracy - Fixed two documentation inaccuracies:
+     1. ValidateAbml SemanticWarnings: Incorrectly claimed response always returns empty list.
+        Code at BehaviorService.cs:530 correctly propagates result.Warnings.
+     2. Vocalization intent channel: Incorrectly claimed vocalization was not in valid channels.
+        SemanticAnalyzer.cs:259 includes "vocalization" in validChannels array.
+     Both were doc-only fixes - no code changes required. -->
 
 ### Implementation Gaps
 

@@ -198,6 +198,7 @@ None identified.
 ### Design Considerations (Requires Planning)
 
 1. **Unused state store (music-styles)**: The MySQL store is defined in `state-stores.yaml` but never accessed. All styles come from hardcoded `BuiltInStyles`. Either implement CreateStyle persistence or remove the store from schema.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 
 2. **Hardcoded tunables throughout**: Multiple hardcoded values scattered through the code:
    - `ticksPerBeat = 480` (line 112)
@@ -222,4 +223,4 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work items.*
+- **Design Consideration #1** (Unused state store): [#188](https://github.com/beyond-immersion/bannou-service/issues/188) - Requires decision on whether to implement custom styles or remove unused store

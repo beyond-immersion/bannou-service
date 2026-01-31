@@ -239,8 +239,10 @@ No bugs identified.
 ### Design Considerations (Requires Planning)
 
 1. **No distributed lock on character update (IMPLEMENTATION TENETS)**: `UpdateCharacterAsync` reads a character, modifies it, and saves it without concurrency protection. Two simultaneous updates result in last-writer-wins. Fix requires: inject `IDistributedLockProvider`, add locking around read-modify-write, or use `GetWithETagAsync`/`TrySaveAsync` with retry-on-conflict.
+   - [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189)
 
 2. **No distributed lock on character compression (IMPLEMENTATION TENETS)**: `CompressCharacterAsync` reads a character, generates summaries, stores archive, and optionally deletes source data without concurrency protection. Fix requires: inject `IDistributedLockProvider`, wrap compression in lock scope.
+   - [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189) (same issue - share lock infrastructure)
 
 3. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 
