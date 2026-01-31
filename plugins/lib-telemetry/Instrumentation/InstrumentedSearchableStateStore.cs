@@ -1,8 +1,8 @@
 #nullable enable
 
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Services;
 using OpenTelemetry.Trace;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Telemetry.Instrumentation;
 

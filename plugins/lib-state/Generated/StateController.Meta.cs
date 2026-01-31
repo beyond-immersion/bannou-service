@@ -754,6 +754,424 @@ public partial class StateController
 
     #endregion
 
+    #region Meta Endpoints for BulkSaveState
+
+    private static readonly string _BulkSaveState_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkSaveStateRequest",
+    "$defs": {
+        "BulkSaveStateRequest": {
+            "description": "Request to save multiple key-value pairs in a single operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "items"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BulkSaveItem"
+                    },
+                    "description": "Items to save"
+                },
+                "options": {
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/StateOptions"
+                        }
+                    ],
+                    "description": "Optional settings applied to all items"
+                }
+            }
+        },
+        "BulkSaveItem": {
+            "description": "A single item to save in a bulk operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "key",
+                "value"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "description": "The key to save"
+                },
+                "value": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "The value to store"
+                }
+            }
+        },
+        "StateOptions": {
+            "description": "Configuration options for state save operations including TTL, consistency level, and optimistic concurrency",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "ttl": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "TTL in seconds (Redis only)"
+                },
+                "consistency": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ConsistencyLevel"
+                        }
+                    ],
+                    "default": "strong",
+                    "description": "Consistency level"
+                },
+                "etag": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optimistic concurrency check - save fails if ETag mismatch"
+                }
+            }
+        },
+        "ConsistencyLevel": {
+            "type": "string",
+            "description": "Consistency level for state operations",
+            "enum": [
+                "strong",
+                "eventual"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkSaveState_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkSaveStateResponse",
+    "$defs": {
+        "BulkSaveStateResponse": {
+            "description": "Response from a bulk save operation with ETags for each saved item",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "results"
+            ],
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BulkSaveResult"
+                    },
+                    "description": "Results for each saved item"
+                }
+            }
+        },
+        "BulkSaveResult": {
+            "description": "Result for a single item in a bulk save operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "key",
+                "etag"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "description": "The key that was saved"
+                },
+                "etag": {
+                    "type": "string",
+                    "description": "New ETag after save"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkSaveState_Info = """
+{
+    "summary": "Bulk save multiple key-value pairs",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "bulkSaveState"
+}
+""";
+
+    /// <summary>Returns endpoint information for BulkSaveState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-save/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkSaveState_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "State",
+            "POST",
+            "/state/bulk-save",
+            _BulkSaveState_Info));
+
+    /// <summary>Returns request schema for BulkSaveState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-save/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkSaveState_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-save",
+            "request-schema",
+            _BulkSaveState_RequestSchema));
+
+    /// <summary>Returns response schema for BulkSaveState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-save/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkSaveState_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-save",
+            "response-schema",
+            _BulkSaveState_ResponseSchema));
+
+    /// <summary>Returns full schema for BulkSaveState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-save/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkSaveState_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-save",
+            _BulkSaveState_Info,
+            _BulkSaveState_RequestSchema,
+            _BulkSaveState_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for BulkExistsState
+
+    private static readonly string _BulkExistsState_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkExistsStateRequest",
+    "$defs": {
+        "BulkExistsStateRequest": {
+            "description": "Request to check existence of multiple keys",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "keys"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store"
+                },
+                "keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keys to check for existence"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkExistsState_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkExistsStateResponse",
+    "$defs": {
+        "BulkExistsStateResponse": {
+            "description": "Response indicating which keys exist in the store",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "existingKeys"
+            ],
+            "properties": {
+                "existingKeys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keys that exist in the store"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkExistsState_Info = """
+{
+    "summary": "Check existence of multiple keys",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "bulkExistsState"
+}
+""";
+
+    /// <summary>Returns endpoint information for BulkExistsState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-exists/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkExistsState_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "State",
+            "POST",
+            "/state/bulk-exists",
+            _BulkExistsState_Info));
+
+    /// <summary>Returns request schema for BulkExistsState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-exists/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkExistsState_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-exists",
+            "request-schema",
+            _BulkExistsState_RequestSchema));
+
+    /// <summary>Returns response schema for BulkExistsState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-exists/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkExistsState_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-exists",
+            "response-schema",
+            _BulkExistsState_ResponseSchema));
+
+    /// <summary>Returns full schema for BulkExistsState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-exists/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkExistsState_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-exists",
+            _BulkExistsState_Info,
+            _BulkExistsState_RequestSchema,
+            _BulkExistsState_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for BulkDeleteState
+
+    private static readonly string _BulkDeleteState_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkDeleteStateRequest",
+    "$defs": {
+        "BulkDeleteStateRequest": {
+            "description": "Request to delete multiple keys",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "keys"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store"
+                },
+                "keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keys to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkDeleteState_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkDeleteStateResponse",
+    "$defs": {
+        "BulkDeleteStateResponse": {
+            "description": "Response from a bulk delete operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "deletedCount"
+            ],
+            "properties": {
+                "deletedCount": {
+                    "type": "integer",
+                    "description": "Number of keys actually deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkDeleteState_Info = """
+{
+    "summary": "Delete multiple keys",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "bulkDeleteState"
+}
+""";
+
+    /// <summary>Returns endpoint information for BulkDeleteState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteState_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "State",
+            "POST",
+            "/state/bulk-delete",
+            _BulkDeleteState_Info));
+
+    /// <summary>Returns request schema for BulkDeleteState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteState_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-delete",
+            "request-schema",
+            _BulkDeleteState_RequestSchema));
+
+    /// <summary>Returns response schema for BulkDeleteState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteState_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-delete",
+            "response-schema",
+            _BulkDeleteState_ResponseSchema));
+
+    /// <summary>Returns full schema for BulkDeleteState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/bulk-delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteState_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "State",
+            "POST",
+            "/state/bulk-delete",
+            _BulkDeleteState_Info,
+            _BulkDeleteState_RequestSchema,
+            _BulkDeleteState_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for ListStores
 
     private static readonly string _ListStores_RequestSchema = """

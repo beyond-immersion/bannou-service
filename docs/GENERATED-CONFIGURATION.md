@@ -490,7 +490,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `LOCATION_CACHE_TTL_SECONDS` | int | `3600` | TTL for location cache entries in seconds (locations change ... |
 | `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | int | `10` | Default max depth when listing descendants if not specified ... |
+| `LOCATION_INDEX_LOCK_TIMEOUT_SECONDS` | int | `5` | Timeout for acquiring distributed locks on index operations ... |
 | `LOCATION_MAX_ANCESTOR_DEPTH` | int | `20` | Maximum depth to traverse when walking ancestor chain (preve... |
 | `LOCATION_MAX_DESCENDANT_DEPTH` | int | `20` | Safety limit for descendant traversal and circular reference... |
 
@@ -710,8 +712,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SCENE_ASSET_BUCKET` | string | `scenes` | lib-asset bucket for storing scene documents |
-| `SCENE_ASSET_CONTENT_TYPE` | string | `application/x-bannou-scene+yaml` | Content type for scene assets (YAML format) |
 | `SCENE_CHECKOUT_TTL_BUFFER_MINUTES` | int | `5` | Buffer time added to checkout TTL for state store expiry (gr... |
 | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
 | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
@@ -751,6 +751,20 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds before expired subscriptions are mar... |
 | `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before background service starts processing |
 
+### Telemetry
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `TELEMETRY_DEPLOYMENT_ENVIRONMENT` | string | `development` | Deployment environment (development, staging, production) |
+| `TELEMETRY_METRICS_ENABLED` | bool | `true` | Enable metrics export |
+| `TELEMETRY_METRICS_EXPORT_INTERVAL_SECONDS` | int | `15` | Metrics export interval in seconds |
+| `TELEMETRY_OTLP_ENDPOINT` | string | `http://localhost:4317` | OTLP exporter endpoint (gRPC or HTTP) |
+| `TELEMETRY_OTLP_PROTOCOL` | string | `grpc` | OTLP transport protocol |
+| `TELEMETRY_SERVICE_NAME` | string | **REQUIRED** | Service name for telemetry (defaults to effective app-id if ... |
+| `TELEMETRY_SERVICE_NAMESPACE` | string | `bannou` | Service namespace for telemetry grouping |
+| `TELEMETRY_TRACING_ENABLED` | bool | `true` | Enable distributed tracing export |
+| `TELEMETRY_TRACING_SAMPLING_RATIO` | double | `1.0` | Trace sampling ratio (0.0-1.0). Use 1.0 for full sampling in... |
+
 ### Voice
 
 | Environment Variable | Type | Default | Description |
@@ -773,9 +787,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 594
-- **Required (no default)**: 42
-- **Optional (has default)**: 552
+- **Total properties**: 603
+- **Required (no default)**: 43
+- **Optional (has default)**: 560
 
 ## Environment Variable Naming Convention
 

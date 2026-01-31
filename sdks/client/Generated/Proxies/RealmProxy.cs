@@ -187,6 +187,24 @@ public sealed class RealmProxy
     }
 
     /// <summary>
+    /// Check if multiple realms exist and are active
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RealmsExistBatchResponse on success.</returns>
+    public Task<ApiResponse<RealmsExistBatchResponse>> RealmsExistBatchAsync(
+        RealmsExistBatchRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RealmsExistBatchRequest, RealmsExistBatchResponse>(
+            "/realm/exists-batch", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Seed realms from configuration
     /// </summary>
     /// <param name="request">The request payload.</param>

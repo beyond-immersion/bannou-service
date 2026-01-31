@@ -38,15 +38,16 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Bannou Realm Service API](#realm) | `client.Realm` | 10 | Realm management service for game worlds. |
+| [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 10 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
 | [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
-| [Bannou State Service API](#state) | `client.State` | 6 | Repository pattern state management with Redis and MySQL bac... |
+| [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
+| [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
 | [Bannou Website Service API](#website) | `client.Website` | 15 | Public-facing website service for registration, information,... |
 
@@ -1288,6 +1289,7 @@ Realm management service for game worlds.
 | `GetRealmbycodeAsync` | `GetRealmByCodeRequest` | `RealmResponse` | Get realm by code |
 | `ListRealmsAsync` | `ListRealmsRequest` | `RealmListResponse` | List all realms |
 | `RealmexistsAsync` | `RealmExistsRequest` | `RealmExistsResponse` | Check if realm exists and is active |
+| `RealmsexistbatchAsync` | `RealmsExistBatchRequest` | `RealmsExistBatchResponse` | Check if multiple realms exist and are active |
 
 ### Realm Admin
 
@@ -1558,6 +1560,9 @@ Repository pattern state management with Redis and MySQL backends.
 | `DeleteStateAsync` | `DeleteStateRequest` | `DeleteStateResponse` | Delete state value |
 | `QuerystateAsync` | `QueryStateRequest` | `QueryStateResponse` | Query state (MySQL JSON queries or Redis with search enabled) |
 | `BulkgetstateAsync` | `BulkGetStateRequest` | `BulkGetStateResponse` | Bulk get multiple keys |
+| `BulksavestateAsync` | `BulkSaveStateRequest` | `BulkSaveStateResponse` | Bulk save multiple key-value pairs |
+| `BulkexistsstateAsync` | `BulkExistsStateRequest` | `BulkExistsStateResponse` | Check existence of multiple keys |
+| `BulkdeletestateAsync` | `BulkDeleteStateRequest` | `BulkDeleteStateResponse` | Delete multiple keys |
 | `ListStoresAsync` | `ListStoresRequest` | `ListStoresResponse` | List configured state stores |
 
 ---
@@ -1579,6 +1584,21 @@ Manages user subscriptions to game services. Tracks which accounts have access t
 | `UpdateSubscriptionAsync` | `UpdateSubscriptionRequest` | `SubscriptionInfo` | Update a subscription |
 | `CancelsubscriptionAsync` | `CancelSubscriptionRequest` | `SubscriptionInfo` | Cancel a subscription |
 | `RenewsubscriptionAsync` | `RenewSubscriptionRequest` | `SubscriptionInfo` | Renew or extend a subscription |
+
+---
+
+## Bannou Telemetry Service API {#telemetry}
+
+**Proxy**: `client.Telemetry` | **Version**: 1.0.0
+
+Unified observability plugin providing distributed tracing, metrics, and log correlation for Bannou services using OpenTelemetry standards.
+
+### Telemetry
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `HealthAsync` | `TelemetryHealthRequest` | `TelemetryHealthResponse` | Check telemetry exporter health |
+| `StatusAsync` | `TelemetryStatusRequest` | `TelemetryStatusResponse` | Get telemetry status and configuration |
 
 ---
 
@@ -1662,8 +1682,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 40
-- **Total methods**: 535
+- **Total services**: 41
+- **Total methods**: 541
 
 ---
 

@@ -1538,6 +1538,168 @@ public partial class RealmController
 
     #endregion
 
+    #region Meta Endpoints for RealmsExistBatch
+
+    private static readonly string _RealmsExistBatch_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RealmsExistBatchRequest",
+    "$defs": {
+        "RealmsExistBatchRequest": {
+            "description": "Request to check if multiple realms exist and are available for use",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "realmIds"
+            ],
+            "properties": {
+                "realmIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "description": "List of realm IDs to validate (max 100)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RealmsExistBatch_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RealmsExistBatchResponse",
+    "$defs": {
+        "RealmsExistBatchResponse": {
+            "description": "Batch validation results for multiple realms",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "results",
+                "allExist",
+                "allActive"
+            ],
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RealmExistsResponse"
+                    },
+                    "description": "Validation result for each requested realm ID (in same order as request)"
+                },
+                "allExist": {
+                    "type": "boolean",
+                    "description": "True if all requested realms exist"
+                },
+                "allActive": {
+                    "type": "boolean",
+                    "description": "True if all requested realms exist AND are active (not deprecated)"
+                },
+                "invalidRealmIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "List of realm IDs that do not exist (empty if all exist)"
+                },
+                "deprecatedRealmIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "List of realm IDs that exist but are deprecated (empty if none deprecated)"
+                }
+            }
+        },
+        "RealmExistsResponse": {
+            "description": "Response indicating whether a realm exists and its active status",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "exists",
+                "isActive"
+            ],
+            "properties": {
+                "exists": {
+                    "type": "boolean",
+                    "description": "Whether the realm exists"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the realm is active (false if deprecated or not found)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "The realm ID if found"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RealmsExistBatch_Info = """
+{
+    "summary": "Check if multiple realms exist and are active",
+    "description": "Batch validation endpoint for services creating multi-realm entities.\nReturns validation results for each realm ID in a single call, avoiding\nN+1 API calls when validating multiple realms.\n",
+    "tags": [
+        "Realm"
+    ],
+    "deprecated": false,
+    "operationId": "realmsExistBatch"
+}
+""";
+
+    /// <summary>Returns endpoint information for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            _RealmsExistBatch_Info));
+
+    /// <summary>Returns request schema for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            "request-schema",
+            _RealmsExistBatch_RequestSchema));
+
+    /// <summary>Returns response schema for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            "response-schema",
+            _RealmsExistBatch_ResponseSchema));
+
+    /// <summary>Returns full schema for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            _RealmsExistBatch_Info,
+            _RealmsExistBatch_RequestSchema,
+            _RealmsExistBatch_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for SeedRealms
 
     private static readonly string _SeedRealms_RequestSchema = """

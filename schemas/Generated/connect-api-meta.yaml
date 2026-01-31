@@ -753,6 +753,7 @@ components:
       - 11
       - 12
       - 13
+      - 14
       - 20
       - 30
       - 31
@@ -772,6 +773,7 @@ components:
       - "RequestTooLarge"
       - "TooManyRequests"
       - "InvalidRequestChannel"
+      - "TextProtocolNotSupported"
       - "Unauthorized"
       - "ServiceNotFound"
       - "ClientNotFound"
@@ -788,6 +790,13 @@ components:
       description: |
         Response codes used in the binary protocol for success/error indication.
         Provides fine-grained error reporting for different failure scenarios.
+
+        **Request error codes (10-19):**
+        - 10 (RequestError): Generic malformed request
+        - 11 (RequestTooLarge): Payload exceeds maximum size
+        - 12 (TooManyRequests): Rate limit exceeded
+        - 13 (InvalidRequestChannel): Invalid channel number
+        - 14 (TextProtocolNotSupported): Text WebSocket frames are not supported; use binary protocol
 
         **Broadcast error codes (40-49):**
         - 40 (BroadcastNotAllowed): Broadcast attempted in External mode where it is forbidden

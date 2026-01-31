@@ -1,13 +1,13 @@
 #nullable enable
 
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Http.Headers;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
 

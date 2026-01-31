@@ -43,6 +43,7 @@ using BeyondImmersion.BannouService.Scene;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
+using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Website;
 
@@ -242,6 +243,11 @@ public partial interface IServiceNavigator
     /// Gets the Subscription service client.
     /// </summary>
     ISubscriptionClient Subscription { get; }
+
+    /// <summary>
+    /// Gets the Telemetry service client.
+    /// </summary>
+    ITelemetryClient Telemetry { get; }
 
     /// <summary>
     /// Gets the Voice service client.

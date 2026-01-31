@@ -47,6 +47,7 @@ using BeyondImmersion.BannouService.Scene;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
+using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Website;
 
@@ -111,6 +112,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly ISpeciesClient _species;
     private readonly IStateClient _state;
     private readonly ISubscriptionClient _subscription;
+    private readonly ITelemetryClient _telemetry;
     private readonly IVoiceClient _voice;
     private readonly IWebsiteClient _website;
 
@@ -160,6 +162,7 @@ public partial class ServiceNavigator : IServiceNavigator
         ISpeciesClient species,
         IStateClient state,
         ISubscriptionClient subscription,
+        ITelemetryClient telemetry,
         IVoiceClient voice,
         IWebsiteClient website)
     {
@@ -205,6 +208,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _species = species;
         _state = state;
         _subscription = subscription;
+        _telemetry = telemetry;
         _voice = voice;
         _website = website;
     }
@@ -366,6 +370,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public ISubscriptionClient Subscription => _subscription;
+
+    /// <inheritdoc />
+    public ITelemetryClient Telemetry => _telemetry;
 
     /// <inheritdoc />
     public IVoiceClient Voice => _voice;

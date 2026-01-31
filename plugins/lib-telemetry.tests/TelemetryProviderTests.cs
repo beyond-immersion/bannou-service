@@ -1,9 +1,9 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Telemetry.Tests;

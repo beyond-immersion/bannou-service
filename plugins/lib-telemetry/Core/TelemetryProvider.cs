@@ -1,11 +1,11 @@
 #nullable enable
 
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Telemetry.Instrumentation;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace BeyondImmersion.BannouService.Telemetry;
 

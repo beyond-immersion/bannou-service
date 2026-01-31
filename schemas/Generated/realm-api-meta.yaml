@@ -642,6 +642,70 @@ paths:
         endpoint for other services to check realm validity.\\nReturns true if realm exists and is not deprecated, false otherwise.\\\
         n\",\n    \"tags\": [\n        \"Realm\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"realmExists\"\
         \n}"
+  /realm/exists-batch:
+    post:
+      summary: Check if multiple realms exist and are active
+      description: |
+        Batch validation endpoint for services creating multi-realm entities.
+        Returns validation results for each realm ID in a single call, avoiding
+        N+1 API calls when validating multiple realms.
+      operationId: realmsExistBatch
+      tags:
+      - Realm
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealmsExistBatchRequest'
+      responses:
+        '200':
+          description: Validation results for all requested realms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmsExistBatchResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmsExistBatchRequest\"\
+        ,\n    \"$defs\": {\n        \"RealmsExistBatchRequest\": {\n            \"description\": \"Request to check if multiple
+        realms exist and are available for use\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"realmIds\"\n            ],\n            \"properties\": {\n\
+        \                \"realmIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
+        \                     \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
+        \                    \"minItems\": 1,\n                    \"maxItems\": 100,\n                    \"description\"\
+        : \"List of realm IDs to validate (max 100)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmsExistBatchResponse\"\
+        ,\n    \"$defs\": {\n        \"RealmsExistBatchResponse\": {\n            \"description\": \"Batch validation results
+        for multiple realms\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"results\",\n                \"allExist\",\n                \"allActive\"\n\
+        \            ],\n            \"properties\": {\n                \"results\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmExistsResponse\"\n         \
+        \           },\n                    \"description\": \"Validation result for each requested realm ID (in same order
+        as request)\"\n                },\n                \"allExist\": {\n                    \"type\": \"boolean\",\n \
+        \                   \"description\": \"True if all requested realms exist\"\n                },\n                \"\
+        allActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if all requested
+        realms exist AND are active (not deprecated)\"\n                },\n                \"invalidRealmIds\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"format\": \"uuid\"\n                    },\n                    \"description\": \"List
+        of realm IDs that do not exist (empty if all exist)\"\n                },\n                \"deprecatedRealmIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
+        : \"List of realm IDs that exist but are deprecated (empty if none deprecated)\"\n                }\n            }\n\
+        \        },\n        \"RealmExistsResponse\": {\n            \"description\": \"Response indicating whether a realm
+        exists and its active status\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"exists\",\n                \"isActive\"\n            ],\n        \
+        \    \"properties\": {\n                \"exists\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the realm exists\"\n                },\n                \"isActive\": {\n      \
+        \              \"type\": \"boolean\",\n                    \"description\": \"Whether the realm is active (false if
+        deprecated or not found)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"The realm ID if found\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Check if multiple realms exist and are active\",\n    \"description\":
+        \"Batch validation endpoint for services creating multi-realm entities.\\nReturns validation results for each realm
+        ID in a single call, avoiding\\nN+1 API calls when validating multiple realms.\\n\",\n    \"tags\": [\n        \"\
+        Realm\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"realmsExistBatch\"\n}"
   /realm/seed:
     post:
       summary: Seed realms from configuration
@@ -919,6 +983,53 @@ components:
           format: uuid
           nullable: true
           description: The realm ID if found
+    RealmsExistBatchRequest:
+      description: Request to check if multiple realms exist and are available for use
+      type: object
+      additionalProperties: false
+      required:
+      - realmIds
+      properties:
+        realmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of realm IDs to validate (max 100)
+    RealmsExistBatchResponse:
+      description: Batch validation results for multiple realms
+      type: object
+      additionalProperties: false
+      required:
+      - results
+      - allExist
+      - allActive
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmExistsResponse'
+          description: Validation result for each requested realm ID (in same order as request)
+        allExist:
+          type: boolean
+          description: True if all requested realms exist
+        allActive:
+          type: boolean
+          description: True if all requested realms exist AND are active (not deprecated)
+        invalidRealmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of realm IDs that do not exist (empty if all exist)
+        deprecatedRealmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of realm IDs that exist but are deprecated (empty if none deprecated)
     SeedRealmsRequest:
       description: Request to seed multiple realms from configuration data
       type: object

@@ -370,7 +370,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 1. ~~**lib-asset integration**~~: **RESOLVED** (2026-01-31) - Removed dead config properties `AssetBucket` and `AssetContentType` per IMPLEMENTATION TENETS (T21 Configuration-First: no dead config). Scene content is stored directly in the state store via `scene:content:{id}` key. If lib-asset integration is needed in the future (e.g., for version content snapshots), the config properties can be re-added at that time.
 
-2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained.
+2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained. [Issue #187](https://github.com/beyond-immersion/bannou-service/issues/187)
 
 3. **SceneCheckoutExpiredEvent**: The topic constant and event type exist, but no background process monitors and expires stale checkouts. Expiry is checked lazily when another user attempts checkout (can take over expired locks), but the event is never published.
 

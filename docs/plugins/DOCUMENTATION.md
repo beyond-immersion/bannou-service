@@ -425,7 +425,7 @@ Archive System
 
 ### Design Considerations
 
-1. **T16 (ViewDocumentBySlugAsync return type)**: Returns `(StatusCodes, object?)` instead of the standard `(StatusCodes, TResponse?)` pattern. This is a browser-facing endpoint (T15 exception) that returns HTML. Low priority since the endpoint is exceptional by design, but could define a `ViewDocumentResponse` type for consistency.
+1. ~~**T16 (ViewDocumentBySlugAsync return type)**~~: **FIXED** (2026-01-31) - Changed return type from `(StatusCodes, object?)` to `(StatusCodes, string?)` for proper type safety. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in controller.
 
 2. **Single Redis store for all data**: All document data, indexes, trashcan, bindings, and archives share one `documentation-statestore`. A very active namespace with many documents could create key-space pressure. No TTL is set on document keys themselves.
 
@@ -460,3 +460,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-31**: Fixed type mismatch for `ns-docs:{namespaceId}` key. Standardized on `HashSet<Guid>` for namespace document lists in `DocumentationService.GetNamespaceStatsAsync` and `SearchIndexService.RebuildIndexAsync`. Trashcan keys (`ns-trash:`) intentionally continue using `List<Guid>`.
 
 - **2026-01-31**: Fixed N+1 query pattern in `ListDocumentsAsync` and `ListTrashcanAsync`. Both methods now use `GetBulkAsync` for bulk document retrieval instead of individual `GetAsync` calls in loops. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items.
+
+- **2026-01-31**: Fixed `ViewDocumentBySlugAsync` return type from `(StatusCodes, object?)` to `(StatusCodes, string?)`. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in `DocumentationController.ViewDocumentBySlug`.

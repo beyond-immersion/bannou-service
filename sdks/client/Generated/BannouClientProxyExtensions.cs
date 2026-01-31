@@ -52,6 +52,7 @@ public partial class BannouClient
     private SpeciesProxy? _species;
     private StateProxy? _state;
     private SubscriptionProxy? _subscription;
+    private TelemetryProxy? _telemetry;
     private VoiceProxy? _voice;
     private WebsiteProxy? _website;
 
@@ -282,6 +283,12 @@ public partial class BannouClient
     /// </summary>
     public SubscriptionProxy Subscription =>
         _subscription ??= new SubscriptionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Telemetry Service API operations.
+    /// </summary>
+    public TelemetryProxy Telemetry =>
+        _telemetry ??= new TelemetryProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Voice Service API operations.

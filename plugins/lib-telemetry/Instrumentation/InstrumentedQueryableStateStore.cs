@@ -1,9 +1,9 @@
 #nullable enable
 
-using System.Diagnostics;
-using System.Linq.Expressions;
 using BeyondImmersion.BannouService.Services;
 using OpenTelemetry.Trace;
+using System.Diagnostics;
+using System.Linq.Expressions;
 
 namespace BeyondImmersion.BannouService.Telemetry.Instrumentation;
 

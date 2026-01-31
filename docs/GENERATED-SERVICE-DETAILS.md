@@ -40,7 +40,7 @@ Des... |
 | [Music](#music) | 1.0.0 | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Realm](#realm) | 1.0.0 | 10 | Realm management service for game worlds. |
+| [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for game worlds. |
@@ -48,9 +48,10 @@ Des... |
 Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
 | [Species](#species) | 2.0.0 | 13 | Species management service for game worlds. |
-| [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
+| [State](#state) | 1.0.0 | 9 | Repository pattern state management with Redis and MySQL bac... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
 Tracks which ac... |
+| [Telemetry](#telemetry) | 1.0.0 | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Voice](#voice) | 1.1.0 | 7 | Voice communication coordination service for P2P and room-ba... |
 | [Website](#website) | 1.0.0 | 17 | Public-facing website service for registration, information,... |
 
@@ -238,7 +239,7 @@ Real-time leaderboard management built on Redis Sorted Sets for O(log N) ranking
 
 **Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
 
-Hierarchical location management for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation (soft-delete), circular reference prevention during parent reassignment, cascading depth updates, code-based lookups (uppercase-normalized per realm), and bulk seeding with two-pass parent resolution. No caching layer - all reads hit the state store directly.
+Hierarchical location management for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation (soft-delete), circular reference prevention during parent reassignment, cascading depth updates, code-based lookups (uppercase-normalized per realm), and bulk seeding with two-pass parent resolution. Features Redis read-through caching with configurable TTL for frequently-accessed locations.
 
 ---
 
@@ -270,7 +271,25 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 **Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md)
 
-The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`/`IMessageTap`) used by all services for event publishing, subscription, and tapping, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
+The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`/`IMessageTap`) used by all services for event publishing, subscription, and tapping, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, aggressive retry buffering, and crash-fast philosophy for unrecoverable failures.
+
+### Event Publishing Reliability Model
+
+**Key behavior**: `TryPublishAsync` returns `true` even when RabbitMQ is unavailable - because the message is buffered for retry and WILL be delivered when the connection recovers. This is **not** "fire-and-forget" or "best-effort" in the traditional sense:
+
+1. **On publish failure**: Message is buffered in `MessageRetryBuffer` (in-memory `ConcurrentQueue`)
+2. **Retry processing**: Every 5 seconds, buffered messages are retried
+3. **Crash-fast on prolonged failure**: If RabbitMQ stays down too long (buffer >10k messages OR oldest message >5 minutes), the node **crashes intentionally** via `Environment.FailFast()`
+4. **Why crash?** Makes failure visible in monitoring, triggers orchestrator restart, prevents silent data loss
+
+**True loss scenarios** (rare):
+- Node dies (power failure, OOM kill) before buffer flushes
+- Clean shutdown with non-empty buffer (logged as warning)
+- Serialization failure (programming bug, not retryable)
+
+**Return value semantics**:
+- `true` = Published successfully OR buffered for retry (delivery will happen)
+- `false` = Unrecoverable failure (serialization error, retry buffer disabled)
 
 ---
 
@@ -370,6 +389,15 @@ The Subscription service manages user subscriptions to game services, controllin
 
 ---
 
+## Telemetry {#telemetry}
+
+**Version**: 1.0.0 | **Schema**: `schemas/telemetry-api.yaml` | **Deep Dive**: [docs/plugins/TELEMETRY.md](plugins/TELEMETRY.md)
+
+Unified observability plugin providing distributed tracing, metrics, and log correlation
+for Bannou services using OpenTelemetry standards.
+
+---
+
 ## Voice {#voice}
 
 **Version**: 1.1.0 | **Schema**: `schemas/voice-api.yaml` | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
@@ -388,8 +416,8 @@ Public-facing website service for browser-based access to registration, news, ac
 
 ## Summary
 
-- **Total services**: 41
-- **Total endpoints**: 541
+- **Total services**: 42
+- **Total endpoints**: 547
 
 ---
 

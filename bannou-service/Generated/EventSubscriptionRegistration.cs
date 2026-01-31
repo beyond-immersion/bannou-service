@@ -30,6 +30,8 @@ public static class EventSubscriptionRegistration
         // From actor-events.yaml
         EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+        EventSubscriptionRegistry.Register<PersonalityEvolvedEvent>("personality.evolved");
+        EventSubscriptionRegistry.Register<CombatPreferencesEvolvedEvent>("combat-preferences.evolved");
         EventSubscriptionRegistry.Register<PoolNodeRegisteredEvent>("actor.pool-node.registered");
         EventSubscriptionRegistry.Register<PoolNodeHeartbeatEvent>("actor.pool-node.heartbeat");
         EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");

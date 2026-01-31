@@ -4863,6 +4863,28 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/realm/exists-batch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check if multiple realms exist and are active
+     * @description Batch validation endpoint for services creating multi-realm entities.
+     *     Returns validation results for each realm ID in a single call, avoiding
+     *     N+1 API calls when validating multiple realms.
+     */
+    post: operations['realmsExistBatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/realm-history/get-participation': {
     parameters: {
       query?: never;
@@ -17628,6 +17650,24 @@ export interface components {
       /** @description Latency in milliseconds */
       ping?: number | null;
     };
+    /** @description Request to check if multiple realms exist and are available for use */
+    RealmsExistBatchRequest: {
+      /** @description List of realm IDs to validate (max 100) */
+      realmIds: string[];
+    };
+    /** @description Batch validation results for multiple realms */
+    RealmsExistBatchResponse: {
+      /** @description Validation result for each requested realm ID (in same order as request) */
+      results: components['schemas']['RealmExistsResponse'][];
+      /** @description True if all requested realms exist */
+      allExist: boolean;
+      /** @description True if all requested realms exist AND are active (not deprecated) */
+      allActive: boolean;
+      /** @description List of realm IDs that do not exist (empty if all exist) */
+      invalidRealmIds?: string[];
+      /** @description List of realm IDs that exist but are deprecated (empty if none deprecated) */
+      deprecatedRealmIds?: string[];
+    };
     /** @description Information about a reference */
     ReferenceInfo: {
       /**
@@ -28150,6 +28190,30 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['RealmExistsResponse'];
+        };
+      };
+    };
+  };
+  realmsExistBatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RealmsExistBatchRequest'];
+      };
+    };
+    responses: {
+      /** @description Validation results for all requested realms */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmsExistBatchResponse'];
         };
       };
     };

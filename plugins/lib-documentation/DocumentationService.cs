@@ -102,8 +102,16 @@ public partial class DocumentationService : IDocumentationService
         await DocumentationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
-    /// <inheritdoc />
-    public async Task<(StatusCodes, object?)> ViewDocumentBySlugAsync(string slug, string? ns = "bannou", CancellationToken cancellationToken = default)
+    /// <summary>
+    /// View documentation page in browser - returns fully rendered HTML string.
+    /// This method is not part of the IDocumentationService interface (x-manual-implementation).
+    /// Returns HTML content as string for browser rendering.
+    /// </summary>
+    /// <param name="slug">Document slug within namespace.</param>
+    /// <param name="ns">Documentation namespace (defaults to "bannou").</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Tuple of status code and HTML string content.</returns>
+    public async Task<(StatusCodes, string?)> ViewDocumentBySlugAsync(string slug, string? ns = "bannou", CancellationToken cancellationToken = default)
     {
         var namespaceId = ns ?? "bannou";
         _logger.LogDebug("ViewDocumentBySlug: slug={Slug}, namespace={Namespace}", slug, namespaceId);

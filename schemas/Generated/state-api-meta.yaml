@@ -285,6 +285,145 @@ paths:
         \    }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bulk get multiple keys\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkGetState\"\n}"
+  /state/bulk-save:
+    post:
+      operationId: bulkSaveState
+      summary: Bulk save multiple key-value pairs
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSaveStateRequest'
+      responses:
+        '200':
+          description: Bulk save results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkSaveStateResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkSaveStateRequest\"\
+        ,\n    \"$defs\": {\n        \"BulkSaveStateRequest\": {\n            \"description\": \"Request to save multiple
+        key-value pairs in a single operation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"storeName\",\n                \"items\"\n            ],\n\
+        \            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Name of the state store\"\n                },\n                \"items\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/BulkSaveItem\"\n                    },\n                    \"description\": \"Items to save\"\n         \
+        \       },\n                \"options\": {\n                    \"nullable\": true,\n                    \"allOf\"\
+        : [\n                        {\n                            \"$ref\": \"#/$defs/StateOptions\"\n                 \
+        \       }\n                    ],\n                    \"description\": \"Optional settings applied to all items\"\
+        \n                }\n            }\n        },\n        \"BulkSaveItem\": {\n            \"description\": \"A single
+        item to save in a bulk operation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"key\",\n                \"value\"\n            ],\n            \"\
+        properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"The key to save\"\n                },\n                \"value\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"The value to store\"\
+        \n                }\n            }\n        },\n        \"StateOptions\": {\n            \"description\": \"Configuration
+        options for state save operations including TTL, consistency level, and optimistic concurrency\",\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n               \
+        \ \"ttl\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"TTL in seconds (Redis only)\"\n                },\n                \"consistency\": {\n\
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ConsistencyLevel\"\
+        \n                        }\n                    ],\n                    \"default\": \"strong\",\n              \
+        \      \"description\": \"Consistency level\"\n                },\n                \"etag\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optimistic
+        concurrency check - save fails if ETag mismatch\"\n                }\n            }\n        },\n        \"ConsistencyLevel\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Consistency level for state operations\",\n\
+        \            \"enum\": [\n                \"strong\",\n                \"eventual\"\n            ]\n        }\n  \
+        \  }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkSaveStateResponse\"\
+        ,\n    \"$defs\": {\n        \"BulkSaveStateResponse\": {\n            \"description\": \"Response from a bulk save
+        operation with ETags for each saved item\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"results\"\n            ],\n            \"properties\": {\n\
+        \                \"results\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"$ref\": \"#/$defs/BulkSaveResult\"\n                    },\n                    \"description\"\
+        : \"Results for each saved item\"\n                }\n            }\n        },\n        \"BulkSaveResult\": {\n \
+        \           \"description\": \"Result for a single item in a bulk save operation\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"key\",\n         \
+        \       \"etag\"\n            ],\n            \"properties\": {\n                \"key\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"The key that was saved\"\n                },\n       \
+        \         \"etag\": {\n                    \"type\": \"string\",\n                    \"description\": \"New ETag
+        after save\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Bulk save multiple key-value pairs\",\n    \"description\": \"\",\n   \
+        \ \"tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkSaveState\"\n}"
+  /state/bulk-exists:
+    post:
+      operationId: bulkExistsState
+      summary: Check existence of multiple keys
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkExistsStateRequest'
+      responses:
+        '200':
+          description: Bulk exists results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkExistsStateResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkExistsStateRequest\"\
+        ,\n    \"$defs\": {\n        \"BulkExistsStateRequest\": {\n            \"description\": \"Request to check existence
+        of multiple keys\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"storeName\",\n                \"keys\"\n            ],\n            \"properties\"\
+        : {\n                \"storeName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Name of the state store\"\n                },\n                \"keys\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"description\": \"Keys to check for existence\"\n                }\n            }\n        }\n   \
+        \ }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkExistsStateResponse\"\
+        ,\n    \"$defs\": {\n        \"BulkExistsStateResponse\": {\n            \"description\": \"Response indicating which
+        keys exist in the store\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"existingKeys\"\n            ],\n            \"properties\": {\n      \
+        \          \"existingKeys\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"type\": \"string\"\n                    },\n                    \"description\": \"Keys that
+        exist in the store\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Check existence of multiple keys\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkExistsState\"\n}"
+  /state/bulk-delete:
+    post:
+      operationId: bulkDeleteState
+      summary: Delete multiple keys
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteStateRequest'
+      responses:
+        '200':
+          description: Bulk delete results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteStateResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkDeleteStateRequest\"\
+        ,\n    \"$defs\": {\n        \"BulkDeleteStateRequest\": {\n            \"description\": \"Request to delete multiple
+        keys\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"storeName\",\n                \"keys\"\n            ],\n            \"properties\": {\n   \
+        \             \"storeName\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Name of the state store\"\n                },\n                \"keys\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"description\": \"Keys to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkDeleteStateResponse\"\
+        ,\n    \"$defs\": {\n        \"BulkDeleteStateResponse\": {\n            \"description\": \"Response from a bulk delete
+        operation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"deletedCount\"\n            ],\n            \"properties\": {\n                \"deletedCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of keys actually deleted\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete multiple keys\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkDeleteState\"\n}"
   /state/list-stores:
     post:
       operationId: listStores
@@ -613,6 +752,122 @@ components:
         found:
           type: boolean
           description: Whether the key was found
+    BulkSaveStateRequest:
+      description: Request to save multiple key-value pairs in a single operation
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - items
+      properties:
+        storeName:
+          type: string
+          description: Name of the state store
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSaveItem'
+          description: Items to save
+        options:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/StateOptions'
+          description: Optional settings applied to all items
+    BulkSaveItem:
+      description: A single item to save in a bulk operation
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - value
+      properties:
+        key:
+          type: string
+          description: The key to save
+        value:
+          type: object
+          additionalProperties: true
+          description: The value to store
+    BulkSaveStateResponse:
+      description: Response from a bulk save operation with ETags for each saved item
+      type: object
+      additionalProperties: false
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSaveResult'
+          description: Results for each saved item
+    BulkSaveResult:
+      description: Result for a single item in a bulk save operation
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - etag
+      properties:
+        key:
+          type: string
+          description: The key that was saved
+        etag:
+          type: string
+          description: New ETag after save
+    BulkExistsStateRequest:
+      description: Request to check existence of multiple keys
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - keys
+      properties:
+        storeName:
+          type: string
+          description: Name of the state store
+        keys:
+          type: array
+          items:
+            type: string
+          description: Keys to check for existence
+    BulkExistsStateResponse:
+      description: Response indicating which keys exist in the store
+      type: object
+      additionalProperties: false
+      required:
+      - existingKeys
+      properties:
+        existingKeys:
+          type: array
+          items:
+            type: string
+          description: Keys that exist in the store
+    BulkDeleteStateRequest:
+      description: Request to delete multiple keys
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - keys
+      properties:
+        storeName:
+          type: string
+          description: Name of the state store
+        keys:
+          type: array
+          items:
+            type: string
+          description: Keys to delete
+    BulkDeleteStateResponse:
+      description: Response from a bulk delete operation
+      type: object
+      additionalProperties: false
+      required:
+      - deletedCount
+      properties:
+        deletedCount:
+          type: integer
+          description: Number of keys actually deleted
     ListStoresRequest:
       type: object
       additionalProperties: false

@@ -1,8 +1,5 @@
 #nullable enable
 
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
@@ -11,6 +8,9 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 

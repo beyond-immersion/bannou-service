@@ -32,7 +32,7 @@ public partial class DocumentationController
         }
 
         // Return full HTML page with rendered markdown
-        return Content((string)html, "text/html");
+        return Content(html, "text/html");
     }
 
     /// <summary>
