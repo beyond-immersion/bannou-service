@@ -58,6 +58,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<CharacterService>>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockSpeciesClient = new Mock<ISpeciesClient>();
@@ -77,6 +78,18 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<string>>(STATE_STORE))
             .Returns(_mockListStore.Object);
+
+        // Default lock acquisition to succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Default realm validation to pass (realm exists and is active)
         _mockRealmClient
@@ -101,6 +114,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         return new CharacterService(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _mockLockProvider.Object,
             _mockLogger.Object,
             Configuration,
             _mockRealmClient.Object,

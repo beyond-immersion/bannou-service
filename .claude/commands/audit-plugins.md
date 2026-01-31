@@ -61,6 +61,7 @@ Use the Task tool to launch multiple agents **in a single message** (parallel ex
 
 For each selected plugin, launch with:
 - `subagent_type`: `"general-purpose"` (must have access to Skill tool)
+- `mode`: `"acceptEdits"` (REQUIRED - agents must be able to edit files)
 - `prompt`: Tell the agent to invoke the audit-plugin skill (see Agent Prompt section below)
 - `description`: `"Audit {plugin-name} plugin"`
 - `run_in_background`: `true` (so they run in parallel)
@@ -69,22 +70,27 @@ For each selected plugin, launch with:
 
 **Critical: Use the EXACT prompt format from the Agent Prompt section - do NOT summarize or paraphrase the audit-plugin instructions yourself.**
 
+**Critical: Always include `mode: "acceptEdits"` - without this, agents cannot do their job and will fail.**
+
 Example (for 3 plugins):
 ```
 <Task 1>
   subagent_type: "general-purpose"
+  mode: "acceptEdits"
   description: "Audit account plugin"
   prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'account'"
   run_in_background: true
 
 <Task 2>
   subagent_type: "general-purpose"
+  mode: "acceptEdits"
   description: "Audit auth plugin"
   prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'auth'"
   run_in_background: true
 
 <Task 3>
   subagent_type: "general-purpose"
+  mode: "acceptEdits"
   description: "Audit connect plugin"
   prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'connect'"
   run_in_background: true

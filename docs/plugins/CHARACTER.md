@@ -18,6 +18,7 @@ The Character service manages game world characters for Arcadia. Characters are 
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for character data, archives, indexes, and refcount tracking |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for character update and compression operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and compression events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-realm (`IRealmClient`) | Validates realm exists and is active before character creation |
@@ -55,6 +56,10 @@ The Character service manages game world characters for Arcadia. Characters are 
 | `archive:{characterId}` | `CharacterArchiveModel` | Compressed character text summaries |
 | `refcount:{characterId}` | `RefCountData` | Cleanup eligibility tracking (zero-ref timestamp) |
 
+**Lock Store**: `character-lock` (Backend: Redis)
+
+Used by `IDistributedLockProvider` to ensure multi-instance safety for character modifications.
+
 ---
 
 ## Events
@@ -83,6 +88,7 @@ This plugin does not consume external events.
 | `MaxPageSize` | `CHARACTER_MAX_PAGE_SIZE` | `100` | Maximum page size for list operations |
 | `DefaultPageSize` | `CHARACTER_DEFAULT_PAGE_SIZE` | `20` | Default page size when not specified |
 | `RealmIndexUpdateMaxRetries` | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for realm index |
+| `LockTimeoutSeconds` | `CHARACTER_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition |
 | `CleanupGracePeriodDays` | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | `30` | Days at zero references before cleanup eligible |
 | `CompressionMaxBackstoryPoints` | `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | `5` | Max backstory points in compression summary |
 | `CompressionMaxLifeEvents` | `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | `10` | Max life events in compression summary |
@@ -98,6 +104,7 @@ This plugin does not consume external events.
 | `ILogger<CharacterService>` | Scoped | Structured logging |
 | `CharacterServiceConfiguration` | Singleton | Pagination and cleanup config |
 | `IStateStoreFactory` | Singleton | State store access |
+| `IDistributedLockProvider` | Singleton | Distributed locking for multi-instance safety |
 | `IMessageBus` | Scoped | Event publishing |
 | `IRealmClient` | Scoped | Realm validation |
 | `ISpeciesClient` | Scoped | Species validation |
@@ -238,11 +245,9 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **No distributed lock on character update (IMPLEMENTATION TENETS)**: `UpdateCharacterAsync` reads a character, modifies it, and saves it without concurrency protection. Two simultaneous updates result in last-writer-wins. Fix requires: inject `IDistributedLockProvider`, add locking around read-modify-write, or use `GetWithETagAsync`/`TrySaveAsync` with retry-on-conflict.
-   - [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189)
+1. ~~**No distributed lock on character update (IMPLEMENTATION TENETS)**~~: **FIXED** (2026-01-31) - `UpdateCharacterAsync` now acquires a distributed lock via `IDistributedLockProvider` using the `character-lock` store before performing read-modify-write operations. Returns `StatusCodes.Conflict` if lock acquisition fails.
 
-2. **No distributed lock on character compression (IMPLEMENTATION TENETS)**: `CompressCharacterAsync` reads a character, generates summaries, stores archive, and optionally deletes source data without concurrency protection. Fix requires: inject `IDistributedLockProvider`, wrap compression in lock scope.
-   - [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189) (same issue - share lock infrastructure)
+2. ~~**No distributed lock on character compression (IMPLEMENTATION TENETS)**~~: **FIXED** (2026-01-31) - `CompressCharacterAsync` now acquires a distributed lock via `IDistributedLockProvider` using the `character-lock` store before performing read-summarize-archive-delete operations. Returns `StatusCodes.Conflict` if lock acquisition fails.
 
 3. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 
@@ -270,4 +275,6 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-*No active work items.*
+### Completed
+
+- **2026-01-31**: Added distributed locking to `UpdateCharacterAsync` and `CompressCharacterAsync` per [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189). Added `character-lock` state store, `LockTimeoutSeconds` configuration, and `IDistributedLockProvider` dependency.

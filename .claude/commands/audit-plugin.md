@@ -1,11 +1,31 @@
 ---
-description: Audit plugin deep dive documents for implementation gaps. Investigates gaps thoroughly and either executes fixes or creates GitHub issues.
+description: Audit plugin deep dive documents for implementation gaps. Investigates gaps thoroughly and executes fixes inline. Creates issues ONLY for genuine design questions requiring human judgment.
 argument-hint: "[plugin-name|random] - Plugin to audit (e.g., 'account', 'auth') or 'random'/omit to pick one at random"
 ---
 
 # Plugin Auditor Command
 
 You are executing the `/audit-plugin` workflow. This is a structured, predictable process for finding and addressing implementation gaps in Bannou plugin documentation.
+
+## ⛔ REQUIRED TOOLS - FAIL IMMEDIATELY IF UNAVAILABLE ⛔
+
+**This workflow REQUIRES the Edit tool to function. Before proceeding:**
+
+1. Verify you can use the Edit tool
+2. If Edit is unavailable, **STOP IMMEDIATELY** with this exact message:
+   ```
+   ## AUDIT FAILED: Edit Tool Unavailable
+
+   This workflow requires the Edit tool to make changes to documentation and code.
+   The agent was launched without edit permissions.
+
+   **To fix:** Relaunch with `mode: "acceptEdits"` parameter.
+   ```
+3. Do NOT proceed to any other phase
+4. Do NOT generate a "report" as a substitute for doing the work
+5. Do NOT create GitHub issues as a "fallback" for inability to edit
+
+**There is no fallback. If you cannot edit, you cannot audit. Fail honestly.**
 
 ## ⛔ FORBIDDEN ESCAPE HATCHES ⛔
 
@@ -24,6 +44,10 @@ You are executing the `/audit-plugin` workflow. This is a structured, predictabl
 6. **"It seems acceptable as-is"** - THERE IS NO "ACCEPTABLE" OPTION. Your only two outputs are EXECUTE or CREATE_ISSUE. If you think something is acceptable, that's a CREATE_ISSUE with "Verify this is intentional" as the open question.
 
 7. **"I'll skip Phase 4 since the gap is obvious"** - NEVER SKIP PHASES. Phase 4 Investigation is mandatory for EVERY gap. You cannot make EXECUTE vs CREATE_ISSUE determination without reading the actual code.
+
+8. **"I'll generate a comprehensive report instead"** - ABSOLUTELY NOT. If you cannot execute the workflow (edit files, create issues), you FAIL. You do not "compensate" by producing a verbose summary. Reports are bullshit. Either do the work or fail honestly.
+
+9. **"The Edit tool isn't available so I'll describe what should be done"** - NO. This is failure. Report the failure. Do not pretend that describing work is the same as doing work.
 
 ## The Deep Dive Document IS The Tracking System
 
@@ -292,6 +316,16 @@ Based on Phase 4 investigation, make a **BINARY** decision. There are exactly tw
 - [ ] Integration with unimplemented services is needed
 - [ ] Business logic decisions are required
 
+**⛔ CREATE_ISSUE is NOT a fallback for inability to execute ⛔**
+
+CREATE_ISSUE exists for ONE reason: genuine design questions that require human judgment. It is NOT:
+- A way to avoid doing work
+- A fallback when you're unsure how to implement something
+- An alternative when Edit tool is unavailable (that's a FAILURE, not an issue)
+- A place to dump "findings" without taking action
+
+If you're reaching for CREATE_ISSUE, ask yourself: "Is there a genuine design question here that I cannot answer?" If the answer is "no, I just don't want to do the work" or "I can't edit files" - that's not CREATE_ISSUE, that's either EXECUTE or FAIL.
+
 **Note on "acceptable" items:** If you determine an item is actually fine as-is and shouldn't be in a gap section, the action is EXECUTE with the fix being "remove from gap section / move to Intentional Quirks." Documentation cleanup IS a valid execute action.
 
 **Report your determination clearly:**
@@ -437,16 +471,35 @@ Provide a final summary:
 
 ## Error Handling
 
+**Tool Unavailability = Immediate Failure**
+
+If Edit tool is unavailable:
+1. STOP IMMEDIATELY
+2. Report: "AUDIT FAILED: Edit Tool Unavailable"
+3. Do NOT generate reports, summaries, or "findings"
+4. Do NOT create issues as a substitute
+5. The only acceptable output is the failure message
+
+**Phase Failures**
+
 If any phase fails:
 1. Do NOT continue to the next phase
 2. Report the failure clearly
 3. Do NOT mark anything as in-progress if you couldn't complete the work
 4. Suggest how to recover
 
+**Honesty Over Output**
+
+Failing honestly is better than producing verbose bullshit. If you cannot do the job, say so. Do not:
+- Generate "comprehensive audit reports" as consolation prizes
+- Pad output with irrelevant information to look productive
+- Describe what you would have done if you could have done it
+
 ## Important Notes
 
+- **Edit tool is required** - if you cannot edit, you cannot audit. Fail immediately.
 - **Never skip the investigation phase** - superficial analysis leads to bad issues or broken implementations
-- **Be conservative with EXECUTE** - when in doubt, create an issue
+- **EXECUTE is the default** - CREATE_ISSUE is only for genuine design questions requiring human judgment
 - **Verify build only when code changes** - run `dotnet build` after code changes, but NOT for documentation-only fixes (markdown, yaml seed data, etc.)
 - **Follow all TENETS** - especially schema-first development
 - **Preserve existing markers** - don't remove IN_PROGRESS markers from other developers
@@ -454,6 +507,7 @@ If any phase fails:
 - **"Documented" does NOT mean "resolved"** - the doc is the tracking system, not the completion marker
 - **You do not filter by priority** - investigate everything, let humans prioritize
 - **Every gap gets EXECUTE or CREATE_ISSUE** - there is no third option
+- **Failure is an acceptable outcome** - if you cannot do the work, say so honestly. Do not generate reports as a substitute for action.
 
 ## Self-Check Before Completing
 
