@@ -199,9 +199,12 @@ State Store Architecture
 1. **KeyCount in ListStores**: Always returns null. Would require DBSIZE for Redis or COUNT for MySQL.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/174 -->
 2. **DefaultConsistency**: Config property exists but consistency mode is not evaluated anywhere.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/176 -->
 3. **Metrics/Tracing**: Config flags exist but no instrumentation implemented.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/179 -->
 4. **State change events**: Considered but rejected as too expensive per-operation.
 5. **StateMetadata population**: `GetStateResponse.Metadata` returns empty object; timestamps not retrieved from backend.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/177 -->
 
 ---
 

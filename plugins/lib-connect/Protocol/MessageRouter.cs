@@ -176,7 +176,8 @@ public static class MessageRouter
     }
 
     /// <summary>
-    /// Validates message rate limiting.
+    /// Validates message rate limiting using a sliding window counter.
+    /// Records the current message and checks if the rate limit is exceeded.
     /// </summary>
     public static RateLimitResult CheckRateLimit(
         ConnectionState connectionState,
@@ -184,13 +185,14 @@ public static class MessageRouter
         int rateLimitWindowMinutes = 1)
     {
         var now = DateTimeOffset.UtcNow;
-        var windowStart = now.AddMinutes(-rateLimitWindowMinutes);
 
-        // Count recent messages within the configured window
-        var recentMessageCount = connectionState.PendingMessages.Values
-            .Count(p => p.SentAt > windowStart);
+        // Record this message in the rate limit tracker (counts ALL messages, not just pending ones)
+        connectionState.RecordMessageForRateLimit();
 
-        if (recentMessageCount >= maxMessagesPerMinute)
+        // Count messages in window (also cleans up expired entries)
+        var recentMessageCount = connectionState.GetMessageCountInWindow(rateLimitWindowMinutes);
+
+        if (recentMessageCount > maxMessagesPerMinute)
         {
             return new RateLimitResult
             {

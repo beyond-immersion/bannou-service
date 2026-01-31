@@ -388,7 +388,7 @@ Connection Mode Behavior Matrix
   │ Capabilities    │ Full flow │ Full flow │ Minimal (no manifest)     │
   │ Client events   │ Full      │ Full      │ Binary protocol only      │
   │ Message loop    │ Full      │ Full      │ Simplified (binary only)  │
-  │ Text messages   │ Echo      │ Echo      │ Ignored                   │
+  │ Text messages   │ Error(14) │ Error(14) │ Ignored                   │
   │ Reconnection    │ Full      │ Full      │ No reconnection window    │
   └─────────────────┴───────────┴───────────┴───────────────────────────┘
 ```
@@ -403,17 +403,15 @@ Connection Mode Behavior Matrix
 2. **Compressed flag (0x04)**: The `MessageFlags.Compressed` bit is defined but no gzip decompression is performed. Compressed payloads are forwarded raw to backend services.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/172 -->
 
-3. **Text message handling**: The `HandleTextMessageFallbackAsync` method simply echoes text messages back. No meaningful text protocol exists - it is a placeholder for clients not yet using binary protocol.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/173 -->
-
-4. **Heartbeat sending**: `HeartbeatIntervalSeconds` is configured but no server-to-client heartbeat sending loop is implemented. The `UpdateSessionHeartbeatAsync` method exists for recording liveness but no periodic invocation mechanism is present.
+3. **Heartbeat sending**: `HeartbeatIntervalSeconds` is configured but no server-to-client heartbeat sending loop is implemented. The `UpdateSessionHeartbeatAsync` method exists for recording liveness but no periodic invocation mechanism is present.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/175 -->
 
-5. **Rate limit window enforcement**: `RateLimitWindowMinutes` is configured but the actual sliding window implementation in `MessageRouter.CheckRateLimit` is simplified - the window tracking in `ConnectionState` may not precisely enforce the configured window.
+4. ~~**Rate limit window enforcement**~~: **FIXED** (2026-01-31) - Rate limiting now uses a dedicated `RateLimitTimestamps` queue in `ConnectionState` that tracks ALL incoming messages (not just pending responses). The `GetMessageCountInWindow()` method implements proper sliding window cleanup.
 
-6. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
+5. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/178 -->
 
-7. **DefaultServices/AuthenticatedServices config**: These arrays are defined in configuration but capability determination is entirely event-driven from Permission service. The config values are not used in the current implementation.
+6. **DefaultServices/AuthenticatedServices config**: These arrays are defined in configuration but capability determination is entirely event-driven from Permission service. The config values are not used in the current implementation.
 
 ---
 
@@ -451,6 +449,8 @@ No bugs identified.
 
 4. **Meta requests always routed as GET**: When the Meta flag is set, the request is transformed to `GET {path}/meta/{suffix}` regardless of the original endpoint's HTTP method.
 
+5. **Text WebSocket frames rejected after AUTH**: After the initial `AUTH <jwt_token>` text message, all subsequent text WebSocket frames return a `TextProtocolNotSupported` (14) error response. The binary protocol is required for all API messages because zero-copy routing depends on the 16-byte service GUID in the binary header. See `docs/WEBSOCKET-PROTOCOL.md` for protocol details.
+
 ### Design Considerations (Requires Planning)
 
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.
@@ -485,8 +485,11 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
+### Completed
+- **Rate limit window enforcement** - Fixed 2026-01-31 - Added dedicated `RateLimitTimestamps` queue to track ALL incoming messages
+
 ### Pending Design Review
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - Requires design decisions on key exchange protocol, algorithm selection, and client SDK coordination (2026-01-31)
 - **Compressed flag (0x04)** - [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) - Requires design decisions on bidirectionality, algorithm flexibility, and client capability negotiation (2026-01-31)
-- **Text message handling** - [Issue #173](https://github.com/beyond-immersion/bannou-service/issues/173) - Requires decision on whether to keep echo behavior, reject text, or implement text protocol (2026-01-31)
 - **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - Requires design decisions on ping mechanism type, pong tracking, timer architecture, and client SDK coordination (2026-01-31)
+- **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - Requires design decisions on queue architecture, concurrency model changes, and whether this feature is even needed (2026-01-31)
