@@ -45,6 +45,11 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// List all registered game services, optionally filtered by active status.
     /// </summary>
+    /// <param name="body">Request containing optional filter to include only active services.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>
+    /// OK with list of services and total count, or InternalServerError if state store fails.
+    /// </returns>
     public async Task<(StatusCodes, ListServicesResponse?)> ListServicesAsync(ListServicesRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Listing services (activeOnly={ActiveOnly})", body.ActiveOnly);
@@ -95,6 +100,11 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Get a service by ID or stub name.
     /// </summary>
+    /// <param name="body">Request containing either a service ID (GUID) or stub name for lookup.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>
+    /// OK with service info if found, NotFound if service doesn't exist, or InternalServerError if state store fails.
+    /// </returns>
     public async Task<(StatusCodes, ServiceInfo?)> GetServiceAsync(GetServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Getting service (serviceId={ServiceId}, stubName={StubName})",
@@ -143,6 +153,12 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Create a new game service entry.
     /// </summary>
+    /// <param name="body">Request containing stub name, display name, optional description, and active status.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>
+    /// OK with created service info, BadRequest if required fields missing, Conflict if stub name exists,
+    /// or InternalServerError if state store fails.
+    /// </returns>
     public async Task<(StatusCodes, ServiceInfo?)> CreateServiceAsync(CreateServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Creating service (stubName={StubName}, displayName={DisplayName})",
@@ -219,6 +235,12 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Update a game service entry.
     /// </summary>
+    /// <param name="body">Request containing service ID and optional fields to update (display name, description, active status).</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>
+    /// OK with updated service info (even if no changes made), BadRequest if service ID missing,
+    /// NotFound if service doesn't exist, or InternalServerError if state store fails.
+    /// </returns>
     public async Task<(StatusCodes, ServiceInfo?)> UpdateServiceAsync(UpdateServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Updating service {ServiceId}", body.ServiceId);
@@ -294,6 +316,12 @@ public partial class GameServiceService : IGameServiceService
     /// <summary>
     /// Delete a game service entry.
     /// </summary>
+    /// <param name="body">Request containing service ID and optional deletion reason.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>
+    /// OK if deleted successfully, BadRequest if service ID missing,
+    /// NotFound if service doesn't exist, or InternalServerError if state store fails.
+    /// </returns>
     public async Task<StatusCodes> DeleteServiceAsync(DeleteServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Deleting service {ServiceId}", body.ServiceId);
@@ -351,6 +379,8 @@ public partial class GameServiceService : IGameServiceService
     /// Add a service ID to the service list index.
     /// Uses ETag-based optimistic concurrency per IMPLEMENTATION TENETS (Multi-Instance Safety).
     /// </summary>
+    /// <param name="serviceId">The service ID to add to the master list.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
     private async Task AddToServiceListAsync(Guid serviceId, CancellationToken cancellationToken)
     {
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
@@ -382,6 +412,8 @@ public partial class GameServiceService : IGameServiceService
     /// Remove a service ID from the service list index.
     /// Uses ETag-based optimistic concurrency per IMPLEMENTATION TENETS (Multi-Instance Safety).
     /// </summary>
+    /// <param name="serviceId">The service ID to remove from the master list.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
     private async Task RemoveFromServiceListAsync(Guid serviceId, CancellationToken cancellationToken)
     {
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);

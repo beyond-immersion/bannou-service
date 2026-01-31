@@ -209,9 +209,10 @@ State Store Architecture
 
 ## Potential Extensions
 
-1. **Store-level metrics**: Track operation counts, latencies per store for capacity planning.
+1. ~~**Store-level metrics**~~: **IMPLEMENTED** (2026-01-31) - Addressed by lib-telemetry plugin (#180). `InstrumentedStateStore<T>` wrappers record operation counts (`bannou.state.operations`), latencies (`bannou.state.duration`), and OpenTelemetry tracing spans per store/operation/backend. Enabled via `TELEMETRY_TRACING_ENABLED` and `TELEMETRY_METRICS_ENABLED`.
 2. **TTL support for MySQL**: Currently Redis-only. MySQL stores never expire data.
-3. **Bulk save operation**: Currently only bulk-get exists. Bulk save would help seed operations.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/182 -->
+3. ~~**Bulk save operation**~~: **IMPLEMENTED** - `SaveBulkAsync()` exists on `IStateStore<T>` and is exposed via `/state/bulk-save` endpoint.
 4. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
 5. **Prefix query support**: Add SCAN-based prefix queries for Redis (with careful iteration limits).
 
@@ -267,3 +268,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-01-31**: Fixed `RedisSearchStateStore.TrySaveAsync` broken transaction. The original code created a Redis transaction with a condition but executed it with `FireAndForget`, then performed the actual JSON.SET outside the transaction. Replaced with two Lua scripts: `TryCreateScript` (for empty ETag create-if-not-exists) and `TryUpdateScript` (for optimistic concurrency updates). Lua scripts execute atomically on Redis server, ensuring proper concurrency control for JSON document storage.
 - **2026-01-31**: Moved "State change events" from Stubs & Unimplemented Features to Intentional Quirks. This was incorrectly categorized as a gap when it's actually a documented design decision. The decision to not publish state change events was intentional due to performance concerns (high operation volume would make per-operation event publishing prohibitively expensive).
+- **2026-01-31**: Marked "Store-level metrics" Potential Extension as IMPLEMENTED. lib-telemetry (#180) provides `InstrumentedStateStore<T>` wrappers that record operation counts, latencies, and tracing spans. Also marked "Bulk save operation" as IMPLEMENTED since `SaveBulkAsync()` already exists.

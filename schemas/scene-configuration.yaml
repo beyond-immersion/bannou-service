@@ -17,19 +17,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    # Service Enable/Disable
-    # Storage Configuration
-    AssetBucket:
-      type: string
-      description: lib-asset bucket for storing scene documents
-      default: "scenes"
-      env: SCENE_ASSET_BUCKET
-    AssetContentType:
-      type: string
-      description: Content type for scene assets (YAML format)
-      default: "application/x-bannou-scene+yaml"
-      env: SCENE_ASSET_CONTENT_TYPE
-
     # Checkout Configuration
     DefaultCheckoutTtlMinutes:
       type: integer

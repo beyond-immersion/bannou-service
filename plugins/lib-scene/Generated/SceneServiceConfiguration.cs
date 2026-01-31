@@ -54,18 +54,6 @@ public class SceneServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// lib-asset bucket for storing scene documents
-    /// Environment variable: SCENE_ASSET_BUCKET
-    /// </summary>
-    public string AssetBucket { get; set; } = "scenes";
-
-    /// <summary>
-    /// Content type for scene assets (YAML format)
-    /// Environment variable: SCENE_ASSET_CONTENT_TYPE
-    /// </summary>
-    public string AssetContentType { get; set; } = "application/x-bannou-scene+yaml";
-
-    /// <summary>
     /// Default lock TTL for checkout operations in minutes
     /// Environment variable: SCENE_DEFAULT_CHECKOUT_TTL_MINUTES
     /// </summary>

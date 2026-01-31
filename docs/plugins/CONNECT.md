@@ -428,7 +428,7 @@ Connection Mode Behavior Matrix
 5. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/181 -->
 
-6. **Pending RPC timeout cleanup**: The `_pendingRPCs` dictionary grows without cleanup. Add a background timer that removes expired entries (where `TimeoutAt` has passed).
+6. ~~**Pending RPC timeout cleanup**~~: **ALREADY IMPLEMENTED** (2026-01-31) - Documentation error: `_pendingRPCCleanupTimer` already runs every `RpcCleanupIntervalSeconds` (default 30s) calling `CleanupExpiredPendingRPCs()` which removes expired entries based on `TimeoutAt`.
 
 7. **Graceful shutdown**: On application shutdown, send close frames to all connected clients with a "server_shutting_down" reason, wait for `ConnectionShutdownTimeoutSeconds`, then force-close remaining connections.
 
@@ -490,6 +490,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Rate limit window enforcement** - Fixed 2026-01-31 - Added dedicated `RateLimitTimestamps` queue to track ALL incoming messages
 - **DefaultServices/AuthenticatedServices config** - Removed 2026-01-31 - Documentation error: these config properties never existed
 - **Connection count enforcement** - Fixed 2026-01-31 - Moved check before WebSocket accept, now returns 503 instead of accepting then closing
+- **Pending RPC timeout cleanup** - Documentation error 2026-01-31 - Already implemented via `_pendingRPCCleanupTimer` and `CleanupExpiredPendingRPCs()` method
 
 ### Pending Design Review
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - Requires design decisions on key exchange protocol, algorithm selection, and client SDK coordination (2026-01-31)
