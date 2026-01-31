@@ -77373,6 +77373,86 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>The HTTP response message.</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest">
+            <summary>
+            Request for telemetry health check (empty object, no parameters needed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse">
+            <summary>
+            Response containing telemetry exporter health status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.Healthy">
+            <summary>
+            Overall health status of telemetry subsystem
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.TracingEnabled">
+            <summary>
+            Whether distributed tracing export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.MetricsEnabled">
+            <summary>
+            Whether metrics export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.OtlpEndpoint">
+            <summary>
+            Configured OTLP endpoint (null if telemetry is disabled)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest">
+            <summary>
+            Request for telemetry status (empty object, no parameters needed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse">
+            <summary>
+            Response containing detailed telemetry configuration and status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.TracingEnabled">
+            <summary>
+            Whether distributed tracing export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.MetricsEnabled">
+            <summary>
+            Whether metrics export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.SamplingRatio">
+            <summary>
+            Current trace sampling ratio (0.0-1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceName">
+            <summary>
+            Service name used for telemetry identification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceNamespace">
+            <summary>
+            Service namespace for telemetry grouping
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.DeploymentEnvironment">
+            <summary>
+            Current deployment environment
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpEndpoint">
+            <summary>
+            Configured OTLP endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpProtocol">
+            <summary>
+            OTLP transport protocol (grpc or http)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.StateStoreDefinitions">
             <summary>
             State store name constants and configuration definitions.
@@ -79344,6 +79424,199 @@
             <summary>
             Enable full-text search via RedisSearch (Redis 8+ only).
             When enabled, documents are stored as JSON for field-level indexing.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.ITelemetryProvider">
+            <summary>
+            Provides telemetry instrumentation capabilities for Bannou infrastructure libs.
+            Injected as optional dependency into lib-state, lib-messaging, and lib-mesh.
+            When null/unavailable, those libs skip instrumentation entirely.
+            </summary>
+            <remarks>
+            <para>
+            This interface is defined in bannou-service so that infrastructure libs (lib-state,
+            lib-messaging, lib-mesh) can reference it without depending on lib-telemetry.
+            The implementation is provided by lib-telemetry.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ITelemetryProvider.TracingEnabled">
+            <summary>
+            Whether distributed tracing is enabled and configured.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ITelemetryProvider.MetricsEnabled">
+            <summary>
+            Whether metrics collection is enabled and configured.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.GetActivitySource(System.String)">
+            <summary>
+            Get the ActivitySource for the specified component.
+            ActivitySource is used to create trace spans.
+            </summary>
+            <param name="componentName">Component name (e.g., "state", "messaging", "mesh").</param>
+            <returns>ActivitySource for the component, or null if tracing is disabled.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.GetMeter(System.String)">
+            <summary>
+            Get the Meter for the specified component.
+            Meter is used to create counters, histograms, and other metrics.
+            </summary>
+            <param name="componentName">Component name (e.g., "state", "messaging", "mesh").</param>
+            <returns>Meter for the component, or null if metrics are disabled.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.StartActivity(System.String,System.String,System.Diagnostics.ActivityKind,System.Nullable{System.Diagnostics.ActivityContext})">
+            <summary>
+            Start an activity (trace span) for an operation.
+            This is a convenience method that handles null checks and configuration.
+            </summary>
+            <param name="componentName">Component name for the activity source.</param>
+            <param name="operationName">Name of the operation being traced.</param>
+            <param name="kind">The activity kind (default: Internal).</param>
+            <param name="parentContext">Optional parent context for distributed tracing.</param>
+            <returns>The started Activity, or null if tracing is disabled.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.RecordCounter(System.String,System.String,System.Int64,System.Collections.Generic.KeyValuePair{System.String,System.Object}[])">
+            <summary>
+            Record a counter metric increment.
+            </summary>
+            <param name="componentName">Component name for the meter.</param>
+            <param name="metricName">Name of the counter metric.</param>
+            <param name="value">Value to add (default: 1).</param>
+            <param name="tags">Optional tags for the metric.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.RecordHistogram(System.String,System.String,System.Double,System.Collections.Generic.KeyValuePair{System.String,System.Object}[])">
+            <summary>
+            Record a histogram metric value.
+            </summary>
+            <param name="componentName">Component name for the meter.</param>
+            <param name="metricName">Name of the histogram metric.</param>
+            <param name="value">Value to record.</param>
+            <param name="tags">Optional tags for the metric.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.WrapStateStore``1(BeyondImmersion.BannouService.Services.IStateStore{``0},System.String,System.String)">
+            <summary>
+            Wrap a state store with instrumentation.
+            Returns the original store if instrumentation is disabled.
+            </summary>
+            <typeparam name="TValue">Value type stored.</typeparam>
+            <param name="store">The store to wrap.</param>
+            <param name="storeName">Name of the state store.</param>
+            <param name="backend">Backend type (redis, mysql, memory).</param>
+            <returns>Instrumented store wrapper or the original store.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.WrapQueryableStateStore``1(BeyondImmersion.BannouService.Services.IQueryableStateStore{``0},System.String,System.String)">
+            <summary>
+            Wrap a queryable state store with instrumentation.
+            Returns the original store if instrumentation is disabled.
+            </summary>
+            <typeparam name="TValue">Value type stored.</typeparam>
+            <param name="store">The store to wrap.</param>
+            <param name="storeName">Name of the state store.</param>
+            <param name="backend">Backend type (mysql).</param>
+            <returns>Instrumented store wrapper or the original store.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.WrapSearchableStateStore``1(BeyondImmersion.BannouService.Services.ISearchableStateStore{``0},System.String,System.String)">
+            <summary>
+            Wrap a searchable state store with instrumentation.
+            Returns the original store if instrumentation is disabled.
+            </summary>
+            <typeparam name="TValue">Value type stored.</typeparam>
+            <param name="store">The store to wrap.</param>
+            <param name="storeName">Name of the state store.</param>
+            <param name="backend">Backend type (redis).</param>
+            <returns>Instrumented store wrapper or the original store.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ITelemetryProvider.WrapJsonQueryableStateStore``1(BeyondImmersion.BannouService.Services.IJsonQueryableStateStore{``0},System.String,System.String)">
+            <summary>
+            Wrap a JSON queryable state store with instrumentation.
+            Returns the original store if instrumentation is disabled.
+            </summary>
+            <typeparam name="TValue">Value type stored.</typeparam>
+            <param name="store">The store to wrap.</param>
+            <param name="storeName">Name of the state store.</param>
+            <param name="backend">Backend type (mysql).</param>
+            <returns>Instrumented store wrapper or the original store.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.TelemetryComponents">
+            <summary>
+            Standard component names for telemetry instrumentation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryComponents.State">
+            <summary>
+            State store operations (lib-state).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryComponents.Messaging">
+            <summary>
+            Messaging operations (lib-messaging).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryComponents.Mesh">
+            <summary>
+            Service mesh operations (lib-mesh).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.TelemetryMetrics">
+            <summary>
+            Standard metric names for telemetry instrumentation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.StateOperations">
+            <summary>
+            Counter for state store operations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.StateDuration">
+            <summary>
+            Histogram for state store operation durations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MessagingPublished">
+            <summary>
+            Counter for published messages.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MessagingConsumed">
+            <summary>
+            Counter for consumed messages.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MessagingPublishDuration">
+            <summary>
+            Histogram for message publish durations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MessagingConsumeDuration">
+            <summary>
+            Histogram for message consume durations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MeshInvocations">
+            <summary>
+            Counter for mesh invocations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MeshDuration">
+            <summary>
+            Histogram for mesh invocation durations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MeshCircuitBreakerState">
+            <summary>
+            Gauge for circuit breaker state.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MeshCircuitBreakerStateChanges">
+            <summary>
+            Counter for circuit breaker state changes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TelemetryMetrics.MeshRetries">
+            <summary>
+            Counter for mesh retries.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver">

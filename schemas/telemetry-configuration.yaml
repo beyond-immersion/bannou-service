@@ -1,0 +1,69 @@
+# Telemetry Service Configuration Schema
+# Defines OpenTelemetry exporter settings for distributed tracing and metrics
+openapi: 3.0.3
+info:
+  title: Telemetry Service Configuration
+  description: |
+    Configuration schema for Telemetry service.
+    Properties are bound to environment variables with TELEMETRY_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+
+# Flat configuration properties for environment variable binding (IMPLEMENTATION TENETS)
+x-service-configuration:
+  properties:
+    OtlpEndpoint:
+      type: string
+      description: OTLP exporter endpoint (gRPC or HTTP)
+      env: TELEMETRY_OTLP_ENDPOINT
+      default: "http://localhost:4317"
+    OtlpProtocol:
+      type: string
+      enum:
+        - grpc
+        - http
+      description: OTLP transport protocol
+      env: TELEMETRY_OTLP_PROTOCOL
+      default: "grpc"
+    TracingEnabled:
+      type: boolean
+      description: Enable distributed tracing export
+      env: TELEMETRY_TRACING_ENABLED
+      default: true
+    TracingSamplingRatio:
+      type: number
+      format: double
+      description: Trace sampling ratio (0.0-1.0). Use 1.0 for full sampling in dev, lower in prod.
+      env: TELEMETRY_TRACING_SAMPLING_RATIO
+      default: 1.0
+    MetricsEnabled:
+      type: boolean
+      description: Enable metrics export
+      env: TELEMETRY_METRICS_ENABLED
+      default: true
+    MetricsExportIntervalSeconds:
+      type: integer
+      description: Metrics export interval in seconds
+      env: TELEMETRY_METRICS_EXPORT_INTERVAL_SECONDS
+      default: 15
+    ServiceName:
+      type: string
+      nullable: true
+      description: Service name for telemetry (defaults to effective app-id if not set)
+      env: TELEMETRY_SERVICE_NAME
+    ServiceNamespace:
+      type: string
+      description: Service namespace for telemetry grouping
+      env: TELEMETRY_SERVICE_NAMESPACE
+      default: "bannou"
+    DeploymentEnvironment:
+      type: string
+      description: Deployment environment (development, staging, production)
+      env: TELEMETRY_DEPLOYMENT_ENVIRONMENT
+      default: "development"

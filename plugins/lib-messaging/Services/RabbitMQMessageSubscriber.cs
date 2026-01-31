@@ -1,5 +1,8 @@
 #nullable enable
 
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Messaging;
@@ -7,8 +10,6 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Collections.Concurrent;
-using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -30,6 +31,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     private readonly RabbitMQConnectionManager _connectionManager;
     private readonly ILogger<RabbitMQMessageSubscriber> _logger;
     private readonly MessagingServiceConfiguration _configuration;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     // Track static subscriptions by topic
     private readonly ConcurrentDictionary<string, StaticSubscription> _staticSubscriptions = new();
@@ -40,14 +42,27 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <summary>
     /// Creates a new RabbitMQMessageSubscriber instance.
     /// </summary>
+    /// <param name="connectionManager">RabbitMQ connection manager.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Messaging service configuration.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for instrumentation.</param>
     public RabbitMQMessageSubscriber(
         RabbitMQConnectionManager connectionManager,
         ILogger<RabbitMQMessageSubscriber> logger,
-        MessagingServiceConfiguration configuration)
+        MessagingServiceConfiguration configuration,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
+
+        if (_telemetryProvider != null)
+        {
+            _logger.LogDebug(
+                "RabbitMQMessageSubscriber created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
+                _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
+        }
     }
 
     /// <inheritdoc/>
@@ -106,6 +121,28 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (sender, ea) =>
             {
+                // Extract W3C trace context from message headers for distributed tracing
+                var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
+
+                // Start telemetry activity for this consume operation
+                using var activity = _telemetryProvider?.StartActivity(
+                    TelemetryComponents.Messaging,
+                    "messaging.consume",
+                    ActivityKind.Consumer,
+                    parentContext);
+
+                var sw = Stopwatch.StartNew();
+                var success = false;
+
+                // Set activity tags for tracing
+                activity?.SetTag("messaging.system", "rabbitmq");
+                activity?.SetTag("messaging.destination", topic);
+                activity?.SetTag("messaging.operation", "receive");
+                if (ea.BasicProperties.MessageId != null)
+                {
+                    activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
+                }
+
                 try
                 {
                     // Deserialize the message
@@ -118,6 +155,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                             "Failed to deserialize message on topic '{Topic}' to {EventType}",
                             topic,
                             typeof(TEvent).Name);
+                        activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                         return;
                     }
@@ -127,13 +165,21 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
                     // Acknowledge
                     await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                    success = true;
+                    activity?.SetStatus(ActivityStatusCode.Ok);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Handler failed for message on topic '{Topic}'", topic);
+                    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                     // Nack with requeue for retry (unless it's been redelivered too many times)
                     var requeue = !ea.Redelivered;
                     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: requeue);
+                }
+                finally
+                {
+                    sw.Stop();
+                    RecordConsumeMetrics(topic, success, sw.Elapsed.TotalSeconds);
                 }
             };
 
@@ -216,6 +262,29 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (sender, ea) =>
             {
+                // Extract W3C trace context from message headers for distributed tracing
+                var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
+
+                // Start telemetry activity for this consume operation
+                using var activity = _telemetryProvider?.StartActivity(
+                    TelemetryComponents.Messaging,
+                    "messaging.consume",
+                    ActivityKind.Consumer,
+                    parentContext);
+
+                var sw = Stopwatch.StartNew();
+                var success = false;
+
+                // Set activity tags for tracing
+                activity?.SetTag("messaging.system", "rabbitmq");
+                activity?.SetTag("messaging.destination", topic);
+                activity?.SetTag("messaging.operation", "receive");
+                activity?.SetTag("messaging.subscription.id", subscriptionId.ToString());
+                if (ea.BasicProperties.MessageId != null)
+                {
+                    activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
+                }
+
                 try
                 {
                     // Deserialize the message
@@ -228,6 +297,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                             "Failed to deserialize message on dynamic subscription {SubscriptionId} topic '{Topic}'",
                             subscriptionId,
                             topic);
+                        activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                         return;
                     }
@@ -237,6 +307,8 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
                     // Acknowledge
                     await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                    success = true;
+                    activity?.SetStatus(ActivityStatusCode.Ok);
                 }
                 catch (Exception ex)
                 {
@@ -245,7 +317,13 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                         "Handler failed for dynamic subscription {SubscriptionId} on topic '{Topic}'",
                         subscriptionId,
                         topic);
+                    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                }
+                finally
+                {
+                    sw.Stop();
+                    RecordConsumeMetrics(topic, success, sw.Elapsed.TotalSeconds);
                 }
             };
 
@@ -354,6 +432,30 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (sender, ea) =>
             {
+                // Extract W3C trace context from message headers for distributed tracing
+                var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
+
+                // Start telemetry activity for this consume operation
+                using var activity = _telemetryProvider?.StartActivity(
+                    TelemetryComponents.Messaging,
+                    "messaging.consume.raw",
+                    ActivityKind.Consumer,
+                    parentContext);
+
+                var sw = Stopwatch.StartNew();
+                var success = false;
+
+                // Set activity tags for tracing
+                activity?.SetTag("messaging.system", "rabbitmq");
+                activity?.SetTag("messaging.destination", topic);
+                activity?.SetTag("messaging.operation", "receive");
+                activity?.SetTag("messaging.subscription.id", subscriptionId.ToString());
+                activity?.SetTag("messaging.message.body_size", ea.Body.Length);
+                if (ea.BasicProperties.MessageId != null)
+                {
+                    activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
+                }
+
                 try
                 {
                     // Pass raw bytes directly to handler - no deserialization
@@ -361,6 +463,8 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
                     // Acknowledge
                     await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                    success = true;
+                    activity?.SetStatus(ActivityStatusCode.Ok);
                 }
                 catch (Exception ex)
                 {
@@ -369,7 +473,13 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                         "Handler failed for raw dynamic subscription {SubscriptionId} on topic '{Topic}'",
                         subscriptionId,
                         topic);
+                    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                }
+                finally
+                {
+                    sw.Stop();
+                    RecordConsumeMetrics(topic, success, sw.Elapsed.TotalSeconds);
                 }
             };
 
@@ -510,6 +620,77 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             ["x-dead-letter-exchange"] = _configuration.DeadLetterExchange,
             ["x-dead-letter-routing-key"] = "dead-letter"
         };
+    }
+
+    /// <summary>
+    /// Extracts W3C trace context from RabbitMQ message headers.
+    /// </summary>
+    /// <param name="headers">Message headers.</param>
+    /// <returns>ActivityContext if traceparent header present, null otherwise.</returns>
+    private static ActivityContext? ExtractTraceContext(IDictionary<string, object?>? headers)
+    {
+        if (headers == null)
+        {
+            return null;
+        }
+
+        // Look for W3C traceparent header
+        if (!headers.TryGetValue("traceparent", out var traceparentObj))
+        {
+            return null;
+        }
+
+        var traceparent = traceparentObj switch
+        {
+            byte[] bytes => Encoding.UTF8.GetString(bytes),
+            string str => str,
+            _ => null
+        };
+
+        if (string.IsNullOrEmpty(traceparent))
+        {
+            return null;
+        }
+
+        // Extract tracestate if present
+        string? tracestate = null;
+        if (headers.TryGetValue("tracestate", out var tracestateObj))
+        {
+            tracestate = tracestateObj switch
+            {
+                byte[] bytes => Encoding.UTF8.GetString(bytes),
+                string str => str,
+                _ => null
+            };
+        }
+
+        // Use ActivityContext.TryParse to parse W3C trace context
+        if (ActivityContext.TryParse(traceparent, tracestate, out var context))
+        {
+            return context;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Records metrics for a consume operation.
+    /// </summary>
+    private void RecordConsumeMetrics(string topic, bool success, double durationSeconds)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("topic", topic),
+            new KeyValuePair<string, object?>("success", success)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Messaging, TelemetryMetrics.MessagingConsumed, 1, tags);
+        _telemetryProvider.RecordHistogram(TelemetryComponents.Messaging, TelemetryMetrics.MessagingConsumeDuration, durationSeconds, tags);
     }
 
     /// <summary>

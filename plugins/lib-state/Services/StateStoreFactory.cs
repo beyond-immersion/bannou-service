@@ -59,6 +59,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     private readonly StateStoreFactoryConfiguration _configuration;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<StateStoreFactory> _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     private ConnectionMultiplexer? _redis;
     private DbContextOptions<StateDbContext>? _mysqlOptions;
@@ -73,13 +74,23 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     /// </summary>
     /// <param name="configuration">Factory configuration.</param>
     /// <param name="loggerFactory">Logger factory.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for instrumentation.</param>
     public StateStoreFactory(
         StateStoreFactoryConfiguration configuration,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _configuration = configuration;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<StateStoreFactory>();
+        _telemetryProvider = telemetryProvider;
+
+        if (_telemetryProvider != null)
+        {
+            _logger.LogDebug(
+                "StateStoreFactory created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
+                _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
+        }
     }
 
     private async Task EnsureInitializedAsync()
@@ -232,63 +243,82 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
 
         return (IStateStore<TValue>)_storeCache.GetOrAdd(cacheKey, _ =>
         {
+            IStateStore<TValue> store;
+            string backend;
+
             // Use in-memory store when configured (for testing/minimal infrastructure)
             if (_configuration.UseInMemory)
             {
                 var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                return new InMemoryStateStore<TValue>(storeName, memoryLogger);
+                store = new InMemoryStateStore<TValue>(storeName, memoryLogger);
+                backend = "memory";
             }
-
-            var storeConfig = _configuration.Stores[storeName];
-
-            if (storeConfig.Backend == StateBackend.Redis)
+            else
             {
-                if (_redis == null)
+                var storeConfig = _configuration.Stores[storeName];
+
+                if (storeConfig.Backend == StateBackend.Redis)
                 {
-                    throw new InvalidOperationException("Redis connection not available");
+                    if (_redis == null)
+                    {
+                        throw new InvalidOperationException("Redis connection not available");
+                    }
+
+                    var keyPrefix = storeConfig.KeyPrefix ?? storeName;
+                    var defaultTtl = storeConfig.DefaultTtlSeconds.HasValue
+                        ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
+                        : (TimeSpan?)null;
+
+                    // Use searchable store if search is enabled
+                    if (storeConfig.EnableSearch)
+                    {
+                        var searchLogger = _loggerFactory.CreateLogger<RedisSearchStateStore<TValue>>();
+                        store = new RedisSearchStateStore<TValue>(
+                            _redis.GetDatabase(),
+                            keyPrefix,
+                            defaultTtl,
+                            searchLogger);
+                    }
+                    else
+                    {
+                        var redisLogger = _loggerFactory.CreateLogger<RedisStateStore<TValue>>();
+                        store = new RedisStateStore<TValue>(
+                            _redis.GetDatabase(),
+                            keyPrefix,
+                            defaultTtl,
+                            redisLogger);
+                    }
+                    backend = "redis";
                 }
-
-                var keyPrefix = storeConfig.KeyPrefix ?? storeName;
-                var defaultTtl = storeConfig.DefaultTtlSeconds.HasValue
-                    ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
-                    : (TimeSpan?)null;
-
-                // Use searchable store if search is enabled
-                if (storeConfig.EnableSearch)
+                else if (storeConfig.Backend == StateBackend.Memory)
                 {
-                    var searchLogger = _loggerFactory.CreateLogger<RedisSearchStateStore<TValue>>();
-                    return new RedisSearchStateStore<TValue>(
-                        _redis.GetDatabase(),
-                        keyPrefix,
-                        defaultTtl,
-                        searchLogger);
+                    var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger);
+                    backend = "memory";
                 }
+                else // MySql
+                {
+                    if (_mysqlOptions == null)
+                    {
+                        throw new InvalidOperationException("MySQL connection not available");
+                    }
 
-                var redisLogger = _loggerFactory.CreateLogger<RedisStateStore<TValue>>();
-                return new RedisStateStore<TValue>(
-                    _redis.GetDatabase(),
-                    keyPrefix,
-                    defaultTtl,
-                    redisLogger);
+                    var mysqlLogger = _loggerFactory.CreateLogger<MySqlStateStore<TValue>>();
+                    store = new MySqlStateStore<TValue>(
+                        _mysqlOptions,
+                        storeConfig.TableName ?? storeName,
+                        mysqlLogger);
+                    backend = "mysql";
+                }
             }
-            else if (storeConfig.Backend == StateBackend.Memory)
+
+            // Wrap with telemetry instrumentation if available
+            if (_telemetryProvider != null)
             {
-                var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                return new InMemoryStateStore<TValue>(storeName, memoryLogger);
+                store = _telemetryProvider.WrapStateStore(store, storeName, backend);
             }
-            else // MySql
-            {
-                if (_mysqlOptions == null)
-                {
-                    throw new InvalidOperationException("MySQL connection not available");
-                }
 
-                var mysqlLogger = _loggerFactory.CreateLogger<MySqlStateStore<TValue>>();
-                return new MySqlStateStore<TValue>(
-                    _mysqlOptions,
-                    storeConfig.TableName ?? storeName,
-                    mysqlLogger);
-            }
+            return store;
         });
     }
 

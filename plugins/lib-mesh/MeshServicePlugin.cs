@@ -59,7 +59,11 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             var stateManager = sp.GetRequiredService<IMeshStateManager>();
             var configuration = sp.GetRequiredService<MeshServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-            return new MeshInvocationClient(stateManager, configuration, logger);
+
+            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
+            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+
+            return new MeshInvocationClient(stateManager, configuration, logger, telemetryProvider);
         });
 
         Logger?.LogDebug("Service dependencies configured");

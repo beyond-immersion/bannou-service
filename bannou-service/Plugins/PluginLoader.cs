@@ -38,9 +38,10 @@ public class PluginLoader
     /// </summary>
     private static readonly Dictionary<string, int> InfrastructureLoadOrder = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "state", 0 },      // First: state management foundation
-        { "messaging", 1 },  // Second: messaging depends on state being available
-        { "mesh", 2 }        // Third: mesh may depend on messaging for events
+        { "telemetry", -1 }, // First: telemetry provides ITelemetryProvider for instrumentation
+        { "state", 0 },      // Second: state management foundation
+        { "messaging", 1 },  // Third: messaging depends on state being available
+        { "mesh", 2 }        // Fourth: mesh may depend on messaging for events
     };
 
     // All discovered plugins (enabled and disabled)

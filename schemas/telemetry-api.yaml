@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Bannou Telemetry Service API
+  version: 1.0.0
+  description: |
+    Unified observability plugin providing distributed tracing, metrics, and log correlation
+    for Bannou services using OpenTelemetry standards.
+
+    NOTE: This is an INTERNAL service API using empty x-permissions (internal-only).
+    Service-to-service calls within the cluster are always permitted (per FOUNDATION TENETS).
+
+    All endpoints use POST-only pattern per FOUNDATION TENETS to enable
+    zero-copy WebSocket routing with static endpoint GUIDs.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+servers:
+  - url: http://localhost:5012
+
+paths:
+  /telemetry/health:
+    post:
+      operationId: health
+      summary: Check telemetry exporter health
+      description: Returns the health status of telemetry exporters and current configuration state.
+      tags:
+        - Telemetry
+      x-permissions: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryHealthRequest'
+      responses:
+        '200':
+          description: Telemetry health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryHealthResponse'
+
+  /telemetry/status:
+    post:
+      operationId: status
+      summary: Get telemetry status and configuration
+      description: Returns detailed telemetry status including active exporters, sampling configuration, and service identity.
+      tags:
+        - Telemetry
+      x-permissions: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryStatusRequest'
+      responses:
+        '200':
+          description: Telemetry status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryStatusResponse'
+
+components:
+  schemas:
+    TelemetryHealthRequest:
+      type: object
+      additionalProperties: false
+      description: Request for telemetry health check (empty object, no parameters needed)
+      properties: {}
+
+    TelemetryHealthResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing telemetry exporter health status
+      required:
+        - healthy
+        - tracingEnabled
+        - metricsEnabled
+      properties:
+        healthy:
+          type: boolean
+          description: Overall health status of telemetry subsystem
+        tracingEnabled:
+          type: boolean
+          description: Whether distributed tracing export is enabled
+        metricsEnabled:
+          type: boolean
+          description: Whether metrics export is enabled
+        otlpEndpoint:
+          type: string
+          nullable: true
+          description: Configured OTLP endpoint (null if telemetry is disabled)
+
+    TelemetryStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request for telemetry status (empty object, no parameters needed)
+      properties: {}
+
+    TelemetryStatusResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing detailed telemetry configuration and status
+      required:
+        - tracingEnabled
+        - metricsEnabled
+        - samplingRatio
+        - serviceName
+        - serviceNamespace
+        - deploymentEnvironment
+        - otlpProtocol
+      properties:
+        tracingEnabled:
+          type: boolean
+          description: Whether distributed tracing export is enabled
+        metricsEnabled:
+          type: boolean
+          description: Whether metrics export is enabled
+        samplingRatio:
+          type: number
+          format: double
+          description: Current trace sampling ratio (0.0-1.0)
+        serviceName:
+          type: string
+          description: Service name used for telemetry identification
+        serviceNamespace:
+          type: string
+          description: Service namespace for telemetry grouping
+        deploymentEnvironment:
+          type: string
+          description: Current deployment environment
+        otlpEndpoint:
+          type: string
+          nullable: true
+          description: Configured OTLP endpoint
+        otlpProtocol:
+          type: string
+          description: OTLP transport protocol (grpc or http)

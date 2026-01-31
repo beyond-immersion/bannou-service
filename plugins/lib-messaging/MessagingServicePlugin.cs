@@ -60,8 +60,32 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         services.AddSingleton<MessageRetryBuffer>();
 
         // Register messaging interfaces with direct RabbitMQ implementations
-        services.AddSingleton<IMessageBus, RabbitMQMessageBus>();
-        services.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
+        // Use factory registration to pass optional telemetry provider
+        services.AddSingleton<IMessageBus>(sp =>
+        {
+            var connectionManager = sp.GetRequiredService<RabbitMQConnectionManager>();
+            var retryBuffer = sp.GetRequiredService<MessageRetryBuffer>();
+            var appConfig = sp.GetRequiredService<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
+
+            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
+            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+
+            return new RabbitMQMessageBus(connectionManager, retryBuffer, appConfig, logger, telemetryProvider);
+        });
+
+        // Use factory registration to pass optional telemetry provider
+        services.AddSingleton<IMessageSubscriber>(sp =>
+        {
+            var connectionManager = sp.GetRequiredService<RabbitMQConnectionManager>();
+            var logger = sp.GetRequiredService<ILogger<RabbitMQMessageSubscriber>>();
+            var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+
+            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
+            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+
+            return new RabbitMQMessageSubscriber(connectionManager, logger, msgConfig, telemetryProvider);
+        });
 
         // Register message tap for forwarding events between exchanges
         services.AddSingleton<IMessageTap, RabbitMQMessageTap>();

@@ -61,7 +61,18 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             var stateConfig = sp.GetRequiredService<StateServiceConfiguration>();
             return BuildFactoryConfiguration(stateConfig);
         });
-        services.AddSingleton<IStateStoreFactory, StateStoreFactory>();
+
+        // Register state store factory with optional telemetry instrumentation
+        services.AddSingleton<IStateStoreFactory>(sp =>
+        {
+            var config = sp.GetRequiredService<StateStoreFactoryConfiguration>();
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
+            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+
+            return new StateStoreFactory(config, loggerFactory, telemetryProvider);
+        });
 
         // Register distributed lock provider (used by Permission service and others)
         services.AddSingleton<IDistributedLockProvider, Services.RedisDistributedLockProvider>();

@@ -1,5 +1,8 @@
 #nullable enable
 
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
@@ -8,8 +11,6 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
-using System.Collections.Concurrent;
-using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -31,6 +32,10 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// If the connection stays down too long or buffer overflows, the node crashes
 /// to trigger a restart by the orchestrator.
 /// </para>
+/// <para>
+/// When ITelemetryProvider is available, publish operations are instrumented with
+/// distributed tracing spans and metrics.
+/// </para>
 /// </remarks>
 public sealed class RabbitMQMessageBus : IMessageBus
 {
@@ -38,6 +43,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
     private readonly MessageRetryBuffer _retryBuffer;
     private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
     private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
@@ -50,16 +56,30 @@ public sealed class RabbitMQMessageBus : IMessageBus
     /// <summary>
     /// Creates a new RabbitMQMessageBus instance.
     /// </summary>
+    /// <param name="connectionManager">RabbitMQ connection manager.</param>
+    /// <param name="retryBuffer">Buffer for retry on failed publishes.</param>
+    /// <param name="appConfiguration">Application configuration.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for instrumentation.</param>
     public RabbitMQMessageBus(
         RabbitMQConnectionManager connectionManager,
         MessageRetryBuffer retryBuffer,
         AppConfiguration appConfiguration,
-        ILogger<RabbitMQMessageBus> logger)
+        ILogger<RabbitMQMessageBus> logger,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _connectionManager = connectionManager;
         _retryBuffer = retryBuffer;
         _appConfiguration = appConfiguration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
+
+        if (_telemetryProvider != null)
+        {
+            _logger.LogDebug(
+                "RabbitMQMessageBus created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
+                _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
+        }
     }
 
     /// <inheritdoc/>
@@ -74,12 +94,28 @@ public sealed class RabbitMQMessageBus : IMessageBus
         // Generate messageId upfront if not provided
         var effectiveMessageId = messageId ?? Guid.NewGuid();
 
+        // Start telemetry activity for this publish operation
+        using var activity = _telemetryProvider?.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.publish",
+            ActivityKind.Producer);
+
+        var sw = Stopwatch.StartNew();
+        var success = false;
+
         try
         {
-
             var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
             var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
             var routingKey = options?.RoutingKey ?? topic;
+
+            // Set activity tags for tracing
+            activity?.SetTag("messaging.system", "rabbitmq");
+            activity?.SetTag("messaging.destination", topic);
+            activity?.SetTag("messaging.operation", "publish");
+            activity?.SetTag("messaging.message_id", effectiveMessageId.ToString());
+            activity?.SetTag("messaging.rabbitmq.exchange", exchange);
+            activity?.SetTag("messaging.rabbitmq.routing_key", routingKey);
 
             // Serialize - if this fails, it's a programming error (not retryable)
             string json;
@@ -93,6 +129,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             {
                 _logger.LogError(ex, "Failed to serialize {EventType} for topic '{Topic}' - this is a programming error",
                     typeof(TEvent).Name, topic);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 return false;
             }
 
@@ -126,10 +163,30 @@ public sealed class RabbitMQMessageBus : IMessageBus
                     properties.Priority = (byte)Math.Min(options.Priority, 9);
                 }
 
+                // Initialize headers dictionary
+                var messageHeaders = new Dictionary<string, object?>();
                 if (options?.Headers is IDictionary<string, object> headers && headers.Count > 0)
                 {
-                    properties.Headers = new Dictionary<string, object?>(
-                        headers.Select(kvp => new KeyValuePair<string, object?>(kvp.Key, kvp.Value)));
+                    foreach (var kvp in headers)
+                    {
+                        messageHeaders[kvp.Key] = kvp.Value;
+                    }
+                }
+
+                // Inject W3C trace context headers if activity is active
+                if (activity != null && Activity.Current != null)
+                {
+                    // W3C Trace Context propagation
+                    messageHeaders["traceparent"] = $"00-{activity.TraceId}-{activity.SpanId}-{(activity.Recorded ? "01" : "00")}";
+                    if (!string.IsNullOrEmpty(activity.TraceStateString))
+                    {
+                        messageHeaders["tracestate"] = activity.TraceStateString;
+                    }
+                }
+
+                if (messageHeaders.Count > 0)
+                {
+                    properties.Headers = messageHeaders;
                 }
 
                 // Publish - for fanout, routing key is ignored but we still pass it for logging
@@ -151,6 +208,8 @@ public sealed class RabbitMQMessageBus : IMessageBus
                     routingKey,
                     effectiveMessageId);
 
+                success = true;
+                activity?.SetStatus(ActivityStatusCode.Ok);
                 return true;
             }
             catch (Exception ex)
@@ -163,7 +222,8 @@ public sealed class RabbitMQMessageBus : IMessageBus
 
                 // Buffer for retry - this may crash the node if buffer is full/stale
                 _retryBuffer.EnqueueForRetry(topic, body, options, effectiveMessageId);
-                return true; // Buffered successfully, will be retried
+                success = true; // Buffered successfully, will be retried
+                return true;
             }
             finally
             {
@@ -174,8 +234,36 @@ public sealed class RabbitMQMessageBus : IMessageBus
         {
             // Catch-all for any unexpected errors (channel acquisition, etc.)
             _logger.LogError(ex, "Unexpected error in TryPublishAsync for topic '{Topic}'", topic);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             return false;
         }
+        finally
+        {
+            // Record telemetry metrics
+            sw.Stop();
+            RecordPublishMetrics(topic, success, sw.Elapsed.TotalSeconds);
+        }
+    }
+
+    /// <summary>
+    /// Records metrics for a publish operation.
+    /// </summary>
+    private void RecordPublishMetrics(string topic, bool success, double durationSeconds)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("topic", topic),
+            new KeyValuePair<string, object?>("exchange", _connectionManager.DefaultExchange),
+            new KeyValuePair<string, object?>("success", success)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Messaging, TelemetryMetrics.MessagingPublished, 1, tags);
+        _telemetryProvider.RecordHistogram(TelemetryComponents.Messaging, TelemetryMetrics.MessagingPublishDuration, durationSeconds, tags);
     }
 
     /// <inheritdoc/>
