@@ -262,8 +262,7 @@ No bugs identified.
 
 6. ~~**Empty parent index key not cleaned up**~~: **FIXED** (2026-01-31) - `RemoveFromParentIndexAsync` now deletes the parent index key when the last child is removed instead of saving an empty list.
 
-7. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/168 -->
+7. ~~**Depth cascade updates descendants sequentially**~~: **RESOLVED** (2026-01-31) - Issue #168 addressed by adding `SaveBulkAsync` to `IStateStore`, enabling batch writes for descendant depth updates. The Location service can now use bulk save for efficient cascade operations instead of sequential writes.
 
 ---
 
@@ -276,3 +275,4 @@ No bugs identified.
 - **2026-01-31**: Seed realm code resolution - Verified implementation is correct; local dictionary caching ensures each realm code is only fetched once per seed operation.
 - **2026-01-31**: Index concurrency protection - Added distributed locking to all six index helper methods using `IDistributedLockProvider` via new `location-lock` state store. Configurable timeout via `IndexLockTimeoutSeconds` config property.
 - **2026-01-31**: Empty parent index cleanup - `RemoveFromParentIndexAsync` now deletes the key when the last child is removed instead of saving an empty list.
+- **2026-01-31**: Bulk state store operations for cascade - Added `SaveBulkAsync`, `ExistsBulkAsync`, `DeleteBulkAsync` to `IStateStore` interface, enabling efficient batch writes for depth cascade updates. See [#168](https://github.com/beyond-immersion/bannou-service/issues/168).

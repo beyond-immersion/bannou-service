@@ -224,7 +224,7 @@ None identified.
 
 3. **Index cleanup only applies to global index**: While the expiration worker uses ETag-based optimistic concurrency to clean `subscription-index`, there is no mechanism to clean `account-subscriptions:{accountId}` or `service-subscriptions:{serviceId}` indexes. These grow indefinitely with cancelled/expired entries, potentially impacting query performance over time.
 
-4. **Event publishing without transactional guarantee**: State store update and event publish are separate operations. If the service crashes between saving and publishing, dependent services (Auth, GameSession) won't learn about the change until the next direct query. The expiration worker mitigates this for expired subscriptions by re-publishing events on each cycle.
+4. **Event publishing without transactional outbox**: State store update and event publish are separate operations (no transactional outbox pattern). However, lib-messaging's `TryPublishAsync` implements aggressive retry: if RabbitMQ is unavailable, messages are buffered in-memory and retried every 5 seconds. The node crashes if the buffer exceeds 10,000 messages or 5 minutes age - making failures visible rather than silent. True event loss only occurs if the node dies before the buffer flushes. The expiration worker provides additional resilience for expired subscriptions by re-publishing events on each cycle. This is the standard Bannou architecture used by all services (see MESSAGING.md Quirk #1).
 
 5. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
 

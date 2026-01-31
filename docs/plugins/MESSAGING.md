@@ -9,7 +9,25 @@
 
 ## Overview
 
-The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`/`IMessageTap`) used by all services for event publishing, subscription, and tapping, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
+The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`/`IMessageTap`) used by all services for event publishing, subscription, and tapping, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, aggressive retry buffering, and crash-fast philosophy for unrecoverable failures.
+
+### Event Publishing Reliability Model
+
+**Key behavior**: `TryPublishAsync` returns `true` even when RabbitMQ is unavailable - because the message is buffered for retry and WILL be delivered when the connection recovers. This is **not** "fire-and-forget" or "best-effort" in the traditional sense:
+
+1. **On publish failure**: Message is buffered in `MessageRetryBuffer` (in-memory `ConcurrentQueue`)
+2. **Retry processing**: Every 5 seconds, buffered messages are retried
+3. **Crash-fast on prolonged failure**: If RabbitMQ stays down too long (buffer >10k messages OR oldest message >5 minutes), the node **crashes intentionally** via `Environment.FailFast()`
+4. **Why crash?** Makes failure visible in monitoring, triggers orchestrator restart, prevents silent data loss
+
+**True loss scenarios** (rare):
+- Node dies (power failure, OOM kill) before buffer flushes
+- Clean shutdown with non-empty buffer (logged as warning)
+- Serialization failure (programming bug, not retryable)
+
+**Return value semantics**:
+- `true` = Published successfully OR buffered for retry (delivery will happen)
+- `false` = Unrecoverable failure (serialization error, retry buffer disabled)
 
 ---
 
@@ -222,7 +240,11 @@ No bugs identified.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Crash-fast buffer philosophy**: If the retry buffer exceeds `RetryBufferMaxSize` (10,000) or oldest message exceeds `RetryBufferMaxAgeSeconds` (300s), the node calls `Environment.FailFast()`. Philosophy: better to crash and restart than silently drop events.
+1. **Aggressive retry with crash-fast buffer philosophy**: When `TryPublishAsync` fails to deliver to RabbitMQ (connection down, channel error, etc.), the message is **not lost** - it's buffered in `MessageRetryBuffer` and `TryPublishAsync` returns `true` (because delivery WILL be retried). The buffer is processed every `RetryBufferIntervalSeconds` (default 5s). If RabbitMQ stays down too long, the node **intentionally crashes** via `Environment.FailFast()`:
+   - Buffer exceeds `RetryBufferMaxSize` (default 10,000 messages)
+   - Oldest message exceeds `RetryBufferMaxAgeSeconds` (default 300s / 5 minutes)
+
+   **Why crash?** Crashing makes the failure visible in monitoring, triggers orchestrator restart, and prevents silent data loss or unbounded memory growth. True event loss only occurs if the node dies (power failure, OOM kill) before the buffer flushes.
 
 2. **HTTP callbacks don't retry on HTTP errors**: Only retries on network failures (`HttpRequestException`, `TaskCanceledException` for timeout). HTTP 4xx/5xx is treated as successful delivery. Philosophy: callback endpoint is responsible for its own error handling.
 
