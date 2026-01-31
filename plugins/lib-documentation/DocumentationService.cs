@@ -531,25 +531,28 @@ public partial class DocumentationService : IDocumentationService
                 fetchLimit,
                 cancellationToken);
 
-            // Fetch document data with metadata for sorting
+            // Fetch document data with metadata for sorting using bulk get (fixes N+1 query pattern)
             var documentsWithMetadata = new List<(DocumentSummary Summary, StoredDocument Doc)>();
-            foreach (var docId in docIds)
+            if (docIds.Count > 0)
             {
-                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                var doc = await docStore.GetAsync(docKey, cancellationToken);
+                var docKeys = docIds.Select(docId => $"{DOC_KEY_PREFIX}{namespaceId}:{docId}").ToList();
+                var bulkResult = await docStore.GetBulkAsync(docKeys, cancellationToken);
 
-                if (doc != null)
+                foreach (var (_, doc) in bulkResult)
                 {
-                    documentsWithMetadata.Add((new DocumentSummary
+                    if (doc != null)
                     {
-                        DocumentId = doc.DocumentId,
-                        Slug = doc.Slug,
-                        Title = doc.Title,
-                        Category = ParseDocumentCategory(doc.Category),
-                        Summary = doc.Summary,
-                        VoiceSummary = doc.VoiceSummary,
-                        Tags = doc.Tags
-                    }, doc));
+                        documentsWithMetadata.Add((new DocumentSummary
+                        {
+                            DocumentId = doc.DocumentId,
+                            Slug = doc.Slug,
+                            Title = doc.Title,
+                            Category = ParseDocumentCategory(doc.Category),
+                            Summary = doc.Summary,
+                            VoiceSummary = doc.VoiceSummary,
+                            Tags = doc.Tags
+                        }, doc));
+                    }
                 }
             }
 
@@ -1502,36 +1505,53 @@ public partial class DocumentationService : IDocumentationService
             var items = new List<TrashcanItem>();
             var now = DateTimeOffset.UtcNow;
             var expiredIds = new List<Guid>();
+            var expiredKeysToDelete = new List<string>();
 
-            // Fetch trashcan items
-            foreach (var docId in trashedDocIds)
+            // Fetch trashcan items using bulk get (fixes N+1 query pattern)
+            if (trashedDocIds.Count > 0)
             {
-                var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
-                var trashedDoc = await trashStore.GetAsync(trashKey, cancellationToken);
+                var trashKeys = trashedDocIds.Select(docId => $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}").ToList();
+                var bulkResult = await trashStore.GetBulkAsync(trashKeys, cancellationToken);
 
-                if (trashedDoc == null)
+                // Build a lookup for quick access
+                var keyToDocId = trashedDocIds.ToDictionary(
+                    docId => $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}",
+                    docId => docId);
+
+                foreach (var docId in trashedDocIds)
                 {
-                    expiredIds.Add(docId);
-                    continue;
+                    var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
+
+                    if (!bulkResult.TryGetValue(trashKey, out var trashedDoc) || trashedDoc == null)
+                    {
+                        expiredIds.Add(docId);
+                        continue;
+                    }
+
+                    // Check if expired
+                    if (trashedDoc.ExpiresAt < now)
+                    {
+                        expiredIds.Add(docId);
+                        expiredKeysToDelete.Add(trashKey);
+                        continue;
+                    }
+
+                    items.Add(new TrashcanItem
+                    {
+                        DocumentId = trashedDoc.Document.DocumentId,
+                        Slug = trashedDoc.Document.Slug,
+                        Title = trashedDoc.Document.Title,
+                        Category = ParseDocumentCategory(trashedDoc.Document.Category),
+                        DeletedAt = trashedDoc.DeletedAt,
+                        ExpiresAt = trashedDoc.ExpiresAt
+                    });
                 }
 
-                // Check if expired
-                if (trashedDoc.ExpiresAt < now)
+                // Batch delete expired items
+                if (expiredKeysToDelete.Count > 0)
                 {
-                    expiredIds.Add(docId);
-                    await trashStore.DeleteAsync(trashKey, cancellationToken);
-                    continue;
+                    await trashStore.DeleteBulkAsync(expiredKeysToDelete, cancellationToken);
                 }
-
-                items.Add(new TrashcanItem
-                {
-                    DocumentId = trashedDoc.Document.DocumentId,
-                    Slug = trashedDoc.Document.Slug,
-                    Title = trashedDoc.Document.Title,
-                    Category = ParseDocumentCategory(trashedDoc.Document.Category),
-                    DeletedAt = trashedDoc.DeletedAt,
-                    ExpiresAt = trashedDoc.ExpiresAt
-                });
             }
 
             // Clean up expired entries from list

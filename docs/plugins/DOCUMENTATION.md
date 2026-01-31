@@ -433,7 +433,7 @@ Archive System
 
 2. **Single Redis store for all data**: All document data, indexes, trashcan, bindings, and archives share one `documentation-statestore`. A very active namespace with many documents could create key-space pressure. No TTL is set on document keys themselves.
 
-3. **N+1 query pattern in ListDocuments and ListTrashcan**: Both endpoints fetch document IDs from an index, then individually fetch each document from the state store. Large result sets generate many sequential Redis calls.
+3. ~~**N+1 query pattern in ListDocuments and ListTrashcan**~~: **FIXED** (2026-01-31) - Both methods now use `GetBulkAsync` for single-call bulk retrieval. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items instead of individual deletes.
 
 4. **Git operations on local filesystem**: `GitSyncService` clones repositories to `GitStoragePath` on the container's filesystem. In multi-instance deployments, each instance clones independently. The distributed lock prevents concurrent syncs of the same namespace, but disk usage is per-instance.
 
@@ -459,4 +459,6 @@ Archive System
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work tracking markers.*
+### Completed
+
+- **2026-01-31**: Fixed N+1 query pattern in `ListDocumentsAsync` and `ListTrashcanAsync`. Both methods now use `GetBulkAsync` for bulk document retrieval instead of individual `GetAsync` calls in loops. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items.

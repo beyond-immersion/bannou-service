@@ -859,11 +859,16 @@ public partial class ItemService : IItemService
                 : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
 
             var effectiveLimit = Math.Min(ids.Count, _configuration.MaxInstancesPerQuery);
+            var idsToFetch = ids.Take(effectiveLimit).ToList();
+
+            // Load all instances in bulk (cache + persistent store)
+            var modelsById = await GetInstancesBulkWithCacheAsync(idsToFetch, cancellationToken);
+
+            // Map to responses, preserving order from the index
             var items = new List<ItemInstanceResponse>();
-            foreach (var id in ids.Take(effectiveLimit))
+            foreach (var id in idsToFetch)
             {
-                var model = await GetInstanceWithCacheAsync(id, cancellationToken);
-                if (model is not null)
+                if (modelsById.TryGetValue(id, out var model))
                 {
                     items.Add(MapInstanceToResponse(model));
                 }
@@ -900,12 +905,14 @@ public partial class ItemService : IItemService
                 ? new List<string>()
                 : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
 
-            var effectiveLimit = Math.Min(body.Limit, _configuration.MaxInstancesPerQuery);
+            // Load all instances in bulk (cache + persistent store)
+            var modelsById = await GetInstancesBulkWithCacheAsync(ids, cancellationToken);
+
+            // Filter and map to responses
             var items = new List<ItemInstanceResponse>();
             foreach (var id in ids)
             {
-                var model = await GetInstanceWithCacheAsync(id, cancellationToken);
-                if (model is null) continue;
+                if (!modelsById.TryGetValue(id, out var model)) continue;
 
                 // Apply realm filter
                 if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
@@ -913,6 +920,7 @@ public partial class ItemService : IItemService
                 items.Add(MapInstanceToResponse(model));
             }
 
+            var effectiveLimit = Math.Min(body.Limit, _configuration.MaxInstancesPerQuery);
             var totalCount = items.Count;
             var paged = items.Skip(body.Offset).Take(effectiveLimit).ToList();
 
@@ -940,13 +948,20 @@ public partial class ItemService : IItemService
     {
         try
         {
+            // Convert GUIDs to string IDs for bulk lookup
+            var instanceIdStrings = body.InstanceIds.Select(id => id.ToString()).ToList();
+
+            // Load all instances in bulk (cache + persistent store)
+            var modelsById = await GetInstancesBulkWithCacheAsync(instanceIdStrings, cancellationToken);
+
+            // Build results, tracking not found items
             var items = new List<ItemInstanceResponse>();
             var notFound = new List<Guid>();
 
             foreach (var instanceId in body.InstanceIds)
             {
-                var model = await GetInstanceWithCacheAsync(instanceId.ToString(), cancellationToken);
-                if (model is not null)
+                var idStr = instanceId.ToString();
+                if (modelsById.TryGetValue(idStr, out var model))
                 {
                     items.Add(MapInstanceToResponse(model));
                 }
@@ -1135,6 +1150,70 @@ public partial class ItemService : IItemService
         await cacheStore.SaveAsync(cacheKey, model,
             new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
         return model;
+    }
+
+    /// <summary>
+    /// Bulk get instances with Redis cache read-through. Falls back to MySQL for cache misses.
+    /// Returns a dictionary keyed by instance ID (without prefix).
+    /// </summary>
+    private async Task<Dictionary<string, ItemInstanceModel>> GetInstancesBulkWithCacheAsync(
+        IEnumerable<string> instanceIds,
+        CancellationToken ct)
+    {
+        var idList = instanceIds.ToList();
+        if (idList.Count == 0) return new Dictionary<string, ItemInstanceModel>();
+
+        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
+        var persistentStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+
+        // Build cache keys
+        var cacheKeys = idList.Select(id => $"{INST_PREFIX}{id}").ToList();
+
+        // Try cache first (single bulk call)
+        var cachedItems = await cacheStore.GetBulkAsync(cacheKeys, ct);
+
+        // Build result from cache hits
+        var result = new Dictionary<string, ItemInstanceModel>();
+        var cacheMissKeys = new List<string>();
+
+        foreach (var key in cacheKeys)
+        {
+            if (cachedItems.TryGetValue(key, out var model))
+            {
+                // Extract instance ID from key (format: "inst:{instanceId}")
+                var instanceId = key.Substring(INST_PREFIX.Length);
+                result[instanceId] = model;
+            }
+            else
+            {
+                cacheMissKeys.Add(key);
+            }
+        }
+
+        // If all items were in cache, we're done
+        if (cacheMissKeys.Count == 0) return result;
+
+        // Fetch cache misses from persistent store (single bulk call)
+        var persistentItems = await persistentStore.GetBulkAsync(cacheMissKeys, ct);
+
+        // Add persistent store results and populate cache
+        if (persistentItems.Count > 0)
+        {
+            var cachePopulation = new List<KeyValuePair<string, ItemInstanceModel>>();
+
+            foreach (var (key, model) in persistentItems)
+            {
+                var instanceId = key.Substring(INST_PREFIX.Length);
+                result[instanceId] = model;
+                cachePopulation.Add(new KeyValuePair<string, ItemInstanceModel>(key, model));
+            }
+
+            // Bulk populate cache for all fetched items
+            await cacheStore.SaveBulkAsync(cachePopulation,
+                new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
+        }
+
+        return result;
     }
 
     /// <summary>

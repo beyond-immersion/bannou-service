@@ -264,7 +264,7 @@ No bugs identified.
 
 ### Design Considerations
 
-1. **List index N+1 loading**: `ListItemsByContainer` and `ListItemsByTemplate` load each instance individually from the state store. With large containers or popular templates, this generates many calls.
+1. ~~**List index N+1 loading**~~: **FIXED** (2026-01-31) - `ListItemsByContainer` and `ListItemsByTemplate` now use `GetInstancesBulkWithCacheAsync` for two-tier bulk loading (Redis cache first, then MySQL for misses). Cache population happens in bulk after persistent store fetch.
 
 2. **No template deletion**: Templates can only be deprecated, never deleted. This preserves instance integrity but means the template store grows monotonically.
 
@@ -276,7 +276,7 @@ No bugs identified.
 
 6. **Destroy bypasses destroyable check with "admin" reason**: If `body.Reason == "admin"`, the template's `Destroyable` flag is ignored, allowing admin-level destruction of indestructible items.
 
-7. **BatchGetItemInstances is sequential**: Each instance is fetched one by one in a foreach loop rather than parallel fetching. Could be slow for large batches.
+7. ~~**BatchGetItemInstances is sequential**~~: **FIXED** (2026-01-31) - `BatchGetItemInstances` now uses `GetInstancesBulkWithCacheAsync` for two-tier bulk loading with a maximum of 2 database round-trips (cache check + persistent store for misses).
 
 8. **Empty container/template index not cleaned up**: After `RemoveFromListAsync`, if the list becomes empty, it remains as an empty JSON array `[]` in the store rather than being deleted.
 
@@ -287,6 +287,10 @@ No bugs identified.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+
+- **2026-01-31**: N+1 bulk loading optimization - Added `GetInstancesBulkWithCacheAsync` helper that performs two-tier bulk loading (Redis cache → MySQL persistent store for misses → bulk cache population). Applied to `ListItemsByContainer`, `ListItemsByTemplate`, and `BatchGetItemInstances`. Maximum 2 database round-trips regardless of item count. See Issue #168 for `IStateStore` bulk operations.
 
 ### Related (Cross-Service)
 - **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Owned by lib-inventory, but affects lib-item's container index and event patterns. See Design Considerations #4 and #5.
