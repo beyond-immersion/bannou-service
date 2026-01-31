@@ -74685,6 +74685,252 @@
             Total number of subscriptions matching the filter
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.ITelemetryClient">
+            <summary>
+            Client interface for the Telemetry service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.ITelemetryClient.HealthAsync(BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check telemetry exporter health
+            </summary>
+            <remarks>
+            Returns the health status of telemetry exporters and current configuration state.
+            </remarks>
+            <returns>Telemetry health status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.ITelemetryClient.StatusAsync(BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get telemetry status and configuration
+            </summary>
+            <remarks>
+            Returns detailed telemetry status including active exporters, sampling configuration, and service identity.
+            </remarks>
+            <returns>Telemetry status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient">
+            <summary>
+            Client implementation for the Telemetry service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Telemetry.TelemetryClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Telemetry.TelemetryClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Telemetry.TelemetryClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Telemetry.TelemetryClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.HealthAsync(BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check telemetry exporter health
+            </summary>
+            <remarks>
+            Returns the health status of telemetry exporters and current configuration state.
+            </remarks>
+            <returns>Telemetry health status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.StatusAsync(BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get telemetry status and configuration
+            </summary>
+            <remarks>
+            Returns detailed telemetry status including active exporters, sampling configuration, and service identity.
+            </remarks>
+            <returns>Telemetry status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest">
+            <summary>
+            Request for telemetry health check (empty object, no parameters needed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse">
+            <summary>
+            Response containing telemetry exporter health status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.Healthy">
+            <summary>
+            Overall health status of telemetry subsystem
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.TracingEnabled">
+            <summary>
+            Whether distributed tracing export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.MetricsEnabled">
+            <summary>
+            Whether metrics export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.OtlpEndpoint">
+            <summary>
+            Configured OTLP endpoint (null if telemetry is disabled)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest">
+            <summary>
+            Request for telemetry status (empty object, no parameters needed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse">
+            <summary>
+            Response containing detailed telemetry configuration and status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.TracingEnabled">
+            <summary>
+            Whether distributed tracing export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.MetricsEnabled">
+            <summary>
+            Whether metrics export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.SamplingRatio">
+            <summary>
+            Current trace sampling ratio (0.0-1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceName">
+            <summary>
+            Service name used for telemetry identification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceNamespace">
+            <summary>
+            Service namespace for telemetry grouping
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.DeploymentEnvironment">
+            <summary>
+            Current deployment environment
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpEndpoint">
+            <summary>
+            Configured OTLP endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpProtocol">
+            <summary>
+            OTLP transport protocol (grpc or http)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Voice.IVoiceClient">
             <summary>
             Client interface for the Voice service.
@@ -77372,86 +77618,6 @@
             <param name="request">The HTTP request message.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>The HTTP response message.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest">
-            <summary>
-            Request for telemetry health check (empty object, no parameters needed)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse">
-            <summary>
-            Response containing telemetry exporter health status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.Healthy">
-            <summary>
-            Overall health status of telemetry subsystem
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.TracingEnabled">
-            <summary>
-            Whether distributed tracing export is enabled
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.MetricsEnabled">
-            <summary>
-            Whether metrics export is enabled
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.OtlpEndpoint">
-            <summary>
-            Configured OTLP endpoint (null if telemetry is disabled)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest">
-            <summary>
-            Request for telemetry status (empty object, no parameters needed)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse">
-            <summary>
-            Response containing detailed telemetry configuration and status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.TracingEnabled">
-            <summary>
-            Whether distributed tracing export is enabled
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.MetricsEnabled">
-            <summary>
-            Whether metrics export is enabled
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.SamplingRatio">
-            <summary>
-            Current trace sampling ratio (0.0-1.0)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceName">
-            <summary>
-            Service name used for telemetry identification
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceNamespace">
-            <summary>
-            Service namespace for telemetry grouping
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.DeploymentEnvironment">
-            <summary>
-            Current deployment environment
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpEndpoint">
-            <summary>
-            Configured OTLP endpoint
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpProtocol">
-            <summary>
-            OTLP transport protocol (grpc or http)
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.StateStoreDefinitions">
             <summary>

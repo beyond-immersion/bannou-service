@@ -9,6 +9,11 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// <summary>
 /// Base class for HTTP test handlers providing common utilities for service testing.
 /// Consolidates the repeated try-catch-ApiException pattern and service client access.
+///
+/// MANDATORY: All test handlers MUST use GetServiceClient&lt;T&gt;() to obtain service clients.
+/// DO NOT use raw HttpClient - the only exception is TestingTestHandler which tests
+/// low-level routing behavior. If you're copying from an existing handler, use
+/// AccountTestHandler or GameServiceTestHandler as your template, NOT TestingTestHandler.
 /// </summary>
 public abstract class BaseHttpTestHandler : IServiceTestHandler
 {
