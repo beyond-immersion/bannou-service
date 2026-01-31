@@ -321,13 +321,14 @@ public partial class SceneService : ISceneService
                 candidateIds = await GetAllSceneIdsAsync(cancellationToken);
             }
 
-            // Load and filter index entries
-            var matchingScenes = new List<SceneSummary>();
-            foreach (var sceneId in candidateIds)
-            {
-                var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneId}", cancellationToken);
-                if (indexEntry == null) continue;
+            // Load all index entries in bulk (single database round-trip)
+            var indexKeys = candidateIds.Select(id => $"{SCENE_INDEX_PREFIX}{id}").ToList();
+            var indexEntries = await indexStore.GetBulkAsync(indexKeys, cancellationToken);
 
+            // Filter index entries
+            var matchingScenes = new List<SceneSummary>();
+            foreach (var indexEntry in indexEntries.Values)
+            {
                 // Apply additional filters
                 if (!string.IsNullOrEmpty(body.NameContains) &&
                     !indexEntry.Name.Contains(body.NameContains, StringComparison.OrdinalIgnoreCase))
@@ -1148,13 +1149,14 @@ public partial class SceneService : ISceneService
 
             // Get all scene IDs (with optional game/type filter)
             var candidateIds = await GetAllSceneIdsAsync(cancellationToken);
+
+            // Load all index entries in bulk (single database round-trip)
+            var indexKeys = candidateIds.Select(id => $"{SCENE_INDEX_PREFIX}{id}").ToList();
+            var indexEntries = await indexStore.GetBulkAsync(indexKeys, cancellationToken);
+
             var results = new List<SearchResult>();
-
-            foreach (var sceneId in candidateIds)
+            foreach (var indexEntry in indexEntries.Values)
             {
-                var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneId}", cancellationToken);
-                if (indexEntry == null) continue;
-
                 // Apply filters
                 if (!string.IsNullOrEmpty(body.GameId) && indexEntry.GameId != body.GameId) continue;
                 if (body.SceneTypes != null && body.SceneTypes.Count > 0)
@@ -1231,12 +1233,17 @@ public partial class SceneService : ISceneService
             var referencingSceneIds = await guidSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{body.SceneId}", cancellationToken);
             var references = new List<ReferenceInfo>();
 
-            if (referencingSceneIds != null)
+            if (referencingSceneIds != null && referencingSceneIds.Count > 0)
             {
-                foreach (var refSceneId in referencingSceneIds)
+                // Load all index entries in bulk (single database round-trip)
+                var indexKeys = referencingSceneIds.Select(id => $"{SCENE_INDEX_PREFIX}{id}").ToList();
+                var indexEntries = await indexStore.GetBulkAsync(indexKeys, cancellationToken);
+
+                foreach (var (key, indexEntry) in indexEntries)
                 {
-                    var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{refSceneId}", cancellationToken);
-                    if (indexEntry == null) continue;
+                    // Extract scene ID from key (format: "scene:index:{sceneId}")
+                    var refSceneIdStr = key.Substring(SCENE_INDEX_PREFIX.Length);
+                    if (!Guid.TryParse(refSceneIdStr, out var refSceneId)) continue;
 
                     // Load scene to find the referencing node
                     var scene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
@@ -1286,12 +1293,17 @@ public partial class SceneService : ISceneService
             var usingSceneIds = await guidSetStore.GetAsync($"{SCENE_ASSETS_PREFIX}{assetIdStr}", cancellationToken);
             var usages = new List<AssetUsageInfo>();
 
-            if (usingSceneIds != null)
+            if (usingSceneIds != null && usingSceneIds.Count > 0)
             {
-                foreach (var sceneId in usingSceneIds)
+                // Load all index entries in bulk (single database round-trip)
+                var indexKeys = usingSceneIds.Select(id => $"{SCENE_INDEX_PREFIX}{id}").ToList();
+                var indexEntries = await indexStore.GetBulkAsync(indexKeys, cancellationToken);
+
+                foreach (var (key, indexEntry) in indexEntries)
                 {
-                    var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneId}", cancellationToken);
-                    if (indexEntry == null) continue;
+                    // Extract scene ID from key (format: "scene:index:{sceneId}")
+                    var sceneIdStr = key.Substring(SCENE_INDEX_PREFIX.Length);
+                    if (!Guid.TryParse(sceneIdStr, out var sceneId)) continue;
 
                     // Apply game filter
                     if (!string.IsNullOrEmpty(body.GameId) && indexEntry.GameId != body.GameId) continue;

@@ -383,13 +383,8 @@ public partial class RealmService : IRealmService
             // Update code index (stored as string for state store compatibility)
             await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).SaveAsync(codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
 
-            // Update all-realms list
-            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
-            if (!allRealmIds.Contains(realmId))
-            {
-                allRealmIds.Add(realmId);
-                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
-            }
+            // Update all-realms list with ETag-based optimistic concurrency
+            await AddToRealmListAsync(realmId, cancellationToken);
 
             // Publish realm created event
             await PublishRealmCreatedEventAsync(model, cancellationToken);
@@ -519,12 +514,8 @@ public partial class RealmService : IRealmService
             var codeIndexKey = BuildCodeIndexKey(model.Code);
             await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).DeleteAsync(codeIndexKey, cancellationToken);
 
-            // Remove from all-realms list
-            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
-            if (allRealmIds.Remove(body.RealmId))
-            {
-                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
-            }
+            // Remove from all-realms list with ETag-based optimistic concurrency
+            await RemoveFromRealmListAsync(body.RealmId, cancellationToken);
 
             // Publish realm deleted event
             await PublishRealmDeletedEventAsync(model, null, cancellationToken);
@@ -764,6 +755,65 @@ public partial class RealmService : IRealmService
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Add a realm ID to the all-realms list index.
+    /// Uses ETag-based optimistic concurrency per IMPLEMENTATION TENETS (Multi-Instance Safety).
+    /// </summary>
+    private async Task AddToRealmListAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm);
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (realmIds, etag) = await listStore.GetWithETagAsync(ALL_REALMS_KEY, cancellationToken);
+            realmIds ??= new List<Guid>();
+
+            if (realmIds.Contains(realmId))
+            {
+                return; // Already in list
+            }
+
+            realmIds.Add(realmId);
+            var result = await listStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on realm list, retrying add (attempt {Attempt})", attempt + 1);
+        }
+
+        _logger.LogWarning("Failed to add realm {RealmId} to list after 3 attempts", realmId);
+    }
+
+    /// <summary>
+    /// Remove a realm ID from the all-realms list index.
+    /// Uses ETag-based optimistic concurrency per IMPLEMENTATION TENETS (Multi-Instance Safety).
+    /// </summary>
+    private async Task RemoveFromRealmListAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm);
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (realmIds, etag) = await listStore.GetWithETagAsync(ALL_REALMS_KEY, cancellationToken);
+            if (realmIds == null || !realmIds.Remove(realmId))
+            {
+                return; // Not in list or already removed
+            }
+
+            var result = await listStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on realm list, retrying remove (attempt {Attempt})", attempt + 1);
+        }
+
+        _logger.LogWarning("Failed to remove realm {RealmId} from list after 3 attempts", realmId);
+    }
 
     private async Task<List<RealmModel>> LoadRealmsByIdsAsync(List<Guid> realmIds, CancellationToken cancellationToken)
     {

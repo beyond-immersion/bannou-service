@@ -210,10 +210,11 @@ None identified.
 2. ~~**All-realms list as single key**~~: **MOVED TO QUIRKS** (2026-01-31) - Intentional optimization for expected scale. See Intentional Quirks #10.
 
 3. **No reference counting for delete**: The delete endpoint does not verify that no entities (characters, locations, species) reference the realm. Dependent services call `RealmExistsAsync` on creation but nothing prevents deleting a realm that still has active entities.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/170 -->
 
 4. ~~**Event publishing non-transactional**~~: **MERGED WITH QUIRK #8** (2026-01-31) - This describes the standard Bannou architecture, not a Realm-specific gap. See expanded Intentional Quirk #8.
 
-5. **Read-modify-write without distributed locks**: Create/Delete modify the all-realms list, Update modifies realm model. Requires ETag-based optimistic concurrency or distributed locks.
+5. ~~**Read-modify-write without distributed locks**~~: **FIXED** (2026-01-31) - Create/Delete operations now use ETag-based optimistic concurrency with 3-attempt retry loops for the all-realms list, matching the pattern established in lib-game-service. Update operations modify only the individual realm model (not a shared list) so no additional protection was needed.
 
 ---
 
@@ -229,6 +230,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **2026-01-31**: Added ETag-based optimistic concurrency to all-realms list operations. `AddToRealmListAsync` and `RemoveFromRealmListAsync` helper methods now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry loops, preventing lost-update race conditions under concurrent Create/Delete operations. Pattern matches lib-game-service implementation.
 - **2026-01-31**: Added `/realm/exists-batch` endpoint for batch realm validation. Uses `GetBulkAsync` for efficient single-call validation of multiple realm IDs. Returns per-realm results with `allExist`/`allActive` convenience flags.
 - **2026-01-31**: Reclassified "VOID realm pattern" from Stubs to Intentional Quirks. The VOID realm is intentionally a convention (like Species/RelationshipType VOID entries), not service-enforced logic. Created `provisioning/seed-data/realms.yaml` to provide seed data with VOID realm, paralleling the existing species.yaml and relationship-types.yaml files.
 - **2026-01-31**: Reclassified "GameServiceId mutability" from Design Considerations to Intentional Quirks. Investigation confirmed Analytics service handles this via `realm.updated` event-driven cache invalidation. Other dependent services (Location, Species, Character) don't cache GameServiceId so are unaffected.

@@ -430,9 +430,9 @@ No bugs identified.
 
 1. **Global index unbounded growth**: The `scene:global-index` key holds ALL scene IDs in a single `HashSet<Guid>`. At scale (millions of scenes), this set becomes a memory and serialization bottleneck. Consider partitioned indexes or cursor-based iteration.
 
-2. **N+1 query pattern in ListScenes**: After resolving candidate IDs via secondary indexes, each scene's index entry is loaded individually. A page of 200 results generates 200 state store reads.
+2. ~~**N+1 query pattern in ListScenes**~~: **FIXED** (2026-01-31) - ListScenes now uses `GetBulkAsync` for single database round-trip when loading index entries. Filtering still happens in-memory after bulk load.
 
-3. **N+1 in SearchScenes**: Even worse than ListScenes -- loads ALL scene IDs globally and iterates one-by-one. A system with 100,000 scenes requires 100,000 index reads per search.
+3. ~~**N+1 in SearchScenes**~~: **FIXED** (2026-01-31) - SearchScenes now uses `GetBulkAsync` for single database round-trip. The global index scan remains, but individual index entry loading is now bulk.
 
 4. **Secondary index race conditions**: Index updates (game, type, reference, asset) are not atomic with the primary index write. A crash between primary save and secondary index update leaves indexes inconsistent. There is no reconciliation mechanism.
 
@@ -444,7 +444,7 @@ No bugs identified.
 
 8. **Asset/reference index staleness**: If a scene is updated and the YAML deserialization produces different reference/asset sets, the index diff logic handles adds and removes. However, if deserialization fails or produces different results than what was stored, indexes become stale with no self-healing mechanism.
 
-9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes.
+9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes. Note: Index entry loading was optimized to use `GetBulkAsync` (2026-01-31), but scene content loading for node traversal remains sequential.
 
 10. **Unused key prefix constants**: The service defines `SCENE_CHECKOUT_EXT_PREFIX` ("scene:checkout-ext:") and `VERSION_RETENTION_PREFIX` ("scene:version-retention:") but never references them. These appear to be dead code from planned features that were never implemented or were refactored away.
 
@@ -454,5 +454,7 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-No active work tracking items.
+### Completed
+
+- **2026-01-31**: N+1 bulk loading optimization - Replaced N+1 `GetAsync` calls with `GetBulkAsync` in `ListScenesAsync`, `SearchScenesAsync`, `FindReferencesAsync`, and `FindAssetUsageAsync`. Index entry loading now uses single database round-trips. See Issue #168 for `IStateStore` bulk operations.
 
