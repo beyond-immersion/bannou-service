@@ -36704,6 +36704,13 @@
             Response codes used in the binary protocol for success/error indication.
             <br/>Provides fine-grained error reporting for different failure scenarios.
             <br/>
+            <br/>**Request error codes (10-19):**
+            <br/>- 10 (RequestError): Generic malformed request
+            <br/>- 11 (RequestTooLarge): Payload exceeds maximum size
+            <br/>- 12 (TooManyRequests): Rate limit exceeded
+            <br/>- 13 (InvalidRequestChannel): Invalid channel number
+            <br/>- 14 (TextProtocolNotSupported): Text WebSocket frames are not supported; use binary protocol
+            <br/>
             <br/>**Broadcast error codes (40-49):**
             <br/>- 40 (BroadcastNotAllowed): Broadcast attempted in External mode where it is forbidden
             <br/>

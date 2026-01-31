@@ -1664,13 +1664,14 @@ public partial class DocumentationService : IDocumentationService
         try
         {
             var namespaceId = body.Namespace;
+            var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
             var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             // Get stats from search index
             var searchStats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
 
-            // Get trashcan count
+            // Get trashcan count (trashcan uses List<Guid> for ordered, duplicate-allowing semantics)
             var trashListKey = $"ns-trash:{namespaceId}";
             var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
@@ -1681,7 +1682,7 @@ public partial class DocumentationService : IDocumentationService
             // Find last updated document
             var lastUpdated = DateTimeOffset.MinValue;
             var docListKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-            var docIds = await guidListStore.GetAsync(docListKey, cancellationToken) ?? [];
+            var docIds = await guidSetStore.GetAsync(docListKey, cancellationToken) ?? [];
 
             if (docIds.Count > 0)
             {

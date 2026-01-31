@@ -197,6 +197,7 @@ State Store Architecture
 ## Stubs & Unimplemented Features
 
 1. **KeyCount in ListStores**: Always returns null. Would require DBSIZE for Redis or COUNT for MySQL.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/174 -->
 2. **DefaultConsistency**: Config property exists but consistency mode is not evaluated anywhere.
 3. **Metrics/Tracing**: Config flags exist but no instrumentation implemented.
 4. **State change events**: Considered but rejected as too expensive per-operation.
@@ -218,7 +219,7 @@ State Store Architecture
 
 ### Bugs (Fix Immediately)
 
-1. **RedisSearchStateStore.TrySaveAsync broken transaction**: In `RedisSearchStateStore.cs:191-209`, the optimistic concurrency check creates a transaction with `Condition.HashEqual` but immediately executes it with `FireAndForget`, then performs the actual JSON set and hash increment as separate non-transactional operations. This defeats the purpose of the condition check - a concurrent modification between the condition check and the actual write will not be detected.
+1. ~~**RedisSearchStateStore.TrySaveAsync broken transaction**~~: **FIXED** (2026-01-31) - Replaced broken transaction pattern with Lua scripts (`TryCreateScript` and `TryUpdateScript`) that atomically check version and perform JSON.SET + metadata update. The `TryCreateScript` handles empty ETag (create-if-not-exists) semantics, while `TryUpdateScript` handles optimistic concurrency updates.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -258,4 +259,6 @@ State Store Architecture
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-*No items currently being tracked.*
+### Completed
+
+- **2026-01-31**: Fixed `RedisSearchStateStore.TrySaveAsync` broken transaction. The original code created a Redis transaction with a condition but executed it with `FireAndForget`, then performed the actual JSON.SET outside the transaction. Replaced with two Lua scripts: `TryCreateScript` (for empty ETag create-if-not-exists) and `TryUpdateScript` (for optimistic concurrency updates). Lua scripts execute atomically on Redis server, ensuring proper concurrency control for JSON document storage.

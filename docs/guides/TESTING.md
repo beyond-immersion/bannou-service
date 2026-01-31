@@ -397,6 +397,239 @@ plugins/lib-{service}.tests/
 
 ## Advanced Testing Features
 
+### External Resource Testing Patterns
+
+Bannou uses two patterns for testing code that depends on external resources (Lua scripts, YAML fixtures). Both patterns avoid embedding multi-line content in C# string literals, which prevents formatting issues and improves maintainability.
+
+#### Pattern 1: Embedded Resources (Lua Scripts)
+
+**Use case**: Production code that needs bundled resources (Lua scripts, SQL, templates)
+
+**Example**: Redis Lua scripts in `lib-state`
+
+**Directory structure**:
+```
+plugins/lib-state/
+├── Scripts/
+│   ├── TryCreate.lua         # Lua script files
+│   └── TryUpdate.lua
+├── Services/
+│   └── RedisLuaScripts.cs    # Loader class
+└── lib-state.csproj          # Embeds Scripts/*.lua
+```
+
+**Step 1: Create resource files**
+```lua
+-- Scripts/TryCreate.lua
+-- KEYS[1] = fullKey, KEYS[2] = metaKey
+-- ARGV[1] = JSON value, ARGV[2] = timestamp
+-- Returns: 1 = success, -1 = already exists
+
+if redis.call('EXISTS', KEYS[1]) == 1 then
+    return -1
+end
+redis.call('JSON.SET', KEYS[1], '$', ARGV[1])
+redis.call('HSET', KEYS[2], 'version', 1, 'created', ARGV[2], 'updated', ARGV[2])
+return 1
+```
+
+**Step 2: Embed in .csproj**
+```xml
+<!-- lib-state.csproj -->
+<ItemGroup>
+  <EmbeddedResource Include="Scripts\*.lua" />
+</ItemGroup>
+```
+
+**Step 3: Create loader class**
+```csharp
+// Services/RedisLuaScripts.cs
+public static class RedisLuaScripts
+{
+    private static readonly ConcurrentDictionary<string, string> _scriptCache = new();
+    private static readonly Assembly _assembly = typeof(RedisLuaScripts).Assembly;
+
+    public static string TryCreate => GetScript("TryCreate");
+    public static string TryUpdate => GetScript("TryUpdate");
+
+    public static string GetScript(string scriptName)
+    {
+        return _scriptCache.GetOrAdd(scriptName, name =>
+        {
+            var resourceName = $"BeyondImmersion.BannouService.State.Scripts.{name}.lua";
+            using var stream = _assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Script '{name}' not found");
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        });
+    }
+
+    public static IEnumerable<string> ListAvailableScripts()
+    {
+        const string prefix = "BeyondImmersion.BannouService.State.Scripts.";
+        return _assembly.GetManifestResourceNames()
+            .Where(n => n.StartsWith(prefix) && n.EndsWith(".lua"))
+            .Select(n => n[prefix.Length..^4]);
+    }
+}
+```
+
+**Step 4: Write tests** (`lib-state.tests/RedisLuaScriptsTests.cs`)
+```csharp
+public class RedisLuaScriptsTests
+{
+    [Fact]
+    public void TryCreate_LoadsFromEmbeddedResource()
+    {
+        var script = RedisLuaScripts.TryCreate;
+        Assert.NotNull(script);
+        Assert.Contains("JSON.SET", script);
+        Assert.Contains("EXISTS", script);
+    }
+
+    [Fact]
+    public void TryCreate_HasCorrectKeyStructure()
+    {
+        var script = RedisLuaScripts.TryCreate;
+        Assert.Contains("KEYS[1]", script);  // fullKey
+        Assert.Contains("KEYS[2]", script);  // metaKey
+    }
+
+    [Fact]
+    public void GetScript_CachesScripts()
+    {
+        var script1 = RedisLuaScripts.GetScript("TryCreate");
+        var script2 = RedisLuaScripts.GetScript("TryCreate");
+        Assert.Same(script1, script2);  // Same cached instance
+    }
+
+    [Fact]
+    public void ListAvailableScripts_ReturnsAllScripts()
+    {
+        var scripts = RedisLuaScripts.ListAvailableScripts().ToList();
+        Assert.Contains("TryCreate", scripts);
+        Assert.Contains("TryUpdate", scripts);
+    }
+}
+```
+
+#### Pattern 2: External Fixtures (YAML/ABML)
+
+**Use case**: Test-only data files that would be corrupted by `dotnet format`
+
+**Why external files?**: YAML indentation is significant. Embedding YAML in C# string literals causes:
+- `dotnet format` to corrupt indentation
+- Difficult-to-read test code
+- Merge conflicts on formatting changes
+
+**Example**: ABML behavior document fixtures in `lib-behavior.tests`
+
+**Directory structure**:
+```
+plugins/lib-behavior.tests/
+├── Compiler/
+│   ├── fixtures/
+│   │   ├── compiler_conditional.yml
+│   │   └── compiler_comparison.yml
+│   ├── TestFixtures.cs           # Fixture loader
+│   └── BehaviorCompilerTests.cs  # Tests using fixtures
+├── Cognition/
+│   ├── fixtures/
+│   │   └── template_valid.yml
+│   └── CognitionTestFixtures.cs
+└── lib-behavior.tests.csproj     # Copies fixtures to output
+```
+
+**Step 1: Create fixture files**
+```yaml
+# Compiler/fixtures/compiler_conditional.yml
+version: "2.0"
+metadata:
+  id: test
+
+context:
+  variables:
+    x: { type: float, default: 10 }
+
+flows:
+  main:
+    actions:
+      - cond:
+          - when: "${x > 5}"
+            then:
+              - log: { message: "Greater" }
+          - otherwise:
+              - log: { message: "Less" }
+```
+
+**Step 2: Configure .csproj to copy fixtures**
+```xml
+<!-- lib-behavior.tests.csproj -->
+<ItemGroup>
+  <!-- Copy YAML test fixtures to output directory -->
+  <None Include="Compiler\fixtures\**\*.yml">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+  <None Include="Cognition\fixtures\**\*.yml">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
+```
+
+**Step 3: Create fixture loader**
+```csharp
+// Compiler/TestFixtures.cs
+public static class TestFixtures
+{
+    private static readonly string FixturesPath = Path.Combine(
+        AppContext.BaseDirectory, "Compiler", "fixtures");
+
+    public static string Load(string name)
+    {
+        var path = Path.Combine(FixturesPath, $"{name}.yml");
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Fixture not found: {path}");
+        return File.ReadAllText(path);
+    }
+
+    public static bool Exists(string name)
+    {
+        return File.Exists(Path.Combine(FixturesPath, $"{name}.yml"));
+    }
+}
+```
+
+**Step 4: Use in tests**
+```csharp
+public class BehaviorCompilerTests
+{
+    [Fact]
+    public void Compile_ConditionalFlow_GeneratesCorrectBytecode()
+    {
+        // Load fixture - not corrupted by dotnet format
+        var yaml = TestFixtures.Load("compiler_conditional");
+
+        var result = _compiler.Compile(yaml);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Bytecode);
+    }
+}
+```
+
+#### When to Use Each Pattern
+
+| Pattern | Use When | Benefits |
+|---------|----------|----------|
+| **Embedded Resources** | Production code needs bundled files | Single assembly deployment, runtime access |
+| **External Fixtures** | Test-only data files | Format-safe, easy to edit, version-controlled |
+
+**Common mistakes to avoid**:
+- ❌ Embedding YAML in C# verbatim strings (breaks on `dotnet format`)
+- ❌ Using `EmbeddedResource` for test-only files (harder to update)
+- ❌ Hardcoding fixture paths (use `AppContext.BaseDirectory`)
+- ❌ Forgetting `CopyToOutputDirectory` in .csproj (fixtures not found at runtime)
+
 ### WebSocket Binary Protocol
 
 **Protocol Specification**: 31-byte binary header + JSON payload

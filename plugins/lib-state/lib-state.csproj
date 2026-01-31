@@ -7,6 +7,11 @@
     <ServiceLib>state</ServiceLib>
   </PropertyGroup>
 
+  <!-- Embed Lua scripts as resources for RedisLuaScripts loader -->
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\*.lua" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
     <!-- State store backends -->

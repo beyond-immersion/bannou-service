@@ -174,38 +174,54 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string etag,
         CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
+        var json = BannouJson.Serialize(value);
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        // Check current version
-        var currentVersion = await _database.HashGetAsync(metaKey, "version");
-        if (currentVersion.ToString() != etag)
+        // Empty etag means "create new entry if it doesn't exist"
+        if (string.IsNullOrEmpty(etag))
         {
-            _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
-                key, _keyPrefix, etag, currentVersion.ToString());
+            // Use Lua script for atomic create-if-not-exists
+            // See Scripts/TryCreate.lua for implementation
+            var createResult = await _database.ScriptEvaluateAsync(
+                RedisLuaScripts.TryCreate,
+                keys: [(RedisKey)fullKey, (RedisKey)metaKey],
+                values: [(RedisValue)json, (RedisValue)now.ToString()]);
+
+            var createSuccess = (long)createResult;
+            if (createSuccess == 1)
+            {
+                _logger.LogDebug("Created new key '{Key}' in store '{Store}'", key, _keyPrefix);
+                return "1";
+            }
+            else
+            {
+                _logger.LogDebug("Key '{Key}' already exists in store '{Store}' (concurrent create conflict)",
+                    key, _keyPrefix);
+                return null;
+            }
+        }
+
+        // Non-empty etag means "update existing entry with matching version"
+        // Use Lua script for atomic optimistic concurrency
+        // See Scripts/TryUpdate.lua for implementation
+        var result = await _database.ScriptEvaluateAsync(
+            RedisLuaScripts.TryUpdate,
+            keys: [(RedisKey)fullKey, (RedisKey)metaKey],
+            values: [(RedisValue)etag, (RedisValue)json, (RedisValue)now.ToString()]);
+
+        var newVersion = (long)result;
+
+        if (newVersion == -1)
+        {
+            _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected})",
+                key, _keyPrefix, etag);
             return null;
         }
 
-        // Perform optimistic update using transaction
-        var json = BannouJson.Serialize(value);
-        var transaction = _database.CreateTransaction();
-
-        transaction.AddCondition(Condition.HashEqual(metaKey, "version", etag));
-
-        _ = transaction.ExecuteAsync(CommandFlags.FireAndForget);
-
-        // Store as JSON
-        await _jsonCommands.SetAsync(fullKey, "$", json);
-        await _database.HashIncrementAsync(metaKey, "version", 1);
-        await _database.HashSetAsync(metaKey, new HashEntry[]
-        {
-            new("updated", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
-        });
-
-        // New version is original + 1
-        var newVersion = long.Parse(etag) + 1;
-        _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _keyPrefix);
+        _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}' (version: {Version})",
+            key, _keyPrefix, newVersion);
         return newVersion.ToString();
     }
 

@@ -1597,8 +1597,9 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Handles text WebSocket messages by wrapping them in binary protocol response format.
-    /// This provides backwards compatibility for clients not yet using the binary protocol.
+    /// Handles text WebSocket messages by returning a TextProtocolNotSupported error.
+    /// The binary protocol is required for all messages after authentication.
+    /// See docs/WEBSOCKET-PROTOCOL.md for protocol specification.
     /// </summary>
     private async Task HandleTextMessageFallbackAsync(
         string sessionId,
@@ -1608,26 +1609,30 @@ public partial class ConnectService : IConnectService
     {
         try
         {
-            _logger.LogDebug("Received text message from session {SessionId}: {Message}",
-                sessionId, textMessage);
+            _logger.LogWarning(
+                "Session {SessionId} sent text WebSocket message after authentication. " +
+                "Text protocol is not supported; binary protocol required. Message preview: {Preview}",
+                sessionId,
+                textMessage.Length > 50 ? textMessage[..50] + "..." : textMessage);
 
-            // For now, just echo back the message wrapped in a binary response
-            var echo = $"Echo: {textMessage}";
+            // Return error response: text protocol is not supported after AUTH
+            // Error responses have empty payloads - the response code tells the story
             var messageId = MessageRouter.GenerateMessageId();
-            var channel = connectionState.GetNextSequenceNumber(0);
+            var sequenceNumber = connectionState.GetNextSequenceNumber(0);
 
-            var binaryMessage = BinaryMessage.FromJson(
+            var errorResponse = new BinaryMessage(
+                MessageFlags.Response,
                 0, // Default channel
-                channel,
-                Guid.Empty, // System message
+                sequenceNumber,
                 messageId,
-                echo);
+                (byte)ResponseCodes.TextProtocolNotSupported,
+                ReadOnlyMemory<byte>.Empty);
 
-            await _connectionManager.SendMessageAsync(sessionId, binaryMessage, cancellationToken);
+            await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling text message from session {SessionId}", sessionId);
+            _logger.LogError(ex, "Error handling text message rejection for session {SessionId}", sessionId);
             await PublishErrorEventAsync("HandleTextMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }

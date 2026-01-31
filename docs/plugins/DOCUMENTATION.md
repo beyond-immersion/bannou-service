@@ -45,7 +45,7 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 |-------------|-----------|---------|
 | `{namespaceId}:{documentId}` | `StoredDocument` | Document content and metadata (note: DOC_KEY_PREFIX is empty; store adds `doc:` prefix) |
 | `slug-idx:{namespaceId}:{slug}` | `string` (GUID) | Slug-to-document-ID lookup index |
-| `ns-docs:{namespaceId}` | `List<Guid>` / `HashSet<Guid>` | All document IDs in a namespace (for pagination and rebuild). **Bug**: Inconsistent types — see Bugs section #1. |
+| `ns-docs:{namespaceId}` | `HashSet<Guid>` | All document IDs in a namespace (for pagination and rebuild). Uses HashSet for uniqueness guarantees. |
 | `ns-trash:{namespaceId}` | `List<Guid>` | Trashcan document ID list per namespace |
 | `trash:{namespaceId}:{documentId}` | `TrashedDocument` | Soft-deleted document with TTL metadata |
 | `repo-binding:{namespaceId}` | `RepositoryBinding` | Repository binding configuration for a namespace |
@@ -411,11 +411,7 @@ Archive System
 
 ### Bugs (Fix Immediately)
 
-1. **Type mismatch for `ns-docs:{namespaceId}` key**: The namespace document list is accessed using inconsistent types across different methods:
-   - `List<Guid>`: Used in `SearchIndexService.RebuildIndexAsync`, archive listing, trash listing, stats
-   - `HashSet<Guid>`: Used in `AddDocumentToNamespaceIndexAsync`, `RemoveDocumentFromNamespaceIndexAsync`, orphan deletion, restore operations
-
-   Both types serialize to/from JSON arrays, but `HashSet` enforces uniqueness while `List` preserves order and allows duplicates. If a document ID is added twice (e.g., during re-sync), the behavior differs depending on which method reads it. The inconsistency can cause orphan deletion to miss documents or stats to report incorrect counts. **Fix**: Standardize on `HashSet<Guid>` for uniqueness guarantees.
+1. ~~**Type mismatch for `ns-docs:{namespaceId}` key**~~: **FIXED** (2026-01-31) - Standardized on `HashSet<Guid>` for namespace document lists in both `DocumentationService.GetNamespaceStatsAsync` and `SearchIndexService.RebuildIndexAsync`. Trashcan (`ns-trash:`) intentionally uses `List<Guid>` for different semantics (order preservation).
 
 ### Intentional Quirks
 
@@ -460,5 +456,7 @@ Archive System
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-01-31**: Fixed type mismatch for `ns-docs:{namespaceId}` key. Standardized on `HashSet<Guid>` for namespace document lists in `DocumentationService.GetNamespaceStatsAsync` and `SearchIndexService.RebuildIndexAsync`. Trashcan keys (`ns-trash:`) intentionally continue using `List<Guid>`.
 
 - **2026-01-31**: Fixed N+1 query pattern in `ListDocumentsAsync` and `ListTrashcanAsync`. Both methods now use `GetBulkAsync` for bulk document retrieval instead of individual `GetAsync` calls in loops. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items.
