@@ -2895,8 +2895,8 @@ components:
           type: string
           description: Type of clause (fee, distribution)
         assetType:
-          type: string
-          description: Type of asset (currency, item)
+          $ref: './escrow-api.yaml#/components/schemas/AssetType'
+          description: Type of asset (currency, item, etc.)
         amount:
           type: number
           description: Amount transferred

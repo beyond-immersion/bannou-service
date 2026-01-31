@@ -1222,7 +1222,7 @@ public partial class ContractService
             // Build the transfer payload based on clause type
             var handler = clauseType.ExecutionHandler;
             string payloadTemplate;
-            string assetType;
+            AssetType assetType;
             double amount;
             string? sourceId;
             string? destinationId;
@@ -1232,7 +1232,7 @@ public partial class ContractService
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("recipient_wallet"), contract.TemplateValues);
                 amount = ParseClauseAmount(clause, contract);
-                assetType = "currency";
+                assetType = AssetType.Currency;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
@@ -1269,7 +1269,7 @@ public partial class ContractService
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_container"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_container"), contract.TemplateValues);
                 amount = GetClauseDoubleProperty(clause, "quantity", 1);
-                assetType = "item";
+                assetType = AssetType.Item;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
@@ -1292,7 +1292,7 @@ public partial class ContractService
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_wallet"), contract.TemplateValues);
                 amount = ParseClauseAmount(clause, contract);
-                assetType = "currency";
+                assetType = AssetType.Currency;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
@@ -1380,10 +1380,10 @@ public partial class ContractService
                 ClauseType = clause.Type,
                 AssetType = assetType,
                 Amount = amount,
-                SourceWalletId = assetType == "currency" && Guid.TryParse(sourceId, out var srcWallet) ? srcWallet : null,
-                DestinationWalletId = assetType == "currency" && Guid.TryParse(destinationId, out var dstWallet) ? dstWallet : null,
-                SourceContainerId = assetType == "item" && Guid.TryParse(sourceId, out var srcContainer) ? srcContainer : null,
-                DestinationContainerId = assetType == "item" && Guid.TryParse(destinationId, out var dstContainer) ? dstContainer : null
+                SourceWalletId = assetType == AssetType.Currency && Guid.TryParse(sourceId, out var srcWallet) ? srcWallet : null,
+                DestinationWalletId = assetType == AssetType.Currency && Guid.TryParse(destinationId, out var dstWallet) ? dstWallet : null,
+                SourceContainerId = assetType == AssetType.Item && Guid.TryParse(sourceId, out var srcContainer) ? srcContainer : null,
+                DestinationContainerId = assetType == AssetType.Item && Guid.TryParse(destinationId, out var dstContainer) ? dstContainer : null
             };
         }
         catch (Exception ex)
@@ -1825,7 +1825,7 @@ internal class DistributionRecordModel
 {
     public string ClauseId { get; set; } = string.Empty;
     public string ClauseType { get; set; } = string.Empty;
-    public string AssetType { get; set; } = string.Empty;
+    public AssetType AssetType { get; set; }
     public double Amount { get; set; }
     public Guid? SourceWalletId { get; set; }
     public Guid? DestinationWalletId { get; set; }

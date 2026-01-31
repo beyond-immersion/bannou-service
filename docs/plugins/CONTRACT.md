@@ -435,7 +435,7 @@ Prebound API Batched Execution
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (Internal POCO uses string for enum)**: `DistributionRecordModel.AssetType` in ContractServiceEscrowIntegration uses string instead of the `AssetType` enum from escrow-api.yaml.
+1. ~~**T25 (Internal POCO uses string for enum)**~~: **FIXED** (2026-01-31) - Updated `DistributionRecordModel.AssetType` to use the `AssetType` enum (generated from escrow-api.yaml). Also updated the contract-api.yaml `DistributionRecord.assetType` schema to use `$ref: './escrow-api.yaml#/components/schemas/AssetType'` instead of `type: string`.
 
 Note: `PartyModel.Role` and similar Role properties are intentionally strings - they represent user-defined template roles (e.g., "buyer", "seller", "guarantor") not a fixed enum.
 
@@ -475,4 +475,6 @@ Note: `PartyModel.Role` and similar Role properties are intentionally strings - 
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work items at this time.*
+### Completed
+
+- **2026-01-31**: Fixed T25 violation - `DistributionRecordModel.AssetType` now uses proper `AssetType` enum. Schema updated to use `$ref` to escrow-api.yaml enum. (audit-plugin)

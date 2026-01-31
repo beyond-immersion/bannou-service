@@ -35,12 +35,12 @@ x-lifecycle:
       name: { type: string, required: true, description: "Human-readable name of the location" }
       description: { type: string, nullable: true, description: "Detailed description of the location" }
       locationType: { $ref: 'location-api.yaml#/components/schemas/LocationType', required: true, description: "Type classification of the location" }
-      parentLocationId: { type: string, format: uuid, description: "ID of the parent location for hierarchical structures" }
+      parentLocationId: { type: string, format: uuid, nullable: true, description: "ID of the parent location for hierarchical structures" }
       depth: { type: integer, required: true, description: "Depth level in the location hierarchy (0 for root locations)" }
       isDeprecated: { type: boolean, required: true, description: "Whether this location has been marked as deprecated" }
-      deprecatedAt: { type: string, format: date-time, description: "Timestamp when the location was deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the location was deprecated" }
       deprecationReason: { type: string, nullable: true, description: "Explanation for why the location was deprecated" }
-      metadata: { type: object, additionalProperties: true, description: "Additional custom metadata associated with the location" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom metadata associated with the location" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was last updated" }
 

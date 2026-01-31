@@ -415,6 +415,7 @@ Actor State Model
 ## Stubs & Unimplemented Features
 
 1. **Session disconnection handling**: `HandleSessionDisconnectedAsync` is stubbed. Actors are not tied to player sessions - NPC brains continue running when players disconnect. Future: session-bound actors that stop on disconnect.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/191 -->
 2. **GOAP integration partial**: GOAP configuration exists (replan threshold, max depth, timeout) but the full planning integration with the behavior loop is minimal. Planning triggers exist but action execution is delegated to ABML flows.
 3. **Auto-scale deployment mode**: Declared as a valid `DeploymentMode` value but no auto-scaling logic is implemented. Pool nodes must be manually managed or pre-provisioned.
 

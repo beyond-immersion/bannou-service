@@ -39757,7 +39757,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.AssetType">
             <summary>
-            Type of asset (currency, item)
+            Type of asset (currency, item, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.Amount">
@@ -39813,6 +39813,17 @@
         <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.ExecutedAt">
             <summary>
             When execution occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.AssetType">
+            <summary>
+            Type of asset held in escrow.
+            <br/>- currency: Currency amount held in escrow wallet
+            <br/>- item: Item instance held in escrow container
+            <br/>- item_stack: Stackable items (quantity) held in escrow container
+            <br/>- contract: Contract instance locked under escrow guardianship
+            <br/>- custom: Custom asset type via registered handler
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Currency.ICurrencyClient">
