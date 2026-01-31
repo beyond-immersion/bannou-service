@@ -2861,9 +2861,30 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Arrange
         var service = CreateService();
         var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId;
         instance.TemplateValues = null;
+
+        // Create template with asset_requirement clauses - this triggers the BadRequest check
+        var template = CreateTestTemplateModel(templateId);
+        template.DefaultTerms = new ContractTermsModel
+        {
+            CustomTerms = new Dictionary<string, object>
+            {
+                ["clauses"] = new List<object>
+                {
+                    new Dictionary<string, object>
+                    {
+                        ["id"] = "clause-1",
+                        ["type"] = "asset_requirement",
+                        ["role"] = "employer",
+                        ["description"] = "Test asset requirement"
+                    }
+                }
+            }
+        };
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
@@ -2871,6 +2892,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((instance, "etag-0"));
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
 
         var request = new CheckAssetRequirementsRequest
         {

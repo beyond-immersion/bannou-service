@@ -172,6 +172,8 @@ public static class StateStoreDefinitions
     public const string LeaderboardSeason = "leaderboard-season";
 
     // Location Service
+    /// <summary>Location lookup cache for frequently-accessed locations</summary>
+    public const string LocationCache = "location-cache";
     /// <summary>Location hierarchy and metadata</summary>
     public const string Location = "location-statestore";
 
@@ -328,6 +330,7 @@ public static class StateStoreDefinitions
             [LeaderboardDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:def" },
             [LeaderboardRanking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:rank" },
             [LeaderboardSeason] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "leaderboard_season" },
+            [LocationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location" },
             [Location] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "location_statestore" },
             [Mapping] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mapping" },
             [Matchmaking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mm" },
@@ -422,6 +425,7 @@ public static class StateStoreDefinitions
             [LeaderboardDefinition] = new StoreMetadata("Leaderboard", "Leaderboard definitions and metadata", "redis"),
             [LeaderboardRanking] = new StoreMetadata("Leaderboard", "Real-time ranking data (sorted sets)", "redis"),
             [LeaderboardSeason] = new StoreMetadata("Leaderboard", "Season history and archives", "mysql"),
+            [LocationCache] = new StoreMetadata("Location", "Location lookup cache for frequently-accessed locations", "redis"),
             [Location] = new StoreMetadata("Location", "Location hierarchy and metadata", "mysql"),
             [Mapping] = new StoreMetadata("Mapping", "Spatial map data and channels", "redis"),
             [Matchmaking] = new StoreMetadata("Matchmaking", "Matchmaking queue and ticket state", "redis"),

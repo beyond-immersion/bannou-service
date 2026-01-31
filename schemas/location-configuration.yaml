@@ -29,3 +29,8 @@ x-service-configuration:
       description: Safety limit for descendant traversal and circular reference checks
       default: 20
       env: LOCATION_MAX_DESCENDANT_DEPTH
+    CacheTtlSeconds:
+      type: integer
+      description: TTL for location cache entries in seconds (locations change infrequently)
+      default: 3600
+      env: LOCATION_CACHE_TTL_SECONDS

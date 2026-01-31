@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -67,7 +68,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Getting location by ID: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+            var model = await GetLocationWithCacheAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -110,7 +111,7 @@ public partial class LocationService : ILocationService
             }
 
             var locationKey = BuildLocationKey(parsedLocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+            var model = await GetLocationWithCacheAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -658,6 +659,9 @@ public partial class LocationService : ILocationService
                 await AddToRootLocationsAsync(body.RealmId, locationId, cancellationToken);
             }
 
+            // Populate cache
+            await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
             // Publish event
             await PublishLocationCreatedEventAsync(model, cancellationToken);
 
@@ -732,6 +736,9 @@ public partial class LocationService : ILocationService
 
                 // Save updated model
                 await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+                // Update cache
+                await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
 
                 // Publish event
                 await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -825,6 +832,9 @@ public partial class LocationService : ILocationService
                 await UpdateDescendantDepthsAsync(body.LocationId, model.RealmId, newDepth - oldDepth, cancellationToken);
             }
 
+            // Update cache
+            await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
             // Publish event with changed fields
             var changedFields = new List<string> { "parentLocationId", "depth" };
             await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -883,6 +893,9 @@ public partial class LocationService : ILocationService
             {
                 await UpdateDescendantDepthsAsync(body.LocationId, model.RealmId, -oldDepth, cancellationToken);
             }
+
+            // Update cache
+            await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
 
             // Publish event with changed fields
             var changedFields = new List<string> { "parentLocationId", "depth" };
@@ -947,6 +960,9 @@ public partial class LocationService : ILocationService
                 await RemoveFromParentIndexAsync(model.RealmId, model.ParentLocationId.Value, body.LocationId, cancellationToken);
             }
 
+            // Invalidate cache
+            await InvalidateLocationCacheAsync(locationKey, cancellationToken);
+
             // Publish event
             await PublishLocationDeletedEventAsync(model, cancellationToken);
 
@@ -990,6 +1006,9 @@ public partial class LocationService : ILocationService
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+            // Update cache
+            await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
 
             // Publish event with changed fields
             var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
@@ -1035,6 +1054,9 @@ public partial class LocationService : ILocationService
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+            // Update cache
+            await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
 
             // Publish event with changed fields
             var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
@@ -1234,14 +1256,48 @@ public partial class LocationService : ILocationService
 
     private async Task<List<LocationModel>> LoadLocationsByIdsAsync(List<Guid> locationIds, CancellationToken cancellationToken)
     {
-        var results = new List<LocationModel>();
+        if (locationIds.Count == 0)
+        {
+            return new List<LocationModel>();
+        }
+
+        var keysList = locationIds.Select(BuildLocationKey).ToList();
+
+        // Try cache first with bulk get
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        var cachedResult = await cacheStore.GetBulkAsync(keysList, cancellationToken);
+
+        // Find cache misses
+        var missedKeys = keysList.Where(k => !cachedResult.ContainsKey(k)).ToList();
+
+        // Fetch misses from persistent store
+        Dictionary<string, LocationModel> fetchedFromStore = new();
+        if (missedKeys.Count > 0)
+        {
+            var persistentStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+            var bulkResult = await persistentStore.GetBulkAsync(missedKeys, cancellationToken);
+            fetchedFromStore = new Dictionary<string, LocationModel>(bulkResult);
+
+            // Populate cache for fetched items
+            foreach (var kvp in fetchedFromStore)
+            {
+                await cacheStore.SaveAsync(kvp.Key, kvp.Value,
+                    new StateOptions { Ttl = _configuration.CacheTtlSeconds }, cancellationToken);
+            }
+        }
+
+        // Combine cached and fetched, preserving order from input list
+        var results = new List<LocationModel>(locationIds.Count);
         foreach (var id in locationIds)
         {
             var key = BuildLocationKey(id);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(key, cancellationToken);
-            if (model != null)
+            if (cachedResult.TryGetValue(key, out var cachedModel))
             {
-                results.Add(model);
+                results.Add(cachedModel);
+            }
+            else if (fetchedFromStore.TryGetValue(key, out var fetchedModel))
+            {
+                results.Add(fetchedModel);
             }
         }
         return results;
@@ -1351,6 +1407,8 @@ public partial class LocationService : ILocationService
             descendant.UpdatedAt = DateTimeOffset.UtcNow;
             var key = BuildLocationKey(descendant.LocationId);
             await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(key, descendant, cancellationToken: cancellationToken);
+            // Invalidate cache for updated descendant
+            await InvalidateLocationCacheAsync(key, cancellationToken);
         }
     }
 
@@ -1461,6 +1519,51 @@ public partial class LocationService : ILocationService
     {
         _logger.LogDebug("Registering Location service permissions");
         await LocationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
+    }
+
+    #endregion
+
+    #region Cache Methods
+
+    /// <summary>
+    /// Get location with Redis cache read-through. Falls back to MySQL persistent store on cache miss.
+    /// </summary>
+    private async Task<LocationModel?> GetLocationWithCacheAsync(string locationKey, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+
+        // Try cache first
+        var cached = await cacheStore.GetAsync(locationKey, ct);
+        if (cached is not null) return cached;
+
+        // Fallback to persistent store
+        var store = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+        var model = await store.GetAsync(locationKey, ct);
+        if (model is null) return null;
+
+        // Populate cache
+        await cacheStore.SaveAsync(locationKey, model,
+            new StateOptions { Ttl = _configuration.CacheTtlSeconds }, ct);
+        return model;
+    }
+
+    /// <summary>
+    /// Populate location cache after a write operation.
+    /// </summary>
+    private async Task PopulateLocationCacheAsync(string locationKey, LocationModel model, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        await cacheStore.SaveAsync(locationKey, model,
+            new StateOptions { Ttl = _configuration.CacheTtlSeconds }, ct);
+    }
+
+    /// <summary>
+    /// Invalidate location cache after a write/delete operation.
+    /// </summary>
+    private async Task InvalidateLocationCacheAsync(string locationKey, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        await cacheStore.DeleteAsync(locationKey, ct);
     }
 
     #endregion

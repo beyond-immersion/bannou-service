@@ -9,7 +9,7 @@
 
 ## Overview
 
-Hierarchical location management for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation (soft-delete), circular reference prevention during parent reassignment, cascading depth updates, code-based lookups (uppercase-normalized per realm), and bulk seeding with two-pass parent resolution. No caching layer - all reads hit the state store directly.
+Hierarchical location management for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation (soft-delete), circular reference prevention during parent reassignment, cascading depth updates, code-based lookups (uppercase-normalized per realm), and bulk seeding with two-pass parent resolution. Features Redis read-through caching with configurable TTL for frequently-accessed locations.
 
 ---
 
@@ -36,15 +36,18 @@ Hierarchical location management for the Arcadia game world. Manages physical pl
 
 ## State Storage
 
-**Store**: `location-statestore` (via `StateStoreDefinitions.Location`) - MySQL backend
+**Stores**:
+- `location-statestore` (via `StateStoreDefinitions.Location`) - MySQL backend (persistent)
+- `location-cache` (via `StateStoreDefinitions.LocationCache`) - Redis backend (cache)
 
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `location:{locationId}` | `LocationModel` | Individual location definition |
-| `code-index:{realmId}:{CODE}` | `string` | Code → location ID (unique per realm) |
-| `realm-index:{realmId}` | `List<Guid>` | All location IDs in a realm |
-| `parent-index:{realmId}:{parentId}` | `List<Guid>` | Child location IDs for a parent |
-| `root-locations:{realmId}` | `List<Guid>` | Location IDs with no parent in a realm |
+| Key Pattern | Data Type | Store | Purpose |
+|-------------|-----------|-------|---------|
+| `location:{locationId}` | `LocationModel` | MySQL | Individual location definition (persistent) |
+| `location:{locationId}` | `LocationModel` | Redis | Location cache (TTL-based) |
+| `code-index:{realmId}:{CODE}` | `string` | MySQL | Code → location ID (unique per realm) |
+| `realm-index:{realmId}` | `List<Guid>` | MySQL | All location IDs in a realm |
+| `parent-index:{realmId}:{parentId}` | `List<Guid>` | MySQL | Child location IDs for a parent |
+| `root-locations:{realmId}` | `List<Guid>` | MySQL | Location IDs with no parent in a realm |
 
 ---
 
@@ -71,6 +74,7 @@ This plugin does not consume external events.
 | `MaxAncestorDepth` | `LOCATION_MAX_ANCESTOR_DEPTH` | `20` | Maximum depth for ancestor chain traversal |
 | `DefaultDescendantMaxDepth` | `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | `10` | Default max depth when listing descendants |
 | `MaxDescendantDepth` | `LOCATION_MAX_DESCENDANT_DEPTH` | `20` | Safety limit for descendant/circular reference checks |
+| `CacheTtlSeconds` | `LOCATION_CACHE_TTL_SECONDS` | `3600` | TTL for location cache entries (locations change infrequently) |
 
 ---
 
@@ -211,9 +215,10 @@ None. All API endpoints are fully implemented.
 
 ## Potential Extensions
 
-1. **Batch location loading**: Replace N+1 `LoadLocationsByIdsAsync` with bulk state store operation for list endpoints.
+1. ~~**Batch location loading**~~: **FIXED** (2026-01-31) - `LoadLocationsByIdsAsync` now uses `GetBulkAsync` for O(1) database round-trips instead of N+1. Order preservation from input list is maintained.
 2. **Spatial coordinates**: Add optional latitude/longitude or x/y/z coordinates for mapping integration.
-3. **Redis caching layer**: Add cache in front of MySQL for frequently-accessed locations (realm capitals, major cities).
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/165 -->
+3. ~~**Redis caching layer**~~: **FIXED** (2026-01-31) - Added `location-cache` Redis store with read-through caching. All read operations check cache first, write operations invalidate/populate cache. Configurable TTL via `LOCATION_CACHE_TTL_SECONDS` (default 3600s).
 4. **Soft-delete reference tracking**: Track which services reference a location before allowing hard delete.
 
 ---
@@ -240,9 +245,9 @@ No bugs identified.
 
 ### Design Considerations
 
-1. **N+1 query pattern**: `LoadLocationsByIdsAsync` issues one state store call per location ID. List operations for realms with hundreds of locations generate hundreds of individual calls. No bulk-get optimization exists.
+1. ~~**N+1 query pattern**~~: **FIXED** (2026-01-31) - `LoadLocationsByIdsAsync` now uses `GetBulkAsync` for single-call bulk retrieval.
 
-2. **No caching layer**: Unlike other services (item, inventory), location has no Redis cache. Every read hits the state store directly. For frequently-accessed locations (realm capitals, major cities), this could be a performance concern.
+2. ~~**No caching layer**~~: **FIXED** (2026-01-31) - Added Redis caching with read-through pattern matching lib-item.
 
 3. **Root-locations index maintenance**: The `root-locations:{realmId}` index must be updated whenever a location gains or loses a parent. Missing updates could cause roots to be missed in `ListRootLocations`.
 
@@ -258,4 +263,6 @@ No bugs identified.
 
 ## Work Tracking
 
-*No active work items at this time.*
+### Completed
+- **2026-01-31**: Batch location loading - Replaced N+1 `LoadLocationsByIdsAsync` with `GetBulkAsync` for O(1) database round-trips.
+- **2026-01-31**: Redis caching layer - Added `location-cache` store with read-through caching for all read operations, cache invalidation/population on writes.

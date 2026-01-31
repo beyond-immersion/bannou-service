@@ -71,4 +71,10 @@ public class LocationServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxDescendantDepth { get; set; } = 20;
 
+    /// <summary>
+    /// TTL for location cache entries in seconds (locations change infrequently)
+    /// Environment variable: LOCATION_CACHE_TTL_SECONDS
+    /// </summary>
+    public int CacheTtlSeconds { get; set; } = 3600;
+
 }

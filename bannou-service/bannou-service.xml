@@ -77302,6 +77302,9 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.LeaderboardSeason">
             <summary>Season history and archives</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.LocationCache">
+            <summary>Location lookup cache for frequently-accessed locations</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Location">
             <summary>Location hierarchy and metadata</summary>
         </member>

@@ -304,13 +304,14 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .Setup(s => s.GetAsync($"{REALM_INDEX_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(locationIds);
 
-        // Setup location retrieval
+        // Setup bulk location retrieval
         _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{location1Id}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(model1);
-        _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{location2Id}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(model2);
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, LocationService.LocationModel>
+            {
+                [$"{LOCATION_KEY_PREFIX}{location1Id}"] = model1,
+                [$"{LOCATION_KEY_PREFIX}{location2Id}"] = model2
+            });
 
         // Act
         var (status, response) = await service.ListLocationsByRealmAsync(request);
@@ -673,12 +674,14 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .Setup(s => s.GetAsync($"{ROOT_LOCATIONS_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(rootLocationIds);
 
+        // Setup bulk location retrieval
         _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{loc1Id}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(model1);
-        _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{loc2Id}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(model2);
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, LocationService.LocationModel>
+            {
+                [$"{LOCATION_KEY_PREFIX}{loc1Id}"] = model1,
+                [$"{LOCATION_KEY_PREFIX}{loc2Id}"] = model2
+            });
 
         // Act
         var (status, response) = await service.ListRootLocationsAsync(request);
@@ -740,12 +743,14 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .Setup(s => s.GetAsync($"{PARENT_INDEX_PREFIX}{realmId}:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(childIds);
 
+        // Setup bulk location retrieval for children
         _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{child1Id}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(model1);
-        _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{child2Id}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(model2);
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, LocationService.LocationModel>
+            {
+                [$"{LOCATION_KEY_PREFIX}{child1Id}"] = model1,
+                [$"{LOCATION_KEY_PREFIX}{child2Id}"] = model2
+            });
 
         // Act
         var (status, response) = await service.ListLocationsByParentAsync(request);

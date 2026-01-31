@@ -324,6 +324,12 @@ x-state-stores:
     service: Location
     purpose: Location hierarchy and metadata
 
+  location-cache:
+    backend: redis
+    prefix: "location"
+    service: Location
+    purpose: Location lookup cache for frequently-accessed locations
+
   realm-statestore:
     backend: mysql
     service: Realm
