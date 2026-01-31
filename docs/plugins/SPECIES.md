@@ -211,7 +211,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. **species.created event only populates subset of fields**: `PublishSpeciesCreatedEventAsync` only sets EventId, Timestamp, SpeciesId, Code, Name, Category, and IsPlayable. The generated `SpeciesCreatedEvent` model includes all lifecycle fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt, IsDeprecated, DeprecatedAt, DeprecationReason) but these are left at default values. Downstream consumers expecting full state on create will receive incomplete data.
+1. ~~**species.created event only populates subset of fields**~~: **FIXED** (2026-01-31) - `PublishSpeciesCreatedEventAsync` now populates all lifecycle fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt, IsDeprecated, DeprecatedAt, DeprecationReason) matching the pattern used by `PublishSpeciesDeletedEventAsync` and `PublishSpeciesUpdatedEventAsync`.
 
 2. **Delete endpoint doesn't enforce deprecation requirement**: Schema description says "Only deprecated species with zero references can be deleted" but `DeleteSpeciesAsync` has no check for `IsDeprecated`. Any species without character references can be deleted, bypassing the intended two-step lifecycle (deprecate → merge → delete).
 
@@ -249,4 +249,6 @@ State Store Layout
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No items currently tracked.*
+### Completed
+
+- **2026-01-31**: Fixed species.created event to populate all lifecycle fields (was only setting 7 of 18 fields)

@@ -313,7 +313,7 @@ Generated Model Hierarchy
 
 ### Bugs (Fix Immediately)
 
-1. **`GetAccountSubscriptionAsync` throws `NotImplementedException`**: Unlike all other stub methods which return `(StatusCodes.NotImplemented, null)`, this method throws `NotImplementedException` directly at line 465. This causes a 500 Internal Server Error instead of the expected NotImplemented response, breaking consistency with the other 16 endpoints.
+1. ~~**`GetAccountSubscriptionAsync` throws `NotImplementedException`**~~: **FIXED** (2026-01-31) - Method now follows the same stub pattern as all other endpoints: logs a debug message and returns `(StatusCodes.NotImplemented, null)` with proper try-catch error handling.
 
 2. **Unreachable catch blocks**: Every endpoint method has a try-catch where the try block cannot throw (contains only `LogDebug` + return). The catch blocks with `TryPublishErrorAsync` are dead code. When real logic is added, the error handling structure is already in place but the current code is misleading.
 
@@ -361,4 +361,6 @@ Generated Model Hierarchy
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work items tracked.*
+### Completed
+
+- **2026-01-31**: Fixed `GetAccountSubscriptionAsync` throwing `NotImplementedException` - now returns proper stub response tuple like all other endpoints.

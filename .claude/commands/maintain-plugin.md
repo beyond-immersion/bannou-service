@@ -202,6 +202,13 @@ Systematically review the code for issues. Check for:
 - [ ] Missing x-permissions on endpoints
 - [ ] Hardcoded values that should be config
 
+**Orphaned Configuration (T21 Violations):**
+- [ ] Configuration properties defined in schema but never referenced in service code
+- [ ] Properties that were bypassed by a fix (e.g., code now uses request parameter instead of config)
+- [ ] Properties that exist in generated config class but `_configuration.PropertyName` never appears in service code
+
+**IMPORTANT**: When a fix changes behavior from "use configuration" to "use request parameter", the configuration property often becomes orphaned. Always check if the original configuration property is still used elsewhere. If not, add it as a Bug: "Orphaned configuration: `PropertyName` is defined but never used (T21 violation)".
+
 **Compare findings against existing doc sections:**
 - Are all known bugs still present in code? (remove fixed ones)
 - Are there new bugs not yet documented?

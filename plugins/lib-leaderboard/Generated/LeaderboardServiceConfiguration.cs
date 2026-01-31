@@ -65,10 +65,4 @@ public class LeaderboardServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ScoreUpdateBatchSize { get; set; } = 1000;
 
-    /// <summary>
-    /// Automatically archive leaderboard data when season ends
-    /// Environment variable: LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END
-    /// </summary>
-    public bool AutoArchiveOnSeasonEnd { get; set; } = true;
-
 }

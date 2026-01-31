@@ -912,7 +912,8 @@ public partial class LeaderboardService : ILeaderboardService
             var newSeasonNumber = (definition.CurrentSeason ?? 0) + 1;
 
             var previousSeason = definition.CurrentSeason;
-            if (!_configuration.AutoArchiveOnSeasonEnd && previousSeason.HasValue)
+            // Use per-request archivePrevious flag (defaults to true in schema)
+            if (!body.ArchivePrevious && previousSeason.HasValue)
             {
                 var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
                 var previousRankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, previousSeason.Value);

@@ -26,9 +26,3 @@ x-service-configuration:
       description: Maximum scores to process in a single batch
       default: 1000
       env: LEADERBOARD_SCORE_UPDATE_BATCH_SIZE
-    # Season Configuration
-    AutoArchiveOnSeasonEnd:
-      type: boolean
-      description: Automatically archive leaderboard data when season ends
-      default: true
-      env: LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END

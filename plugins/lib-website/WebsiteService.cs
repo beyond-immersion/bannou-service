@@ -462,7 +462,29 @@ public partial class WebsiteService : IWebsiteService
         await WebsitePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
-    public Task<(StatusCodes, SubscriptionResponse?)> GetAccountSubscriptionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    /// <summary>
+    /// Gets account subscription information. Not yet implemented - planned for future release.
+    /// </summary>
+    public async Task<(StatusCodes, SubscriptionResponse?)> GetAccountSubscriptionAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("MethodGetAccountSubscriptionAsync called but not implemented");
+            return (StatusCodes.NotImplemented, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting account subscription");
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "website",
+                operation: "GetAccountSubscription",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
 
     #endregion
 }

@@ -100,7 +100,6 @@ public class LeaderboardServiceTests
 
         Assert.Equal(1000, config.MaxEntriesPerQuery);
         Assert.Equal(1000, config.ScoreUpdateBatchSize);
-        Assert.True(config.AutoArchiveOnSeasonEnd);
     }
 
     [Fact]
@@ -109,13 +108,11 @@ public class LeaderboardServiceTests
         var config = new LeaderboardServiceConfiguration
         {
             MaxEntriesPerQuery = 500,
-            ScoreUpdateBatchSize = 200,
-            AutoArchiveOnSeasonEnd = false
+            ScoreUpdateBatchSize = 200
         };
 
         Assert.Equal(500, config.MaxEntriesPerQuery);
         Assert.Equal(200, config.ScoreUpdateBatchSize);
-        Assert.False(config.AutoArchiveOnSeasonEnd);
     }
 
     #endregion

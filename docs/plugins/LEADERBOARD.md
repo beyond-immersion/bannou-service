@@ -70,7 +70,6 @@ Real-time leaderboard management built on Redis Sorted Sets for O(log N) ranking
 |----------|---------|---------|---------|
 | `MaxEntriesPerQuery` | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | `1000` | Maximum entries returned per ranking query |
 | `ScoreUpdateBatchSize` | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | `1000` | Maximum scores per batch submission |
-| `AutoArchiveOnSeasonEnd` | `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | `true` | Retain previous season data when starting new season |
 
 ---
 
@@ -79,7 +78,7 @@ Real-time leaderboard management built on Redis Sorted Sets for O(log N) ranking
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<LeaderboardService>` | Scoped | Structured logging |
-| `LeaderboardServiceConfiguration` | Singleton | All 3 config properties |
+| `LeaderboardServiceConfiguration` | Singleton | All 2 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access (2 stores) |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
@@ -111,7 +110,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ### Seasons (2 endpoints)
 
-- **CreateSeason** (`/leaderboard/season/create`): Validates leaderboard is seasonal. If `AutoArchiveOnSeasonEnd=false`, deletes previous season's ranking data and removes from season index. Increments season number with ETag-based optimistic concurrency. Adds new season to season index. Publishes `season.started` event.
+- **CreateSeason** (`/leaderboard/season/create`): Validates leaderboard is seasonal. If `archivePrevious=false` in request, deletes previous season's ranking data and removes from season index. Increments season number with ETag-based optimistic concurrency. Adds new season to season index. Publishes `season.started` event.
 - **GetSeason** (`/leaderboard/season/get`): Validates leaderboard is seasonal. Defaults to current season if no number specified. Validates season exists in season index. Returns entry count from ranking sorted set.
 
 ---
@@ -184,10 +183,10 @@ Season Lifecycle
 
   CreateSeason (admin)
        │
-       ├── AutoArchiveOnSeasonEnd=true?
+       ├── body.ArchivePrevious=true (default)?
        │    └── Previous season data RETAINED
        │
-       ├── AutoArchiveOnSeasonEnd=false?
+       ├── body.ArchivePrevious=false?
        │    └── Previous season ranking DELETED
        │
        ├── Increment CurrentSeason (optimistic concurrency)
@@ -218,7 +217,7 @@ Season Lifecycle
 
 ### Bugs (Fix Immediately)
 
-1. **`archivePrevious` request parameter is ignored**: `CreateSeasonRequest.ArchivePrevious` is defined in the schema and exists in the generated model, but the `CreateSeasonAsync` implementation completely ignores it. Instead, it uses the service-wide `_configuration.AutoArchiveOnSeasonEnd` property. Callers have no per-request control over whether previous season data is archived, contrary to what the API contract suggests.
+1. ~~**`archivePrevious` request parameter is ignored**~~: **FIXED** (2026-01-31) - `CreateSeasonAsync` now uses `body.ArchivePrevious` instead of `_configuration.AutoArchiveOnSeasonEnd`. The request parameter defaults to `true` per the schema, giving callers per-request control over archival behavior.
 
 ### Intentional Quirks
 
@@ -226,7 +225,7 @@ Season Lifecycle
 
 2. **Rank events only on rank change**: `leaderboard.rank.changed` is only published when the rank actually changes (previous rank != new rank). Score updates that don't affect rank produce no event.
 
-3. **AutoArchiveOnSeasonEnd=false deletes data**: The naming is misleading - when archive is disabled, previous season data is permanently deleted on season creation. There's no way to recover it.
+3. **`archivePrevious=false` deletes data**: When the request specifies not to archive, previous season data is permanently deleted on season creation. There's no way to recover it. The parameter defaults to `true`, so callers must explicitly opt-in to deletion.
 
 4. **Batch submit has no event publishing**: Unlike individual `SubmitScore` which publishes `entry.added` and `rank.changed` events, batch submissions produce no events. Consumers relying on leaderboard events won't see batch updates.
 
@@ -246,4 +245,8 @@ Season Lifecycle
 
 ## Work Tracking
 
-*No active work items. Use `/audit-plugin leaderboard` to process bugs and design considerations.*
+### Completed
+
+- **2026-01-31**: Fixed `archivePrevious` request parameter being ignored in `CreateSeasonAsync` - now uses per-request flag instead of global configuration. Removed orphaned `AutoArchiveOnSeasonEnd` configuration property (per-request control is sufficient).
+
+*Use `/audit-plugin leaderboard` to process remaining bugs and design considerations.*

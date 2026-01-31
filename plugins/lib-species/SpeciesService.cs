@@ -1235,7 +1235,7 @@ public partial class SpeciesService : ISpeciesService
     #region Event Publishing
 
     /// <summary>
-    /// Publishes a species created event.
+    /// Publishes a species created event with full entity state.
     /// </summary>
     private async Task PublishSpeciesCreatedEventAsync(SpeciesModel model, CancellationToken cancellationToken)
     {
@@ -1248,8 +1248,19 @@ public partial class SpeciesService : ISpeciesService
                 SpeciesId = model.SpeciesId,
                 Code = model.Code,
                 Name = model.Name,
+                Description = model.Description,
                 Category = model.Category,
-                IsPlayable = model.IsPlayable
+                IsPlayable = model.IsPlayable,
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt ?? default,
+                DeprecationReason = model.DeprecationReason,
+                BaseLifespan = model.BaseLifespan ?? 0,
+                MaturityAge = model.MaturityAge ?? 0,
+                TraitModifiers = model.TraitModifiers ?? new Dictionary<string, object>(),
+                RealmIds = model.RealmIds?.ToList() ?? [],
+                Metadata = model.Metadata ?? new Dictionary<string, object>(),
+                CreatedAt = model.CreatedAt,
+                UpdatedAt = model.UpdatedAt
             };
 
             await _messageBus.TryPublishAsync("species.created", eventModel, cancellationToken: cancellationToken);
