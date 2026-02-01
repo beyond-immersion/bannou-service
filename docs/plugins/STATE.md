@@ -239,6 +239,7 @@ State Store Architecture
 1. ~~**Unused config properties**~~: **FIXED** (2026-02-01) - All three properties (`DefaultConsistency`, `EnableMetrics`, `EnableTracing`) removed from schema as dead config. `DefaultConsistency` removed in this audit; `EnableMetrics`/`EnableTracing` removed previously when telemetry was centralized to lib-telemetry.
 
 2. **MySQL query loads all into memory**: `QueryAsync` and `QueryPagedAsync` in MySqlStateStore load all entries from the store, deserialize each one, then filter in memory. For very large stores this could be memory-intensive. Consider SQL-level filtering.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/251 -->
 
 3. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. No enforcement of store ownership. Relies on convention (services only access their own stores).
 

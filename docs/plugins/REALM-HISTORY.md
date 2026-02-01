@@ -9,7 +9,7 @@
 
 ## Overview
 
-Historical event participation and lore management for realms. Tracks when realms participate in world events (wars, treaties, cataclysms) with role and impact tracking, and maintains machine-readable lore elements (origin myths, cultural practices, political systems) for behavior system consumption. Provides text summarization for realm archival. Uses a dual-index pattern for efficient queries in both directions (realm's events and event's realms).
+Historical event participation and lore management for realms. Tracks when realms participate in world events (wars, treaties, cataclysms) with role and impact tracking, and maintains machine-readable lore elements (origin myths, cultural practices, political systems) for behavior system consumption. Provides text summarization for realm archival. Uses shared History infrastructure helpers (`IDualIndexHelper`, `IBackstoryStorageHelper`) for the dual-index pattern and backstory storage, matching the character-history implementation.
 
 ---
 
@@ -20,6 +20,8 @@ Historical event participation and lore management for realms. Tracks when realm
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and lore |
 | lib-messaging (`IMessageBus`) | Publishing participation and lore lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| `IDualIndexHelper` | Dual-index storage pattern for participation records (from `bannou-service/History/`) |
+| `IBackstoryStorageHelper` | Lore element storage with merge/replace semantics (from `bannou-service/History/`) |
 | `PaginationHelper` | Calculates skip/take for pagination (from `bannou-service/History/`) |
 | `TimestampHelper` | Unix timestamp conversion utilities (from `bannou-service/History/`) |
 
@@ -163,7 +165,6 @@ None. The service is feature-complete for its scope.
 2. **Lore inheritance**: Child realms inheriting lore elements from parent realms (if realm hierarchy is added).
 3. **AI-powered summarization**: Replace template-based summaries with LLM-generated narrative text.
 4. **Realm timeline visualization**: Chronological event data suitable for timeline UI rendering.
-5. **Shared helper migration**: Migrate to use `IDualIndexHelper` and `IBackstoryStorageHelper` from `bannou-service/History/` for consistency with character-history.
 
 ---
 
@@ -201,7 +202,7 @@ None identified.
 
 7. **DeleteAll is O(n) with N+1 queries**: Iterates through all participations for the realm individually, fetching each to find its eventId, then updating each event index separately. For realms with thousands of events, this could be slow. Uses bulk operations for participation records but not for event index updates.
 
-8. **Doesn't use shared helper classes**: Unlike character-history which uses `IDualIndexHelper` and `IBackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
+8. ~~**Doesn't use shared helper classes**~~: **FIXED** (2026-02-01) - Refactored to use `IDualIndexHelper<RealmParticipationData>` for participation operations and `IBackstoryStorageHelper<RealmLoreData, RealmLoreElementData>` for lore operations, matching the character-history implementation pattern.
 
 9. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection. Concurrent participation recordings for the same realm could result in lost index entries.
 
@@ -209,4 +210,6 @@ None identified.
 
 ## Work Tracking
 
-*No active work items.*
+### Completed
+
+- **2026-02-01**: Migrated to shared helper classes (`IDualIndexHelper`, `IBackstoryStorageHelper`) for consistency with character-history. Eliminates code duplication and ensures both services share the same tested implementation.
