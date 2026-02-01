@@ -223,9 +223,9 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. **Delete does not enforce deprecation requirement**: The API schema description (`/relationship-type/delete`, lines 261-263) states "Only deprecated types with zero references can be deleted", but `DeleteRelationshipTypeAsync` (lines 590-641) does NOT check `IsDeprecated` before deletion. Any type without children can be deleted regardless of deprecation status. Fix: Add deprecation check before deletion to match documented behavior.
+1. ~~**Delete does not enforce deprecation requirement**~~: **FIXED** (2026-02-01) - Added `IsDeprecated` check before deletion. Returns 409 Conflict if type is not deprecated.
 
-2. **Delete does not check for relationship references**: The API description states types "with zero references" can be deleted, but the service only checks for child types (`GetChildTypeIdsAsync`), not for relationships using this type. A type with active relationships can be deleted, leaving those relationships referencing a non-existent type. Fix: Call `IRelationshipClient.ListRelationshipsByTypeAsync` to verify zero references exist before deletion.
+2. ~~**Delete does not check for relationship references**~~: **FIXED** (2026-02-01) - Added `IRelationshipClient.ListRelationshipsByTypeAsync` check before deletion. Returns 409 Conflict if any relationships (including ended) reference the type.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -259,4 +259,6 @@ State Store Layout
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-*No active work tracking markers.*
+### Completed
+
+- **2026-02-01**: Issue #215 - Fixed deletion validation bugs (deprecation requirement + relationship reference check)

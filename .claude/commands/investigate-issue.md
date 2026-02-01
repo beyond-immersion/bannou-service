@@ -105,19 +105,34 @@ If the issue doesn't exist or is closed, report the error and stop.
 
 This phase requires thorough reading. Do NOT skim.
 
-**Step 2a: Read the full issue**
+**Step 2a: Read project development rules**
+Before analyzing the issue, read the project's development constraints:
+```
+docs/reference/TENETS.md
+```
+
+This is MANDATORY. The TENETs define inviolable rules that affect how you analyze scope, ask questions, and later implement. Key rules to internalize:
+- T1: Schema-first development (never edit Generated/ files)
+- T4: Infrastructure libs pattern (lib-state, lib-messaging, lib-mesh)
+- T7: Error handling patterns (ApiException vs Exception)
+- T8: Return pattern (StatusCodes tuples, null response for non-200)
+- T21: Configuration-first (no hardcoded tunables)
+
+Understanding these rules BEFORE analyzing the issue prevents asking invalid questions (like "what message format for errors?" when T8 says non-200 returns null).
+
+**Step 2b: Read the full issue**
 - Read the entire issue body
 - Read ALL comments (may contain clarifications, decisions, or scope changes)
 - Note any linked issues or PRs
 
-**Step 2b: Identify affected plugin(s)**
+**Step 2c: Identify affected plugin(s)**
 From the issue content, identify which plugin(s) are involved. Look for:
 - Explicit mentions of services/plugins
 - File paths mentioned
 - API endpoints referenced
 - Event names mentioned
 
-**Step 2c: Read plugin deep dive(s)**
+**Step 2d: Read plugin deep dive(s)**
 For each identified plugin, read the FULL deep dive document:
 ```
 docs/plugins/{PLUGIN}.md
@@ -132,7 +147,7 @@ Extract and note:
 - **Known Quirks & Caveats** (gotchas to avoid)
 - **Design Considerations** (architectural context)
 
-**Step 2d: Read relevant source code**
+**Step 2e: Read relevant source code**
 Based on the issue, read the actual implementation files:
 ```
 plugins/lib-{service}/{Service}Service.cs

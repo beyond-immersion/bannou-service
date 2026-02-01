@@ -604,6 +604,31 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 return StatusCodes.NotFound;
             }
 
+            // Check deprecation requirement (per API schema: "Only deprecated types...can be deleted")
+            if (!existing.IsDeprecated)
+            {
+                _logger.LogDebug("Cannot delete non-deprecated type: {TypeId}", body.RelationshipTypeId);
+                return StatusCodes.Conflict;
+            }
+
+            // Check for relationship references (per API schema: "with zero references")
+            // Includes ended relationships to prevent orphaned TypeId references
+            var relationshipsResponse = await _relationshipClient.ListRelationshipsByTypeAsync(
+                new ListRelationshipsByTypeRequest
+                {
+                    RelationshipTypeId = body.RelationshipTypeId,
+                    IncludeEnded = true,
+                    Page = 1,
+                    PageSize = 1
+                },
+                cancellationToken);
+
+            if (relationshipsResponse.Relationships != null && relationshipsResponse.Relationships.Count > 0)
+            {
+                _logger.LogDebug("Cannot delete type with existing relationships: {TypeId}", body.RelationshipTypeId);
+                return StatusCodes.Conflict;
+            }
+
             // Check if type has children
             var childIds = await GetChildTypeIdsAsync(body.RelationshipTypeId, false, cancellationToken);
             if (childIds.Count > 0)

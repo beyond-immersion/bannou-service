@@ -223,6 +223,7 @@ Character Key Architecture (Realm-Partitioned)
 
 1. ~~**Incomplete reference counting**~~: **FIXED** (2026-01-31) - `CheckCharacterReferences` now checks relationships, encounters, contracts, and actors. History events and documents are not checked as there's no query API for those services to look up references by character ID.
 2. **`CharacterRetentionDays` config placeholder**: Defined for future retention/purge feature but not yet referenced in service code.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/212 -->
 
 ---
 

@@ -360,6 +360,7 @@ Dispute Resolution
 1. **~~Event consumer registration empty~~** (FIXED): `RegisterEventConsumers()` now registers handlers for `contract.fulfilled` (transitions bound escrows to Finalizing) and `contract.terminated` (transitions bound escrows to Refunded). Uses QueryAsync to find escrows by BoundContractId and ETag-based concurrency for state transitions. The `/escrow/verify-condition` endpoint remains available for manual verification.
 
 2. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment "Validate deposits (placeholder - real impl would check with currency/inventory services)". No actual cross-service validation is performed. The validation always passes (empty failure list).
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/213 -->
 
 3. **Expiration background processing**: Configuration defines `ExpirationCheckInterval` (PT1M), `ExpirationBatchSize` (100), and `ExpirationGracePeriod` (PT1H), but no background timer or hosted service scans for expired escrows. The `EscrowExpiredEvent` topic is defined but never published. Expired escrows remain in their current state until manually cancelled.
 
@@ -453,3 +454,8 @@ Dispute Resolution
    - State machine defines `Finalizing -> Releasing -> Released` but code skips `Releasing`
    - Same issue affects `Refunding` state
    - Needs design decision: remove unused states or implement two-phase transitions
+
+2. **ValidateEscrow asset checking** - [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
+   - `ValidateEscrowAsync` contains placeholder logic - validation always passes
+   - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
+   - Design questions: contract validation, custom handler invocation, graceful degradation policy
