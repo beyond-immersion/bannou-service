@@ -2904,15 +2904,14 @@ components:
       type: object
       description: |
         Outcome of a single clause distribution during contract execution.
-        Used in ContractExecutedEvent to provide per-clause success/failure details
-        for escrow verification. Deliberately excludes wallet/container IDs as
-        escrow already knows this mapping from the template values it set.
-        Asset type is not included because clauseType already implies it
-        (currency_transfer = currency, item_transfer = item, fee = currency).
+        Used in ContractExecutedEvent to provide per-clause success/failure details.
+        Deliberately excludes wallet/container IDs - consumers tracking these should
+        correlate via clauseId to their own records.
       additionalProperties: false
       required:
       - clauseId
       - clauseType
+      - assetType
       - amount
       - succeeded
       properties:
@@ -2923,6 +2922,11 @@ components:
         clauseType:
           type: string
           description: Type of clause (e.g., currency_transfer, item_transfer, fee)
+        assetType:
+          type: string
+          description: |
+            Descriptive type of asset involved (e.g., "currency", "item").
+            Provides human-readable context for what was transferred.
         amount:
           type: number
           description: Quantity transferred (currency amount, item count, etc.)

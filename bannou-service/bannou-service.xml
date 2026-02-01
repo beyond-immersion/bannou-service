@@ -40140,11 +40140,9 @@
         <member name="T:BeyondImmersion.BannouService.Contract.ClauseDistributionResult">
             <summary>
             Outcome of a single clause distribution during contract execution.
-            <br/>Used in ContractExecutedEvent to provide per-clause success/failure details
-            <br/>for escrow verification. Deliberately excludes wallet/container IDs as
-            <br/>escrow already knows this mapping from the template values it set.
-            <br/>Asset type is not included because clauseType already implies it
-            <br/>(currency_transfer = currency, item_transfer = item, fee = currency).
+            <br/>Used in ContractExecutedEvent to provide per-clause success/failure details.
+            <br/>Deliberately excludes wallet/container IDs - consumers tracking these should
+            <br/>correlate via clauseId to their own records.
             <br/>
             </summary>
         </member>
@@ -40156,6 +40154,13 @@
         <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.ClauseType">
             <summary>
             Type of clause (e.g., currency_transfer, item_transfer, fee)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.AssetType">
+            <summary>
+            Descriptive type of asset involved (e.g., "currency", "item").
+            <br/>Provides human-readable context for what was transferred.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.Amount">

@@ -3029,11 +3029,9 @@ public partial class ExecuteContractRequest
 
 /// <summary>
 /// Outcome of a single clause distribution during contract execution.
-/// <br/>Used in ContractExecutedEvent to provide per-clause success/failure details
-/// <br/>for escrow verification. Deliberately excludes wallet/container IDs as
-/// <br/>escrow already knows this mapping from the template values it set.
-/// <br/>Asset type is not included because clauseType already implies it
-/// <br/>(currency_transfer = currency, item_transfer = item, fee = currency).
+/// <br/>Used in ContractExecutedEvent to provide per-clause success/failure details.
+/// <br/>Deliberately excludes wallet/container IDs - consumers tracking these should
+/// <br/>correlate via clauseId to their own records.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -3055,6 +3053,16 @@ public partial class ClauseDistributionResult
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ClauseType { get; set; } = default!;
+
+    /// <summary>
+    /// Descriptive type of asset involved (e.g., "currency", "item").
+    /// <br/>Provides human-readable context for what was transferred.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetType { get; set; } = default!;
 
     /// <summary>
     /// Quantity transferred (currency amount, item count, etc.)

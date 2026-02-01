@@ -1006,6 +1006,7 @@ public partial class ContractService
                     {
                         ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
                         ClauseType = d.ClauseType,
+                        AssetType = d.AssetType,
                         Amount = d.Amount,
                         Succeeded = d.Succeeded,
                         FailureReason = d.FailureReason
@@ -1067,6 +1068,7 @@ public partial class ContractService
                 {
                     ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
                     ClauseType = d.ClauseType,
+                    AssetType = d.AssetType,
                     Amount = d.Amount,
                     Succeeded = d.Succeeded,
                     FailureReason = d.FailureReason
@@ -1209,6 +1211,7 @@ public partial class ContractService
                 {
                     ClauseId = clause.Id,
                     ClauseType = clause.Type,
+                    AssetType = "unknown",
                     Amount = 0,
                     Succeeded = false,
                     FailureReason = $"No execution handler found for clause type: {clause.Type}"
@@ -1218,12 +1221,14 @@ public partial class ContractService
             // Build the transfer payload based on clause type
             var handler = clauseType.ExecutionHandler;
             string payloadTemplate;
+            string assetType;
             double amount;
             string? sourceId;
             string? destinationId;
 
             if (string.Equals(clause.Type, "fee", StringComparison.OrdinalIgnoreCase))
             {
+                assetType = "currency";
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("recipient_wallet"), contract.TemplateValues);
                 amount = ParseClauseAmount(clause, contract);
@@ -1235,6 +1240,7 @@ public partial class ContractService
                     {
                         ClauseId = clause.Id,
                         ClauseType = clause.Type,
+                        AssetType = assetType,
                         Amount = 0,
                         Succeeded = false,
                         FailureReason = "Missing source or recipient wallet after template resolution"
@@ -1254,6 +1260,7 @@ public partial class ContractService
                         {
                             ClauseId = clause.Id,
                             ClauseType = clause.Type,
+                            AssetType = assetType,
                             Amount = 0,
                             Succeeded = false,
                             FailureReason = $"Could not query remainder balance for wallet {sourceId}"
@@ -1274,6 +1281,7 @@ public partial class ContractService
             else if (!string.IsNullOrEmpty(clause.GetProperty("source_container")))
             {
                 // Item transfer
+                assetType = "item";
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_container"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_container"), contract.TemplateValues);
                 amount = GetClauseDoubleProperty(clause, "quantity", 1);
@@ -1285,6 +1293,7 @@ public partial class ContractService
                     {
                         ClauseId = clause.Id,
                         ClauseType = clause.Type,
+                        AssetType = assetType,
                         Amount = 0,
                         Succeeded = false,
                         FailureReason = "Missing source or destination container after template resolution"
@@ -1303,6 +1312,7 @@ public partial class ContractService
             else
             {
                 // Currency transfer / distribution
+                assetType = "currency";
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_wallet"), contract.TemplateValues);
                 amount = ParseClauseAmount(clause, contract);
@@ -1314,6 +1324,7 @@ public partial class ContractService
                     {
                         ClauseId = clause.Id,
                         ClauseType = clause.Type,
+                        AssetType = assetType,
                         Amount = 0,
                         Succeeded = false,
                         FailureReason = "Missing source or destination wallet after template resolution"
@@ -1333,6 +1344,7 @@ public partial class ContractService
                         {
                             ClauseId = clause.Id,
                             ClauseType = clause.Type,
+                            AssetType = assetType,
                             Amount = 0,
                             Succeeded = false,
                             FailureReason = $"Could not query remainder balance for wallet {sourceId}"
@@ -1382,6 +1394,7 @@ public partial class ContractService
                 {
                     ClauseId = clause.Id,
                     ClauseType = clause.Type,
+                    AssetType = assetType,
                     Amount = amount,
                     Succeeded = false,
                     FailureReason = failureReason
@@ -1408,6 +1421,7 @@ public partial class ContractService
                 {
                     ClauseId = clause.Id,
                     ClauseType = clause.Type,
+                    AssetType = assetType,
                     Amount = amount,
                     Succeeded = false,
                     FailureReason = failureReason
@@ -1421,6 +1435,7 @@ public partial class ContractService
             {
                 ClauseId = clause.Id,
                 ClauseType = clause.Type,
+                AssetType = assetType,
                 Amount = amount,
                 Succeeded = true,
                 FailureReason = null
@@ -1434,6 +1449,7 @@ public partial class ContractService
             {
                 ClauseId = clause.Id,
                 ClauseType = clause.Type,
+                AssetType = "unknown",
                 Amount = 0,
                 Succeeded = false,
                 FailureReason = ex.Message
@@ -1736,6 +1752,7 @@ public partial class ContractService
             {
                 ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
                 ClauseType = d.ClauseType,
+                AssetType = d.AssetType,
                 Amount = d.Amount,
                 Succeeded = d.Succeeded,
                 FailureReason = d.FailureReason
@@ -1775,13 +1792,13 @@ internal class ClauseHandlerModel
 
 /// <summary>
 /// Internal model for storing distribution records.
-/// Contract is a foundational service - no wallet/container IDs (escrow knows the mapping).
-/// No assetType - clauseType already implies it (currency_transfer = currency, etc.).
+/// Contract is a foundational service - no wallet/container IDs are stored.
 /// </summary>
 internal class DistributionRecordModel
 {
     public string ClauseId { get; set; } = string.Empty;
     public string ClauseType { get; set; } = string.Empty;
+    public string AssetType { get; set; } = string.Empty;
     public double Amount { get; set; }
     public bool Succeeded { get; set; }
     public string? FailureReason { get; set; }

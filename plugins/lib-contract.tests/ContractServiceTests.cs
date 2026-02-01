@@ -3424,4 +3424,308 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     }
 
     #endregion
+
+    #region Distribution Result AssetType Tests
+
+    [Fact]
+    public async Task ExecuteContractAsync_WithCurrencyClause_PopulatesAssetTypeCurrency()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId;
+        instance.Status = ContractStatus.Fulfilled;
+        instance.TemplateValues = new Dictionary<string, string>
+        {
+            ["source_wallet"] = Guid.NewGuid().ToString(),
+            ["destination_wallet"] = Guid.NewGuid().ToString()
+        };
+
+        var template = CreateTestTemplateModel(templateId);
+        template.DefaultTerms = new ContractTermsModel
+        {
+            CustomTerms = new Dictionary<string, object>
+            {
+                ["clauses"] = new List<object>
+                {
+                    new Dictionary<string, object>
+                    {
+                        ["id"] = "clause-1",
+                        ["type"] = "currency_transfer",
+                        ["source_wallet"] = "{{source_wallet}}",
+                        ["destination_wallet"] = "{{destination_wallet}}",
+                        ["currency_code"] = "gold",
+                        ["amount"] = "100"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Setup built-in clause type (currency_transfer)
+        _mockClauseTypeStore
+            .Setup(s => s.GetAsync("clause-type:currency_transfer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ClauseTypeModel
+            {
+                TypeCode = "currency_transfer",
+                Description = "Transfers currency between wallets",
+                Category = ClauseCategory.Execution,
+                IsBuiltIn = true,
+                ExecutionHandler = new ClauseHandlerModel
+                {
+                    Service = "currency",
+                    Endpoint = "/currency/transfer"
+                },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup navigator to return success
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<ServiceClients.PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
+                new ServiceClients.PreboundApiDefinition
+                {
+                    ServiceName = "currency",
+                    Endpoint = "/currency/transfer"
+                },
+                """{"from_wallet_id": "xxx", "to_wallet_id": "yyy", "amount": 100}""",
+                ServiceClients.RawApiResult.Success(200, """{"success": true}""", TimeSpan.FromMilliseconds(50))));
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId,
+            IdempotencyKey = "test-exec-key"
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Executed);
+        Assert.NotNull(response.Distributions);
+        Assert.Single(response.Distributions);
+        Assert.Equal("currency", response.Distributions.First().AssetType);
+        Assert.Equal("currency_transfer", response.Distributions.First().ClauseType);
+        Assert.True(response.Distributions.First().Succeeded);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_WithItemClause_PopulatesAssetTypeItem()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId;
+        instance.Status = ContractStatus.Fulfilled;
+        instance.TemplateValues = new Dictionary<string, string>
+        {
+            ["source_container"] = Guid.NewGuid().ToString(),
+            ["destination_container"] = Guid.NewGuid().ToString()
+        };
+
+        var template = CreateTestTemplateModel(templateId);
+        template.DefaultTerms = new ContractTermsModel
+        {
+            CustomTerms = new Dictionary<string, object>
+            {
+                ["clauses"] = new List<object>
+                {
+                    new Dictionary<string, object>
+                    {
+                        ["id"] = "clause-1",
+                        ["type"] = "item_transfer",
+                        ["source_container"] = "{{source_container}}",
+                        ["destination_container"] = "{{destination_container}}",
+                        ["item_code"] = "sword",
+                        ["quantity"] = "1"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Setup built-in clause type (item_transfer)
+        _mockClauseTypeStore
+            .Setup(s => s.GetAsync("clause-type:item_transfer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ClauseTypeModel
+            {
+                TypeCode = "item_transfer",
+                Description = "Transfers items between containers",
+                Category = ClauseCategory.Execution,
+                IsBuiltIn = true,
+                ExecutionHandler = new ClauseHandlerModel
+                {
+                    Service = "inventory",
+                    Endpoint = "/inventory/transfer"
+                },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup navigator to return success
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<ServiceClients.PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
+                new ServiceClients.PreboundApiDefinition
+                {
+                    ServiceName = "inventory",
+                    Endpoint = "/inventory/transfer"
+                },
+                """{"from_container_id": "xxx", "to_container_id": "yyy", "item_code": "sword"}""",
+                ServiceClients.RawApiResult.Success(200, """{"success": true}""", TimeSpan.FromMilliseconds(50))));
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId,
+            IdempotencyKey = "test-exec-key"
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Executed);
+        Assert.NotNull(response.Distributions);
+        Assert.Single(response.Distributions);
+        Assert.Equal("item", response.Distributions.First().AssetType);
+        Assert.Equal("item_transfer", response.Distributions.First().ClauseType);
+        Assert.True(response.Distributions.First().Succeeded);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_WithFeeClause_PopulatesAssetTypeCurrency()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId;
+        instance.Status = ContractStatus.Fulfilled;
+        instance.TemplateValues = new Dictionary<string, string>
+        {
+            ["fee_source_wallet"] = Guid.NewGuid().ToString(),
+            ["fee_recipient_wallet"] = Guid.NewGuid().ToString()
+        };
+
+        var template = CreateTestTemplateModel(templateId);
+        template.DefaultTerms = new ContractTermsModel
+        {
+            CustomTerms = new Dictionary<string, object>
+            {
+                ["clauses"] = new List<object>
+                {
+                    new Dictionary<string, object>
+                    {
+                        ["id"] = "clause-fee",
+                        ["type"] = "fee",
+                        ["source_wallet"] = "{{fee_source_wallet}}",
+                        ["recipient_wallet"] = "{{fee_recipient_wallet}}",
+                        ["currency_code"] = "gold",
+                        ["amount"] = "10"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Setup built-in clause type (fee)
+        _mockClauseTypeStore
+            .Setup(s => s.GetAsync("clause-type:fee", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ClauseTypeModel
+            {
+                TypeCode = "fee",
+                Description = "Deducts fee from source wallet and transfers to recipient",
+                Category = ClauseCategory.Execution,
+                IsBuiltIn = true,
+                ExecutionHandler = new ClauseHandlerModel
+                {
+                    Service = "currency",
+                    Endpoint = "/currency/transfer"
+                },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup navigator to return success
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<ServiceClients.PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
+                new ServiceClients.PreboundApiDefinition
+                {
+                    ServiceName = "currency",
+                    Endpoint = "/currency/transfer"
+                },
+                """{"from_wallet_id": "xxx", "to_wallet_id": "yyy", "amount": 10}""",
+                ServiceClients.RawApiResult.Success(200, """{"success": true}""", TimeSpan.FromMilliseconds(50))));
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId,
+            IdempotencyKey = "test-exec-key"
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Executed);
+        Assert.NotNull(response.Distributions);
+        Assert.Single(response.Distributions);
+        Assert.Equal("currency", response.Distributions.First().AssetType);
+        Assert.Equal("fee", response.Distributions.First().ClauseType);
+        Assert.True(response.Distributions.First().Succeeded);
+    }
+
+    #endregion
 }
