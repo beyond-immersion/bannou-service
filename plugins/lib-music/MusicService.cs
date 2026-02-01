@@ -108,8 +108,8 @@ public partial class MusicService : IMusicService
                 }
             }
 
-            // Calculate ticks
-            var ticksPerBeat = 480;
+            // Calculate ticks (use configuration for MIDI resolution)
+            var ticksPerBeat = _configuration.DefaultTicksPerBeat;
             var totalBars = body.DurationBars;
 
             // Use Storyteller for narrative-driven composition
@@ -125,14 +125,14 @@ public partial class MusicService : IMusicService
 
             // Generate chord progression guided by Storyteller intents
             var progressionGenerator = new ProgressionGenerator(seed);
-            var chordsPerBar = 1;
+            var chordsPerBar = _configuration.DefaultChordsPerBar;
             var progression = progressionGenerator.Generate(key, totalBars * chordsPerBar);
 
             // Voice the chords
             var voiceLeader = new VoiceLeader();
             var (voicings, _) = voiceLeader.Voice(
                 progression.Select(p => p.Chord).ToList(),
-                voiceCount: 4);
+                voiceCount: _configuration.DefaultVoiceCount);
 
             // Generate melody over the harmony with Storyteller-guided contour
             var melodyOptions = new MelodyOptions
@@ -141,7 +141,7 @@ public partial class MusicService : IMusicService
                 Contour = GetContourFromStoryResult(storyResult),
                 IntervalPreferences = style.IntervalPreferences,
                 Density = GetDensityFromStoryResult(storyResult),
-                Syncopation = 0.2,
+                Syncopation = _configuration.DefaultMelodySyncopation,
                 TicksPerBeat = ticksPerBeat
             };
 
@@ -514,8 +514,8 @@ public partial class MusicService : IMusicService
             var progression = generator.Generate(scale, length);
 
             // Convert to API response
-            var ticksPerBeat = 480;
-            var beatsPerChord = 4.0;
+            var ticksPerBeat = _configuration.DefaultTicksPerBeat;
+            var beatsPerChord = _configuration.DefaultBeatsPerChord;
             var currentTick = 0;
 
             var chordEvents = new List<ChordEvent>();
@@ -612,9 +612,9 @@ public partial class MusicService : IMusicService
             {
                 Range = range,
                 Contour = contour,
-                Density = body.RhythmDensity ?? 0.7,
-                Syncopation = body.Syncopation ?? 0.2,
-                TicksPerBeat = 480
+                Density = body.RhythmDensity ?? _configuration.DefaultMelodyDensity,
+                Syncopation = body.Syncopation ?? _configuration.DefaultMelodySyncopation,
+                TicksPerBeat = _configuration.DefaultTicksPerBeat
             };
 
             var generator = new MelodyGenerator(seed);
@@ -704,7 +704,7 @@ public partial class MusicService : IMusicService
             var voiceLeader = new VoiceLeader(rules);
 
             // Voice the chords (returns voicings and violations together)
-            var (voicings, sdkViolations) = voiceLeader.Voice(chords, voiceCount: 4);
+            var (voicings, sdkViolations) = voiceLeader.Voice(chords, voiceCount: _configuration.DefaultVoiceCount);
 
             // VoiceLeadingViolation and Pitch have x-sdk-type, so SDK types are used directly
 
@@ -759,7 +759,7 @@ public partial class MusicService : IMusicService
     /// Builds a Storyteller CompositionRequest from the API request.
     /// Maps mood to narrative template and emotional preset per design spec.
     /// </summary>
-    private static CompositionRequest BuildStorytellerRequest(
+    private CompositionRequest BuildStorytellerRequest(
         GenerateCompositionRequest body,
         int totalBars)
     {
@@ -831,17 +831,17 @@ public partial class MusicService : IMusicService
     }
 
     /// <summary>
-    /// Converts API EmotionalStateInput to SDK EmotionalState.
+    /// Converts API EmotionalStateInput to SDK EmotionalState using configuration defaults.
     /// </summary>
-    private static EmotionalState ToSdkEmotionalState(EmotionalStateInput input)
+    private EmotionalState ToSdkEmotionalState(EmotionalStateInput input)
     {
         return new EmotionalState(
-            input.Tension ?? 0.2,
-            input.Brightness ?? 0.5,
-            input.Energy ?? 0.5,
-            input.Warmth ?? 0.5,
-            input.Stability ?? 0.8,
-            input.Valence ?? 0.5);
+            input.Tension ?? _configuration.DefaultEmotionalTension,
+            input.Brightness ?? _configuration.DefaultEmotionalBrightness,
+            input.Energy ?? _configuration.DefaultEmotionalEnergy,
+            input.Warmth ?? _configuration.DefaultEmotionalWarmth,
+            input.Stability ?? _configuration.DefaultEmotionalStability,
+            input.Valence ?? _configuration.DefaultEmotionalValence);
     }
 
     /// <summary>

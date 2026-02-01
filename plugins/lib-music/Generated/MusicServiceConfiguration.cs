@@ -59,4 +59,76 @@ public class MusicServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int CompositionCacheTtlSeconds { get; set; } = 86400;
 
+    /// <summary>
+    /// Default MIDI ticks per beat (PPQN) for composition rendering
+    /// Environment variable: MUSIC_DEFAULT_TICKS_PER_BEAT
+    /// </summary>
+    public int DefaultTicksPerBeat { get; set; } = 480;
+
+    /// <summary>
+    /// Default number of chords per bar in generated progressions
+    /// Environment variable: MUSIC_DEFAULT_CHORDS_PER_BAR
+    /// </summary>
+    public int DefaultChordsPerBar { get; set; } = 1;
+
+    /// <summary>
+    /// Default number of voices for chord voicing
+    /// Environment variable: MUSIC_DEFAULT_VOICE_COUNT
+    /// </summary>
+    public int DefaultVoiceCount { get; set; } = 4;
+
+    /// <summary>
+    /// Default beats per chord in progression generation
+    /// Environment variable: MUSIC_DEFAULT_BEATS_PER_CHORD
+    /// </summary>
+    public double DefaultBeatsPerChord { get; set; } = 4.0;
+
+    /// <summary>
+    /// Default syncopation amount for melody generation (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_MELODY_SYNCOPATION
+    /// </summary>
+    public double DefaultMelodySyncopation { get; set; } = 0.2;
+
+    /// <summary>
+    /// Default note density for melody generation (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_MELODY_DENSITY
+    /// </summary>
+    public double DefaultMelodyDensity { get; set; } = 0.7;
+
+    /// <summary>
+    /// Default tension value for emotional state (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_EMOTIONAL_TENSION
+    /// </summary>
+    public double DefaultEmotionalTension { get; set; } = 0.2;
+
+    /// <summary>
+    /// Default brightness value for emotional state (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_EMOTIONAL_BRIGHTNESS
+    /// </summary>
+    public double DefaultEmotionalBrightness { get; set; } = 0.5;
+
+    /// <summary>
+    /// Default energy value for emotional state (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_EMOTIONAL_ENERGY
+    /// </summary>
+    public double DefaultEmotionalEnergy { get; set; } = 0.5;
+
+    /// <summary>
+    /// Default warmth value for emotional state (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_EMOTIONAL_WARMTH
+    /// </summary>
+    public double DefaultEmotionalWarmth { get; set; } = 0.5;
+
+    /// <summary>
+    /// Default stability value for emotional state (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_EMOTIONAL_STABILITY
+    /// </summary>
+    public double DefaultEmotionalStability { get; set; } = 0.8;
+
+    /// <summary>
+    /// Default valence value for emotional state (0.0-1.0)
+    /// Environment variable: MUSIC_DEFAULT_EMOTIONAL_VALENCE
+    /// </summary>
+    public double DefaultEmotionalValence { get; set; } = 0.5;
+
 }

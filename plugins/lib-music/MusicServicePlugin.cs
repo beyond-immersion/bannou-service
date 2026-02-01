@@ -8,134 +8,63 @@ namespace BeyondImmersion.BannouService.Music;
 
 /// <summary>
 /// Plugin wrapper for Music service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IBannouService implementation with the new Plugin system.
+/// MusicService is a pure computation service with no startup/shutdown lifecycle needs.
 /// </summary>
 public class MusicServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "music";
     public override string DisplayName => "Music Service";
 
-    private IMusicService? _service;
-    private IServiceProvider? _serviceProvider;
-
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [BannouService] registration.
+    /// Configure services for dependency injection.
     /// </summary>
+    /// <remarks>
+    /// Service registration is handled centrally by PluginLoader based on [BannouService] attributes.
+    /// Configuration registration is handled centrally based on [ServiceConfiguration] attributes.
+    /// </remarks>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogDebug("Configuring service dependencies");
-
-        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
-        // No need to register IMusicService and MusicService here
-
-        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
-        // No need to register MusicServiceConfiguration here
-
-        // Add any service-specific dependencies
-        // The generated clients should already be registered by AddAllBannouServiceClients()
-
-        Logger?.LogDebug("Service dependencies configured");
+        Logger?.LogDebug("Music service dependencies configured (no additional registrations needed)");
     }
 
     /// <summary>
-    /// Configure application pipeline - handles controller registration.
+    /// Configure application pipeline.
     /// </summary>
+    /// <remarks>
+    /// The generated MusicController is discovered via standard ASP.NET Core controller discovery.
+    /// </remarks>
     public override void ConfigureApplication(WebApplication app)
     {
-        Logger?.LogInformation("Configuring Music service application pipeline");
-
-        // The generated MusicController should already be discovered via standard ASP.NET Core controller discovery
-
-        // Store service provider for lifecycle management
-        _serviceProvider = app.Services;
-
         Logger?.LogInformation("Music service application pipeline configured");
     }
 
     /// <summary>
-    /// Start the service - calls existing IBannouService lifecycle if present.
+    /// Start the service.
     /// </summary>
-    protected override async Task<bool> OnStartAsync()
+    /// <remarks>
+    /// MusicService is a pure computation service with no startup initialization required.
+    /// All state (composition cache) is lazily initialized on first use via IStateStoreFactory.
+    /// </remarks>
+    protected override Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("Starting Music service");
-
-        try
-        {
-            // Get service instance from DI container with proper scope handling
-            // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
-            using var scope = _serviceProvider?.CreateScope();
-            _service = scope?.ServiceProvider.GetService<IMusicService>();
-
-            if (_service == null)
-            {
-                Logger?.LogError("Failed to resolve IMusicService from DI container");
-                return false;
-            }
-
-            // Call existing IBannouService.OnStartAsync if the service implements it
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Music service");
-                await bannouService.OnStartAsync(CancellationToken.None);
-            }
-
-            Logger?.LogInformation("Music service started successfully");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to start Music service");
-            return false;
-        }
+        Logger?.LogInformation("Music service started");
+        return Task.FromResult(true);
     }
 
     /// <summary>
-    /// Running phase - calls existing IBannouService lifecycle if present.
+    /// Running phase - no ongoing work for this service.
     /// </summary>
-    protected override async Task OnRunningAsync()
+    protected override Task OnRunningAsync()
     {
-        if (_service == null) return;
-
-        Logger?.LogDebug("Music service running");
-
-        try
-        {
-            // Call existing IBannouService.OnRunningAsync if the service implements it
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Music service");
-                await bannouService.OnRunningAsync(CancellationToken.None);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Exception during Music service running phase");
-        }
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IBannouService lifecycle if present.
+    /// Shutdown the service - no cleanup required.
     /// </summary>
-    protected override async Task OnShutdownAsync()
+    protected override Task OnShutdownAsync()
     {
-        if (_service == null) return;
-
-        Logger?.LogInformation("Shutting down Music service");
-
-        try
-        {
-            // Call existing IBannouService.OnShutdownAsync if the service implements it
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Music service");
-                await bannouService.OnShutdownAsync();
-            }
-
-            Logger?.LogInformation("Music service shutdown complete");
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Exception during Music service shutdown");
-        }
+        Logger?.LogInformation("Music service shutdown complete");
+        return Task.CompletedTask;
     }
 }

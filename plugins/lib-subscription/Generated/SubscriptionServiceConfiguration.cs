@@ -54,12 +54,6 @@ public class SubscriptionServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Suffix for authorization keys in state store
-    /// Environment variable: SUBSCRIPTION_AUTHORIZATION_SUFFIX
-    /// </summary>
-    public string AuthorizationSuffix { get; set; } = "authorized";
-
-    /// <summary>
     /// Interval in minutes between subscription expiration checks
     /// Environment variable: SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES
     /// </summary>

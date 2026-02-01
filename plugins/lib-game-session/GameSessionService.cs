@@ -1454,6 +1454,45 @@ public partial class GameSessionService : IGameSessionService
             model.Players.Remove(playerToKick);
             model.CurrentPlayers = model.Players.Count;
 
+            // Clear game-session:in_game state via Permission service for the kicked player
+            try
+            {
+                await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
+                {
+                    SessionId = playerToKick.SessionId,
+                    ServiceId = "game-session"
+                }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                // Permission service returned an error - continue anyway, state cleaned up on session expiry
+                _logger.LogWarning(ex, "Permission service error clearing session state for kicked player {SessionId}: {StatusCode}",
+                    playerToKick.SessionId, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    "api_exception",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = playerToKick.SessionId, StatusCode = ex.StatusCode },
+                    stack: ex.StackTrace);
+            }
+            catch (Exception ex)
+            {
+                // Unexpected error - continue anyway, state cleaned up on session expiry
+                _logger.LogError(ex, "Failed to clear session state for kicked player {SessionId}", playerToKick.SessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = playerToKick.SessionId },
+                    stack: ex.StackTrace);
+            }
+
             // Update status
             if (model.Status == SessionStatus.Full)
             {

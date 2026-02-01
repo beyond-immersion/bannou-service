@@ -214,6 +214,7 @@ None. The service is feature-complete for its scope.
 ## Potential Extensions
 
 1. **Trait decay**: Gradual regression toward neutral (0.0) over time without reinforcing experiences.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/201 -->
 2. **Personality archetypes**: Pre-defined trait combinations for quick character creation.
 3. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
 4. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.

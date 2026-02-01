@@ -14,12 +14,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    AuthorizationSuffix:
-      type: string
-      description: Suffix for authorization keys in state store
-      env: SUBSCRIPTION_AUTHORIZATION_SUFFIX
-      default: "authorized"
-
     # Background Service Configuration
     ExpirationCheckIntervalMinutes:
       type: integer

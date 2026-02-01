@@ -353,6 +353,7 @@ Authoring Workflow
 ## Stubs & Unimplemented Features
 
 1. **Event aggregation for MapUpdatedEvent**: Only `MapObjectsChangedEvent` uses the aggregation buffer. `MapUpdatedEvent` (from PublishMapUpdate) publishes immediately on every call. The code comment notes "payload-level coalescing is complex."
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/199 -->
 
 2. **Spatial index garbage collection on channel reset**: `ClearChannelDataAsync` deletes objects and the region index but notes "Spatial and type indexes are per-object and will be orphaned. They'll be cleaned up on next access or could be garbage collected." No GC is implemented.
 

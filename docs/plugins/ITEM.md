@@ -222,15 +222,14 @@ Soulbound Types
 
 ## Stubs & Unimplemented Features
 
-1. **Unbound event not implemented**: `item-instance.unbound` event type is defined in the event schema but no unbinding endpoint exists. Items can only be bound, not unbound (except via admin override rebinding).
-<!-- AUDIT:IN_PROGRESS:2026-01-31 -->
+1. ~~**Unbound event not implemented**~~: **FIXED** (2026-01-31) - Added `/item/instance/unbind` endpoint with admin-only permission. Clears `BoundToId` and `BoundAt`, publishes `ItemInstanceUnboundEvent` with reason and previous character ID. Returns BadRequest if item is not bound.
 2. **Deprecation without cascade**: Deprecating a template doesn't automatically migrate, disable, or destroy existing instances. Admin must manage instances separately.
 
 ---
 
 ## Potential Extensions
 
-1. **Unbind endpoint**: Allow admin-level unbinding of soulbound items with event publishing.
+1. ~~**Unbind endpoint**~~: **FIXED** (2026-01-31) - Implemented as `/item/instance/unbind` with admin-only permission.
 2. **Template migration**: When deprecating with `migrationTargetId`, automatically upgrade instances to the new template.
 3. **Affix system**: Random or crafted modifiers applied to instances (prefixes/suffixes).
 4. **Durability repair**: Endpoint to restore durability with configurable repair costs.
@@ -290,6 +289,8 @@ No bugs identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-01-31**: Unbind endpoint implementation - Added `/item/instance/unbind` endpoint with `UnbindItemInstanceAsync` method. Admin-only permission, clears binding state, and publishes `ItemInstanceUnboundEvent` with reason and previous character ID. Returns BadRequest (400) if item is not bound. Schema, generated code, and service implementation all updated.
 
 - **2026-01-31**: N+1 bulk loading optimization - Added `GetInstancesBulkWithCacheAsync` helper that performs two-tier bulk loading (Redis cache → MySQL persistent store for misses → bulk cache population). Applied to `ListItemsByContainer`, `ListItemsByTemplate`, and `BatchGetItemInstances`. Maximum 2 database round-trips regardless of item count. See Issue #168 for `IStateStore` bulk operations.
 

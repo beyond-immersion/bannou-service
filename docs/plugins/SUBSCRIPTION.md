@@ -82,7 +82,6 @@ This plugin does not consume external events. The `IEventConsumer` is injected b
 | `ExpirationCheckIntervalMinutes` | `SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES` | `5` | Interval between expiration check cycles in the background worker |
 | `ExpirationGracePeriodSeconds` | `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | `30` | Grace period after expiration before marking inactive (prevents race conditions with last-second renewals) |
 | `StartupDelaySeconds` | `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | `30` | Delay before first expiration check after service start (allows dependencies to initialize) |
-| `AuthorizationSuffix` | `SUBSCRIPTION_AUTHORIZATION_SUFFIX` | `authorized` | **DEAD CONFIG** - Property is accessed (line 54: `AuthorizationSuffix => _configuration.AuthorizationSuffix`) but the resulting value is never used in any business logic |
 
 ---
 
@@ -174,7 +173,7 @@ State Key Relationships & Index Cleanup
 
 ## Stubs & Unimplemented Features
 
-1. **`AuthorizationSuffix` config property**: Defined in schema, generated in configuration class, and accessed in service (line 54: `private string AuthorizationSuffix => _configuration.AuthorizationSuffix;`) but the property value is never used in any method. Should be either wired up to actual authorization logic or removed from the configuration schema.
+1. ~~**`AuthorizationSuffix` config property**~~: **FIXED** (2026-01-31) - Removed the dead configuration property from schema, regenerated configuration class, and removed unused property accessor from service.
 
 2. **Misleading code comment**: Line 49 in `SubscriptionService.cs` says "Register event handlers via partial class (SubscriptionServiceEvents.cs)" but no such file exists. The service doesn't consume any external events.
 
@@ -228,7 +227,7 @@ None identified.
 
 5. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
 
-6. **Dead configuration property**: `AuthorizationSuffix` is defined in schema, generated, and accessed but never used. This violates the Configuration-First tenet ("ALL properties below MUST be referenced" and "no dead config"). Requires decision: either wire up to actual logic or remove from schema.
+6. ~~**Dead configuration property**~~: **FIXED** (2026-01-31) - Removed `AuthorizationSuffix` from schema, regenerated configuration, removed accessor from service.
 
 ---
 
@@ -236,4 +235,8 @@ None identified.
 
 *This section tracks active development work managed by the `/audit-plugin` workflow.*
 
-No active work items.
+### Completed
+
+| Date | Gap | Action |
+|------|-----|--------|
+| 2026-01-31 | Dead `AuthorizationSuffix` config property | Removed from schema, regenerated config, removed service accessor, removed test |

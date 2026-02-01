@@ -20,3 +20,78 @@ x-service-configuration:
       description: TTL in seconds for cached deterministic compositions
       default: 86400
       env: MUSIC_COMPOSITION_CACHE_TTL_SECONDS
+
+    # Generation Defaults
+    DefaultTicksPerBeat:
+      type: integer
+      description: Default MIDI ticks per beat (PPQN) for composition rendering
+      default: 480
+      env: MUSIC_DEFAULT_TICKS_PER_BEAT
+
+    DefaultChordsPerBar:
+      type: integer
+      description: Default number of chords per bar in generated progressions
+      default: 1
+      env: MUSIC_DEFAULT_CHORDS_PER_BAR
+
+    DefaultVoiceCount:
+      type: integer
+      description: Default number of voices for chord voicing
+      default: 4
+      env: MUSIC_DEFAULT_VOICE_COUNT
+
+    DefaultBeatsPerChord:
+      type: number
+      description: Default beats per chord in progression generation
+      default: 4.0
+      env: MUSIC_DEFAULT_BEATS_PER_CHORD
+
+    # Melody Defaults
+    DefaultMelodySyncopation:
+      type: number
+      description: Default syncopation amount for melody generation (0.0-1.0)
+      default: 0.2
+      env: MUSIC_DEFAULT_MELODY_SYNCOPATION
+
+    DefaultMelodyDensity:
+      type: number
+      description: Default note density for melody generation (0.0-1.0)
+      default: 0.7
+      env: MUSIC_DEFAULT_MELODY_DENSITY
+
+    # Default Emotional State
+    DefaultEmotionalTension:
+      type: number
+      description: Default tension value for emotional state (0.0-1.0)
+      default: 0.2
+      env: MUSIC_DEFAULT_EMOTIONAL_TENSION
+
+    DefaultEmotionalBrightness:
+      type: number
+      description: Default brightness value for emotional state (0.0-1.0)
+      default: 0.5
+      env: MUSIC_DEFAULT_EMOTIONAL_BRIGHTNESS
+
+    DefaultEmotionalEnergy:
+      type: number
+      description: Default energy value for emotional state (0.0-1.0)
+      default: 0.5
+      env: MUSIC_DEFAULT_EMOTIONAL_ENERGY
+
+    DefaultEmotionalWarmth:
+      type: number
+      description: Default warmth value for emotional state (0.0-1.0)
+      default: 0.5
+      env: MUSIC_DEFAULT_EMOTIONAL_WARMTH
+
+    DefaultEmotionalStability:
+      type: number
+      description: Default stability value for emotional state (0.0-1.0)
+      default: 0.8
+      env: MUSIC_DEFAULT_EMOTIONAL_STABILITY
+
+    DefaultEmotionalValence:
+      type: number
+      description: Default valence value for emotional state (0.0-1.0)
+      default: 0.5
+      env: MUSIC_DEFAULT_EMOTIONAL_VALENCE

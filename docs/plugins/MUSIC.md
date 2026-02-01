@@ -58,6 +58,18 @@ This plugin does not consume external events.
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `CompositionCacheTtlSeconds` | `MUSIC_COMPOSITION_CACHE_TTL_SECONDS` | `86400` | TTL for cached deterministic compositions (24 hours) |
+| `DefaultTicksPerBeat` | `MUSIC_DEFAULT_TICKS_PER_BEAT` | `480` | MIDI ticks per beat (PPQN) for composition rendering |
+| `DefaultChordsPerBar` | `MUSIC_DEFAULT_CHORDS_PER_BAR` | `1` | Number of chords per bar in generated progressions |
+| `DefaultVoiceCount` | `MUSIC_DEFAULT_VOICE_COUNT` | `4` | Number of voices for chord voicing |
+| `DefaultBeatsPerChord` | `MUSIC_DEFAULT_BEATS_PER_CHORD` | `4.0` | Beats per chord in progression generation |
+| `DefaultMelodySyncopation` | `MUSIC_DEFAULT_MELODY_SYNCOPATION` | `0.2` | Default syncopation amount (0.0-1.0) |
+| `DefaultMelodyDensity` | `MUSIC_DEFAULT_MELODY_DENSITY` | `0.7` | Default note density (0.0-1.0) |
+| `DefaultEmotionalTension` | `MUSIC_DEFAULT_EMOTIONAL_TENSION` | `0.2` | Default emotional tension (0.0-1.0) |
+| `DefaultEmotionalBrightness` | `MUSIC_DEFAULT_EMOTIONAL_BRIGHTNESS` | `0.5` | Default emotional brightness (0.0-1.0) |
+| `DefaultEmotionalEnergy` | `MUSIC_DEFAULT_EMOTIONAL_ENERGY` | `0.5` | Default emotional energy (0.0-1.0) |
+| `DefaultEmotionalWarmth` | `MUSIC_DEFAULT_EMOTIONAL_WARMTH` | `0.5` | Default emotional warmth (0.0-1.0) |
+| `DefaultEmotionalStability` | `MUSIC_DEFAULT_EMOTIONAL_STABILITY` | `0.8` | Default emotional stability (0.0-1.0) |
+| `DefaultEmotionalValence` | `MUSIC_DEFAULT_EMOTIONAL_VALENCE` | `0.5` | Default emotional valence (0.0-1.0) |
 
 ---
 
@@ -165,17 +177,20 @@ EmotionalState Dimensions
 
 ## Stubs & Unimplemented Features
 
-1. **CreateStyle not persisted**: `CreateStyleAsync` returns the style as if created but does not save to the `music-styles` MySQL store or the in-memory `BuiltInStyles` collection. Custom styles are lost after the response.
-2. **music-styles store declared but unused**: The MySQL store for styles exists in `state-stores.yaml` but is never accessed. All styles come from hardcoded `BuiltInStyles`.
+1. **CreateStyle not persisted**: `CreateStyleAsync` returns the style as if created but does not save to the `music-styles` MySQL store or the in-memory `BuiltInStyles` collection. Custom styles are lost after the response. See Design Consideration #1 below - tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
+2. **music-styles store declared but unused**: The MySQL store for styles exists in `state-stores.yaml` but is never accessed. All styles come from hardcoded `BuiltInStyles`. See Design Consideration #1 below - tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
 
 ---
 
 ## Potential Extensions
 
-1. **Persistent custom styles**: Implement CreateStyle to store in MySQL, merge with BuiltInStyles on load.
+1. **Persistent custom styles**: Implement CreateStyle to store in MySQL, merge with BuiltInStyles on load. Tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
 2. **Multi-instrument arrangement**: Extend MIDI-JSON output to support multiple instrument tracks with orchestration rules.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/202 -->
 3. **Real-time streaming**: Generate and stream MIDI events for live performance scenarios.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/203 -->
 4. **Style mixing**: Blend parameters from multiple styles for hybrid compositions.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/204 -->
 
 ---
 
@@ -200,22 +215,15 @@ None identified.
 1. **Unused state store (music-styles)**: The MySQL store is defined in `state-stores.yaml` but never accessed. All styles come from hardcoded `BuiltInStyles`. Either implement CreateStyle persistence or remove the store from schema.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 
-2. **Hardcoded tunables throughout**: Multiple hardcoded values scattered through the code:
-   - `ticksPerBeat = 480` (line 112)
-   - `chordsPerBar = 1` (line 128)
-   - `voiceCount = 4` (line 135)
-   - `Syncopation = 0.2` (lines 144, 616)
-   - `beatsPerChord = 4.0` (line 517)
-   - `Density = 0.7` (line 615)
-   - Emotional state defaults: tension=0.2, brightness=0.5, energy=0.5, warmth=0.5, stability=0.8, valence=0.5 (lines 839-844)
+2. ~~**Hardcoded tunables throughout**~~: **FIXED** (2026-01-31) - All hardcoded tunables moved to configuration schema. Added 12 new configuration properties in `music-configuration.yaml`: `DefaultTicksPerBeat`, `DefaultChordsPerBar`, `DefaultVoiceCount`, `DefaultBeatsPerChord`, `DefaultMelodySyncopation`, `DefaultMelodyDensity`, and 6 emotional state defaults. Service now reads from `_configuration` instead of magic numbers.
 
-   Requires ~10 new configuration properties to fully address.
-
-3. **MusicServicePlugin scope lifecycle**: The plugin creates a scoped DI container in `OnStartAsync` (line 66), resolves `IMusicService`, then disposes the scope at the end of the `using` block. The `_service` reference is retained but never used after initial startup (subsequent requests create their own scopes via controller DI). This is not a bug but could be confusing—the `_service` field could be removed or the pattern simplified.
+3. ~~**MusicServicePlugin scope lifecycle**~~: **FIXED** (2026-01-31) - Removed dead code from plugin. MusicService doesn't implement IBannouService, so the entire lifecycle resolution pattern was no-ops. Simplified plugin to minimal implementation: empty ConfigureServices, empty ConfigureApplication, no-op lifecycle methods. Plugin went from 141 lines to 60 lines of clean, honest code.
 
 4. **No event publishing for compositions**: Generated compositions are not tracked. No analytics on what styles/moods are popular, no composition history per user.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/205 -->
 
 5. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/206 -->
 
 ---
 
@@ -223,4 +231,16 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-- **Design Consideration #1** (Unused state store): [#188](https://github.com/beyond-immersion/bannou-service/issues/188) - Requires decision on whether to implement custom styles or remove unused store
+### Completed (2026-01-31)
+
+- **Design Consideration #2** (Hardcoded tunables): FIXED - Added 12 configuration properties to `music-configuration.yaml`. All magic numbers now read from `_configuration`.
+- **Design Consideration #3** (MusicServicePlugin lifecycle): FIXED - Removed dead code, simplified plugin from 141 to 60 lines.
+
+### Pending Design
+
+- **Stubs #1-2, Potential Extension #1, Design Consideration #1** (Unused state store / CreateStyle persistence): [#188](https://github.com/beyond-immersion/bannou-service/issues/188) - Requires decision on whether to implement custom styles or remove unused store
+- **Potential Extension #2** (Multi-instrument arrangement): [#202](https://github.com/beyond-immersion/bannou-service/issues/202) - Needs design for orchestration rules and presets
+- **Potential Extension #3** (Real-time streaming): [#203](https://github.com/beyond-immersion/bannou-service/issues/203) - Needs design for streaming protocol and timing semantics
+- **Potential Extension #4** (Style mixing): [#204](https://github.com/beyond-immersion/bannou-service/issues/204) - Needs design for blending algorithm and input format
+- **Design Consideration #4** (Event publishing): [#205](https://github.com/beyond-immersion/bannou-service/issues/205) - Needs decision on whether composition analytics are needed
+- **Design Consideration #5** (Rate limiting): [#206](https://github.com/beyond-immersion/bannou-service/issues/206) - Needs design for appropriate limits and enforcement point

@@ -1123,13 +1123,4 @@ public class SubscriptionConfigurationTests
         Assert.NotNull(config);
     }
 
-    [Fact]
-    public void Configuration_AuthorizationSuffix_ShouldHaveDefault()
-    {
-        // Arrange
-        var config = new SubscriptionServiceConfiguration();
-
-        // Act & Assert
-        Assert.Equal("authorized", config.AuthorizationSuffix);
-    }
 }

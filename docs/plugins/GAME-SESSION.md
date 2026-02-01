@@ -372,7 +372,7 @@ Subscription Cache Architecture
 
 ### Bugs (Fix Immediately)
 
-1. **Kick does not clear permission state**: `KickPlayerAsync` removes the player from the session and publishes the `player-left` event with `Kicked=true`, but does NOT call `_permissionClient.ClearSessionStateAsync` for the kicked player's WebSocket session. The kicked player retains `game-session:in_game` permission state until session expiry. Compare to `LeaveGameSessionAsync` (line 751) and `LeaveGameSessionByIdAsync` (line 1162) which both clear state. Fix: Add permission state clearing to `KickPlayerAsync` matching the leave operations.
+1. ~~**Kick does not clear permission state**~~: **FIXED** (2026-01-31) - `KickPlayerAsync` now calls `_permissionClient.ClearSessionStateAsync` using the kicked player's WebSocket session ID (`playerToKick.SessionId`) before saving the session. Error handling matches the pattern in Leave methods (best-effort with logging and error event publishing).
 
 ### Intentional Quirks
 
@@ -410,4 +410,6 @@ Subscription Cache Architecture
 
 *This section tracks active development work. Markers are managed by `/audit-plugin` workflow.*
 
-No active work items.
+### Completed
+
+- **2026-01-31**: Fixed "Kick does not clear permission state" bug - added permission clearing to `KickPlayerAsync` matching the Leave methods.
