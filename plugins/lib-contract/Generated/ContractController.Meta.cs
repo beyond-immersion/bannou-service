@@ -1444,37 +1444,36 @@ public partial class ContractController
     "$defs": {
         "ListContractTemplatesRequest": {
             "type": "object",
-            "description": "Request to list contract templates",
+            "description": "Request to list contract templates with cursor-based pagination.",
             "additionalProperties": false,
             "properties": {
                 "realmId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Filter by realm (null includes cross-realm templates)"
+                    "description": "Filter by realm (null includes cross-realm templates)."
                 },
                 "isActive": {
                     "type": "boolean",
                     "nullable": true,
-                    "description": "Filter by active status"
+                    "description": "Filter by active status."
                 },
                 "searchTerm": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Search in name and description"
+                    "description": "Search in name and description."
                 },
-                "page": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "default": 1,
-                    "description": "Page number (1-based)"
+                "cursor": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque cursor from previous response. Null for first page."
                 },
                 "pageSize": {
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 100,
-                    "default": 20,
-                    "description": "Results per page"
+                    "nullable": true,
+                    "description": "Number of items per page. Uses service default if not specified."
                 }
             }
         }
@@ -1489,13 +1488,11 @@ public partial class ContractController
     "$defs": {
         "ListContractTemplatesResponse": {
             "type": "object",
-            "description": "Paginated list of contract templates",
+            "description": "Paginated list of contract templates.",
             "additionalProperties": false,
             "required": [
                 "templates",
-                "totalCount",
-                "page",
-                "pageSize"
+                "hasMore"
             ],
             "properties": {
                 "templates": {
@@ -1503,23 +1500,16 @@ public partial class ContractController
                     "items": {
                         "$ref": "#/$defs/ContractTemplateResponse"
                     },
-                    "description": "List of templates"
+                    "description": "Templates in this page."
                 },
-                "totalCount": {
-                    "type": "integer",
-                    "description": "Total matching templates"
+                "nextCursor": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cursor for next page. Null if no more results."
                 },
-                "page": {
-                    "type": "integer",
-                    "description": "Current page number"
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "description": "Results per page"
-                },
-                "hasNextPage": {
+                "hasMore": {
                     "type": "boolean",
-                    "description": "Whether more results exist"
+                    "description": "Whether more results exist beyond this page."
                 }
             }
         },
@@ -4441,25 +4431,25 @@ public partial class ContractController
     "$defs": {
         "QueryContractInstancesRequest": {
             "type": "object",
-            "description": "Request to query contract instances",
+            "description": "Request to query contract instances with cursor-based pagination.",
             "additionalProperties": false,
             "properties": {
                 "partyEntityId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Filter by party entity ID"
+                    "description": "Filter by party entity ID."
                 },
                 "partyEntityType": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Filter by party entity type"
+                    "description": "Filter by party entity type."
                 },
                 "templateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Filter by template"
+                    "description": "Filter by template."
                 },
                 "statuses": {
                     "type": "array",
@@ -4467,20 +4457,19 @@ public partial class ContractController
                         "$ref": "#/$defs/ContractStatus"
                     },
                     "nullable": true,
-                    "description": "Filter by statuses"
+                    "description": "Filter by statuses."
                 },
-                "page": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "default": 1,
-                    "description": "Page number (1-based)"
+                "cursor": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque cursor from previous response. Null for first page."
                 },
                 "pageSize": {
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 100,
-                    "default": 20,
-                    "description": "Results per page"
+                    "nullable": true,
+                    "description": "Number of items per page. Uses service default if not specified."
                 }
             }
         },
@@ -4512,13 +4501,11 @@ public partial class ContractController
     "$defs": {
         "QueryContractInstancesResponse": {
             "type": "object",
-            "description": "Paginated list of contract instances",
+            "description": "Paginated list of contract instances.",
             "additionalProperties": false,
             "required": [
                 "contracts",
-                "totalCount",
-                "page",
-                "pageSize"
+                "hasMore"
             ],
             "properties": {
                 "contracts": {
@@ -4526,23 +4513,16 @@ public partial class ContractController
                     "items": {
                         "$ref": "#/$defs/ContractInstanceResponse"
                     },
-                    "description": "List of contracts"
+                    "description": "Contracts in this page."
                 },
-                "totalCount": {
-                    "type": "integer",
-                    "description": "Total matching contracts"
+                "nextCursor": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cursor for next page. Null if no more results."
                 },
-                "page": {
-                    "type": "integer",
-                    "description": "Current page number"
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "description": "Results per page"
-                },
-                "hasNextPage": {
+                "hasMore": {
                     "type": "boolean",
-                    "description": "Whether more results exist"
+                    "description": "Whether more results exist beyond this page."
                 }
             }
         },

@@ -583,55 +583,53 @@ paths:
         states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContractTemplatesRequest\"\
         ,\n    \"$defs\": {\n        \"ListContractTemplatesRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request to list contract templates\",\n            \"additionalProperties\": false,\n           \
-        \ \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter
-        by realm (null includes cross-realm templates)\"\n                },\n                \"isActive\": {\n          \
-        \          \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Filter by active status\"\n                },\n                \"searchTerm\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Search in name and description\"\
-        \n                },\n                \"page\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number (1-based)\"\
-        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
-        \        \"description\": \"Results per page\"\n                }\n            }\n        }\n    }\n}"
+        description\": \"Request to list contract templates with cursor-based pagination.\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by realm (null includes cross-realm templates).\"\n                },\n                \"isActive\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by active status.\"\n                },\n                \"searchTerm\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Search in name and
+        description.\"\n                },\n                \"cursor\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Opaque cursor from previous response.
+        Null for first page.\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Number of items per page. Uses service default if not specified.\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContractTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"ListContractTemplatesResponse\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"Paginated list of contract templates\",\n            \"additionalProperties\": false,\n     \
-        \       \"required\": [\n                \"templates\",\n                \"totalCount\",\n                \"page\"\
-        ,\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"templates\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/ContractTemplateResponse\"\n                    },\n                    \"description\": \"List of templates\"\
-        \n                },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n            \
-        \        \"description\": \"Total matching templates\"\n                },\n                \"page\": {\n        \
-        \            \"type\": \"integer\",\n                    \"description\": \"Current page number\"\n              \
-        \  },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Results per page\"\n                },\n                \"hasNextPage\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether more results exist\"\n                }\n            }\n       \
-        \ },\n        \"ContractTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        Contract template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"templateId\",\n                \"code\",\n                \"name\",\n                \"minParties\",\n\
-        \                \"maxParties\",\n                \"partyRoles\",\n                \"defaultEnforcementMode\",\n \
-        \               \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Unique template identifier\"\n                },\n                \"code\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n  \
-        \              },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Human-readable name\"\n                },\n                \"description\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed
-        description\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Realm ID if realm-specific\"\n                },\n                \"minParties\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Minimum parties required\"\n                },\n          \
-        \      \"maxParties\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum
-        parties allowed\"\n                },\n                \"partyRoles\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\n         \
-        \           },\n                    \"description\": \"Party role definitions\"\n                },\n            \
-        \    \"defaultTerms\": {\n                    \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Default contract terms\"\n                },\n                \"milestones\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/MilestoneDefinition\"\n                    },\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Milestone definitions\"\n                },\n                \"defaultEnforcementMode\"\
+        \ \"description\": \"Paginated list of contract templates.\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"templates\",\n                \"hasMore\"\n            ],\n          \
+        \  \"properties\": {\n                \"templates\": {\n                    \"type\": \"array\",\n               \
+        \     \"items\": {\n                        \"$ref\": \"#/$defs/ContractTemplateResponse\"\n                    },\n\
+        \                    \"description\": \"Templates in this page.\"\n                },\n                \"nextCursor\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cursor for next page. Null if no more results.\"\n                },\n                \"hasMore\": {\n       \
+        \             \"type\": \"boolean\",\n                    \"description\": \"Whether more results exist beyond this
+        page.\"\n                }\n            }\n        },\n        \"ContractTemplateResponse\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Contract template details\",\n            \"additionalProperties\":
+        false,\n            \"required\": [\n                \"templateId\",\n                \"code\",\n                \"\
+        name\",\n                \"minParties\",\n                \"maxParties\",\n                \"partyRoles\",\n     \
+        \           \"defaultEnforcementMode\",\n                \"isActive\",\n                \"createdAt\"\n          \
+        \  ],\n            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique template identifier\"\n\
+        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Unique template code\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Detailed description\"\n                },\n                \"realmId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm ID if realm-specific\"\n                },\n                \"minParties\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Minimum parties required\"\
+        \n                },\n                \"maxParties\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Maximum parties allowed\"\n                },\n                \"partyRoles\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PartyRoleDefinition\"\
+        \n                    },\n                    \"description\": \"Party role definitions\"\n                },\n  \
+        \              \"defaultTerms\": {\n                    \"$ref\": \"#/$defs/ContractTerms\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Default contract terms\"\n                },\n     \
+        \           \"milestones\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/MilestoneDefinition\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Milestone definitions\"\n                },\n                \"defaultEnforcementMode\"\
         : {\n                    \"$ref\": \"#/$defs/EnforcementMode\",\n                    \"description\": \"Default enforcement
         mode\"\n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n    \
         \                \"description\": \"Whether contracts can be transferred\"\n                },\n                \"\
@@ -1677,150 +1675,147 @@ paths:
         states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryContractInstancesRequest\"\
         ,\n    \"$defs\": {\n        \"QueryContractInstancesRequest\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"Request to query contract instances\",\n            \"additionalProperties\": false,\n      \
-        \      \"properties\": {\n                \"partyEntityId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Filter by party entity ID\"\n                },\n                \"partyEntityType\": {\n                    \"\
-        type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by party
-        entity type\"\n                },\n                \"templateId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Filter by template\"\n                },\n                \"statuses\": {\n                    \"type\": \"array\"\
+        \ \"description\": \"Request to query contract instances with cursor-based pagination.\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"partyEntityId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by party entity ID.\"\n                },\n                \"partyEntityType\": {\n                   \
+        \ \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by
+        party entity type.\"\n                },\n                \"templateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by template.\"\n                },\n                \"statuses\": {\n                    \"type\": \"array\"\
         ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ContractStatus\"\n              \
-        \      },\n                    \"nullable\": true,\n                    \"description\": \"Filter by statuses\"\n\
-        \                },\n                \"page\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number (1-based)\"\
-        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
-        \        \"description\": \"Results per page\"\n                }\n            }\n        },\n        \"ContractStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a contract instance\",\n\
-        \            \"enum\": [\n                \"draft\",\n                \"proposed\",\n                \"pending\",\n\
-        \                \"active\",\n                \"fulfilled\",\n                \"expired\",\n                \"terminated\"\
-        ,\n                \"breached\",\n                \"suspended\",\n                \"disputed\",\n                \"\
-        declined\"\n            ]\n        }\n    }\n}"
+        \      },\n                    \"nullable\": true,\n                    \"description\": \"Filter by statuses.\"\n\
+        \                },\n                \"cursor\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Opaque cursor from previous response. Null for first
+        page.\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n       \
+        \             \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Number of items per page. Uses service default if not specified.\"\n       \
+        \         }\n            }\n        },\n        \"ContractStatus\": {\n            \"type\": \"string\",\n       \
+        \     \"description\": \"Current status of a contract instance\",\n            \"enum\": [\n                \"draft\"\
+        ,\n                \"proposed\",\n                \"pending\",\n                \"active\",\n                \"fulfilled\"\
+        ,\n                \"expired\",\n                \"terminated\",\n                \"breached\",\n                \"\
+        suspended\",\n                \"disputed\",\n                \"declined\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryContractInstancesResponse\"\
         ,\n    \"$defs\": {\n        \"QueryContractInstancesResponse\": {\n            \"type\": \"object\",\n          \
-        \  \"description\": \"Paginated list of contract instances\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"contracts\",\n                \"totalCount\",\n                \"page\"\
-        ,\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"contracts\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/ContractInstanceResponse\"\n                    },\n                    \"description\": \"List of contracts\"\
-        \n                },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n            \
-        \        \"description\": \"Total matching contracts\"\n                },\n                \"page\": {\n        \
-        \            \"type\": \"integer\",\n                    \"description\": \"Current page number\"\n              \
-        \  },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Results per page\"\n                },\n                \"hasNextPage\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether more results exist\"\n                }\n            }\n       \
-        \ },\n        \"ContractInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        Contract instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"contractId\",\n                \"templateId\",\n                \"status\",\n                \"parties\"\
-        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"contractId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique contract identifier\"\n                },\n                \"templateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Source template ID\"\
-        \n                },\n                \"templateCode\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"Source template code\"\n                },\n                \"status\": {\n         \
-        \           \"$ref\": \"#/$defs/ContractStatus\",\n                    \"description\": \"Current contract status\"\
-        \n                },\n                \"parties\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"$ref\": \"#/$defs/ContractPartyResponse\"\n                    },\n  \
-        \                  \"description\": \"Contract parties\"\n                },\n                \"terms\": {\n     \
-        \               \"$ref\": \"#/$defs/ContractTerms\",\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Contract terms\"\n                },\n                \"milestones\": {\n                  \
-        \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MilestoneInstanceResponse\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Milestone
-        progress\"\n                },\n                \"currentMilestoneIndex\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Index of current milestone\"\n\
-        \                },\n                \"escrowIds\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
-        \                   },\n                    \"nullable\": true,\n                    \"description\": \"Related escrow
-        IDs\"\n                },\n                \"proposedAt\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When contract was proposed\"\n                },\n                \"acceptedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When all parties consented\"\n                },\n                \"effectiveFrom\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When contract became active\"\n                },\n\
-        \                \"effectiveUntil\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When contract expires\"\
-        \n                },\n                \"terminatedAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When contract was terminated\"\n                },\n                \"gameMetadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Game-specific metadata\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Creation timestamp\"\n                },\n                \"updatedAt\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n  \
-        \      \"ContractStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current status of
-        a contract instance\",\n            \"enum\": [\n                \"draft\",\n                \"proposed\",\n     \
-        \           \"pending\",\n                \"active\",\n                \"fulfilled\",\n                \"expired\"\
-        ,\n                \"terminated\",\n                \"breached\",\n                \"suspended\",\n              \
-        \  \"disputed\",\n                \"declined\"\n            ]\n        },\n        \"ContractPartyResponse\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"Contract party details\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"entityId\",\n                \"entityType\",\n          \
-        \      \"role\",\n                \"consentStatus\"\n            ],\n            \"properties\": {\n             \
-        \   \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
-        \              \"description\": \"Entity ID\"\n                },\n                \"entityType\": {\n           \
-        \         \"type\": \"object\",\n                    \"description\": \"Entity type\"\n                },\n      \
-        \          \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in
-        contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"#/$defs/ConsentStatus\"\
-        ,\n                    \"description\": \"Consent status\"\n                },\n                \"consentedAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"When consent was given\"\n                }\n          \
-        \  }\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\",\n\
-        \                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
-        {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
+        \  \"description\": \"Paginated list of contract instances.\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"contracts\",\n                \"hasMore\"\n            ],\n         \
+        \   \"properties\": {\n                \"contracts\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/ContractInstanceResponse\"\n                    },\n\
+        \                    \"description\": \"Contracts in this page.\"\n                },\n                \"nextCursor\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Required notice for termination (ISO 8601 duration)\"\n                },\n                \"breachThreshold\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Breaches before auto-termination (0 for no auto)\"\n             \
-        \   },\n                \"gracePeriodForCure\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Time to cure breach (ISO 8601 duration)\"\n        \
-        \        },\n                \"customTerms\": {\n                    \"type\": \"object\",\n                    \"\
-        additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific
-        custom terms\"\n                }\n            }\n        },\n        \"PaymentSchedule\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"When payments occur\",\n            \"enum\": [\n                \"\
-        one_time\",\n                \"recurring\",\n                \"milestone_based\"\n            ]\n        },\n    \
-        \    \"TerminationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How the contract
-        can be terminated\",\n            \"enum\": [\n                \"mutual_consent\",\n                \"unilateral_with_notice\"\
-        ,\n                \"unilateral_immediate\",\n                \"non_terminable\"\n            ]\n        },\n    \
-        \    \"MilestoneInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Milestone
-        instance status\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
-        code\",\n                \"name\",\n                \"sequence\",\n                \"required\",\n               \
-        \ \"status\"\n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Milestone code\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Milestone name\"\n        \
-        \        },\n                \"sequence\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Order in flow\"\n                },\n                \"required\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether required\"\n                },\n                \"status\": {\n\
-        \                    \"$ref\": \"#/$defs/MilestoneStatus\",\n                    \"description\": \"Current status\"\
-        \n                },\n                \"completedAt\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When completed\"\n                },\n                \"failedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When failed\"\n                },\n                \"activatedAt\": {\n                    \"type\"\
+        : \"Cursor for next page. Null if no more results.\"\n                },\n                \"hasMore\": {\n       \
+        \             \"type\": \"boolean\",\n                    \"description\": \"Whether more results exist beyond this
+        page.\"\n                }\n            }\n        },\n        \"ContractInstanceResponse\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Contract instance details\",\n            \"additionalProperties\":
+        false,\n            \"required\": [\n                \"contractId\",\n                \"templateId\",\n          \
+        \      \"status\",\n                \"parties\",\n                \"createdAt\"\n            ],\n            \"properties\"\
+        : {\n                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique contract identifier\"\n                },\n           \
+        \     \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Source template ID\"\n                },\n                \"templateCode\":
+        {\n                    \"type\": \"string\",\n                    \"description\": \"Source template code\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/ContractStatus\",\n      \
+        \              \"description\": \"Current contract status\"\n                },\n                \"parties\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ContractPartyResponse\"\n                    },\n                    \"description\": \"Contract parties\"\
+        \n                },\n                \"terms\": {\n                    \"$ref\": \"#/$defs/ContractTerms\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Contract terms\"\n                },\n\
+        \                \"milestones\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
+        \                       \"$ref\": \"#/$defs/MilestoneInstanceResponse\"\n                    },\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Milestone progress\"\n                },\n      \
+        \          \"currentMilestoneIndex\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Index of current milestone\"\n                },\n               \
+        \ \"escrowIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                 \
+        \       \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Related escrow IDs\"\n                },\n  \
+        \              \"proposedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When contract was proposed\"\n\
+        \                },\n                \"acceptedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        When all parties consented\"\n                },\n                \"effectiveFrom\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this milestone became active\"\n                },\n                \"deadline\"\
+        \           \"description\": \"When contract became active\"\n                },\n                \"effectiveUntil\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Absolute deadline (computed from activatedAt + duration)\"\
-        \n                },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
-        optional milestones\"\n                }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n            \"enum\": [\n  \
-        \              \"pending\",\n                \"active\",\n                \"completed\",\n                \"failed\"\
-        ,\n                \"skipped\"\n            ]\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\",\n        \
-        \    \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n\
-        \        }\n    }\n}"
+        \   \"nullable\": true,\n                    \"description\": \"When contract expires\"\n                },\n    \
+        \            \"terminatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When contract was terminated\"\n\
+        \                },\n                \"gameMetadata\": {\n                    \"type\": \"object\",\n            \
+        \        \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific metadata\"\n                },\n                \"createdAt\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Last update timestamp\"\n                }\n            }\n        },\n        \"ContractStatus\": {\n           \
+        \ \"type\": \"string\",\n            \"description\": \"Current status of a contract instance\",\n            \"enum\"\
+        : [\n                \"draft\",\n                \"proposed\",\n                \"pending\",\n                \"active\"\
+        ,\n                \"fulfilled\",\n                \"expired\",\n                \"terminated\",\n               \
+        \ \"breached\",\n                \"suspended\",\n                \"disputed\",\n                \"declined\"\n   \
+        \         ]\n        },\n        \"ContractPartyResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Contract party details\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"entityId\",\n                \"entityType\",\n                \"role\",\n                \"consentStatus\"\
+        \n            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity ID\"\n       \
+        \         },\n                \"entityType\": {\n                    \"type\": \"object\",\n                    \"\
+        description\": \"Entity type\"\n                },\n                \"role\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Role in contract\"\n                },\n                \"consentStatus\"\
+        : {\n                    \"$ref\": \"#/$defs/ConsentStatus\",\n                    \"description\": \"Consent status\"\
+        \n                },\n                \"consentedAt\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When consent was given\"\n                }\n            }\n        },\n        \"ConsentStatus\": {\n       \
+        \     \"type\": \"string\",\n            \"description\": \"Party's consent status\",\n            \"enum\": [\n \
+        \               \"pending\",\n                \"consented\",\n                \"declined\",\n                \"implicit\"\
+        \n            ]\n        },\n        \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Configurable contract terms\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"duration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Contract duration (ISO 8601 duration, null for perpetual)\"\n            \
+        \    },\n                \"paymentSchedule\": {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"When payments occur\"\n             \
+        \   },\n                \"paymentFrequency\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Recurring payment frequency (ISO 8601 duration)\"\n    \
+        \            },\n                \"terminationPolicy\": {\n                    \"$ref\": \"#/$defs/TerminationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How contract can be terminated\"\
+        \n                },\n                \"terminationNoticePeriod\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Required notice for termination (ISO
+        8601 duration)\"\n                },\n                \"breachThreshold\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breaches before auto-termination (0 for no auto)\"\n                },\n                \"gracePeriodForCure\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Time to cure breach (ISO 8601 duration)\"\n                },\n                \"customTerms\": {\n          \
+        \          \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-specific custom terms\"\n                }\n            }\n \
+        \       },\n        \"PaymentSchedule\": {\n            \"type\": \"string\",\n            \"description\": \"When
+        payments occur\",\n            \"enum\": [\n                \"one_time\",\n                \"recurring\",\n      \
+        \          \"milestone_based\"\n            ]\n        },\n        \"TerminationPolicy\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How the contract can be terminated\",\n            \"enum\": [\n   \
+        \             \"mutual_consent\",\n                \"unilateral_with_notice\",\n                \"unilateral_immediate\"\
+        ,\n                \"non_terminable\"\n            ]\n        },\n        \"MilestoneInstanceResponse\": {\n     \
+        \       \"type\": \"object\",\n            \"description\": \"Milestone instance status\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"sequence\"\
+        ,\n                \"required\",\n                \"status\"\n            ],\n            \"properties\": {\n    \
+        \            \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Milestone
+        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Milestone name\"\n                },\n                \"sequence\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"Order in flow\"\n                },\n       \
+        \         \"required\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        required\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/MilestoneStatus\"\
+        ,\n                    \"description\": \"Current status\"\n                },\n                \"completedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When completed\"\n                },\n                \"\
+        failedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"When failed\"\n                },\n    \
+        \            \"activatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this milestone became active\"\
+        \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Absolute deadline (computed from activatedAt + duration)\"\n                },\n                \"deadlineBehavior\"\
+        : {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Behavior when deadline passes for optional milestones\"\n                }\n\
+        \            }\n        },\n        \"MilestoneStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a milestone\",\n            \"enum\": [\n                \"pending\",\n                \"active\"\
+        ,\n                \"completed\",\n                \"failed\",\n                \"skipped\"\n            ]\n     \
+        \   },\n        \"MilestoneDeadlineBehavior\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Behavior when optional milestone deadline passes\",\n            \"enum\": [\n                \"skip\",\n      \
+        \          \"warn\",\n                \"breach\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query instances by party, template, status\",\n    \"description\": \"\
         Queries contract instances with various filters. At least one filter\\nmust be provided.\\n\",\n    \"tags\": [\n\
         \        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryContractInstances\"\n}"
@@ -3401,6 +3396,18 @@ components:
       enum:
       - instance_data
       - runtime_state
+    IndexLockFailureMode:
+      type: string
+      description: Behavior when index lock acquisition fails
+      enum:
+      - warn
+      - fail
+    TermsMergeMode:
+      type: string
+      description: How instance terms merge with template terms during contract creation
+      enum:
+      - shallow
+      - deep
     CreateContractTemplateRequest:
       type: object
       description: Request to create a new contract template
@@ -3484,33 +3491,32 @@ components:
           description: Template code (provide this or templateId)
     ListContractTemplatesRequest:
       type: object
-      description: Request to list contract templates
+      description: Request to list contract templates with cursor-based pagination.
       additionalProperties: false
       properties:
         realmId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by realm (null includes cross-realm templates)
+          description: Filter by realm (null includes cross-realm templates).
         isActive:
           type: boolean
           nullable: true
-          description: Filter by active status
+          description: Filter by active status.
         searchTerm:
           type: string
           nullable: true
-          description: Search in name and description
-        page:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Page number (1-based)
+          description: Search in name and description.
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-          description: Results per page
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
     UpdateContractTemplateRequest:
       type: object
       description: Request to update a contract template
@@ -3632,31 +3638,24 @@ components:
           description: Last update timestamp
     ListContractTemplatesResponse:
       type: object
-      description: Paginated list of contract templates
+      description: Paginated list of contract templates.
       additionalProperties: false
       required:
       - templates
-      - totalCount
-      - page
-      - pageSize
+      - hasMore
       properties:
         templates:
           type: array
           items:
             $ref: '#/components/schemas/ContractTemplateResponse'
-          description: List of templates
-        totalCount:
-          type: integer
-          description: Total matching templates
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Results per page
-        hasNextPage:
+          description: Templates in this page.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
           type: boolean
-          description: Whether more results exist
+          description: Whether more results exist beyond this page.
     CreateContractInstanceRequest:
       type: object
       description: Request to create a contract instance
@@ -3745,40 +3744,39 @@ components:
           description: Contract instance ID
     QueryContractInstancesRequest:
       type: object
-      description: Request to query contract instances
+      description: Request to query contract instances with cursor-based pagination.
       additionalProperties: false
       properties:
         partyEntityId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by party entity ID
+          description: Filter by party entity ID.
         partyEntityType:
           $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
-          description: Filter by party entity type
+          description: Filter by party entity type.
         templateId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by template
+          description: Filter by template.
         statuses:
           type: array
           items:
             $ref: '#/components/schemas/ContractStatus'
           nullable: true
-          description: Filter by statuses
-        page:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Page number (1-based)
+          description: Filter by statuses.
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-          description: Results per page
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
     TerminateContractInstanceRequest:
       type: object
       description: Request to terminate a contract
@@ -3907,31 +3905,24 @@ components:
           description: Last update timestamp
     QueryContractInstancesResponse:
       type: object
-      description: Paginated list of contract instances
+      description: Paginated list of contract instances.
       additionalProperties: false
       required:
       - contracts
-      - totalCount
-      - page
-      - pageSize
+      - hasMore
       properties:
         contracts:
           type: array
           items:
             $ref: '#/components/schemas/ContractInstanceResponse'
-          description: List of contracts
-        totalCount:
-          type: integer
-          description: Total matching contracts
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Results per page
-        hasNextPage:
+          description: Contracts in this page.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
           type: boolean
-          description: Whether more results exist
+          description: Whether more results exist beyond this page.
     ContractInstanceStatusResponse:
       type: object
       description: Contract status summary

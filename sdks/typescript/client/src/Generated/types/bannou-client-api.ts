@@ -14681,40 +14681,30 @@ export interface components {
       /** @description Total count */
       totalCount: number;
     };
-    /** @description Request to list contract templates */
+    /** @description Request to list contract templates with cursor-based pagination. */
     ListContractTemplatesRequest: {
       /**
        * Format: uuid
-       * @description Filter by realm (null includes cross-realm templates)
+       * @description Filter by realm (null includes cross-realm templates).
        */
       realmId?: string | null;
-      /** @description Filter by active status */
+      /** @description Filter by active status. */
       isActive?: boolean | null;
-      /** @description Search in name and description */
+      /** @description Search in name and description. */
       searchTerm?: string | null;
-      /**
-       * @description Page number (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Results per page
-       * @default 20
-       */
-      pageSize: number;
+      /** @description Opaque cursor from previous response. Null for first page. */
+      cursor?: string | null;
+      /** @description Number of items per page. Uses service default if not specified. */
+      pageSize?: number | null;
     };
-    /** @description Paginated list of contract templates */
+    /** @description Paginated list of contract templates. */
     ListContractTemplatesResponse: {
-      /** @description List of templates */
+      /** @description Templates in this page. */
       templates: components['schemas']['ContractTemplateResponse'][];
-      /** @description Total matching templates */
-      totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Results per page */
-      pageSize: number;
-      /** @description Whether more results exist */
-      hasNextPage?: boolean;
+      /** @description Cursor for next page. Null if no more results. */
+      nextCursor?: string | null;
+      /** @description Whether more results exist beyond this page. */
+      hasMore: boolean;
     };
     /** @description Request to list currency definitions */
     ListCurrencyDefinitionsRequest: {
@@ -17128,45 +17118,35 @@ export interface components {
        */
       pageSize: number;
     };
-    /** @description Request to query contract instances */
+    /** @description Request to query contract instances with cursor-based pagination. */
     QueryContractInstancesRequest: {
       /**
        * Format: uuid
-       * @description Filter by party entity ID
+       * @description Filter by party entity ID.
        */
       partyEntityId?: string | null;
-      /** @description Filter by party entity type */
+      /** @description Filter by party entity type. */
       partyEntityType?: components['schemas']['EntityType'];
       /**
        * Format: uuid
-       * @description Filter by template
+       * @description Filter by template.
        */
       templateId?: string | null;
-      /** @description Filter by statuses */
+      /** @description Filter by statuses. */
       statuses?: components['schemas']['ContractStatus'][] | null;
-      /**
-       * @description Page number (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Results per page
-       * @default 20
-       */
-      pageSize: number;
+      /** @description Opaque cursor from previous response. Null for first page. */
+      cursor?: string | null;
+      /** @description Number of items per page. Uses service default if not specified. */
+      pageSize?: number | null;
     };
-    /** @description Paginated list of contract instances */
+    /** @description Paginated list of contract instances. */
     QueryContractInstancesResponse: {
-      /** @description List of contracts */
+      /** @description Contracts in this page. */
       contracts: components['schemas']['ContractInstanceResponse'][];
-      /** @description Total matching contracts */
-      totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Results per page */
-      pageSize: number;
-      /** @description Whether more results exist */
-      hasNextPage?: boolean;
+      /** @description Cursor for next page. Null if no more results. */
+      nextCursor?: string | null;
+      /** @description Whether more results exist beyond this page. */
+      hasMore: boolean;
     };
     /** @description Request to search documentation using natural language queries */
     QueryDocumentationRequest: {
