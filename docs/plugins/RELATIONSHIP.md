@@ -44,7 +44,6 @@ No services subscribe to relationship events.
 | `entity-idx:{entityType}:{entityId}` | `List<Guid>` | Relationship IDs involving this entity |
 | `type-idx:{relationshipTypeId}` | `List<Guid>` | Relationship IDs of this type |
 | `composite:{entity1}:{entity2}:{typeId}` | `string` | Uniqueness constraint (normalized bidirectional key -> relationship ID) |
-| `all-relationships` | `List<Guid>` | Master list of all relationship IDs (maintained but never queried) |
 
 ---
 
@@ -140,7 +139,7 @@ End relationship:
 
 ## Stubs & Unimplemented Features
 
-1. **`all-relationships` master list key**: The constant is defined and maintained during create (line 443) but never queried in any endpoint. Likely vestigial from early development or intended for future admin queries.
+1. ~~**`all-relationships` master list key**~~: **FIXED** (2026-01-31) - Removed dead code: the constant, helper method, and create-time call were all removed. The list was never queried by any endpoint.
 
 ---
 
@@ -191,4 +190,6 @@ No bugs identified.
 
 *This section tracks active development work. Markers are managed by `/audit-plugin`.*
 
-No items currently being tracked.
+### Completed
+
+- **2026-01-31**: Removed dead `all-relationships` master list key (constant, helper method, and create-time call).

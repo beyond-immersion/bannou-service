@@ -26,7 +26,6 @@ public partial class RelationshipService : IRelationshipService
     private const string ENTITY_INDEX_PREFIX = "entity-idx:";
     private const string TYPE_INDEX_PREFIX = "type-idx:";
     private const string COMPOSITE_KEY_PREFIX = "composite:";
-    private const string ALL_RELATIONSHIPS_KEY = "all-relationships";
 
     /// <summary>
     /// Initializes a new instance of the RelationshipService.
@@ -439,9 +438,6 @@ public partial class RelationshipService : IRelationshipService
             // Update type index
             await AddToTypeIndexAsync(body.RelationshipTypeId, relationshipId, cancellationToken);
 
-            // Update all relationships list
-            await AddToAllRelationshipsListAsync(relationshipId, cancellationToken);
-
             // Publish relationship created event
             await PublishRelationshipCreatedEventAsync(model, cancellationToken);
 
@@ -694,21 +690,6 @@ public partial class RelationshipService : IRelationshipService
         if (relationshipIds.Remove(relationshipId))
         {
             await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// Adds a relationship ID to the master list of all relationships.
-    /// </summary>
-    private async Task AddToAllRelationshipsListAsync(Guid relationshipId, CancellationToken cancellationToken)
-    {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
-        var allRelationships = await store.GetAsync(ALL_RELATIONSHIPS_KEY, cancellationToken) ?? new List<Guid>();
-
-        if (!allRelationships.Contains(relationshipId))
-        {
-            allRelationships.Add(relationshipId);
-            await store.SaveAsync(ALL_RELATIONSHIPS_KEY, allRelationships, cancellationToken: cancellationToken);
         }
     }
 

@@ -430,8 +430,7 @@ Connection Mode Behavior Matrix
 
 6. ~~**Pending RPC timeout cleanup**~~: **ALREADY IMPLEMENTED** (2026-01-31) - Documentation error: `_pendingRPCCleanupTimer` already runs every `RpcCleanupIntervalSeconds` (default 30s) calling `CleanupExpiredPendingRPCs()` which removes expired entries based on `TimeoutAt`.
 
-7. **Graceful shutdown**: On application shutdown, send close frames to all connected clients with a "server_shutting_down" reason, wait for `ConnectionShutdownTimeoutSeconds`, then force-close remaining connections.
-<!-- AUDIT:IN_PROGRESS:2026-01-31 -->
+7. ~~**Graceful shutdown**~~: **FIXED** (2026-01-31) - ConnectService now implements IDisposable. On shutdown, the DI container calls Dispose() which in turn calls WebSocketConnectionManager.Dispose() to send close frames to all clients and wait up to ConnectionShutdownTimeoutSeconds before force-closing.
 
 ---
 
@@ -469,7 +468,7 @@ No bugs identified.
 
 7. **Instance ID non-deterministic**: `_instanceId` is generated as `MachineName-{random8chars}`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
 
-8. **No graceful shutdown**: When the application shuts down, WebSocket connections are abruptly terminated. There is no mechanism to send close frames or drain pending messages before exit (only `ConnectionShutdownTimeoutSeconds` for the WebSocketConnectionManager's internal cleanup).
+8. ~~**No graceful shutdown**~~: **FIXED** (2026-01-31) - ConnectService now implements IDisposable. During shutdown, WebSocketConnectionManager.Dispose() sends close frames to all connections with "Server shutdown" message and waits up to ConnectionShutdownTimeoutSeconds before force-closing.
 
 9. **Session subsumed skips account index removal**: Lines 866-870 - when a session is "subsumed" by a new connection (same session ID), the old connection's cleanup skips RemoveSessionFromAccountAsync. This is intentional (session is still active) but means account index removal only happens once per unique session lifecycle.
 
@@ -495,6 +494,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Server-initiated heartbeats (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 3 "Heartbeat sending" tracked in Issue #175
 - **Payload encryption (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 1 "Encrypted flag" tracked in Issue #171
 - **Payload compression (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 2 "Compressed flag" tracked in Issue #172
+- **Graceful shutdown** - Fixed 2026-01-31 - ConnectService now implements IDisposable; WebSocket close frames sent on shutdown
 
 ### Pending Design Review
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - Requires design decisions on key exchange protocol, algorithm selection, and client SDK coordination (2026-01-31)

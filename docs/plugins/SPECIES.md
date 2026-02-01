@@ -213,7 +213,7 @@ State Store Layout
 
 1. ~~**species.created event only populates subset of fields**~~: **FIXED** (2026-01-31) - `PublishSpeciesCreatedEventAsync` now populates all lifecycle fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt, IsDeprecated, DeprecatedAt, DeprecationReason) matching the pattern used by `PublishSpeciesDeletedEventAsync` and `PublishSpeciesUpdatedEventAsync`.
 
-2. **Delete endpoint doesn't enforce deprecation requirement**: Schema description says "Only deprecated species with zero references can be deleted" but `DeleteSpeciesAsync` has no check for `IsDeprecated`. Any species without character references can be deleted, bypassing the intended two-step lifecycle (deprecate → merge → delete).
+2. ~~**Delete endpoint doesn't enforce deprecation requirement**~~: **FIXED** (2026-01-31) - `DeleteSpeciesAsync` now checks `IsDeprecated` before allowing deletion, returning `StatusCodes.BadRequest` if the species is not deprecated. This enforces the intended two-step lifecycle (deprecate -> merge -> delete) as documented in the schema.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -252,3 +252,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **2026-01-31**: Fixed species.created event to populate all lifecycle fields (was only setting 7 of 18 fields)
+- **2026-01-31**: Fixed DeleteSpecies to enforce deprecation requirement - now returns BadRequest if species is not deprecated, matching schema documentation

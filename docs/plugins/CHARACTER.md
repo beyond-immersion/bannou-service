@@ -27,8 +27,11 @@ The Character service manages game world characters for Arcadia. Characters are 
 | lib-character-history (`ICharacterHistoryClient`) | Fetches backstory for enrichment; summarizes/deletes on compression |
 | lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting |
 | lib-relationship-type (`IRelationshipTypeClient`) | Maps relationship type IDs to codes for family tree categorization |
+| lib-character-encounter (`ICharacterEncounterClient`) | Queries encounters for cleanup reference counting |
+| lib-contract (`IContractClient`) | Queries contracts for cleanup reference counting |
+| lib-actor (`IActorClient`) | Queries actors for cleanup reference counting (NPC brains) |
 
-> **Refactoring Consideration**: This plugin injects 6 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+> **Refactoring Consideration**: This plugin injects 9 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ---
 
@@ -112,6 +115,9 @@ This plugin does not consume external events.
 | `ICharacterHistoryClient` | Scoped | Enrichment and compression |
 | `IRelationshipClient` | Scoped | Family tree and reference counting |
 | `IRelationshipTypeClient` | Scoped | Relationship code lookup |
+| `ICharacterEncounterClient` | Scoped | Encounter reference counting |
+| `IContractClient` | Scoped | Contract reference counting |
+| `IActorClient` | Scoped | Actor reference counting (NPC brains) |
 | `IEventConsumer` | Scoped | Event registration (no handlers defined) |
 
 Service lifetime is **Scoped** (per-request).
@@ -215,14 +221,14 @@ Character Key Architecture (Realm-Partitioned)
 
 ## Stubs & Unimplemented Features
 
-1. **Incomplete reference counting**: `CheckCharacterReferences` only checks relationships. Does not check character encounters, history events, contracts, documents, or AI agent references.
+1. ~~**Incomplete reference counting**~~: **FIXED** (2026-01-31) - `CheckCharacterReferences` now checks relationships, encounters, contracts, and actors. History events and documents are not checked as there's no query API for those services to look up references by character ID.
 2. **`CharacterRetentionDays` config placeholder**: Defined for future retention/purge feature but not yet referenced in service code.
 
 ---
 
 ## Potential Extensions
 
-1. **Full reference counting**: Expand to check encounters, history, contracts, and other polymorphic references.
+1. ~~**Full reference counting**~~: **FIXED** (2026-01-31) - Now checks relationships, encounters, contracts, and actors. History events and documentation references would require new query APIs from those services.
 2. **Realm transfer**: Move characters between realms with event publishing and index updates.
 3. **Batch compression**: Compress multiple dead characters in one operation.
 4. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
@@ -253,7 +259,7 @@ No bugs identified.
 
 4. **Global index double-write**: Both realm index and global index are updated on create/delete. Extra write for resilience across restarts but adds complexity.
 
-5. **Reference counting only checks relationships**: `CheckCharacterReferences` queries only the Relationship service. Characters referenced by encounters, history events, contracts, or AI agents are not counted, potentially allowing premature cleanup.
+5. ~~**Reference counting only checks relationships**~~: **FIXED** (2026-01-31) - `CheckCharacterReferences` now queries relationships, encounters, contracts, and actors. History events and documentation references are not checked (would require new APIs from those services).
 
 6. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
 
@@ -278,3 +284,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **2026-01-31**: Added distributed locking to `UpdateCharacterAsync` and `CompressCharacterAsync` per [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189). Added `character-lock` state store, `LockTimeoutSeconds` configuration, and `IDistributedLockProvider` dependency.
+- **2026-01-31**: Expanded reference counting in `CheckCharacterReferencesAsync` to check encounters (via `ICharacterEncounterClient`), contracts (via `IContractClient`), and actors (via `IActorClient`) in addition to relationships. Added 3 new service client dependencies. History events and documentation references are not checked as those services lack character-based query APIs.

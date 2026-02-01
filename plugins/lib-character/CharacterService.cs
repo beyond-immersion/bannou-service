@@ -1,9 +1,12 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
@@ -35,6 +38,9 @@ public partial class CharacterService : ICharacterService
     private readonly ICharacterHistoryClient _historyClient;
     private readonly IRelationshipClient _relationshipClient;
     private readonly IRelationshipTypeClient _relationshipTypeClient;
+    private readonly ICharacterEncounterClient _encounterClient;
+    private readonly IContractClient _contractClient;
+    private readonly IActorClient _actorClient;
 
     // Key prefixes for realm-partitioned storage
     private const string CHARACTER_KEY_PREFIX = "character:";
@@ -52,6 +58,9 @@ public partial class CharacterService : ICharacterService
 
     // Reference type constants
     private const string REFERENCE_TYPE_RELATIONSHIP = "RELATIONSHIP";
+    private const string REFERENCE_TYPE_ENCOUNTER = "ENCOUNTER";
+    private const string REFERENCE_TYPE_CONTRACT = "CONTRACT";
+    private const string REFERENCE_TYPE_ACTOR = "ACTOR";
 
     // Grace period for cleanup eligibility - from configuration in days, converted to seconds at usage
 
@@ -67,6 +76,9 @@ public partial class CharacterService : ICharacterService
         ICharacterHistoryClient historyClient,
         IRelationshipClient relationshipClient,
         IRelationshipTypeClient relationshipTypeClient,
+        ICharacterEncounterClient encounterClient,
+        IContractClient contractClient,
+        IActorClient actorClient,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -80,6 +92,9 @@ public partial class CharacterService : ICharacterService
         _historyClient = historyClient;
         _relationshipClient = relationshipClient;
         _relationshipTypeClient = relationshipTypeClient;
+        _encounterClient = encounterClient;
+        _contractClient = contractClient;
+        _actorClient = actorClient;
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -860,6 +875,7 @@ public partial class CharacterService : ICharacterService
             var referenceTypes = new List<string>();
             var referenceCount = 0;
 
+            // Check relationships
             try
             {
                 // Query for relationships where this character is entity1 or entity2
@@ -873,7 +889,7 @@ public partial class CharacterService : ICharacterService
 
                 if (relResult != null && relResult.Relationships.Count > 0)
                 {
-                    referenceCount = relResult.TotalCount;
+                    referenceCount += relResult.TotalCount;
 
                     // Track that relationships exist (detailed categorization would require
                     // additional calls to RelationshipType service for type codes)
@@ -884,6 +900,78 @@ public partial class CharacterService : ICharacterService
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
                 _logger.LogDebug("No relationships found for character {CharacterId}", body.CharacterId);
+            }
+
+            // Check character encounters
+            try
+            {
+                var encounterResult = await _encounterClient.QueryByCharacterAsync(
+                    new QueryByCharacterRequest
+                    {
+                        CharacterId = body.CharacterId,
+                        Page = 1,
+                        PageSize = 1 // Only need to know if any exist, not all of them
+                    },
+                    cancellationToken);
+
+                if (encounterResult != null && encounterResult.TotalCount > 0)
+                {
+                    referenceCount += encounterResult.TotalCount;
+                    if (!referenceTypes.Contains(REFERENCE_TYPE_ENCOUNTER))
+                        referenceTypes.Add(REFERENCE_TYPE_ENCOUNTER);
+                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogDebug("No encounters found for character {CharacterId}", body.CharacterId);
+            }
+
+            // Check contracts where character is a party
+            try
+            {
+                var contractResult = await _contractClient.QueryContractInstancesAsync(
+                    new QueryContractInstancesRequest
+                    {
+                        PartyEntityId = body.CharacterId,
+                        PartyEntityType = EntityType.Character,
+                        Page = 1,
+                        PageSize = 1 // Only need to know if any exist
+                    },
+                    cancellationToken);
+
+                if (contractResult != null && contractResult.TotalCount > 0)
+                {
+                    referenceCount += contractResult.TotalCount;
+                    if (!referenceTypes.Contains(REFERENCE_TYPE_CONTRACT))
+                        referenceTypes.Add(REFERENCE_TYPE_CONTRACT);
+                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogDebug("No contracts found for character {CharacterId}", body.CharacterId);
+            }
+
+            // Check actors associated with this character (NPC brains)
+            try
+            {
+                var actorResult = await _actorClient.ListActorsAsync(
+                    new ListActorsRequest
+                    {
+                        CharacterId = body.CharacterId,
+                        Limit = 1 // Only need to know if any exist
+                    },
+                    cancellationToken);
+
+                if (actorResult != null && actorResult.Actors.Count > 0)
+                {
+                    referenceCount += actorResult.Total;
+                    if (!referenceTypes.Contains(REFERENCE_TYPE_ACTOR))
+                        referenceTypes.Add(REFERENCE_TYPE_ACTOR);
+                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogDebug("No actors found for character {CharacterId}", body.CharacterId);
             }
 
             // Get/update reference tracking data with optimistic concurrency

@@ -534,6 +534,13 @@ public partial class SpeciesService : ISpeciesService
                 return StatusCodes.NotFound;
             }
 
+            // Species must be deprecated before deletion (per schema: "Only deprecated species with zero references can be deleted")
+            if (!model.IsDeprecated)
+            {
+                _logger.LogDebug("Cannot delete non-deprecated species {Code}: must deprecate first", model.Code);
+                return StatusCodes.BadRequest;
+            }
+
             // Check if species is in use by characters
             try
             {

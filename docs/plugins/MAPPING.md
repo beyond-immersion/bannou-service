@@ -356,6 +356,7 @@ Authoring Workflow
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/199 -->
 
 2. **Spatial index garbage collection on channel reset**: `ClearChannelDataAsync` deletes objects and the region index but notes "Spatial and type indexes are per-object and will be orphaned. They'll be cleaned up on next access or could be garbage collected." No GC is implemented.
+<!-- AUDIT:IN_PROGRESS:2026-01-31 -->
 
 3. **MapSnapshotEvent not published**: The events schema defines `MapSnapshotEvent` and its topic `map.{regionId}.{kind}.snapshot`, but `RequestSnapshot` only returns data to the caller -- it does not broadcast a snapshot event.
 

@@ -2072,11 +2072,32 @@ public partial class MappingService : IMappingService
 
         _logger.LogDebug("Clearing {Count} objects from channel {ChannelId}", objectIds.Count, channelId);
 
-        // Delete all objects
+        // Delete all objects and their index entries
         var objectStore = _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping);
         foreach (var objectId in objectIds)
         {
             var objectKey = BuildObjectKey(regionId, objectId);
+            var obj = await objectStore.GetAsync(objectKey, cancellationToken);
+
+            if (obj != null)
+            {
+                // Clean up spatial indexes
+                if (obj.Position != null)
+                {
+                    await RemoveFromSpatialIndexAsync(regionId, kind, objectId, obj.Position, cancellationToken);
+                }
+                if (obj.Bounds != null)
+                {
+                    await RemoveFromSpatialIndexForBoundsAsync(regionId, kind, objectId, obj.Bounds, cancellationToken);
+                }
+
+                // Clean up type index
+                if (!string.IsNullOrEmpty(obj.ObjectType))
+                {
+                    await RemoveFromTypeIndexAsync(regionId, obj.ObjectType, objectId, cancellationToken);
+                }
+            }
+
             await objectStore.DeleteAsync(objectKey, cancellationToken);
         }
 
@@ -2088,10 +2109,6 @@ public partial class MappingService : IMappingService
         var versionKey = BuildVersionKey(channelId);
         await _stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping)
             .SaveAsync(versionKey, new LongWrapper { Value = 0L }, cancellationToken: cancellationToken);
-
-        // Note: Spatial and type indexes are per-object and will be orphaned.
-        // They'll be cleaned up on next access or could be garbage collected.
-        // For a production implementation, we'd need to track all index keys.
     }
 
     private async Task<long> IncrementVersionAsync(Guid channelId, CancellationToken cancellationToken)
