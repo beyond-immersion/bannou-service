@@ -100,10 +100,10 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 |----------|---------|---------|------|---------|
 | `DefaultTimeout` | `ESCROW_DEFAULT_TIMEOUT` | `P7D` | ✓ | Default escrow expiration if not specified (ISO 8601 duration) - used in `CreateEscrowAsync` |
 | `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✓ | Maximum allowed escrow duration - validated in `CreateEscrowAsync` |
-| `ExpirationGracePeriod` | `ESCROW_EXPIRATION_GRACE_PERIOD` | `PT1H` | ✗ | Grace period after expiration before auto-refund (no background processor) |
+| `ExpirationGracePeriod` | `ESCROW_EXPIRATION_GRACE_PERIOD` | `PT1H` | ✓ | Grace period after expiration before auto-refund - used in `EscrowExpirationService` |
 | `TokenLength` | `ESCROW_TOKEN_LENGTH` | `32` | ✓ | Token length in bytes - used in `GenerateToken` |
-| `ExpirationCheckInterval` | `ESCROW_EXPIRATION_CHECK_INTERVAL` | `PT1M` | ✗ | How often to check for expired escrows (no background processor) |
-| `ExpirationBatchSize` | `ESCROW_EXPIRATION_BATCH_SIZE` | `100` | ✗ | Batch size for expiration processing (no background processor) |
+| `ExpirationCheckInterval` | `ESCROW_EXPIRATION_CHECK_INTERVAL` | `PT1M` | ✓ | How often to check for expired escrows - used in `EscrowExpirationService` |
+| `ExpirationBatchSize` | `ESCROW_EXPIRATION_BATCH_SIZE` | `100` | ✓ | Batch size for expiration processing - used in `EscrowExpirationService` |
 | `ValidationCheckInterval` | `ESCROW_VALIDATION_CHECK_INTERVAL` | `PT5M` | ✗ | How often to validate held assets (no background processor) |
 | `MaxParties` | `ESCROW_MAX_PARTIES` | `10` | ✓ | Maximum parties per escrow - validated in `CreateEscrowAsync` |
 | `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✓ | Maximum asset lines per deposit - validated in `DepositAsync` |
@@ -421,7 +421,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 2. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment "Validate deposits (placeholder - real impl would check with currency/inventory services)". No actual cross-service validation is performed. The validation always passes (empty failure list).
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/213 -->
 
-3. **Expiration background processing**: Configuration defines `ExpirationCheckInterval` (PT1M), `ExpirationBatchSize` (100), and `ExpirationGracePeriod` (PT1H), but no background timer or hosted service scans for expired escrows. The `EscrowExpiredEvent` topic is defined but never published. Expired escrows remain in their current state until manually cancelled.
+3. ~~**Expiration background processing**~~: **FIXED** (2026-02-01) - Implemented `EscrowExpirationService` background worker that periodically scans for escrows past their `ExpiresAt + GracePeriod`, transitions them to `Expired` status, publishes `EscrowExpiredEvent`, and if deposits exist also publishes `EscrowRefundedEvent` for downstream services. Configuration properties `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` are now fully wired up.
 
 4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 
@@ -441,8 +441,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ## Potential Extensions
 
-1. **Background expiration processor**: Implement `IHostedService` that periodically scans the status index for escrows past their `ExpiresAt`, applies grace period, transitions to `Expired`, and auto-refunds deposits.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
+1. ~~**Background expiration processor**~~: **DONE** (2026-02-01) - Implemented as `EscrowExpirationService`. The service scans escrows from expirable statuses (PendingDeposits, PartiallyFunded, PendingConsent, PendingCondition) using QueryAsync, applies the grace period, transitions to Expired, and publishes both `EscrowExpiredEvent` and `EscrowRefundedEvent` (if deposits existed).
 
 2. **~~Contract event consumers~~** (DONE): Handlers for `contract.fulfilled` and `contract.terminated` are now implemented in `EscrowServiceEvents.cs`.
 
@@ -487,9 +486,9 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 1. **POCO string defaults (`= string.Empty`)**: Internal POCO properties use `= string.Empty` as default to satisfy NRT. Consider making these nullable (`string?`) or adding validation at assignment time for fields that should always have values (e.g., `PartyType`, `CreatedByType`).
 
-2. **EscrowExpiredEvent never published**: The `Expired` state and event exist in schema but no code transitions to it. Requires implementing the expiration background processor or removing the expired state/event if not yet needed.
+2. ~~**EscrowExpiredEvent never published**~~: **FIXED** (2026-02-01) - The `EscrowExpirationService` now transitions escrows to `Expired` and publishes `EscrowExpiredEvent`.
 
-3. **Status index not cleaned on expiration**: Since no expiration processor exists, status index entries for expired escrows accumulate indefinitely. If an escrow expires without being cancelled, its status index entry remains under the pre-expiration status forever. Needs either a periodic cleanup timer or expiration handling in query paths.
+3. ~~**Status index not cleaned on expiration**~~: **FIXED** (2026-02-01) - The `EscrowExpirationService` now properly updates the status index when transitioning escrows to `Expired`, removing the old status entry and creating the new one.
 
 4. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
 
@@ -523,6 +522,12 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 2. **~~Releasing state is unreachable~~** - [Issue #210](https://github.com/beyond-immersion/bannou-service/issues/210) (CLOSED - Superseded by #214)
    - Resolved via the event-driven confirmation flow implementation
+
+3. **Escrow Expiration Background Service** (2026-02-01)
+   - Implemented `EscrowExpirationService` that scans for expired escrows and transitions them
+   - Wired up `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` config
+   - Publishes `EscrowExpiredEvent` and `EscrowRefundedEvent` (for auto-refund)
+   - Fixed related Design Considerations: "EscrowExpiredEvent never published" and "Status index not cleaned on expiration"
 
 ### Pending Design Review
 

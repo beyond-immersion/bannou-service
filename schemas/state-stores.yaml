@@ -206,12 +206,6 @@ x-state-stores:
     service: Analytics
     purpose: Glicko-2 skill ratings
 
-  analytics-history:
-    backend: redis
-    prefix: "analytics:hist"
-    service: Analytics
-    purpose: Event buffer and legacy controller history (Redis for backward compatibility)
-
   analytics-history-data:
     backend: mysql
     service: Analytics

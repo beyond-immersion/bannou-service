@@ -197,7 +197,7 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ### Bugs (Fix Immediately)
 
-1. **Unused state store definition `analytics-history`** - The `analytics-history` Redis store is defined in `schemas/state-stores.yaml` but never used in code. Only `analytics-history-data` (MySQL) is referenced. Per IMPLEMENTATION TENETS (T21), unused configuration should be removed from the schema.
+1. ~~**Unused state store definition `analytics-history`**~~: **FIXED** (2026-02-01) - Removed the unused `analytics-history` Redis store definition from `schemas/state-stores.yaml`. The store was defined but never referenced in code. Updated regression tests accordingly.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -219,4 +219,9 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-*No active work tracking markers at this time.*
+### Recently Completed
+
+1. **Removed unused `analytics-history` state store** (2026-02-01)
+   - Removed from `schemas/state-stores.yaml`
+   - Regenerated `StateStoreDefinitions.cs` via `generate-state-stores.py`
+   - Updated regression test to verify `analytics-history-data` instead

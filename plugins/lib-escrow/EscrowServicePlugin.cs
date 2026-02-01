@@ -32,8 +32,9 @@ public class EscrowServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register EscrowServiceConfiguration here
 
-        // Register background service for confirmation timeout processing
+        // Register background services
         services.AddSingleton<IHostedService, EscrowConfirmationTimeoutService>();
+        services.AddSingleton<IHostedService, EscrowExpirationService>();
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()

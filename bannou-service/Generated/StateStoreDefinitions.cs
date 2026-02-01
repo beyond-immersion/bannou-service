@@ -44,8 +44,6 @@ public static class StateStoreDefinitions
     public const string ActorTemplates = "actor-templates";
 
     // Analytics Service
-    /// <summary>Event buffer and legacy controller history (Redis for backward compatibility)</summary>
-    public const string AnalyticsHistory = "analytics-history";
     /// <summary>Controller possession history for queryable audit trails (MySQL for server-side filtering)</summary>
     public const string AnalyticsHistoryData = "analytics-history-data";
     /// <summary>Glicko-2 skill ratings</summary>
@@ -289,7 +287,6 @@ public static class StateStoreDefinitions
             [ActorState] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:state" },
             [ActorTemplates] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:tpl" },
             [AgentMemories] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "agent:mem" },
-            [AnalyticsHistory] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:hist" },
             [AnalyticsHistoryData] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "analytics_history_data" },
             [AnalyticsRating] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:rating" },
             [AnalyticsSummary] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:sum" },
@@ -386,7 +383,6 @@ public static class StateStoreDefinitions
             [ActorState] = new StoreMetadata("Actor", "Runtime actor state", "redis"),
             [ActorTemplates] = new StoreMetadata("Actor", "Actor template definitions", "redis"),
             [AgentMemories] = new StoreMetadata("Behavior", "Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)", "redis"),
-            [AnalyticsHistory] = new StoreMetadata("Analytics", "Event buffer and legacy controller history (Redis for backward compatibility)", "redis"),
             [AnalyticsHistoryData] = new StoreMetadata("Analytics", "Controller possession history for queryable audit trails (MySQL for server-side filtering)", "mysql"),
             [AnalyticsRating] = new StoreMetadata("Analytics", "Glicko-2 skill ratings", "redis"),
             [AnalyticsSummary] = new StoreMetadata("Analytics", "Event buffer, session mappings, and resolution caches for analytics ingestion", "redis"),

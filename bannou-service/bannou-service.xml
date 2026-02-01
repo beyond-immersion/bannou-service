@@ -78304,9 +78304,6 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ActorTemplates">
             <summary>Actor template definitions</summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsHistory">
-            <summary>Event buffer and legacy controller history (Redis for backward compatibility)</summary>
-        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsHistoryData">
             <summary>Controller possession history for queryable audit trails (MySQL for server-side filtering)</summary>
         </member>
