@@ -144,13 +144,16 @@ public class ContractMilestoneExpirationService : BackgroundService
             try
             {
                 // Use distributed lock to prevent concurrent processing
-                var lockKey = $"contract-milestone-check:{contractId}";
-                await using var lockHandle = await lockProvider.TryAcquireAsync(
+                var lockKey = $"milestone-check:{contractId}";
+                var lockOwner = $"milestone-service-{Environment.MachineName}-{Environment.ProcessId}";
+                await using var lockHandle = await lockProvider.LockAsync(
+                    StateStoreDefinitions.Contract,
                     lockKey,
-                    TimeSpan.FromSeconds(30),
+                    lockOwner,
+                    30, // 30 seconds lock expiry
                     cancellationToken);
 
-                if (lockHandle == null)
+                if (!lockHandle.Success)
                 {
                     // Another instance is processing this contract
                     _logger.LogDebug("Could not acquire lock for contract {ContractId}, skipping", contractId);

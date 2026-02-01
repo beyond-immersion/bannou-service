@@ -170,11 +170,15 @@ Service lifetime is **Scoped** (per-request). One background service implemented
 
 - **GetDepositStatus** (`/escrow/deposit/status`): Returns expected assets for a party, actual deposited assets (flattened from all deposits), fulfillment status, deposit token, and deposit deadline.
 
-### Completion Endpoints (4 endpoints)
+### Completion Endpoints (6 endpoints)
 
-- **Release** (`/escrow/release`): Requires escrow in `Finalizing` or `Releasing` state. Builds release results from pre-configured `ReleaseAllocations`. Sets status to `Released`, resolution to `Released`. Decrements pending counts for all parties. Publishes `escrow.released`. Note: Does NOT invoke downstream services for actual asset movement - the event is consumed externally.
+- **Release** (`/escrow/release`): Requires escrow in `Finalizing` state. For contract-bound escrows, verifies contract is fulfilled then immediately transitions to `Released`. For unbound escrows, checks `ReleaseMode`: `immediate` skips to `Released`; other modes transition to `Releasing`, set confirmation deadline, initialize confirmation tracking, and publish `escrow.releasing`. The released event is published when all required confirmations are received.
 
-- **Refund** (`/escrow/refund`): Accepts escrow in `Refunding`, `Validation_failed`, `Disputed`, `Partially_funded`, or `Pending_deposits` states. Builds refund results from actual deposits (returns each deposit's assets to depositor). Sets status to `Refunded`. Decrements pending counts. Publishes `escrow.refunded`.
+- **ConfirmRelease** (`/escrow/confirm-release`): Party confirmation for releases. Requires escrow in `Releasing` state. Validates release token, records party confirmation. If all required confirmations (per ReleaseMode) are met, transitions to `Released` and publishes `escrow.released`. Uses ETag-based optimistic concurrency.
+
+- **ConfirmRefund** (`/escrow/confirm-refund`): Party confirmation for refunds. Requires escrow in `Refunding` state. Records party confirmation. If all required confirmations (per RefundMode) are met, transitions to `Refunded` and publishes `escrow.refunded`.
+
+- **Refund** (`/escrow/refund`): Accepts escrow in `Refunding`, `Validation_failed`, `Disputed`, `Partially_funded`, or `Pending_deposits` states. For `immediate` RefundMode, transitions directly to `Refunded`. For other modes, transitions to `Refunding` and waits for confirmations. Builds refund results from actual deposits (returns each deposit's assets to depositor).
 
 - **Cancel** (`/escrow/cancel`): Only for `Pending_deposits` or `Partially_funded` (not yet fully funded). Builds refund results for any partial deposits. Sets status to `Cancelled`, resolution to `Cancelled_refunded`. Publishes `escrow.cancelled`.
 
