@@ -437,8 +437,7 @@ Prebound API Batched Execution
 
 1. ~~**T25 (Internal POCO uses string for enum)**~~: **FIXED** (2026-01-31) - Updated `DistributionRecordModel.AssetType` to use the `AssetType` enum (generated from escrow-api.yaml). Also updated the contract-api.yaml `DistributionRecord.assetType` schema to use `$ref: './escrow-api.yaml#/components/schemas/AssetType'` instead of `type: string`.
 
-2. **T5 (ContractExecutedEvent not schema-defined)**: The `ContractExecutedEvent` is defined inline in `ContractServiceEscrowIntegration.cs:1778` rather than in `contract-events.yaml`. This violates schema-first development and prevents proper event model generation.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/217 -->
+2. ~~**T5 (ContractExecutedEvent not schema-defined)**~~: **FIXED** (2026-02-01) - Moved all 6 escrow integration events (ContractLockedEvent, ContractUnlockedEvent, ContractPartyTransferredEvent, ClauseTypeRegisteredEvent, ContractTemplateValuesSetEvent, ContractExecutedEvent) from inline definitions to schema. Added to x-event-publications and components/schemas in contract-events.yaml. Event publishing code now uses proper EntityType/ClauseCategory enums instead of strings.
 
 3. **ContractExecutedEvent lacks per-party distribution details**: The event only contains aggregate `DistributionCount`, not per-party or per-clause success/failure information. This prevents downstream consumers (particularly lib-escrow) from knowing which parties received their distributions, hindering contract-bound escrow integration.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/218 -->
@@ -483,9 +482,9 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 
-- **2026-02-01**: T5 violation - ContractExecutedEvent not schema-defined. Issue #217 created. Blocks #218.
-- **2026-02-01**: ContractExecutedEvent enhancement - add per-party distribution details for escrow integration. Issue #218 created. Depends on #217.
+- **2026-02-01**: ContractExecutedEvent enhancement - add per-party distribution details for escrow integration. Issue #218 created.
 
 ### Completed
 
+- **2026-02-01**: Fixed T5 violation - moved all 6 escrow integration events from inline definitions to contract-events.yaml schema. Issue #217 closed.
 - **2026-01-31**: Fixed T25 violation - `DistributionRecordModel.AssetType` now uses proper `AssetType` enum. Schema updated to use `$ref` to escrow-api.yaml enum. (audit-plugin)

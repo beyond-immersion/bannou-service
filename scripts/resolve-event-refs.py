@@ -320,6 +320,11 @@ def resolve_event_schema(events_path: Path, schema_dir: Path) -> Optional[Path]:
             f"{original_desc}"
         )
 
+    # Embed the list of inlined types in the schema for the shell script to read
+    # This allows accurate exclusion - only exclude types that were actually inlined
+    # from API schemas, not types natively defined in the events schema
+    resolved['x-inlined-types'] = sorted(types_to_inline.keys())
+
     # Write resolved schema to Generated directory
     generated_dir = schema_dir / 'Generated'
     output_path = generated_dir / f"{events_path.stem}-resolved.yaml"
@@ -420,6 +425,9 @@ def resolve_lifecycle_event_schema(lifecycle_path: Path, schema_dir: Path) -> Op
             f"Source: {lifecycle_path.name}\n\n"
             f"{original_desc}"
         )
+
+    # Embed the list of inlined types in the schema for the shell script to read
+    resolved['x-inlined-types'] = sorted(types_to_inline.keys())
 
     # Write resolved schema (same directory as input, with -resolved suffix)
     output_name = lifecycle_path.stem.replace('-lifecycle-events', '-lifecycle-events-resolved') + '.yaml'

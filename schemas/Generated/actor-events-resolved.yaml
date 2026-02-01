@@ -811,3 +811,10 @@ components:
           nullable: true
           description: Whether character is currently indoors/under roof
 
+x-inlined-types:
+- HazardInfo
+- NearbyObject
+- PerceptionData
+- PerceptionSourceType
+- Position3D
+- SpatialContext

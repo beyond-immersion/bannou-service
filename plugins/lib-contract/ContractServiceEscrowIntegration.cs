@@ -1593,26 +1593,40 @@ public partial class ContractService
     private async Task PublishContractLockedEventAsync(
         ContractInstanceModel model, Guid guardianId, string guardianType, CancellationToken ct)
     {
+        // Parse guardian type from string (API models use string per existing schema)
+        if (!Enum.TryParse<EntityType>(guardianType, ignoreCase: true, out var parsedGuardianType))
+        {
+            _logger.LogWarning("Invalid guardian type '{GuardianType}' when publishing contract locked event for {ContractId}", guardianType, model.ContractId);
+            return;
+        }
+
         await _messageBus.TryPublishAsync("contract.locked", new ContractLockedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ContractId = model.ContractId,
             GuardianId = guardianId,
-            GuardianType = guardianType
+            GuardianType = parsedGuardianType
         });
     }
 
     private async Task PublishContractUnlockedEventAsync(
         ContractInstanceModel model, Guid? guardianId, string? guardianType, CancellationToken ct)
     {
+        // Parse guardian type from string if present (API models use string per existing schema)
+        EntityType? parsedGuardianType = null;
+        if (guardianType != null && Enum.TryParse<EntityType>(guardianType, ignoreCase: true, out var parsed))
+        {
+            parsedGuardianType = parsed;
+        }
+
         await _messageBus.TryPublishAsync("contract.unlocked", new ContractUnlockedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ContractId = model.ContractId,
             PreviousGuardianId = guardianId,
-            PreviousGuardianType = guardianType
+            PreviousGuardianType = parsedGuardianType
         });
     }
 
@@ -1629,9 +1643,9 @@ public partial class ContractService
             ContractId = model.ContractId,
             Role = role,
             FromEntityId = fromEntityId,
-            FromEntityType = fromEntityType.ToString(),
+            FromEntityType = fromEntityType,
             ToEntityId = toEntityId,
-            ToEntityType = toEntityType.ToString()
+            ToEntityType = toEntityType
         });
     }
 
@@ -1643,7 +1657,7 @@ public partial class ContractService
             Timestamp = DateTimeOffset.UtcNow,
             TypeCode = model.TypeCode,
             Description = model.Description,
-            Category = model.Category.ToString(),
+            Category = model.Category,
             IsBuiltIn = model.IsBuiltIn
         });
     }
@@ -1676,120 +1690,6 @@ public partial class ContractService
 
     #endregion
 }
-
-#region Escrow Integration Event Models
-
-/// <summary>
-/// Event published when a contract is locked under guardian custody.
-/// </summary>
-public class ContractLockedEvent
-{
-    /// <summary>Event ID.</summary>
-    public Guid EventId { get; set; }
-    /// <summary>Event timestamp.</summary>
-    public DateTimeOffset Timestamp { get; set; }
-    /// <summary>Contract instance ID.</summary>
-    public Guid ContractId { get; set; }
-    /// <summary>Guardian entity ID.</summary>
-    public Guid GuardianId { get; set; }
-    /// <summary>Guardian entity type.</summary>
-    public string GuardianType { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Event published when a contract is unlocked from guardian custody.
-/// </summary>
-public class ContractUnlockedEvent
-{
-    /// <summary>Event ID.</summary>
-    public Guid EventId { get; set; }
-    /// <summary>Event timestamp.</summary>
-    public DateTimeOffset Timestamp { get; set; }
-    /// <summary>Contract instance ID.</summary>
-    public Guid ContractId { get; set; }
-    /// <summary>Previous guardian entity ID.</summary>
-    public Guid? PreviousGuardianId { get; set; }
-    /// <summary>Previous guardian entity type.</summary>
-    public string? PreviousGuardianType { get; set; }
-}
-
-/// <summary>
-/// Event published when a party role is transferred.
-/// </summary>
-public class ContractPartyTransferredEvent
-{
-    /// <summary>Event ID.</summary>
-    public Guid EventId { get; set; }
-    /// <summary>Event timestamp.</summary>
-    public DateTimeOffset Timestamp { get; set; }
-    /// <summary>Contract instance ID.</summary>
-    public Guid ContractId { get; set; }
-    /// <summary>Role that was transferred.</summary>
-    public string Role { get; set; } = string.Empty;
-    /// <summary>Previous entity ID.</summary>
-    public Guid FromEntityId { get; set; }
-    /// <summary>Previous entity type.</summary>
-    public string FromEntityType { get; set; } = string.Empty;
-    /// <summary>New entity ID.</summary>
-    public Guid ToEntityId { get; set; }
-    /// <summary>New entity type.</summary>
-    public string ToEntityType { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Event published when a clause type is registered.
-/// </summary>
-public class ClauseTypeRegisteredEvent
-{
-    /// <summary>Event ID.</summary>
-    public Guid EventId { get; set; }
-    /// <summary>Event timestamp.</summary>
-    public DateTimeOffset Timestamp { get; set; }
-    /// <summary>Clause type code.</summary>
-    public string TypeCode { get; set; } = string.Empty;
-    /// <summary>Description.</summary>
-    public string Description { get; set; } = string.Empty;
-    /// <summary>Category.</summary>
-    public string Category { get; set; } = string.Empty;
-    /// <summary>Whether this is a built-in type.</summary>
-    public bool IsBuiltIn { get; set; }
-}
-
-/// <summary>
-/// Event published when template values are set on a contract.
-/// </summary>
-public class ContractTemplateValuesSetEvent
-{
-    /// <summary>Event ID.</summary>
-    public Guid EventId { get; set; }
-    /// <summary>Event timestamp.</summary>
-    public DateTimeOffset Timestamp { get; set; }
-    /// <summary>Contract instance ID.</summary>
-    public Guid ContractId { get; set; }
-    /// <summary>Keys that were set.</summary>
-    public List<string> Keys { get; set; } = new();
-    /// <summary>Total value count after setting.</summary>
-    public int ValueCount { get; set; }
-}
-
-/// <summary>
-/// Event published when a contract's clauses are executed.
-/// </summary>
-public class ContractExecutedEvent
-{
-    /// <summary>Event ID.</summary>
-    public Guid EventId { get; set; }
-    /// <summary>Event timestamp.</summary>
-    public DateTimeOffset Timestamp { get; set; }
-    /// <summary>Contract instance ID.</summary>
-    public Guid ContractId { get; set; }
-    /// <summary>Template code.</summary>
-    public string TemplateCode { get; set; } = string.Empty;
-    /// <summary>Number of distributions executed.</summary>
-    public int DistributionCount { get; set; }
-}
-
-#endregion
 
 #region Escrow Integration Internal Models
 

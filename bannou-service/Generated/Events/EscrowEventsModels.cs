@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Escrow;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -398,6 +413,188 @@ public partial class EscrowFinalizingEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when escrow transitions to Releasing state.
+/// <br/>Downstream services (currency, inventory) subscribe to execute actual asset transfers.
+/// <br/>Parties may also need to confirm receipt depending on ReleaseMode.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EscrowReleasingEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the release was initiated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// The escrow transitioning to Releasing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The confirmation mode for this release
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("releaseMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ReleaseMode ReleaseMode { get; set; } = default!;
+
+    /// <summary>
+    /// Per-party allocations with confirmation details
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allocations")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ReleaseAllocationWithConfirmation> Allocations { get; set; } = new System.Collections.ObjectModel.Collection<ReleaseAllocationWithConfirmation>();
+
+    /// <summary>
+    /// Deadline for party confirmations (if applicable)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("confirmationDeadline")]
+    public System.DateTimeOffset? ConfirmationDeadline { get; set; } = default!;
+
+    /// <summary>
+    /// Associated contract ID if this is a contract-driven release
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundContractId")]
+    public System.Guid? BoundContractId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Release allocation details with confirmation information
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ReleaseAllocationWithConfirmation
+{
+
+    /// <summary>
+    /// Party receiving these assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipientPartyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RecipientPartyId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the recipient party
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipientPartyType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType RecipientPartyType { get; set; } = default!;
+
+    /// <summary>
+    /// Assets being released to this party
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assets")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<EscrowAsset> Assets { get; set; } = new System.Collections.ObjectModel.Collection<EscrowAsset>();
+
+    /// <summary>
+    /// Target wallet for currency assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationWalletId")]
+    public System.Guid? DestinationWalletId { get; set; } = default!;
+
+    /// <summary>
+    /// Target container for item assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationContainerId")]
+    public System.Guid? DestinationContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// Token for this party to confirm release
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("releaseToken")]
+    public string? ReleaseToken { get; set; } = default!;
+
+    /// <summary>
+    /// Prebound API shortcut for client confirmation (pushed via WebSocket)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("confirmationShortcut")]
+    public object? ConfirmationShortcut { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when escrow transitions to Refunding state.
+/// <br/>Downstream services subscribe to execute actual refund transfers.
+/// <br/>Parties may also need to confirm receipt depending on RefundMode.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EscrowRefundingEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the refund was initiated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// The escrow transitioning to Refunding
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The confirmation mode for this refund
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("refundMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RefundMode RefundMode { get; set; } = default!;
+
+    /// <summary>
+    /// Deposits being refunded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deposits")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<EscrowDeposit> Deposits { get; set; } = new System.Collections.ObjectModel.Collection<EscrowDeposit>();
+
+    /// <summary>
+    /// Reason for refund
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
 
 }
 

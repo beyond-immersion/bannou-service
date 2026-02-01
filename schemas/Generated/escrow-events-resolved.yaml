@@ -1,0 +1,1063 @@
+openapi: 3.0.3
+info:
+  title: Escrow Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: escrow-events.yaml
+
+    Event models for Escrow service RabbitMQ pub/sub via MassTransit.
+
+    **Event Categories**:
+    - Lifecycle events: escrow.created, escrow.deposit.received, escrow.funded
+    - Consent events: escrow.consent.received, escrow.finalizing
+    - Completion events: escrow.released, escrow.refunded
+    - Dispute events: escrow.disputed, escrow.resolved
+    - Timeout events: escrow.expired, escrow.cancelled
+    - Validation events: escrow.validation.failed, escrow.validation.reaffirmed
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Escrow listens to contract fulfillment/failure events
+  - topic: contract.fulfilled
+    event: ContractFulfilledEvent
+    description: Triggers release when bound contract is fulfilled
+  - topic: contract.terminated
+    event: ContractTerminatedEvent
+    description: Triggers refund when bound contract is terminated
+  x-event-publications:
+    # Lifecycle events
+  - topic: escrow.created
+    event: EscrowCreatedEvent
+    description: Published when a new escrow agreement is created
+  - topic: escrow.deposit.received
+    event: EscrowDepositReceivedEvent
+    description: Published when a deposit is received
+  - topic: escrow.funded
+    event: EscrowFundedEvent
+    description: Published when all expected deposits are received
+
+    # Consent events
+  - topic: escrow.consent.received
+    event: EscrowConsentReceivedEvent
+    description: Published when a party consents
+  - topic: escrow.finalizing
+    event: EscrowFinalizingEvent
+    description: Published when finalization begins (contract execution)
+
+    # Completion events
+  - topic: escrow.releasing
+    event: EscrowReleasingEvent
+    description: Published when escrow transitions to Releasing state, awaiting confirmations
+  - topic: escrow.released
+    event: EscrowReleasedEvent
+    description: Published when assets are released to recipients
+  - topic: escrow.refunding
+    event: EscrowRefundingEvent
+    description: Published when escrow transitions to Refunding state, awaiting confirmations
+  - topic: escrow.refunded
+    event: EscrowRefundedEvent
+    description: Published when assets are refunded to depositors
+
+    # Dispute events
+  - topic: escrow.disputed
+    event: EscrowDisputedEvent
+    description: Published when a party raises a dispute
+  - topic: escrow.resolved
+    event: EscrowResolvedEvent
+    description: Published when an arbiter resolves a dispute
+
+    # Timeout events
+  - topic: escrow.expired
+    event: EscrowExpiredEvent
+    description: Published when escrow times out
+  - topic: escrow.cancelled
+    event: EscrowCancelledEvent
+    description: Published when escrow is cancelled before funding
+
+    # Validation events
+  - topic: escrow.validation.failed
+    event: EscrowValidationFailedEvent
+    description: Published when periodic validation detects asset changes
+  - topic: escrow.validation.reaffirmed
+    event: EscrowValidationReaffirmedEvent
+    description: Published when a party reaffirms after validation failure
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Lifecycle Events
+    # =========================================================================
+
+    EscrowCreatedEvent:
+      type: object
+      description: Event published when a new escrow agreement is created
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - escrowType
+      - trustMode
+      - parties
+      - expectedDepositCount
+      - expiresAt
+      - createdAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        escrowType:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowType'
+          description: Type of escrow
+        trustMode:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowTrustMode'
+          description: Trust mode
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowPartyInfo'
+          description: Parties in the escrow
+        expectedDepositCount:
+          type: integer
+          description: Number of expected deposits
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the escrow expires
+        boundContractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Bound contract ID if applicable
+        referenceType:
+          type: string
+          nullable: true
+          description: Reference type (trade, auction, etc.)
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference ID
+        createdAt:
+          type: string
+          format: date-time
+          description: When the escrow was created
+
+    EscrowDepositReceivedEvent:
+      type: object
+      description: Event published when a deposit is received
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - partyId
+      - partyType
+      - depositId
+      - assetSummary
+      - depositsReceived
+      - depositsExpected
+      - fullyFunded
+      - depositedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party who deposited
+        partyType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the depositing party
+        depositId:
+          type: string
+          format: uuid
+          description: Deposit record ID
+        assetSummary:
+          type: string
+          description: Human-readable summary of deposited assets
+        depositsReceived:
+          type: integer
+          description: Number of deposits received so far
+        depositsExpected:
+          type: integer
+          description: Total deposits expected
+        fullyFunded:
+          type: boolean
+          description: Whether escrow is now fully funded
+        depositedAt:
+          type: string
+          format: date-time
+          description: When the deposit was made
+
+    EscrowFundedEvent:
+      type: object
+      description: Event published when all expected deposits are received
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - totalDeposits
+      - fundedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        totalDeposits:
+          type: integer
+          description: Total number of deposits received
+        fundedAt:
+          type: string
+          format: date-time
+          description: When funding completed
+
+    # =========================================================================
+    # Consent Events
+    # =========================================================================
+
+    EscrowConsentReceivedEvent:
+      type: object
+      description: Event published when a party consents
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - partyId
+      - partyType
+      - consentType
+      - consentsReceived
+      - consentsRequired
+      - consentedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party who consented
+        partyType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the consenting party
+        consentType:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowConsentType'
+          description: Type of consent
+        consentsReceived:
+          type: integer
+          description: Number of consents received
+        consentsRequired:
+          type: integer
+          description: Number of consents required
+        consentedAt:
+          type: string
+          format: date-time
+          description: When consent was given
+
+    EscrowFinalizingEvent:
+      type: object
+      description: Event published when finalization begins
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - finalizerCount
+      - startedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        boundContractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Bound contract ID if applicable
+        finalizerCount:
+          type: integer
+          description: Number of finalizer APIs to execute
+        startedAt:
+          type: string
+          format: date-time
+          description: When finalization started
+
+    # =========================================================================
+    # Completion Events
+    # =========================================================================
+
+    EscrowReleasingEvent:
+      type: object
+      description: |
+        Event published when escrow transitions to Releasing state.
+        Downstream services (currency, inventory) subscribe to execute actual asset transfers.
+        Parties may also need to confirm receipt depending on ReleaseMode.
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - releaseMode
+      - allocations
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the release was initiated
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow transitioning to Releasing
+        releaseMode:
+          $ref: '../escrow-api.yaml#/components/schemas/ReleaseMode'
+          description: The confirmation mode for this release
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseAllocationWithConfirmation'
+          description: Per-party allocations with confirmation details
+        confirmationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline for party confirmations (if applicable)
+        boundContractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated contract ID if this is a contract-driven release
+
+    ReleaseAllocationWithConfirmation:
+      type: object
+      description: Release allocation details with confirmation information
+      additionalProperties: false
+      required:
+      - recipientPartyId
+      - recipientPartyType
+      - assets
+      properties:
+        recipientPartyId:
+          type: string
+          format: uuid
+          description: Party receiving these assets
+        recipientPartyType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the recipient party
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAsset'
+          description: Assets being released to this party
+        destinationWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target wallet for currency assets
+        destinationContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target container for item assets
+        releaseToken:
+          type: string
+          nullable: true
+          description: Token for this party to confirm release
+        confirmationShortcut:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Prebound API shortcut for client confirmation (pushed via WebSocket)
+
+    EscrowRefundingEvent:
+      type: object
+      description: |
+        Event published when escrow transitions to Refunding state.
+        Downstream services subscribe to execute actual refund transfers.
+        Parties may also need to confirm receipt depending on RefundMode.
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - refundMode
+      - deposits
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the refund was initiated
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow transitioning to Refunding
+        refundMode:
+          $ref: '../escrow-api.yaml#/components/schemas/RefundMode'
+          description: The confirmation mode for this refund
+        deposits:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowDeposit'
+          description: Deposits being refunded
+        reason:
+          type: string
+          nullable: true
+          description: Reason for refund
+
+    EscrowReleasedEvent:
+      type: object
+      description: Event published when assets are released
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - recipients
+      - resolution
+      - completedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipientInfo'
+          description: Recipients and what they received
+        resolution:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          description: How the escrow was resolved
+        completedAt:
+          type: string
+          format: date-time
+          description: When release completed
+
+    EscrowRefundedEvent:
+      type: object
+      description: Event published when assets are refunded
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - depositors
+      - resolution
+      - completedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        depositors:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepositorInfo'
+          description: Depositors and what was refunded
+        reason:
+          type: string
+          nullable: true
+          description: Reason for refund
+        resolution:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          description: How the escrow was resolved
+        completedAt:
+          type: string
+          format: date-time
+          description: When refund completed
+
+    # =========================================================================
+    # Dispute Events
+    # =========================================================================
+
+    EscrowDisputedEvent:
+      type: object
+      description: Event published when a party raises a dispute
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - disputedBy
+      - disputedByType
+      - reason
+      - disputedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        disputedBy:
+          type: string
+          format: uuid
+          description: Party who raised the dispute
+        disputedByType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the disputing party
+        reason:
+          type: string
+          description: Reason for dispute
+        disputedAt:
+          type: string
+          format: date-time
+          description: When dispute was raised
+
+    EscrowResolvedEvent:
+      type: object
+      description: Event published when an arbiter resolves a dispute
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - arbiterId
+      - arbiterType
+      - resolution
+      - resolvedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        arbiterId:
+          type: string
+          format: uuid
+          description: Arbiter ID
+        arbiterType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Arbiter type
+        resolution:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          description: Resolution decision by arbiter
+        notes:
+          type: string
+          nullable: true
+          description: Arbiter notes
+        resolvedAt:
+          type: string
+          format: date-time
+          description: When dispute was resolved
+
+    # =========================================================================
+    # Timeout Events
+    # =========================================================================
+
+    EscrowExpiredEvent:
+      type: object
+      description: Event published when escrow times out
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - status
+      - autoRefunded
+      - expiredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        status:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowStatus'
+          description: Status when expiration occurred
+        autoRefunded:
+          type: boolean
+          description: Whether deposits were automatically refunded
+        expiredAt:
+          type: string
+          format: date-time
+          description: When expiration occurred
+
+    EscrowCancelledEvent:
+      type: object
+      description: Event published when escrow is cancelled
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - depositsRefunded
+      - cancelledAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        cancelledBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity that cancelled
+        cancelledByType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Type of cancelling entity
+        reason:
+          type: string
+          nullable: true
+          description: Reason for cancellation
+        depositsRefunded:
+          type: integer
+          description: Number of deposits refunded
+        cancelledAt:
+          type: string
+          format: date-time
+          description: When cancellation occurred
+
+    # =========================================================================
+    # Validation Events
+    # =========================================================================
+
+    EscrowValidationFailedEvent:
+      type: object
+      description: Event published when validation detects asset changes
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - failures
+      - detectedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        failures:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationFailureInfo'
+          description: Detected failures
+        detectedAt:
+          type: string
+          format: date-time
+          description: When failures were detected
+
+    EscrowValidationReaffirmedEvent:
+      type: object
+      description: Event published when a party reaffirms after validation failure
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - reaffirmedBy
+      - reaffirmedByType
+      - allReaffirmed
+      - reaffirmedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow agreement ID
+        reaffirmedBy:
+          type: string
+          format: uuid
+          description: Party who reaffirmed
+        reaffirmedByType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of reaffirming party
+        allReaffirmed:
+          type: boolean
+          description: Whether all parties have reaffirmed
+        reaffirmedAt:
+          type: string
+          format: date-time
+          description: When reaffirmation occurred
+
+    # =========================================================================
+    # Shared Event Models
+    # =========================================================================
+
+    EscrowPartyInfo:
+      type: object
+      description: Brief party information for events
+      additionalProperties: false
+      required:
+      - partyId
+      - partyType
+      - role
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party ID
+        partyType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Party type
+        role:
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowPartyRole'
+          description: Role of the party in the escrow
+
+    RecipientInfo:
+      type: object
+      description: Recipient information for release events
+      additionalProperties: false
+      required:
+      - partyId
+      - partyType
+      - assetSummary
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Recipient party ID
+        partyType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Recipient party type
+        assetSummary:
+          type: string
+          description: Summary of assets received
+
+    DepositorInfo:
+      type: object
+      description: Depositor information for refund events
+      additionalProperties: false
+      required:
+      - partyId
+      - partyType
+      - assetSummary
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Depositor party ID
+        partyType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Depositor party type
+        assetSummary:
+          type: string
+          description: Summary of assets refunded
+
+    ValidationFailureInfo:
+      type: object
+      description: Validation failure information for events
+      additionalProperties: false
+      required:
+      - assetType
+      - failureType
+      - affectedPartyId
+      properties:
+        assetType:
+          $ref: '#/components/schemas/AssetType'
+          description: Type of asset that failed validation
+        failureType:
+          $ref: '../escrow-api.yaml#/components/schemas/ValidationFailureType'
+          description: Type of validation failure
+        affectedPartyId:
+          type: string
+          format: uuid
+          description: Party whose deposit is affected
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional failure details
+    AssetType:
+      type: string
+      description: |
+        Type of asset held in escrow.
+        - currency: Currency amount held in escrow wallet
+        - item: Item instance held in escrow container
+        - item_stack: Stackable items (quantity) held in escrow container
+        - contract: Contract instance locked under escrow guardianship
+        - custom: Custom asset type via registered handler
+      enum:
+      - currency
+      - item
+      - item_stack
+      - contract
+      - custom
+
+    EscrowAsset:
+      type: object
+      description: An asset held in escrow
+      required:
+      - assetType
+      - sourceOwnerId
+      - sourceOwnerType
+      properties:
+        assetType:
+          $ref: '#/components/schemas/AssetType'
+          description: Type of asset held in escrow
+        # Currency fields
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=currency - currency definition ID
+        currencyCode:
+          type: string
+          nullable: true
+          description: Denormalized currency code for display
+        currencyAmount:
+          type: number
+          nullable: true
+          description: Amount of currency
+        # Item fields
+        itemInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=item - unique item instance ID
+        itemName:
+          type: string
+          nullable: true
+          description: Denormalized item name for display
+        itemTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=item_stack - stackable item template
+        itemTemplateName:
+          type: string
+          nullable: true
+          description: Denormalized template name for display
+        itemQuantity:
+          type: integer
+          nullable: true
+          description: For assetType=item_stack - quantity
+        # Contract fields
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=contract - contract instance ID
+        contractTemplateCode:
+          type: string
+          nullable: true
+          description: Denormalized contract template code
+        contractDescription:
+          type: string
+          nullable: true
+          description: Description of the contract
+        contractPartyRole:
+          type: string
+          nullable: true
+          description: Which party role in the contract is being escrowed
+        # Custom fields
+        customAssetType:
+          type: string
+          nullable: true
+          description: For assetType=custom - registered handler type
+        customAssetId:
+          type: string
+          nullable: true
+          description: Custom asset identifier
+        customAssetData:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Handler-specific data
+        # Source tracking
+        sourceOwnerId:
+          type: string
+          format: uuid
+          description: Where this asset came from (for refunds)
+        sourceOwnerType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the source owner
+        sourceContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source wallet/container ID
+
+    EscrowAssetBundle:
+      type: object
+      description: Groups multiple assets for a single deposit or release
+      required:
+      - bundleId
+      - assets
+      properties:
+        bundleId:
+          type: string
+          format: uuid
+          description: Bundle identifier
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAsset'
+          description: Assets in this bundle
+        description:
+          type: string
+          nullable: true
+          description: Summary for display
+        estimatedValue:
+          type: number
+          nullable: true
+          description: Optional valuation for UI display
+
+    EscrowDeposit:
+      type: object
+      description: Records an actual deposit
+      required:
+      - id
+      - escrowId
+      - partyId
+      - partyType
+      - assets
+      - depositedAt
+      - idempotencyKey
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Deposit record identifier
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow this deposit belongs to
+        partyId:
+          type: string
+          format: uuid
+          description: Party who deposited
+        partyType:
+          description: Type of entity (Account, Character, etc.)
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+        assets:
+          $ref: '#/components/schemas/EscrowAssetBundle'
+          description: Assets deposited
+        depositedAt:
+          type: string
+          format: date-time
+          description: When the deposit was made
+        depositTokenUsed:
+          type: string
+          nullable: true
+          description: Token used (for audit)
+        idempotencyKey:
+          type: string
+          description: Idempotency key for this deposit
+
+x-inlined-types:
+- AssetType
+- EscrowAsset
+- EscrowAssetBundle
+- EscrowDeposit

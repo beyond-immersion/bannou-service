@@ -84,6 +84,26 @@ info:
       event: ContractPreboundApiValidationFailedEvent
       description: Published when a prebound API response fails validation
 
+    # Guardian and escrow integration events
+    - topic: contract.locked
+      event: ContractLockedEvent
+      description: Published when contract is locked under guardian custody
+    - topic: contract.unlocked
+      event: ContractUnlockedEvent
+      description: Published when contract is released from guardian custody
+    - topic: contract.party.transferred
+      event: ContractPartyTransferredEvent
+      description: Published when a party role is transferred to new entity
+    - topic: contract.clausetype.registered
+      event: ClauseTypeRegisteredEvent
+      description: Published when a new clause type is registered
+    - topic: contract.templatevalues.set
+      event: ContractTemplateValuesSetEvent
+      description: Published when template values are set on contract instance
+    - topic: contract.executed
+      event: ContractExecutedEvent
+      description: Published when contract clauses are executed (distributions made)
+
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/contract-lifecycle-events.yaml
 x-lifecycle:
@@ -659,6 +679,211 @@ components:
           type: string
           nullable: true
           description: Description of why validation failed
+
+    # =========================================================================
+    # Guardian & Escrow Integration Events
+    # =========================================================================
+
+    ContractLockedEvent:
+      type: object
+      description: Event published when a contract is locked under guardian custody
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+        - contractId
+        - guardianId
+        - guardianType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID
+        guardianType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Guardian entity type
+
+    ContractUnlockedEvent:
+      type: object
+      description: Event published when a contract is released from guardian custody
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+        - contractId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        previousGuardianId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Previous guardian entity ID
+        previousGuardianType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Previous guardian entity type
+
+    ContractPartyTransferredEvent:
+      type: object
+      description: Event published when a party role is transferred to new entity
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+        - contractId
+        - role
+        - fromEntityId
+        - fromEntityType
+        - toEntityId
+        - toEntityType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        role:
+          type: string
+          description: Role that was transferred
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Previous entity ID
+        fromEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Previous entity type
+        toEntityId:
+          type: string
+          format: uuid
+          description: New entity ID
+        toEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: New entity type
+
+    ClauseTypeRegisteredEvent:
+      type: object
+      description: Event published when a new clause type is registered
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+        - typeCode
+        - description
+        - category
+        - isBuiltIn
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        typeCode:
+          type: string
+          description: Clause type code
+        description:
+          type: string
+          description: Clause type description
+        category:
+          $ref: 'contract-api.yaml#/components/schemas/ClauseCategory'
+          description: Clause category
+        isBuiltIn:
+          type: boolean
+          description: Whether this is a built-in type
+
+    ContractTemplateValuesSetEvent:
+      type: object
+      description: Event published when template values are set on a contract instance
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+        - contractId
+        - keys
+        - valueCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        keys:
+          type: array
+          items:
+            type: string
+          description: Keys that were set
+        valueCount:
+          type: integer
+          description: Total value count after setting
+
+    ContractExecutedEvent:
+      type: object
+      description: Event published when contract clauses are executed (distributions made)
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+        - contractId
+        - templateCode
+        - distributionCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        distributionCount:
+          type: integer
+          description: Number of distributions executed
 
     # =========================================================================
     # Shared Event Models

@@ -166,3 +166,6 @@ components:
       type: string
       description: All authentication provider types including email
       enum: [email, google, discord, twitch, steam]
+x-inlined-types:
+- AuthMethodInfo
+- AuthProvider

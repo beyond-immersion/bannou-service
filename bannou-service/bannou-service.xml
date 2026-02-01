@@ -14726,6 +14726,206 @@
             Description of why validation failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractLockedEvent">
+            <summary>
+            Event published when a contract is locked under guardian custody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.GuardianId">
+            <summary>
+            Guardian entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.GuardianType">
+            <summary>
+            Guardian entity type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractUnlockedEvent">
+            <summary>
+            Event published when a contract is released from guardian custody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.PreviousGuardianId">
+            <summary>
+            Previous guardian entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.PreviousGuardianType">
+            <summary>
+            Previous guardian entity type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent">
+            <summary>
+            Event published when a party role is transferred to new entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.Role">
+            <summary>
+            Role that was transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.FromEntityId">
+            <summary>
+            Previous entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.FromEntityType">
+            <summary>
+            Previous entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.ToEntityId">
+            <summary>
+            New entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.ToEntityType">
+            <summary>
+            New entity type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent">
+            <summary>
+            Event published when a new clause type is registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.TypeCode">
+            <summary>
+            Clause type code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.Description">
+            <summary>
+            Clause type description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.Category">
+            <summary>
+            Clause category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.IsBuiltIn">
+            <summary>
+            Whether this is a built-in type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent">
+            <summary>
+            Event published when template values are set on a contract instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.Keys">
+            <summary>
+            Keys that were set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.ValueCount">
+            <summary>
+            Total value count after setting
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractExecutedEvent">
+            <summary>
+            Event published when contract clauses are executed (distributions made)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.TemplateCode">
+            <summary>
+            Template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.DistributionCount">
+            <summary>
+            Number of distributions executed
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.PartyInfo">
             <summary>
             Brief party information for events
@@ -16929,6 +17129,127 @@
         <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.StartedAt">
             <summary>
             When finalization started
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowReleasingEvent">
+            <summary>
+            Event published when escrow transitions to Releasing state.
+            <br/>Downstream services (currency, inventory) subscribe to execute actual asset transfers.
+            <br/>Parties may also need to confirm receipt depending on ReleaseMode.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.Timestamp">
+            <summary>
+            When the release was initiated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.EscrowId">
+            <summary>
+            The escrow transitioning to Releasing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.ReleaseMode">
+            <summary>
+            The confirmation mode for this release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.Allocations">
+            <summary>
+            Per-party allocations with confirmation details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.ConfirmationDeadline">
+            <summary>
+            Deadline for party confirmations (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.BoundContractId">
+            <summary>
+            Associated contract ID if this is a contract-driven release
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation">
+            <summary>
+            Release allocation details with confirmation information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.RecipientPartyId">
+            <summary>
+            Party receiving these assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.RecipientPartyType">
+            <summary>
+            Type of the recipient party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.Assets">
+            <summary>
+            Assets being released to this party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.DestinationWalletId">
+            <summary>
+            Target wallet for currency assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.DestinationContainerId">
+            <summary>
+            Target container for item assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.ReleaseToken">
+            <summary>
+            Token for this party to confirm release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.ConfirmationShortcut">
+            <summary>
+            Prebound API shortcut for client confirmation (pushed via WebSocket)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowRefundingEvent">
+            <summary>
+            Event published when escrow transitions to Refunding state.
+            <br/>Downstream services subscribe to execute actual refund transfers.
+            <br/>Parties may also need to confirm receipt depending on RefundMode.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.Timestamp">
+            <summary>
+            When the refund was initiated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.EscrowId">
+            <summary>
+            The escrow transitioning to Refunding
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.RefundMode">
+            <summary>
+            The confirmation mode for this refund
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.Deposits">
+            <summary>
+            Deposits being refunded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.Reason">
+            <summary>
+            Reason for refund
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.EscrowReleasedEvent">

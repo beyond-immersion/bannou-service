@@ -23,12 +23,16 @@ if [[ -z "$command" ]]; then
 fi
 
 # Check for git checkout (except for branch switching which is safe)
-# Block: git checkout <file>, git checkout -- <file>, git checkout .
-# Allow: git checkout <branch-name> (no -- or file paths with extensions)
+# Block: git checkout <file>, git checkout -- <file>, git checkout ., git checkout HEAD -- file
+# Allow: git checkout <branch-name>, git checkout -b <branch>
 if [[ "$command" =~ git[[:space:]]+checkout ]]; then
     # Allow branch operations: git checkout -b, git checkout <branchname>
-    # But block file operations: git checkout -- file, git checkout ., git checkout file.ext
-    if [[ "$command" =~ git[[:space:]]+checkout[[:space:]]+-- ]] || \
+    # But block file operations:
+    #   - git checkout -- file
+    #   - git checkout <ref> -- file (e.g., HEAD --)
+    #   - git checkout .
+    #   - git checkout file.ext
+    if [[ "$command" =~ git[[:space:]]+checkout[[:space:]].*-- ]] || \
        [[ "$command" =~ git[[:space:]]+checkout[[:space:]]+\. ]] || \
        [[ "$command" =~ git[[:space:]]+checkout[[:space:]]+[^-][^[:space:]]*\.[a-zA-Z] ]]; then
         cat <<'ENDJSON'
