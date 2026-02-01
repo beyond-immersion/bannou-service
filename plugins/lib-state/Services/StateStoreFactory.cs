@@ -66,6 +66,9 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _initialized;
 
+    // Singleton RedisOperations instance (shares connection with state stores)
+    private RedisOperations? _redisOperations;
+
     // Cache for created store instances
     private readonly ConcurrentDictionary<string, object> _storeCache = new();
 
@@ -315,7 +318,16 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             // Wrap with telemetry instrumentation if available
             if (_telemetryProvider != null)
             {
-                store = _telemetryProvider.WrapStateStore(store, storeName, backend);
+                // Use cacheable wrapper for stores that implement ICacheableStateStore
+                // so that the wrapped store also implements ICacheableStateStore
+                if (store is ICacheableStateStore<TValue> cacheableStore)
+                {
+                    store = _telemetryProvider.WrapCacheableStateStore(cacheableStore, storeName, backend);
+                }
+                else
+                {
+                    store = _telemetryProvider.WrapStateStore(store, storeName, backend);
+                }
             }
 
             return store;
@@ -396,6 +408,58 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public ICacheableStateStore<TValue> GetCacheableStore<TValue>(string storeName)
+        where TValue : class
+    {
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        // Get the effective backend (respecting UseInMemory override)
+        var backend = GetBackendType(storeName);
+
+        if (backend == StateBackend.MySql)
+        {
+            throw new InvalidOperationException(
+                $"Store '{storeName}' uses MySQL backend which does not support Set/Sorted Set operations. " +
+                "Use Redis or InMemory backend for cacheable stores.");
+        }
+
+        var store = GetStore<TValue>(storeName);
+        return (ICacheableStateStore<TValue>)store;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ICacheableStateStore<TValue>> GetCacheableStoreAsync<TValue>(string storeName, CancellationToken cancellationToken = default)
+        where TValue : class
+    {
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        // Ensure connections are initialized asynchronously
+        if (!_initialized)
+        {
+            await EnsureInitializedAsync();
+        }
+
+        // Get the effective backend (respecting UseInMemory override)
+        var backend = GetBackendType(storeName);
+
+        if (backend == StateBackend.MySql)
+        {
+            throw new InvalidOperationException(
+                $"Store '{storeName}' uses MySQL backend which does not support Set/Sorted Set operations. " +
+                "Use Redis or InMemory backend for cacheable stores.");
+        }
+
+        var store = GetStoreInternal<TValue>(storeName);
+        return (ICacheableStateStore<TValue>)store;
+    }
+
+    /// <inheritdoc/>
     public bool SupportsSearch(string storeName)
     {
 
@@ -443,6 +507,43 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         return _configuration.Stores
             .Where(kvp => kvp.Value.Backend == backend)
             .Select(kvp => kvp.Key);
+    }
+
+    /// <inheritdoc/>
+    public IRedisOperations? GetRedisOperations()
+    {
+        // Return null when using in-memory mode
+        if (_configuration.UseInMemory)
+        {
+            _logger.LogDebug("GetRedisOperations returning null - running in InMemory mode");
+            return null;
+        }
+
+        // Ensure connections are initialized
+        if (!_initialized)
+        {
+            _logger.LogWarning(
+                "GetRedisOperations called before InitializeAsync - performing sync-over-async initialization. " +
+                "Consider calling InitializeAsync() at startup.");
+            EnsureInitializedAsync().GetAwaiter().GetResult();
+        }
+
+        // Return null if Redis is not available
+        if (_redis == null)
+        {
+            _logger.LogDebug("GetRedisOperations returning null - Redis connection not available");
+            return null;
+        }
+
+        // Lazy initialization of RedisOperations singleton
+        if (_redisOperations == null)
+        {
+            var logger = _loggerFactory.CreateLogger<RedisOperations>();
+            _redisOperations = new RedisOperations(_redis.GetDatabase(), logger);
+            _logger.LogDebug("Created RedisOperations instance");
+        }
+
+        return _redisOperations;
     }
 
     /// <summary>

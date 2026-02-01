@@ -16,9 +16,10 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// <summary>
 /// Redis-backed state store with full-text search capabilities via RedisSearch.
 /// Uses JSON documents for storage to enable field-level indexing.
+/// Implements ICacheableStateStore for Set and Sorted Set operations.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
-public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue>
+public sealed class RedisSearchStateStore<TValue> : ICacheableStateStore<TValue>, ISearchableStateStore<TValue>
     where TValue : class
 {
     private readonly IDatabase _database;

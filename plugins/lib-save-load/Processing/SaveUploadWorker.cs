@@ -112,7 +112,7 @@ public class SaveUploadWorker : BackgroundService
             return;
         }
 
-        var pendingStore = stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+        var pendingStore = stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
         var versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
         // Get pending upload IDs from tracking set (Redis doesn't support LINQ queries)
@@ -174,7 +174,7 @@ public class SaveUploadWorker : BackgroundService
 
     private async Task ProcessUploadAsync(
         PendingUploadEntry entry,
-        IStateStore<PendingUploadEntry> pendingStore,
+        ICacheableStateStore<PendingUploadEntry> pendingStore,
         IStateStore<SaveVersionManifest> versionStore,
         IAssetClient assetClient,
         IMessageBus messageBus,
@@ -274,7 +274,7 @@ public class SaveUploadWorker : BackgroundService
 
     private async Task RecordUploadFailureAsync(
         PendingUploadEntry entry,
-        IStateStore<PendingUploadEntry> pendingStore,
+        ICacheableStateStore<PendingUploadEntry> pendingStore,
         IMessageBus messageBus,
         string errorMessage,
         StorageCircuitBreaker circuitBreaker,

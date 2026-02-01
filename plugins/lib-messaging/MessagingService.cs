@@ -75,7 +75,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     private readonly IMessageBus _messageBus;
     private readonly IMessageSubscriber _messageSubscriber;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IStateStore<ExternalSubscriptionData> _subscriptionStore;
+    private readonly ICacheableStateStore<ExternalSubscriptionData> _subscriptionStore;
     private readonly string _appId;
 
     /// <summary>
@@ -113,7 +113,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
         _httpClientFactory = httpClientFactory;
-        _subscriptionStore = stateStoreFactory.GetStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs);
+        _subscriptionStore = stateStoreFactory.GetCacheableStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs);
         _appId = appConfiguration.EffectiveAppId;
     }
 

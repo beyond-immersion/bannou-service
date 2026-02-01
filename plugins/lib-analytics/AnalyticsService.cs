@@ -1540,14 +1540,14 @@ public partial class AnalyticsService : IAnalyticsService
             bufferedEvent.Metadata = null;
         }
 
-        IStateStore<BufferedAnalyticsEvent>? bufferStore = null;
-        IStateStore<object>? bufferIndexStore = null;
+        ICacheableStateStore<BufferedAnalyticsEvent>? bufferStore = null;
+        ICacheableStateStore<object>? bufferIndexStore = null;
         string? eventKey = null;
 
         try
         {
-            bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
-            bufferIndexStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.AnalyticsSummary);
+            bufferStore = _stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
+            bufferIndexStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
             eventKey = GetEventBufferEntryKey(bufferedEvent.EventId);
 
             await bufferStore.SaveAsync(eventKey, bufferedEvent, options: null, cancellationToken);
@@ -1647,7 +1647,7 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
-        var bufferIndexStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.AnalyticsSummary);
+        var bufferIndexStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
         var bufferCount = await bufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
         if (bufferCount == 0)
         {
@@ -1721,7 +1721,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
+            var bufferStore = _stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
             await FlushBufferedEventsBatchAsync(bufferIndexStore, bufferStore, cancellationToken);
         }
         catch (Exception ex)
@@ -1741,7 +1741,7 @@ public partial class AnalyticsService : IAnalyticsService
     }
 
     private async Task FlushBufferedEventsBatchAsync(
-        IStateStore<object> bufferIndexStore,
+        ICacheableStateStore<object> bufferIndexStore,
         IStateStore<BufferedAnalyticsEvent> bufferStore,
         CancellationToken cancellationToken)
     {

@@ -106,7 +106,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             // Check if already exists
@@ -182,7 +182,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             var definition = await definitionStore.GetAsync(key, cancellationToken);
@@ -220,7 +220,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var indexKey = GetDefinitionIndexKey(body.GameServiceId);
             var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 
@@ -304,7 +304,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
@@ -383,7 +383,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             var definition = await definitionStore.GetAsync(key, cancellationToken);
@@ -441,7 +441,7 @@ public partial class AchievementService : IAchievementService
                 TotalPoints = 0
             };
 
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var progressList = new List<AchievementProgress>();
             var unlockedCount = 0;
 
@@ -521,7 +521,7 @@ public partial class AchievementService : IAchievementService
         try
         {
             // Get achievement definition
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -677,7 +677,7 @@ public partial class AchievementService : IAchievementService
         try
         {
             // Get achievement definition
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -829,7 +829,7 @@ public partial class AchievementService : IAchievementService
                 });
             }
 
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var unlockedAchievements = new List<UnlockedAchievement>();
             var totalPoints = 0;
 
@@ -958,7 +958,7 @@ public partial class AchievementService : IAchievementService
                 });
             }
 
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var synced = 0;
             var failed = 0;
             var errors = new List<string>();

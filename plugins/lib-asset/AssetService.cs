@@ -2855,7 +2855,7 @@ public partial class AssetService : IAssetService
             }
 
             var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetCacheableStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
             var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
@@ -3025,7 +3025,7 @@ public partial class AssetService : IAssetService
             }
 
             var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetCacheableStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
             var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
@@ -3162,7 +3162,7 @@ public partial class AssetService : IAssetService
             }
 
             var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetCacheableStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
             var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
@@ -3265,7 +3265,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+            var bundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
 
             // For now, require owner filter for efficient querying
             // A full bundle registry would be needed for arbitrary queries
@@ -3440,7 +3440,7 @@ public partial class AssetService : IAssetService
             }
 
             var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
-            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
+            var versionStore = _stateStoreFactory.GetCacheableStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
             var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);

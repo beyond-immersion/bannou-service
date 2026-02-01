@@ -13,9 +13,10 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// In-memory state store for testing and minimal infrastructure scenarios.
 /// Data is NOT persisted across restarts.
 /// Thread-safe via ConcurrentDictionary.
+/// Implements ICacheableStateStore for Set and Sorted Set operations.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
-public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
+public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     where TValue : class
 {
     private readonly string _storeName;
@@ -38,6 +39,9 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     // Shared set store for set operations
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SetEntry>> _allSetStores = new();
 
+    // Shared sorted set store for sorted set operations
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SortedSetEntry>> _allSortedSetStores = new();
+
     /// <summary>
     /// Entry for a set in the in-memory store.
     /// </summary>
@@ -48,8 +52,21 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         public readonly object Lock = new();
     }
 
+    /// <summary>
+    /// Entry for a sorted set in the in-memory store.
+    /// Uses a dictionary for member->score lookup and a sorted list for ordered access.
+    /// </summary>
+    private sealed class SortedSetEntry
+    {
+        // Member -> Score mapping for O(1) lookup
+        public Dictionary<string, double> MemberScores { get; } = new();
+        public DateTimeOffset? ExpiresAt { get; set; }
+        public readonly object Lock = new();
+    }
+
     private readonly ConcurrentDictionary<string, StoreEntry> _store;
     private readonly ConcurrentDictionary<string, SetEntry> _setStore;
+    private readonly ConcurrentDictionary<string, SortedSetEntry> _sortedSetStore;
 
     /// <summary>
     /// Creates a new in-memory state store.
@@ -66,6 +83,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         // Get or create the store for this name
         _store = _allStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, StoreEntry>());
         _setStore = _allSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SetEntry>());
+        _sortedSetStore = _allSortedSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SortedSetEntry>());
 
         _logger.LogDebug("In-memory state store '{StoreName}' initialized", storeName);
     }
@@ -384,6 +402,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     {
         _store.Clear();
         _setStore.Clear();
+        _sortedSetStore.Clear();
         _logger.LogDebug("Cleared all entries from store '{Store}'", _storeName);
     }
 
@@ -658,71 +677,256 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         }
     }
 
-    // ==================== Sorted Set Operations (Not Supported) ====================
-    // In-memory backend does not support sorted set operations. Use Redis for leaderboards.
+    // ==================== Sorted Set Operations ====================
+
+    private bool IsSortedSetExpired(SortedSetEntry entry)
+    {
+        return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Get members ordered by score for ranking operations.
+    /// </summary>
+    private IReadOnlyList<(string member, double score)> GetOrderedMembers(SortedSetEntry entry, bool descending)
+    {
+        var ordered = descending
+            ? entry.MemberScores.OrderByDescending(kvp => kvp.Value).ThenBy(kvp => kvp.Key)
+            : entry.MemberScores.OrderBy(kvp => kvp.Value).ThenBy(kvp => kvp.Key);
+
+        return ordered.Select(kvp => (kvp.Key, kvp.Value)).ToList();
+    }
 
     /// <inheritdoc/>
-    public Task<bool> SortedSetAddAsync(
+    public async Task<bool> SortedSetAddAsync(
         string key,
         string member,
         double score,
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _sortedSetStore.GetOrAdd(key, _ => new SortedSetEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                entry.MemberScores.Clear();
+            }
+
+            var isNew = !entry.MemberScores.ContainsKey(member);
+            entry.MemberScores[member] = score;
+
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Added member '{Member}' to sorted set '{Key}' with score {Score} (new: {IsNew})",
+                member, key, score, isNew);
+
+            return isNew;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<long> SortedSetAddBatchAsync(
+    public async Task<long> SortedSetAddBatchAsync(
         string key,
         IEnumerable<(string member, double score)> entries,
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        var entryList = entries.ToList();
+        if (entryList.Count == 0)
+        {
+            return 0;
+        }
+
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var sortedSetEntry = _sortedSetStore.GetOrAdd(key, _ => new SortedSetEntry());
+
+        lock (sortedSetEntry.Lock)
+        {
+            if (IsSortedSetExpired(sortedSetEntry))
+            {
+                sortedSetEntry.MemberScores.Clear();
+            }
+
+            var added = 0L;
+            foreach (var (member, score) in entryList)
+            {
+                if (!sortedSetEntry.MemberScores.ContainsKey(member))
+                {
+                    added++;
+                }
+                sortedSetEntry.MemberScores[member] = score;
+            }
+
+            if (expiresAt.HasValue)
+            {
+                sortedSetEntry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Batch added {Count} entries to sorted set '{Key}', {NewCount} new",
+                entryList.Count, key, added);
+
+            return added;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<bool> SortedSetRemoveAsync(
+    public async Task<bool> SortedSetRemoveAsync(
         string key,
         string member,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        if (!_sortedSetStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                _sortedSetStore.TryRemove(key, out _);
+                return false;
+            }
+
+            var removed = entry.MemberScores.Remove(member);
+
+            _logger.LogDebug("Removed member '{Member}' from sorted set '{Key}' (existed: {Existed})",
+                member, key, removed);
+
+            return removed;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<double?> SortedSetScoreAsync(
+    public async Task<double?> SortedSetScoreAsync(
         string key,
         string member,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        if (!_sortedSetStore.TryGetValue(key, out var entry))
+        {
+            return null;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                _sortedSetStore.TryRemove(key, out _);
+                return null;
+            }
+
+            return entry.MemberScores.TryGetValue(member, out var score) ? score : null;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<long?> SortedSetRankAsync(
+    public async Task<long?> SortedSetRankAsync(
         string key,
         string member,
         bool descending = true,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        if (!_sortedSetStore.TryGetValue(key, out var entry))
+        {
+            return null;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                _sortedSetStore.TryRemove(key, out _);
+                return null;
+            }
+
+            if (!entry.MemberScores.ContainsKey(member))
+            {
+                return null;
+            }
+
+            var orderedMembers = GetOrderedMembers(entry, descending);
+            for (var i = 0; i < orderedMembers.Count; i++)
+            {
+                if (orderedMembers[i].member == member)
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
+    public async Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
         string key,
         long start,
         long stop,
         bool descending = true,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        if (!_sortedSetStore.TryGetValue(key, out var entry))
+        {
+            return Array.Empty<(string, double)>();
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                _sortedSetStore.TryRemove(key, out _);
+                return Array.Empty<(string, double)>();
+            }
+
+            var orderedMembers = GetOrderedMembers(entry, descending);
+            var count = orderedMembers.Count;
+
+            // Handle negative indices (like Redis)
+            if (start < 0) start = Math.Max(0, count + start);
+            if (stop < 0) stop = count + stop;
+
+            // Clamp to valid range
+            start = Math.Max(0, start);
+            stop = Math.Min(count - 1, stop);
+
+            if (start > stop || start >= count)
+            {
+                return Array.Empty<(string, double)>();
+            }
+
+            return orderedMembers
+                .Skip((int)start)
+                .Take((int)(stop - start + 1))
+                .ToList();
+        }
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
+    public async Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
         string key,
         double minScore,
         double maxScore,
@@ -731,32 +935,109 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         bool descending = false,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        if (!_sortedSetStore.TryGetValue(key, out var entry))
+        {
+            return Array.Empty<(string, double)>();
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                _sortedSetStore.TryRemove(key, out _);
+                return Array.Empty<(string, double)>();
+            }
+
+            var orderedMembers = GetOrderedMembers(entry, descending);
+
+            var filtered = orderedMembers
+                .Where(m => m.score >= minScore && m.score <= maxScore);
+
+            if (offset > 0)
+            {
+                filtered = filtered.Skip(offset);
+            }
+
+            if (count >= 0)
+            {
+                filtered = filtered.Take(count);
+            }
+
+            return filtered.ToList();
+        }
     }
 
     /// <inheritdoc/>
-    public Task<long> SortedSetCountAsync(
+    public async Task<long> SortedSetCountAsync(
         string key,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        if (!_sortedSetStore.TryGetValue(key, out var entry))
+        {
+            return 0;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                _sortedSetStore.TryRemove(key, out _);
+                return 0;
+            }
+
+            return entry.MemberScores.Count;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<double> SortedSetIncrementAsync(
+    public async Task<double> SortedSetIncrementAsync(
         string key,
         string member,
         double increment,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        var entry = _sortedSetStore.GetOrAdd(key, _ => new SortedSetEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsSortedSetExpired(entry))
+            {
+                entry.MemberScores.Clear();
+            }
+
+            if (!entry.MemberScores.TryGetValue(member, out var currentScore))
+            {
+                currentScore = 0;
+            }
+
+            var newScore = currentScore + increment;
+            entry.MemberScores[member] = newScore;
+
+            _logger.LogDebug("Incremented member '{Member}' in sorted set '{Key}' by {Increment} to {NewScore}",
+                member, key, increment, newScore);
+
+            return newScore;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<bool> SortedSetDeleteAsync(
+    public async Task<bool> SortedSetDeleteAsync(
         string key,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by InMemory backend. Use Redis for leaderboards.");
+        await Task.CompletedTask;
+
+        var deleted = _sortedSetStore.TryRemove(key, out _);
+
+        _logger.LogDebug("Deleted sorted set '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _storeName, deleted);
+
+        return deleted;
     }
 }

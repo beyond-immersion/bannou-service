@@ -136,6 +136,18 @@ public interface ITelemetryProvider
     /// <returns>Instrumented store wrapper or the original store.</returns>
     IJsonQueryableStateStore<TValue> WrapJsonQueryableStateStore<TValue>(IJsonQueryableStateStore<TValue> store, string storeName, string backend)
         where TValue : class;
+
+    /// <summary>
+    /// Wrap a cacheable state store with instrumentation.
+    /// Returns the original store if instrumentation is disabled.
+    /// </summary>
+    /// <typeparam name="TValue">Value type stored.</typeparam>
+    /// <param name="store">The store to wrap.</param>
+    /// <param name="storeName">Name of the state store.</param>
+    /// <param name="backend">Backend type (redis, memory).</param>
+    /// <returns>Instrumented store wrapper or the original store.</returns>
+    ICacheableStateStore<TValue> WrapCacheableStateStore<TValue>(ICacheableStateStore<TValue> store, string storeName, string backend)
+        where TValue : class;
 }
 
 /// <summary>

@@ -273,6 +273,19 @@ public sealed class TelemetryProvider : ITelemetryProvider, IDisposable
         return new InstrumentedJsonQueryableStateStore<TValue>(store, this, storeName, backend);
     }
 
+    /// <inheritdoc/>
+    public ICacheableStateStore<TValue> WrapCacheableStateStore<TValue>(ICacheableStateStore<TValue> store, string storeName, string backend)
+        where TValue : class
+    {
+        // Only wrap if tracing or metrics is enabled
+        if (!TracingEnabled && !MetricsEnabled)
+        {
+            return store;
+        }
+
+        return new InstrumentedCacheableStateStore<TValue>(store, this, storeName, backend);
+    }
+
     /// <summary>
     /// Disposes all managed resources.
     /// </summary>

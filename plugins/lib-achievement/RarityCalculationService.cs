@@ -102,7 +102,7 @@ public class RarityCalculationService : BackgroundService
         {
             using var scope = _serviceProvider.CreateScope();
             var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
-            var definitionStore = stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+            var definitionStore = stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
 
             // Get all known game service IDs from the index set
             var gameServiceIds = await definitionStore.GetSetAsync<string>(GAME_SERVICE_INDEX_KEY, cancellationToken);

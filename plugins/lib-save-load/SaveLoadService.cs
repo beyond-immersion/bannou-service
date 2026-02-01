@@ -541,7 +541,7 @@ public partial class SaveLoadService : ISaveLoadService
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
-            var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+            var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
 
             // Convert request types to strings for state key construction
             var ownerTypeStr = body.OwnerType.ToString();
@@ -1173,7 +1173,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for async upload if enabled - PendingUploadEntry fields are now proper types
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+                var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid();
                 var pendingEntry = new PendingUploadEntry
                 {
@@ -1512,7 +1512,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for upload if enabled - PendingUploadEntry fields are now proper types
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+                var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid();
                 var pendingEntry = new PendingUploadEntry
                 {
@@ -2254,7 +2254,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for upload if enabled
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+                var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid();
                 var pendingEntry = new PendingUploadEntry
                 {
@@ -2542,7 +2542,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for async upload
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+                var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid();
                 var pendingEntry = new PendingUploadEntry
                 {

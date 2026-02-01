@@ -66,4 +66,8 @@ public sealed class NullTelemetryProvider : ITelemetryProvider
     /// <inheritdoc />
     public IJsonQueryableStateStore<TValue> WrapJsonQueryableStateStore<TValue>(IJsonQueryableStateStore<TValue> store, string storeName, string backend)
         where TValue : class => store;
+
+    /// <inheritdoc />
+    public ICacheableStateStore<TValue> WrapCacheableStateStore<TValue>(ICacheableStateStore<TValue> store, string storeName, string backend)
+        where TValue : class => store;
 }

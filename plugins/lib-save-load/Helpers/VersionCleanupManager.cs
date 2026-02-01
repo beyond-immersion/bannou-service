@@ -215,7 +215,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
 
         var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
         var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
-        var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+        var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
         var slotIdString = slot.SlotId.ToString();
 
         var collapsedCount = 0;

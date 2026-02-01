@@ -233,77 +233,8 @@ public class InstrumentedStateStoreTests
 
     #endregion
 
-    #region Set Operations
-
-    [Fact]
-    public async Task AddToSetAsync_DelegatesToInnerStore()
-    {
-        // Arrange
-        _innerStoreMock
-            .Setup(x => x.AddToSetAsync<string>("set-key", "item", null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Act
-        var result = await _sut.AddToSetAsync("set-key", "item");
-
-        // Assert
-        Assert.True(result);
-        _innerStoreMock.Verify(
-            x => x.AddToSetAsync<string>("set-key", "item", null, It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task GetSetAsync_DelegatesToInnerStore()
-    {
-        // Arrange
-        var expected = new List<string> { "a", "b", "c" };
-        _innerStoreMock
-            .Setup(x => x.GetSetAsync<string>("set-key", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expected);
-
-        // Act
-        var result = await _sut.GetSetAsync<string>("set-key");
-
-        // Assert
-        Assert.Equal(3, result.Count);
-    }
-
-    #endregion
-
-    #region Sorted Set Operations
-
-    [Fact]
-    public async Task SortedSetAddAsync_DelegatesToInnerStore()
-    {
-        // Arrange
-        _innerStoreMock
-            .Setup(x => x.SortedSetAddAsync("zset", "member", 1.0, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Act
-        var result = await _sut.SortedSetAddAsync("zset", "member", 1.0);
-
-        // Assert
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task SortedSetRankAsync_DelegatesToInnerStore()
-    {
-        // Arrange
-        _innerStoreMock
-            .Setup(x => x.SortedSetRankAsync("zset", "member", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(5L);
-
-        // Act
-        var result = await _sut.SortedSetRankAsync("zset", "member", true);
-
-        // Assert
-        Assert.Equal(5L, result);
-    }
-
-    #endregion
+    // Note: Set and Sorted Set operation tests moved to InstrumentedCacheableStateStoreTests
+    // as these operations are now on ICacheableStateStore, not IStateStore
 
     /// <summary>
     /// Test entity for state store tests.

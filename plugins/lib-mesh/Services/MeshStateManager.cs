@@ -24,8 +24,8 @@ public class MeshStateManager : IMeshStateManager
 
     // Cached stores (lazy initialization after InitializeAsync)
     private IStateStore<MeshEndpoint>? _endpointStore;
-    private IStateStore<MeshEndpoint>? _appIdIndexStore;
-    private IStateStore<MeshEndpoint>? _globalIndexStore;
+    private ICacheableStateStore<MeshEndpoint>? _appIdIndexStore;
+    private ICacheableStateStore<MeshEndpoint>? _globalIndexStore;
 
     private int _initialized; // 0 = false, 1 = true; uses Interlocked for thread safety
 
@@ -60,9 +60,9 @@ public class MeshStateManager : IMeshStateManager
             // lib-state is already initialized by StateServicePlugin
             _endpointStore = await _stateStoreFactory.GetStoreAsync<MeshEndpoint>(
                 StateStoreDefinitions.MeshEndpoints, cancellationToken);
-            _appIdIndexStore = await _stateStoreFactory.GetStoreAsync<MeshEndpoint>(
+            _appIdIndexStore = await _stateStoreFactory.GetCacheableStoreAsync<MeshEndpoint>(
                 StateStoreDefinitions.MeshAppidIndex, cancellationToken);
-            _globalIndexStore = await _stateStoreFactory.GetStoreAsync<MeshEndpoint>(
+            _globalIndexStore = await _stateStoreFactory.GetCacheableStoreAsync<MeshEndpoint>(
                 StateStoreDefinitions.MeshGlobalIndex, cancellationToken);
 
             // Verify connectivity with a simple operation
