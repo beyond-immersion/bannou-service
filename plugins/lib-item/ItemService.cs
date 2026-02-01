@@ -773,6 +773,78 @@ public partial class ItemService : IItemService
     }
 
     /// <inheritdoc/>
+    public async Task<(StatusCodes, ItemInstanceResponse?)> UnbindItemInstanceAsync(
+        UnbindItemInstanceRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+            var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+
+            if (model is null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (model.BoundToId is null)
+            {
+                _logger.LogWarning("Item {InstanceId} is not bound", body.InstanceId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var previousCharacterId = model.BoundToId.Value;
+            var now = DateTimeOffset.UtcNow;
+
+            // Clear binding
+            model.BoundToId = null;
+            model.BoundAt = null;
+            model.ModifiedAt = now;
+
+            await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
+
+            // Invalidate cache after write
+            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
+            // Get template for event enrichment (uses cache)
+            var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
+
+            if (template is null)
+            {
+                _logger.LogWarning("Template {TemplateId} not found when unbinding instance {InstanceId}, possible data inconsistency",
+                    model.TemplateId, body.InstanceId);
+            }
+
+            var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
+
+            await _messageBus.TryPublishAsync("item-instance.unbound", new ItemInstanceUnboundEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                InstanceId = body.InstanceId,
+                TemplateId = model.TemplateId,
+                TemplateCode = templateCode,
+                RealmId = model.RealmId,
+                PreviousCharacterId = previousCharacterId,
+                Reason = body.Reason
+            }, cancellationToken);
+
+            _logger.LogDebug("Unbound item {InstanceId} from character {CharacterId} reason={Reason}",
+                body.InstanceId, previousCharacterId, body.Reason);
+            return (StatusCodes.OK, MapInstanceToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unbinding item instance {InstanceId}", body.InstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item", "UnbindItemInstance", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "post:/item/instance/unbind",
+                details: null, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<(StatusCodes, DestroyItemInstanceResponse?)> DestroyItemInstanceAsync(
         DestroyItemInstanceRequest body,
         CancellationToken cancellationToken = default)

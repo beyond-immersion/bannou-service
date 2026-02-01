@@ -250,6 +250,7 @@ Stack Operations
 ## Stubs & Unimplemented Features
 
 1. **Grid constraint approximation**: Grid containers use slot count as proxy for space tracking. True grid collision detection (tracking occupied cells, item rotation via SlotX/SlotY/Rotated) is not implemented.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/196 -->
 
 2. **Nested container weight propagation**: The `WeightContribution` enum exists and is stored, but parent container ContentsWeight is not automatically updated when child container contents change. Only the immediate container's counters are updated.
 

@@ -106,12 +106,12 @@ This plugin does not consume external events (it IS the event infrastructure).
 | `SubscriptionRecoveryStartupDelaySeconds` | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | `2` | Delay before recovery on startup |
 | `RabbitMQNetworkRecoveryIntervalSeconds` | `MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS` | `10` | Auto-recovery interval |
 | `ExternalSubscriptionTtlSeconds` | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | `86400` | External subscription persistence TTL (24h) |
+| `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Enable RabbitMQ publisher confirms for at-least-once delivery |
 
 ### Unused Configuration Properties
 
 | Property | Env Var | Default | Notes |
 |----------|---------|---------|-------|
-| `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Defined but never evaluated |
 | `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `3` | Defined but not used in service code |
 | `RetryDelayMs` | `MESSAGING_RETRY_DELAY_MS` | `5000` | Defined but not used in service code |
 | `UseMassTransit` | `MESSAGING_USE_MASSTRANSIT` | `true` | Legacy feature flag, never checked |
@@ -213,7 +213,7 @@ Messaging Architecture
 
 ## Stubs & Unimplemented Features
 
-1. **Publisher confirms**: `EnablePublisherConfirms` config exists but confirmations are not implemented.
+1. ~~**Publisher confirms**~~: **FIXED** (2026-01-31) - `RabbitMQConnectionManager.GetChannelAsync()` now passes `CreateChannelOptions(publisherConfirmationsEnabled: config.EnablePublisherConfirms)` when creating channels. When enabled (default: true), `BasicPublishAsync` awaits broker confirmation before returning, providing at-least-once delivery guarantees.
 2. **Metrics collection**: `EnableMetrics` flag exists but no instrumentation code.
 3. **Distributed tracing**: `EnableTracing` flag exists but no Activity/DiagnosticSource usage.
 4. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
@@ -225,10 +225,9 @@ Messaging Architecture
 ## Potential Extensions
 
 1. **RabbitMQ Management API integration**: Enable accurate message counts and queue depth monitoring.
-2. **Publisher confirm support**: Add reliability guarantees for critical event publishing.
-3. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
-4. **Dead-letter processing**: Consumer for DLX queue to handle poison messages.
-5. **Configurable channel pool size**: Currently hardcoded at 10 in `RabbitMQConnectionManager.MAX_POOL_SIZE`.
+2. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
+3. **Dead-letter processing**: Consumer for DLX queue to handle poison messages.
+4. **Configurable channel pool size**: Currently hardcoded at 10 in `RabbitMQConnectionManager.MAX_POOL_SIZE`.
 
 ---
 
@@ -266,7 +265,7 @@ No bugs identified.
 
 3. **ServiceId from global static**: `RabbitMQMessageBus.TryPublishErrorAsync()` accesses `Program.ServiceGUID` directly (global variable) rather than injecting it via configuration.
 
-4. **Six unused config properties**: `EnablePublisherConfirms`, `RetryMaxAttempts`, `RetryDelayMs`, `UseMassTransit`, `EnableMetrics`, `EnableTracing` are all defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS (no dead config).
+4. **Five unused config properties**: `RetryMaxAttempts`, `RetryDelayMs`, `UseMassTransit`, `EnableMetrics`, `EnableTracing` are all defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS (no dead config).
 
 5. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
 
@@ -280,4 +279,6 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-*No active work items.*
+### Completed
+
+- **2026-01-31**: Publisher confirms implemented - `RabbitMQConnectionManager` now uses `CreateChannelOptions` with `EnablePublisherConfirms` config.

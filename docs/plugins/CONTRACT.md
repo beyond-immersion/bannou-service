@@ -409,6 +409,7 @@ Prebound API Batched Execution
 ## Stubs & Unimplemented Features
 
 1. **Territory constraint checking**: The `ConstraintType.Territory` case in CheckContractConstraint is a stub with only a comment "Would need to check territory overlap with proposed action". No actual territory logic exists.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/197 -->
 2. **Time commitment constraint checking**: The `ConstraintType.Time_commitment` case is similarly stubbed with no implementation.
 3. **Milestone deadline computation**: `MilestoneInstanceResponse.Deadline` is always returned as null with comment "Would need to compute absolute deadline". No deadline enforcement or expiration logic exists for milestones.
 4. **ContractSummary.TemplateName**: Always returned as null in QueryActiveContracts and CheckConstraint responses with comment "Would need to load template". Template name is not resolved for summary queries.

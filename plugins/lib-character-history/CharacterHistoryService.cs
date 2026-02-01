@@ -105,6 +105,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
     /// <summary>
     /// Records a character's participation in a historical event.
+    /// Returns Conflict if the character already has a participation record for this event.
     /// </summary>
     public async Task<(StatusCodes, HistoricalParticipation?)> RecordParticipationAsync(RecordParticipationRequest body, CancellationToken cancellationToken)
     {
@@ -113,6 +114,19 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
+            // Check for existing participation - schema documents 409 Conflict for duplicates
+            var existingRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                cancellationToken);
+
+            var duplicateExists = existingRecords.Any(r => r.EventId == body.EventId);
+            if (duplicateExists)
+            {
+                _logger.LogWarning("Character {CharacterId} already has participation record for event {EventId}",
+                    body.CharacterId, body.EventId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var participationId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 

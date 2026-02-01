@@ -211,6 +211,7 @@ None. The service is feature-complete for its scope.
 ## Potential Extensions
 
 1. **Permission TTL**: Auto-expire session permissions after configurable period, forcing recompilation on next access.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/198 -->
 2. **Fine-grained caching**: Cache compiled permissions per-service instead of per-session for more granular invalidation.
 3. **Permission delegation**: Allow services to grant temporary elevated permissions to specific sessions.
 4. **Audit trail**: Log permission checks and changes for security auditing.

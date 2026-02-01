@@ -223,6 +223,7 @@ Soulbound Types
 ## Stubs & Unimplemented Features
 
 1. **Unbound event not implemented**: `item-instance.unbound` event type is defined in the event schema but no unbinding endpoint exists. Items can only be bound, not unbound (except via admin override rebinding).
+<!-- AUDIT:IN_PROGRESS:2026-01-31 -->
 2. **Deprecation without cascade**: Deprecating a template doesn't automatically migrate, disable, or destroy existing instances. Admin must manage instances separately.
 
 ---

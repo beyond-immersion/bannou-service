@@ -315,6 +315,36 @@ paths:
       - role: developer
         states: {}
 
+  /item/instance/unbind:
+    post:
+      operationId: unbindItemInstance
+      tags:
+      - Item Instance
+      summary: Unbind item from character
+      description: |
+        Removes the binding from a soulbound item. This is an admin-only operation
+        for returning bound items to tradeable state. Requires a reason for audit trail.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnbindItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance unbound successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '400':
+          description: Item is not bound
+        '404':
+          description: Item instance not found
+      x-permissions:
+      - role: admin
+        states: {}
+
   /item/instance/destroy:
     post:
       operationId: destroyItemInstance
@@ -1191,6 +1221,23 @@ components:
         bindType:
           $ref: '#/components/schemas/SoulboundType'
           description: Type of binding to apply
+
+    UnbindItemInstanceRequest:
+      type: object
+      description: Request to unbind an item from a character
+      additionalProperties: false
+      required:
+      - instanceId
+      - reason
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to unbind
+        reason:
+          type: string
+          maxLength: 200
+          description: Reason for unbinding (admin, expiration, transfer_override)
 
     DestroyItemInstanceRequest:
       type: object

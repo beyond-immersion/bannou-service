@@ -95,9 +95,10 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
                     _connection = await factory.CreateConnectionAsync(cancellationToken);
 
                     _logger.LogInformation(
-                        "RabbitMQ connection established to {Host}:{Port}",
+                        "RabbitMQ connection established to {Host}:{Port} (publisher confirms: {PublisherConfirms})",
                         _configuration.RabbitMQHost,
-                        _configuration.RabbitMQPort);
+                        _configuration.RabbitMQPort,
+                        _configuration.EnablePublisherConfirms);
 
                     return true;
                 }
@@ -162,8 +163,12 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
             }
         }
 
-        // No usable channel in pool, create new one
-        return await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        // No usable channel in pool, create new one with publisher confirms if configured
+        var channelOptions = new CreateChannelOptions(
+            publisherConfirmationsEnabled: _configuration.EnablePublisherConfirms,
+            publisherConfirmationTrackingEnabled: false);
+
+        return await _connection.CreateChannelAsync(channelOptions, cancellationToken);
     }
 
     /// <summary>

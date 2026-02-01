@@ -182,7 +182,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. **Schema promises 409 Conflict but implementation allows duplicates**: The API schema (`character-history-api.yaml`) documents that `/character-history/record-participation` returns `409 Conflict` when "Participation already recorded for this character and event". However, `RecordParticipationAsync` always generates a new `participationId` and stores the record without checking if the character+event pair already exists. This allows the same character to have multiple participation records for the same event, contradicting the documented API contract.
+1. ~~**Schema promises 409 Conflict but implementation allows duplicates**~~: **FIXED** (2026-01-31) - `RecordParticipationAsync` now checks for existing participation records for the same characterId+eventId pair before creating a new record, returning `StatusCodes.Conflict` if a duplicate exists. The check uses `GetRecordsByPrimaryKeyAsync` to fetch all participations for the character and `.Any(r => r.EventId == body.EventId)` to detect duplicates.
 
 ### Intentional Quirks
 
@@ -226,4 +226,5 @@ None. The service is feature-complete for its scope.
 
 ## Work Tracking
 
-No active work items tracked for this plugin.
+### Completed
+- **2026-01-31**: Fixed duplicate participation bug - `RecordParticipationAsync` now returns 409 Conflict when character+event pair already exists, matching schema contract.

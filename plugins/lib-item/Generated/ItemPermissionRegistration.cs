@@ -202,6 +202,21 @@ public static class ItemPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/item/instance/unbind",
+            Method = ServiceEndpointMethod.POST,
+            Description = "unbindItemInstance",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/item/instance/destroy",
             Method = ServiceEndpointMethod.POST,
             Description = "destroyItemInstance",
