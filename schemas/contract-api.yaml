@@ -1051,6 +1051,20 @@ components:
       - instance_data
       - runtime_state
 
+    IndexLockFailureMode:
+      type: string
+      description: Behavior when index lock acquisition fails
+      enum:
+      - warn
+      - fail
+
+    TermsMergeMode:
+      type: string
+      description: How instance terms merge with template terms during contract creation
+      enum:
+      - shallow
+      - deep
+
     # =========================================================================
     # Template Models
     # =========================================================================

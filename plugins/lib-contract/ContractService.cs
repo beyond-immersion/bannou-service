@@ -50,6 +50,19 @@ public partial class ContractService : IContractService
     private const string ALL_TEMPLATES_KEY = "all-templates";
 
     /// <summary>
+    /// Contract statuses that count as "active" for the MaxActiveContractsPerEntity limit.
+    /// Draft, Proposed, Pending, and Active contracts count toward the limit.
+    /// Static readonly to avoid allocation per request (IMPLEMENTATION TENETS compliance).
+    /// </summary>
+    private static readonly HashSet<ContractStatus> ActiveStatuses = new()
+    {
+        ContractStatus.Draft,
+        ContractStatus.Proposed,
+        ContractStatus.Pending,
+        ContractStatus.Active
+    };
+
+    /// <summary>
     /// Safely extracts a boolean value from custom terms dictionary.
     /// Handles both native bool values and JsonElement values from JSON deserialization.
     /// </summary>
@@ -621,6 +634,7 @@ public partial class ContractService : IContractService
             }
 
             // Validate active contract limit per entity (0 = unlimited)
+            // Only counts Draft/Proposed/Pending/Active contracts, not Fulfilled/Terminated/etc.
             if (_configuration.MaxActiveContractsPerEntity > 0)
             {
                 foreach (var party in body.Parties)
@@ -629,11 +643,28 @@ public partial class ContractService : IContractService
                     var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
                         .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
-                    if (contractIds.Count >= _configuration.MaxActiveContractsPerEntity)
+                    // Count only contracts in active statuses
+                    var activeCount = 0;
+                    foreach (var contractIdStr in contractIds)
+                    {
+                        var existingContract = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+                            .GetAsync($"{INSTANCE_PREFIX}{contractIdStr}", cancellationToken);
+                        if (existingContract != null && ActiveStatuses.Contains(existingContract.Status))
+                        {
+                            activeCount++;
+                            // Early exit if we've already hit the limit
+                            if (activeCount >= _configuration.MaxActiveContractsPerEntity)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (activeCount >= _configuration.MaxActiveContractsPerEntity)
                     {
                         _logger.LogWarning(
-                            "Entity {EntityType}:{EntityId} has {Count} contracts, exceeds limit {Max}",
-                            party.EntityType, party.EntityId, contractIds.Count, _configuration.MaxActiveContractsPerEntity);
+                            "Entity {EntityType}:{EntityId} has {Count} active contracts, exceeds limit {Max}",
+                            party.EntityType, party.EntityId, activeCount, _configuration.MaxActiveContractsPerEntity);
                         return (StatusCodes.BadRequest, null);
                     }
                 }
@@ -2050,7 +2081,12 @@ public partial class ContractService : IContractService
             "contract-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire index lock for key {Key}", key);
+            // Behavior controlled by IndexLockFailureMode configuration
+            if (_configuration.IndexLockFailureMode == IndexLockFailureMode.Fail)
+            {
+                throw new InvalidOperationException($"Could not acquire index lock for key {key}");
+            }
+            _logger.LogWarning("Could not acquire index lock for key {Key}, continuing with stale index", key);
             return;
         }
 
@@ -2069,7 +2105,12 @@ public partial class ContractService : IContractService
             "contract-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire index lock for key {Key}", key);
+            // Behavior controlled by IndexLockFailureMode configuration
+            if (_configuration.IndexLockFailureMode == IndexLockFailureMode.Fail)
+            {
+                throw new InvalidOperationException($"Could not acquire index lock for key {key}");
+            }
+            _logger.LogWarning("Could not acquire index lock for key {Key}, continuing with stale index", key);
             return;
         }
 
@@ -2129,7 +2170,20 @@ public partial class ContractService : IContractService
         var result = new Dictionary<string, object>(first);
         foreach (var kvp in second)
         {
-            result[kvp.Key] = kvp.Value;
+            // Deep merge: recursively merge nested dictionaries when TermsMergeMode is Deep
+            if (_configuration.TermsMergeMode == TermsMergeMode.Deep &&
+                result.TryGetValue(kvp.Key, out var existing) &&
+                existing is Dictionary<string, object> existingDict &&
+                kvp.Value is Dictionary<string, object> newDict)
+            {
+                // Recursive deep merge of nested dictionaries
+                result[kvp.Key] = MergeDictionaries(existingDict, newDict)!;
+            }
+            else
+            {
+                // Shallow merge: replace by key
+                result[kvp.Key] = kvp.Value;
+            }
         }
         return result;
     }

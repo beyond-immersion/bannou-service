@@ -183,7 +183,7 @@ No bugs identified.
 5. **Read-modify-write without distributed locks**: Index updates (add/remove from list) and composite key checks have no concurrency protection. Two concurrent creates with the same composite key could both pass the uniqueness check if timed precisely. Requires IDistributedLockProvider integration.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
-6. **Data inconsistency logging without error events**: When bulk-fetch finds an ID in the index but the model doesn't exist, the service logs an error but does not publish an error event via `TryPublishErrorAsync`. This makes orphaned references harder to detect via monitoring.
+6. ~~**Data inconsistency logging without error events**~~: **FIXED** (2026-02-01) - Added `EmitDataInconsistencyErrorAsync` helper methods that call `TryPublishErrorAsync` with error type `data_inconsistency` at all three bulk-fetch locations (ListRelationshipsByEntity, GetRelationshipsBetween, ListRelationshipsByType). Error events include the orphaned key, index source (entity or type), and relevant context for monitoring and alerting.
 
 ---
 
@@ -193,4 +193,5 @@ No bugs identified.
 
 ### Completed
 
+- **2026-02-01**: Added `TryPublishErrorAsync` calls for data inconsistency detection in bulk-fetch operations (ListRelationshipsByEntity, GetRelationshipsBetween, ListRelationshipsByType).
 - **2026-01-31**: Removed dead `all-relationships` master list key (constant, helper method, and create-time call).

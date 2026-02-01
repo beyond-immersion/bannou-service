@@ -1231,7 +1231,20 @@ public partial class ContractService
                 assetType = "currency";
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("recipient_wallet"), contract.TemplateValues);
-                amount = ParseClauseAmount(clause, contract);
+                var (parsedAmount, parseError) = ParseClauseAmount(clause, contract);
+                if (parseError != null)
+                {
+                    return new DistributionRecordModel
+                    {
+                        ClauseId = clause.Id,
+                        ClauseType = clause.Type,
+                        AssetType = assetType,
+                        Amount = 0,
+                        Succeeded = false,
+                        FailureReason = parseError
+                    };
+                }
+                amount = parsedAmount;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
@@ -1315,7 +1328,20 @@ public partial class ContractService
                 assetType = "currency";
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_wallet"), contract.TemplateValues);
-                amount = ParseClauseAmount(clause, contract);
+                var (parsedAmount, parseError) = ParseClauseAmount(clause, contract);
+                if (parseError != null)
+                {
+                    return new DistributionRecordModel
+                    {
+                        ClauseId = clause.Id,
+                        ClauseType = clause.Type,
+                        AssetType = assetType,
+                        Amount = 0,
+                        Succeeded = false,
+                        FailureReason = parseError
+                    };
+                }
+                amount = parsedAmount;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
@@ -1467,14 +1493,17 @@ public partial class ContractService
     /// Returns REMAINDER_SENTINEL (-1) when the clause specifies "remainder" to signal the caller
     /// should query the source wallet balance and use the full remaining amount.
     /// </summary>
-    private double ParseClauseAmount(ClauseDefinition clause, ContractInstanceModel contract)
+    /// <param name="clause">The clause definition containing amount and amount_type properties.</param>
+    /// <param name="contract">The contract instance with template values for substitution.</param>
+    /// <returns>Tuple of (amount, error). If error is non-null, amount should be ignored.</returns>
+    private (double amount, string? error) ParseClauseAmount(ClauseDefinition clause, ContractInstanceModel contract)
     {
         var amountStr = clause.GetProperty("amount");
         var amountType = clause.GetProperty("amount_type") ?? "flat";
 
         if (string.Equals(amountStr, "remainder", StringComparison.OrdinalIgnoreCase))
         {
-            return REMAINDER_SENTINEL;
+            return (REMAINDER_SENTINEL, null);
         }
 
         if (!double.TryParse(amountStr, out var rawAmount))
@@ -1485,35 +1514,38 @@ public partial class ContractService
                 var resolved = ResolveTemplateValue(amountStr, contract.TemplateValues);
                 if (double.TryParse(resolved, out var resolvedAmount))
                 {
-                    return resolvedAmount;
+                    return (resolvedAmount, null);
                 }
             }
-            _logger.LogWarning("Clause {ClauseId} has unparseable amount {Amount}, defaulting to 0",
+            _logger.LogWarning("Clause {ClauseId} has unparseable amount {Amount}",
                 clause.Id, amountStr);
-            return 0;
+            return (0, $"Clause {clause.Id} has unparseable amount '{amountStr}'");
         }
 
         if (string.Equals(amountType, "percentage", StringComparison.OrdinalIgnoreCase))
         {
             // Percentage of the base_amount template value
-            if (contract.TemplateValues != null && contract.TemplateValues.TryGetValue("base_amount", out var baseVal))
+            if (contract.TemplateValues == null ||
+                !contract.TemplateValues.TryGetValue("base_amount", out var baseVal))
             {
-                if (double.TryParse(baseVal, out var baseAmount))
-                {
-                    return Math.Floor(baseAmount * rawAmount / 100.0);
-                }
-                _logger.LogWarning("Clause {ClauseId} has percentage amount_type but base_amount {BaseAmount} is not a valid number, defaulting to 0",
-                    clause.Id, baseVal);
-            }
-            else
-            {
-                _logger.LogWarning("Clause {ClauseId} has percentage amount_type but no base_amount in template values, defaulting to 0",
+                _logger.LogWarning(
+                    "Clause {ClauseId} has percentage amount_type but no base_amount in template values",
                     clause.Id);
+                return (0, $"Clause {clause.Id} has percentage amount_type but no base_amount in template values");
             }
-            return 0;
+
+            if (!double.TryParse(baseVal, out var baseAmount))
+            {
+                _logger.LogWarning(
+                    "Clause {ClauseId} has percentage amount_type but base_amount {BaseAmount} is not a valid number",
+                    clause.Id, baseVal);
+                return (0, $"Clause {clause.Id} has percentage amount_type but base_amount '{baseVal}' is not a valid number");
+            }
+
+            return (Math.Floor(baseAmount * rawAmount / 100.0), null);
         }
 
-        return rawAmount;
+        return (rawAmount, null);
     }
 
     /// <summary>

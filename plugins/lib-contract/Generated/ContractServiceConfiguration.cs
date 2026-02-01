@@ -102,12 +102,6 @@ public class ContractServiceConfiguration : IServiceConfiguration
     public int PreboundApiTimeoutMs { get; set; } = 30000;
 
     /// <summary>
-    /// Staleness threshold in seconds for cached clause validation results before revalidation
-    /// Environment variable: CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS
-    /// </summary>
-    public int ClauseValidationCacheStalenessSeconds { get; set; } = 15;
-
-    /// <summary>
     /// Lock timeout in seconds for contract-level distributed locks
     /// Environment variable: CONTRACT_LOCK_TIMEOUT_SECONDS
     /// </summary>
@@ -118,6 +112,18 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// Environment variable: CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>
     public int IndexLockTimeoutSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Behavior when index lock acquisition fails (warn=continue, fail=throw)
+    /// Environment variable: CONTRACT_INDEX_LOCK_FAILURE_MODE
+    /// </summary>
+    public IndexLockFailureMode IndexLockFailureMode { get; set; } = IndexLockFailureMode.Warn;
+
+    /// <summary>
+    /// How instance terms merge with template terms (shallow=replace by key, deep=recursive merge)
+    /// Environment variable: CONTRACT_TERMS_MERGE_MODE
+    /// </summary>
+    public TermsMergeMode TermsMergeMode { get; set; } = TermsMergeMode.Shallow;
 
     /// <summary>
     /// TTL in seconds for idempotency key storage (default 24 hours)

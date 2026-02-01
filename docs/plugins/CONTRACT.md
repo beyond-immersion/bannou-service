@@ -106,12 +106,13 @@ This plugin does not consume external events. The events schema explicitly decla
 | `MaxPartiesPerContract` | `CONTRACT_MAX_PARTIES_PER_CONTRACT` | `20` | Hard cap on party count per instance (overrides template) |
 | `MaxMilestonesPerTemplate` | `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | `50` | Maximum milestones allowed in a template definition |
 | `MaxPreboundApisPerMilestone` | `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | `10` | Cap on onComplete/onExpire API lists per milestone |
-| `MaxActiveContractsPerEntity` | `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | `100` | **Bug [#242](https://github.com/beyond-immersion/bannou-service/issues/242)**: Actually counts ALL contracts, not just active. Will be renamed to `MaxTotalContractsPerEntity`. |
+| `MaxActiveContractsPerEntity` | `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | `100` | Maximum active contracts (Draft/Proposed/Pending/Active) per entity; 0 for unlimited |
 | `PreboundApiBatchSize` | `CONTRACT_PREBOUND_API_BATCH_SIZE` | `10` | APIs executed concurrently per batch (sequential between batches) |
 | `PreboundApiTimeoutMs` | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | `30000` | Per-API timeout in milliseconds (30s default) |
-| `ClauseValidationCacheStalenessSeconds` | `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | `15` | **Dead config [#241](https://github.com/beyond-immersion/bannou-service/issues/241)**: Cache is request-scoped, this value is never used. Pending removal. |
 | `ContractLockTimeoutSeconds` | `CONTRACT_LOCK_TIMEOUT_SECONDS` | `60` | Lock timeout for contract-level distributed locks |
 | `IndexLockTimeoutSeconds` | `CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS` | `15` | Lock timeout for index update distributed locks |
+| `IndexLockFailureMode` | `CONTRACT_INDEX_LOCK_FAILURE_MODE` | `warn` | Behavior on index lock failure: `warn` (continue) or `fail` (throw) |
+| `TermsMergeMode` | `CONTRACT_TERMS_MERGE_MODE` | `shallow` | How instance terms merge with template: `shallow` (replace by key) or `deep` (recursive) |
 | `IdempotencyTtlSeconds` | `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | `86400` | TTL for idempotency key storage (24 hours) |
 | `MilestoneDeadlineCheckIntervalSeconds` | `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | `300` | Interval between milestone deadline checks (5 minutes) |
 | `MilestoneDeadlineStartupDelaySeconds` | `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | `30` | Startup delay before first milestone deadline check |
@@ -123,7 +124,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<ContractService>` | Scoped | Structured logging |
-| `ContractServiceConfiguration` | Singleton | All 14 config properties (see Configuration table for known issues) |
+| `ContractServiceConfiguration` | Singleton | All 14 config properties (see Configuration table) |
 | `IStateStoreFactory` | Singleton | Redis state store access |
 | `IDistributedLockProvider` | Singleton | Contract-instance locks (`contract-instance`, 60s TTL) for mutation serialization; index-level locks (15s TTL) for list operations; milestone-check locks (30s TTL) for background service |
 | `IMessageBus` | Scoped | Event publishing and error events |
@@ -134,7 +135,6 @@ This plugin does not consume external events. The events schema explicitly decla
 
 Service lifetime is **Scoped** (per-request). Background service `ContractMilestoneExpirationService` runs continuously. Partial classes split into:
 - `ContractService.cs` - Core operations (templates, instances, milestones, breaches, metadata, constraints, helpers, event publishing, internal models)
-- `ContractServiceClauseValidation.cs` - Clause validation with ConcurrentDictionary-based cache
 - `ContractServiceEscrowIntegration.cs` - Guardian system, clause type system, execution system
 
 ---
@@ -535,52 +535,37 @@ When a clause execution fails:
 
 ## Known Quirks & Caveats
 
-### Bugs (Tracked Issues)
+### Bugs (Fix Immediately)
 
-| Issue | Description | Status |
-|-------|-------------|--------|
-| [#241](https://github.com/beyond-immersion/bannou-service/issues/241) | `ClauseValidationCacheStalenessSeconds` is dead config (T21 violation) | Open |
-| [#242](https://github.com/beyond-immersion/bannou-service/issues/242) | `MaxActiveContractsPerEntity` counts ALL contracts, not just active | Open |
-| [#243](https://github.com/beyond-immersion/bannou-service/issues/243) | `ParseClauseAmount` returns 0 on missing base_amount instead of failing | Open |
+*None currently tracked.*
 
-### Planned Enhancements
-
-| Issue | Description | Status |
-|-------|-------------|--------|
-| [#244](https://github.com/beyond-immersion/bannou-service/issues/244) | Add `IndexLockFailureMode` configuration (warn vs fail) | Open |
-| [#245](https://github.com/beyond-immersion/bannou-service/issues/245) | Add `TermsMergeMode` configuration (shallow vs deep) | Open |
-| [#246](https://github.com/beyond-immersion/bannou-service/issues/246) | Add per-milestone `onApiFailure` flag | Open |
-| [#247](https://github.com/beyond-immersion/bannou-service/issues/247) | Implement cursor-based pagination for listings and indexes | Open |
-
-### Intentional Design Decisions
+### Intentional Quirks (Documented Behavior)
 
 1. **Consent expiration is lazy**: Contracts do not automatically expire when `DefaultConsentTimeoutDays` passes. The check only triggers on the next `ConsentToContract` call. This avoids background job overhead for checking all Proposed contracts. Proposed contracts with no further consent attempts remain in Proposed status harmlessly until accessed.
 
-2. **Index lock failure is non-fatal (currently)**: When `AddToListAsync`/`RemoveFromListAsync` cannot acquire the 15-second distributed lock, the operation logs a warning and continues. The index may become stale. This prioritizes availability over strict consistency. See [#244](https://github.com/beyond-immersion/bannou-service/issues/244) for making this configurable.
+2. **Index lock failure is configurable**: When `AddToListAsync`/`RemoveFromListAsync` cannot acquire the 15-second distributed lock, behavior is controlled by `IndexLockFailureMode` configuration. Default is `warn` (logs warning and continues), or `fail` (throws exception). See `CONTRACT_INDEX_LOCK_FAILURE_MODE` environment variable.
 
 3. **Serial clause execution within type category**: Fee clauses and distribution clauses execute sequentially (clause-by-clause), not in parallel. This prevents race conditions on shared wallets. Parallel execution would require distributed locks per-wallet, adding complexity.
 
-4. **Prebound API failures are non-blocking (currently)**: Failed prebound API executions (milestone callbacks) publish failure events but do not fail the milestone completion. The milestone is still marked complete. See [#246](https://github.com/beyond-immersion/bannou-service/issues/246) for making this configurable per-milestone.
+4. **Prebound API failures are non-blocking**: Failed prebound API executions (milestone callbacks) publish failure events but do not fail the milestone completion. The milestone is still marked complete. This is intentional to avoid coupling milestone state to external service availability.
 
-5. **Template terms merge is shallow (currently)**: `MergeTerms` performs a single-level merge. CustomTerms dictionary values are replaced by key, not deep-merged. See [#245](https://github.com/beyond-immersion/bannou-service/issues/245) for adding deep merge option.
+5. **Template terms merge is configurable**: `MergeTerms` behavior is controlled by `TermsMergeMode` configuration. Default is `shallow` (single-level merge, dictionary values replaced by key) or `deep` (recursive merge of nested dictionaries). See `CONTRACT_TERMS_MERGE_MODE` environment variable.
+
+### Design Considerations (Requires Planning)
+
+1. **Per-milestone onApiFailure flag** ([#246](https://github.com/beyond-immersion/bannou-service/issues/246)): Currently prebound API failures are always non-blocking. Adding a per-milestone flag would require API schema changes (new field on MilestoneDefinition), model regeneration, and careful design of retry semantics. Requires design discussion before implementation.
+
+2. **Cursor-based pagination** ([#247](https://github.com/beyond-immersion/bannou-service/issues/247)): Current index storage uses `List<string>` which doesn't support cursor-based pagination efficiently. Would require migrating to Redis sorted sets, designing cursor encoding, updating all index operations, and planning a migration strategy for existing data. Significant architectural change.
 
 ---
 
 ## Work Tracking
 
-This section tracks active development work. For detailed analysis, see [CONTRACT-QUIRKS-ANALYSIS.md](CONTRACT-QUIRKS-ANALYSIS.md).
+This section tracks active development work using AUDIT markers.
 
-### Open Issues
+### Active Work
 
-| Category | Issue | Title |
-|----------|-------|-------|
-| Bug | [#241](https://github.com/beyond-immersion/bannou-service/issues/241) | Remove dead ClauseValidationCacheStalenessSeconds config |
-| Bug | [#242](https://github.com/beyond-immersion/bannou-service/issues/242) | Fix MaxActiveContractsPerEntity to count active contracts |
-| Bug | [#243](https://github.com/beyond-immersion/bannou-service/issues/243) | ParseClauseAmount should fail on missing base_amount |
-| Enhancement | [#244](https://github.com/beyond-immersion/bannou-service/issues/244) | Add IndexLockFailureMode configuration |
-| Enhancement | [#245](https://github.com/beyond-immersion/bannou-service/issues/245) | Add TermsMergeMode configuration |
-| Enhancement | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) | Add per-milestone onApiFailure flag |
-| Scalability | [#247](https://github.com/beyond-immersion/bannou-service/issues/247) | Implement cursor-based pagination |
+*None currently tracked.*
 
 ### Completed
 

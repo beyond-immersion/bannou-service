@@ -211,7 +211,7 @@ State Store Layout
 
 ## Potential Extensions
 
-1. **Circular hierarchy prevention**: Add explicit cycle detection during `SetParent` operations (currently only prevents obvious self-reference).
+1. ~~**Circular hierarchy prevention**~~: **FIXED** (2026-02-01) - Added `WouldCreateCycleAsync` helper that walks the ancestor chain from the proposed parent. `UpdateRelationshipTypeAsync` now returns BadRequest if setting a parent would create a cycle. The check uses `MaxHierarchyDepth` as a safety limit and also rejects self-references.
 2. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
 3. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
 4. **Category-based permissions**: Allow different roles to create relationships of different categories.
@@ -244,7 +244,7 @@ State Store Layout
 
 ### Design Considerations (Requires Planning)
 
-1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. Hierarchy traversal methods have a configurable safety limit (`MaxHierarchyDepth`, default 20) to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment (lines 522-550). Fix requires deciding on detection strategy (on-write vs on-read) and handling existing circular data.
+1. ~~**No circular hierarchy prevention**~~: **FIXED** (2026-02-01) - Added `WouldCreateCycleAsync` helper in `RelationshipTypeService.cs` that walks the ancestor chain from the proposed parent. If the current type is found as an ancestor (or is the same as the proposed parent), the parent assignment is rejected with BadRequest. Uses `MaxHierarchyDepth` as a safety limit. Existing corrupted data (cycles already in the database) will trigger the safety limit and be treated as a cycle, preventing further corruption.
 
 2. **Recursive child query unbounded**: `GetChildRelationshipTypesAsync` with `recursive=true` traverses the full subtree (lines 1072-1091). Deep hierarchies with many branches could generate many state store calls. The `MaxHierarchyDepth` limit bounds depth but not breadth.
 
@@ -266,5 +266,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **2026-02-01**: Audit - Added circular hierarchy prevention via `WouldCreateCycleAsync` helper; parent assignments that would create cycles are now rejected
 - **2026-02-01**: Issue #215 - Fixed deletion validation bugs (deprecation requirement + relationship reference check)
 - **2026-02-01**: Audit - Moved "No event consumption" from Stubs to Intentional Quirks (by design, schema explicitly declares empty subscriptions, on-demand queries are sufficient)

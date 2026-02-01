@@ -180,6 +180,22 @@ Technical observations about ways the plugin could be improved or extended. No s
 
 ---
 
+### Service-Specific Sections (Optional)
+
+Between sections 12 and 13, plugins may include additional `##` sections for service-specific content that doesn't fit the standard template structure. Common examples:
+
+- **Duration/Format Reference**: ISO 8601 duration formats, encoding details, data format specifications
+- **Architecture Details**: Subsystem design, state machine diagrams, pipeline flows specific to this plugin
+- **Integration Guides**: How external systems interact with this plugin, protocol details
+
+**Rules for extra sections**:
+1. Use `##` headers (same level as other numbered sections)
+2. Must NOT duplicate content that belongs in standard sections above
+3. Content must be specific to this plugin's implementation, not general patterns
+4. Do not add extra sections to the overview/summary (that gets copied to GENERATED-SERVICE-DETAILS.md)
+
+---
+
 ### 13. Known Quirks & Caveats
 
 Organized into three categories based on the nature and urgency of each finding.

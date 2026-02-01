@@ -54,11 +54,6 @@ x-service-configuration:
       env: CONTRACT_PREBOUND_API_TIMEOUT_MS
       default: 30000
       description: Timeout for individual prebound API calls in milliseconds
-    clauseValidationCacheStalenessSeconds:
-      type: integer
-      env: CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS
-      default: 15
-      description: Staleness threshold in seconds for cached clause validation results before revalidation
 
     # Lock Configuration
     contractLockTimeoutSeconds:
@@ -72,6 +67,18 @@ x-service-configuration:
       env: CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS
       default: 15
       description: Lock timeout in seconds for index update distributed locks
+
+    indexLockFailureMode:
+      $ref: 'contract-api.yaml#/components/schemas/IndexLockFailureMode'
+      env: CONTRACT_INDEX_LOCK_FAILURE_MODE
+      default: warn
+      description: Behavior when index lock acquisition fails (warn=continue, fail=throw)
+
+    termsMergeMode:
+      $ref: 'contract-api.yaml#/components/schemas/TermsMergeMode'
+      env: CONTRACT_TERMS_MERGE_MODE
+      default: shallow
+      description: How instance terms merge with template terms (shallow=replace by key, deep=recursive merge)
 
     idempotencyTtlSeconds:
       type: integer

@@ -424,6 +424,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 3. ~~**Expiration background processing**~~: **FIXED** (2026-02-01) - Implemented `EscrowExpirationService` background worker that periodically scans for escrows past their `ExpiresAt + GracePeriod`, transitions them to `Expired` status, publishes `EscrowExpiredEvent`, and if deposits exist also publishes `EscrowRefundedEvent` for downstream services. Configuration properties `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` are now fully wired up.
 
 4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
 5. **~~Configuration properties not wired up~~** (PARTIALLY FIXED): Most configuration properties are now enforced:
    - ~~`MaxTimeout`~~ - now validated against requested timeout in `CreateEscrowAsync`

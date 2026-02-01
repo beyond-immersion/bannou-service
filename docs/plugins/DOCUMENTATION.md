@@ -35,11 +35,11 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 
 ## State Storage
 
-**Stores**: 1 state store (single Redis store with key prefix `doc`)
+**Stores**: 1 state store (single Redis store with key prefix `doc`, Redis Search enabled)
 
-| Store | Backend | Purpose |
-|-------|---------|---------|
-| `documentation-statestore` | Redis | All document data, indexes, bindings, trashcan, archives |
+| Store | Backend | Search | Purpose |
+|-------|---------|--------|---------|
+| `documentation-statestore` | Redis | FT.* | All document data, indexes, bindings, trashcan, archives |
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -379,8 +379,7 @@ Archive System
 
 1. ~~**AI-powered semantic search stub config**~~: **FIXED** (2026-01-31) - Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` that were never referenced in service code (T21 violation). The query/search implementations both use inverted-index keyword matching. The `QueryAsync` method is identical to `SearchAsync` with an added relevance score filter. This is the correct current behavior; semantic search remains a potential future extension (see Potential Extensions below).
 
-2. **RedisSearchIndexService**: A `RedisSearchIndexService` class exists and is registered when `stateStoreFactory.SupportsSearch()` returns true, but the in-memory `SearchIndexService` fallback is the common code path. The Redis Search (FT.*) integration is partially implemented for environments with RediSearch module.
-<!-- AUDIT:IN_PROGRESS:2026-02-01 -->
+2. ~~**RedisSearchIndexService configuration**~~: **FIXED** (2026-02-01) - Added `enableSearch: true` to `documentation-statestore` in `state-stores.yaml`. The `RedisSearchIndexService` was fully implemented but never used because the store lacked the search flag. With this configuration, Redis Search (FT.*) will be used when available; the in-memory `SearchIndexService` fallback remains for environments without RediSearch module.
 
 3. **Voice summary generation**: `GenerateVoiceSummary()` strips markdown and truncates the first paragraph. No actual NLG, TTS-optimization, or prosody considerations are applied - it is a simple text extraction.
 
@@ -463,3 +462,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-31**: Fixed `ViewDocumentBySlugAsync` return type from `(StatusCodes, object?)` to `(StatusCodes, string?)`. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in `DocumentationController.ViewDocumentBySlug`.
 
 - **2026-01-31**: Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` from schema (T21 violation - never referenced in service code). Updated tests to remove assertions for removed properties. Semantic search remains a potential future extension.
+
+- **2026-02-01**: Enabled Redis Search for documentation by adding `enableSearch: true` to `documentation-statestore` in `state-stores.yaml`. The `RedisSearchIndexService` was fully implemented but never activated because the store lacked the search configuration flag. With this fix, Redis Search (FT.*) will be used when the RediSearch module is available.

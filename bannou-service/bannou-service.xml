@@ -38376,6 +38376,16 @@
             Type of metadata to update
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.IndexLockFailureMode">
+            <summary>
+            Behavior when index lock acquisition fails
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.TermsMergeMode">
+            <summary>
+            How instance terms merge with template terms during contract creation
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest">
             <summary>
             Request to create a new contract template

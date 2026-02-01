@@ -124,6 +124,7 @@ public partial class RelationshipService : IRelationshipService
                 if (model == null)
                 {
                     _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    await EmitDataInconsistencyErrorAsync("ListRelationshipsByEntity", key, body.EntityId, body.EntityType);
                     continue;
                 }
                 relationships.Add(model);
@@ -223,6 +224,7 @@ public partial class RelationshipService : IRelationshipService
                 if (model == null)
                 {
                     _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    await EmitDataInconsistencyErrorAsync("GetRelationshipsBetween", key, body.Entity1Id, body.Entity1Type);
                     continue;
                 }
 
@@ -305,6 +307,7 @@ public partial class RelationshipService : IRelationshipService
                 if (model == null)
                 {
                     _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    await EmitDataInconsistencyErrorAsync("ListRelationshipsByType", key, body.RelationshipTypeId);
                     continue;
                 }
                 relationships.Add(model);
@@ -825,6 +828,40 @@ public partial class RelationshipService : IRelationshipService
             endpoint: endpoint,
             details: null,
             stack: ex.StackTrace);
+    }
+
+    /// <summary>
+    /// Emits a data inconsistency error event when an index contains an ID for a non-existent relationship.
+    /// Used by list operations to signal orphaned index entries for monitoring and cleanup.
+    /// </summary>
+    private async Task EmitDataInconsistencyErrorAsync(string operation, string orphanedKey, Guid indexEntityId, EntityType indexEntityType)
+    {
+        await _messageBus.TryPublishErrorAsync(
+            "relationship",
+            operation,
+            "data_inconsistency",
+            $"Relationship key {orphanedKey} exists in entity index but relationship record not found",
+            dependency: "state-store",
+            endpoint: null,
+            details: $"entityId={indexEntityId}, entityType={indexEntityType}",
+            stack: null);
+    }
+
+    /// <summary>
+    /// Emits a data inconsistency error event when a type index contains an ID for a non-existent relationship.
+    /// Used by ListRelationshipsByType to signal orphaned index entries for monitoring and cleanup.
+    /// </summary>
+    private async Task EmitDataInconsistencyErrorAsync(string operation, string orphanedKey, Guid relationshipTypeId)
+    {
+        await _messageBus.TryPublishErrorAsync(
+            "relationship",
+            operation,
+            "data_inconsistency",
+            $"Relationship key {orphanedKey} exists in type index but relationship record not found",
+            dependency: "state-store",
+            endpoint: null,
+            details: $"relationshipTypeId={relationshipTypeId}",
+            stack: null);
     }
 
     #endregion

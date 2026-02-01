@@ -534,6 +534,14 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                         return (StatusCodes.BadRequest, null);
                     }
 
+                    // Check for circular hierarchy - prevent making an ancestor into a descendant
+                    if (await WouldCreateCycleAsync(existing.RelationshipTypeId, newParentId, cancellationToken))
+                    {
+                        _logger.LogDebug("Cannot set parent {NewParentId} for type {TypeId}: would create circular hierarchy",
+                            newParentId, existing.RelationshipTypeId);
+                        return (StatusCodes.BadRequest, null);
+                    }
+
                     // Remove from old parent's index
                     if (existing.ParentTypeId.HasValue)
                     {
@@ -1161,6 +1169,56 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         {
             await store.SaveAsync(ALL_TYPES_KEY, allTypes, cancellationToken: cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Checks if setting proposedParentId as the parent of typeId would create a circular hierarchy.
+    /// A cycle exists if typeId is an ancestor of proposedParentId (i.e., walking up from proposedParentId
+    /// eventually reaches typeId).
+    /// </summary>
+    /// <param name="typeId">The type that would receive a new parent.</param>
+    /// <param name="proposedParentId">The proposed new parent type ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the assignment would create a cycle; false otherwise.</returns>
+    private async Task<bool> WouldCreateCycleAsync(Guid typeId, Guid proposedParentId, CancellationToken cancellationToken)
+    {
+        // Self-reference is an obvious cycle
+        if (typeId == proposedParentId)
+        {
+            return true;
+        }
+
+        // Walk up the ancestor chain from proposedParentId
+        // If we encounter typeId, that means typeId is an ancestor of proposedParentId,
+        // so making proposedParentId the parent of typeId would create a cycle
+        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var currentParentId = proposedParentId;
+        var iterations = 0;
+
+        while (iterations < _configuration.MaxHierarchyDepth)
+        {
+            iterations++;
+            var parentKey = BuildTypeKey(currentParentId);
+            var parentType = await store.GetAsync(parentKey, cancellationToken);
+
+            if (parentType == null || !parentType.ParentTypeId.HasValue)
+            {
+                // Reached root without finding typeId - no cycle
+                return false;
+            }
+
+            if (parentType.ParentTypeId.Value == typeId)
+            {
+                // typeId is an ancestor of proposedParentId - this would create a cycle
+                return true;
+            }
+
+            currentParentId = parentType.ParentTypeId.Value;
+        }
+
+        // Exceeded max depth - treat as potential cycle for safety
+        // (This also handles existing corrupted cycles gracefully)
+        return true;
     }
 
     private async Task<RelationshipTypeResponse> MapToResponseAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
