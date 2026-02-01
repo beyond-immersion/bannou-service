@@ -144,16 +144,31 @@ public class CharacterHistoryServiceTests
         // Arrange
         var service = CreateService();
         var characterId = Guid.NewGuid();
+        var existingEventId = Guid.NewGuid();
+        var existingRecordId = "existing-id";
         var existingIndex = new HistoryIndexData
         {
             EntityId = characterId.ToString(),
-            RecordIds = new List<string> { "existing-id" }
+            RecordIds = new List<string> { existingRecordId }
+        };
+
+        // Create an existing participation record with a different EventId
+        var existingParticipation = new ParticipationData
+        {
+            ParticipationId = Guid.NewGuid(),
+            CharacterId = characterId,
+            EventId = existingEventId, // Different from the new request
+            EventName = "Previous Event",
+            EventCategory = EventCategory.WAR,
+            Role = ParticipationRole.COMBATANT,
+            EventDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
+            Significance = 0.7f
         };
 
         var request = new RecordParticipationRequest
         {
             CharacterId = characterId,
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid(), // New event, different from existingEventId
             EventName = "New Event",
             EventCategory = EventCategory.CULTURAL,
             Role = ParticipationRole.WITNESS,
@@ -161,10 +176,20 @@ public class CharacterHistoryServiceTests
             Significance = 0.5f
         };
 
+        // Mock index retrieval for duplicate check
         _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingIndex);
         _mockIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("participation-event-")), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HistoryIndexData?)null);
+
+        // Mock GetBulkAsync to return existing participation records for duplicate check
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ParticipationData>
+            {
+                { $"participation-{existingRecordId}", existingParticipation }
+            });
 
         // Act
         await service.RecordParticipationAsync(request, CancellationToken.None);

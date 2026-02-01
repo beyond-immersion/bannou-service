@@ -391,6 +391,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var service = CreateService();
         var typeId = Guid.NewGuid();
         var model = CreateTestRelationshipTypeModel(typeId, "TEST", "Test Type");
+        model.IsDeprecated = true; // Service requires deprecation before deletion
 
         _mockRelationshipTypeStore
             .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
@@ -405,6 +406,13 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         _mockGuidListStore
             .Setup(s => s.GetAsync($"children-idx:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<Guid>?)null);
+
+        // Mock relationship client to return no references
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByTypeAsync(
+                It.IsAny<ListRelationshipsByTypeRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipListResponse { Relationships = new List<RelationshipResponse>() });
 
         // Act
         var status = await service.DeleteRelationshipTypeAsync(

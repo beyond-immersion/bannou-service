@@ -11222,6 +11222,20 @@
             <returns>Characters retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Character.ICharacterClient.TransferCharacterToRealmAsync(BeyondImmersion.BannouService.Character.TransferCharacterToRealmRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Transfer character to a different realm
+            </summary>
+            <remarks>
+            Moves a character from their current realm to a new target realm.
+            <br/>Updates all indexes, validates the target realm exists and is active,
+            <br/>and publishes realm transition events.
+            </remarks>
+            <returns>Character transferred successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Character.CharacterClient">
             <summary>
             Client implementation for the Character service.
@@ -11399,6 +11413,20 @@
             Get all characters in a realm (primary query pattern)
             </summary>
             <returns>Characters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.TransferCharacterToRealmAsync(BeyondImmersion.BannouService.Character.TransferCharacterToRealmRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Transfer character to a different realm
+            </summary>
+            <remarks>
+            Moves a character from their current realm to a new target realm.
+            <br/>Updates all indexes, validates the target realm exists and is active,
+            <br/>and publishes realm transition events.
+            </remarks>
+            <returns>Character transferred successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.CharacterClient.ObjectResponseResult`1">
@@ -11583,6 +11611,21 @@
         <member name="P:BeyondImmersion.BannouService.Character.GetCharactersByRealmRequest.PageSize">
             <summary>
             Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.TransferCharacterToRealmRequest">
+            <summary>
+            Request payload for transferring a character to a different realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.TransferCharacterToRealmRequest.CharacterId">
+            <summary>
+            ID of the character to transfer
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.TransferCharacterToRealmRequest.TargetRealmId">
+            <summary>
+            ID of the realm to transfer the character to
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.CharacterResponse">
@@ -16158,6 +16201,11 @@
             Type of contract breach
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MilestoneDeadlineBehavior">
+            <summary>
+            Behavior when optional milestone deadline passes
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Contract.BreachStatus">
             <summary>
             Current status of a breach record
@@ -16191,6 +16239,16 @@
         <member name="T:BeyondImmersion.BannouService.Contract.MetadataType">
             <summary>
             Type of metadata to update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.IndexLockFailureMode">
+            <summary>
+            Behavior when index lock acquisition fails
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.TermsMergeMode">
+            <summary>
+            How instance terms merge with template terms during contract creation
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest">
@@ -16275,32 +16333,32 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest">
             <summary>
-            Request to list contract templates
+            Request to list contract templates with cursor-based pagination.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.RealmId">
             <summary>
-            Filter by realm (null includes cross-realm templates)
+            Filter by realm (null includes cross-realm templates).
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.IsActive">
             <summary>
-            Filter by active status
+            Filter by active status.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.SearchTerm">
             <summary>
-            Search in name and description
+            Search in name and description.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.Cursor">
             <summary>
-            Page number (1-based)
+            Opaque cursor from previous response. Null for first page.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.PageSize">
             <summary>
-            Results per page
+            Number of items per page. Uses service default if not specified.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest">
@@ -16430,32 +16488,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse">
             <summary>
-            Paginated list of contract templates
+            Paginated list of contract templates.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.Templates">
             <summary>
-            List of templates
+            Templates in this page.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.TotalCount">
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.NextCursor">
             <summary>
-            Total matching templates
+            Cursor for next page. Null if no more results.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.HasMore">
             <summary>
-            Current page number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.PageSize">
-            <summary>
-            Results per page
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.HasNextPage">
-            <summary>
-            Whether more results exist
+            Whether more results exist beyond this page.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest">
@@ -16540,37 +16588,37 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest">
             <summary>
-            Request to query contract instances
+            Request to query contract instances with cursor-based pagination.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PartyEntityId">
             <summary>
-            Filter by party entity ID
+            Filter by party entity ID.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PartyEntityType">
             <summary>
-            Filter by party entity type
+            Filter by party entity type.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.TemplateId">
             <summary>
-            Filter by template
+            Filter by template.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Statuses">
             <summary>
-            Filter by statuses
+            Filter by statuses.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Cursor">
             <summary>
-            Page number (1-based)
+            Opaque cursor from previous response. Null for first page.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PageSize">
             <summary>
-            Results per page
+            Number of items per page. Uses service default if not specified.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest">
@@ -16700,32 +16748,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse">
             <summary>
-            Paginated list of contract instances
+            Paginated list of contract instances.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.Contracts">
             <summary>
-            List of contracts
+            Contracts in this page.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.TotalCount">
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.NextCursor">
             <summary>
-            Total matching contracts
+            Cursor for next page. Null if no more results.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.HasMore">
             <summary>
-            Current page number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.PageSize">
-            <summary>
-            Results per page
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.HasNextPage">
-            <summary>
-            Whether more results exist
+            Whether more results exist beyond this page.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse">
@@ -16938,6 +16976,11 @@
             Relative deadline (ISO 8601 duration)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.DeadlineBehavior">
+            <summary>
+            Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.OnComplete">
             <summary>
             APIs to call on completion
@@ -16988,9 +17031,19 @@
             When failed
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.ActivatedAt">
+            <summary>
+            When this milestone became active
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Deadline">
             <summary>
-            Absolute deadline
+            Absolute deadline (computed from activatedAt + duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.DeadlineBehavior">
+            <summary>
+            Behavior when deadline passes for optional milestones
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.MilestoneProgressSummary">
@@ -17939,49 +17992,45 @@
             Idempotency key for the execution
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Contract.DistributionRecord">
+        <member name="T:BeyondImmersion.BannouService.Contract.ClauseDistributionResult">
             <summary>
-            Record of an asset distribution
+            Outcome of a single clause distribution during contract execution.
+            <br/>Used in ContractExecutedEvent to provide per-clause success/failure details.
+            <br/>Deliberately excludes wallet/container IDs - consumers tracking these should
+            <br/>correlate via clauseId to their own records.
+            <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.ClauseId">
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.ClauseId">
             <summary>
-            Clause that was executed
+            The clause that was executed
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.ClauseType">
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.ClauseType">
             <summary>
-            Type of clause (fee, distribution)
+            Type of clause (e.g., currency_transfer, item_transfer, fee)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.AssetType">
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.AssetType">
             <summary>
-            Type of asset (currency, item, etc.)
+            Descriptive type of asset involved (e.g., "currency", "item").
+            <br/>Provides human-readable context for what was transferred.
+            <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.Amount">
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.Amount">
             <summary>
-            Amount transferred
+            Quantity transferred (currency amount, item count, etc.)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.SourceWalletId">
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.Succeeded">
             <summary>
-            Source wallet ID (for currency)
+            Whether this clause executed successfully
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.DestinationWalletId">
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseDistributionResult.FailureReason">
             <summary>
-            Destination wallet ID (for currency)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.SourceContainerId">
-            <summary>
-            Source container ID (for items)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.DestinationContainerId">
-            <summary>
-            Destination container ID (for items)
+            If succeeded is false, describes what went wrong
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ExecuteContractResponse">
@@ -18006,23 +18055,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.Distributions">
             <summary>
-            Records of what was moved where
+            Per-clause distribution outcomes with success/failure details
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.ExecutedAt">
             <summary>
             When execution occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Contract.AssetType">
-            <summary>
-            Type of asset held in escrow.
-            <br/>- currency: Currency amount held in escrow wallet
-            <br/>- item: Item instance held in escrow container
-            <br/>- item_stack: Stackable items (quantity) held in escrow container
-            <br/>- contract: Contract instance locked under escrow guardianship
-            <br/>- custom: Custom asset type via registered handler
-            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Currency.ICurrencyClient">
@@ -23912,6 +23950,32 @@
             <returns>Dispute raised</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ConfirmReleaseAsync(BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of released assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their released assets.
+            <br/>Required when ReleaseMode is party_required or service_and_party.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ConfirmRefundAsync(BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of refunded assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their refunded deposits.
+            <br/>Required when RefundMode is party_required.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ResolveAsync(BeyondImmersion.BannouService.Escrow.ResolveRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -24238,6 +24302,32 @@
             <returns>Dispute raised</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ConfirmReleaseAsync(BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of released assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their released assets.
+            <br/>Required when ReleaseMode is party_required or service_and_party.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ConfirmRefundAsync(BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of refunded assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their refunded deposits.
+            <br/>Required when RefundMode is party_required.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ResolveAsync(BeyondImmersion.BannouService.Escrow.ResolveRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -24471,6 +24561,35 @@
             <br/>
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReleaseMode">
+            <summary>
+            Controls how release confirmation is handled:
+            <br/>- immediate: Finalizing → Released (skip Releasing state entirely).
+            <br/>  ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+            <br/>  Assets are marked as released BEFORE downstream services confirm transfers.
+            <br/>  If downstream services fail, manual intervention may be required.
+            <br/>- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+            <br/>- party_required: Wait for all parties to call /confirm-release.
+            <br/>- service_and_party: Wait for both service completion AND party confirmation.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.RefundMode">
+            <summary>
+            Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+            <br/>Refunds typically use 'immediate' since parties get their own assets back.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmationTimeoutBehavior">
+            <summary>
+            What happens when confirmation timeout expires:
+            <br/>- auto_confirm: If service events received, auto-confirm parties (default).
+            <br/>- dispute: Transition to Disputed state, require arbiter intervention.
+            <br/>- refund: Treat as failed, transition to Refunding.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAgreement">
             <summary>
             Main escrow agreement record
@@ -24614,6 +24733,21 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ResolutionNotes">
             <summary>
             Notes about the resolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ReleaseMode">
+            <summary>
+            How release confirmation is handled for this escrow.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.RefundMode">
+            <summary>
+            How refund confirmation is handled for this escrow.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ConfirmationDeadline">
+            <summary>
+            Deadline for party confirmations when in Releasing/Refunding state.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.AdditionalProperties">
@@ -25169,6 +25303,18 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.Metadata">
             <summary>
             Application metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.ReleaseMode">
+            <summary>
+            How release confirmation is handled. Defaults to service_only if not specified.
+            <br/>Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.RefundMode">
+            <summary>
+            How refund confirmation is handled. Defaults to immediate if not specified.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.IdempotencyKey">
@@ -26256,6 +26402,101 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest">
+            <summary>
+            Request to confirm receipt of released assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.EscrowId">
+            <summary>
+            The escrow being confirmed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.PartyId">
+            <summary>
+            The party confirming receipt.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.ReleaseToken">
+            <summary>
+            The party's release token (received via confirmation shortcut).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.Notes">
+            <summary>
+            Optional confirmation notes.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse">
+            <summary>
+            Response from confirming release receipt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.EscrowId">
+            <summary>
+            The escrow ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.Confirmed">
+            <summary>
+            Whether this party's confirmation was recorded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.AllPartiesConfirmed">
+            <summary>
+            Whether all parties have now confirmed (triggers Released transition).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.Status">
+            <summary>
+            Current escrow status after confirmation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest">
+            <summary>
+            Request to confirm receipt of refunded assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest.EscrowId">
+            <summary>
+            The escrow being confirmed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest.PartyId">
+            <summary>
+            The party confirming receipt of refund.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest.Notes">
+            <summary>
+            Optional confirmation notes.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse">
+            <summary>
+            Response from confirming refund receipt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.EscrowId">
+            <summary>
+            The escrow ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.Confirmed">
+            <summary>
+            Whether this party's confirmation was recorded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.AllPartiesConfirmed">
+            <summary>
+            Whether all parties have now confirmed (triggers Refunded transition).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.Status">
+            <summary>
+            Current escrow status after confirmation.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Escrow.ResolveRequest">
             <summary>
             Request for arbiter to resolve a disputed escrow
@@ -26906,12 +27147,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.GameService.ListServicesRequest">
             <summary>
-            Request to list all game services
+            Request to list all game services with optional pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ListServicesRequest.ActiveOnly">
             <summary>
             If true, only return active services
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ListServicesRequest.Skip">
+            <summary>
+            Number of services to skip for pagination (offset)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ListServicesRequest.Take">
+            <summary>
+            Maximum number of services to return (limit)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameService.GetServiceRequest">
@@ -29928,6 +30179,19 @@
             <returns>Item instance bound successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.UnbindItemInstanceAsync(BeyondImmersion.BannouService.Item.UnbindItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Unbind item from character
+            </summary>
+            <remarks>
+            Removes the binding from a soulbound item. This is an admin-only operation
+            <br/>for returning bound items to tradeable state. Requires a reason for audit trail.
+            </remarks>
+            <returns>Item instance unbound successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Item.IItemClient.DestroyItemInstanceAsync(BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -30167,6 +30431,19 @@
             <br/>the template's soulboundType. Once bound, the item cannot be traded.
             </remarks>
             <returns>Item instance bound successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.UnbindItemInstanceAsync(BeyondImmersion.BannouService.Item.UnbindItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Unbind item from character
+            </summary>
+            <remarks>
+            Removes the binding from a soulbound item. This is an admin-only operation
+            <br/>for returning bound items to tradeable state. Requires a reason for audit trail.
+            </remarks>
+            <returns>Item instance unbound successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Item.ItemClient.DestroyItemInstanceAsync(BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest,System.Threading.CancellationToken)">
@@ -31031,6 +31308,21 @@
         <member name="P:BeyondImmersion.BannouService.Item.BindItemInstanceRequest.BindType">
             <summary>
             Type of binding to apply
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.UnbindItemInstanceRequest">
+            <summary>
+            Request to unbind an item from a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UnbindItemInstanceRequest.InstanceId">
+            <summary>
+            Instance ID to unbind
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UnbindItemInstanceRequest.Reason">
+            <summary>
+            Reason for unbinding (admin, expiration, transfer_override)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest">
@@ -58770,6 +59062,219 @@
             Description of why validation failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractLockedEvent">
+            <summary>
+            Event published when a contract is locked under guardian custody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.GuardianId">
+            <summary>
+            Guardian entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractLockedEvent.GuardianType">
+            <summary>
+            Guardian entity type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractUnlockedEvent">
+            <summary>
+            Event published when a contract is released from guardian custody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.PreviousGuardianId">
+            <summary>
+            Previous guardian entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractUnlockedEvent.PreviousGuardianType">
+            <summary>
+            Previous guardian entity type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent">
+            <summary>
+            Event published when a party role is transferred to new entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.Role">
+            <summary>
+            Role that was transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.FromEntityId">
+            <summary>
+            Previous entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.FromEntityType">
+            <summary>
+            Previous entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.ToEntityId">
+            <summary>
+            New entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPartyTransferredEvent.ToEntityType">
+            <summary>
+            New entity type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent">
+            <summary>
+            Event published when a new clause type is registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.TypeCode">
+            <summary>
+            Clause type code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.Description">
+            <summary>
+            Clause type description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.Category">
+            <summary>
+            Clause category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ClauseTypeRegisteredEvent.IsBuiltIn">
+            <summary>
+            Whether this is a built-in type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent">
+            <summary>
+            Event published when template values are set on a contract instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.Keys">
+            <summary>
+            Keys that were set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateValuesSetEvent.ValueCount">
+            <summary>
+            Total value count after setting
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractExecutedEvent">
+            <summary>
+            Event published when contract clauses are executed (distributions made).
+            <br/>Provides per-clause distribution results for escrow verification, enabling
+            <br/>lib-escrow to correlate outcomes with its template value mappings and handle
+            <br/>partial failures appropriately.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.TemplateCode">
+            <summary>
+            Template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.DistributionCount">
+            <summary>
+            Number of distributions executed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExecutedEvent.DistributionResults">
+            <summary>
+            Per-clause distribution outcomes for escrow verification.
+            <br/>Escrow correlates these via clauseId to the template values it set,
+            <br/>enabling proper handling of partial failures without requiring
+            <br/>wallet/container IDs in the event payload.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.PartyInfo">
             <summary>
             Brief party information for events
@@ -60973,6 +61478,127 @@
         <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.StartedAt">
             <summary>
             When finalization started
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowReleasingEvent">
+            <summary>
+            Event published when escrow transitions to Releasing state.
+            <br/>Downstream services (currency, inventory) subscribe to execute actual asset transfers.
+            <br/>Parties may also need to confirm receipt depending on ReleaseMode.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.Timestamp">
+            <summary>
+            When the release was initiated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.EscrowId">
+            <summary>
+            The escrow transitioning to Releasing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.ReleaseMode">
+            <summary>
+            The confirmation mode for this release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.Allocations">
+            <summary>
+            Per-party allocations with confirmation details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.ConfirmationDeadline">
+            <summary>
+            Deadline for party confirmations (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasingEvent.BoundContractId">
+            <summary>
+            Associated contract ID if this is a contract-driven release
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation">
+            <summary>
+            Release allocation details with confirmation information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.RecipientPartyId">
+            <summary>
+            Party receiving these assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.RecipientPartyType">
+            <summary>
+            Type of the recipient party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.Assets">
+            <summary>
+            Assets being released to this party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.DestinationWalletId">
+            <summary>
+            Target wallet for currency assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.DestinationContainerId">
+            <summary>
+            Target container for item assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.ReleaseToken">
+            <summary>
+            Token for this party to confirm release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReleaseAllocationWithConfirmation.ConfirmationShortcut">
+            <summary>
+            Prebound API shortcut for client confirmation (pushed via WebSocket)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowRefundingEvent">
+            <summary>
+            Event published when escrow transitions to Refunding state.
+            <br/>Downstream services subscribe to execute actual refund transfers.
+            <br/>Parties may also need to confirm receipt depending on RefundMode.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.Timestamp">
+            <summary>
+            When the refund was initiated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.EscrowId">
+            <summary>
+            The escrow transitioning to Refunding
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.RefundMode">
+            <summary>
+            The confirmation mode for this refund
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.Deposits">
+            <summary>
+            Deposits being refunded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundingEvent.Reason">
+            <summary>
+            Reason for refund
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.EscrowReleasedEvent">
@@ -71775,6 +72401,16 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing CharacterListResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterProxy.TransferCharacterToRealmAsync(BeyondImmersion.BannouService.Character.TransferCharacterToRealmRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Transfer character to a different realm
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CharacterResponse on success.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.ConnectProxy">
             <summary>
             Typed proxy for Bannou Connect API API endpoints.
@@ -72868,6 +73504,26 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing DisputeResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.EscrowProxy.ConfirmReleaseAsync(BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Confirm receipt of released assets
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ConfirmReleaseResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.EscrowProxy.ConfirmRefundAsync(BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Confirm receipt of refunded assets
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ConfirmRefundResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.EscrowProxy.ResolveAsync(BeyondImmersion.BannouService.Escrow.ResolveRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Arbiter resolves disputed escrow
@@ -73380,6 +74036,16 @@
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.ItemProxy.BindItemInstanceAsync(BeyondImmersion.BannouService.Item.BindItemInstanceRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Bind item to character
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ItemInstanceResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ItemProxy.UnbindItemInstanceAsync(BeyondImmersion.BannouService.Item.UnbindItemInstanceRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Unbind item from character
             </summary>
             <param name="request">The request payload.</param>
             <param name="channel">Message channel for ordering (default 0).</param>

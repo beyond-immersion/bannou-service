@@ -11,6 +11,29 @@
 
 The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
 
+### Interface Hierarchy (as of 2026-02-01)
+
+```
+IStateStore<T>                    - Core CRUD (all backends)
+├── ICacheableStateStore<T>       - Sets + Sorted Sets (Redis + InMemory)
+├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
+│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
+└── ISearchableStateStore<T>      - Full-text search (Redis+Search only)
+
+IRedisOperations                  - Low-level Redis access (Lua scripts, hashes, atomic counters)
+```
+
+**Backend Support Matrix**:
+
+| Interface | Redis | MySQL | InMemory | RedisSearch |
+|-----------|:-----:|:-----:|:--------:|:-----------:|
+| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
+| `ICacheableStateStore<T>` | ✅ | ❌ | ✅ | ✅ |
+| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
+| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
+
 ---
 
 ## Dependencies (What This Plugin Relies On)
@@ -108,18 +131,31 @@ This plugin does not consume external events.
 |---------|----------|------|
 | `IStateStoreFactory` | Singleton | Creates typed store instances, manages connections |
 | `StateStoreFactory` | Singleton | Implementation with Redis/MySQL initialization and store caching |
-| `IDistributedLockProvider` | Singleton | Redis-backed distributed mutex using SET NX EX pattern |
-| `RedisDistributedLockProvider` | Singleton | Implementation with Lua script for safe unlock |
+| `IDistributedLockProvider` | Singleton | Distributed mutex using Redis (SET NX EX) with InMemory fallback |
+| `RedisDistributedLockProvider` | Singleton | Uses `IRedisOperations` for Lua-based safe unlock, falls back to in-memory locks |
+| `IRedisOperations` | - | Low-level Redis ops (Lua scripts, hashes, counters); obtained via `GetRedisOperations()` |
+| `RedisOperations` | Internal | Shares `ConnectionMultiplexer` with state stores |
 | `StateService` | Scoped | HTTP API implementation |
+
+### Factory Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `GetStore<T>(name)` | `IStateStore<T>` | Basic CRUD operations (all backends) |
+| `GetStoreAsync<T>(name)` | `IStateStore<T>` | Async version, avoids sync-over-async |
+| `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set + Sorted Set ops (throws for MySQL) |
+| `GetCacheableStoreAsync<T>(name)` | `ICacheableStateStore<T>` | Async version |
+| `GetSearchableStore<T>(name)` | `ISearchableStateStore<T>` | Full-text search (RedisSearch only) |
+| `GetRedisOperations()` | `IRedisOperations?` | Low-level Redis; null when `UseInMemory=true` |
 
 ### Store Implementation Classes
 
-| Class | Backend | Features |
-|-------|---------|----------|
-| `RedisStateStore<T>` | Redis | String ops, sets, sorted sets, TTL, transactions for atomic saves |
-| `RedisSearchStateStore<T>` | Redis | JSON storage, FT search, set ops (no sorted sets) |
-| `MySqlStateStore<T>` | MySQL | EF Core, JSON path queries, per-operation DbContext for thread safety |
-| `InMemoryStateStore<T>` | Memory | Static shared stores, set ops (no sorted sets), TTL via lazy cleanup |
+| Class | Backend | Implements | Features |
+|-------|---------|------------|----------|
+| `RedisStateStore<T>` | Redis | `ICacheableStateStore<T>` | String ops, sets, sorted sets, TTL, transactions |
+| `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets, sorted sets |
+| `MySqlStateStore<T>` | MySQL | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core, JSON path queries (no sets/sorted sets) |
+| `InMemoryStateStore<T>` | Memory | `ICacheableStateStore<T>` | Static shared stores, sets, sorted sets, TTL via lazy cleanup |
 
 ---
 
@@ -154,36 +190,52 @@ Returns registered store names with backend info. Optional backend filter (Redis
 ## Visual Aid
 
 ```
-State Store Architecture
-==========================
+State Store Architecture (Interface Hierarchy)
+==============================================
 
-  Service Code                StateStoreFactory              Backends
-  ============                ================              ========
+  Service Code                     StateStoreFactory
+  ============                     ================
 
-  _stateStoreFactory          GetStore<T>(name)
-  .GetStore<T>()  ──────────► ┌─────────────┐
-                               │ Store Cache  │
-                               │ (Concurrent  │
-                               │  Dictionary) │
-                               └──────┬──────┘
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    │                 │                  │
-              ┌─────▼─────┐    ┌─────▼──────┐    ┌─────▼─────┐
-              │RedisState  │    │RedisSearch │    │MySqlState │
-              │Store<T>    │    │StateStore  │    │Store<T>   │
-              │            │    │<T>         │    │           │
-              │ String ops │    │ JSON ops   │    │ EF Core   │
-              │ Set ops    │    │ FT search  │    │ JSON query│
-              │ ZSet ops   │    │ Set ops    │    │ No sets   │
-              │ TTL support│    │ No ZSets   │    │ No zsets  │
-              └─────┬──────┘    └─────┬──────┘    └─────┬─────┘
-                    │                 │                  │
-              ┌─────▼─────┐    ┌─────▼──────┐    ┌─────▼─────┐
-              │   Redis    │    │   Redis    │    │   MySQL   │
-              │  (single   │    │  + FT idx  │    │ StateEntry│
-              │ connection)│    │            │    │  table    │
-              └────────────┘    └────────────┘    └───────────┘
+  GetStore<T>()         ─────────► IStateStore<T>          (all backends)
+  GetCacheableStore<T>() ────────► ICacheableStateStore<T> (Redis/Memory)
+  GetSearchableStore<T>() ───────► ISearchableStateStore<T>(RedisSearch)
+  GetRedisOperations()   ────────► IRedisOperations?       (Redis only)
+
+  Interface Hierarchy:
+  ===================
+
+    IStateStore<T>  ◄────────────── Core CRUD (all backends)
+         │
+         ├── ICacheableStateStore<T>  ◄── Sets + Sorted Sets
+         │        │                        (Redis, InMemory)
+         │        ├── RedisStateStore<T>
+         │        ├── RedisSearchStateStore<T>
+         │        └── InMemoryStateStore<T>
+         │
+         ├── IQueryableStateStore<T>  ◄── LINQ queries
+         │        │                        (MySQL only)
+         │        └── IJsonQueryableStateStore<T>
+         │                 └── MySqlStateStore<T>
+         │
+         └── ISearchableStateStore<T> ◄── Full-text search
+                  └── RedisSearchStateStore<T>  (Redis+FT only)
+
+    IRedisOperations  ◄────────────── Lua scripts, hashes, counters
+         └── RedisOperations            (Redis only, null if InMemory)
+
+  Backend Layout:
+  ===============
+
+    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+    │ RedisStateStore │    │RedisSearchStore │    │  MySqlStateStore│
+    │ + ICacheable    │    │ + ICacheable    │    │ + IQueryable    │
+    │                 │    │ + ISearchable   │    │ + IJsonQueryable│
+    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
+             │                      │                      │
+    ┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐
+    │     Redis       │    │   Redis + FT    │    │      MySQL      │
+    │  (String/Sets)  │    │   (JSON/Index)  │    │   (StateEntry)  │
+    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ---
@@ -243,7 +295,7 @@ State Store Architecture
 
 3. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. No enforcement of store ownership. Relies on convention (services only access their own stores).
 
-4. **Set and sorted set operation support varies by backend**: Redis supports sets and sorted sets. MySQL throws `NotSupportedException`. InMemory supports sets but not sorted sets. RedisSearchStateStore supports sets but not sorted sets. Services must know their backend to use these features.
+4. ~~**Set and sorted set operation support varies by backend**~~: **FIXED** (2026-02-01) - Set and Sorted Set operations are now consolidated in `ICacheableStateStore<T>` interface. Services call `GetCacheableStore<T>()` for stores needing these operations. MySQL throws `InvalidOperationException` at factory call time (compile-time safety via interface segregation). Redis, RedisSearch, and InMemory all support the full `ICacheableStateStore<T>` interface including sorted sets.
 
 5. **Connection initialization retry**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry (relies on StackExchange.Redis auto-reconnect).
 
@@ -251,7 +303,7 @@ State Store Architecture
 
 7. **ConnectionRetryCount not in schema**: `ConnectionRetryCount` has a hardcoded default of `10` in `StateStoreFactoryConfiguration` but is not exposed in the configuration schema. Should be added to `state-configuration.yaml`.
 
-8. **RedisDistributedLockProvider error handling**: `LockAsync` catches exceptions and logs them but does not call `TryPublishErrorAsync`. Injecting `IMessageBus` into infrastructure code requires careful consideration of circular dependencies and whether infrastructure libs should publish events at all.
+8. ~~**RedisDistributedLockProvider direct Redis connection**~~: **FIXED** (2026-02-01) - `RedisDistributedLockProvider` now uses `IStateStoreFactory.GetRedisOperations()` instead of managing its own `ConnectionMultiplexer`. When Redis is unavailable (`UseInMemory=true`), it falls back to an in-memory lock implementation using `ConcurrentDictionary` with TTL-based expiration. Error events are still not published (infrastructure libs avoid event publishing to prevent circular dependencies).
 
 ---
 
@@ -265,3 +317,11 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-31**: Moved "State change events" from Stubs & Unimplemented Features to Intentional Quirks. This was incorrectly categorized as a gap when it's actually a documented design decision. The decision to not publish state change events was intentional due to performance concerns (high operation volume would make per-operation event publishing prohibitively expensive).
 - **2026-01-31**: Marked "Store-level metrics" Potential Extension as IMPLEMENTED. lib-telemetry (#180) provides `InstrumentedStateStore<T>` wrappers that record operation counts, latencies, and tracing spans. Also marked "Bulk save operation" as IMPLEMENTED since `SaveBulkAsync()` already exists.
 - **2026-02-01**: Removed `DefaultConsistency` from `state-configuration.yaml` as dead config per IMPLEMENTATION TENETS (T21). The property was defined but never evaluated - consistency is specified per-request via `StateOptions.Consistency`. Also updated docs to reflect that `EnableMetrics`/`EnableTracing` were previously removed when telemetry was centralized to lib-telemetry.
+- **2026-02-01**: **Interface Hierarchy Cleanup (#255)** - Major refactoring to clarify backend-specific interface support:
+  - Added `IRedisOperations` interface for low-level Redis access (Lua scripts, hash operations, atomic counters, TTL manipulation)
+  - Added `ICacheableStateStore<T>` interface consolidating Set and Sorted Set operations (Redis + InMemory only)
+  - Added Sorted Set support to `InMemoryStateStore` for full testability without Redis
+  - Migrated `RedisDistributedLockProvider` to use `IRedisOperations` with in-memory fallback
+  - Updated all services using Set/Sorted Set operations to call `GetCacheableStore<T>()` instead of `GetStore<T>()`
+  - Added `InstrumentedCacheableStateStore<T>` telemetry decorator
+  - MySQL backend now throws `InvalidOperationException` at factory call time rather than runtime `NotSupportedException`

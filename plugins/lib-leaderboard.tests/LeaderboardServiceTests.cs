@@ -27,7 +27,7 @@ public class LeaderboardServiceTests
     private readonly Mock<ILogger<LeaderboardService>> _mockLogger;
     private readonly LeaderboardServiceConfiguration _configuration;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
-    private readonly Mock<IStateStore<LeaderboardDefinitionData>> _mockDefinitionStore;
+    private readonly Mock<ICacheableStateStore<LeaderboardDefinitionData>> _mockDefinitionStore;
 
     public LeaderboardServiceTests()
     {
@@ -35,7 +35,7 @@ public class LeaderboardServiceTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockLogger = new Mock<ILogger<LeaderboardService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
-        _mockDefinitionStore = new Mock<IStateStore<LeaderboardDefinitionData>>();
+        _mockDefinitionStore = new Mock<ICacheableStateStore<LeaderboardDefinitionData>>();
 
         _configuration = new LeaderboardServiceConfiguration
         {
@@ -49,6 +49,11 @@ public class LeaderboardServiceTests
     private void SetupMinimalMocks()
     {
         // Setup state store factory to return definition store mock
+        // The service uses GetCacheableStore, so we need to set that up
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<LeaderboardDefinitionData>(It.IsAny<string>()))
+            .Returns(_mockDefinitionStore.Object);
+        // Also setup GetStore for backwards compatibility
         _mockStateStoreFactory
             .Setup(f => f.GetStore<LeaderboardDefinitionData>(It.IsAny<string>()))
             .Returns(_mockDefinitionStore.Object);

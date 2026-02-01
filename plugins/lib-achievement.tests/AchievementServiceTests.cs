@@ -28,8 +28,8 @@ public class AchievementServiceTests
     private readonly Mock<ILogger<AchievementService>> _mockLogger;
     private readonly AchievementServiceConfiguration _configuration;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
-    private readonly Mock<IStateStore<AchievementDefinitionData>> _mockDefinitionStore;
-    private readonly Mock<IStateStore<EntityProgressData>> _mockProgressStore;
+    private readonly Mock<ICacheableStateStore<AchievementDefinitionData>> _mockDefinitionStore;
+    private readonly Mock<ICacheableStateStore<EntityProgressData>> _mockProgressStore;
     private readonly List<IPlatformAchievementSync> _platformSyncs;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
@@ -39,8 +39,8 @@ public class AchievementServiceTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockLogger = new Mock<ILogger<AchievementService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
-        _mockDefinitionStore = new Mock<IStateStore<AchievementDefinitionData>>();
-        _mockProgressStore = new Mock<IStateStore<EntityProgressData>>();
+        _mockDefinitionStore = new Mock<ICacheableStateStore<AchievementDefinitionData>>();
+        _mockProgressStore = new Mock<ICacheableStateStore<EntityProgressData>>();
         _platformSyncs = new List<IPlatformAchievementSync>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
 
@@ -68,6 +68,14 @@ public class AchievementServiceTests
     private void SetupMinimalMocks()
     {
         // Setup state store factory to return appropriate mocks
+        // The service uses GetCacheableStore, so we need to set that up
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<AchievementDefinitionData>(It.IsAny<string>()))
+            .Returns(_mockDefinitionStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<EntityProgressData>(It.IsAny<string>()))
+            .Returns(_mockProgressStore.Object);
+        // Also setup GetStore for backwards compatibility
         _mockStateStoreFactory
             .Setup(f => f.GetStore<AchievementDefinitionData>(It.IsAny<string>()))
             .Returns(_mockDefinitionStore.Object);

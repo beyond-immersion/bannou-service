@@ -471,6 +471,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var service = CreateService();
         var speciesId = Guid.NewGuid();
         var model = CreateTestSpeciesModel(speciesId, "TEST", "Test Species");
+        model.IsDeprecated = true; // Service requires deprecation before deletion
 
         _mockSpeciesStore
             .Setup(s => s.GetAsync(
