@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 6.0
-> **Last Updated**: 2026-01-28
+> **Version**: 7.0
+> **Last Updated**: 2026-02-01
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document is the authoritative index for Bannou development standards. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -18,8 +18,9 @@ When documenting tenet compliance in source code comments, **NEVER use specific 
 - `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18
 - `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
+- `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
 
-> **Note**: Tenet 1 (Schema-First Development) is special - it references [SCHEMA-RULES.md](SCHEMA-RULES.md) for all schema-related rules. In source code, reference it as `FOUNDATION TENETS` or simply "per schema-first development".
+> **Note**: Tenets 1 and 2 are special - they reference external documents ([SCHEMA-RULES.md](SCHEMA-RULES.md) and [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md)) for detailed rules. In source code, reference them as `FOUNDATION TENETS` or by their specific names ("per schema-first development", "per service hierarchy").
 
 **Examples:**
 ```csharp
@@ -116,17 +117,67 @@ Schema-first applies to **HTTP APIs and service contracts**. Some components are
 
 ---
 
+## Tenet 2: Service Hierarchy (INVIOLABLE)
+
+**Services are organized into layers. Dependencies may only flow downward.**
+
+Before adding ANY service client dependency, you MUST read [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md). This is not optional.
+
+### The Hierarchy Layers
+
+```
+Layer 4: Application Services (actor, behavior, mapping, scene, etc.)
+Layer 3: Extended Services (character-personality, character-history, etc.)
+Layer 2: Foundational Services (account, auth, character, realm, etc.)
+Layer 1: Observability (telemetry, orchestrator, analytics) - OPTIONAL
+Layer 0: Infrastructure (lib-state, lib-messaging, lib-mesh) - ALWAYS ON
+```
+
+### The Cardinal Rule
+
+> **A service may ONLY depend on services in its own layer or lower layers. Dependencies on higher layers are FORBIDDEN.**
+
+### Why This Matters
+
+- **Layer 2 services are foundations** - they don't know about their consumers
+- **Layer 1 services are optional** - nothing breaks if they're disabled
+- **Higher layers extend lower layers** - not the other way around
+
+### Common Violation Pattern
+
+```csharp
+// FORBIDDEN: Foundation service depending on extension service
+public class CharacterService  // Layer 2
+{
+    private readonly IActorClient _actorClient;  // Layer 4 - VIOLATION!
+}
+
+// CORRECT: Extension service depending on foundation
+public class ActorService  // Layer 4
+{
+    private readonly ICharacterClient _characterClient;  // Layer 2 - OK
+}
+```
+
+### Reference Counting the Right Way
+
+If a foundational service needs to know about references from higher layers (for cleanup eligibility), use **event-driven reference registration** - higher-layer services publish reference events, and the foundational service consumes them. See [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md) for the full pattern.
+
+---
+
 ## Tenet Categories
 
-Tenets are organized into three categories based on when they're needed:
+Tenets are organized into categories based on when they're needed:
 
 | Category | Tenets | When to Reference |
 |----------|--------|-------------------|
+| [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
+| [**Service Hierarchy**](SERVICE_HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
 | [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
 | [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
-> **Note**: Schema-related rules (formerly T1, T2, T26) are now consolidated in [SCHEMA-RULES.md](SCHEMA-RULES.md) and referenced by Tenet 1 above.
+> **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE_HIERARCHY.md) that contain their own detailed rules.
 
 ---
 
@@ -195,6 +246,10 @@ Tenets are organized into three categories based on when they're needed:
 | Shared type defined in events schema | T1 | Move type to `-api.yaml`, use `$ref` in events |
 | API schema `$ref` to events schema | T1 | Reverse the dependency - API is source of truth |
 | Events `$ref` to different service's API | T1 | Use common schema or duplicate the type |
+| Layer 2 service depending on Layer 3 | T2 | Remove dependency; use events instead (see [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md)) |
+| Layer 2 service depending on Layer 4 | T2 | Remove dependency; higher layer should publish events |
+| Foundation service calling extension client | T2 | Invert the dependency; extension consumes foundation events |
+| Circular service dependencies | T2 | Restructure to respect layer hierarchy |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use generated clients via lib-mesh |

@@ -1032,6 +1032,9 @@ public class MeshStateManagerTests
 public class MeshInvocationClientTests : IDisposable
 {
     private readonly Mock<IMeshStateManager> _mockStateManager;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<ILogger<MeshInvocationClient>> _mockLogger;
     private readonly ITelemetryProvider _telemetryProvider;
     private MeshInvocationClient? _client;
@@ -1039,8 +1042,20 @@ public class MeshInvocationClientTests : IDisposable
     public MeshInvocationClientTests()
     {
         _mockStateManager = new Mock<IMeshStateManager>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockLogger = new Mock<ILogger<MeshInvocationClient>>();
         _telemetryProvider = new NullTelemetryProvider();
+
+        // Setup default return values for message bus (never throws)
+        _mockMessageBus.Setup(x => x.TryPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<object>(),
+            It.IsAny<PublishOptions>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
     }
 
     public void Dispose()
@@ -1052,6 +1067,9 @@ public class MeshInvocationClientTests : IDisposable
     {
         _client = new MeshInvocationClient(
             _mockStateManager.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockMessageSubscriber.Object,
             new MeshServiceConfiguration(),
             _mockLogger.Object,
             _telemetryProvider);

@@ -217,6 +217,7 @@ None. The service is feature-complete for its scope.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/201 -->
 2. ~~**ArchetypeHint field not persisted**~~: **FIXED** (2026-01-31) - The `archetypeHint` field defined in the schema was not being stored or returned by the service. Now properly persisted in `PersonalityData` and mapped to responses. Note: This is a hint string only - pre-defined archetype templates for quick character creation remain a separate potential extension.
 3. **Pre-defined archetype templates**: Template system that maps archetype codes (e.g., "guardian", "trickster") to pre-configured trait combinations for quick character creation.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/256 -->
 4. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
 5. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.
 

@@ -27,9 +27,9 @@ The Character service manages game world characters for Arcadia. Characters are 
 | lib-character-history (`ICharacterHistoryClient`) | Fetches backstory for enrichment; summarizes/deletes on compression |
 | lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting |
 | lib-relationship-type (`IRelationshipTypeClient`) | Maps relationship type IDs to codes for family tree categorization |
-| lib-character-encounter (`ICharacterEncounterClient`) | Queries encounters for cleanup reference counting |
-| lib-contract (`IContractClient`) | Queries contracts for cleanup reference counting |
-| lib-actor (`IActorClient`) | Queries actors for cleanup reference counting (NPC brains) |
+| lib-character-encounter (`ICharacterEncounterClient`) | ⚠️ **HIERARCHY VIOLATION** - Layer 3 service, remove |
+| lib-contract (`IContractClient`) | ⚠️ **HIERARCHY VIOLATION** - Layer 2c peer, questionable |
+| lib-actor (`IActorClient`) | ⚠️ **HIERARCHY VIOLATION** - Layer 4 service, remove |
 
 > **Refactoring Consideration**: This plugin injects 9 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
@@ -126,7 +126,7 @@ Service lifetime is **Scoped** (per-request).
 
 ## API Endpoints (Implementation Notes)
 
-### CRUD Operations (6 endpoints)
+### CRUD Operations (7 endpoints)
 
 - **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability (throws `InvalidOperationException`). Generates new GUID. Stores with realm-partitioned key. Maintains both realm index and global index with optimistic concurrency retries.
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
@@ -175,7 +175,7 @@ Simple lookup of compressed archive data by character ID.
 Determines cleanup eligibility for compressed characters:
 1. Character must exist
 2. Check if compressed (archive exists)
-3. Reference count must be 0 (currently only checks relationships)
+3. Reference count must be 0 (checks relationships, encounters, contracts, and actors)
 4. Must maintain 0 references for grace period (default 30 days)
 
 Tracks `ZeroRefSinceUnix` timestamp in state store with optimistic concurrency for multi-instance safety.
@@ -222,19 +222,17 @@ Character Key Architecture (Realm-Partitioned)
 
 ## Stubs & Unimplemented Features
 
-1. ~~**Incomplete reference counting**~~: **FIXED** (2026-01-31) - `CheckCharacterReferences` now checks relationships, encounters, contracts, and actors. History events and documents are not checked as there's no query API for those services to look up references by character ID.
-2. **`CharacterRetentionDays` config placeholder**: Defined for future retention/purge feature but not yet referenced in service code.
+1. **`CharacterRetentionDays` config placeholder**: Defined for future retention/purge feature but not yet referenced in service code.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/212 -->
 
 ---
 
 ## Potential Extensions
 
-1. ~~**Full reference counting**~~: **FIXED** (2026-01-31) - Now checks relationships, encounters, contracts, and actors. History events and documentation references would require new query APIs from those services.
-2. ~~**Realm transfer**~~: **FIXED** (2026-02-01) - Added `/character/transfer-realm` endpoint that validates target realm, acquires distributed lock, moves character data between realm-partitioned keys, updates both realm and global indexes, and publishes `character.realm.left`, `character.realm.joined`, and `character.updated` events.
-3. **Batch compression**: Compress multiple dead characters in one operation.
+1. **Batch compression**: Compress multiple dead characters in one operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
-4. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
+2. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
+3. **Parallel family tree lookups**: Currently `BuildFamilyTreeAsync` makes sequential calls for each relationship type and character. Could parallelize these for better performance.
 
 ---
 
@@ -242,7 +240,7 @@ Character Key Architecture (Realm-Partitioned)
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **Dependency inversion in reference counting (SERVICE_HIERARCHY violation)**: `CheckCharacterReferencesAsync` directly calls `ICharacterEncounterClient`, `IContractClient`, and `IActorClient` to count references. This inverts the dependency hierarchy - Character (Layer 2) should NOT depend on Layer 3/4 services. **Correct fix**: Character should define `character.reference.registered` and `character.reference.unregistered` events in its own schema that it consumes. Higher-layer services publish TO those topics when they create/delete references. Character maintains refcounts without knowing who the publishers are. See `docs/reference/SERVICE_HIERARCHY.md` for the full pattern.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -252,31 +250,29 @@ No bugs identified.
 
 3. **Fail-closed validation**: If realm or species validation services are unavailable, character creation throws `InvalidOperationException` rather than proceeding. This is intentional to prevent data integrity issues.
 
+4. **Distributed locks return Conflict on contention**: Update, compress, and transfer operations acquire distributed locks via `IDistributedLockProvider`. If another instance holds the lock, these operations return `StatusCodes.Conflict` rather than waiting. Callers should retry with backoff.
+
+5. **Lock timeout is configurable but short by default**: The `LockTimeoutSeconds` configuration (default 30s) controls how long a lock can be held. Operations should complete well within this window; the timeout is a safety net for crashed processes.
+
 ### Design Considerations (Requires Planning)
 
-1. ~~**No distributed lock on character update (IMPLEMENTATION TENETS)**~~: **FIXED** (2026-01-31) - `UpdateCharacterAsync` now acquires a distributed lock via `IDistributedLockProvider` using the `character-lock` store before performing read-modify-write operations. Returns `StatusCodes.Conflict` if lock acquisition fails.
+1. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 
-2. ~~**No distributed lock on character compression (IMPLEMENTATION TENETS)**~~: **FIXED** (2026-01-31) - `CompressCharacterAsync` now acquires a distributed lock via `IDistributedLockProvider` using the `character-lock` store before performing read-summarize-archive-delete operations. Returns `StatusCodes.Conflict` if lock acquisition fails.
+2. **Global index double-write**: Both realm index and global index are updated on create/delete. Extra write for resilience across restarts but adds complexity.
 
-3. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
+3. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
 
-4. **Global index double-write**: Both realm index and global index are updated on create/delete. Extra write for resilience across restarts but adds complexity.
+4. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
 
-5. ~~**Reference counting only checks relationships**~~: **FIXED** (2026-01-31) - `CheckCharacterReferences` now queries relationships, encounters, contracts, and actors. History events and documentation references are not checked (would require new APIs from those services).
+5. **INCARNATION tracking is directional**: Only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
 
-6. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
+6. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
 
-7. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
+7. **"orphaned" label ignores parent death status**: Adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died.
 
-8. **INCARNATION tracking is directional**: Only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
+8. **"single parent household" is literal**: Adds this label when exactly one parent exists. Doesn't consider whether two parents were expected.
 
-9. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
-
-10. **"orphaned" label ignores parent death status**: Adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died.
-
-11. **"single parent household" is literal**: Adds this label when exactly one parent exists. Doesn't consider whether two parents were expected.
-
-12. **Family tree character lookups are sequential**: Calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
+9. **Family tree character lookups are sequential**: Calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
 
 ---
 
@@ -284,8 +280,12 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-### Completed
+### Active
 
-- **2026-01-31**: Added distributed locking to `UpdateCharacterAsync` and `CompressCharacterAsync` per [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189). Added `character-lock` state store, `LockTimeoutSeconds` configuration, and `IDistributedLockProvider` dependency.
-- **2026-01-31**: Expanded reference counting in `CheckCharacterReferencesAsync` to check encounters (via `ICharacterEncounterClient`), contracts (via `IContractClient`), and actors (via `IActorClient`) in addition to relationships. Added 3 new service client dependencies. History events and documentation references are not checked as those services lack character-based query APIs.
+No active work items.
+
+### Historical
+
 - **2026-02-01**: Implemented realm transfer feature (`/character/transfer-realm` endpoint). Validates target realm, acquires distributed lock, atomically moves character between realm-partitioned keys, updates realm and global indexes, publishes realm transition and update events.
+- **2026-01-31**: Expanded reference counting in `CheckCharacterReferencesAsync` to check encounters, contracts, and actors in addition to relationships.
+- **2026-01-31**: Added distributed locking to `UpdateCharacterAsync` and `CompressCharacterAsync` per [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189).

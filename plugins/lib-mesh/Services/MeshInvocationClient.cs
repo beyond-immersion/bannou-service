@@ -2,6 +2,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -27,8 +28,8 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     // Cache for endpoint resolution to reduce state store calls
     private readonly EndpointCache _endpointCache;
 
-    // Circuit breaker state per app-id
-    private readonly CircuitBreaker _circuitBreaker;
+    // Distributed circuit breaker state per app-id (shared across instances via Redis)
+    private readonly DistributedCircuitBreaker _circuitBreaker;
 
     // Round-robin counter for load balancing across multiple endpoints
     private int _roundRobinCounter;
@@ -37,11 +38,17 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// Creates a new MeshInvocationClient.
     /// </summary>
     /// <param name="stateManager">State manager for endpoint resolution (avoids circular dependency with generated clients).</param>
+    /// <param name="stateStoreFactory">Factory for obtaining Redis operations for distributed circuit breaker.</param>
+    /// <param name="messageBus">Message bus for publishing circuit state change events.</param>
+    /// <param name="messageSubscriber">Message subscriber for receiving circuit state change events from other instances.</param>
     /// <param name="configuration">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public MeshInvocationClient(
         IMeshStateManager stateManager,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
         MeshServiceConfiguration configuration,
         ILogger<MeshInvocationClient> logger,
         ITelemetryProvider telemetryProvider)
@@ -80,9 +87,43 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         }
 
         _endpointCache = new EndpointCache(TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds));
-        _circuitBreaker = new CircuitBreaker(
+
+        // Create distributed circuit breaker (shares state across instances via Redis + events)
+        _circuitBreaker = new DistributedCircuitBreaker(
+            stateStoreFactory,
+            messageBus,
+            logger,
             configuration.CircuitBreakerThreshold,
             TimeSpan.FromSeconds(configuration.CircuitBreakerResetSeconds));
+
+        // Subscribe to circuit state change events from other instances
+        if (configuration.CircuitBreakerEnabled)
+        {
+            _ = SubscribeToCircuitStateChangesAsync(messageSubscriber);
+        }
+    }
+
+    /// <summary>
+    /// Subscribes to circuit state change events to keep local cache synchronized.
+    /// </summary>
+    private async Task SubscribeToCircuitStateChangesAsync(IMessageSubscriber messageSubscriber)
+    {
+        try
+        {
+            await messageSubscriber.SubscribeAsync<MeshCircuitStateChangedEvent>(
+                "mesh.circuit.changed",
+                (evt, _) =>
+                {
+                    _circuitBreaker.HandleStateChangeEvent(evt);
+                    return Task.CompletedTask;
+                });
+
+            _logger.LogDebug("Subscribed to mesh.circuit.changed events for distributed circuit breaker");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to subscribe to circuit state change events - distributed sync disabled");
+        }
     }
 
     /// <inheritdoc/>
@@ -185,7 +226,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             // Check circuit breaker before attempting invocation
             if (_configuration.CircuitBreakerEnabled)
             {
-                var state = _circuitBreaker.GetState(appId);
+                var state = await _circuitBreaker.GetStateAsync(appId, cancellationToken);
                 activity?.SetTag("bannou.mesh.circuit_breaker_state", state.ToString());
 
                 if (state == CircuitState.Open)
@@ -229,7 +270,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
                     if (attempt < maxAttempts - 1)
                         continue; // Retry - endpoint might become available
 
-                    RecordCircuitBreakerFailure(appId);
+                    await RecordCircuitBreakerFailureAsync(appId, cancellationToken);
                     activity?.SetStatus(ActivityStatusCode.Error, "No endpoints available");
                     throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
                 }
@@ -255,7 +296,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
                     if (!IsTransientError(lastResponse.StatusCode))
                     {
                         // Non-transient response (success or client error) - done
-                        RecordCircuitBreakerSuccess(appId);
+                        await RecordCircuitBreakerSuccessAsync(appId, cancellationToken);
                         success = lastResponse.IsSuccessStatusCode;
                         if (success)
                         {
@@ -287,7 +328,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             }
 
             // All attempts exhausted
-            RecordCircuitBreakerFailure(appId);
+            await RecordCircuitBreakerFailureAsync(appId, cancellationToken);
             activity?.SetTag("bannou.mesh.retry_count", retryCount);
 
             if (lastException != null)
@@ -320,22 +361,22 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// Records a circuit breaker failure if circuit breaking is enabled.
     /// Called once per invocation after all retries are exhausted.
     /// </summary>
-    private void RecordCircuitBreakerFailure(string appId)
+    private async Task RecordCircuitBreakerFailureAsync(string appId, CancellationToken cancellationToken)
     {
         if (_configuration.CircuitBreakerEnabled)
         {
-            _circuitBreaker.RecordFailure(appId);
+            await _circuitBreaker.RecordFailureAsync(appId, cancellationToken);
         }
     }
 
     /// <summary>
     /// Records a circuit breaker success if circuit breaking is enabled.
     /// </summary>
-    private void RecordCircuitBreakerSuccess(string appId)
+    private async Task RecordCircuitBreakerSuccessAsync(string appId, CancellationToken cancellationToken)
     {
         if (_configuration.CircuitBreakerEnabled)
         {
-            _circuitBreaker.RecordSuccess(appId);
+            await _circuitBreaker.RecordSuccessAsync(appId, cancellationToken);
         }
     }
 
@@ -515,98 +556,13 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     }
 
     /// <summary>
-    /// Circuit breaker states for mesh endpoints.
-    /// </summary>
-    private enum CircuitState
-    {
-        /// <summary>Requests flow normally.</summary>
-        Closed,
-        /// <summary>Requests are blocked; waiting for reset period to elapse.</summary>
-        Open,
-        /// <summary>One probe request allowed to test recovery.</summary>
-        HalfOpen
-    }
-
-    /// <summary>
-    /// Per-appId circuit breaker tracking consecutive failures.
-    /// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
-    /// </summary>
-    private sealed class CircuitBreaker
-    {
-        private readonly int _threshold;
-        private readonly TimeSpan _resetTimeout;
-        private readonly ConcurrentDictionary<string, CircuitEntry> _circuits = new();
-
-        public CircuitBreaker(int threshold, TimeSpan resetTimeout)
-        {
-            _threshold = threshold;
-            _resetTimeout = resetTimeout;
-        }
-
-        /// <summary>
-        /// Gets the current circuit state for an appId.
-        /// Transitions from Open to HalfOpen when the reset period has elapsed.
-        /// </summary>
-        public CircuitState GetState(string appId)
-        {
-            if (!_circuits.TryGetValue(appId, out var entry))
-                return CircuitState.Closed;
-
-            if (entry.State == CircuitState.Open &&
-                DateTimeOffset.UtcNow >= entry.OpenedAt + _resetTimeout)
-            {
-                // Reset period elapsed - allow a probe
-                entry.State = CircuitState.HalfOpen;
-                return CircuitState.HalfOpen;
-            }
-
-            return entry.State;
-        }
-
-        /// <summary>
-        /// Records a successful invocation. Resets the circuit to Closed.
-        /// </summary>
-        public void RecordSuccess(string appId)
-        {
-            if (_circuits.TryGetValue(appId, out var entry))
-            {
-                entry.ConsecutiveFailures = 0;
-                entry.State = CircuitState.Closed;
-            }
-        }
-
-        /// <summary>
-        /// Records a failed invocation. Opens the circuit when threshold is reached.
-        /// </summary>
-        public void RecordFailure(string appId)
-        {
-            var entry = _circuits.GetOrAdd(appId, _ => new CircuitEntry());
-
-            entry.ConsecutiveFailures++;
-
-            if (entry.ConsecutiveFailures >= _threshold)
-            {
-                entry.State = CircuitState.Open;
-                entry.OpenedAt = DateTimeOffset.UtcNow;
-            }
-        }
-
-        private sealed class CircuitEntry
-        {
-            public int ConsecutiveFailures;
-            public CircuitState State = CircuitState.Closed;
-            public DateTimeOffset OpenedAt;
-        }
-    }
-
-    /// <summary>
     /// Simple in-memory cache for endpoint resolution.
+    /// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
     /// </summary>
     private sealed class EndpointCache
     {
         private readonly TimeSpan _ttl;
-        private readonly Dictionary<string, (MeshEndpoint Endpoint, DateTimeOffset Expiry)> _cache = new();
-        private readonly object _lock = new();
+        private readonly ConcurrentDictionary<string, (MeshEndpoint Endpoint, DateTimeOffset Expiry)> _cache = new();
 
         public EndpointCache(TimeSpan ttl)
         {
@@ -615,18 +571,16 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
         public bool TryGet(string appId, out MeshEndpoint? endpoint)
         {
-            lock (_lock)
+            if (_cache.TryGetValue(appId, out var entry))
             {
-                if (_cache.TryGetValue(appId, out var entry))
+                if (entry.Expiry > DateTimeOffset.UtcNow)
                 {
-                    if (entry.Expiry > DateTimeOffset.UtcNow)
-                    {
-                        endpoint = entry.Endpoint;
-                        return true;
-                    }
-
-                    _cache.Remove(appId);
+                    endpoint = entry.Endpoint;
+                    return true;
                 }
+
+                // Expired - remove it
+                _cache.TryRemove(appId, out _);
             }
 
             endpoint = null;
@@ -635,18 +589,12 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
         public void Set(string appId, MeshEndpoint endpoint)
         {
-            lock (_lock)
-            {
-                _cache[appId] = (endpoint, DateTimeOffset.UtcNow.Add(_ttl));
-            }
+            _cache[appId] = (endpoint, DateTimeOffset.UtcNow.Add(_ttl));
         }
 
         public void Invalidate(string appId)
         {
-            lock (_lock)
-            {
-                _cache.Remove(appId);
-            }
+            _cache.TryRemove(appId, out _);
         }
     }
 }

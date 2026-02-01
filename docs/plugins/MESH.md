@@ -3,7 +3,7 @@
 > **Plugin**: lib-mesh
 > **Schema**: schemas/mesh-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index (all Redis)
+> **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index, mesh-circuit-breaker (all Redis)
 
 ---
 
@@ -17,8 +17,10 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for endpoint registry, app-id indexes, and global index |
-| lib-messaging (`IMessageBus`) | Publishing endpoint lifecycle events; error event publishing |
+| lib-state (`IStateStoreFactory`) | Redis persistence for endpoint registry, app-id indexes, global index, and circuit breaker state |
+| lib-state (`IRedisOperations`) | Lua script execution for atomic circuit breaker state transitions |
+| lib-messaging (`IMessageBus`) | Publishing endpoint lifecycle events, circuit state change events, and error events |
+| lib-messaging (`IMessageSubscriber`) | Subscribing to `mesh.circuit.changed` for cross-instance circuit breaker sync |
 | lib-messaging (`IEventConsumer`) | Subscribing to `bannou.service-heartbeats` and `bannou.full-service-mappings` |
 
 ---
@@ -35,18 +37,20 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 ## State Storage
 
-**Stores**: 3 Redis stores (via lib-state `IStateStoreFactory`)
+**Stores**: 4 Redis stores (via lib-state `IStateStoreFactory`)
 
 | Store | Key Pattern | Data Type | Purpose |
 |-------|-------------|-----------|---------|
 | `mesh-endpoints` | `{instanceId}` (GUID string) | `MeshEndpoint` | Individual endpoint registration with health/load metadata |
 | `mesh-appid-index` | `{appId}` (set of instance IDs) | `Set<string>` | App-ID to instance-ID mapping for routing queries |
 | `mesh-global-index` | `_index` (set of instance IDs) | `Set<string>` | Global endpoint index for discovery (avoids KEYS/SCAN) |
+| `mesh-circuit-breaker` | `{appId}` (hash) | Hash: failures, state, openedAt | Distributed circuit breaker state for cross-instance failure tracking |
 
 **Key Patterns**:
 - Endpoint data keyed by instance ID (GUID)
 - App-ID index lists all instance IDs for a given app-id (with TTL refresh on heartbeat)
 - Global index (`_index` key) tracks all known instance IDs (no TTL - cleaned lazily on access)
+- Circuit breaker hash per app-id with atomic Lua script updates (no TTL - cleared on success)
 
 ---
 
@@ -58,6 +62,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 |-------|-----------|---------|
 | `mesh.endpoint.registered` | `MeshEndpointRegisteredEvent` | New endpoint registered (explicit or auto-discovered from heartbeat) |
 | `mesh.endpoint.deregistered` | `MeshEndpointDeregisteredEvent` | Endpoint removed (graceful shutdown or health check failure) |
+| `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | Circuit breaker state changes (Closed→Open, Open→HalfOpen, HalfOpen→Closed, etc.) |
 
 ### Consumed Events
 
@@ -65,6 +70,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 |-------|-----------|---------|
 | `bannou.service-heartbeats` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeatAsync` - Updates existing endpoint metrics or auto-registers new endpoints |
 | `bannou.full-service-mappings` | `FullServiceMappingsEvent` | `HandleServiceMappingsAsync` - Atomically updates `IServiceAppMappingResolver` for all generated clients (configurable via `EnableServiceMappingSync`) |
+| `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | `HandleCircuitStateChanged` - Updates local circuit breaker cache from other instances |
 
 ---
 
@@ -108,9 +114,10 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `MeshServiceConfiguration` | Singleton | All 24 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Heartbeat and mapping event subscription |
-| `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores) |
+| `IMeshStateManager` | Singleton | Redis state via lib-state (4 stores) |
 | `IServiceAppMappingResolver` | Singleton | Shared service→app-id routing (used by all generated clients) |
-| `MeshInvocationClient` | Singleton | HTTP invocation with circuit breaker, retries, caching |
+| `MeshInvocationClient` | Singleton | HTTP invocation with distributed circuit breaker, retries, caching |
+| `DistributedCircuitBreaker` | Internal (via MeshInvocationClient) | Redis-backed circuit breaker with local cache + event sync |
 | `MeshHealthCheckService` | Hosted (BackgroundService) | Active endpoint health probing |
 | `LocalMeshStateManager` | Singleton | In-memory state for `UseLocalRouting=true` mode |
 
@@ -236,8 +243,7 @@ Event-Driven Auto-Registration
 
 1. ~~**Weighted round-robin**~~: **IMPLEMENTED** (2026-01-30) - Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum. Uses smooth weighted round-robin algorithm (nginx-style): each endpoint's current_weight is incremented by effective_weight (100 - LoadPercent) each round, highest current_weight wins, then is reduced by total effective weight. Provides predictable distribution proportional to inverse load.
 
-2. **Distributed circuit breaker**: Share circuit breaker state across instances via Redis for cluster-wide protection.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/219 -->
+2. ~~**Distributed circuit breaker**~~: **IMPLEMENTED** (2026-02-01) - Circuit breaker state is now shared across instances via Redis + RabbitMQ events. Uses Lua scripts for atomic state transitions, local `ConcurrentDictionary` cache for 0ms reads on hot path, and `mesh.circuit.changed` events for cross-instance synchronization. Gracefully degrades to local-only tracking when Redis unavailable.
 
 3. **Endpoint affinity**: Sticky routing for stateful services (session affinity based on request metadata).
 
@@ -266,7 +272,7 @@ Event-Driven Auto-Registration
 
 3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem - not a bug, but worth noting.
 
-4. **Circuit breaker is per-instance, not distributed**: Each `MeshInvocationClient` instance maintains its own circuit breaker state. In multi-instance deployments, one instance may have an open circuit while others are still closed.
+4. ~~**Circuit breaker is per-instance, not distributed**~~: **FIXED** (2026-02-01) - Circuit breaker state is now shared across instances via Redis and synchronized via `mesh.circuit.changed` events. All instances see the same circuit state within event propagation latency.
 
 5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop until the configured retry attempts are exhausted or cancellation is requested.
 
@@ -276,9 +282,11 @@ Event-Driven Auto-Registration
 
 ### Design Considerations (Requires Planning)
 
-1. **EndpointCache uses Dictionary + lock, not ConcurrentDictionary**: The `EndpointCache` inner class in MeshInvocationClient uses a plain `Dictionary<>` with explicit lock statements instead of `ConcurrentDictionary`. Lower overhead for simple get/set but not lock-free.
+1. ~~**EndpointCache uses Dictionary + lock, not ConcurrentDictionary**~~: **FIXED** (2026-02-01) - The `EndpointCache` inner class in MeshInvocationClient now uses `ConcurrentDictionary` for lock-free thread safety, consistent with IMPLEMENTATION TENETS (Multi-Instance Safety).
 
-2. **MeshInvocationClient is Singleton with mutable state**: The circuit breaker and endpoint cache are instance-level mutable state in a Singleton-lifetime service. Thread-safe by design (ConcurrentDictionary for circuits, lock for cache) but long-lived state accumulates.
+2. **MeshInvocationClient is Singleton with mutable state**: The circuit breaker and endpoint cache are instance-level mutable state in a Singleton-lifetime service. Thread-safe by design (ConcurrentDictionary for all caches) but long-lived state accumulates.
+
+3. **Event-backed local cache pattern for circuit breaker**: The distributed circuit breaker uses a hybrid architecture: Redis stores authoritative state (via atomic Lua scripts), local `ConcurrentDictionary` provides 0ms reads on hot path, and RabbitMQ events propagate state changes across instances. This pattern avoids Redis round-trip latency on every invocation while ensuring eventual consistency across the cluster.
 
 3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. Uses `Interlocked.CompareExchange` for thread-safe first initialization and resets `_initialized` flag on failure to allow retry.
 
@@ -301,3 +309,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-30**: Implemented health check deregistration. `MeshHealthCheckService` now tracks consecutive failures per endpoint via `ConcurrentDictionary`, deregisters after `HealthCheckFailureThreshold` (default 3) failures, and publishes `MeshEndpointDeregisteredEvent` with `HealthCheckFailed` reason. Added new config property `MESH_HEALTH_CHECK_FAILURE_THRESHOLD`.
 - **2026-01-30**: Implemented weighted round-robin load balancing. Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum in `mesh-api.yaml`, updated configuration to reference the API enum via `$ref`, and implemented `SelectWeightedRoundRobin` method using nginx-style smooth weighted round-robin algorithm. Static `_weightedRoundRobinCurrentWeights` dictionary tracks current weights per endpoint.
 - **2026-02-01**: Created [#219](https://github.com/beyond-immersion/bannou-service/issues/219) for distributed circuit breaker design - needs decisions on performance tradeoffs (Redis latency per invocation), atomicity mechanism (Lua scripts vs distributed locks vs optimistic concurrency), configuration model (opt-in vs automatic), and whether endpoint cache also needs distribution.
+- **2026-02-01**: Implemented [#219](https://github.com/beyond-immersion/bannou-service/issues/219) distributed circuit breaker. Uses event-backed local cache pattern: Redis stores authoritative state via atomic Lua scripts, local `ConcurrentDictionary` cache for 0ms hot path reads, `mesh.circuit.changed` events for cross-instance sync. No new configuration - always-on when `CircuitBreakerEnabled=true`. Gracefully degrades to local-only when Redis unavailable. Also fixed `EndpointCache` to use `ConcurrentDictionary`.

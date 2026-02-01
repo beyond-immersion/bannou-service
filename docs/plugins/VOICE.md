@@ -175,6 +175,7 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/238 -->
 
 3. **RTP server pool allocation**: `AllocateRtpServerAsync` currently returns the single configured RTP server. The implementation notes "In production, this would select from a pool based on load."
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 
 4. **IKamailioClient methods unused**: `GetActiveDialogsAsync`, `TerminateDialogAsync`, `ReloadDispatcherAsync`, and `GetStatsAsync` are implemented but never called by VoiceService. Only `IsHealthyAsync` is used (indirectly via `AllocateRtpServerAsync`).
 
@@ -237,3 +238,4 @@ None identified.
 |------|-------|-----|--------|
 | 2026-01-31 | [#195](https://github.com/beyond-immersion/bannou-service/issues/195) | RTPEngine publish/subscribe methods unused in scaled tier | Needs Design |
 | 2026-02-01 | [#238](https://github.com/beyond-immersion/bannou-service/issues/238) | Service-to-service events stub | Needs Design |
+| 2026-02-01 | [#258](https://github.com/beyond-immersion/bannou-service/issues/258) | RTP server pool allocation with load-based selection | Needs Design |

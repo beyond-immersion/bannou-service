@@ -376,6 +376,7 @@ Optimistic Concurrency Pattern (Checkout)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/254 -->
 
 4. **SceneReferenceBrokenEvent**: The topic and event type are defined in the events schema, but no code path currently publishes this event. It would need to be triggered when a scene is force-deleted despite references (currently blocked by the 409 Conflict check).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/257 -->
 
 5. **require_annotation and custom_expression validation rules**: The `ValidationRuleType` enum includes these values, but `ApplyValidationRule` in `SceneValidationService` only handles `require_tag`, `forbid_tag`, and `require_node_type`. The other types silently pass.
 
