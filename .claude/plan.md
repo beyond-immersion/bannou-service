@@ -1034,24 +1034,30 @@ Background services in Bannou plugins are registered via the `IHostedService` pa
 1. Configuration section: Remove TokenAlgorithm/TokenSecret, add new config properties
 2. Add Release Modes section explaining `immediate`, `service_only`, `party_required`, `service_and_party`
 3. Add warning callout for `immediate` mode risks
-4. Bugs section: Mark bugs 1, 2, 3 as FIXED
-5. Add Work Tracking entry for this issue
+4. Add Contract-Bound Escrow section explaining that ReleaseMode only applies to unbound escrows
+5. Bugs section: Mark bugs 1, 2, 3 as FIXED
+6. Add Work Tracking entry for this issue
 
 ---
 
 ## Phase 6: Follow-up Issues
 
-### Create HMAC Token Enhancement Issue
+### Already Created (Contract Integration)
+
+These issues were created during the architecture analysis:
+
+- **#217**: [BUG] T5: ContractExecutedEvent not schema-defined
+- **#218**: [ENHANCEMENT] ContractExecutedEvent: Add per-party distribution details
+
+These are prerequisites for full contract-bound escrow integration. For now, we implement the contract-bound path by verifying `Fulfilled` status and trusting that contract execution succeeded.
+
+### To Create
 
 ```bash
+# HMAC token enhancement
 gh issue create --title "[ENHANCEMENT] Consider HMAC-signed escrow tokens" --body "..."
-```
 
-### Create Service Completion Event Issues
-
-Currency and Inventory services need to publish `*.escrow.transfer.completed` events:
-
-```bash
+# Service completion events (for unbound escrow confirmation flow)
 gh issue create --title "[FEATURE] lib-currency: Publish escrow transfer completion events" --body "..."
 gh issue create --title "[FEATURE] lib-inventory: Publish escrow transfer completion events" --body "..."
 ```

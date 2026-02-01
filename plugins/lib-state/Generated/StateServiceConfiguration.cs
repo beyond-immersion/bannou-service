@@ -77,10 +77,4 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ConnectionTimeoutSeconds { get; set; } = 60;
 
-    /// <summary>
-    /// Default consistency level for state operations
-    /// Environment variable: STATE_DEFAULT_CONSISTENCY
-    /// </summary>
-    public ConsistencyLevel DefaultConsistency { get; set; } = ConsistencyLevel.Strong;
-
 }

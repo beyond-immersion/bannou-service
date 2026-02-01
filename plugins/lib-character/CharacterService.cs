@@ -491,6 +491,125 @@ public partial class CharacterService : ICharacterService
         }
     }
 
+    /// <summary>
+    /// Transfers a character to a different realm.
+    /// Updates all indexes and publishes realm transition events.
+    /// </summary>
+    public async Task<(StatusCodes, CharacterResponse?)> TransferCharacterToRealmAsync(
+        TransferCharacterToRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Transferring character {CharacterId} to realm {TargetRealmId}",
+                body.CharacterId, body.TargetRealmId);
+
+            // Validate target realm exists and is active
+            var (targetRealmExists, targetRealmIsActive) = await ValidateRealmAsync(body.TargetRealmId, cancellationToken);
+            if (!targetRealmExists)
+            {
+                _logger.LogWarning("Cannot transfer character: target realm not found: {TargetRealmId}", body.TargetRealmId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (!targetRealmIsActive)
+            {
+                _logger.LogWarning("Cannot transfer character: target realm is deprecated: {TargetRealmId}", body.TargetRealmId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Acquire distributed lock for character modification (per IMPLEMENTATION TENETS)
+            var lockOwner = $"transfer-character-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.CharacterLock,
+                body.CharacterId.ToString(),
+                lockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for character transfer {CharacterId}", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Find existing character
+            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+            if (character == null)
+            {
+                _logger.LogWarning("Character not found for transfer: {CharacterId}", body.CharacterId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if already in target realm
+            if (character.RealmId == body.TargetRealmId)
+            {
+                _logger.LogWarning("Character {CharacterId} is already in realm {RealmId}", body.CharacterId, body.TargetRealmId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var previousRealmId = character.RealmId;
+
+            // Delete old character data (keyed by old realm)
+            var oldCharacterKey = BuildCharacterKey(previousRealmId.ToString(), character.CharacterId.ToString());
+            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
+                .DeleteAsync(oldCharacterKey, cancellationToken);
+
+            // Remove from old realm index
+            await RemoveCharacterFromRealmIndexAsync(previousRealmId.ToString(), character.CharacterId.ToString(), cancellationToken);
+
+            // Update character with new realm
+            character.RealmId = body.TargetRealmId;
+            character.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save character with new realm key
+            var newCharacterKey = BuildCharacterKey(body.TargetRealmId.ToString(), character.CharacterId.ToString());
+            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
+                .SaveAsync(newCharacterKey, character, cancellationToken: cancellationToken);
+
+            // Add to new realm index (this also updates global index)
+            await AddCharacterToRealmIndexAsync(body.TargetRealmId.ToString(), character.CharacterId.ToString(), cancellationToken);
+
+            _logger.LogInformation("Character {CharacterId} transferred from realm {PreviousRealmId} to realm {TargetRealmId}",
+                body.CharacterId, previousRealmId, body.TargetRealmId);
+
+            // Publish realm left event for previous realm
+            await PublishCharacterRealmLeftEventAsync(
+                body.CharacterId,
+                previousRealmId,
+                "transfer");
+
+            // Publish realm joined event for new realm
+            await PublishCharacterRealmJoinedEventAsync(body.CharacterId, body.TargetRealmId, previousRealmId);
+
+            // Publish character updated event
+            await PublishCharacterUpdatedEventAsync(character, new List<string> { "realmId" });
+
+            var response = MapToCharacterResponse(character);
+            return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error transferring character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error transferring character: {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character",
+                "TransferCharacterToRealm",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/character/transfer-realm",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
     #endregion
 
     #region Enriched Character & Compression Operations

@@ -294,6 +294,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/CharacterListResponse'
 
+  /character/transfer-realm:
+    post:
+      summary: Transfer character to a different realm
+      description: |
+        Moves a character from their current realm to a new target realm.
+        Updates all indexes, validates the target realm exists and is active,
+        and publishes realm transition events.
+      operationId: transferCharacterToRealm
+      tags:
+      - Character Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCharacterToRealmRequest'
+      responses:
+        '200':
+          description: Character transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          description: Invalid transfer (same realm or target realm invalid)
+        '404':
+          description: Character or target realm not found
+        '409':
+          description: Could not acquire lock on character
+
 components:
   schemas:
     # Shared Enum Definitions
@@ -458,6 +491,23 @@ components:
           maximum: 100
           default: 20
           description: Number of results per page
+
+    TransferCharacterToRealmRequest:
+      description: Request payload for transferring a character to a different realm
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - targetRealmId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to transfer
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the realm to transfer the character to
 
     # Response Models
     CharacterResponse:

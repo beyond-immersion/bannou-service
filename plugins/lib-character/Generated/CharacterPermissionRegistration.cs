@@ -215,6 +215,21 @@ public static class CharacterPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character/transfer-realm",
+            Method = ServiceEndpointMethod.POST,
+            Description = "transferCharacterToRealm",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

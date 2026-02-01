@@ -98,13 +98,7 @@ This plugin does not consume external events.
 | `MySqlConnectionString` | `STATE_MYSQL_CONNECTION_STRING` | `"server=bannou-mysql;..."` | Full MySQL connection string |
 | `ConnectionTimeoutSeconds` | `STATE_CONNECTION_TIMEOUT_SECONDS` | `60` | Database connection timeout |
 
-### Unused Configuration Properties
-
-| Property | Env Var | Default | Notes |
-|----------|---------|---------|-------|
-| `DefaultConsistency` | `STATE_DEFAULT_CONSISTENCY` | `Strong` | Defined but never evaluated in service code |
-| `EnableMetrics` | `STATE_ENABLE_METRICS` | `true` | Feature flag, never implemented |
-| `EnableTracing` | `STATE_ENABLE_TRACING` | `true` | Feature flag, never implemented |
+**Note:** `DefaultConsistency`, `EnableMetrics`, and `EnableTracing` were removed as dead config. Telemetry is now controlled centrally via lib-telemetry. Consistency is specified per-request via `StateOptions.Consistency`.
 
 ---
 
@@ -198,10 +192,8 @@ State Store Architecture
 
 1. **KeyCount in ListStores**: Always returns null. Would require DBSIZE for Redis or COUNT for MySQL.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/174 -->
-2. **DefaultConsistency**: Config property exists but consistency mode is not evaluated anywhere.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/176 -->
-3. **Metrics/Tracing**: Config flags exist but no instrumentation implemented.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/179 -->
+2. ~~**DefaultConsistency**~~: **FIXED** (2026-02-01) - Removed as dead config per IMPLEMENTATION TENETS (T21). Consistency is specified per-request via `StateOptions.Consistency`, not as a global default. The `ConsistencyLevel` enum remains available for per-request use.
+3. ~~**Metrics/Tracing**~~: **FIXED** (2026-01-31) - `EnableMetrics` and `EnableTracing` config flags removed. Telemetry is now controlled centrally via lib-telemetry plugin. See Potential Extensions #1 for details.
 4. **StateMetadata population**: `GetStateResponse.Metadata` returns empty object; timestamps not retrieved from backend.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/177 -->
 
@@ -244,7 +236,7 @@ State Store Architecture
 
 ### Design Considerations (Requires Planning)
 
-1. **Unused config properties**: `DefaultConsistency`, `EnableMetrics`, `EnableTracing` are defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS.
+1. ~~**Unused config properties**~~: **FIXED** (2026-02-01) - All three properties (`DefaultConsistency`, `EnableMetrics`, `EnableTracing`) removed from schema as dead config. `DefaultConsistency` removed in this audit; `EnableMetrics`/`EnableTracing` removed previously when telemetry was centralized to lib-telemetry.
 
 2. **MySQL query loads all into memory**: `QueryAsync` and `QueryPagedAsync` in MySqlStateStore load all entries from the store, deserialize each one, then filter in memory. For very large stores this could be memory-intensive. Consider SQL-level filtering.
 
@@ -271,3 +263,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-31**: Fixed `RedisSearchStateStore.TrySaveAsync` broken transaction. The original code created a Redis transaction with a condition but executed it with `FireAndForget`, then performed the actual JSON.SET outside the transaction. Replaced with two Lua scripts: `TryCreateScript` (for empty ETag create-if-not-exists) and `TryUpdateScript` (for optimistic concurrency updates). Lua scripts execute atomically on Redis server, ensuring proper concurrency control for JSON document storage.
 - **2026-01-31**: Moved "State change events" from Stubs & Unimplemented Features to Intentional Quirks. This was incorrectly categorized as a gap when it's actually a documented design decision. The decision to not publish state change events was intentional due to performance concerns (high operation volume would make per-operation event publishing prohibitively expensive).
 - **2026-01-31**: Marked "Store-level metrics" Potential Extension as IMPLEMENTED. lib-telemetry (#180) provides `InstrumentedStateStore<T>` wrappers that record operation counts, latencies, and tracing spans. Also marked "Bulk save operation" as IMPLEMENTED since `SaveBulkAsync()` already exists.
+- **2026-02-01**: Removed `DefaultConsistency` from `state-configuration.yaml` as dead config per IMPLEMENTATION TENETS (T21). The property was defined but never evaluated - consistency is specified per-request via `StateOptions.Consistency`. Also updated docs to reflect that `EnableMetrics`/`EnableTracing` were previously removed when telemetry was centralized to lib-telemetry.

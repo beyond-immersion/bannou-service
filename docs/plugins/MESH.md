@@ -237,6 +237,7 @@ Event-Driven Auto-Registration
 1. ~~**Weighted round-robin**~~: **IMPLEMENTED** (2026-01-30) - Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum. Uses smooth weighted round-robin algorithm (nginx-style): each endpoint's current_weight is incremented by effective_weight (100 - LoadPercent) each round, highest current_weight wins, then is reduced by total effective weight. Provides predictable distribution proportional to inverse load.
 
 2. **Distributed circuit breaker**: Share circuit breaker state across instances via Redis for cluster-wide protection.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/219 -->
 
 3. **Endpoint affinity**: Sticky routing for stateful services (session affinity based on request metadata).
 
@@ -299,3 +300,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-30**: Created [#162](https://github.com/beyond-immersion/bannou-service/issues/162) for `LocalMeshStateManager` enhancement - needs design decisions on scope (in-memory state tracking vs. configurable failure simulation) and priority of failure scenarios.
 - **2026-01-30**: Implemented health check deregistration. `MeshHealthCheckService` now tracks consecutive failures per endpoint via `ConcurrentDictionary`, deregisters after `HealthCheckFailureThreshold` (default 3) failures, and publishes `MeshEndpointDeregisteredEvent` with `HealthCheckFailed` reason. Added new config property `MESH_HEALTH_CHECK_FAILURE_THRESHOLD`.
 - **2026-01-30**: Implemented weighted round-robin load balancing. Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum in `mesh-api.yaml`, updated configuration to reference the API enum via `$ref`, and implemented `SelectWeightedRoundRobin` method using nginx-style smooth weighted round-robin algorithm. Static `_weightedRoundRobinCurrentWeights` dictionary tracks current weights per endpoint.
+- **2026-02-01**: Created [#219](https://github.com/beyond-immersion/bannou-service/issues/219) for distributed circuit breaker design - needs decisions on performance tradeoffs (Redis latency per invocation), atomicity mechanism (Lua scripts vs distributed locks vs optimistic concurrency), configuration model (opt-in vs automatic), and whether endpoint cache also needs distribution.

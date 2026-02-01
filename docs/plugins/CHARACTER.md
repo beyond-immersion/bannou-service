@@ -126,13 +126,14 @@ Service lifetime is **Scoped** (per-request).
 
 ## API Endpoints (Implementation Notes)
 
-### CRUD Operations (5 endpoints)
+### CRUD Operations (6 endpoints)
 
 - **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability (throws `InvalidOperationException`). Generates new GUID. Stores with realm-partitioned key. Maintains both realm index and global index with optimistic concurrency retries.
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
 - **Update**: Smart field tracking with `ChangedFields` list. Setting `DeathDate` automatically sets `Status` to `Dead`. `SpeciesId` is mutable (supports species merge migrations).
 - **Delete**: Removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates.
 - **List/ByRealm**: Gets realm index, bulk-fetches all characters, filters in-memory (status, species), then paginates. Clamps page size to `MaxPageSize`.
+- **TransferRealm**: Moves a character to a different realm. Validates target realm is active, acquires distributed lock, deletes from old realm-partitioned key, saves to new realm-partitioned key, updates indexes, and publishes `character.realm.left` (reason: "transfer"), `character.realm.joined` (with previousRealmId), and `character.updated` events.
 
 ### Enriched Character (`/character/get-enriched`)
 
@@ -230,7 +231,7 @@ Character Key Architecture (Realm-Partitioned)
 ## Potential Extensions
 
 1. ~~**Full reference counting**~~: **FIXED** (2026-01-31) - Now checks relationships, encounters, contracts, and actors. History events and documentation references would require new query APIs from those services.
-2. **Realm transfer**: Move characters between realms with event publishing and index updates.
+2. ~~**Realm transfer**~~: **FIXED** (2026-02-01) - Added `/character/transfer-realm` endpoint that validates target realm, acquires distributed lock, moves character data between realm-partitioned keys, updates both realm and global indexes, and publishes `character.realm.left`, `character.realm.joined`, and `character.updated` events.
 3. **Batch compression**: Compress multiple dead characters in one operation.
 4. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
 
@@ -286,3 +287,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-01-31**: Added distributed locking to `UpdateCharacterAsync` and `CompressCharacterAsync` per [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189). Added `character-lock` state store, `LockTimeoutSeconds` configuration, and `IDistributedLockProvider` dependency.
 - **2026-01-31**: Expanded reference counting in `CheckCharacterReferencesAsync` to check encounters (via `ICharacterEncounterClient`), contracts (via `IContractClient`), and actors (via `IActorClient`) in addition to relationships. Added 3 new service client dependencies. History events and documentation references are not checked as those services lack character-based query APIs.
+- **2026-02-01**: Implemented realm transfer feature (`/character/transfer-realm` endpoint). Validates target realm, acquires distributed lock, atomically moves character between realm-partitioned keys, updates realm and global indexes, publishes realm transition and update events.
