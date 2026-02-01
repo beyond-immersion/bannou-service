@@ -222,6 +222,7 @@ None identified.
 2. **Read-modify-write on indexes without distributed locks**: `AddToAccountIndexAsync`, `AddToServiceIndexAsync`, and `AddToSubscriptionIndexAsync` perform read-modify-write operations without distributed locks. Two instances racing to add subscriptions could lose an index entry. The `Contains` check before adding provides some protection but is not atomic.
 
 3. **Index cleanup only applies to global index**: While the expiration worker uses ETag-based optimistic concurrency to clean `subscription-index`, there is no mechanism to clean `account-subscriptions:{accountId}` or `service-subscriptions:{serviceId}` indexes. These grow indefinitely with cancelled/expired entries, potentially impacting query performance over time.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
 4. **Event publishing without transactional outbox**: State store update and event publish are separate operations (no transactional outbox pattern). However, lib-messaging's `TryPublishAsync` implements aggressive retry: if RabbitMQ is unavailable, messages are buffered in-memory and retried every 5 seconds. The node crashes if the buffer exceeds 10,000 messages or 5 minutes age - making failures visible rather than silent. True event loss only occurs if the node dies before the buffer flushes. The expiration worker provides additional resilience for expired subscriptions by re-publishing events on each cycle. This is the standard Bannou architecture used by all services (see MESSAGING.md Quirk #1).
 

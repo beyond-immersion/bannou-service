@@ -253,8 +253,10 @@ Stack Operations
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/196 -->
 
 2. **Nested container weight propagation**: The `WeightContribution` enum exists and is stored, but parent container ContentsWeight is not automatically updated when child container contents change. Only the immediate container's counters are updated.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/226 -->
 
 3. **Equipment slot specialization**: `IsEquipmentSlot` and `EquipmentSlotName` fields exist on containers but no special equipment-only validation logic (e.g., only allow weapons in weapon slot) is implemented.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/226 -->
 
 4. **RemoveItem does not clear item's ContainerId**: When RemoveItemFromContainer is called, the item's ContainerId field in lib-item is not cleared. The item still references the container it was removed from until AddItemToContainer places it elsewhere. See [#164](https://github.com/beyond-immersion/bannou-service/issues/164) for the design discussion on configurable drop behavior.
 

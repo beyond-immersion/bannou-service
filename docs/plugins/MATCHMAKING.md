@@ -238,8 +238,10 @@ Reconnection Support
 ## Stubs & Unimplemented Features
 
 1. **Queue statistics are placeholder**: `MatchesFormedLastHour`, `AverageWaitSeconds`, `MedianWaitSeconds`, `TimeoutRatePercent`, `CancelRatePercent` fields exist on `QueueModel` but are not actively computed or updated during match processing. The `matchmaking.stats` event sets `MatchesFormedSinceLastSnapshot = 0` with a TODO comment.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/225 -->
 2. **Tournament support declared but minimal**: `TournamentIdRequired` and `TournamentId` on tickets exist as fields but no tournament-specific matching logic is implemented.
 3. **MatchmakingTicketUpdatedEvent defined but never published**: The events schema defines `MatchmakingTicketUpdatedEvent` but the service never publishes to `matchmaking.ticket-updated`. Only created and cancelled events fire.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/225 -->
 
 ---
 

@@ -181,6 +181,7 @@ No bugs identified.
 4. **Type migration during merge**: The update endpoint allows changing `RelationshipTypeId`, which is used by the RelationshipType service during type merges. This modifies type indexes atomically but without distributed transaction guarantees — a crash between removing from old index and adding to new could leave the relationship in neither index.
 
 5. **Read-modify-write without distributed locks**: Index updates (add/remove from list) and composite key checks have no concurrency protection. Two concurrent creates with the same composite key could both pass the uniqueness check if timed precisely. Requires IDistributedLockProvider integration.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
 
 6. **Data inconsistency logging without error events**: When bulk-fetch finds an ID in the index but the model doesn't exist, the service logs an error but does not publish an error event via `TryPublishErrorAsync`. This makes orphaned references harder to detect via monitoring.
 

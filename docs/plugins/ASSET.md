@@ -294,6 +294,7 @@ Client                    Asset Service                     MinIO Storage
 ## Stubs & Unimplemented Features
 
 1. **Texture and Model Processors**: `TextureProcessor` and `ModelProcessor` are registered but contain minimal implementations (validation only, no actual format conversion or optimization). The `AudioProcessor` with FFmpeg integration is the only fully functional processor.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/227 -->
 
 2. **Filesystem/Azure/R2 storage providers**: `StorageProvider` config accepts `minio`, `s3`, `r2`, `azure`, `filesystem` but only MinIO/S3-compatible backends have an implementation (`MinioStorageProvider`). Other backends would require new `IAssetStorageProvider` implementations.
 
@@ -302,6 +303,7 @@ Client                    Asset Service                     MinIO Storage
 4. **Bundle ZIP cache cleanup**: `ZipCacheTtlHours` is set but no scheduled task removes expired ZIP cache entries from the `bundles/zip-cache` storage path.
 
 5. **Schema-defined events not implemented**: The `asset-events.yaml` schema declares `asset.processing.queued` and `asset.ready` events that have no corresponding `TryPublishAsync` calls in the service code. These event types exist in generated models but are never emitted.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/227 -->
 
 ---
 

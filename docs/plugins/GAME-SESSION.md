@@ -356,6 +356,7 @@ Subscription Cache Architecture
 1. **Actions endpoint echoes data**: `PerformGameActionAsync` publishes an event and returns the action data back without any game-specific logic. Actual game state mutation would need to be implemented per game type.
 2. **No player-in-session validation for actions**: The Actions endpoint checks lobby exists and isn't finished, but doesn't verify the requesting player is actually in the session (relies on permission-based access control instead).
 3. **Lifecycle events not published**: `SESSION_UPDATED_TOPIC` and `SESSION_DELETED_TOPIC` constants are defined (lines 50-51) but never used. The `game-session.updated` and `game-session.deleted` events declared in the schema are not published anywhere in the service.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/224 -->
 
 ---
 
