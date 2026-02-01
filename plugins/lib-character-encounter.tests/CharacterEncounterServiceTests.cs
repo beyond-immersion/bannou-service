@@ -127,7 +127,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .Setup(c => c.GetCharacterAsync(
                 It.Is<GetCharacterRequest>(r => r.CharacterId == characterId),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Not found", 404));
     }
 
     /// <summary>

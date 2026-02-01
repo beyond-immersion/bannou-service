@@ -709,7 +709,7 @@ public class AuthServiceTests
         _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
             It.IsAny<GetAccountByEmailRequest>(),
             It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Not found", 404));
 
         var service = CreateAuthService();
 

@@ -75,9 +75,6 @@ public class SteamAchievementSyncTests : IDisposable
             });
     }
 
-    private static IReadOnlyDictionary<string, IEnumerable<string>> EmptyHeaders
-        => new Dictionary<string, IEnumerable<string>>();
-
     #region Constructor Tests
 
     [Fact]
@@ -202,7 +199,7 @@ public class SteamAchievementSyncTests : IDisposable
             .Setup(c => c.GetAuthMethodsAsync(
                 It.IsAny<GetAuthMethodsRequest>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Account not found", 404, string.Empty, EmptyHeaders, null));
+            .ThrowsAsync(new ApiException("Account not found", 404));
 
         var sync = CreateSync();
 
@@ -340,7 +337,7 @@ public class SteamAchievementSyncTests : IDisposable
             .Setup(c => c.GetAuthMethodsAsync(
                 It.IsAny<GetAuthMethodsRequest>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Account not found", 404, string.Empty, EmptyHeaders, null));
+            .ThrowsAsync(new ApiException("Account not found", 404));
 
         var sync = CreateSync();
 

@@ -31,9 +31,9 @@
             </summary>
             <param name="message">Error message describing the failure.</param>
             <param name="statusCode">HTTP status code of the error response.</param>
-            <param name="response">Raw response body content.</param>
-            <param name="headers">Response headers from the failed request.</param>
-            <param name="innerException">Inner exception that caused this failure.</param>
+            <param name="response">Raw response body content (optional, defaults to null).</param>
+            <param name="headers">Response headers from the failed request (optional, defaults to empty).</param>
+            <param name="innerException">Inner exception that caused this failure (optional).</param>
         </member>
         <member name="M:BeyondImmersion.Bannou.Core.ApiException.ToString">
             <inheritdoc/>
@@ -59,6 +59,10 @@
             <param name="headers">Response headers from the failed request.</param>
             <param name="result">Typed error result from the API.</param>
             <param name="innerException">Inner exception that caused this failure.</param>
+            <remarks>
+            Parameter order maintained for backwards compatibility with generated clients.
+            For the non-generic ApiException, use the simplified constructor with optional parameters.
+            </remarks>
         </member>
         <member name="T:BeyondImmersion.Bannou.Core.BannouJson">
              <summary>

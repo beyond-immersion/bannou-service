@@ -699,11 +699,10 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(existingAccount);
 
         // AddAuthMethod returns 409 (already linked)
-        var headers = new Dictionary<string, IEnumerable<string>>();
         _mockAccountClient.Setup(c => c.AddAuthMethodAsync(
             It.IsAny<AddAuthMethodRequest>(),
             It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Conflict", 409, string.Empty, headers, null));
+            .ThrowsAsync(new ApiException("Conflict", 409));
 
         // Act
         var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Twitch, userInfo, CancellationToken.None);

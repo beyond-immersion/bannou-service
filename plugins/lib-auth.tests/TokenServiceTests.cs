@@ -317,7 +317,7 @@ public class TokenServiceTests
 
         // Setup subscription client to return empty subscriptions
         _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(It.IsAny<QueryCurrentSubscriptionsRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act - should not throw (issuer validation is done at startup, not runtime)
         var result = await _service.GenerateAccessTokenAsync(account);
@@ -345,7 +345,7 @@ public class TokenServiceTests
 
         // Setup subscription client to return empty subscriptions
         _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(It.IsAny<QueryCurrentSubscriptionsRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act - should not throw (audience validation is done at startup, not runtime)
         var result = await _service.GenerateAccessTokenAsync(account);
@@ -417,7 +417,7 @@ public class TokenServiceTests
         _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
             It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Not found", 404));
 
         _mockSessionService.Setup(s => s.SaveSessionAsync(
             It.IsAny<string>(),
