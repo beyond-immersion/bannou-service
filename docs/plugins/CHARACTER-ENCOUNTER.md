@@ -20,6 +20,7 @@ Character encounter tracking service for memorable interactions between characte
 | lib-state (`IStateStoreFactory`) | MySQL persistence for encounters, perspectives, and all indexes |
 | lib-messaging (`IMessageBus`) | Publishing encounter lifecycle events; error event publishing |
 | lib-messaging (`IEventConsumer`) | Consuming `character.deleted` events for cleanup |
+| lib-character (`ICharacterClient`) | Validating participant character IDs exist on RecordEncounter |
 
 ---
 
@@ -49,6 +50,7 @@ Character encounter tracking service for memorable interactions between characte
 | `loc-idx-{locationId}` | `LocationIndexData` | List of encounter IDs at a location |
 | `global-char-idx` | `GlobalCharacterIndexData` | All character IDs with encounter data (for bulk decay) |
 | `custom-type-idx` | `CustomTypeIndexData` | All custom encounter type codes (for enumeration) |
+| `type-enc-idx-{CODE}` | `TypeEncounterIndexData` | List of encounter IDs using this type code (for type-in-use validation) |
 
 ---
 
@@ -94,6 +96,7 @@ Character encounter tracking service for memorable interactions between characte
 | `SentimentShiftMemorable` | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE` | `0.1` | Default shift for MEMORABLE outcome |
 | `SentimentShiftTransformative` | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE` | `0.3` | Default shift for TRANSFORMATIVE outcome |
 | `SeedBuiltInTypesOnStartup` | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | `true` | Auto-seed built-in types on startup |
+| `DuplicateTimestampToleranceMinutes` | `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | `5` | Time window in minutes for duplicate encounter detection |
 
 ---
 
@@ -102,10 +105,11 @@ Character encounter tracking service for memorable interactions between characte
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterEncounterService>` | Scoped | Structured logging |
-| `CharacterEncounterServiceConfiguration` | Singleton | All 18 config properties |
+| `CharacterEncounterServiceConfiguration` | Singleton | All 19 config properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access for all data types |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event subscription registration |
+| `ICharacterClient` | Scoped | Cross-service character validation |
 
 Service lifetime is **Scoped** (per-request). No background services. No distributed locks used.
 
@@ -119,12 +123,12 @@ Service lifetime is **Scoped** (per-request). No background services. No distrib
 - **GetEncounterType** (`/character-encounter/type/get`): Looks up by uppercased code. If not found, checks if it is a built-in type and auto-seeds it on demand (lazy seeding pattern). Returns NotFound for truly unknown codes.
 - **ListEncounterTypes** (`/character-encounter/type/list`): Ensures built-in types are seeded first. Builds key list from built-in codes plus custom type index. Loads each type individually. Applies filters: `includeInactive`, `builtInOnly`, `customOnly`. Sorts by sortOrder then code.
 - **UpdateEncounterType** (`/character-encounter/type/update`): Partial update semantics (null fields unchanged). Built-in types can only have description and defaultEmotionalImpact updated; rejects name or sortOrder changes. No event published.
-- **DeleteEncounterType** (`/character-encounter/type/delete`): Rejects deletion of built-in types (returns BadRequest). Performs soft-delete by marking `IsActive = false`. Removes from custom type index. Does NOT validate whether encounters reference this type.
+- **DeleteEncounterType** (`/character-encounter/type/delete`): Rejects deletion of built-in types (returns BadRequest). Validates type is not in use via `type-enc-idx-{CODE}` lookup (returns 409 Conflict if encounters exist). Performs soft-delete by marking `IsActive = false`. Removes from custom type index.
 - **SeedEncounterTypes** (`/character-encounter/type/seed`): Idempotent operation. Iterates built-in types. Creates if missing. If `forceReset=true`, overwrites existing built-in types with default values. Reports created/updated/skipped counts.
 
 ### Recording (1 endpoint)
 
-- **RecordEncounter** (`/character-encounter/record`): Validates minimum 2 participants. Validates encounter type exists (auto-seeds built-in types). Validates type is active. Deduplicates participant IDs. Creates encounter record. Creates perspective per participant (uses provided perspectives or generates defaults from outcome). Default emotional impact derived from encounter type or outcome. Default sentiment shift derived from outcome enum. Updates character index, pair indexes (O(N^2) pairs), and location index. Enforces `MaxEncountersPerCharacter` and `MaxEncountersPerPair` by pruning oldest. Publishes `encounter.recorded` event.
+- **RecordEncounter** (`/character-encounter/record`): Validates minimum 2 participants. Validates encounter type exists (auto-seeds built-in types). Validates type is active. Deduplicates participant IDs. **Checks for duplicate encounters** (same participants, type, and timestamp within `DuplicateTimestampToleranceMinutes` - returns 409 Conflict). **Validates all participant characters exist** via `ICharacterClient` (returns 404 if any not found). Creates encounter record. Adds to `type-enc-idx-{CODE}` for type-in-use tracking. Creates perspective per participant (uses provided perspectives or generates defaults from outcome). Default emotional impact derived from encounter type or outcome. Default sentiment shift derived from outcome enum. Updates character index, pair indexes (O(N^2) pairs), and location index. Enforces `MaxEncountersPerCharacter` and `MaxEncountersPerPair` by pruning oldest. Publishes `encounter.recorded` event.
 
 ### Queries (6 endpoints)
 
@@ -279,25 +283,25 @@ Encounter Lifecycle & Pruning
 Index Architecture
 ====================
 
-  +-----------------------+      +--------------------+
-  | global-char-idx       |      | custom-type-idx    |
-  | [charA, charB, ...]   |      | [HEALING, ...]     |
-  +-----------+-----------+      +--------------------+
-              |
-   +----------+----------+
-   |                     |
-   v                     v
-  +------------------+  +------------------+
-  | char-idx-charA   |  | char-idx-charB   |
-  | [pA1, pA2, ...]  |  | [pB1, pB2, ...]  |
-  +--------+---------+  +------------------+
-           |
-           v
+  +-----------------------+      +--------------------+     +----------------------+
+  | global-char-idx       |      | custom-type-idx    |     | type-enc-idx-{CODE}  |
+  | [charA, charB, ...]   |      | [HEALING, ...]     |     | [enc1, enc2, ...]    |
+  +-----------+-----------+      +--------------------+     +----------------------+
+              |                                                        |
+   +----------+----------+                                             |
+   |                     |                                             |
+   v                     v                                             |
+  +------------------+  +------------------+                           |
+  | char-idx-charA   |  | char-idx-charB   |                           |
+  | [pA1, pA2, ...]  |  | [pB1, pB2, ...]  |                           |
+  +--------+---------+  +------------------+                           |
+           |                                                           |
+           v                                                           |
   +-------------------+     +------------------+     +------------------+
   | pers-pA1          |     | enc-{id}         |     | pair-idx-A:B     |
   | encounterId       |---->| participants     |<----| [enc1, enc2,...] |
   | emotionalImpact   |     | type, outcome    |     +------------------+
-  | memoryStrength    |     | realm, location  |
+  | memoryStrength    |     | realm, location  |<----+
   | sentimentShift    |     +------------------+     +------------------+
   +-------------------+                              | loc-idx-{locId}  |
                                                      | [enc1, enc2,...] |
@@ -321,11 +325,10 @@ Index Architecture
 ## Potential Extensions
 
 1. **Background decay worker**: Implement a hosted service that periodically calls `DecayMemories` for all characters, enabling the "scheduled" mode path and reducing lazy decay latency on first access.
-2. **Encounter deduplication**: Add duplicate detection based on (participantIds, timestamp, typeCode) tuple to prevent recording the same event multiple times.
-3. **Encounter aggregation**: Pre-compute and cache sentiment values per character pair, updating on encounter record/delete/perspective-update to avoid O(N) computation on every GetSentiment call.
-4. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
-5. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
-6. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
+2. **Encounter aggregation**: Pre-compute and cache sentiment values per character pair, updating on encounter record/delete/perspective-update to avoid O(N) computation on every GetSentiment call.
+3. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
+4. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
+5. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
 
 ---
 
