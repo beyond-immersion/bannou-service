@@ -409,9 +409,9 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Network pruning (Clean) | Logged warning | "Network pruning requested but not yet implemented" |
-| Volume pruning (Clean) | Logged warning | "Volume pruning requested but not yet implemented" |
-| Image pruning (Clean) | Logged warning | "Image pruning requested but not yet implemented" |
+| ~~Network pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneNetworksAsync()` - delegates to Docker.DotNet SDK for Docker backends, returns CNI-managed message for Kubernetes |
+| ~~Volume pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneVolumesAsync()` - CAUTION: Can cause data loss. Kubernetes returns unsupported (PVCs require explicit management) |
+| ~~Image pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneImagesAsync()` - prunes dangling images, reports reclaimed bytes. Kubernetes returns kubelet-managed message |
 | Queue depth tracking (pool status) | Hardcoded 0 | Comment: "We don't have a queue yet" |
 | Auto-scaling (pool) | No trigger | Thresholds are stored but no background job evaluates them |
 | Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored but no background timer |
@@ -427,7 +427,6 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 - **Deploy validation**: Pre-flight checks before deployment (disk space, network reachability, image pull verification).
 - **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old.
 - **Canary deployments**: Route percentage of traffic to new version, monitor health, then promote or rollback.
-- **Network/volume/image pruning**: Extend `IContainerOrchestrator` with prune methods for Docker system cleanup.
 - **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
 - **Lease expiry enforcement**: Background timer to reclaim expired leases and return processors to available pool.
 
@@ -471,7 +470,9 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-*No active work items.*
+### Completed
+
+- **2026-02-01**: Implemented network/volume/image pruning via `IContainerOrchestrator` interface. Added `PruneNetworksAsync()`, `PruneVolumesAsync()`, and `PruneImagesAsync()` methods to all four orchestrator backends (DockerCompose, DockerSwarm, Kubernetes, Portainer). Updated `CleanAsync` in OrchestratorService to use the new prune methods.
 
 ---
 

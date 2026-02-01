@@ -1505,44 +1505,74 @@ public partial class OrchestratorService : IOrchestratorService
                 }
             }
 
-            // Note: Network, volume, and image pruning would require extending IContainerOrchestrator
-            // or direct Docker SDK access. Track unsupported operations to report accurately.
-            var unsupportedOperations = new List<string>();
-
+            // Prune networks if requested
             if (cleanNetworks)
             {
-                _logger.LogWarning("Network pruning requested but not yet implemented");
-                unsupportedOperations.Add("networks");
+                _logger.LogInformation("Pruning unused networks...");
+                var networkResult = await orchestrator.PruneNetworksAsync(cancellationToken);
+                if (networkResult.Success)
+                {
+                    removedNetworks = networkResult.DeletedCount;
+                    foreach (var network in networkResult.DeletedItems)
+                    {
+                        cleanedItems.Add($"network:{network}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Network pruning failed: {Message}", networkResult.Message);
+                }
             }
 
+            // Prune volumes if requested (CAUTION: can cause data loss)
             if (cleanVolumes)
             {
-                _logger.LogWarning("Volume pruning requested but not yet implemented");
-                unsupportedOperations.Add("volumes");
+                _logger.LogInformation("Pruning unused volumes...");
+                var volumeResult = await orchestrator.PruneVolumesAsync(cancellationToken);
+                if (volumeResult.Success)
+                {
+                    removedVolumes = volumeResult.DeletedCount;
+                    reclaimedBytes += volumeResult.ReclaimedBytes;
+                    foreach (var volume in volumeResult.DeletedItems)
+                    {
+                        cleanedItems.Add($"volume:{volume}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Volume pruning failed: {Message}", volumeResult.Message);
+                }
             }
 
+            // Prune dangling images if requested
             if (cleanImages)
             {
-                _logger.LogWarning("Image pruning requested but not yet implemented");
-                unsupportedOperations.Add("images");
+                _logger.LogInformation("Pruning dangling images...");
+                var imageResult = await orchestrator.PruneImagesAsync(cancellationToken);
+                if (imageResult.Success)
+                {
+                    removedImages = imageResult.DeletedCount;
+                    reclaimedBytes += imageResult.ReclaimedBytes;
+                    foreach (var image in imageResult.DeletedItems)
+                    {
+                        cleanedItems.Add($"image:{image}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Image pruning failed: {Message}", imageResult.Message);
+                }
             }
 
             // Build response message
             var messageBuilder = new System.Text.StringBuilder();
             if (cleanedItems.Count > 0)
             {
-                messageBuilder.Append($"Cleaned: {string.Join(", ", cleanedItems)}");
+                messageBuilder.Append($"Cleaned: {cleanedItems.Count} item(s)");
             }
-            else if (cleanContainers)
+            else
             {
-                messageBuilder.Append("No orphaned containers found");
-            }
-
-            if (unsupportedOperations.Count > 0)
-            {
-                if (messageBuilder.Length > 0)
-                    messageBuilder.Append(". ");
-                messageBuilder.Append($"Unsupported operations skipped: {string.Join(", ", unsupportedOperations)}");
+                messageBuilder.Append("No items to clean");
             }
 
             if (messageBuilder.Length == 0)
@@ -1550,14 +1580,7 @@ public partial class OrchestratorService : IOrchestratorService
                 messageBuilder.Append("No cleanup targets specified");
             }
 
-            // Success is true only if all requested operations were attempted
-            // (even if they found nothing to clean)
-            var allOperationsSupported = !unsupportedOperations.Any(op =>
-                (op == "networks" && cleanNetworks) ||
-                (op == "volumes" && cleanVolumes) ||
-                (op == "images" && cleanImages));
-
-            var cleanSuccess = unsupportedOperations.Count == 0 || cleanContainers;
+            var cleanSuccess = true;
             var response = new CleanResponse
             {
                 Success = cleanSuccess,

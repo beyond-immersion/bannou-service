@@ -1065,6 +1065,151 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     }
 
     /// <inheritdoc />
+    public async Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Pruning unused networks");
+
+        try
+        {
+            var response = await _client.Networks.PruneNetworksAsync(
+                new Docker.DotNet.Models.NetworksDeleteUnusedParameters(),
+                cancellationToken);
+
+            var deletedNetworks = response.NetworksDeleted ?? new List<string>();
+
+            _logger.LogInformation(
+                "Pruned {Count} unused networks: {Networks}",
+                deletedNetworks.Count,
+                string.Join(", ", deletedNetworks));
+
+            return new PruneResult
+            {
+                Success = true,
+                DeletedItems = deletedNetworks.ToList(),
+                DeletedCount = deletedNetworks.Count,
+                ReclaimedBytes = 0, // Networks don't report reclaimed bytes
+                Message = deletedNetworks.Count > 0
+                    ? $"Pruned {deletedNetworks.Count} unused network(s)"
+                    : "No unused networks to prune"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error pruning networks");
+            return new PruneResult
+            {
+                Success = false,
+                Message = $"Error pruning networks: {ex.Message}"
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Pruning unused volumes");
+
+        try
+        {
+            var response = await _client.Volumes.PruneAsync(
+                new Docker.DotNet.Models.VolumesPruneParameters(),
+                cancellationToken);
+
+            var deletedVolumes = response.VolumesDeleted ?? new List<string>();
+            var reclaimedBytes = (long)response.SpaceReclaimed;
+
+            _logger.LogInformation(
+                "Pruned {Count} unused volumes, reclaimed {Bytes} bytes: {Volumes}",
+                deletedVolumes.Count,
+                reclaimedBytes,
+                string.Join(", ", deletedVolumes));
+
+            return new PruneResult
+            {
+                Success = true,
+                DeletedItems = deletedVolumes.ToList(),
+                DeletedCount = deletedVolumes.Count,
+                ReclaimedBytes = reclaimedBytes,
+                Message = deletedVolumes.Count > 0
+                    ? $"Pruned {deletedVolumes.Count} unused volume(s), reclaimed {FormatBytes(reclaimedBytes)}"
+                    : "No unused volumes to prune"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error pruning volumes");
+            return new PruneResult
+            {
+                Success = false,
+                Message = $"Error pruning volumes: {ex.Message}"
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Pruning dangling images");
+
+        try
+        {
+            var response = await _client.Images.PruneImagesAsync(
+                new Docker.DotNet.Models.ImagesPruneParameters(),
+                cancellationToken);
+
+            var deletedImages = response.ImagesDeleted ?? new List<Docker.DotNet.Models.ImageDeleteResponse>();
+            var reclaimedBytes = (long)response.SpaceReclaimed;
+
+            // Extract image IDs from the response
+            var deletedIds = deletedImages
+                .Where(img => !string.IsNullOrEmpty(img.Deleted))
+                .Select(img => img.Deleted)
+                .ToList();
+
+            _logger.LogInformation(
+                "Pruned {Count} dangling images, reclaimed {Bytes} bytes",
+                deletedIds.Count,
+                reclaimedBytes);
+
+            return new PruneResult
+            {
+                Success = true,
+                DeletedItems = deletedIds!,
+                DeletedCount = deletedIds.Count,
+                ReclaimedBytes = reclaimedBytes,
+                Message = deletedIds.Count > 0
+                    ? $"Pruned {deletedIds.Count} dangling image(s), reclaimed {FormatBytes(reclaimedBytes)}"
+                    : "No dangling images to prune"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error pruning images");
+            return new PruneResult
+            {
+                Success = false,
+                Message = $"Error pruning images: {ex.Message}"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Formats bytes into a human-readable string (e.g., "1.5 GB").
+    /// </summary>
+    private static string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        double len = bytes;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         _client.Dispose();
