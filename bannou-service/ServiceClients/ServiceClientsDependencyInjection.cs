@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -19,6 +20,11 @@ public static class ServiceClientsDependencyInjection
     {
         // Core service mapping infrastructure
         services.AddServiceAppMappingResolver();
+
+        // Default no-op telemetry provider. When lib-telemetry plugin loads,
+        // its TelemetryProvider registration will override this.
+        // This allows infrastructure libs to always receive a non-null ITelemetryProvider.
+        services.AddSingleton<ITelemetryProvider, NullTelemetryProvider>();
 
         // Session ID forwarding handler for automatic header propagation
         // Registered as transient - HttpClientFactory creates new instance per HttpClient

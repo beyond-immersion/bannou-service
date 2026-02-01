@@ -59,7 +59,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     private readonly StateStoreFactoryConfiguration _configuration;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<StateStoreFactory> _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private ConnectionMultiplexer? _redis;
     private DbContextOptions<StateDbContext>? _mysqlOptions;
@@ -74,18 +74,18 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     /// </summary>
     /// <param name="configuration">Factory configuration.</param>
     /// <param name="loggerFactory">Logger factory.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for instrumentation.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public StateStoreFactory(
         StateStoreFactoryConfiguration configuration,
         ILoggerFactory loggerFactory,
-        ITelemetryProvider? telemetryProvider = null)
+        ITelemetryProvider telemetryProvider)
     {
         _configuration = configuration;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<StateStoreFactory>();
         _telemetryProvider = telemetryProvider;
 
-        if (_telemetryProvider != null)
+        if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
             _logger.LogDebug(
                 "StateStoreFactory created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",

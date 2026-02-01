@@ -43,7 +43,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
     private readonly MessageRetryBuffer _retryBuffer;
     private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
     private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
@@ -60,13 +60,13 @@ public sealed class RabbitMQMessageBus : IMessageBus
     /// <param name="retryBuffer">Buffer for retry on failed publishes.</param>
     /// <param name="appConfiguration">Application configuration.</param>
     /// <param name="logger">Logger instance.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for instrumentation.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public RabbitMQMessageBus(
         RabbitMQConnectionManager connectionManager,
         MessageRetryBuffer retryBuffer,
         AppConfiguration appConfiguration,
         ILogger<RabbitMQMessageBus> logger,
-        ITelemetryProvider? telemetryProvider = null)
+        ITelemetryProvider telemetryProvider)
     {
         _connectionManager = connectionManager;
         _retryBuffer = retryBuffer;
@@ -74,7 +74,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
         _logger = logger;
         _telemetryProvider = telemetryProvider;
 
-        if (_telemetryProvider != null)
+        if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
             _logger.LogDebug(
                 "RabbitMQMessageBus created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",

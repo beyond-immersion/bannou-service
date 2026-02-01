@@ -31,7 +31,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     private readonly RabbitMQConnectionManager _connectionManager;
     private readonly ILogger<RabbitMQMessageSubscriber> _logger;
     private readonly MessagingServiceConfiguration _configuration;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Track static subscriptions by topic
     private readonly ConcurrentDictionary<string, StaticSubscription> _staticSubscriptions = new();
@@ -45,19 +45,19 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <param name="connectionManager">RabbitMQ connection manager.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Messaging service configuration.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for instrumentation.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public RabbitMQMessageSubscriber(
         RabbitMQConnectionManager connectionManager,
         ILogger<RabbitMQMessageSubscriber> logger,
         MessagingServiceConfiguration configuration,
-        ITelemetryProvider? telemetryProvider = null)
+        ITelemetryProvider telemetryProvider)
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
 
-        if (_telemetryProvider != null)
+        if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
             _logger.LogDebug(
                 "RabbitMQMessageSubscriber created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",

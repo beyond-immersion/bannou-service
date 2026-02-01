@@ -54,14 +54,13 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         // Uses IMeshStateManager directly (NOT IMeshClient) to avoid circular dependency:
         // - All generated clients (AccountClient, etc.) need IMeshInvocationClient
         // - If MeshInvocationClient needed IMeshClient, and MeshClient needs IMeshInvocationClient = deadlock
+        // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
         services.AddSingleton<IMeshInvocationClient>(sp =>
         {
             var stateManager = sp.GetRequiredService<IMeshStateManager>();
             var configuration = sp.GetRequiredService<MeshServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-
-            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
-            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
 
             return new MeshInvocationClient(stateManager, configuration, logger, telemetryProvider);
         });

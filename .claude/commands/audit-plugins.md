@@ -14,9 +14,10 @@ Background agents cannot use the Skill tool - it gets auto-denied with "prompts 
 ## Purpose
 
 When you want to make progress on multiple plugins in a batch, this command:
-1. Selects N unique plugins at random
-2. Launches N agents sequentially (one completes before the next starts)
-3. Each agent runs the full `/audit-plugin` workflow on its assigned plugin
+1. Scans ALL plugins to find ones with actionable gaps
+2. Selects N unique plugins at random FROM THOSE WITH GAPS
+3. Launches N agents sequentially (one completes before the next starts)
+4. Each agent runs the full `/audit-plugin` workflow on its assigned plugin
 
 ## Workflow
 
@@ -33,24 +34,63 @@ If no argument or invalid argument:
 - Report error: "Usage: /audit-plugins <count> (e.g., /audit-plugins 3)"
 - Do not proceed
 
-### Step 2: Discover and Select Plugins
+### Step 2: Scan and Filter Plugins
 
-Use bash for true randomness - select N unique plugins in one command:
+**CRITICAL: Only select plugins that have actionable gaps.**
+
+Use the `scripts/check-plugin-gaps.sh` script to filter plugins:
+
 ```bash
-ls docs/plugins/*.md | grep -v DEEP_DIVE_TEMPLATE | shuf -n {N}
+# Find all plugins with actionable gaps
+for f in docs/plugins/*.md; do
+  [ "$(basename "$f")" = "DEEP_DIVE_TEMPLATE.md" ] && continue
+  if scripts/check-plugin-gaps.sh "$f" >/dev/null 2>&1; then
+    echo "$f"
+  fi
+done
 ```
 
-Where `{N}` is the requested count from the argument.
+**Report the scan results:**
+```
+## Plugin Gap Scan
 
-If requested count > available plugins:
-- The `shuf` command will return all available (fewer than requested)
-- Report: "Requested {N} but only {M} plugins available. Auditing {M} plugins."
+| Plugin | Total | Audit | Fixed | Actionable |
+|--------|-------|-------|-------|------------|
+| ACCOUNT.md | 6 | 5 | 0 | 1 |
+| AUTH.md | 5 | 5 | 0 | 0 (skip) |
+| ... | ... | ... | ... | ... |
+
+**Plugins with actionable gaps:** N
+**Plugins fully marked/fixed:** M
+```
+
+### Step 3: Select Plugins
+
+From the filtered list (plugins WITH actionable gaps), randomly select N:
+
+```bash
+# Get list of plugins with gaps, then shuffle and take N
+for f in docs/plugins/*.md; do
+  [ "$(basename "$f")" = "DEEP_DIVE_TEMPLATE.md" ] && continue
+  if scripts/check-plugin-gaps.sh "$f" >/dev/null 2>&1; then
+    echo "$f"
+  fi
+done | shuf -n {N}
+```
+
+**If requested count > available plugins with gaps:**
+- Report: "Requested {N} but only {M} plugins have actionable gaps. Auditing {M} plugins."
+- Select all available plugins with gaps
+
+**If NO plugins have actionable gaps:**
+- Report: "All plugins are fully audited! No actionable gaps remaining."
+- Exit successfully (this is a good outcome)
 
 **Report selection:**
 ```
 ## Sequential Audit: {N} Plugins
 
-Selected plugins:
+Selected plugins (from {M} with actionable gaps):
 1. {plugin-1}
 2. {plugin-2}
 3. {plugin-3}
@@ -59,7 +99,7 @@ Selected plugins:
 Auditing sequentially...
 ```
 
-### Step 3: Launch Agents Sequentially
+### Step 4: Launch Agents Sequentially
 
 For each selected plugin, launch ONE agent at a time and wait for it to complete before launching the next.
 
@@ -98,7 +138,7 @@ Example (for 3 plugins - run these ONE AT A TIME):
   run_in_background: false
 ```
 
-### Step 4: Track Results
+### Step 5: Track Results
 
 After each agent completes, record its result before launching the next:
 
@@ -111,7 +151,7 @@ After each agent completes, record its result before launching the next:
 | 2 | {name} | (running...) | |
 ```
 
-### Step 5: Final Summary
+### Step 6: Final Summary
 
 After all agents complete:
 
@@ -158,10 +198,11 @@ Agent 3 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args
 
 ## Error Handling
 
-- If a plugin has no gaps: Agent reports "no gaps" and finishes (not an error)
-- If an agent fails: Report the failure, continue with next plugin
-- If build fails in one agent: That agent stops, continue with next plugin
-- If all plugins already have markers: Report "all plugins have active work"
+- **All plugins fully audited**: Report success: "All plugins are fully audited! No actionable gaps remaining."
+- **Plugin has no gaps** (shouldn't happen with pre-filtering): Agent reports "no gaps" and finishes
+- **Agent fails**: Report the failure, continue with next plugin
+- **Build fails in one agent**: That agent stops, continue with next plugin
+- **Fewer plugins with gaps than requested**: Audit all available plugins with gaps, report the adjusted count
 
 ## Limits
 

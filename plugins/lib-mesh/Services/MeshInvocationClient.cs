@@ -21,7 +21,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     private readonly IMeshStateManager _stateManager;
     private readonly MeshServiceConfiguration _configuration;
     private readonly ILogger<MeshInvocationClient> _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly HttpMessageInvoker _httpClient;
 
     // Cache for endpoint resolution to reduce state store calls
@@ -39,19 +39,19 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// <param name="stateManager">State manager for endpoint resolution (avoids circular dependency with generated clients).</param>
     /// <param name="configuration">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for instrumentation.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public MeshInvocationClient(
         IMeshStateManager stateManager,
         MeshServiceConfiguration configuration,
         ILogger<MeshInvocationClient> logger,
-        ITelemetryProvider? telemetryProvider = null)
+        ITelemetryProvider telemetryProvider)
     {
         _stateManager = stateManager;
         _configuration = configuration;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
 
-        if (_telemetryProvider != null)
+        if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
             _logger.LogDebug(
                 "MeshInvocationClient created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",

@@ -680,6 +680,12 @@
             Pending messages awaiting responses (Message ID -> Request Info)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.RateLimitTimestamps">
+            <summary>
+            Timestamps of all incoming messages for rate limiting.
+            Uses Queue for efficient sliding window implementation.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.Flags">
             <summary>
             Connection flags and capabilities
@@ -784,6 +790,19 @@
             <summary>
             Updates last activity timestamp.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.RecordMessageForRateLimit">
+            <summary>
+            Records an incoming message timestamp for rate limiting.
+            Call this for every incoming message regardless of type or flags.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.GetMessageCountInWindow(System.Int32)">
+            <summary>
+            Counts messages within the specified window and removes expired entries.
+            </summary>
+            <param name="windowMinutes">Sliding window duration in minutes</param>
+            <returns>Number of messages within the window</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.InitiateReconnectionWindow(System.Int32,System.Collections.Generic.ICollection{System.String})">
             <summary>
@@ -1599,6 +1618,13 @@
             <summary>
             Response codes used in the binary protocol for success/error indication.
             <br/>Provides fine-grained error reporting for different failure scenarios.
+            <br/>
+            <br/>**Request error codes (10-19):**
+            <br/>- 10 (RequestError): Generic malformed request
+            <br/>- 11 (RequestTooLarge): Payload exceeds maximum size
+            <br/>- 12 (TooManyRequests): Rate limit exceeded
+            <br/>- 13 (InvalidRequestChannel): Invalid channel number
+            <br/>- 14 (TextProtocolNotSupported): Text WebSocket frames are not supported; use binary protocol
             <br/>
             <br/>**Broadcast error codes (40-49):**
             <br/>- 40 (BroadcastNotAllowed): Broadcast attempted in External mode where it is forbidden
@@ -17930,7 +17956,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.AssetType">
             <summary>
-            Type of asset (currency, item)
+            Type of asset (currency, item, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.Amount">
@@ -17986,6 +18012,17 @@
         <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.ExecutedAt">
             <summary>
             When execution occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.AssetType">
+            <summary>
+            Type of asset held in escrow.
+            <br/>- currency: Currency amount held in escrow wallet
+            <br/>- item: Item instance held in escrow container
+            <br/>- item_stack: Stackable items (quantity) held in escrow container
+            <br/>- contract: Contract instance locked under escrow guardianship
+            <br/>- custom: Custom asset type via registered handler
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Currency.ICurrencyClient">
@@ -42578,6 +42615,20 @@
             <returns>Validation result</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.IRealmClient.RealmsExistBatchAsync(BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if multiple realms exist and are active
+            </summary>
+            <remarks>
+            Batch validation endpoint for services creating multi-realm entities.
+            <br/>Returns validation results for each realm ID in a single call, avoiding
+            <br/>N+1 API calls when validating multiple realms.
+            </remarks>
+            <returns>Validation results for all requested realms</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Realm.IRealmClient.SeedRealmsAsync(BeyondImmersion.BannouService.Realm.SeedRealmsRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -42771,6 +42822,20 @@
             <br/>Returns true if realm exists and is not deprecated, false otherwise.
             </remarks>
             <returns>Validation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.RealmsExistBatchAsync(BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if multiple realms exist and are active
+            </summary>
+            <remarks>
+            Batch validation endpoint for services creating multi-realm entities.
+            <br/>Returns validation results for each realm ID in a single call, avoiding
+            <br/>N+1 API calls when validating multiple realms.
+            </remarks>
+            <returns>Validation results for all requested realms</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.SeedRealmsAsync(BeyondImmersion.BannouService.Realm.SeedRealmsRequest,System.Threading.CancellationToken)">
@@ -43019,6 +43084,46 @@
         <member name="P:BeyondImmersion.BannouService.Realm.RealmExistsResponse.RealmId">
             <summary>
             The realm ID if found
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest">
+            <summary>
+            Request to check if multiple realms exist and are available for use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest.RealmIds">
+            <summary>
+            List of realm IDs to validate (max 100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse">
+            <summary>
+            Batch validation results for multiple realms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.Results">
+            <summary>
+            Validation result for each requested realm ID (in same order as request)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.AllExist">
+            <summary>
+            True if all requested realms exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.AllActive">
+            <summary>
+            True if all requested realms exist AND are active (not deprecated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.InvalidRealmIds">
+            <summary>
+            List of realm IDs that do not exist (empty if all exist)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmsExistBatchResponse.DeprecatedRealmIds">
+            <summary>
+            List of realm IDs that exist but are deprecated (empty if none deprecated)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Realm.SeedRealmsRequest">
@@ -51576,6 +51681,33 @@
             <returns>Bulk results</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.State.IStateClient.BulkSaveStateAsync(BeyondImmersion.BannouService.State.BulkSaveStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk save multiple key-value pairs
+            </summary>
+            <returns>Bulk save results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.IStateClient.BulkExistsStateAsync(BeyondImmersion.BannouService.State.BulkExistsStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check existence of multiple keys
+            </summary>
+            <returns>Bulk exists results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.IStateClient.BulkDeleteStateAsync(BeyondImmersion.BannouService.State.BulkDeleteStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete multiple keys
+            </summary>
+            <returns>Bulk delete results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.State.IStateClient.ListStoresAsync(BeyondImmersion.BannouService.State.ListStoresRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -51701,6 +51833,33 @@
             Bulk get multiple keys
             </summary>
             <returns>Bulk results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.BulkSaveStateAsync(BeyondImmersion.BannouService.State.BulkSaveStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk save multiple key-value pairs
+            </summary>
+            <returns>Bulk save results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.BulkExistsStateAsync(BeyondImmersion.BannouService.State.BulkExistsStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check existence of multiple keys
+            </summary>
+            <returns>Bulk exists results</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.BulkDeleteStateAsync(BeyondImmersion.BannouService.State.BulkDeleteStateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete multiple keys
+            </summary>
+            <returns>Bulk delete results</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.State.StateClient.ListStoresAsync(BeyondImmersion.BannouService.State.ListStoresRequest,System.Threading.CancellationToken)">
@@ -52045,6 +52204,116 @@
         <member name="P:BeyondImmersion.BannouService.State.BulkStateItem.Found">
             <summary>
             Whether the key was found
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveStateRequest">
+            <summary>
+            Request to save multiple key-value pairs in a single operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateRequest.StoreName">
+            <summary>
+            Name of the state store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateRequest.Items">
+            <summary>
+            Items to save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateRequest.Options">
+            <summary>
+            Optional settings applied to all items
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveItem">
+            <summary>
+            A single item to save in a bulk operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveItem.Key">
+            <summary>
+            The key to save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveItem.Value">
+            <summary>
+            The value to store
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveStateResponse">
+            <summary>
+            Response from a bulk save operation with ETags for each saved item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveStateResponse.Results">
+            <summary>
+            Results for each saved item
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkSaveResult">
+            <summary>
+            Result for a single item in a bulk save operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveResult.Key">
+            <summary>
+            The key that was saved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkSaveResult.Etag">
+            <summary>
+            New ETag after save
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkExistsStateRequest">
+            <summary>
+            Request to check existence of multiple keys
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkExistsStateRequest.StoreName">
+            <summary>
+            Name of the state store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkExistsStateRequest.Keys">
+            <summary>
+            Keys to check for existence
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkExistsStateResponse">
+            <summary>
+            Response indicating which keys exist in the store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkExistsStateResponse.ExistingKeys">
+            <summary>
+            Keys that exist in the store
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkDeleteStateRequest">
+            <summary>
+            Request to delete multiple keys
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkDeleteStateRequest.StoreName">
+            <summary>
+            Name of the state store
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkDeleteStateRequest.Keys">
+            <summary>
+            Keys to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkDeleteStateResponse">
+            <summary>
+            Response from a bulk delete operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.BulkDeleteStateResponse.DeletedCount">
+            <summary>
+            Number of keys actually deleted
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.State.ListStoresRequest">
@@ -52624,6 +52893,252 @@
         <member name="P:BeyondImmersion.BannouService.Subscription.SubscriptionListResponse.TotalCount">
             <summary>
             Total number of subscriptions matching the filter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.ITelemetryClient">
+            <summary>
+            Client interface for the Telemetry service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.ITelemetryClient.HealthAsync(BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check telemetry exporter health
+            </summary>
+            <remarks>
+            Returns the health status of telemetry exporters and current configuration state.
+            </remarks>
+            <returns>Telemetry health status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.ITelemetryClient.StatusAsync(BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get telemetry status and configuration
+            </summary>
+            <remarks>
+            Returns detailed telemetry status including active exporters, sampling configuration, and service identity.
+            </remarks>
+            <returns>Telemetry status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient">
+            <summary>
+            Client implementation for the Telemetry service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Telemetry.TelemetryClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Telemetry.TelemetryClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Telemetry.TelemetryClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Telemetry.TelemetryClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.HealthAsync(BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check telemetry exporter health
+            </summary>
+            <remarks>
+            Returns the health status of telemetry exporters and current configuration state.
+            </remarks>
+            <returns>Telemetry health status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.StatusAsync(BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get telemetry status and configuration
+            </summary>
+            <remarks>
+            Returns detailed telemetry status including active exporters, sampling configuration, and service identity.
+            </remarks>
+            <returns>Telemetry status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Telemetry.TelemetryClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest">
+            <summary>
+            Request for telemetry health check (empty object, no parameters needed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse">
+            <summary>
+            Response containing telemetry exporter health status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.Healthy">
+            <summary>
+            Overall health status of telemetry subsystem
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.TracingEnabled">
+            <summary>
+            Whether distributed tracing export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.MetricsEnabled">
+            <summary>
+            Whether metrics export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryHealthResponse.OtlpEndpoint">
+            <summary>
+            Configured OTLP endpoint (null if telemetry is disabled)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest">
+            <summary>
+            Request for telemetry status (empty object, no parameters needed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse">
+            <summary>
+            Response containing detailed telemetry configuration and status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.TracingEnabled">
+            <summary>
+            Whether distributed tracing export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.MetricsEnabled">
+            <summary>
+            Whether metrics export is enabled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.SamplingRatio">
+            <summary>
+            Current trace sampling ratio (0.0-1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceName">
+            <summary>
+            Service name used for telemetry identification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.ServiceNamespace">
+            <summary>
+            Service namespace for telemetry grouping
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.DeploymentEnvironment">
+            <summary>
+            Current deployment environment
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpEndpoint">
+            <summary>
+            Configured OTLP endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Telemetry.TelemetryStatusResponse.OtlpProtocol">
+            <summary>
+            OTLP transport protocol (grpc or http)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Voice.IVoiceClient">
@@ -68707,6 +69222,11 @@
             Gets the typed proxy for Bannou Subscription Service API operations.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.Client.BannouClient.Telemetry">
+            <summary>
+            Gets the typed proxy for Bannou Telemetry Service API operations.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.Bannou.Client.BannouClient.Voice">
             <summary>
             Gets the typed proxy for Bannou Voice Service API operations.
@@ -69326,6 +69846,9 @@
         </member>
         <member name="F:BeyondImmersion.Bannou.Client.ResponseCodes.InvalidRequestChannel">
             <summary>Invalid channel number in request header.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.ResponseCodes.TextProtocolNotSupported">
+            <summary>Text WebSocket frame received; binary protocol required after AUTH.</summary>
         </member>
         <member name="F:BeyondImmersion.Bannou.Client.ResponseCodes.Unauthorized">
             <summary>Authentication required but not provided or invalid.</summary>
@@ -74285,6 +74808,16 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing RealmExistsResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.RealmProxy.RealmsExistBatchAsync(BeyondImmersion.BannouService.Realm.RealmsExistBatchRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Check if multiple realms exist and are active
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing RealmsExistBatchResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.RealmProxy.SeedRealmsAsync(BeyondImmersion.BannouService.Realm.SeedRealmsRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Seed realms from configuration
@@ -75188,6 +75721,36 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing BulkGetStateResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.StateProxy.BulkSaveStateAsync(BeyondImmersion.BannouService.State.BulkSaveStateRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Bulk save multiple key-value pairs
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing BulkSaveStateResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.StateProxy.BulkExistsStateAsync(BeyondImmersion.BannouService.State.BulkExistsStateRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Check existence of multiple keys
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing BulkExistsStateResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.StateProxy.BulkDeleteStateAsync(BeyondImmersion.BannouService.State.BulkDeleteStateRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Delete multiple keys
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing BulkDeleteStateResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.StateProxy.ListStoresAsync(BeyondImmersion.BannouService.State.ListStoresRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             List configured state stores
@@ -75278,6 +75841,37 @@
             <param name="timeout">Request timeout.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing SubscriptionInfo on success.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Proxies.TelemetryProxy">
+            <summary>
+            Typed proxy for Bannou Telemetry Service API API endpoints.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.TelemetryProxy.#ctor(BeyondImmersion.Bannou.Client.IBannouClient)">
+            <summary>
+            Creates a new TelemetryProxy instance.
+            </summary>
+            <param name="client">The underlying Bannou client.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.TelemetryProxy.HealthAsync(BeyondImmersion.BannouService.Telemetry.TelemetryHealthRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Check telemetry exporter health
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing TelemetryHealthResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.TelemetryProxy.StatusAsync(BeyondImmersion.BannouService.Telemetry.TelemetryStatusRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get telemetry status and configuration
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing TelemetryStatusResponse on success.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.VoiceProxy">
             <summary>

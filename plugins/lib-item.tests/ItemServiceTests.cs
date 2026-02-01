@@ -95,6 +95,18 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockInstanceCacheStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+        // Default GetBulkAsync returns empty dict (cache miss) so tests fall through to persistent store
+        _mockInstanceCacheStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ItemInstanceModel>());
+        _mockInstanceCacheStore
+            .Setup(s => s.SaveBulkAsync(It.IsAny<IEnumerable<KeyValuePair<string, ItemInstanceModel>>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Default GetBulkAsync for persistent store returns empty (individual tests set up specific returns)
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ItemInstanceModel>());
 
         // Default GetWithETagAsync for optimistic concurrency in list operations
         _mockTemplateStringStore
@@ -1282,12 +1294,16 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetAsync($"inst-container:{containerId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(BannouJson.Serialize(new List<string> { id1.ToString(), id2.ToString() }));
 
+        // Implementation uses GetBulkAsync for performance
+        var model1 = CreateStoredInstanceModel(id1);
+        var model2 = CreateStoredInstanceModel(id2);
         _mockInstanceStore
-            .Setup(s => s.GetAsync($"inst:{id1}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateStoredInstanceModel(id1));
-        _mockInstanceStore
-            .Setup(s => s.GetAsync($"inst:{id2}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateStoredInstanceModel(id2));
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ItemInstanceModel>
+            {
+                [$"inst:{id1}"] = model1,
+                [$"inst:{id2}"] = model2
+            });
 
         var request = new ListItemsByContainerRequest { ContainerId = containerId };
 
@@ -1335,12 +1351,15 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetAsync($"inst-container:{containerId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(BannouJson.Serialize(ids.Select(id => id.ToString()).ToList()));
 
-        foreach (var id in ids)
+        // Implementation uses GetBulkAsync for performance - only first 2 will be fetched due to cap
+        var bulkResult = new Dictionary<string, ItemInstanceModel>();
+        foreach (var id in ids.Take(2))
         {
-            _mockInstanceStore
-                .Setup(s => s.GetAsync($"inst:{id}", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(CreateStoredInstanceModel(id));
+            bulkResult[$"inst:{id}"] = CreateStoredInstanceModel(id);
         }
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResult);
 
         var request = new ListItemsByContainerRequest { ContainerId = containerId };
 
@@ -1376,12 +1395,14 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var otherModel = CreateStoredInstanceModel(otherId);
         otherModel.RealmId = Guid.NewGuid();
 
+        // Implementation uses GetBulkAsync for performance
         _mockInstanceStore
-            .Setup(s => s.GetAsync($"inst:{matchId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(matchModel);
-        _mockInstanceStore
-            .Setup(s => s.GetAsync($"inst:{otherId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(otherModel);
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ItemInstanceModel>
+            {
+                [$"inst:{matchId}"] = matchModel,
+                [$"inst:{otherId}"] = otherModel
+            });
 
         var request = new ListItemsByTemplateRequest
         {
@@ -1414,12 +1435,15 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(BannouJson.Serialize(ids.Select(id => id.ToString()).ToList()));
 
+        // Implementation uses GetBulkAsync for performance
+        var bulkResult = new Dictionary<string, ItemInstanceModel>();
         foreach (var id in ids)
         {
-            _mockInstanceStore
-                .Setup(s => s.GetAsync($"inst:{id}", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(CreateStoredInstanceModel(id));
+            bulkResult[$"inst:{id}"] = CreateStoredInstanceModel(id);
         }
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResult);
 
         var request = new ListItemsByTemplateRequest
         {
@@ -1449,12 +1473,15 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var foundId = Guid.NewGuid();
         var notFoundId = Guid.NewGuid();
 
+        // Implementation uses GetBulkAsync for performance
+        // Only foundId is in the result - notFoundId is missing (not found)
         _mockInstanceStore
-            .Setup(s => s.GetAsync($"inst:{foundId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateStoredInstanceModel(foundId));
-        _mockInstanceStore
-            .Setup(s => s.GetAsync($"inst:{notFoundId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ItemInstanceModel?)null);
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ItemInstanceModel>
+            {
+                [$"inst:{foundId}"] = CreateStoredInstanceModel(foundId)
+                // notFoundId is not present - simulates not found
+            });
 
         var request = new BatchGetItemInstancesRequest
         {

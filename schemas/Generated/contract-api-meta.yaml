@@ -3190,13 +3190,13 @@ paths:
         \                  \"type\": \"string\",\n                    \"description\": \"Clause that was executed\"\n    \
         \            },\n                \"clauseType\": {\n                    \"type\": \"string\",\n                  \
         \  \"description\": \"Type of clause (fee, distribution)\"\n                },\n                \"assetType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of asset (currency, item)\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"number\",\n                 \
-        \   \"description\": \"Amount transferred\"\n                },\n                \"sourceWalletId\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Source wallet ID (for currency)\"\n                },\n                \"\
-        destinationWalletId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Destination wallet ID (for currency)\"\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of asset (currency, item,
+        etc.)\"\n                },\n                \"amount\": {\n                    \"type\": \"number\",\n          \
+        \          \"description\": \"Amount transferred\"\n                },\n                \"sourceWalletId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Source wallet ID (for currency)\"\n                },\n          \
+        \      \"destinationWalletId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Destination wallet ID (for currency)\"\
         \n                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n      \
         \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source container ID (for items)\"\n                },\n                \"destinationContainerId\": {\n       \
@@ -5037,8 +5037,8 @@ components:
           type: string
           description: Type of clause (fee, distribution)
         assetType:
-          type: string
-          description: Type of asset (currency, item)
+          $ref: './escrow-api.yaml#/components/schemas/AssetType'
+          description: Type of asset (currency, item, etc.)
         amount:
           type: number
           description: Amount transferred

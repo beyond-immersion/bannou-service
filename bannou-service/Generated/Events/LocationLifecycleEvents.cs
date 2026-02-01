@@ -97,7 +97,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     /// ID of the parent location for hierarchical structures
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentLocationId")]
-    public System.Guid ParentLocationId { get; set; } = default!;
+    public System.Guid? ParentLocationId { get; set; } = default!;
 
     /// <summary>
     /// Depth level in the location hierarchy (0 for root locations)
@@ -115,7 +115,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     /// Timestamp when the location was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the location was deprecated
@@ -127,7 +127,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     /// Additional custom metadata associated with the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the location was created
@@ -213,7 +213,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     /// ID of the parent location for hierarchical structures
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentLocationId")]
-    public System.Guid ParentLocationId { get; set; } = default!;
+    public System.Guid? ParentLocationId { get; set; } = default!;
 
     /// <summary>
     /// Depth level in the location hierarchy (0 for root locations)
@@ -231,7 +231,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     /// Timestamp when the location was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the location was deprecated
@@ -243,7 +243,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     /// Additional custom metadata associated with the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the location was created
@@ -337,7 +337,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// ID of the parent location for hierarchical structures
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentLocationId")]
-    public System.Guid ParentLocationId { get; set; } = default!;
+    public System.Guid? ParentLocationId { get; set; } = default!;
 
     /// <summary>
     /// Depth level in the location hierarchy (0 for root locations)
@@ -355,7 +355,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// Timestamp when the location was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the location was deprecated
@@ -367,7 +367,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// Additional custom metadata associated with the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the location was created

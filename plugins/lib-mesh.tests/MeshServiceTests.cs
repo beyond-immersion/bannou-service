@@ -1033,12 +1033,14 @@ public class MeshInvocationClientTests : IDisposable
 {
     private readonly Mock<IMeshStateManager> _mockStateManager;
     private readonly Mock<ILogger<MeshInvocationClient>> _mockLogger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private MeshInvocationClient? _client;
 
     public MeshInvocationClientTests()
     {
         _mockStateManager = new Mock<IMeshStateManager>();
         _mockLogger = new Mock<ILogger<MeshInvocationClient>>();
+        _telemetryProvider = new NullTelemetryProvider();
     }
 
     public void Dispose()
@@ -1051,7 +1053,8 @@ public class MeshInvocationClientTests : IDisposable
         _client = new MeshInvocationClient(
             _mockStateManager.Object,
             new MeshServiceConfiguration(),
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _telemetryProvider);
         return _client;
     }
 

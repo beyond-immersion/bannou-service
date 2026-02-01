@@ -483,7 +483,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | bool | `true` | Automatically archive leaderboard data when season ends |
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
 
@@ -784,9 +783,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 600
+- **Total properties**: 599
 - **Required (no default)**: 43
-- **Optional (has default)**: 557
+- **Optional (has default)**: 556
 
 ## Environment Variable Naming Convention
 

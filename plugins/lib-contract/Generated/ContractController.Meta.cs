@@ -8380,8 +8380,8 @@ public partial class ContractController
                     "description": "Type of clause (fee, distribution)"
                 },
                 "assetType": {
-                    "type": "string",
-                    "description": "Type of asset (currency, item)"
+                    "type": "object",
+                    "description": "Type of asset (currency, item, etc.)"
                 },
                 "amount": {
                     "type": "number",

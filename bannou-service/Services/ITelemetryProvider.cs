@@ -7,14 +7,17 @@ namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Provides telemetry instrumentation capabilities for Bannou infrastructure libs.
-/// Injected as optional dependency into lib-state, lib-messaging, and lib-mesh.
-/// When null/unavailable, those libs skip instrumentation entirely.
+/// Always injected into lib-state, lib-messaging, and lib-mesh (never null).
+/// When telemetry is disabled, NullTelemetryProvider is used (all methods are no-ops).
 /// </summary>
 /// <remarks>
 /// <para>
 /// This interface is defined in bannou-service so that infrastructure libs (lib-state,
 /// lib-messaging, lib-mesh) can reference it without depending on lib-telemetry.
-/// The implementation is provided by lib-telemetry.
+/// </para>
+/// <para>
+/// NullTelemetryProvider is registered by default during startup. When lib-telemetry
+/// plugin loads, its TelemetryProvider registration overrides the null implementation.
 /// </para>
 /// </remarks>
 public interface ITelemetryProvider

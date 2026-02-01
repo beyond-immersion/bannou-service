@@ -67,22 +67,20 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             var retryBuffer = sp.GetRequiredService<MessageRetryBuffer>();
             var appConfig = sp.GetRequiredService<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
-
-            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
-            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+            // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
 
             return new RabbitMQMessageBus(connectionManager, retryBuffer, appConfig, logger, telemetryProvider);
         });
 
-        // Use factory registration to pass optional telemetry provider
+        // Use factory registration to pass telemetry provider
+        // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
         services.AddSingleton<IMessageSubscriber>(sp =>
         {
             var connectionManager = sp.GetRequiredService<RabbitMQConnectionManager>();
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageSubscriber>>();
             var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
-
-            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
-            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
 
             return new RabbitMQMessageSubscriber(connectionManager, logger, msgConfig, telemetryProvider);
         });

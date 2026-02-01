@@ -20,6 +20,7 @@ Usage:
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -71,8 +72,8 @@ def get_refs_from_schema(schema: dict, refs: set) -> None:
         ref = schema['$ref']
         if ref.startswith('#/components/schemas/'):
             refs.add(ref.split('/')[-1])
-        elif 'common-api.yaml#/components/schemas/' in ref:
-            # Handle refs to common-api.yaml
+        elif '-api.yaml#/components/schemas/' in ref:
+            # Handle refs to any *-api.yaml (common-api.yaml, escrow-api.yaml, etc.)
             refs.add(ref.split('/')[-1])
 
     for key, value in schema.items():
@@ -84,20 +85,25 @@ def get_refs_from_schema(schema: dict, refs: set) -> None:
                     get_refs_from_schema(item, refs)
 
 
-def rewrite_common_refs(schema: Any) -> Any:
-    """Recursively rewrite common-api.yaml refs to local refs."""
+# Regex to match external API schema refs like './escrow-api.yaml#' or 'common-api.yaml#'
+EXTERNAL_API_REF_PATTERN = re.compile(r'\.?/?[a-z-]+-api\.yaml#')
+
+
+def rewrite_external_refs(schema: Any) -> Any:
+    """Recursively rewrite all *-api.yaml refs to local refs."""
     if isinstance(schema, dict):
         result = {}
         for key, value in schema.items():
-            if key == '$ref' and isinstance(value, str) and 'common-api.yaml#' in value:
-                # Rewrite ./common-api.yaml#/components/schemas/X to #/components/schemas/X
-                # Handle both './common-api.yaml#' and 'common-api.yaml#' forms
-                result[key] = value.replace('./common-api.yaml#', '#').replace('common-api.yaml#', '#')
+            if key == '$ref' and isinstance(value, str) and EXTERNAL_API_REF_PATTERN.search(value):
+                # Rewrite any external API ref to local ref
+                # e.g., './escrow-api.yaml#/components/schemas/X' -> '#/components/schemas/X'
+                # e.g., 'common-api.yaml#/components/schemas/X' -> '#/components/schemas/X'
+                result[key] = EXTERNAL_API_REF_PATTERN.sub('#', value)
             else:
-                result[key] = rewrite_common_refs(value)
+                result[key] = rewrite_external_refs(value)
         return result
     elif isinstance(schema, list):
-        return [rewrite_common_refs(item) for item in schema]
+        return [rewrite_external_refs(item) for item in schema]
     else:
         return schema
 
@@ -371,8 +377,8 @@ def main():
     # Merge schemas
     consolidated = merge_schemas(schema_dir)
 
-    # Rewrite common-api.yaml refs to local refs (since types are now inlined)
-    consolidated = rewrite_common_refs(consolidated)
+    # Rewrite external *-api.yaml refs to local refs (since types are now inlined)
+    consolidated = rewrite_external_refs(consolidated)
 
     # Write YAML output
     yaml_path = output_dir / 'bannou-client-api.yaml'

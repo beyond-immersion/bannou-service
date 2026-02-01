@@ -79617,14 +79617,17 @@
         <member name="T:BeyondImmersion.BannouService.Services.ITelemetryProvider">
             <summary>
             Provides telemetry instrumentation capabilities for Bannou infrastructure libs.
-            Injected as optional dependency into lib-state, lib-messaging, and lib-mesh.
-            When null/unavailable, those libs skip instrumentation entirely.
+            Always injected into lib-state, lib-messaging, and lib-mesh (never null).
+            When telemetry is disabled, NullTelemetryProvider is used (all methods are no-ops).
             </summary>
             <remarks>
             <para>
             This interface is defined in bannou-service so that infrastructure libs (lib-state,
             lib-messaging, lib-mesh) can reference it without depending on lib-telemetry.
-            The implementation is provided by lib-telemetry.
+            </para>
+            <para>
+            NullTelemetryProvider is registered by default during startup. When lib-telemetry
+            plugin loads, its TelemetryProvider registration overrides the null implementation.
             </para>
             </remarks>
         </member>
@@ -79806,6 +79809,46 @@
             <summary>
             Counter for mesh retries.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.NullTelemetryProvider">
+            <summary>
+            Null-object implementation of ITelemetryProvider.
+            Registered as the default implementation before plugins load.
+            When lib-telemetry is enabled, its TelemetryProvider overrides this registration.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.NullTelemetryProvider.TracingEnabled">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.NullTelemetryProvider.MetricsEnabled">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.GetActivitySource(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.GetMeter(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.StartActivity(System.String,System.String,System.Diagnostics.ActivityKind,System.Nullable{System.Diagnostics.ActivityContext})">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.RecordCounter(System.String,System.String,System.Int64,System.Collections.Generic.KeyValuePair{System.String,System.Object}[])">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.RecordHistogram(System.String,System.String,System.Double,System.Collections.Generic.KeyValuePair{System.String,System.Object}[])">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.WrapStateStore``1(BeyondImmersion.BannouService.Services.IStateStore{``0},System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.WrapQueryableStateStore``1(BeyondImmersion.BannouService.Services.IQueryableStateStore{``0},System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.WrapSearchableStateStore``1(BeyondImmersion.BannouService.Services.ISearchableStateStore{``0},System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.NullTelemetryProvider.WrapJsonQueryableStateStore``1(BeyondImmersion.BannouService.Services.IJsonQueryableStateStore{``0},System.String,System.String)">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver">
             <summary>

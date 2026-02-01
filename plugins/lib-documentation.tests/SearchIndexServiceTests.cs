@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Documentation.Tests;
 public class SearchIndexServiceTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
-    private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
+    private readonly Mock<IStateStore<HashSet<Guid>>> _mockGuidSetStore;
     private readonly Mock<ILogger<SearchIndexService>> _mockLogger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly SearchIndexService _service;
@@ -26,13 +26,13 @@ public class SearchIndexServiceTests
     public SearchIndexServiceTests()
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
-        _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockGuidSetStore = new Mock<IStateStore<HashSet<Guid>>>();
         _mockLogger = new Mock<ILogger<SearchIndexService>>();
         _configuration = new DocumentationServiceConfiguration();
 
         // Setup factory to return typed stores
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
-            .Returns(_mockGuidListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<HashSet<Guid>>(STATE_STORE))
+            .Returns(_mockGuidSetStore.Object);
 
         _service = new SearchIndexService(
             _mockStateStoreFactory.Object,
@@ -650,10 +650,10 @@ public class SearchIndexServiceTests
     public async Task RebuildIndexAsync_WithNoDocuments_ShouldReturnZero()
     {
         // Arrange
-        _mockGuidListStore.Setup(s => s.GetAsync(
+        _mockGuidSetStore.Setup(s => s.GetAsync(
             It.Is<string>(k => k == $"ns-docs:{TEST_NAMESPACE}"),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<Guid>?)null);
+            .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
         var count = await _service.RebuildIndexAsync(TEST_NAMESPACE);
@@ -666,10 +666,10 @@ public class SearchIndexServiceTests
     public async Task RebuildIndexAsync_WithEmptyDocumentList_ShouldReturnZero()
     {
         // Arrange
-        _mockGuidListStore.Setup(s => s.GetAsync(
+        _mockGuidSetStore.Setup(s => s.GetAsync(
             It.Is<string>(k => k == $"ns-docs:{TEST_NAMESPACE}"),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<Guid>());
+            .ReturnsAsync(new HashSet<Guid>());
 
         // Act
         var count = await _service.RebuildIndexAsync(TEST_NAMESPACE);

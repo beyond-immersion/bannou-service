@@ -62,14 +62,13 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             return BuildFactoryConfiguration(stateConfig);
         });
 
-        // Register state store factory with optional telemetry instrumentation
+        // Register state store factory with telemetry instrumentation
+        // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
         services.AddSingleton<IStateStoreFactory>(sp =>
         {
             var config = sp.GetRequiredService<StateStoreFactoryConfiguration>();
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-
-            // ITelemetryProvider is optional - will be null if lib-telemetry is not enabled
-            var telemetryProvider = sp.GetService<ITelemetryProvider>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
 
             return new StateStoreFactory(config, loggerFactory, telemetryProvider);
         });

@@ -10733,8 +10733,8 @@ export interface components {
       clauseId: string;
       /** @description Type of clause (fee, distribution) */
       clauseType: string;
-      /** @description Type of asset (currency, item) */
-      assetType: string;
+      /** @description Type of asset (currency, item, etc.) */
+      assetType: components['schemas']['AssetType'];
       /** @description Amount transferred */
       amount: number;
       /**
