@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Contract;
 
@@ -16,4 +17,13 @@ public class ContractServicePlugin : StandardServicePlugin<IContractService>
     /// Gets the human-readable display name for this plugin.
     /// </summary>
     public override string DisplayName => "Contract Service";
+
+    /// <summary>
+    /// Configures services for the Contract plugin.
+    /// </summary>
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        // Register the milestone expiration background service
+        services.AddHostedService<ContractMilestoneExpirationService>();
+    }
 }

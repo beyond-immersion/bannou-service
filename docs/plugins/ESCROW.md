@@ -11,6 +11,8 @@
 
 Full-custody orchestration layer for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes (full-consent requiring cryptographic tokens, initiator-trusted, single-party-trusted). Features a 13-state finite state machine, SHA-256-based token generation for deposit and release authorization, idempotent deposit handling, contract-bound conditional releases, per-party pending count tracking, custom asset type handler registration for extensibility, periodic validation with reaffirmation flow, and arbiter-mediated dispute resolution with split allocation support. Handles currency, items, item stacks, contracts, and custom asset types. Does NOT perform actual asset transfers itself - publishes events that downstream services (lib-currency, lib-inventory, lib-contract) consume to execute the physical movements.
 
+**Release/Refund Modes**: Configurable confirmation flows via `ReleaseMode` and `RefundMode` enums. For unbound escrows, `ReleaseMode` controls whether releases complete immediately or require downstream service and/or party confirmations. Contract-bound escrows skip release mode logic entirely - they rely on contract fulfillment verification.
+
 ---
 
 ## Dependencies (What This Plugin Relies On)
@@ -70,7 +72,9 @@ Full-custody orchestration layer for multi-party asset exchanges. Manages the co
 | `escrow.funded` | `EscrowFundedEvent` | All required expected deposits fulfilled |
 | `escrow.consent.received` | `EscrowConsentReceivedEvent` | A party records consent (release, refund, dispute, reaffirm) |
 | `escrow.finalizing` | `EscrowFinalizingEvent` | Finalization begins (all consents met or condition verified) |
+| `escrow.releasing` | `EscrowReleasingEvent` | Release initiated, waiting for confirmations (per ReleaseMode) |
 | `escrow.released` | `EscrowReleasedEvent` | Assets released to recipients |
+| `escrow.refunding` | `EscrowRefundingEvent` | Refund initiated, waiting for confirmations (per RefundMode) |
 | `escrow.refunded` | `EscrowRefundedEvent` | Assets refunded to depositors |
 | `escrow.disputed` | `EscrowDisputedEvent` | Party raises a dispute |
 | `escrow.resolved` | `EscrowResolvedEvent` | Arbiter resolves a dispute |
@@ -95,20 +99,24 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | Property | Env Var | Default | Used | Purpose |
 |----------|---------|---------|------|---------|
 | `DefaultTimeout` | `ESCROW_DEFAULT_TIMEOUT` | `P7D` | ✓ | Default escrow expiration if not specified (ISO 8601 duration) - used in `CreateEscrowAsync` |
-| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✗ | Maximum allowed escrow duration (not enforced) |
+| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✓ | Maximum allowed escrow duration - validated in `CreateEscrowAsync` |
 | `ExpirationGracePeriod` | `ESCROW_EXPIRATION_GRACE_PERIOD` | `PT1H` | ✗ | Grace period after expiration before auto-refund (no background processor) |
-| `TokenAlgorithm` | `ESCROW_TOKEN_ALGORITHM` | `hmac_sha256` | ✗ | Algorithm used for token generation (code uses SHA-256 regardless) |
 | `TokenLength` | `ESCROW_TOKEN_LENGTH` | `32` | ✓ | Token length in bytes - used in `GenerateToken` |
-| `TokenSecret` | `ESCROW_TOKEN_SECRET` | `null` | ✗ | Token secret for HMAC (code uses random bytes, no HMAC) |
 | `ExpirationCheckInterval` | `ESCROW_EXPIRATION_CHECK_INTERVAL` | `PT1M` | ✗ | How often to check for expired escrows (no background processor) |
 | `ExpirationBatchSize` | `ESCROW_EXPIRATION_BATCH_SIZE` | `100` | ✗ | Batch size for expiration processing (no background processor) |
 | `ValidationCheckInterval` | `ESCROW_VALIDATION_CHECK_INTERVAL` | `PT5M` | ✗ | How often to validate held assets (no background processor) |
 | `MaxParties` | `ESCROW_MAX_PARTIES` | `10` | ✓ | Maximum parties per escrow - validated in `CreateEscrowAsync` |
-| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✗ | Maximum asset lines per deposit (not enforced) |
-| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | ✗ | Maximum concurrent pending escrows per party (not enforced) |
+| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✓ | Maximum asset lines per deposit - validated in `DepositAsync` |
+| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | ✓ | Maximum concurrent pending escrows per party - validated in `CreateEscrowAsync` |
 | `IdempotencyTtlHours` | `ESCROW_IDEMPOTENCY_TTL_HOURS` | `24` | ✓ | TTL in hours for idempotency key storage - used in `DepositAsync` |
 | `MaxConcurrencyRetries` | `ESCROW_MAX_CONCURRENCY_RETRIES` | `3` | ✓ | Max retry attempts for optimistic concurrency operations - used throughout |
-| `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | ✓ | Default limit for listing escrows when not specified - used in `ListEscrowsAsync`
+| `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | ✓ | Default limit for listing escrows when not specified - used in `ListEscrowsAsync` |
+| `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `service_only` | ✓ | Default release confirmation mode for new escrows |
+| `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `immediate` | ✓ | Default refund confirmation mode for new escrows |
+| `ConfirmationTimeoutSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | `300` | ✓ | Timeout for party confirmations in seconds (5 minutes default) |
+| `ConfirmationTimeoutBehavior` | `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | `auto_confirm` | ✓ | What happens when confirmation timeout expires |
+| `ConfirmationTimeoutCheckIntervalSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | `30` | ✓ | How often the background service checks for expired confirmations |
+| `ConfirmationTimeoutBatchSize` | `ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE` | `100` | ✓ | Maximum escrows to process per timeout check cycle |
 
 ---
 
@@ -122,7 +130,8 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event subscription registration for contract events |
 
-Service lifetime is **Scoped** (per-request). No background services (expiration checking and periodic validation are defined in config but not yet implemented as background loops).
+Service lifetime is **Scoped** (per-request). One background service implemented:
+- **`EscrowConfirmationTimeoutService`** - Checks for escrows in `Releasing`/`Refunding` states with expired confirmation deadlines, applies configured timeout behavior (auto_confirm, dispute, or refund).
 
 **Internal State Store Accessors** (lazy-initialized):
 - `AgreementStore` - IQueryableStateStore for escrow agreements (MySQL)
@@ -355,6 +364,52 @@ Dispute Resolution
 
 ---
 
+## Release Modes
+
+Escrows support configurable release confirmation flows via `ReleaseMode`. This controls what must happen between `Finalizing` and `Released` states.
+
+### Available Modes
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| `immediate` | Skip `Releasing` state entirely; go directly to `Released` | Trusted/low-value scenarios (NPC vendors, system rewards) |
+| `service_only` | Wait for downstream services (currency, inventory) to confirm transfers complete | **Default** - Most common production use |
+| `party_required` | Wait for all parties to call `/escrow/confirm-release` | High-value trades requiring explicit acknowledgment |
+| `service_and_party` | Wait for both service completion AND party confirmation | Maximum assurance |
+
+> ⚠️ **WARNING: `immediate` Mode Risk**
+>
+> The `immediate` mode marks assets as released BEFORE downstream services confirm transfers. Use only for trusted/low-value scenarios (NPC vendors, automated rewards, system-initiated distributions). If downstream service calls fail, assets may be marked as released but not actually transferred, requiring manual intervention.
+
+### Refund Modes
+
+Refunds use `RefundMode` with similar options (excluding `service_and_party`). Default is `immediate` since refunds are less contentious - parties are getting their own assets back.
+
+### Confirmation Timeout
+
+When waiting for confirmations, a deadline is set based on `ConfirmationTimeoutSeconds`. When expired, the `ConfirmationTimeoutBehavior` determines what happens:
+
+| Behavior | Action |
+|----------|--------|
+| `auto_confirm` | If services confirmed, auto-complete; otherwise escalate to `Disputed` |
+| `dispute` | Transition to `Disputed`, require arbiter intervention |
+| `refund` | Treat as failed, transition to `Refunding` |
+
+---
+
+## Contract-Bound vs Unbound Escrows
+
+**Critical architectural distinction**: `ReleaseMode` only applies to **unbound escrows**. Contract-bound escrows follow a different flow.
+
+| Scenario | Behavior | ReleaseMode Used? |
+|----------|----------|-------------------|
+| **Unbound escrow** | Escrow orchestrates release, publishes `escrow.releasing`, waits for confirmations per ReleaseMode | **YES** |
+| **Contract-bound escrow** | Contract handles distribution via `ExecuteContract`, escrow verifies `contract.fulfilled` then immediate Released | **NO** |
+
+Contract-bound escrows verify the contract status on release. Once the contract is fulfilled, the escrow immediately transitions to `Released` because the contract system has already coordinated the asset distribution.
+
+---
+
 ## Stubs & Unimplemented Features
 
 1. **~~Event consumer registration empty~~** (FIXED): `RegisterEventConsumers()` now registers handlers for `contract.fulfilled` (transitions bound escrows to Finalizing) and `contract.terminated` (transitions bound escrows to Refunded). Uses QueryAsync to find escrows by BoundContractId and ETag-based concurrency for state transitions. The `/escrow/verify-condition` endpoint remains available for manual verification.
@@ -366,18 +421,17 @@ Dispute Resolution
 
 4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 
-5. **Configuration properties not wired up**: Several configuration properties are not enforced:
-   - `MaxTimeout` - not validated against requested timeout
-   - `TokenAlgorithm` - code always uses SHA-256
-   - `TokenSecret` - not used; tokens are random, not HMAC-signed
-   - `MaxAssetsPerDeposit` - no validation on asset count per deposit
-   - `MaxPendingPerParty` - party pending counts tracked but limit not enforced
+5. **~~Configuration properties not wired up~~** (PARTIALLY FIXED): Most configuration properties are now enforced:
+   - ~~`MaxTimeout`~~ - now validated against requested timeout in `CreateEscrowAsync`
+   - ~~`MaxAssetsPerDeposit`~~ - now validated in `DepositAsync`
+   - ~~`MaxPendingPerParty`~~ - now enforced in `CreateEscrowAsync`
+   - Removed dead config: `TokenAlgorithm`, `TokenSecret` (code always uses SHA-256 with random bytes)
 
 6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
 7. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements.
 
-8. **Releasing state unused in transitions**: The `ValidTransitions` map includes `Finalizing -> Releasing -> Released`, but the release flow jumps directly from `Finalizing` to `Released` without passing through `Releasing`.
+8. **~~Releasing state unused in transitions~~** (FIXED): The `Releasing` state is now used for event-driven confirmation flow. When `ReleaseMode` is not `immediate`, escrows transition to `Releasing` and wait for service/party confirmations before completing to `Released`. The `EscrowConfirmationTimeoutService` background service handles expired confirmation deadlines.
 
 ---
 
@@ -403,12 +457,14 @@ Dispute Resolution
 
 ### Bugs (Fix Immediately)
 
-1. **Releasing state is unreachable**: The `ValidTransitions` map includes `Finalizing -> Releasing -> Released`, but `ReleaseAsync` transitions directly from `Finalizing` to `Released`, never using the `Releasing` intermediate state. Either remove `Releasing` from the state machine or implement a two-phase release (start → complete).
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/210 -->
+1. **~~Releasing state is unreachable~~** (FIXED): The `Releasing` state is now used for event-driven confirmation flow via `ReleaseMode`. When mode is not `immediate`, the flow is `Finalizing` → `Releasing` → (await confirmations) → `Released`. See the [Release Modes](#release-modes) section for details.
+<!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
 
-2. **Status index key pattern mismatch**: Status index keys use `{status}:{escrowId}` pattern in some places but the store accessor method `GetStatusIndexKey(EscrowStatus)` only returns `{status}`. The escrow ID is appended manually with `$"{GetStatusIndexKey(status)}:{escrowId}"` - inconsistent key construction could cause lookup failures.
+2. **~~Status index key pattern mismatch~~** (FIXED): Status index now uses Redis Sets via `AddToSetAsync`/`RemoveFromSetAsync`/`GetSetMembersAsync` for consistent key construction. The `UpdateStatusIndexAsync` helper ensures atomic updates when transitioning states.
+<!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
 
-3. **Party pending count race on failure**: If escrow creation fails after `IncrementPartyPendingCountAsync` but before `SaveAsync`, pending counts are incorrectly incremented. No rollback mechanism exists.
+3. **~~Party pending count race on failure~~** (FIXED): Escrow creation now uses try/finally pattern with rollback. If creation fails after incrementing pending counts, the counts are decremented in the exception handler to maintain consistency.
+<!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -448,14 +504,24 @@ Dispute Resolution
 
 ## Work Tracking
 
+### Recently Completed
+
+1. **Escrow State Machine Bug Fixes** - [Issue #214](https://github.com/beyond-immersion/bannou-service/issues/214) (2026-02-01)
+   - Implemented event-driven confirmation flow with `ReleaseMode` and `RefundMode` enums
+   - Fixed bug #1: `Releasing` state now used for confirmation waiting
+   - Fixed bug #2: Status index now uses Redis Sets for consistent key handling
+   - Fixed bug #3: Party pending count race fixed with try/finally rollback
+   - Fixed bug #4: Removed dead config (`TokenAlgorithm`, `TokenSecret`), wired up `MaxTimeout`, `MaxAssetsPerDeposit`, `MaxPendingPerParty`
+   - Added `/escrow/confirm-release` and `/escrow/confirm-refund` endpoints
+   - Added `EscrowConfirmationTimeoutService` background worker
+   - Added `EscrowReleasingEvent` and `EscrowRefundingEvent`
+
+2. **~~Releasing state is unreachable~~** - [Issue #210](https://github.com/beyond-immersion/bannou-service/issues/210) (CLOSED - Superseded by #214)
+   - Resolved via the event-driven confirmation flow implementation
+
 ### Pending Design Review
 
-1. **Releasing state is unreachable** - [Issue #210](https://github.com/beyond-immersion/bannou-service/issues/210) (2026-01-31)
-   - State machine defines `Finalizing -> Releasing -> Released` but code skips `Releasing`
-   - Same issue affects `Refunding` state
-   - Needs design decision: remove unused states or implement two-phase transitions
-
-2. **ValidateEscrow asset checking** - [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
+1. **ValidateEscrow asset checking** - [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
    - `ValidateEscrowAsync` contains placeholder logic - validation always passes
    - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
    - Design questions: contract validation, custom handler invocation, graceful degradation policy
