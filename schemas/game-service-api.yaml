@@ -156,12 +156,23 @@ components:
     ListServicesRequest:
       type: object
       additionalProperties: false
-      description: Request to list all game services
+      description: Request to list all game services with optional pagination
       properties:
         activeOnly:
           type: boolean
           default: false
           description: If true, only return active services
+        skip:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Number of services to skip for pagination (offset)
+        take:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+          description: Maximum number of services to return (limit)
 
     GetServiceRequest:
       type: object

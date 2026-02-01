@@ -315,13 +315,15 @@ Generated Model Hierarchy
 
 1. ~~**`GetAccountSubscriptionAsync` throws `NotImplementedException`**~~: **FIXED** (2026-01-31) - Method now follows the same stub pattern as all other endpoints: logs a debug message and returns `(StatusCodes.NotImplemented, null)` with proper try-catch error handling.
 
-2. **Unreachable catch blocks**: Every endpoint method has a try-catch where the try block cannot throw (contains only `LogDebug` + return). The catch blocks with `TryPublishErrorAsync` are dead code. When real logic is added, the error handling structure is already in place but the current code is misleading.
+2. ~~**Unreachable catch blocks**~~: **RECLASSIFIED** (2026-01-31) - Moved to Intentional Quirks. The try-catch scaffolding is correct for when real business logic is added; the catch blocks are unreachable now but will become reachable once the try blocks contain actual work.
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **Path params on GET endpoints**: The `content/{slug}` and `cms/pages/{slug}` endpoints use path parameters, which means they cannot be routed via the WebSocket binary protocol (which requires static POST paths for GUID mapping). This service is accessed directly via HTTP, not through the Connect gateway.
 
 2. **No NotImplemented mapping in ConvertToActionResult**: The generated `ConvertToActionResult` switch expression has no case for `StatusCodes.NotImplemented`. Since all stubs currently return NotImplemented, the controller will fall through to the `_ => StatusCode(500, result)` default case, meaning clients receive 500 Internal Server Error instead of 501 Not Implemented.
+
+3. **Scaffolded error handling in stub methods**: Every endpoint method has a try-catch block where the catch cannot currently be reached (the try block contains only `LogDebug` + return, which cannot throw). This is intentional scaffolding - when real business logic is added to the try blocks, the error handling structure with `TryPublishErrorAsync` will become reachable without requiring structural changes.
 
 ### Design Considerations (Requires Planning)
 
@@ -364,3 +366,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **2026-01-31**: Fixed `GetAccountSubscriptionAsync` throwing `NotImplementedException` - now returns proper stub response tuple like all other endpoints.
+- **2026-01-31**: Reclassified "Unreachable catch blocks" from Bug to Intentional Quirk - the scaffolded try-catch structure is correct for future implementation.

@@ -91,7 +91,7 @@ Service lifetime is **Scoped** (per-request).
 
 ## API Endpoints (Implementation Notes)
 
-- **Create**: Validates entities are not the same (prevents self-relationships). Normalizes composite key bidirectionally (`A->B` and `B->A` produce the same key via string sort). Stores five keys: relationship data, two entity indexes, type index, composite uniqueness key, and all-relationships list. Publishes `relationship.created`.
+- **Create**: Validates entities are not the same (prevents self-relationships). Normalizes composite key bidirectionally (`A->B` and `B->A` produce the same key via string sort). Stores four keys: relationship data, two entity indexes, type index, and composite uniqueness key. Publishes `relationship.created`.
 
 - **Get**: Simple key lookup by relationship ID.
 

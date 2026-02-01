@@ -436,6 +436,7 @@ Circuit Breaker State Machine
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/193 -->
 
 2. **XDELTA delta algorithm**: Same as BSDIFF - stubbed with `NotSupportedException`. Listed as a supported algorithm in configuration but has no implementation.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/193 -->
 
 3. **JSON Schema validation**: SchemaMigrator.ValidateAgainstSchema only verifies data is valid JSON. Full JSON Schema (draft-07) validation is not implemented. Comment notes potential use of JsonSchema.Net library.
 
@@ -526,3 +527,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Needs Design Review
 
 - **BSDIFF delta algorithm** - Library selection and design decisions needed. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
+- **XDELTA delta algorithm** - Consolidated with BSDIFF; same library selection and design questions apply. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)

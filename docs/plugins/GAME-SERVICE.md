@@ -134,7 +134,7 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. **Pagination for ListServices**: Currently loads all services into memory. Would matter at scale (hundreds of game services).
+1. ~~**Pagination for ListServices**~~: **FIXED** (2026-01-31) - Added `skip` (default 0) and `take` (default 50, max 200) parameters to `ListServicesRequest`. Response `totalCount` reflects total matching items (not page count). Filtering by `activeOnly` is applied before pagination.
 2. **Service metadata schema validation**: The `metadata` field could support schema validation per service type.
 3. **Service versioning**: Track deployment versions to inform clients of compatibility.
 
@@ -166,4 +166,10 @@ No bugs identified.
 
 ## Work Tracking
 
-*No active work items. All quirks and design considerations are documented but not yet scheduled for implementation.*
+### Completed
+
+- **2026-01-31**: Added pagination support to `ListServicesAsync` with `skip`/`take` parameters (schema + implementation)
+
+### Pending
+
+*Remaining quirks and design considerations are documented above but not yet scheduled for implementation.*

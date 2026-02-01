@@ -34,118 +34,70 @@ If no argument or invalid argument:
 - Report error: "Usage: /audit-plugins <count> (e.g., /audit-plugins 3)"
 - Do not proceed
 
-### Step 2: Scan and Filter Plugins
+### Step 2: Run Selection Script
 
-**CRITICAL: Only select plugins that have actionable gaps.**
-
-**⛔ DO NOT write your own grep/awk commands. The script already outputs the counts.**
-
-Run this EXACT command (copy-paste it, do not modify):
+Run this command (replace `{N}` with the count from the argument):
 
 ```bash
-for f in docs/plugins/*.md; do
-  [ "$(basename "$f")" = "DEEP_DIVE_TEMPLATE.md" ] && continue
-  name=$(basename "$f")
-  output=$(scripts/check-plugin-gaps.sh "$f" 2>/dev/null)
-  exitcode=$?
-  echo "$name|$output|$exitcode"
-done
+scripts/select-plugins-for-audit.sh {N}
 ```
 
-The script outputs `TOTAL=N AUDIT=N FIXED=N ACTIONABLE=N` - parse THAT output for your table.
-Exit code 0 means actionable gaps exist. Exit code 1 means no actionable gaps.
+The script outputs three types of lines:
+- `SCAN: PLUGIN.md|TOTAL=N AUDIT=N FIXED=N ACTIONABLE=N|EXIT_CODE` - One per plugin
+- `SELECTED: plugin-name` - One per selected plugin (lowercase, no extension)
+- `SUMMARY: TOTAL_SCANNED=N WITH_GAPS=N SELECTED=N` - Final counts
 
-**Report the scan results (built from script output, NOT your own grep):**
+### Step 3: Parse Output and Report
+
+Parse the script output to build the scan table and selection list.
+
+**Report format:**
 ```
 ## Plugin Gap Scan
 
-| Plugin | Total | Audit | Fixed | Actionable |
-|--------|-------|-------|-------|------------|
-| ACCOUNT.md | 6 | 5 | 0 | 1 |
-| AUTH.md | 5 | 5 | 0 | 0 (skip) |
-| ... | ... | ... | ... | ... |
+| Plugin | Total | Audit | Fixed | Actionable | Status |
+|--------|-------|-------|-------|------------|--------|
+| ACCOUNT.md | 6 | 5 | 0 | 1 | ✓ |
+| AUTH.md | 5 | 5 | 0 | 0 | (skip) |
+| ... | ... | ... | ... | ... | ... |
 
-**Plugins with actionable gaps:** N
-**Plugins fully marked/fixed:** M
-```
+**Summary:** {TOTAL_SCANNED} plugins scanned, {WITH_GAPS} with actionable gaps
 
-### Step 3: Select Plugins
+## Selected for Audit: {SELECTED} Plugins
 
-From the filtered list (plugins WITH actionable gaps), randomly select N.
-
-**⛔ DO NOT write your own filtering logic. Use the script's exit code.**
-
-Run this EXACT command (replace {N} with the count):
-
-```bash
-for f in docs/plugins/*.md; do
-  [ "$(basename "$f")" = "DEEP_DIVE_TEMPLATE.md" ] && continue
-  if scripts/check-plugin-gaps.sh "$f" >/dev/null 2>&1; then
-    echo "$f"
-  fi
-done | shuf -n {N}
-```
-
-Exit code 0 = has actionable gaps (include). Exit code 1 = no gaps (exclude).
-
-**If requested count > available plugins with gaps:**
-- Report: "Requested {N} but only {M} plugins have actionable gaps. Auditing {M} plugins."
-- Select all available plugins with gaps
-
-**If NO plugins have actionable gaps:**
-- Report: "All plugins are fully audited! No actionable gaps remaining."
-- Exit successfully (this is a good outcome)
-
-**Report selection:**
-```
-## Sequential Audit: {N} Plugins
-
-Selected plugins (from {M} with actionable gaps):
 1. {plugin-1}
 2. {plugin-2}
 3. {plugin-3}
-...
 
 Auditing sequentially...
 ```
 
+**Edge cases:**
+- If `WITH_GAPS=0`: Report "All plugins are fully audited! No actionable gaps remaining." and exit successfully.
+- If `SELECTED < requested count`: Report "Requested {N} but only {WITH_GAPS} plugins have actionable gaps. Auditing {WITH_GAPS} plugins."
+
 ### Step 4: Launch Agents Sequentially
 
-For each selected plugin, launch ONE agent at a time and wait for it to complete before launching the next.
+For each `SELECTED:` plugin from the script output, launch ONE agent at a time and wait for completion before the next.
 
-For each plugin, launch with:
+**Agent configuration:**
 - `subagent_type`: `"general-purpose"` (must have access to Skill tool)
 - `mode`: `"bypassPermissions"` (REQUIRED - agents need full permissions)
-- `prompt`: Tell the agent to invoke the audit-plugin skill (see Agent Prompt section below)
 - `description`: `"Audit {plugin-name} plugin"`
+- `prompt`: `"Use the Skill tool to invoke the 'audit-plugin' skill with args '{plugin-name}'"`
 - `run_in_background`: `false` (REQUIRED - Skill tool only works in foreground)
 
 **Critical: Launch ONE agent, wait for completion, then launch the next.**
 
 **Critical: Do NOT use `run_in_background: true` - the Skill tool will be denied.**
 
-Example (for 3 plugins - run these ONE AT A TIME):
+Example for 3 selected plugins (mesh, messaging, escrow):
 ```
-<Task 1 - wait for completion>
-  subagent_type: "general-purpose"
-  mode: "bypassPermissions"
-  description: "Audit account plugin"
-  prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'account'"
-  run_in_background: false
-
-<Task 2 - after Task 1 completes>
-  subagent_type: "general-purpose"
-  mode: "bypassPermissions"
-  description: "Audit auth plugin"
-  prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'auth'"
-  run_in_background: false
-
-<Task 3 - after Task 2 completes>
-  subagent_type: "general-purpose"
-  mode: "bypassPermissions"
-  description: "Audit connect plugin"
-  prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'connect'"
-  run_in_background: false
+Agent 1: prompt = "Use the Skill tool to invoke the 'audit-plugin' skill with args 'mesh'"
+(wait for completion)
+Agent 2: prompt = "Use the Skill tool to invoke the 'audit-plugin' skill with args 'messaging'"
+(wait for completion)
+Agent 3: prompt = "Use the Skill tool to invoke the 'audit-plugin' skill with args 'escrow'"
 ```
 
 ### Step 5: Track Results
@@ -157,8 +109,9 @@ After each agent completes, record its result before launching the next:
 
 | # | Plugin | Result | Action Taken |
 |---|--------|--------|--------------|
-| 1 | {name} | {EXECUTED/ISSUE_CREATED/NO_GAPS} | {details} |
-| 2 | {name} | (running...) | |
+| 1 | mesh | EXECUTED | Fixed 2 gaps |
+| 2 | messaging | (running...) | |
+| 3 | escrow | (pending) | |
 ```
 
 ### Step 6: Final Summary
@@ -170,9 +123,9 @@ After all agents complete:
 
 | Plugin | Result | Action Taken |
 |--------|--------|--------------|
-| {name} | {EXECUTED/ISSUE_CREATED/NO_GAPS} | {details} |
-| {name} | {EXECUTED/ISSUE_CREATED/NO_GAPS} | {details} |
-| {name} | {EXECUTED/ISSUE_CREATED/NO_GAPS} | {details} |
+| mesh | EXECUTED | Fixed 2 gaps |
+| messaging | ISSUE_CREATED | Issue #123 for design question |
+| escrow | NO_GAPS | All gaps already marked |
 
 ### Summary
 - Gaps fixed: {N}
@@ -180,39 +133,20 @@ After all agents complete:
 - No gaps found: {N}
 ```
 
-## Agent Prompt
-
-Each agent should invoke the actual `/audit-plugin` skill - do NOT summarize or paraphrase the skill instructions.
-
-**The prompt for each agent is exactly this (with plugin name filled in):**
-
-```
-Use the Skill tool to invoke the 'audit-plugin' skill with args '{PLUGIN_NAME}'
-```
-
-**Example for 3 plugins:**
-```
-Agent 1 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'account'"
-Agent 2 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'auth'"
-Agent 3 prompt: "Use the Skill tool to invoke the 'audit-plugin' skill with args 'connect'"
-```
-
-**Why this matters:** The `/audit-plugin` skill has detailed instructions including EXECUTE vs CREATE_ISSUE criteria, forbidden escape hatches, and investigation requirements. Summarizing loses critical context. Let the skill speak for itself.
-
 ## Important Notes
 
 - **Sequential execution**: Agents run one at a time, each completing before the next starts
 - **Unique plugins**: Each agent gets a different plugin - no overlap
 - **Foreground mode required**: Background agents cannot use Skill tool
 - **Full permissions**: `bypassPermissions` mode ensures Edit/Bash/etc work without prompting
+- **WEBSITE skipped**: The Website plugin is entirely stub code - the script excludes it automatically
 
 ## Error Handling
 
-- **All plugins fully audited**: Report success: "All plugins are fully audited! No actionable gaps remaining."
+- **All plugins fully audited**: Report success and exit
 - **Plugin has no gaps** (shouldn't happen with pre-filtering): Agent reports "no gaps" and finishes
 - **Agent fails**: Report the failure, continue with next plugin
 - **Build fails in one agent**: That agent stops, continue with next plugin
-- **Fewer plugins with gaps than requested**: Audit all available plugins with gaps, report the adjusted count
 
 ## Limits
 

@@ -355,10 +355,10 @@ Authoring Workflow
 1. **Event aggregation for MapUpdatedEvent**: Only `MapObjectsChangedEvent` uses the aggregation buffer. `MapUpdatedEvent` (from PublishMapUpdate) publishes immediately on every call. The code comment notes "payload-level coalescing is complex."
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/199 -->
 
-2. **Spatial index garbage collection on channel reset**: `ClearChannelDataAsync` deletes objects and the region index but notes "Spatial and type indexes are per-object and will be orphaned. They'll be cleaned up on next access or could be garbage collected." No GC is implemented.
-<!-- AUDIT:IN_PROGRESS:2026-01-31 -->
+2. ~~**Spatial index garbage collection on channel reset**~~: **FIXED** (2026-01-31) - `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects. For each object, it fetches the object data to get Position/Bounds/ObjectType and calls the existing cleanup methods (`RemoveFromSpatialIndexAsync`, `RemoveFromSpatialIndexForBoundsAsync`, `RemoveFromTypeIndexAsync`). This adds one extra Redis GET per object but ensures no orphaned index entries remain.
 
 3. **MapSnapshotEvent not published**: The events schema defines `MapSnapshotEvent` and its topic `map.{regionId}.{kind}.snapshot`, but `RequestSnapshot` only returns data to the caller -- it does not broadcast a snapshot event.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/208 -->
 
 4. **MapSnapshotRequestedEvent not consumed**: The schema defines `MapSnapshotRequestedEvent` for consumer-initiated snapshot requests, but the service does not subscribe to it.
 
@@ -390,7 +390,7 @@ Authoring Workflow
 
 1. **Version counter race condition**: `IncrementVersionAsync` performs a non-atomic read-increment-write on the version counter. Two concurrent publishes could read the same version and both write version+1, producing duplicate version numbers. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode where unauthorized publishes are processed concurrently with authorized ones.
 
-2. **Orphaned spatial/type indexes on channel reset**: When `ClearChannelDataAsync` runs (reset takeover mode), it deletes objects and the region index but leaves spatial and type indexes pointing to deleted objects. Subsequent queries will attempt to load deleted objects (returning null, filtered out) but the index entries persist indefinitely.
+2. ~~**Orphaned spatial/type indexes on channel reset**~~: **FIXED** (2026-01-31) - `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects, preventing orphaned index entries.
 
 3. **Index operations are not atomic**: The spatial, type, and region index operations perform read-modify-write on Redis lists without atomicity. Two concurrent requests adding objects to the same index cell could both read the same list, both add their object, and save—the second save overwrites the first, losing an object. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode.
 
@@ -441,3 +441,7 @@ Authoring Workflow
 ### Pending Investigation
 
 *No pending investigation items.*
+
+### Completed
+
+- **2026-01-31**: Fixed spatial index garbage collection on channel reset. `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects by fetching each object's Position/Bounds/ObjectType and calling the existing cleanup methods.

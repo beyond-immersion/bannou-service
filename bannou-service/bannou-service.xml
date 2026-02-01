@@ -48707,12 +48707,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.GameService.ListServicesRequest">
             <summary>
-            Request to list all game services
+            Request to list all game services with optional pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ListServicesRequest.ActiveOnly">
             <summary>
             If true, only return active services
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ListServicesRequest.Skip">
+            <summary>
+            Number of services to skip for pagination (offset)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ListServicesRequest.Take">
+            <summary>
+            Maximum number of services to return (limit)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameService.GetServiceRequest">

@@ -43,16 +43,17 @@ public partial class GameServiceService : IGameServiceService
     private static string StateStoreName => StateStoreDefinitions.GameService;
 
     /// <summary>
-    /// List all registered game services, optionally filtered by active status.
+    /// List all registered game services, optionally filtered by active status with pagination.
     /// </summary>
-    /// <param name="body">Request containing optional filter to include only active services.</param>
+    /// <param name="body">Request containing optional filter, skip, and take for pagination.</param>
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>
-    /// OK with list of services and total count, or InternalServerError if state store fails.
+    /// OK with paginated list of services and total count, or InternalServerError if state store fails.
     /// </returns>
     public async Task<(StatusCodes, ListServicesResponse?)> ListServicesAsync(ListServicesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Listing services (activeOnly={ActiveOnly})", body.ActiveOnly);
+        _logger.LogDebug("Listing services (activeOnly={ActiveOnly}, skip={Skip}, take={Take})",
+            body.ActiveOnly, body.Skip, body.Take);
 
         try
         {
@@ -60,7 +61,7 @@ public partial class GameServiceService : IGameServiceService
             var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
 
-            var services = new List<ServiceInfo>();
+            var allMatchingServices = new List<ServiceInfo>();
             var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
             if (serviceIds != null)
@@ -71,22 +72,29 @@ public partial class GameServiceService : IGameServiceService
 
                     if (serviceModel != null)
                     {
-                        // Apply filter
+                        // Apply active filter
                         if (body.ActiveOnly && !serviceModel.IsActive)
                             continue;
 
-                        services.Add(MapToServiceInfo(serviceModel));
+                        allMatchingServices.Add(MapToServiceInfo(serviceModel));
                     }
                 }
             }
 
+            // Apply pagination after filtering
+            var paginatedServices = allMatchingServices
+                .Skip(body.Skip)
+                .Take(body.Take)
+                .ToList();
+
             var response = new ListServicesResponse
             {
-                Services = services,
-                TotalCount = services.Count
+                Services = paginatedServices,
+                TotalCount = allMatchingServices.Count
             };
 
-            _logger.LogDebug("Listed {Count} services", services.Count);
+            _logger.LogDebug("Listed {PageCount} of {TotalCount} services (skip={Skip}, take={Take})",
+                paginatedServices.Count, allMatchingServices.Count, body.Skip, body.Take);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
