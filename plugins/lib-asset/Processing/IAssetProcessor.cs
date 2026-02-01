@@ -1,6 +1,49 @@
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
 /// <summary>
+/// Error codes for asset processing operations.
+/// Used by <see cref="AssetProcessingResult"/> and <see cref="AssetValidationResult"/>
+/// to provide structured error categorization.
+/// </summary>
+public enum ProcessingErrorCode
+{
+    /// <summary>
+    /// Content type is not supported by this processor.
+    /// </summary>
+    UnsupportedContentType,
+
+    /// <summary>
+    /// Model format is not supported (content type and extension both invalid).
+    /// </summary>
+    UnsupportedFormat,
+
+    /// <summary>
+    /// File exceeds the maximum allowed size.
+    /// </summary>
+    FileTooLarge,
+
+    /// <summary>
+    /// Binary file requires a supported extension for format detection.
+    /// </summary>
+    MissingExtension,
+
+    /// <summary>
+    /// Source file was not found in storage.
+    /// </summary>
+    SourceNotFound,
+
+    /// <summary>
+    /// Transcoding operation failed (FFmpeg or similar).
+    /// </summary>
+    TranscodingFailed,
+
+    /// <summary>
+    /// General processing error (unexpected exception).
+    /// </summary>
+    ProcessingError
+}
+
+/// <summary>
 /// Interface for asset processing operations.
 /// Implementations handle specific asset types (textures, models, audio).
 /// </summary>
@@ -130,7 +173,7 @@ public sealed class AssetProcessingResult
     /// <summary>
     /// Error code if processing failed.
     /// </summary>
-    public string? ErrorCode { get; init; }
+    public ProcessingErrorCode? ErrorCode { get; init; }
 
     /// <summary>
     /// Time taken to process the asset in milliseconds.
@@ -166,9 +209,12 @@ public sealed class AssetProcessingResult
     /// <summary>
     /// Creates a failed result.
     /// </summary>
+    /// <param name="errorMessage">Human-readable error description.</param>
+    /// <param name="errorCode">Structured error code for categorization.</param>
+    /// <param name="processingTimeMs">Time spent before failure in milliseconds.</param>
     public static AssetProcessingResult Failed(
         string errorMessage,
-        string? errorCode = null,
+        ProcessingErrorCode? errorCode = null,
         long processingTimeMs = 0)
     {
         return new AssetProcessingResult
@@ -199,7 +245,7 @@ public sealed class AssetValidationResult
     /// <summary>
     /// Error code if validation failed.
     /// </summary>
-    public string? ErrorCode { get; init; }
+    public ProcessingErrorCode? ErrorCode { get; init; }
 
     /// <summary>
     /// Validation warnings that don't prevent processing.
@@ -221,7 +267,9 @@ public sealed class AssetValidationResult
     /// <summary>
     /// Creates an invalid result.
     /// </summary>
-    public static AssetValidationResult Invalid(string errorMessage, string? errorCode = null)
+    /// <param name="errorMessage">Human-readable validation failure description.</param>
+    /// <param name="errorCode">Structured error code for categorization.</param>
+    public static AssetValidationResult Invalid(string errorMessage, ProcessingErrorCode? errorCode = null)
     {
         return new AssetValidationResult
         {

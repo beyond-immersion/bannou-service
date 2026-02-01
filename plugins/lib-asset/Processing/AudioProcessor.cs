@@ -75,7 +75,7 @@ public sealed class AudioProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"Unsupported content type: {context.ContentType}",
-                "UNSUPPORTED_CONTENT_TYPE");
+                ProcessingErrorCode.UnsupportedContentType);
         }
 
         // Check file size limits
@@ -84,7 +84,7 @@ public sealed class AudioProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                "FILE_TOO_LARGE");
+                ProcessingErrorCode.FileTooLarge);
         }
 
         // Check for potentially problematic scenarios
@@ -149,7 +149,7 @@ public sealed class AudioProcessor : IAssetProcessor
             {
                 return AssetProcessingResult.Failed(
                     "Source file not found in storage",
-                    "SOURCE_NOT_FOUND",
+                    ProcessingErrorCode.SourceNotFound,
                     stopwatch.ElapsedMilliseconds);
             }
 
@@ -203,7 +203,7 @@ public sealed class AudioProcessor : IAssetProcessor
             {
                 return AssetProcessingResult.Failed(
                     ffmpegResult.ErrorMessage ?? "Transcoding failed",
-                    "TRANSCODING_FAILED",
+                    ProcessingErrorCode.TranscodingFailed,
                     stopwatch.ElapsedMilliseconds);
             }
 
@@ -281,7 +281,7 @@ public sealed class AudioProcessor : IAssetProcessor
 
             return AssetProcessingResult.Failed(
                 ex.Message,
-                "PROCESSING_ERROR",
+                ProcessingErrorCode.ProcessingError,
                 stopwatch.ElapsedMilliseconds);
         }
     }

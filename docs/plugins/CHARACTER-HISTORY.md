@@ -172,9 +172,13 @@ None. The service is feature-complete for its scope.
 ## Potential Extensions
 
 1. **AI-powered summarization**: Replace template-based text with LLM-generated narrative prose.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/230 -->
 2. **Backstory element limits**: Configurable maximum elements per character to prevent unbounded growth.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
 3. **Participation pagination at store level**: Database-side pagination instead of in-memory for large histories.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 4. **Cross-character event correlation**: Query which characters participated together in the same events.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/231 -->
 
 ---
 
@@ -231,6 +235,8 @@ None. The service is feature-complete for its scope.
 ### Pending Design Review
 - **2026-01-31**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations (in-memory pagination causes memory pressure for characters with many participations)
 - **2026-01-31**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Add configurable backstory element count limit (prevent unbounded growth)
+- **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
+- **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
 
 ### Completed
 - **2026-01-31**: Fixed duplicate participation bug - `RecordParticipationAsync` now returns 409 Conflict when character+event pair already exists, matching schema contract.

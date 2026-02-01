@@ -1114,7 +1114,16 @@ public partial class InventoryService : IInventoryService
                 _logger.LogWarning("Failed to acquire lock for container {ContainerId} during transfer", sourceContainerId);
                 return (StatusCodes.Conflict, null);
             }
+
             var quantityToTransfer = body.Quantity ?? item.Quantity;
+
+            // Validate requested quantity doesn't exceed available
+            if (body.Quantity.HasValue && body.Quantity.Value > item.Quantity)
+            {
+                _logger.LogDebug("Cannot transfer {Requested} from stack of {Available}",
+                    body.Quantity.Value, item.Quantity);
+                return (StatusCodes.BadRequest, null);
+            }
 
             // Get source and target containers
             var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
@@ -1126,10 +1135,31 @@ public partial class InventoryService : IInventoryService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Move the item
+            // Determine which item to move - if partial transfer, split first
+            var instanceIdToMove = body.InstanceId;
+            if (body.Quantity.HasValue && body.Quantity.Value < item.Quantity)
+            {
+                // Partial transfer: split the stack first, then move the split portion
+                var (splitStatus, splitResponse) = await SplitStackAsync(new SplitStackRequest
+                {
+                    InstanceId = body.InstanceId,
+                    Quantity = body.Quantity.Value
+                }, cancellationToken);
+
+                if (splitStatus != StatusCodes.OK || splitResponse is null)
+                {
+                    _logger.LogWarning("Failed to split stack for partial transfer: {Status}", splitStatus);
+                    return (splitStatus, null);
+                }
+
+                // Move the newly created split item, not the original
+                instanceIdToMove = splitResponse.NewInstanceId;
+            }
+
+            // Move the item (either original for full transfer, or split item for partial)
             var (moveStatus, _) = await MoveItemAsync(new MoveItemRequest
             {
-                InstanceId = body.InstanceId,
+                InstanceId = instanceIdToMove,
                 TargetContainerId = body.TargetContainerId
             }, cancellationToken);
 
@@ -1144,7 +1174,7 @@ public partial class InventoryService : IInventoryService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
-                InstanceId = body.InstanceId,
+                InstanceId = instanceIdToMove,
                 TemplateId = item.TemplateId,
                 SourceContainerId = sourceContainerId,
                 SourceOwnerId = sourceContainer.OwnerId,
@@ -1158,7 +1188,7 @@ public partial class InventoryService : IInventoryService
             return (StatusCodes.OK, new TransferItemResponse
             {
                 Success = true,
-                InstanceId = body.InstanceId,
+                InstanceId = instanceIdToMove,
                 SourceContainerId = sourceContainerId,
                 TargetContainerId = body.TargetContainerId,
                 QuantityTransferred = quantityToTransfer

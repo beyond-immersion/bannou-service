@@ -325,7 +325,7 @@ Client                    Asset Service                     MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` in `Processing/IAssetProcessor.cs` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define a `ProcessingErrorCode` enum for compile-time validation. Note: `MetabundleErrorCode` and client event error codes have been properly typed as enums; only the internal processing result types remain strings.
+1. ~~**T25 (String constants instead of enum)**~~: **FIXED** (2026-02-01) - Added `ProcessingErrorCode` enum with 7 values (UnsupportedContentType, UnsupportedFormat, FileTooLarge, MissingExtension, SourceNotFound, TranscodingFailed, ProcessingError). Changed `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` to use `ProcessingErrorCode?` type. All processors (TextureProcessor, ModelProcessor, AudioProcessor) now use strongly-typed enum values.
 
 2. **Schema-code event mismatch**: The events schema (`asset-events.yaml`) declares `asset.processing.queued` and `asset.ready` events that are not actually published anywhere in the service code. These should either be implemented or removed from the schema to prevent downstream consumers from expecting events that never fire.
 
@@ -371,4 +371,6 @@ Client                    Asset Service                     MinIO Storage
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-*No items are currently being tracked.*
+### Completed
+
+- **2026-02-01**: Fixed T25 violation - Added `ProcessingErrorCode` enum to replace string constants in `AssetProcessingResult` and `AssetValidationResult`. Modified 4 files: `IAssetProcessor.cs`, `TextureProcessor.cs`, `ModelProcessor.cs`, `AudioProcessor.cs`. Updated tests in `AudioProcessorTests.cs`.

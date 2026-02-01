@@ -64,7 +64,7 @@ public sealed class TextureProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"Unsupported content type: {context.ContentType}",
-                "UNSUPPORTED_CONTENT_TYPE");
+                ProcessingErrorCode.UnsupportedContentType);
         }
 
         // Check file size limits
@@ -73,7 +73,7 @@ public sealed class TextureProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                "FILE_TOO_LARGE");
+                ProcessingErrorCode.FileTooLarge);
         }
 
         // Check for potentially problematic scenarios
@@ -169,7 +169,7 @@ public sealed class TextureProcessor : IAssetProcessor
 
             return AssetProcessingResult.Failed(
                 ex.Message,
-                "PROCESSING_ERROR",
+                ProcessingErrorCode.ProcessingError,
                 stopwatch.ElapsedMilliseconds);
         }
     }

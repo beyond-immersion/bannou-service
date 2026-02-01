@@ -439,6 +439,7 @@ Circuit Breaker State Machine
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/193 -->
 
 3. **JSON Schema validation**: SchemaMigrator.ValidateAgainstSchema only verifies data is valid JSON. Full JSON Schema (draft-07) validation is not implemented. Comment notes potential use of JsonSchema.Net library.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/229 -->
 
 4. **Auto-collapse during cleanup**: CleanupService logs delta chains that could be collapsed when AutoCollapseEnabled is true, but does not actually perform the collapse. It only identifies candidates.
 
@@ -528,3 +529,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **BSDIFF delta algorithm** - Library selection and design decisions needed. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
 - **XDELTA delta algorithm** - Consolidated with BSDIFF; same library selection and design questions apply. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
+- **JSON Schema validation** - Method exists but is never called; design decisions needed on where/when to invoke validation. See [#229](https://github.com/beyond-immersion/bannou-service/issues/229). (2026-02-01)
