@@ -281,13 +281,15 @@ Stack Operations
 
 ### Bugs (Fix Immediately)
 
-1. **RemoveItem does not decrement counters if lock fails on source**: In `RemoveItemFromContainer`, if the lock acquisition fails, the method returns Conflict but the caller may have already partially processed the operation. However, the lock is acquired after getting the item, so this is a minor issue - the operation is cleanly rejected.
+1. ~~**RemoveItem does not decrement counters if lock fails on source**~~: **NOT A BUG** (2026-01-31) - Code review confirms lock is acquired BEFORE any counter modifications (line 852-857), so lock failure results in clean rejection with no state changes. Moved to Intentional Quirks as documentation of safe behavior.
 
 2. ~~**MergeStacks only locks source container**~~: **FIXED** (2026-01-30) - MergeStacks now acquires locks on both containers when items are in different containers, using deterministic ordering (smaller GUID first) to prevent deadlocks.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **List index locking separate from container lock**: Owner/type indexes use `ListLockTimeoutSeconds` (default 15s, shorter than container locks). Index lock failure is non-fatal - a warning is logged but the main operation succeeds. This means index state can drift from container state if locks fail.
+1. **Lock acquired before any modifications**: All mutating operations (remove, add, update, delete, split, merge, transfer) acquire the distributed lock BEFORE reading or modifying container state. If lock acquisition fails, the operation returns `Conflict` with no state changes - clean rejection, no partial processing.
+
+2. **List index locking separate from container lock**: Owner/type indexes use `ListLockTimeoutSeconds` (default 15s, shorter than container locks). Index lock failure is non-fatal - a warning is logged but the main operation succeeds. This means index state can drift from container state if locks fail.
 
 2. **Nesting depth validation uses parent's limit**: When creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children.
 
@@ -327,4 +329,5 @@ Stack Operations
 - **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Design and implementation of configurable drop behavior for removed items. Current `RemoveItemFromContainer` leaves items in limbo (container counters updated but item's ContainerId unchanged). Issue tracks adding per-container drop configuration, a `/inventory/drop` endpoint, and location-owned ground containers.
 
 ### Completed
+- **2026-01-31**: Audit confirmed "RemoveItem counter decrement on lock fail" is not a bug - lock is acquired before any modifications. Moved to Intentional Quirks.
 - **2026-01-30**: Fixed MergeStacks race condition - now locks both containers with deterministic ordering

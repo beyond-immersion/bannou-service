@@ -108,18 +108,6 @@ public class DocumentationServiceConfiguration : IServiceConfiguration
     public int MaxImportDocuments { get; set; } = 0;
 
     /// <summary>
-    /// Enable AI-powered semantic search (future feature)
-    /// Environment variable: DOCUMENTATION_AI_ENHANCEMENTS_ENABLED
-    /// </summary>
-    public bool AiEnhancementsEnabled { get; set; } = false;
-
-    /// <summary>
-    /// Model for generating embeddings (when AI enabled)
-    /// Environment variable: DOCUMENTATION_AI_EMBEDDINGS_MODEL
-    /// </summary>
-    public string? AiEmbeddingsModel { get; set; }
-
-    /// <summary>
     /// Local path for cloned git repositories
     /// Environment variable: DOCUMENTATION_GIT_STORAGE_PATH
     /// </summary>

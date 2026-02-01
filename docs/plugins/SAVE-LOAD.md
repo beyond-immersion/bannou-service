@@ -433,6 +433,7 @@ Circuit Breaker State Machine
 ## Stubs & Unimplemented Features
 
 1. **BSDIFF delta algorithm**: DeltaProcessor throws `NotSupportedException` for BSDIFF. Defined in config as an option but not implemented. Intended for binary game state where JSON Patch is inappropriate.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/193 -->
 
 2. **XDELTA delta algorithm**: Same as BSDIFF - stubbed with `NotSupportedException`. Listed as a supported algorithm in configuration but has no implementation.
 
@@ -522,4 +523,6 @@ Circuit Breaker State Machine
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-(No active work items)
+### Needs Design Review
+
+- **BSDIFF delta algorithm** - Library selection and design decisions needed. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)

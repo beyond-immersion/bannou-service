@@ -71,18 +71,6 @@ x-service-configuration:
       env: DOCUMENTATION_MAX_IMPORT_DOCUMENTS
       default: 0
 
-    # AI Enhancement Configuration (disabled by default)
-    AiEnhancementsEnabled:
-      type: boolean
-      description: Enable AI-powered semantic search (future feature)
-      env: DOCUMENTATION_AI_ENHANCEMENTS_ENABLED
-      default: false
-    AiEmbeddingsModel:
-      type: string
-      nullable: true  # NRT: Optional config MUST be nullable (only used when AI enabled)
-      description: Model for generating embeddings (when AI enabled)
-      env: DOCUMENTATION_AI_EMBEDDINGS_MODEL
-
     # Git Repository Binding Configuration
     GitStoragePath:
       type: string

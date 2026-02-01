@@ -169,6 +169,7 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 ## Stubs & Unimplemented Features
 
 1. **RTPEngine publish/subscribe**: `PublishAsync` and `SubscribeRequestAsync` are fully implemented in `RtpEngineClient` but never called by `VoiceService`. XML docs indicate these are reserved for future SFU publisher/subscriber routing.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/195 -->
 
 2. **Service-to-service events**: `voice-events.yaml` is a stub with empty publications/subscriptions. No domain events are published to the message bus (only error events via `TryPublishErrorAsync`).
 
@@ -229,4 +230,8 @@ None identified.
 
 ## Work Tracking
 
-No active work items.
+### Issues Created
+
+| Date | Issue | Gap | Status |
+|------|-------|-----|--------|
+| 2026-01-31 | [#195](https://github.com/beyond-immersion/bannou-service/issues/195) | RTPEngine publish/subscribe methods unused in scaled tier | Needs Design |

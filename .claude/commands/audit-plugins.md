@@ -38,19 +38,24 @@ If no argument or invalid argument:
 
 **CRITICAL: Only select plugins that have actionable gaps.**
 
-Use the `scripts/check-plugin-gaps.sh` script to filter plugins:
+**⛔ DO NOT write your own grep/awk commands. The script already outputs the counts.**
+
+Run this EXACT command (copy-paste it, do not modify):
 
 ```bash
-# Find all plugins with actionable gaps
 for f in docs/plugins/*.md; do
   [ "$(basename "$f")" = "DEEP_DIVE_TEMPLATE.md" ] && continue
-  if scripts/check-plugin-gaps.sh "$f" >/dev/null 2>&1; then
-    echo "$f"
-  fi
+  name=$(basename "$f")
+  output=$(scripts/check-plugin-gaps.sh "$f" 2>/dev/null)
+  exitcode=$?
+  echo "$name|$output|$exitcode"
 done
 ```
 
-**Report the scan results:**
+The script outputs `TOTAL=N AUDIT=N FIXED=N ACTIONABLE=N` - parse THAT output for your table.
+Exit code 0 means actionable gaps exist. Exit code 1 means no actionable gaps.
+
+**Report the scan results (built from script output, NOT your own grep):**
 ```
 ## Plugin Gap Scan
 
@@ -66,10 +71,13 @@ done
 
 ### Step 3: Select Plugins
 
-From the filtered list (plugins WITH actionable gaps), randomly select N:
+From the filtered list (plugins WITH actionable gaps), randomly select N.
+
+**⛔ DO NOT write your own filtering logic. Use the script's exit code.**
+
+Run this EXACT command (replace {N} with the count):
 
 ```bash
-# Get list of plugins with gaps, then shuffle and take N
 for f in docs/plugins/*.md; do
   [ "$(basename "$f")" = "DEEP_DIVE_TEMPLATE.md" ] && continue
   if scripts/check-plugin-gaps.sh "$f" >/dev/null 2>&1; then
@@ -77,6 +85,8 @@ for f in docs/plugins/*.md; do
   fi
 done | shuf -n {N}
 ```
+
+Exit code 0 = has actionable gaps (include). Exit code 1 = no gaps (exclude).
 
 **If requested count > available plugins with gaps:**
 - Report: "Requested {N} but only {M} plugins have actionable gaps. Auditing {M} plugins."

@@ -93,8 +93,6 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `MinRelevanceScore` | `DOCUMENTATION_MIN_RELEVANCE_SCORE` | `0.3` | Default minimum relevance for query results |
 | `MaxSearchResults` | `DOCUMENTATION_MAX_SEARCH_RESULTS` | `20` | Maximum search/query results returned |
 | `MaxImportDocuments` | `DOCUMENTATION_MAX_IMPORT_DOCUMENTS` | `0` | Max documents per import (0 = unlimited) |
-| `AiEnhancementsEnabled` | `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | `false` | Enable AI-powered semantic search (future) |
-| `AiEmbeddingsModel` | `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | (null) | Embeddings model when AI enabled |
 | `GitStoragePath` | `DOCUMENTATION_GIT_STORAGE_PATH` | `/tmp/bannou-git-repos` | Local path for cloned repositories |
 | `GitStorageCleanupHours` | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | `24` | Hours before orphaned repos are cleaned up |
 | `GitCloneTimeoutSeconds` | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | `300` | Git clone/pull timeout |
@@ -118,7 +116,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<DocumentationService>` | Scoped | Structured logging |
-| `DocumentationServiceConfiguration` | Singleton | All 27 configuration properties (26 service-specific + ForceServiceId) |
+| `DocumentationServiceConfiguration` | Singleton | All 25 configuration properties (24 service-specific + ForceServiceId) |
 | `IStateStoreFactory` | Singleton | Redis state store access for all data |
 | `IDistributedLockProvider` | Singleton | Sync operation locking |
 | `IMessageBus` | Scoped | Event publishing (lifecycle, analytics, errors) |
@@ -379,7 +377,7 @@ Archive System
 
 ## Stubs & Unimplemented Features
 
-1. **AI-powered semantic search**: Configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` exist but the query/search implementations use the same inverted-index keyword matching. The `QueryAsync` method on `SearchIndexService` is identical to `SearchAsync` with an added relevance score filter. No embeddings generation, vector storage, or semantic similarity is implemented.
+1. ~~**AI-powered semantic search stub config**~~: **FIXED** (2026-01-31) - Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` that were never referenced in service code (T21 violation). The query/search implementations both use inverted-index keyword matching. The `QueryAsync` method is identical to `SearchAsync` with an added relevance score filter. This is the correct current behavior; semantic search remains a potential future extension (see Potential Extensions below).
 
 2. **RedisSearchIndexService**: A `RedisSearchIndexService` class exists and is registered when `stateStoreFactory.SupportsSearch()` returns true, but the in-memory `SearchIndexService` fallback is the common code path. The Redis Search (FT.*) integration is partially implemented for environments with RediSearch module.
 
@@ -462,3 +460,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-31**: Fixed N+1 query pattern in `ListDocumentsAsync` and `ListTrashcanAsync`. Both methods now use `GetBulkAsync` for bulk document retrieval instead of individual `GetAsync` calls in loops. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items.
 
 - **2026-01-31**: Fixed `ViewDocumentBySlugAsync` return type from `(StatusCodes, object?)` to `(StatusCodes, string?)`. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in `DocumentationController.ViewDocumentBySlug`.
+
+- **2026-01-31**: Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` from schema (T21 violation - never referenced in service code). Updated tests to remove assertions for removed properties. Semantic search remains a potential future extension.
