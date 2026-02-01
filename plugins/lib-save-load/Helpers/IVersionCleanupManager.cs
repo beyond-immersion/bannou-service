@@ -37,4 +37,20 @@ public interface IVersionCleanupManager
     Task CleanupOldVersionsAsync(
         SaveSlotMetadata slot,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Collapses delta chains that exceed the configured maximum length.
+    /// For each delta version at the end of a chain exceeding MaxDeltaChainLength,
+    /// reconstructs the full data and stores as a new full snapshot.
+    /// </summary>
+    /// <param name="slot">The slot metadata.</param>
+    /// <param name="deltaVersions">The delta versions in the slot to evaluate for collapse.</param>
+    /// <param name="maxChainLength">Maximum allowed delta chain length before collapse.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of delta chains collapsed.</returns>
+    Task<int> CollapseExcessiveDeltaChainsAsync(
+        SaveSlotMetadata slot,
+        IReadOnlyList<SaveVersionManifest> deltaVersions,
+        int maxChainLength,
+        CancellationToken cancellationToken);
 }

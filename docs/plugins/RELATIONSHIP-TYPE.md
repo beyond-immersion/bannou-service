@@ -205,6 +205,7 @@ State Store Layout
 ## Stubs & Unimplemented Features
 
 1. **`IncludeChildren` parameter ignored**: The `ListRelationshipTypesRequest.IncludeChildren` property exists in the schema (default: `true`) but is not used in `ListRelationshipTypesAsync`. The list endpoint always returns all types matching the filters, regardless of this flag's value.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/233 -->
 
 ---
 
@@ -258,6 +259,10 @@ State Store Layout
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above.
+
+### In Progress
+
+- **2026-02-01**: Issue #233 - `IncludeChildren` parameter semantics require design decision (NEEDS_DESIGN)
 
 ### Completed
 

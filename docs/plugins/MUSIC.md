@@ -178,13 +178,16 @@ EmotionalState Dimensions
 ## Stubs & Unimplemented Features
 
 1. **CreateStyle not persisted**: `CreateStyleAsync` returns the style as if created but does not save to the `music-styles` MySQL store or the in-memory `BuiltInStyles` collection. Custom styles are lost after the response. See Design Consideration #1 below - tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 2. **music-styles store declared but unused**: The MySQL store for styles exists in `state-stores.yaml` but is never accessed. All styles come from hardcoded `BuiltInStyles`. See Design Consideration #1 below - tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 
 ---
 
 ## Potential Extensions
 
 1. **Persistent custom styles**: Implement CreateStyle to store in MySQL, merge with BuiltInStyles on load. Tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 2. **Multi-instrument arrangement**: Extend MIDI-JSON output to support multiple instrument tracks with orchestration rules.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/202 -->
 3. **Real-time streaming**: Generate and stream MIDI events for live performance scenarios.

@@ -194,6 +194,8 @@ None. The service is feature-complete for its scope.
 
 2. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
 
+3. **Helper abstractions constructed inline**: `DualIndexHelper` and `BackstoryStorageHelper` are instantiated directly in the constructor rather than registered in DI. This is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized. Testing works via `IStateStoreFactory` mocking - no special setup required.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory pagination for all list operations**: Fetches ALL participation records into memory, then filters and paginates. Characters with thousands of participations load entire list. Should implement store-level pagination.
@@ -202,9 +204,9 @@ None. The service is feature-complete for its scope.
 2. **No backstory element count limit**: No maximum on elements per character. Unbounded growth possible if AddBackstoryElement is called repeatedly without cleanup.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/207 -->
 
-3. **Helper abstractions are inline**: `DualIndexHelper` and `BackstoryStorageHelper` are constructed in the service constructor with configuration objects. Not registered in DI. Makes testing require constructor inspection.
+3. ~~**Helper abstractions are inline**~~: **FIXED** (2026-02-01) - Moved to Intentional Quirks. The inline construction is intentional: helpers require service-specific configuration (key prefixes, data access lambdas) that can't be generalized through DI. Testing is straightforward via `IStateStoreFactory` mocking - the original "requires constructor inspection" claim was inaccurate.
 
-4. **GUID parsing without validation in helper config**: The `SetEntityId` delegate passed to `BackstoryStorageHelper` configuration (CharacterHistoryService.cs:90) uses `Guid.Parse(id)` without try-catch. If a backstory record has corrupted characterId data in the state store, throws `FormatException` during backstory operations.
+4. ~~**GUID parsing without validation in helper config**~~: **REMOVED** (2026-02-01) - The documented concern was invalid. The `SetEntityId` delegate is only called when WRITING new data (with the `entityId` parameter from the request, which is already a valid GUID string from `Guid.ToString()`). It is never called during READ operations or deserialization of stored data. Corrupted store data cannot trigger this code path.
 
 5. **DeleteAll is O(n) with secondary index cleanup**: Iterates all participation records for a character, extracting event IDs via lambda, and removes from each event index individually. For characters with hundreds of participations, this generates many state store operations.
 
@@ -239,4 +241,6 @@ None. The service is feature-complete for its scope.
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
 
 ### Completed
+- **2026-02-01**: Removed "GUID parsing without validation in helper config" from Design Considerations - the documented concern was invalid. The `SetEntityId` delegate is only called when writing new data with validated request parameters, never during reads or deserialization.
+- **2026-02-01**: Reclassified "Helper abstractions are inline" from Design Considerations to Intentional Quirks - the inline construction is intentional design, and testing via `IStateStoreFactory` mocking is straightforward. The original "requires constructor inspection" claim was inaccurate.
 - **2026-01-31**: Fixed duplicate participation bug - `RecordParticipationAsync` now returns 409 Conflict when character+event pair already exists, matching schema contract.

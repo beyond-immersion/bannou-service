@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.SaveLoad.Helpers;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -275,16 +276,28 @@ public class CleanupService : BackgroundService
             }
         }
 
-        // Log delta chains that need collapsing (only when auto-collapse is enabled)
-        if (_configuration.AutoCollapseEnabled && versionsDeleted > 0)
+        // Collapse delta chains that exceed max length (when auto-collapse is enabled)
+        if (_configuration.AutoCollapseEnabled)
         {
             var remainingVersions = versionList.Except(versionsToDelete).ToList();
             var deltaVersions = remainingVersions.Where(v => v.IsDelta).ToList();
             if (deltaVersions.Count > 0)
             {
-                _logger.LogInformation(
-                    "Slot {SlotId} has {DeltaCount} delta versions that could be collapsed",
-                    slot.SlotId, deltaVersions.Count);
+                using var collapseScope = _serviceProvider.CreateScope();
+                var versionCleanupManager = collapseScope.ServiceProvider
+                    .GetRequiredService<IVersionCleanupManager>();
+                var collapsedCount = await versionCleanupManager.CollapseExcessiveDeltaChainsAsync(
+                    slot,
+                    deltaVersions,
+                    _configuration.MaxDeltaChainLength,
+                    cancellationToken);
+
+                if (collapsedCount > 0)
+                {
+                    _logger.LogInformation(
+                        "Auto-collapsed {CollapsedCount} delta chains for slot {SlotId}",
+                        collapsedCount, slot.SlotId);
+                }
             }
         }
 

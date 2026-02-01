@@ -199,6 +199,7 @@ Season Lifecycle
 ## Stubs & Unimplemented Features
 
 1. **IncludeArchived not implemented**: `ListLeaderboardDefinitions` returns `NotImplemented` when `IncludeArchived=true`. Archived leaderboards are mentioned in the API but not tracked.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/232 -->
 2. **GetSeason returns approximate dates**: `StartedAt` uses the definition's `CreatedAt` timestamp (not the actual season start). `EndedAt` uses `UtcNow` for inactive seasons. No per-season start/end tracking exists.
 3. **Batch submit ignores UpdateMode**: `SubmitScoreBatch` always uses Replace mode regardless of the leaderboard's configured `UpdateMode`. Individual `SubmitScore` respects the mode.
 

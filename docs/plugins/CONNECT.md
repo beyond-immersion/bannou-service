@@ -406,31 +406,15 @@ Connection Mode Behavior Matrix
 3. **Heartbeat sending**: `HeartbeatIntervalSeconds` is configured but no server-to-client heartbeat sending loop is implemented. The `UpdateSessionHeartbeatAsync` method exists for recording liveness but no periodic invocation mechanism is present.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/175 -->
 
-4. ~~**Rate limit window enforcement**~~: **FIXED** (2026-01-31) - Rate limiting now uses a dedicated `RateLimitTimestamps` queue in `ConnectionState` that tracks ALL incoming messages (not just pending responses). The `GetMessageCountInWindow()` method implements proper sliding window cleanup.
-
-5. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
+4. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/178 -->
-
-6. ~~**DefaultServices/AuthenticatedServices config**~~: **REMOVED** (2026-01-31) - Documentation error: these configuration properties never existed in the schema or implementation. Capability determination has always been event-driven from the Permission service.
 
 ---
 
 ## Potential Extensions
 
-1. ~~**Connection count enforcement**~~: **FIXED** (2026-01-31) - Connection limit check moved from `HandleWebSocketCommunicationAsync` to `ConnectController.HandleWebSocketConnectionAsync` BEFORE `AcceptWebSocketAsync()`. Now returns 503 Service Unavailable instead of accepting then immediately closing. Secondary check retained in service as defense-in-depth for race conditions.
-
-2. ~~**Server-initiated heartbeats**~~: **DUPLICATE** (2026-01-31) - Same as Stubs item 3 "Heartbeat sending" which has [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) for design decisions.
-
-3. ~~**Payload encryption**~~: **DUPLICATE** (2026-01-31) - Same as Stubs item 1 "Encrypted flag (0x02)" which has [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) for design decisions.
-
-4. ~~**Payload compression**~~: **DUPLICATE** (2026-01-31) - Same as Stubs item 2 "Compressed flag (0x04)" which has [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) for design decisions.
-
-5. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
+1. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/181 -->
-
-6. ~~**Pending RPC timeout cleanup**~~: **ALREADY IMPLEMENTED** (2026-01-31) - Documentation error: `_pendingRPCCleanupTimer` already runs every `RpcCleanupIntervalSeconds` (default 30s) calling `CleanupExpiredPendingRPCs()` which removes expired entries based on `TimeoutAt`.
-
-7. ~~**Graceful shutdown**~~: **FIXED** (2026-01-31) - ConnectService now implements IDisposable. On shutdown, the DI container calls Dispose() which in turn calls WebSocketConnectionManager.Dispose() to send close frames to all clients and wait up to ConnectionShutdownTimeoutSeconds before force-closing.
 
 ---
 
@@ -468,33 +452,21 @@ No bugs identified.
 
 7. **Instance ID non-deterministic**: `_instanceId` is generated as `MachineName-{random8chars}`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
 
-8. ~~**No graceful shutdown**~~: **FIXED** (2026-01-31) - ConnectService now implements IDisposable. During shutdown, WebSocketConnectionManager.Dispose() sends close frames to all connections with "Server shutdown" message and waits up to ConnectionShutdownTimeoutSeconds before force-closing.
+8. **Session subsumed skips account index removal**: Lines 866-870 - when a session is "subsumed" by a new connection (same session ID), the old connection's cleanup skips RemoveSessionFromAccountAsync. This is intentional (session is still active) but means account index removal only happens once per unique session lifecycle.
 
-9. **Session subsumed skips account index removal**: Lines 866-870 - when a session is "subsumed" by a new connection (same session ID), the old connection's cleanup skips RemoveSessionFromAccountAsync. This is intentional (session is still active) but means account index removal only happens once per unique session lifecycle.
+9. **Disconnect event published before account index removal**: Lines 816-846 - the `session.disconnected` event is published before the session is removed from the account index. Race condition: consumers receiving the event might still see the session in GetAccountSessions.
 
-10. **Disconnect event published before account index removal**: Lines 816-846 - the `session.disconnected` event is published before the session is removed from the account index. Race condition: consumers receiving the event might still see the session in GetAccountSessions.
+10. **RabbitMQ subscription retained during reconnection window**: Lines 871-889 - for non-forced disconnects, the RabbitMQ subscription is NOT immediately unsubscribed. Messages queue up during the reconnection window. Only forced disconnects unsubscribe immediately.
 
-11. **RabbitMQ subscription retained during reconnection window**: Lines 871-889 - for non-forced disconnects, the RabbitMQ subscription is NOT immediately unsubscribed. Messages queue up during the reconnection window. Only forced disconnects unsubscribe immediately.
+11. **Internal mode skips capability initialization entirely**: Lines 603-652 - internal mode connections skip all service mapping, capability manifest, and RabbitMQ subscription setup. They only get peer routing capability.
 
-12. **Internal mode skips capability initialization entirely**: Lines 603-652 - internal mode connections skip all service mapping, capability manifest, and RabbitMQ subscription setup. They only get peer routing capability.
-
-13. **Connection state created before auth validation**: Lines 590-591 - a new ConnectionState is allocated before checking connection limits. On high load, rejected connections still allocate and GC these objects.
+12. **Connection state created before auth validation**: Lines 590-591 - a new ConnectionState is allocated before checking connection limits. On high load, rejected connections still allocate and GC these objects.
 
 ---
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
-
-### Completed
-- **Rate limit window enforcement** - Fixed 2026-01-31 - Added dedicated `RateLimitTimestamps` queue to track ALL incoming messages
-- **DefaultServices/AuthenticatedServices config** - Removed 2026-01-31 - Documentation error: these config properties never existed
-- **Connection count enforcement** - Fixed 2026-01-31 - Moved check before WebSocket accept, now returns 503 instead of accepting then closing
-- **Pending RPC timeout cleanup** - Documentation error 2026-01-31 - Already implemented via `_pendingRPCCleanupTimer` and `CleanupExpiredPendingRPCs()` method
-- **Server-initiated heartbeats (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 3 "Heartbeat sending" tracked in Issue #175
-- **Payload encryption (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 1 "Encrypted flag" tracked in Issue #171
-- **Payload compression (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 2 "Compressed flag" tracked in Issue #172
-- **Graceful shutdown** - Fixed 2026-01-31 - ConnectService now implements IDisposable; WebSocket close frames sent on shutdown
 
 ### Pending Design Review
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - Requires design decisions on key exchange protocol, algorithm selection, and client SDK coordination (2026-01-31)

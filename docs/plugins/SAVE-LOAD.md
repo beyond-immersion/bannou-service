@@ -442,6 +442,7 @@ Circuit Breaker State Machine
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/229 -->
 
 4. **Auto-collapse during cleanup**: CleanupService logs delta chains that could be collapsed when AutoCollapseEnabled is true, but does not actually perform the collapse. It only identifies candidates.
+<!-- AUDIT:IN_PROGRESS:2026-02-01 -->
 
 5. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit.
 
