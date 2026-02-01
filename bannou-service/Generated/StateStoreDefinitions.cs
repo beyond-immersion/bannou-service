@@ -310,7 +310,7 @@ public static class StateStoreDefinitions
             [CurrencyIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:idemp" },
             [CurrencyTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_transactions" },
             [CurrencyWallets] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_wallets" },
-            [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
+            [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc", EnableSearch = true },
             [EdgeRevocation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth:edge" },
             [EscrowActiveValidation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:validate" },
             [EscrowAgreements] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_agreements" },

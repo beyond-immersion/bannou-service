@@ -163,6 +163,7 @@ x-state-stores:
     prefix: doc
     service: Documentation
     purpose: Documentation content and metadata
+    enableSearch: true
 
   # ============================================================================
   # Test Stores
