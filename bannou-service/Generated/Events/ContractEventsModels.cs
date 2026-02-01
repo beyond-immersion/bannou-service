@@ -1177,7 +1177,11 @@ public partial class ContractTemplateValuesSetEvent
 }
 
 /// <summary>
-/// Event published when contract clauses are executed (distributions made)
+/// Event published when contract clauses are executed (distributions made).
+/// <br/>Provides per-clause distribution results for escrow verification, enabling
+/// <br/>lib-escrow to correlate outcomes with its template value mappings and handle
+/// <br/>partial failures appropriately.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContractExecutedEvent
@@ -1220,6 +1224,18 @@ public partial class ContractExecutedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("distributionCount")]
     public int DistributionCount { get; set; } = default!;
+
+    /// <summary>
+    /// Per-clause distribution outcomes for escrow verification.
+    /// <br/>Escrow correlates these via clauseId to the template values it set,
+    /// <br/>enabling proper handling of partial failures without requiring
+    /// <br/>wallet/container IDs in the event payload.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("distributionResults")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ClauseDistributionResult> DistributionResults { get; set; } = new System.Collections.ObjectModel.Collection<ClauseDistributionResult>();
 
 }
 

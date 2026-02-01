@@ -2900,48 +2900,39 @@ components:
           nullable: true
           description: Idempotency key for the execution
 
-    DistributionRecord:
+    ClauseDistributionResult:
       type: object
-      description: Record of an asset distribution
+      description: |
+        Outcome of a single clause distribution during contract execution.
+        Used in ContractExecutedEvent to provide per-clause success/failure details
+        for escrow verification. Deliberately excludes wallet/container IDs as
+        escrow already knows this mapping from the template values it set.
+        Asset type is not included because clauseType already implies it
+        (currency_transfer = currency, item_transfer = item, fee = currency).
       additionalProperties: false
       required:
       - clauseId
       - clauseType
-      - assetType
       - amount
+      - succeeded
       properties:
         clauseId:
           type: string
-          description: Clause that was executed
+          format: uuid
+          description: The clause that was executed
         clauseType:
           type: string
-          description: Type of clause (fee, distribution)
-        assetType:
-          $ref: './escrow-api.yaml#/components/schemas/AssetType'
-          description: Type of asset (currency, item, etc.)
+          description: Type of clause (e.g., currency_transfer, item_transfer, fee)
         amount:
           type: number
-          description: Amount transferred
-        sourceWalletId:
+          description: Quantity transferred (currency amount, item count, etc.)
+        succeeded:
+          type: boolean
+          description: Whether this clause executed successfully
+        failureReason:
           type: string
-          format: uuid
           nullable: true
-          description: Source wallet ID (for currency)
-        destinationWalletId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination wallet ID (for currency)
-        sourceContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Source container ID (for items)
-        destinationContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination container ID (for items)
+          description: If succeeded is false, describes what went wrong
 
     ExecuteContractResponse:
       type: object
@@ -2964,9 +2955,9 @@ components:
         distributions:
           type: array
           items:
-            $ref: '#/components/schemas/DistributionRecord'
+            $ref: '#/components/schemas/ClauseDistributionResult'
           nullable: true
-          description: Records of what was moved where
+          description: Per-clause distribution outcomes with success/failure details
         executedAt:
           type: string
           format: date-time

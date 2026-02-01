@@ -857,7 +857,11 @@ components:
 
     ContractExecutedEvent:
       type: object
-      description: Event published when contract clauses are executed (distributions made)
+      description: |
+        Event published when contract clauses are executed (distributions made).
+        Provides per-clause distribution results for escrow verification, enabling
+        lib-escrow to correlate outcomes with its template value mappings and handle
+        partial failures appropriately.
       additionalProperties: false
       required:
         - eventId
@@ -865,6 +869,7 @@ components:
         - contractId
         - templateCode
         - distributionCount
+        - distributionResults
       properties:
         eventId:
           type: string
@@ -884,6 +889,15 @@ components:
         distributionCount:
           type: integer
           description: Number of distributions executed
+        distributionResults:
+          type: array
+          description: |
+            Per-clause distribution outcomes for escrow verification.
+            Escrow correlates these via clauseId to the template values it set,
+            enabling proper handling of partial failures without requiring
+            wallet/container IDs in the event payload.
+          items:
+            $ref: 'contract-api.yaml#/components/schemas/ClauseDistributionResult'
 
     # =========================================================================
     # Shared Event Models

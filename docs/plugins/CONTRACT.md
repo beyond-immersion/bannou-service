@@ -354,10 +354,10 @@ Clause Execution Pipeline
        │    │    └── Serialize payload for handler endpoint
        │    │
        │    ├── Execute via ServiceNavigator
-       │    │    ├── Success (200) → record distribution
-       │    │    └── Failure → publish contract.prebound-api.failed, skip clause
+       │    │    ├── Success (200) → record distribution (Succeeded=true)
+       │    │    └── Failure → publish contract.prebound-api.failed, record failure (Succeeded=false)
        │    │
-       │    └── Record DistributionRecordModel
+       │    └── Record DistributionRecordModel (always, including failures)
        │
        └── Save execution state (ExecutedAt, ExecutionIdempotencyKey, ExecutionDistributions)
 
@@ -435,12 +435,11 @@ Prebound API Batched Execution
 
 ### Bugs (Fix Immediately)
 
-1. ~~**T25 (Internal POCO uses string for enum)**~~: **FIXED** (2026-01-31) - Updated `DistributionRecordModel.AssetType` to use the `AssetType` enum (generated from escrow-api.yaml). Also updated the contract-api.yaml `DistributionRecord.assetType` schema to use `$ref: './escrow-api.yaml#/components/schemas/AssetType'` instead of `type: string`.
+1. ~~**T25 (Internal POCO uses string for enum)**~~: **FIXED** (2026-02-01) - Superseded by bug #3 fix. The `DistributionRecord` schema model was deleted entirely. The internal `DistributionRecordModel` no longer contains AssetType (clauseType already implies asset type). Contract is a foundational service and should not reference escrow's AssetType enum.
 
 2. ~~**T5 (ContractExecutedEvent not schema-defined)**~~: **FIXED** (2026-02-01) - Moved all 6 escrow integration events (ContractLockedEvent, ContractUnlockedEvent, ContractPartyTransferredEvent, ClauseTypeRegisteredEvent, ContractTemplateValuesSetEvent, ContractExecutedEvent) from inline definitions to schema. Added to x-event-publications and components/schemas in contract-events.yaml. Event publishing code now uses proper EntityType/ClauseCategory enums instead of strings.
 
-3. **ContractExecutedEvent lacks per-party distribution details**: The event only contains aggregate `DistributionCount`, not per-party or per-clause success/failure information. This prevents downstream consumers (particularly lib-escrow) from knowing which parties received their distributions, hindering contract-bound escrow integration.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/218 -->
+3. ~~**ContractExecutedEvent lacks per-party distribution details**~~: **FIXED** (2026-02-01) - Added `ClauseDistributionResult` model with per-clause success/failure tracking (`clauseId`, `clauseType`, `amount`, `succeeded`, `failureReason`). `ContractExecutedEvent` now includes `distributionResults` array. Deleted duplicate `DistributionRecord` model. Removed wallet/container IDs and assetType fields (contract is a foundational service with no escrow/inventory awareness - escrow knows the mapping from template values it set, clauseType already implies asset type). Implementation updated to always return distribution records including failures.
 
 Note: `PartyModel.Role` and similar Role properties are intentionally strings - they represent user-defined template roles (e.g., "buyer", "seller", "guarantor") not a fixed enum.
 
@@ -482,9 +481,10 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 
-- **2026-02-01**: ContractExecutedEvent enhancement - add per-party distribution details for escrow integration. Issue #218 created.
+(No active work items)
 
 ### Completed
 
+- **2026-02-01**: Issue #218 - Added per-clause distribution details to `ContractExecutedEvent`. Created `ClauseDistributionResult` model with success/failure tracking. Removed wallet/container IDs and assetType (foundational service principle - escrow knows mapping from template values, clauseType implies asset type). Deleted duplicate `DistributionRecord` model.
 - **2026-02-01**: Fixed T5 violation - moved all 6 escrow integration events from inline definitions to contract-events.yaml schema. Issue #217 closed.
-- **2026-01-31**: Fixed T25 violation - `DistributionRecordModel.AssetType` now uses proper `AssetType` enum. Schema updated to use `$ref` to escrow-api.yaml enum. (audit-plugin)
+- **2026-01-31**: Fixed T25 violation - `DistributionRecordModel.AssetType` now uses proper `AssetType` enum. Schema updated to use `$ref` to escrow-api.yaml enum. (audit-plugin) - Note: Superseded by Issue #218 fix which removed AssetType entirely.

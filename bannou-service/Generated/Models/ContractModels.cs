@@ -3028,22 +3028,28 @@ public partial class ExecuteContractRequest
 }
 
 /// <summary>
-/// Record of an asset distribution
+/// Outcome of a single clause distribution during contract execution.
+/// <br/>Used in ContractExecutedEvent to provide per-clause success/failure details
+/// <br/>for escrow verification. Deliberately excludes wallet/container IDs as
+/// <br/>escrow already knows this mapping from the template values it set.
+/// <br/>Asset type is not included because clauseType already implies it
+/// <br/>(currency_transfer = currency, item_transfer = item, fee = currency).
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DistributionRecord
+public partial class ClauseDistributionResult
 {
 
     /// <summary>
-    /// Clause that was executed
+    /// The clause that was executed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clauseId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ClauseId { get; set; } = default!;
+    public System.Guid ClauseId { get; set; } = default!;
 
     /// <summary>
-    /// Type of clause (fee, distribution)
+    /// Type of clause (e.g., currency_transfer, item_transfer, fee)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clauseType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -3051,43 +3057,22 @@ public partial class DistributionRecord
     public string ClauseType { get; set; } = default!;
 
     /// <summary>
-    /// Type of asset (currency, item, etc.)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetType AssetType { get; set; } = default!;
-
-    /// <summary>
-    /// Amount transferred
+    /// Quantity transferred (currency amount, item count, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
     public double Amount { get; set; } = default!;
 
     /// <summary>
-    /// Source wallet ID (for currency)
+    /// Whether this clause executed successfully
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceWalletId")]
-    public System.Guid? SourceWalletId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("succeeded")]
+    public bool Succeeded { get; set; } = default!;
 
     /// <summary>
-    /// Destination wallet ID (for currency)
+    /// If succeeded is false, describes what went wrong
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("destinationWalletId")]
-    public System.Guid? DestinationWalletId { get; set; } = default!;
-
-    /// <summary>
-    /// Source container ID (for items)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceContainerId")]
-    public System.Guid? SourceContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Destination container ID (for items)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("destinationContainerId")]
-    public System.Guid? DestinationContainerId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("failureReason")]
+    public string? FailureReason { get; set; } = default!;
 
 }
 
@@ -3117,10 +3102,10 @@ public partial class ExecuteContractResponse
     public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// Records of what was moved where
+    /// Per-clause distribution outcomes with success/failure details
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("distributions")]
-    public System.Collections.Generic.ICollection<DistributionRecord>? Distributions { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ClauseDistributionResult>? Distributions { get; set; } = default!;
 
     /// <summary>
     /// When execution occurred
@@ -3129,38 +3114,6 @@ public partial class ExecuteContractResponse
     public System.DateTimeOffset? ExecutedAt { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Type of asset held in escrow.
-/// <br/>- currency: Currency amount held in escrow wallet
-/// <br/>- item: Item instance held in escrow container
-/// <br/>- item_stack: Stackable items (quantity) held in escrow container
-/// <br/>- contract: Contract instance locked under escrow guardianship
-/// <br/>- custom: Custom asset type via registered handler
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"currency")]
-    Currency = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"item")]
-    Item = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"item_stack")]
-    ItemStack = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"contract")]
-    Contract = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

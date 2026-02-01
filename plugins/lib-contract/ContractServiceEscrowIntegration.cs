@@ -1002,16 +1002,13 @@ public partial class ContractService
                     Executed = true,
                     AlreadyExecuted = true,
                     ContractId = body.ContractInstanceId,
-                    Distributions = model.ExecutionDistributions?.Select(d => new DistributionRecord
+                    Distributions = model.ExecutionDistributions?.Select(d => new ClauseDistributionResult
                     {
-                        ClauseId = d.ClauseId,
+                        ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
                         ClauseType = d.ClauseType,
-                        AssetType = d.AssetType,
                         Amount = d.Amount,
-                        SourceWalletId = d.SourceWalletId,
-                        DestinationWalletId = d.DestinationWalletId,
-                        SourceContainerId = d.SourceContainerId,
-                        DestinationContainerId = d.DestinationContainerId
+                        Succeeded = d.Succeeded,
+                        FailureReason = d.FailureReason
                     }).ToList(),
                     ExecutedAt = model.ExecutedAt
                 });
@@ -1066,16 +1063,13 @@ public partial class ContractService
                 Executed = true,
                 AlreadyExecuted = false,
                 ContractId = body.ContractInstanceId,
-                Distributions = distributions.Select(d => new DistributionRecord
+                Distributions = distributions.Select(d => new ClauseDistributionResult
                 {
-                    ClauseId = d.ClauseId,
+                    ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
                     ClauseType = d.ClauseType,
-                    AssetType = d.AssetType,
                     Amount = d.Amount,
-                    SourceWalletId = d.SourceWalletId,
-                    DestinationWalletId = d.DestinationWalletId,
-                    SourceContainerId = d.SourceContainerId,
-                    DestinationContainerId = d.DestinationContainerId
+                    Succeeded = d.Succeeded,
+                    FailureReason = d.FailureReason
                 }).ToList(),
                 ExecutedAt = now
             };
@@ -1089,7 +1083,7 @@ public partial class ContractService
             }
 
             // Publish event
-            await PublishContractExecutedEventAsync(model, distributions.Count, cancellationToken);
+            await PublishContractExecutedEventAsync(model, distributions, cancellationToken);
 
             _logger.LogInformation("Executed contract: {ContractId} with {Count} distributions",
                 body.ContractInstanceId, distributions.Count);
@@ -1158,20 +1152,14 @@ public partial class ContractService
         foreach (var clause in feeClauses)
         {
             var result = await ExecuteSingleClauseAsync(clause, contract, context, ct);
-            if (result != null)
-            {
-                distributions.Add(result);
-            }
+            distributions.Add(result);
         }
 
         // Then execute distribution clauses
         foreach (var clause in distributionClauses)
         {
             var result = await ExecuteSingleClauseAsync(clause, contract, context, ct);
-            if (result != null)
-            {
-                distributions.Add(result);
-            }
+            distributions.Add(result);
         }
 
         _logger.LogInformation("Executed {Count} clauses for contract {ContractId}",
@@ -1182,8 +1170,9 @@ public partial class ContractService
 
     /// <summary>
     /// Executes a single clause by calling the registered clause type's execution handler.
+    /// Always returns a result - Succeeded indicates whether the clause executed successfully.
     /// </summary>
-    private async Task<DistributionRecordModel?> ExecuteSingleClauseAsync(
+    private async Task<DistributionRecordModel> ExecuteSingleClauseAsync(
         ClauseDefinition clause,
         ContractInstanceModel contract,
         Dictionary<string, object?> context,
@@ -1216,13 +1205,19 @@ public partial class ContractService
             {
                 _logger.LogWarning("No execution handler found for clause type: {Type}, clause: {ClauseId}",
                     clause.Type, clause.Id);
-                return null;
+                return new DistributionRecordModel
+                {
+                    ClauseId = clause.Id,
+                    ClauseType = clause.Type,
+                    Amount = 0,
+                    Succeeded = false,
+                    FailureReason = $"No execution handler found for clause type: {clause.Type}"
+                };
             }
 
             // Build the transfer payload based on clause type
             var handler = clauseType.ExecutionHandler;
             string payloadTemplate;
-            AssetType assetType;
             double amount;
             string? sourceId;
             string? destinationId;
@@ -1232,12 +1227,18 @@ public partial class ContractService
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("recipient_wallet"), contract.TemplateValues);
                 amount = ParseClauseAmount(clause, contract);
-                assetType = AssetType.Currency;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
                     _logger.LogWarning("Fee clause {ClauseId} missing source or recipient wallet after template resolution", clause.Id);
-                    return null;
+                    return new DistributionRecordModel
+                    {
+                        ClauseId = clause.Id,
+                        ClauseType = clause.Type,
+                        Amount = 0,
+                        Succeeded = false,
+                        FailureReason = "Missing source or recipient wallet after template resolution"
+                    };
                 }
 
                 // Remainder for fees: query source wallet balance
@@ -1249,7 +1250,14 @@ public partial class ContractService
                     {
                         _logger.LogWarning("Fee clause {ClauseId} failed: could not query remainder balance for wallet {WalletId}",
                             clause.Id, sourceId);
-                        return null;
+                        return new DistributionRecordModel
+                        {
+                            ClauseId = clause.Id,
+                            ClauseType = clause.Type,
+                            Amount = 0,
+                            Succeeded = false,
+                            FailureReason = $"Could not query remainder balance for wallet {sourceId}"
+                        };
                     }
                     amount = balanceResult.Value;
                 }
@@ -1269,12 +1277,18 @@ public partial class ContractService
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_container"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_container"), contract.TemplateValues);
                 amount = GetClauseDoubleProperty(clause, "quantity", 1);
-                assetType = AssetType.Item;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
                     _logger.LogWarning("Item clause {ClauseId} missing source or destination container after template resolution", clause.Id);
-                    return null;
+                    return new DistributionRecordModel
+                    {
+                        ClauseId = clause.Id,
+                        ClauseType = clause.Type,
+                        Amount = 0,
+                        Succeeded = false,
+                        FailureReason = "Missing source or destination container after template resolution"
+                    };
                 }
 
                 var itemCode = clause.GetProperty("item_code") ?? "all";
@@ -1292,12 +1306,18 @@ public partial class ContractService
                 sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_wallet"), contract.TemplateValues);
                 amount = ParseClauseAmount(clause, contract);
-                assetType = AssetType.Currency;
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
                 {
                     _logger.LogWarning("Distribution clause {ClauseId} missing source or destination wallet after template resolution", clause.Id);
-                    return null;
+                    return new DistributionRecordModel
+                    {
+                        ClauseId = clause.Id,
+                        ClauseType = clause.Type,
+                        Amount = 0,
+                        Succeeded = false,
+                        FailureReason = "Missing source or destination wallet after template resolution"
+                    };
                 }
 
                 // Remainder for distributions: query source wallet balance (after fees deducted)
@@ -1309,7 +1329,14 @@ public partial class ContractService
                     {
                         _logger.LogWarning("Distribution clause {ClauseId} failed: could not query remainder balance for wallet {WalletId}",
                             clause.Id, sourceId);
-                        return null;
+                        return new DistributionRecordModel
+                        {
+                            ClauseId = clause.Id,
+                            ClauseType = clause.Type,
+                            Amount = 0,
+                            Succeeded = false,
+                            FailureReason = $"Could not query remainder balance for wallet {sourceId}"
+                        };
                     }
                     amount = balanceResult.Value;
                 }
@@ -1337,6 +1364,7 @@ public partial class ContractService
 
             if (!result.SubstitutionSucceeded)
             {
+                var failureReason = $"Template substitution failed: {result.SubstitutionError}";
                 _logger.LogWarning("Template substitution failed for clause {ClauseId}: {Error}",
                     clause.Id, result.SubstitutionError);
                 await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
@@ -1347,14 +1375,22 @@ public partial class ContractService
                     Trigger = "contract.execute",
                     ServiceName = handler.Service,
                     Endpoint = handler.Endpoint,
-                    ErrorMessage = $"Template substitution failed: {result.SubstitutionError}",
+                    ErrorMessage = failureReason,
                     StatusCode = null
                 });
-                return null;
+                return new DistributionRecordModel
+                {
+                    ClauseId = clause.Id,
+                    ClauseType = clause.Type,
+                    Amount = amount,
+                    Succeeded = false,
+                    FailureReason = failureReason
+                };
             }
 
             if (result.Result == null || result.Result.StatusCode != 200)
             {
+                var failureReason = $"Handler returned status {result.Result?.StatusCode}";
                 _logger.LogWarning("Clause execution failed for {ClauseId}: status={StatusCode}",
                     clause.Id, result.Result?.StatusCode);
                 await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
@@ -1365,32 +1401,43 @@ public partial class ContractService
                     Trigger = "contract.execute",
                     ServiceName = handler.Service,
                     Endpoint = handler.Endpoint,
-                    ErrorMessage = $"Handler returned status {result.Result?.StatusCode}",
+                    ErrorMessage = failureReason,
                     StatusCode = result.Result?.StatusCode
                 });
-                return null;
+                return new DistributionRecordModel
+                {
+                    ClauseId = clause.Id,
+                    ClauseType = clause.Type,
+                    Amount = amount,
+                    Succeeded = false,
+                    FailureReason = failureReason
+                };
             }
 
-            _logger.LogDebug("Clause {ClauseId} executed: {Amount} {AssetType} from {Source} to {Dest}",
-                clause.Id, amount, assetType, sourceId, destinationId);
+            _logger.LogDebug("Clause {ClauseId} executed: {Amount} {ClauseType}",
+                clause.Id, amount, clause.Type);
 
             return new DistributionRecordModel
             {
                 ClauseId = clause.Id,
                 ClauseType = clause.Type,
-                AssetType = assetType,
                 Amount = amount,
-                SourceWalletId = assetType == AssetType.Currency && Guid.TryParse(sourceId, out var srcWallet) ? srcWallet : null,
-                DestinationWalletId = assetType == AssetType.Currency && Guid.TryParse(destinationId, out var dstWallet) ? dstWallet : null,
-                SourceContainerId = assetType == AssetType.Item && Guid.TryParse(sourceId, out var srcContainer) ? srcContainer : null,
-                DestinationContainerId = assetType == AssetType.Item && Guid.TryParse(destinationId, out var dstContainer) ? dstContainer : null
+                Succeeded = true,
+                FailureReason = null
             };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to execute clause {ClauseId} for contract {ContractId}",
                 clause.Id, contract.ContractId);
-            return null;
+            return new DistributionRecordModel
+            {
+                ClauseId = clause.Id,
+                ClauseType = clause.Type,
+                Amount = 0,
+                Succeeded = false,
+                FailureReason = ex.Message
+            };
         }
     }
 
@@ -1676,7 +1723,7 @@ public partial class ContractService
     }
 
     private async Task PublishContractExecutedEventAsync(
-        ContractInstanceModel model, int distributionCount, CancellationToken ct)
+        ContractInstanceModel model, List<DistributionRecordModel> distributions, CancellationToken ct)
     {
         await _messageBus.TryPublishAsync("contract.executed", new ContractExecutedEvent
         {
@@ -1684,7 +1731,15 @@ public partial class ContractService
             Timestamp = DateTimeOffset.UtcNow,
             ContractId = model.ContractId,
             TemplateCode = model.TemplateCode,
-            DistributionCount = distributionCount
+            DistributionCount = distributions.Count,
+            DistributionResults = distributions.Select(d => new ClauseDistributionResult
+            {
+                ClauseId = Guid.TryParse(d.ClauseId, out var cid) ? cid : Guid.Empty,
+                ClauseType = d.ClauseType,
+                Amount = d.Amount,
+                Succeeded = d.Succeeded,
+                FailureReason = d.FailureReason
+            }).ToList()
         });
     }
 
@@ -1720,17 +1775,16 @@ internal class ClauseHandlerModel
 
 /// <summary>
 /// Internal model for storing distribution records.
+/// Contract is a foundational service - no wallet/container IDs (escrow knows the mapping).
+/// No assetType - clauseType already implies it (currency_transfer = currency, etc.).
 /// </summary>
 internal class DistributionRecordModel
 {
     public string ClauseId { get; set; } = string.Empty;
     public string ClauseType { get; set; } = string.Empty;
-    public AssetType AssetType { get; set; }
     public double Amount { get; set; }
-    public Guid? SourceWalletId { get; set; }
-    public Guid? DestinationWalletId { get; set; }
-    public Guid? SourceContainerId { get; set; }
-    public Guid? DestinationContainerId { get; set; }
+    public bool Succeeded { get; set; }
+    public string? FailureReason { get; set; }
 }
 
 /// <summary>
