@@ -26,9 +26,10 @@ namespace BeyondImmersion.BannouService.Connect;
 /// <summary>
 /// WebSocket-first edge gateway service providing zero-copy message routing.
 /// Uses Permission service for dynamic API discovery and capability management.
+/// Implements IDisposable to enable graceful shutdown with WebSocket close frames.
 /// </summary>
 [BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
-public partial class ConnectService : IConnectService
+public partial class ConnectService : IConnectService, IDisposable
 {
     /// <summary>
     /// Named HttpClient for mesh proxying. Configured via IHttpClientFactory.
@@ -3054,6 +3055,38 @@ public partial class ConnectService : IConnectService
             409 => ResponseCodes.Service_Conflict,
             _ => ResponseCodes.Service_InternalServerError
         };
+    }
+
+    #endregion
+
+    #region IDisposable
+
+    private bool _disposed;
+
+    /// <summary>
+    /// Disposes the ConnectService, gracefully closing all WebSocket connections.
+    /// Called by the DI container during application shutdown.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+
+        _logger.LogInformation("ConnectService shutting down - closing all WebSocket connections");
+
+        // Dispose the pending RPC cleanup timer
+        _pendingRPCCleanupTimer?.Dispose();
+        _pendingRPCCleanupTimer = null;
+
+        // Dispose the connection manager, which gracefully closes all WebSocket connections
+        // with "Server shutdown" close frames and waits up to ConnectionShutdownTimeoutSeconds
+        _connectionManager.Dispose();
+
+        _logger.LogInformation("ConnectService shutdown complete");
     }
 
     #endregion

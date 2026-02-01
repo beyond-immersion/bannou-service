@@ -419,11 +419,11 @@ Connection Mode Behavior Matrix
 
 1. ~~**Connection count enforcement**~~: **FIXED** (2026-01-31) - Connection limit check moved from `HandleWebSocketCommunicationAsync` to `ConnectController.HandleWebSocketConnectionAsync` BEFORE `AcceptWebSocketAsync()`. Now returns 503 Service Unavailable instead of accepting then immediately closing. Secondary check retained in service as defense-in-depth for race conditions.
 
-2. **Server-initiated heartbeats**: Implement a background timer that sends periodic binary ping messages to clients, using `HeartbeatIntervalSeconds` configuration. Detect dead connections via missed pong responses.
+2. ~~**Server-initiated heartbeats**~~: **DUPLICATE** (2026-01-31) - Same as Stubs item 3 "Heartbeat sending" which has [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) for design decisions.
 
-3. **Payload encryption**: Implement AES-GCM encryption/decryption when `MessageFlags.Encrypted` is set. Key exchange could use per-session ephemeral keys established during WebSocket handshake.
+3. ~~**Payload encryption**~~: **DUPLICATE** (2026-01-31) - Same as Stubs item 1 "Encrypted flag (0x02)" which has [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) for design decisions.
 
-4. **Payload compression**: Implement gzip decompression when `MessageFlags.Compressed` is set, decompress before routing to backend. Compress responses when client indicates support.
+4. ~~**Payload compression**~~: **DUPLICATE** (2026-01-31) - Same as Stubs item 2 "Compressed flag (0x04)" which has [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) for design decisions.
 
 5. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/181 -->
@@ -431,6 +431,7 @@ Connection Mode Behavior Matrix
 6. ~~**Pending RPC timeout cleanup**~~: **ALREADY IMPLEMENTED** (2026-01-31) - Documentation error: `_pendingRPCCleanupTimer` already runs every `RpcCleanupIntervalSeconds` (default 30s) calling `CleanupExpiredPendingRPCs()` which removes expired entries based on `TimeoutAt`.
 
 7. **Graceful shutdown**: On application shutdown, send close frames to all connected clients with a "server_shutting_down" reason, wait for `ConnectionShutdownTimeoutSeconds`, then force-close remaining connections.
+<!-- AUDIT:IN_PROGRESS:2026-01-31 -->
 
 ---
 
@@ -491,6 +492,9 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **DefaultServices/AuthenticatedServices config** - Removed 2026-01-31 - Documentation error: these config properties never existed
 - **Connection count enforcement** - Fixed 2026-01-31 - Moved check before WebSocket accept, now returns 503 instead of accepting then closing
 - **Pending RPC timeout cleanup** - Documentation error 2026-01-31 - Already implemented via `_pendingRPCCleanupTimer` and `CleanupExpiredPendingRPCs()` method
+- **Server-initiated heartbeats (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 3 "Heartbeat sending" tracked in Issue #175
+- **Payload encryption (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 1 "Encrypted flag" tracked in Issue #171
+- **Payload compression (Potential Extensions)** - Duplicate 2026-01-31 - Consolidated with Stubs item 2 "Compressed flag" tracked in Issue #172
 
 ### Pending Design Review
 - **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - Requires design decisions on key exchange protocol, algorithm selection, and client SDK coordination (2026-01-31)

@@ -1150,6 +1150,142 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
     #endregion
 
+    #region UnbindItemInstance Tests
+
+    [Fact]
+    public async Task UnbindItemInstanceAsync_ValidRequest_UnbindsItem()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var previousCharacterId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+        model.BoundToId = previousCharacterId;
+        model.BoundAt = DateTimeOffset.UtcNow.AddHours(-1);
+
+        var template = CreateStoredTemplateModel(model.TemplateId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new UnbindItemInstanceRequest
+        {
+            InstanceId = instanceId,
+            Reason = "admin_override"
+        };
+
+        // Act
+        var (status, response) = await service.UnbindItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Null(response.BoundToId);
+        Assert.Null(response.BoundAt);
+    }
+
+    [Fact]
+    public async Task UnbindItemInstanceAsync_NotBound_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+        model.BoundToId = null;
+        model.BoundAt = null;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new UnbindItemInstanceRequest
+        {
+            InstanceId = instanceId,
+            Reason = "admin_override"
+        };
+
+        // Act
+        var (status, response) = await service.UnbindItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UnbindItemInstanceAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ItemInstanceModel?)null);
+
+        var request = new UnbindItemInstanceRequest
+        {
+            InstanceId = Guid.NewGuid(),
+            Reason = "admin_override"
+        };
+
+        // Act
+        var (status, response) = await service.UnbindItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UnbindItemInstanceAsync_PublishesUnboundEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var previousCharacterId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+        model.BoundToId = previousCharacterId;
+        model.BoundAt = DateTimeOffset.UtcNow.AddHours(-1);
+
+        var template = CreateStoredTemplateModel(model.TemplateId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new UnbindItemInstanceRequest
+        {
+            InstanceId = instanceId,
+            Reason = "transfer_override"
+        };
+
+        // Act
+        await service.UnbindItemInstanceAsync(request);
+
+        // Assert
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "item-instance.unbound",
+            It.Is<ItemInstanceUnboundEvent>(e =>
+                e.InstanceId == instanceId &&
+                e.PreviousCharacterId == previousCharacterId &&
+                e.Reason == "transfer_override"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
     #region DestroyItemInstance Tests
 
     [Fact]
