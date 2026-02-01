@@ -204,9 +204,7 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. **No event consumption**: Event consumer is registered in the constructor (`RegisterEventConsumers`) but no `RelationshipTypeServiceEvents.cs` partial class exists to implement handlers. Future: could listen for relationship deletion events to track type usage.
-
-2. **`IncludeChildren` parameter ignored**: The `ListRelationshipTypesRequest.IncludeChildren` property exists in the schema (default: `true`) but is not used in `ListRelationshipTypesAsync`. The list endpoint always returns all types matching the filters, regardless of this flag's value.
+1. **`IncludeChildren` parameter ignored**: The `ListRelationshipTypesRequest.IncludeChildren` property exists in the schema (default: `true`) but is not used in `ListRelationshipTypesAsync`. The list endpoint always returns all types matching the filters, regardless of this flag's value.
 
 ---
 
@@ -229,7 +227,9 @@ State Store Layout
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Depth auto-calculated but not updated**: Depth is `parent.Depth + 1` at creation time (lines 395-408). If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated. Depth recalculation would require traversing all descendants.
+1. **No event consumption by design**: The schema explicitly declares `x-event-subscriptions: []` with the comment "Relationship Type service doesn't subscribe to external events". Event consumer registration is called in the constructor but uses the default no-op implementation. Type usage checks (e.g., during delete) are performed on-demand via `IRelationshipClient.ListRelationshipsByTypeAsync` rather than maintaining cached counts via event subscriptions. This avoids complexity without sacrificing functionality.
+
+2. **Depth auto-calculated but not updated**: Depth is `parent.Depth + 1` at creation time (lines 395-408). If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated. Depth recalculation would require traversing all descendants.
 
 2. **Guid.Empty as null marker in events**: Event payloads use `Guid.Empty` for nullable fields like `ParentTypeId` and `InverseTypeId` when no value is set (lines 1198, 1227-1228). This is per the x-lifecycle schema pattern.
 
@@ -262,3 +262,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **2026-02-01**: Issue #215 - Fixed deletion validation bugs (deprecation requirement + relationship reference check)
+- **2026-02-01**: Audit - Moved "No event consumption" from Stubs to Intentional Quirks (by design, schema explicitly declares empty subscriptions, on-demand queries are sufficient)

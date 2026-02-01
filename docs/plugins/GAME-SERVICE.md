@@ -136,6 +136,7 @@ None. The service is feature-complete for its scope.
 
 1. ~~**Pagination for ListServices**~~: **FIXED** (2026-01-31) - Added `skip` (default 0) and `take` (default 50, max 200) parameters to `ListServicesRequest`. Response `totalCount` reflects total matching items (not page count). Filtering by `activeOnly` is applied before pagination.
 2. **Service metadata schema validation**: The `metadata` field could support schema validation per service type.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/228 -->
 3. **Service versioning**: Track deployment versions to inform clients of compatibility.
 
 ---

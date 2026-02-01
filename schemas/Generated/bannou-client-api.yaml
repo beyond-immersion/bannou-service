@@ -4190,6 +4190,80 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /escrow/confirm-release:
+    post:
+      operationId: confirmRelease
+      tags:
+      - Completion
+      summary: Confirm receipt of released assets
+      description: |
+        Called by parties to confirm they received their released assets.
+        Required when ReleaseMode is party_required or service_and_party.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmReleaseRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmReleaseResponse'
+        '400':
+          description: Confirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /escrow/confirm-refund:
+    post:
+      operationId: confirmRefund
+      tags:
+      - Completion
+      summary: Confirm receipt of refunded assets
+      description: |
+        Called by parties to confirm they received their refunded deposits.
+        Required when RefundMode is party_required.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmRefundRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmRefundResponse'
+        '400':
+          description: Confirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /escrow/resolve:
     post:
       operationId: resolve
@@ -10393,6 +10467,7 @@ components:
       enum:
       - term_violation
       - milestone_missed
+      - milestone_deadline
       - unauthorized_action
       - non_payment
     BulkGetAssetsRequest:
@@ -11378,6 +11453,44 @@ components:
       - validation
       - execution
       - both
+    ClauseDistributionResult:
+      type: object
+      description: |
+        Outcome of a single clause distribution during contract execution.
+        Used in ContractExecutedEvent to provide per-clause success/failure details.
+        Deliberately excludes wallet/container IDs - consumers tracking these should
+        correlate via clauseId to their own records.
+      additionalProperties: false
+      required:
+      - clauseId
+      - clauseType
+      - assetType
+      - amount
+      - succeeded
+      properties:
+        clauseId:
+          type: string
+          format: uuid
+          description: The clause that was executed
+        clauseType:
+          type: string
+          description: Type of clause (e.g., currency_transfer, item_transfer, 
+            fee)
+        assetType:
+          type: string
+          description: |
+            Descriptive type of asset involved (e.g., "currency", "item").
+            Provides human-readable context for what was transferred.
+        amount:
+          type: number
+          description: Quantity transferred (currency amount, item count, etc.)
+        succeeded:
+          type: boolean
+          description: Whether this clause executed successfully
+        failureReason:
+          type: string
+          nullable: true
+          description: If succeeded is false, describes what went wrong
     ClauseTypeSummary:
       type: object
       description: Summary of a clause type
@@ -11998,6 +12111,99 @@ components:
       - lzma
       - none
       description: Compression algorithm for bundles
+    ConfirmRefundRequest:
+      type: object
+      description: Request to confirm receipt of refunded assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt of refund.
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+    ConfirmRefundResponse:
+      type: object
+      description: Response from confirming refund receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Refunded
+            transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
+    ConfirmReleaseRequest:
+      type: object
+      description: Request to confirm receipt of released assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      - releaseToken
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt.
+        releaseToken:
+          type: string
+          description: The party's release token (received via confirmation 
+            shortcut).
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+    ConfirmReleaseResponse:
+      type: object
+      description: Response from confirming release receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Released
+            transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
     ConflictingBundleEntry:
       type: object
       additionalProperties: false
@@ -13461,6 +13667,19 @@ components:
           nullable: true
           additionalProperties: true
           description: Application metadata
+        releaseMode:
+          allOf:
+          - $ref: '#/components/schemas/ReleaseMode'
+          nullable: true
+          description: |
+            How release confirmation is handled. Defaults to service_only if not specified.
+            Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+        refundMode:
+          allOf:
+          - $ref: '#/components/schemas/RefundMode'
+          nullable: true
+          description: How refund confirmation is handled. Defaults to immediate
+            if not specified.
         idempotencyKey:
           type: string
           description: Idempotency key for this operation
@@ -14949,48 +15168,6 @@ components:
         escrow:
           $ref: '#/components/schemas/EscrowAgreement'
           description: Disputed escrow agreement
-    DistributionRecord:
-      type: object
-      description: Record of an asset distribution
-      additionalProperties: false
-      required:
-      - clauseId
-      - clauseType
-      - assetType
-      - amount
-      properties:
-        clauseId:
-          type: string
-          description: Clause that was executed
-        clauseType:
-          type: string
-          description: Type of clause (fee, distribution)
-        assetType:
-          $ref: '#/components/schemas/AssetType'
-          description: Type of asset (currency, item, etc.)
-        amount:
-          type: number
-          description: Amount transferred
-        sourceWalletId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Source wallet ID (for currency)
-        destinationWalletId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination wallet ID (for currency)
-        sourceContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Source container ID (for items)
-        destinationContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination container ID (for items)
     Document:
       description: Complete document with all metadata and content
       type: object
@@ -15901,6 +16078,18 @@ components:
           type: string
           nullable: true
           description: Notes about the resolution
+        releaseMode:
+          $ref: '#/components/schemas/ReleaseMode'
+          description: How release confirmation is handled for this escrow.
+        refundMode:
+          $ref: '#/components/schemas/RefundMode'
+          description: How refund confirmation is handled for this escrow.
+        confirmationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline for party confirmations when in 
+            Releasing/Refunding state.
     EscrowAsset:
       type: object
       description: An asset held in escrow
@@ -16540,9 +16729,10 @@ components:
         distributions:
           type: array
           items:
-            $ref: '#/components/schemas/DistributionRecord'
+            $ref: '#/components/schemas/ClauseDistributionResult'
           nullable: true
-          description: Records of what was moved where
+          description: Per-clause distribution outcomes with success/failure 
+            details
         executedAt:
           type: string
           format: date-time
@@ -21362,12 +21552,23 @@ components:
     ListServicesRequest:
       type: object
       additionalProperties: false
-      description: Request to list all game services
+      description: Request to list all game services with optional pagination
       properties:
         activeOnly:
           type: boolean
           default: false
           description: If true, only return active services
+        skip:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Number of services to skip for pagination (offset)
+        take:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+          description: Maximum number of services to return (limit)
     ListServicesResponse:
       type: object
       additionalProperties: false
@@ -22463,6 +22664,13 @@ components:
           items:
             type: string
           description: Non-fatal migration warnings
+    MilestoneDeadlineBehavior:
+      type: string
+      description: Behavior when optional milestone deadline passes
+      enum:
+      - skip
+      - warn
+      - breach
     MilestoneDefinition:
       type: object
       description: Milestone definition in a template
@@ -22497,6 +22705,11 @@ components:
           type: string
           nullable: true
           description: Relative deadline (ISO 8601 duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones 
+            (default skip). Required milestones always trigger breach.
         onComplete:
           type: array
           items:
@@ -22545,11 +22758,20 @@ components:
           format: date-time
           nullable: true
           description: When failed
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this milestone became active
         deadline:
           type: string
           format: date-time
           nullable: true
-          description: Absolute deadline
+          description: Absolute deadline (computed from activatedAt + duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones
     MilestoneProgressSummary:
       type: object
       description: Brief milestone progress
@@ -25307,6 +25529,15 @@ components:
           type: string
           description: Refresh token issued during authentication to obtain a 
             new access token
+    RefundMode:
+      type: string
+      description: |
+        Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+        Refunds typically use 'immediate' since parties get their own assets back.
+      enum:
+      - immediate
+      - service_only
+      - party_required
     RefundRequest:
       type: object
       description: Request to trigger escrow refund to depositors
@@ -25729,6 +25960,22 @@ components:
           type: string
           format: uuid
           description: Hold ID to release
+    ReleaseMode:
+      type: string
+      description: |
+        Controls how release confirmation is handled:
+        - immediate: Finalizing → Released (skip Releasing state entirely).
+          ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+          Assets are marked as released BEFORE downstream services confirm transfers.
+          If downstream services fail, manual intervention may be required.
+        - service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+        - party_required: Wait for all parties to call /confirm-release.
+        - service_and_party: Wait for both service completion AND party confirmation.
+      enum:
+      - immediate
+      - service_only
+      - party_required
+      - service_and_party
     ReleaseRequest:
       type: object
       description: Request to trigger escrow release to recipients

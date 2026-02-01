@@ -250,6 +250,11 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Relative deadline (ISO 8601 duration)"
                 },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach."
+                },
                 "onComplete": {
                     "type": "array",
                     "items": {
@@ -267,6 +272,15 @@ public partial class ContractController
                     "description": "APIs to call if deadline passes"
                 }
             }
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
+            ]
         },
         "PreboundApi": {
             "type": "object",
@@ -668,6 +682,11 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Relative deadline (ISO 8601 duration)"
                 },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach."
+                },
                 "onComplete": {
                     "type": "array",
                     "items": {
@@ -685,6 +704,15 @@ public partial class ContractController
                     "description": "APIs to call if deadline passes"
                 }
             }
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
+            ]
         },
         "PreboundApi": {
             "type": "object",
@@ -1169,6 +1197,11 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Relative deadline (ISO 8601 duration)"
                 },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach."
+                },
                 "onComplete": {
                     "type": "array",
                     "items": {
@@ -1186,6 +1219,15 @@ public partial class ContractController
                     "description": "APIs to call if deadline passes"
                 }
             }
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
+            ]
         },
         "PreboundApi": {
             "type": "object",
@@ -1724,6 +1766,11 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Relative deadline (ISO 8601 duration)"
                 },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach."
+                },
                 "onComplete": {
                     "type": "array",
                     "items": {
@@ -1741,6 +1788,15 @@ public partial class ContractController
                     "description": "APIs to call if deadline passes"
                 }
             }
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
+            ]
         },
         "PreboundApi": {
             "type": "object",
@@ -2245,6 +2301,11 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Relative deadline (ISO 8601 duration)"
                 },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach."
+                },
                 "onComplete": {
                     "type": "array",
                     "items": {
@@ -2262,6 +2323,15 @@ public partial class ContractController
                     "description": "APIs to call if deadline passes"
                 }
             }
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
+            ]
         },
         "PreboundApi": {
             "type": "object",
@@ -3006,11 +3076,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -3023,6 +3104,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -3402,11 +3492,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -3419,6 +3520,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -3809,11 +3919,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -3826,6 +3947,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -4205,11 +4335,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -4222,6 +4363,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -4684,11 +4834,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -4701,6 +4862,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -5097,11 +5267,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -5114,6 +5295,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -5357,6 +5547,7 @@ public partial class ContractController
             "enum": [
                 "term_violation",
                 "milestone_missed",
+                "milestone_deadline",
                 "unauthorized_action",
                 "non_payment"
             ]
@@ -5537,11 +5728,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -5554,6 +5756,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -5720,11 +5931,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -5737,6 +5959,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -5897,11 +6128,22 @@ public partial class ContractController
                     "nullable": true,
                     "description": "When failed"
                 },
+                "activatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this milestone became active"
+                },
                 "deadline": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
-                    "description": "Absolute deadline"
+                    "description": "Absolute deadline (computed from activatedAt + duration)"
+                },
+                "deadlineBehavior": {
+                    "$ref": "#/$defs/MilestoneDeadlineBehavior",
+                    "nullable": true,
+                    "description": "Behavior when deadline passes for optional milestones"
                 }
             }
         },
@@ -5914,6 +6156,15 @@ public partial class ContractController
                 "completed",
                 "failed",
                 "skipped"
+            ]
+        },
+        "MilestoneDeadlineBehavior": {
+            "type": "string",
+            "description": "Behavior when optional milestone deadline passes",
+            "enum": [
+                "skip",
+                "warn",
+                "breach"
             ]
         }
     }
@@ -6029,6 +6280,7 @@ public partial class ContractController
             "enum": [
                 "term_violation",
                 "milestone_missed",
+                "milestone_deadline",
                 "unauthorized_action",
                 "non_payment"
             ]
@@ -6124,6 +6376,7 @@ public partial class ContractController
             "enum": [
                 "term_violation",
                 "milestone_missed",
+                "milestone_deadline",
                 "unauthorized_action",
                 "non_payment"
             ]
@@ -6317,6 +6570,7 @@ public partial class ContractController
             "enum": [
                 "term_violation",
                 "milestone_missed",
+                "milestone_deadline",
                 "unauthorized_action",
                 "non_payment"
             ]
@@ -6504,6 +6758,7 @@ public partial class ContractController
             "enum": [
                 "term_violation",
                 "milestone_missed",
+                "milestone_deadline",
                 "unauthorized_action",
                 "non_payment"
             ]
@@ -8347,10 +8602,10 @@ public partial class ContractController
                 "distributions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/DistributionRecord"
+                        "$ref": "#/$defs/ClauseDistributionResult"
                     },
                     "nullable": true,
-                    "description": "Records of what was moved where"
+                    "description": "Per-clause distribution outcomes with success/failure details"
                 },
                 "executedAt": {
                     "type": "string",
@@ -8360,56 +8615,43 @@ public partial class ContractController
                 }
             }
         },
-        "DistributionRecord": {
+        "ClauseDistributionResult": {
             "type": "object",
-            "description": "Record of an asset distribution",
+            "description": "Outcome of a single clause distribution during contract execution.\nUsed in ContractExecutedEvent to provide per-clause success/failure details.\nDeliberately excludes wallet/container IDs - consumers tracking these should\ncorrelate via clauseId to their own records.\n",
             "additionalProperties": false,
             "required": [
                 "clauseId",
                 "clauseType",
                 "assetType",
-                "amount"
+                "amount",
+                "succeeded"
             ],
             "properties": {
                 "clauseId": {
                     "type": "string",
-                    "description": "Clause that was executed"
+                    "format": "uuid",
+                    "description": "The clause that was executed"
                 },
                 "clauseType": {
                     "type": "string",
-                    "description": "Type of clause (fee, distribution)"
+                    "description": "Type of clause (e.g., currency_transfer, item_transfer, fee)"
                 },
                 "assetType": {
-                    "type": "object",
-                    "description": "Type of asset (currency, item, etc.)"
+                    "type": "string",
+                    "description": "Descriptive type of asset involved (e.g., \"currency\", \"item\").\nProvides human-readable context for what was transferred.\n"
                 },
                 "amount": {
                     "type": "number",
-                    "description": "Amount transferred"
+                    "description": "Quantity transferred (currency amount, item count, etc.)"
                 },
-                "sourceWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet ID (for currency)"
+                "succeeded": {
+                    "type": "boolean",
+                    "description": "Whether this clause executed successfully"
                 },
-                "destinationWalletId": {
+                "failureReason": {
                     "type": "string",
-                    "format": "uuid",
                     "nullable": true,
-                    "description": "Destination wallet ID (for currency)"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source container ID (for items)"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Destination container ID (for items)"
+                    "description": "If succeeded is false, describes what went wrong"
                 }
             }
         }

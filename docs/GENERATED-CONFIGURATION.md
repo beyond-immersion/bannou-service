@@ -279,6 +279,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH` | double | `1.0` | Default initial memory strength for new perspectives (0.0-1.... |
 | `CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for query results |
+| `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | int | `5` | Time window in minutes for duplicate encounter detection. En... |
 | `CHARACTER_ENCOUNTER_MAX_BATCH_SIZE` | int | `100` | Maximum items in bulk operations (batch-get, etc.) |
 | `CHARACTER_ENCOUNTER_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for query results |
 | `CHARACTER_ENCOUNTER_MAX_PER_CHARACTER` | int | `1000` | Maximum encounters stored per character before oldest are pr... |
@@ -355,6 +356,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | int | `50` | Maximum number of milestones allowed in a template |
 | `CONTRACT_MAX_PARTIES_PER_CONTRACT` | int | `20` | Maximum number of parties allowed in a single contract |
 | `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | int | `10` | Maximum number of prebound APIs per milestone |
+| `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | int | `300` | Interval between milestone deadline checks in seconds (defau... |
+| `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first milestone deadline check in secon... |
 | `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
 | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
 
@@ -385,8 +388,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | **REQUIRED** | Model for generating embeddings (when AI enabled) |
-| `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | bool | `false` | Enable AI-powered semantic search (future feature) |
 | `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | int | `10` | Maximum documents processed per bulk operation |
 | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
 | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
@@ -416,7 +417,13 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE` | int | `100` | Maximum escrows to process per timeout check cycle |
+| `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | string | `auto_confirm` | What happens on confirmation timeout (auto_confirm/dispute/r... |
+| `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | int | `30` | How often the background service checks for expired confirma... |
+| `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | int | `300` | Timeout for party confirmations in seconds (default 5 minute... |
 | `ESCROW_DEFAULT_LIST_LIMIT` | int | `50` | Default limit for listing escrows when not specified |
+| `ESCROW_DEFAULT_REFUND_MODE` | string | `immediate` | Default refund confirmation mode (immediate/service_only/par... |
+| `ESCROW_DEFAULT_RELEASE_MODE` | string | `service_only` | Default release confirmation mode (immediate/service_only/pa... |
 | `ESCROW_DEFAULT_TIMEOUT` | string | `P7D` | Default escrow expiration if not specified (ISO 8601 duratio... |
 | `ESCROW_EXPIRATION_BATCH_SIZE` | int | `100` | Batch size for expiration processing |
 | `ESCROW_EXPIRATION_CHECK_INTERVAL` | string | `PT1M` | How often to check for expired escrows (ISO 8601 duration) |
@@ -427,9 +434,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ESCROW_MAX_PARTIES` | int | `10` | Maximum parties per escrow |
 | `ESCROW_MAX_PENDING_PER_PARTY` | int | `100` | Maximum concurrent pending escrows per party |
 | `ESCROW_MAX_TIMEOUT` | string | `P30D` | Maximum allowed escrow duration (ISO 8601 duration) |
-| `ESCROW_TOKEN_ALGORITHM` | string | `hmac_sha256` | Algorithm used for token generation |
 | `ESCROW_TOKEN_LENGTH` | int | `32` | Token length in bytes (before encoding) |
-| `ESCROW_TOKEN_SECRET` | string | **REQUIRED** | Token secret for HMAC (must be set in production) |
 | `ESCROW_VALIDATION_CHECK_INTERVAL` | string | `PT5M` | How often to validate held assets (ISO 8601 duration) |
 
 ### Game Session
@@ -609,6 +614,18 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `MUSIC_COMPOSITION_CACHE_TTL_SECONDS` | int | `86400` | TTL in seconds for cached deterministic compositions |
+| `MUSIC_DEFAULT_BEATS_PER_CHORD` | double | `4.0` | Default beats per chord in progression generation |
+| `MUSIC_DEFAULT_CHORDS_PER_BAR` | int | `1` | Default number of chords per bar in generated progressions |
+| `MUSIC_DEFAULT_EMOTIONAL_BRIGHTNESS` | double | `0.5` | Default brightness value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_ENERGY` | double | `0.5` | Default energy value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_STABILITY` | double | `0.8` | Default stability value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_TENSION` | double | `0.2` | Default tension value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_VALENCE` | double | `0.5` | Default valence value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_WARMTH` | double | `0.5` | Default warmth value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_MELODY_DENSITY` | double | `0.7` | Default note density for melody generation (0.0-1.0) |
+| `MUSIC_DEFAULT_MELODY_SYNCOPATION` | double | `0.2` | Default syncopation amount for melody generation (0.0-1.0) |
+| `MUSIC_DEFAULT_TICKS_PER_BEAT` | int | `480` | Default MIDI ticks per beat (PPQN) for composition rendering |
+| `MUSIC_DEFAULT_VOICE_COUNT` | int | `4` | Default number of voices for chord voicing |
 
 ### Orchestrator
 
@@ -733,7 +750,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
-| `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
@@ -742,7 +758,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SUBSCRIPTION_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
 | `SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES` | int | `5` | Interval in minutes between subscription expiration checks |
 | `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds before expired subscriptions are mar... |
 | `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before background service starts processing |
@@ -783,9 +798,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 599
-- **Required (no default)**: 43
-- **Optional (has default)**: 556
+- **Total properties**: 614
+- **Required (no default)**: 41
+- **Optional (has default)**: 573
 
 ## Environment Variable Naming Convention
 

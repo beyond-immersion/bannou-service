@@ -792,6 +792,77 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Get all characters in a realm (primary query pattern)\",\n    \"description\"\
         : \"\",\n    \"tags\": [\n        \"Character Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
         getCharactersByRealm\"\n}"
+  /character/transfer-realm:
+    post:
+      summary: Transfer character to a different realm
+      description: |
+        Moves a character from their current realm to a new target realm.
+        Updates all indexes, validates the target realm exists and is active,
+        and publishes realm transition events.
+      operationId: transferCharacterToRealm
+      tags:
+      - Character Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCharacterToRealmRequest'
+      responses:
+        '200':
+          description: Character transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          description: Invalid transfer (same realm or target realm invalid)
+        '404':
+          description: Character or target realm not found
+        '409':
+          description: Could not acquire lock on character
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferCharacterToRealmRequest\"\
+        ,\n    \"$defs\": {\n        \"TransferCharacterToRealmRequest\": {\n            \"description\": \"Request payload
+        for transferring a character to a different realm\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"targetRealmId\"\n     \
+        \       ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the character to transfer\"\
+        \n                },\n                \"targetRealmId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the realm to transfer the character
+        to\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
+        from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\"\
+        ,\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier for the character\"\n                },\n                \"name\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Display name of the character\"\n                },\n          \
+        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
+        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
+        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Transfer character to a different realm\",\n    \"description\": \"Moves
+        a character from their current realm to a new target realm.\\nUpdates all indexes, validates the target realm exists
+        and is active,\\nand publishes realm transition events.\\n\",\n    \"tags\": [\n        \"Character Management\"\n\
+        \    ],\n    \"deprecated\": false,\n    \"operationId\": \"transferCharacterToRealm\"\n}"
 components:
   schemas:
     CharacterStatus:
@@ -951,6 +1022,22 @@ components:
           maximum: 100
           default: 20
           description: Number of results per page
+    TransferCharacterToRealmRequest:
+      description: Request payload for transferring a character to a different realm
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - targetRealmId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to transfer
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the realm to transfer the character to
     CharacterResponse:
       description: Complete character data returned from character operations
       type: object

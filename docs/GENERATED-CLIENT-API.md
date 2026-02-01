@@ -16,7 +16,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 13 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for game worlds. |
+| [Bannou Character Service API](#character) | `client.Character` | 11 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
@@ -24,11 +24,11 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
-| [Escrow Service API](#escrow) | `client.Escrow` | 20 | Full-custody orchestration layer for multi-party asset excha... |
+| [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
-| [Item Service API](#item) | `client.Item` | 13 | Item template and instance management service. |
+| [Item Service API](#item) | `client.Item` | 14 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
@@ -377,6 +377,7 @@ Character management service for game worlds.
 | `UpdateCharacterAsync` | `UpdateCharacterRequest` | `CharacterResponse` | Update character |
 | `DeleteCharacterEventAsync` | `DeleteCharacterRequest` | *(fire-and-forget)* | Delete character (permanent removal) |
 | `ListCharactersAsync` | `ListCharactersRequest` | `CharacterListResponse` | List characters with filtering |
+| `TransfercharactertorealmAsync` | `TransferCharacterToRealmRequest` | `CharacterResponse` | Transfer character to a different realm |
 
 ---
 
@@ -770,6 +771,8 @@ Full-custody orchestration layer for multi-party asset exchanges.
 | `RefundAsync` | `RefundRequest` | `RefundResponse` | Trigger refund |
 | `CancelAsync` | `CancelRequest` | `CancelResponse` | Cancel escrow before fully funded |
 | `DisputeAsync` | `DisputeRequest` | `DisputeResponse` | Raise a dispute on funded escrow |
+| `ConfirmreleaseAsync` | `ConfirmReleaseRequest` | `ConfirmReleaseResponse` | Confirm receipt of released assets |
+| `ConfirmrefundAsync` | `ConfirmRefundRequest` | `ConfirmRefundResponse` | Confirm receipt of refunded assets |
 
 ### Condition
 
@@ -928,6 +931,7 @@ Item template and instance management service.
 | `GetIteminstanceAsync` | `GetItemInstanceRequest` | `ItemInstanceResponse` | Get item instance by ID |
 | `ModifyiteminstanceAsync` | `ModifyItemInstanceRequest` | `ItemInstanceResponse` | Modify item instance state |
 | `BinditeminstanceAsync` | `BindItemInstanceRequest` | `ItemInstanceResponse` | Bind item to character |
+| `UnbinditeminstanceAsync` | `UnbindItemInstanceRequest` | `ItemInstanceResponse` | Unbind item from character |
 | `DestroyiteminstanceAsync` | `DestroyItemInstanceRequest` | `DestroyItemInstanceResponse` | Destroy item instance |
 
 ### Item Query
@@ -1683,7 +1687,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 41
-- **Total methods**: 541
+- **Total methods**: 545
 
 ---
 

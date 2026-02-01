@@ -97,104 +97,123 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Human-readable description\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n    \
-        \                \"description\": \"Application metadata\"\n                },\n                \"idempotencyKey\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Idempotency key for this operation\"\
-        \n                }\n            }\n        },\n        \"EscrowType\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Type of escrow agreement.\\n- two_party: Simple trade escrow between Party A and Party
-        B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional: Release based on external condition
-        or contract fulfillment\\n- auction: Winner-takes-all with refunds to losers\\n\",\n            \"enum\": [\n    \
-        \            \"two_party\",\n                \"multi_party\",\n                \"conditional\",\n                \"\
-        auction\"\n            ]\n        },\n        \"EscrowTrustMode\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Trust model for the escrow agreement.\\n- full_consent: All parties must explicitly consent
-        using tokens\\n- initiator_trusted: The service that created the escrow can complete unilaterally\\n- single_party_trusted:
-        A designated party can complete unilaterally\\n\",\n            \"enum\": [\n                \"full_consent\",\n \
-        \               \"initiator_trusted\",\n                \"single_party_trusted\"\n            ]\n        },\n    \
-        \    \"CreateEscrowPartyInput\": {\n            \"type\": \"object\",\n            \"description\": \"Input for defining
-        a party in escrow creation\",\n            \"required\": [\n                \"partyId\",\n                \"partyType\"\
-        ,\n                \"role\"\n            ],\n            \"properties\": {\n                \"partyId\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Party entity ID\"\n                },\n                \"partyType\": {\n                    \"description\":
-        \"Type of entity (Account, Character, etc.)\",\n                    \"type\": \"object\"\n                },\n   \
-        \             \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Display name\"\n                },\n                \"role\": {\n        \
-        \            \"$ref\": \"#/$defs/EscrowPartyRole\",\n                    \"description\": \"Role of this party in
-        the escrow\"\n                },\n                \"consentRequired\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether consent is required (defaults
-        based on role)\"\n                },\n                \"walletId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Party wallet for currency operations\"\n                },\n                \"containerId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Party container for item operations\"\n                }\n            }\n\
-        \        },\n        \"EscrowPartyRole\": {\n            \"type\": \"string\",\n            \"description\": \"Role
-        of a party in the escrow.\\n- depositor: Deposits assets into escrow\\n- recipient: Receives assets when released\\
-        n- depositor_recipient: Both deposits and can receive (typical for trades)\\n- arbiter: Can resolve disputes, does
-        not deposit or receive\\n- observer: Can view status but cannot act\\n\",\n            \"enum\": [\n             \
-        \   \"depositor\",\n                \"recipient\",\n                \"depositor_recipient\",\n                \"arbiter\"\
-        ,\n                \"observer\"\n            ]\n        },\n        \"ExpectedDepositInput\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"Input for defining expected deposits from a party\",\n            \"\
-        required\": [\n                \"partyId\",\n                \"partyType\",\n                \"expectedAssets\"\n\
-        \            ],\n            \"properties\": {\n                \"partyId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Party who should deposit\"\n\
-        \                },\n                \"partyType\": {\n                    \"description\": \"Type of depositing party\"\
-        ,\n                    \"type\": \"object\"\n                },\n                \"expectedAssets\": {\n         \
-        \           \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAssetInput\"\
-        \n                    },\n                    \"description\": \"Expected assets\"\n                },\n         \
-        \       \"optional\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Is this deposit optional\"\n                },\n                \"depositDeadline\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Specific deadline for this deposit\"\n           \
-        \     }\n            }\n        },\n        \"EscrowAssetInput\": {\n            \"type\": \"object\",\n         \
-        \   \"description\": \"Input for specifying an asset in escrow operations\",\n            \"required\": [\n      \
-        \          \"assetType\"\n            ],\n            \"properties\": {\n                \"assetType\": {\n      \
-        \              \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type of asset to deposit\"\
-        \n                },\n                \"currencyDefinitionId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Currency definition ID\"\n                },\n                \"currencyCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code\"\n \
-        \               },\n                \"currencyAmount\": {\n                    \"type\": \"number\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Currency amount\"\n                },\n    \
-        \            \"itemInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Item instance ID\"\n    \
-        \            },\n                \"itemName\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item name\"\n                },\n                \"itemTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item template ID (for stacks)\"\n                },\n  \
-        \              \"itemTemplateName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Item template name\"\n                },\n                \"itemQuantity\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item quantity (for stacks)\"\n                },\n                \"contractInstanceId\": {\n                \
+        \                \"description\": \"Application metadata\"\n                },\n                \"releaseMode\": {\n\
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ReleaseMode\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"How release confirmation is handled. Defaults to service_only if not specified.\\nOnly applies
+        to unbound escrows; contract-bound escrows follow contract fulfillment.\\n\"\n                },\n               \
+        \ \"refundMode\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\"\
+        : \"#/$defs/RefundMode\"\n                        }\n                    ],\n                    \"nullable\": true,\n\
+        \                    \"description\": \"How refund confirmation is handled. Defaults to immediate if not specified.\"\
+        \n                },\n                \"idempotencyKey\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"Idempotency key for this operation\"\n                }\n            }\n        },\n\
+        \        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
+        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
+        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
+        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
+        All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
+        unilaterally\\n- single_party_trusted: A designated party can complete unilaterally\\n\",\n            \"enum\": [\n\
+        \                \"full_consent\",\n                \"initiator_trusted\",\n                \"single_party_trusted\"\
+        \n            ]\n        },\n        \"CreateEscrowPartyInput\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"Input for defining a party in escrow creation\",\n            \"required\": [\n            \
+        \    \"partyId\",\n                \"partyType\",\n                \"role\"\n            ],\n            \"properties\"\
+        : {\n                \"partyId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Party entity ID\"\n                },\n                \"partyType\"\
+        : {\n                    \"description\": \"Type of entity (Account, Character, etc.)\",\n                    \"type\"\
+        : \"object\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Display name\"\n                },\n\
+        \                \"role\": {\n                    \"$ref\": \"#/$defs/EscrowPartyRole\",\n                    \"description\"\
+        : \"Role of this party in the escrow\"\n                },\n                \"consentRequired\": {\n             \
+        \       \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
+        consent is required (defaults based on role)\"\n                },\n                \"walletId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Party wallet for currency operations\"\n                },\n             \
+        \   \"containerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Party container for item operations\"\
+        \n                }\n            }\n        },\n        \"EscrowPartyRole\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Role of a party in the escrow.\\n- depositor: Deposits assets into escrow\\n- recipient:
+        Receives assets when released\\n- depositor_recipient: Both deposits and can receive (typical for trades)\\n- arbiter:
+        Can resolve disputes, does not deposit or receive\\n- observer: Can view status but cannot act\\n\",\n           \
+        \ \"enum\": [\n                \"depositor\",\n                \"recipient\",\n                \"depositor_recipient\"\
+        ,\n                \"arbiter\",\n                \"observer\"\n            ]\n        },\n        \"ExpectedDepositInput\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Input for defining expected deposits from a
+        party\",\n            \"required\": [\n                \"partyId\",\n                \"partyType\",\n            \
+        \    \"expectedAssets\"\n            ],\n            \"properties\": {\n                \"partyId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Party who should deposit\"\n                },\n                \"partyType\": {\n                    \"description\"\
+        : \"Type of depositing party\",\n                    \"type\": \"object\"\n                },\n                \"\
+        expectedAssets\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"$ref\": \"#/$defs/EscrowAssetInput\"\n                    },\n                    \"description\": \"Expected
+        assets\"\n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Is this deposit optional\"\n          \
+        \      },\n                \"depositDeadline\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Specific
+        deadline for this deposit\"\n                }\n            }\n        },\n        \"EscrowAssetInput\": {\n     \
+        \       \"type\": \"object\",\n            \"description\": \"Input for specifying an asset in escrow operations\"\
+        ,\n            \"required\": [\n                \"assetType\"\n            ],\n            \"properties\": {\n   \
+        \             \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\"\
+        : \"Type of asset to deposit\"\n                },\n                \"currencyDefinitionId\": {\n                \
         \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Contract instance ID\"\n                },\n                \"contractTemplateCode\"\
+        \                   \"description\": \"Currency definition ID\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Contract template code\"\n                },\n                \"contractDescription\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        description\"\n                },\n                \"contractPartyRole\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Contract party role being escrowed\"\
-        \n                },\n                \"customAssetType\": {\n                    \"type\": \"string\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Custom asset type\"\n                },\n\
-        \                \"customAssetId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Custom asset ID\"\n                },\n                \"customAssetData\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Custom asset data\"\n                }\n            }\n        },\n\
-        \        \"AssetType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of asset held in
-        escrow.\\n- currency: Currency amount held in escrow wallet\\n- item: Item instance held in escrow container\\n- item_stack:
-        Stackable items (quantity) held in escrow container\\n- contract: Contract instance locked under escrow guardianship\\
-        n- custom: Custom asset type via registered handler\\n\",\n            \"enum\": [\n                \"currency\",\n\
-        \                \"item\",\n                \"item_stack\",\n                \"contract\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ReleaseAllocationInput\": {\n            \"type\": \"object\",\n          \
-        \  \"description\": \"Input for specifying how assets should be allocated on release\",\n            \"required\"\
-        : [\n                \"recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n\
-        \            ],\n            \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Recipient party ID\"\
-        \n                },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n     \
-        \               \"description\": \"Recipient party type\"\n                },\n                \"assets\": {\n   \
-        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAssetInput\"\
-        \n                    },\n                    \"description\": \"Assets to allocate\"\n                },\n      \
-        \          \"destinationWalletId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Destination wallet\"\n\
-        \                },\n                \"destinationContainerId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Destination container\"\n                }\n            }\n        }\n    }\n}"
+        : \"Currency code\"\n                },\n                \"currencyAmount\": {\n                    \"type\": \"number\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency amount\"\n           \
+        \     },\n                \"itemInstanceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Item instance
+        ID\"\n                },\n                \"itemName\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Item name\"\n                },\n          \
+        \      \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Item template ID (for stacks)\"\
+        \n                },\n                \"itemTemplateName\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Item template name\"\n                },\n\
+        \                \"itemQuantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Item quantity (for stacks)\"\n                },\n               \
+        \ \"contractInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Contract instance ID\"\n        \
+        \        },\n                \"contractTemplateCode\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Contract template code\"\n                },\n\
+        \                \"contractDescription\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Contract description\"\n                },\n                \"contractPartyRole\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract party role being escrowed\"\n                },\n                \"customAssetType\": {\n           \
+        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Custom asset type\"\n                },\n                \"customAssetId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Custom asset ID\"\n           \
+        \     },\n                \"customAssetData\": {\n                    \"type\": \"object\",\n                    \"\
+        nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\": \"Custom
+        asset data\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of asset held in escrow.\\n- currency: Currency amount held in escrow wallet\\
+        n- item: Item instance held in escrow container\\n- item_stack: Stackable items (quantity) held in escrow container\\
+        n- contract: Contract instance locked under escrow guardianship\\n- custom: Custom asset type via registered handler\\\
+        n\",\n            \"enum\": [\n                \"currency\",\n                \"item\",\n                \"item_stack\"\
+        ,\n                \"contract\",\n                \"custom\"\n            ]\n        },\n        \"ReleaseAllocationInput\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Input for specifying how assets should be allocated
+        on release\",\n            \"required\": [\n                \"recipientPartyId\",\n                \"recipientPartyType\"\
+        ,\n                \"assets\"\n            ],\n            \"properties\": {\n                \"recipientPartyId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Recipient party ID\"\n                },\n                \"recipientPartyType\": {\n           \
+        \         \"type\": \"object\",\n                    \"description\": \"Recipient party type\"\n                },\n\
+        \                \"assets\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/EscrowAssetInput\"\n                    },\n                    \"description\"\
+        : \"Assets to allocate\"\n                },\n                \"destinationWalletId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Destination wallet\"\n                },\n                \"destinationContainerId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Destination container\"\n                }\n            }\n      \
+        \  },\n        \"ReleaseMode\": {\n            \"type\": \"string\",\n            \"description\": \"Controls how
+        release confirmation is handled:\\n- immediate: Finalizing \\u2192 Released (skip Releasing state entirely).\\n  \\
+        u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\\n  Assets are marked
+        as released BEFORE downstream services confirm transfers.\\n  If downstream services fail, manual intervention may
+        be required.\\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\\
+        n- party_required: Wait for all parties to call /confirm-release.\\n- service_and_party: Wait for both service completion
+        AND party confirmation.\\n\",\n            \"enum\": [\n                \"immediate\",\n                \"service_only\"\
+        ,\n                \"party_required\",\n                \"service_and_party\"\n            ]\n        },\n       \
+        \ \"RefundMode\": {\n            \"type\": \"string\",\n            \"description\": \"Controls how refund confirmation
+        is handled. Same semantics as ReleaseMode.\\nRefunds typically use 'immediate' since parties get their own assets
+        back.\\n\",\n            \"enum\": [\n                \"immediate\",\n                \"service_only\",\n        \
+        \        \"party_required\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateEscrowResponse\"\
         ,\n    \"$defs\": {\n        \"CreateEscrowResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from creating an escrow agreement\",\n            \"required\": [\n                \"escrow\",\n    \
@@ -269,9 +288,15 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow
         was resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\":
         {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Notes about the resolution\"\n                }\n            }\n        },\n        \"EscrowType\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple trade
-        escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
+        : \"Notes about the resolution\"\n                },\n                \"releaseMode\": {\n                    \"$ref\"\
+        : \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation is handled for this escrow.\"\
+        \n                },\n                \"refundMode\": {\n                    \"$ref\": \"#/$defs/RefundMode\",\n \
+        \                   \"description\": \"How refund confirmation is handled for this escrow.\"\n                },\n\
+        \                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Deadline for party
+        confirmations when in Releasing/Refunding state.\"\n                }\n            }\n        },\n        \"EscrowType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple
+        trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
         Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with refunds to losers\\\
         n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\",\n                \"\
         conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\": {\n         \
@@ -478,15 +503,26 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"PartyToken\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"Token issued to a party for deposit or release operations\",\n     \
-        \       \"required\": [\n                \"partyId\",\n                \"partyType\",\n                \"token\"\n\
-        \            ],\n            \"properties\": {\n                \"partyId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Party ID\"\n                },\n\
-        \                \"partyType\": {\n                    \"description\": \"Type of entity (Account, Character, etc.)\"\
-        ,\n                    \"type\": \"object\"\n                },\n                \"token\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"The token\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        },\n\
+        \        \"PartyToken\": {\n            \"type\": \"object\",\n            \"description\": \"Token issued to a party
+        for deposit or release operations\",\n            \"required\": [\n                \"partyId\",\n                \"\
+        partyType\",\n                \"token\"\n            ],\n            \"properties\": {\n                \"partyId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Party ID\"\n                },\n                \"partyType\": {\n                    \"description\"\
+        : \"Type of entity (Account, Character, etc.)\",\n                    \"type\": \"object\"\n                },\n \
+        \               \"token\": {\n                    \"type\": \"string\",\n                    \"description\": \"The
+        token\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new escrow agreement\",\n    \"description\": \"Create a new escrow
         agreement. For each party, creates a dedicated escrow wallet\\nand container (owned by escrow entity). Issues deposit
         tokens and returns ALL\\ntokens to the creating service, which is responsible for distributing them to\\nparties through
@@ -597,11 +633,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -806,7 +848,19 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get escrow details\",\n    \"description\": \"Get escrow agreement details
         by ID.\",\n    \"tags\": [\n        \"Lifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEscrow\"\
         \n}"
@@ -942,9 +996,15 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow
         was resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\":
         {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Notes about the resolution\"\n                }\n            }\n        },\n        \"EscrowType\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple trade
-        escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
+        : \"Notes about the resolution\"\n                },\n                \"releaseMode\": {\n                    \"$ref\"\
+        : \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation is handled for this escrow.\"\
+        \n                },\n                \"refundMode\": {\n                    \"$ref\": \"#/$defs/RefundMode\",\n \
+        \                   \"description\": \"How refund confirmation is handled for this escrow.\"\n                },\n\
+        \                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Deadline for party
+        confirmations when in Releasing/Refunding state.\"\n                }\n            }\n        },\n        \"EscrowType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple
+        trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
         Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with refunds to losers\\\
         n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\",\n                \"\
         conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\": {\n         \
@@ -1151,7 +1211,19 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List escrows for a party\",\n    \"description\": \"List escrow agreements
         with filtering options.\",\n    \"tags\": [\n        \"Lifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listEscrows\"\n}"
@@ -1387,11 +1459,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -1596,15 +1674,26 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"PartyToken\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"Token issued to a party for deposit or release operations\",\n     \
-        \       \"required\": [\n                \"partyId\",\n                \"partyType\",\n                \"token\"\n\
-        \            ],\n            \"properties\": {\n                \"partyId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Party ID\"\n                },\n\
-        \                \"partyType\": {\n                    \"description\": \"Type of entity (Account, Character, etc.)\"\
-        ,\n                    \"type\": \"object\"\n                },\n                \"token\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"The token\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        },\n\
+        \        \"PartyToken\": {\n            \"type\": \"object\",\n            \"description\": \"Token issued to a party
+        for deposit or release operations\",\n            \"required\": [\n                \"partyId\",\n                \"\
+        partyType\",\n                \"token\"\n            ],\n            \"properties\": {\n                \"partyId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Party ID\"\n                },\n                \"partyType\": {\n                    \"description\"\
+        : \"Type of entity (Account, Character, etc.)\",\n                    \"type\": \"object\"\n                },\n \
+        \               \"token\": {\n                    \"type\": \"string\",\n                    \"description\": \"The
+        token\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deposit assets into escrow\",\n    \"description\": \"Deposit assets into
         escrow. Transfers currency from party's own wallet to that\\nparty's escrow wallet. Moves items from party's own container
         to that party's\\nescrow container. Locks contracts with escrow as guardian.\\nRejects soulbound/non-tradeable items.
@@ -1929,11 +2018,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -2138,7 +2233,19 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record party consent\",\n    \"description\": \"Record party consent for
         release, refund, or re-affirmation.\",\n    \"tags\": [\n        \"Consent\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"recordConsent\"\n}"
@@ -2325,11 +2432,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -2534,23 +2647,34 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"FinalizerResult\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Result from a contract finalizer API call\",\n           \
-        \ \"required\": [\n                \"endpoint\",\n                \"success\"\n            ],\n            \"properties\"\
-        : {\n                \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Finalizer endpoint\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether it succeeded\"\n                },\n                \"error\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Error message if failed\"\n                }\n            }\n        },\n        \"ReleaseResult\": {\n      \
-        \      \"type\": \"object\",\n            \"description\": \"Result of releasing assets to a single recipient\",\n\
-        \            \"required\": [\n                \"recipientPartyId\",\n                \"success\"\n            ],\n\
-        \            \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Recipient party ID\"\n      \
-        \          },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\",\n     \
-        \               \"description\": \"Assets released (null if failed)\",\n                    \"nullable\": true\n \
-        \               },\n                \"success\": {\n                    \"type\": \"boolean\",\n                 \
-        \   \"description\": \"Whether release succeeded\"\n                },\n                \"error\": {\n           \
-        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        },\n\
+        \        \"FinalizerResult\": {\n            \"type\": \"object\",\n            \"description\": \"Result from a contract
+        finalizer API call\",\n            \"required\": [\n                \"endpoint\",\n                \"success\"\n \
+        \           ],\n            \"properties\": {\n                \"endpoint\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Finalizer endpoint\"\n                },\n                \"success\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether it succeeded\"\n     \
+        \           },\n                \"error\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Error message if failed\"\n                }\n            }\n    \
+        \    },\n        \"ReleaseResult\": {\n            \"type\": \"object\",\n            \"description\": \"Result of
+        releasing assets to a single recipient\",\n            \"required\": [\n                \"recipientPartyId\",\n  \
+        \              \"success\"\n            ],\n            \"properties\": {\n                \"recipientPartyId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Recipient party ID\"\n                },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\"\
+        ,\n                    \"description\": \"Assets released (null if failed)\",\n                    \"nullable\": true\n\
+        \                },\n                \"success\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"description\": \"Whether release succeeded\"\n                },\n                \"error\": {\n          \
+        \          \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
         Error message if failed\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Trigger release\",\n    \"description\": \"Trigger release (for trusted
         modes or after consent).\\nIf boundContractId is set, checks contract status first (must be fulfilled).\\nRuns finalization
@@ -2669,11 +2793,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -2878,17 +3008,28 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"RefundResult\": {\n            \"\
-        type\": \"object\",\n            \"description\": \"Result of refunding assets to a single depositor\",\n        \
-        \    \"required\": [\n                \"depositorPartyId\",\n                \"success\"\n            ],\n       \
-        \     \"properties\": {\n                \"depositorPartyId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"Depositor party ID\"\n            \
-        \    },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\",\n           \
-        \         \"description\": \"Assets refunded (null if failed)\",\n                    \"nullable\": true\n       \
-        \         },\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether refund succeeded\"\n                },\n                \"error\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Error message if failed\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        },\n\
+        \        \"RefundResult\": {\n            \"type\": \"object\",\n            \"description\": \"Result of refunding
+        assets to a single depositor\",\n            \"required\": [\n                \"depositorPartyId\",\n            \
+        \    \"success\"\n            ],\n            \"properties\": {\n                \"depositorPartyId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Depositor party ID\"\n                },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\"\
+        ,\n                    \"description\": \"Assets refunded (null if failed)\",\n                    \"nullable\": true\n\
+        \                },\n                \"success\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"description\": \"Whether refund succeeded\"\n                },\n                \"error\": {\n           \
+        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Error message if failed\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Trigger refund\",\n    \"description\": \"Trigger refund (for trusted modes
         or consent).\",\n    \"tags\": [\n        \"Completion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"refund\"\n}"
@@ -3003,11 +3144,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -3212,17 +3359,28 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"RefundResult\": {\n            \"\
-        type\": \"object\",\n            \"description\": \"Result of refunding assets to a single depositor\",\n        \
-        \    \"required\": [\n                \"depositorPartyId\",\n                \"success\"\n            ],\n       \
-        \     \"properties\": {\n                \"depositorPartyId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"Depositor party ID\"\n            \
-        \    },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\",\n           \
-        \         \"description\": \"Assets refunded (null if failed)\",\n                    \"nullable\": true\n       \
-        \         },\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether refund succeeded\"\n                },\n                \"error\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Error message if failed\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        },\n\
+        \        \"RefundResult\": {\n            \"type\": \"object\",\n            \"description\": \"Result of refunding
+        assets to a single depositor\",\n            \"required\": [\n                \"depositorPartyId\",\n            \
+        \    \"success\"\n            ],\n            \"properties\": {\n                \"depositorPartyId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Depositor party ID\"\n                },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\"\
+        ,\n                    \"description\": \"Assets refunded (null if failed)\",\n                    \"nullable\": true\n\
+        \                },\n                \"success\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"description\": \"Whether refund succeeded\"\n                },\n                \"error\": {\n           \
+        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Error message if failed\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cancel escrow before fully funded\",\n    \"description\": \"Cancel escrow
         before fully funded, refunding any deposits.\",\n    \"tags\": [\n        \"Completion\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"cancel\"\n}"
@@ -3340,11 +3498,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -3549,10 +3713,176 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Raise a dispute on funded escrow\",\n    \"description\": \"Raise a dispute
         on a funded escrow.\",\n    \"tags\": [\n        \"Completion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"dispute\"\n}"
+  /escrow/confirm-release:
+    post:
+      operationId: confirmRelease
+      tags:
+      - Completion
+      summary: Confirm receipt of released assets
+      description: |
+        Called by parties to confirm they received their released assets.
+        Required when ReleaseMode is party_required or service_and_party.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmReleaseRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmReleaseResponse'
+        '400':
+          description: Confirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfirmReleaseRequest\"\
+        ,\n    \"$defs\": {\n        \"ConfirmReleaseRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to confirm receipt of released assets\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"escrowId\",\n                \"partyId\",\n                \"releaseToken\"\n   \
+        \         ],\n            \"properties\": {\n                \"escrowId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"The escrow being confirmed.\"\
+        \n                },\n                \"partyId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"The party confirming receipt.\"\n             \
+        \   },\n                \"releaseToken\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"The party's release token (received via confirmation shortcut).\"\n                },\n                \"notes\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional confirmation notes.\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfirmReleaseResponse\"\
+        ,\n    \"$defs\": {\n        \"ConfirmReleaseResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from confirming release receipt\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"escrowId\",\n                \"confirmed\",\n                \"allPartiesConfirmed\"\n    \
+        \        ],\n            \"properties\": {\n                \"escrowId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"The escrow ID.\"\n          \
+        \      },\n                \"confirmed\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this party's confirmation was recorded.\"\n                },\n                \"allPartiesConfirmed\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether all parties have now
+        confirmed (triggers Released transition).\"\n                },\n                \"status\": {\n                 \
+        \   \"$ref\": \"#/$defs/EscrowStatus\",\n                    \"description\": \"Current escrow status after confirmation.\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"EscrowStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of the escrow agreement.\\n-
+        pending_deposits: Waiting for parties to deposit\\n- partially_funded: Some but not all deposits received\\n- funded:
+        All deposits received, awaiting consent/condition\\n- pending_consent: Some consents received, waiting for more\\\
+        n- pending_condition: Waiting for contract fulfillment or external verification\\n- finalizing: Running contract finalizer
+        prebound APIs (transient)\\n- releasing: Release in progress (transient)\\n- released: Assets transferred to recipients\\
+        n- refunding: Refund in progress (transient)\\n- refunded: Assets returned to depositors\\n- disputed: In dispute,
+        arbiter must resolve\\n- expired: Timed out without completion\\n- cancelled: Cancelled before funding complete\\\
+        n- validation_failed: Held assets changed, awaiting re-affirmation\\n\",\n            \"enum\": [\n              \
+        \  \"pending_deposits\",\n                \"partially_funded\",\n                \"funded\",\n                \"pending_consent\"\
+        ,\n                \"pending_condition\",\n                \"finalizing\",\n                \"releasing\",\n     \
+        \           \"released\",\n                \"refunding\",\n                \"refunded\",\n                \"disputed\"\
+        ,\n                \"expired\",\n                \"cancelled\",\n                \"validation_failed\"\n         \
+        \   ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Confirm receipt of released assets\",\n    \"description\": \"Called by
+        parties to confirm they received their released assets.\\nRequired when ReleaseMode is party_required or service_and_party.\\\
+        n\",\n    \"tags\": [\n        \"Completion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"confirmRelease\"\
+        \n}"
+  /escrow/confirm-refund:
+    post:
+      operationId: confirmRefund
+      tags:
+      - Completion
+      summary: Confirm receipt of refunded assets
+      description: |
+        Called by parties to confirm they received their refunded deposits.
+        Required when RefundMode is party_required.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmRefundRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmRefundResponse'
+        '400':
+          description: Confirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfirmRefundRequest\"\
+        ,\n    \"$defs\": {\n        \"ConfirmRefundRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to confirm receipt of refunded assets\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"escrowId\",\n                \"partyId\"\n            ],\n            \"properties\"\
+        : {\n                \"escrowId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"The escrow being confirmed.\"\n                },\n              \
+        \  \"partyId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
+        \            \"description\": \"The party confirming receipt of refund.\"\n                },\n                \"\
+        notes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Optional confirmation notes.\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfirmRefundResponse\"\
+        ,\n    \"$defs\": {\n        \"ConfirmRefundResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from confirming refund receipt\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"escrowId\",\n                \"confirmed\",\n                \"allPartiesConfirmed\"\n    \
+        \        ],\n            \"properties\": {\n                \"escrowId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"The escrow ID.\"\n          \
+        \      },\n                \"confirmed\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this party's confirmation was recorded.\"\n                },\n                \"allPartiesConfirmed\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether all parties have now
+        confirmed (triggers Refunded transition).\"\n                },\n                \"status\": {\n                 \
+        \   \"$ref\": \"#/$defs/EscrowStatus\",\n                    \"description\": \"Current escrow status after confirmation.\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"EscrowStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of the escrow agreement.\\n-
+        pending_deposits: Waiting for parties to deposit\\n- partially_funded: Some but not all deposits received\\n- funded:
+        All deposits received, awaiting consent/condition\\n- pending_consent: Some consents received, waiting for more\\\
+        n- pending_condition: Waiting for contract fulfillment or external verification\\n- finalizing: Running contract finalizer
+        prebound APIs (transient)\\n- releasing: Release in progress (transient)\\n- released: Assets transferred to recipients\\
+        n- refunding: Refund in progress (transient)\\n- refunded: Assets returned to depositors\\n- disputed: In dispute,
+        arbiter must resolve\\n- expired: Timed out without completion\\n- cancelled: Cancelled before funding complete\\\
+        n- validation_failed: Held assets changed, awaiting re-affirmation\\n\",\n            \"enum\": [\n              \
+        \  \"pending_deposits\",\n                \"partially_funded\",\n                \"funded\",\n                \"pending_consent\"\
+        ,\n                \"pending_condition\",\n                \"finalizing\",\n                \"releasing\",\n     \
+        \           \"released\",\n                \"refunding\",\n                \"refunded\",\n                \"disputed\"\
+        ,\n                \"expired\",\n                \"cancelled\",\n                \"validation_failed\"\n         \
+        \   ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Confirm receipt of refunded assets\",\n    \"description\": \"Called by
+        parties to confirm they received their refunded deposits.\\nRequired when RefundMode is party_required.\\n\",\n  \
+        \  \"tags\": [\n        \"Completion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"confirmRefund\"\
+        \n}"
   /escrow/resolve:
     post:
       operationId: resolve
@@ -3725,11 +4055,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -3934,17 +4270,28 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"TransferResult\": {\n            \"\
-        type\": \"object\",\n            \"description\": \"Result of transferring assets to a party during resolution\",\n\
-        \            \"required\": [\n                \"partyId\",\n                \"success\"\n            ],\n        \
-        \    \"properties\": {\n                \"partyId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Party ID\"\n                },\n            \
-        \    \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\",\n                    \"description\"\
-        : \"Assets transferred (null if failed)\",\n                    \"nullable\": true\n                },\n         \
-        \       \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        transfer succeeded\"\n                },\n                \"error\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Error message if failed\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        },\n\
+        \        \"TransferResult\": {\n            \"type\": \"object\",\n            \"description\": \"Result of transferring
+        assets to a party during resolution\",\n            \"required\": [\n                \"partyId\",\n              \
+        \  \"success\"\n            ],\n            \"properties\": {\n                \"partyId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Party
+        ID\"\n                },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\"\
+        ,\n                    \"description\": \"Assets transferred (null if failed)\",\n                    \"nullable\"\
+        : true\n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n         \
+        \           \"description\": \"Whether transfer succeeded\"\n                },\n                \"error\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Error message if failed\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Arbiter resolves disputed escrow\",\n    \"description\": \"Arbiter resolves
         a disputed escrow.\",\n    \"tags\": [\n        \"Arbiter\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"resolve\"\n}"
@@ -4067,11 +4414,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -4276,7 +4629,19 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Verify condition for conditional escrow\",\n    \"description\": \"Verify
         condition for conditional escrow (non-contract path).\\nFor escrows with boundContractId, use contract milestones
         instead.\\n\",\n    \"tags\": [\n        \"Condition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -4412,11 +4777,17 @@ paths:
         \         \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\"\
         : \"How the escrow was resolved\",\n                    \"nullable\": true\n                },\n                \"\
         resolutionNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Notes about the resolution\"\n                }\n            }\n        },\n    \
-        \    \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\
-        n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive
-        rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with
-        refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
+        \             \"description\": \"Notes about the resolution\"\n                },\n                \"releaseMode\"\
+        : {\n                    \"$ref\": \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation
+        is handled for this escrow.\"\n                },\n                \"refundMode\": {\n                    \"$ref\"\
+        : \"#/$defs/RefundMode\",\n                    \"description\": \"How refund confirmation is handled for this escrow.\"\
+        \n                },\n                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Deadline for party confirmations when in Releasing/Refunding state.\"\n                }\n            }\n    \
+        \    },\n        \"EscrowType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow
+        agreement.\\n- two_party: Simple trade escrow between Party A and Party B\\n- multi_party: N parties with complex
+        deposit/receive rules\\n- conditional: Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all
+        with refunds to losers\\n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\"\
         ,\n                \"conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Trust model for the escrow agreement.\\n- full_consent:
         All parties must explicitly consent using tokens\\n- initiator_trusted: The service that created the escrow can complete
@@ -4595,7 +4966,18 @@ paths:
         Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\",\n            \"enum\"\
         : [\n                \"released\",\n                \"refunded\",\n                \"split\",\n                \"\
         expired_refunded\",\n                \"cancelled_refunded\",\n                \"violation_refunded\"\n           \
-        \ ]\n        }\n    }\n}"
+        \ ]\n        },\n        \"ReleaseMode\": {\n            \"type\": \"string\",\n            \"description\": \"Controls
+        how release confirmation is handled:\\n- immediate: Finalizing \\u2192 Released (skip Releasing state entirely).\\\
+        n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\\n  Assets are
+        marked as released BEFORE downstream services confirm transfers.\\n  If downstream services fail, manual intervention
+        may be required.\\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\\
+        n- party_required: Wait for all parties to call /confirm-release.\\n- service_and_party: Wait for both service completion
+        AND party confirmation.\\n\",\n            \"enum\": [\n                \"immediate\",\n                \"service_only\"\
+        ,\n                \"party_required\",\n                \"service_and_party\"\n            ]\n        },\n       \
+        \ \"RefundMode\": {\n            \"type\": \"string\",\n            \"description\": \"Controls how refund confirmation
+        is handled. Same semantics as ReleaseMode.\\nRefunds typically use 'immediate' since parties get their own assets
+        back.\\n\",\n            \"enum\": [\n                \"immediate\",\n                \"service_only\",\n        \
+        \        \"party_required\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually trigger validation\",\n    \"description\": \"Manually trigger
         validation on an active escrow.\",\n    \"tags\": [\n        \"Validation\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"validateEscrow\"\n}"
@@ -4714,9 +5096,15 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow
         was resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\":
         {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Notes about the resolution\"\n                }\n            }\n        },\n        \"EscrowType\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple trade
-        escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
+        : \"Notes about the resolution\"\n                },\n                \"releaseMode\": {\n                    \"$ref\"\
+        : \"#/$defs/ReleaseMode\",\n                    \"description\": \"How release confirmation is handled for this escrow.\"\
+        \n                },\n                \"refundMode\": {\n                    \"$ref\": \"#/$defs/RefundMode\",\n \
+        \                   \"description\": \"How refund confirmation is handled for this escrow.\"\n                },\n\
+        \                \"confirmationDeadline\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Deadline for party
+        confirmations when in Releasing/Refunding state.\"\n                }\n            }\n        },\n        \"EscrowType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple
+        trade escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
         Release based on external condition or contract fulfillment\\n- auction: Winner-takes-all with refunds to losers\\\
         n\",\n            \"enum\": [\n                \"two_party\",\n                \"multi_party\",\n                \"\
         conditional\",\n                \"auction\"\n            ]\n        },\n        \"EscrowTrustMode\": {\n         \
@@ -4923,7 +5311,19 @@ paths:
         parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
         Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
         refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        }\n    }\n}"
+        ,\n                \"violation_refunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
+        \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
+        (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
+        \  If downstream services fail, manual intervention may be required.\\n- service_only: Wait for downstream services
+        (currency, inventory) to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\
+        n- service_and_party: Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n  \
+        \              \"immediate\",\n                \"service_only\",\n                \"party_required\",\n          \
+        \      \"service_and_party\"\n            ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds
+        typically use 'immediate' since parties get their own assets back.\\n\",\n            \"enum\": [\n              \
+        \  \"immediate\",\n                \"service_only\",\n                \"party_required\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Re-affirm after validation failure\",\n    \"description\": \"Re-affirm
         after validation failure (party accepts changed state).\",\n    \"tags\": [\n        \"Validation\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"reaffirm\"\n}"
@@ -5224,6 +5624,42 @@ components:
       enum:
       - deposit
       - release
+    ReleaseMode:
+      type: string
+      description: |
+        Controls how release confirmation is handled:
+        - immediate: Finalizing → Released (skip Releasing state entirely).
+          ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+          Assets are marked as released BEFORE downstream services confirm transfers.
+          If downstream services fail, manual intervention may be required.
+        - service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+        - party_required: Wait for all parties to call /confirm-release.
+        - service_and_party: Wait for both service completion AND party confirmation.
+      enum:
+      - immediate
+      - service_only
+      - party_required
+      - service_and_party
+    RefundMode:
+      type: string
+      description: |
+        Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+        Refunds typically use 'immediate' since parties get their own assets back.
+      enum:
+      - immediate
+      - service_only
+      - party_required
+    ConfirmationTimeoutBehavior:
+      type: string
+      description: |
+        What happens when confirmation timeout expires:
+        - auto_confirm: If service events received, auto-confirm parties (default).
+        - dispute: Transition to Disputed state, require arbiter intervention.
+        - refund: Treat as failed, transition to Refunding.
+      enum:
+      - auto_confirm
+      - dispute
+      - refund
     EscrowAgreement:
       type: object
       description: Main escrow agreement record
@@ -5365,6 +5801,17 @@ components:
           type: string
           nullable: true
           description: Notes about the resolution
+        releaseMode:
+          $ref: '#/components/schemas/ReleaseMode'
+          description: How release confirmation is handled for this escrow.
+        refundMode:
+          $ref: '#/components/schemas/RefundMode'
+          description: How refund confirmation is handled for this escrow.
+        confirmationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline for party confirmations when in Releasing/Refunding state.
     EscrowParty:
       type: object
       description: A party in the escrow agreement
@@ -5827,6 +6274,18 @@ components:
           nullable: true
           additionalProperties: true
           description: Application metadata
+        releaseMode:
+          allOf:
+          - $ref: '#/components/schemas/ReleaseMode'
+          nullable: true
+          description: |
+            How release confirmation is handled. Defaults to service_only if not specified.
+            Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+        refundMode:
+          allOf:
+          - $ref: '#/components/schemas/RefundMode'
+          nullable: true
+          description: How refund confirmation is handled. Defaults to immediate if not specified.
         idempotencyKey:
           type: string
           description: Idempotency key for this operation
@@ -6658,6 +7117,96 @@ components:
         escrow:
           $ref: '#/components/schemas/EscrowAgreement'
           description: Disputed escrow agreement
+    ConfirmReleaseRequest:
+      type: object
+      description: Request to confirm receipt of released assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      - releaseToken
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt.
+        releaseToken:
+          type: string
+          description: The party's release token (received via confirmation shortcut).
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+    ConfirmReleaseResponse:
+      type: object
+      description: Response from confirming release receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Released transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
+    ConfirmRefundRequest:
+      type: object
+      description: Request to confirm receipt of refunded assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt of refund.
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+    ConfirmRefundResponse:
+      type: object
+      description: Response from confirming refund receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Refunded transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
     ResolveRequest:
       type: object
       description: Request for arbiter to resolve a disputed escrow

@@ -117,6 +117,24 @@ public partial class EscrowController
                     "additionalProperties": true,
                     "description": "Application metadata"
                 },
+                "releaseMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ReleaseMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How release confirmation is handled. Defaults to service_only if not specified.\nOnly applies to unbound escrows; contract-bound escrows follow contract fulfillment.\n"
+                },
+                "refundMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/RefundMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How refund confirmation is handled. Defaults to immediate if not specified."
+                },
                 "idempotencyKey": {
                     "type": "string",
                     "description": "Idempotency key for this operation"
@@ -125,7 +143,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -190,7 +208,7 @@ public partial class EscrowController
         },
         "EscrowPartyRole": {
             "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\ n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
                 "depositor",
                 "recipient",
@@ -332,7 +350,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -379,6 +397,25 @@ public partial class EscrowController
                     "description": "Destination container"
                 }
             }
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \ u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
         }
     }
 }
@@ -588,6 +625,20 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
@@ -1134,6 +1185,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "PartyToken": {
@@ -1439,12 +1509,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -1985,6 +2069,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -2342,6 +2445,20 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
@@ -2888,6 +3005,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -3479,12 +3615,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -4025,6 +4175,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "PartyToken": {
@@ -4909,7289 +5078,20 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        }
-    }
-}
-""";
-
-    private static readonly string _RecordConsent_Info = """
-{
-    "summary": "Record party consent",
-    "description": "Record party consent for release, refund, or re-affirmation.",
-    "tags": [
-        "Consent"
-    ],
-    "deprecated": false,
-    "operationId": "recordConsent"
-}
-""";
-
-    /// <summary>Returns endpoint information for RecordConsent</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent",
-            _RecordConsent_Info));
-
-    /// <summary>Returns request schema for RecordConsent</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent",
-            "request-schema",
-            _RecordConsent_RequestSchema));
-
-    /// <summary>Returns response schema for RecordConsent</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent",
-            "response-schema",
-            _RecordConsent_ResponseSchema));
-
-    /// <summary>Returns full schema for RecordConsent</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent",
-            _RecordConsent_Info,
-            _RecordConsent_RequestSchema,
-            _RecordConsent_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for GetConsentStatus
-
-    private static readonly string _GetConsentStatus_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/GetConsentStatusRequest",
-    "$defs": {
-        "GetConsentStatusRequest": {
-            "type": "object",
-            "description": "Request to get consent status for all parties",
-            "required": [
-                "escrowId"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _GetConsentStatus_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/GetConsentStatusResponse",
-    "$defs": {
-        "GetConsentStatusResponse": {
-            "type": "object",
-            "description": "Response containing consent status for all parties",
-            "required": [
-                "partiesRequiringConsent",
-                "consentsReceived",
-                "consentsRequired",
-                "canRelease",
-                "canRefund"
-            ],
-            "properties": {
-                "partiesRequiringConsent": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/PartyConsentStatus"
-                    },
-                    "description": "Consent status per party"
-                },
-                "consentsReceived": {
-                    "type": "integer",
-                    "description": "Number of consents received"
-                },
-                "consentsRequired": {
-                    "type": "integer",
-                    "description": "Number of consents required"
-                },
-                "canRelease": {
-                    "type": "boolean",
-                    "description": "Whether release can proceed"
-                },
-                "canRefund": {
-                    "type": "boolean",
-                    "description": "Whether refund can proceed"
-                }
-            }
-        },
-        "PartyConsentStatus": {
-            "type": "object",
-            "description": "Consent status for a single party",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentGiven"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party ID"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Party display name"
-                },
-                "consentGiven": {
-                    "type": "boolean",
-                    "description": "Whether consent was given"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given (if any)",
-                    "nullable": true
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When consent was given"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\ n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        }
-    }
-}
-""";
-
-    private static readonly string _GetConsentStatus_Info = """
-{
-    "summary": "Get consent status for escrow",
-    "description": "Get consent status for all parties in an escrow.",
-    "tags": [
-        "Consent"
-    ],
-    "deprecated": false,
-    "operationId": "getConsentStatus"
-}
-""";
-
-    /// <summary>Returns endpoint information for GetConsentStatus</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent/status",
-            _GetConsentStatus_Info));
-
-    /// <summary>Returns request schema for GetConsentStatus</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent/status",
-            "request-schema",
-            _GetConsentStatus_RequestSchema));
-
-    /// <summary>Returns response schema for GetConsentStatus</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent/status",
-            "response-schema",
-            _GetConsentStatus_ResponseSchema));
-
-    /// <summary>Returns full schema for GetConsentStatus</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/consent/status",
-            _GetConsentStatus_Info,
-            _GetConsentStatus_RequestSchema,
-            _GetConsentStatus_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for Release
-
-    private static readonly string _Release_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ReleaseRequest",
-    "$defs": {
-        "ReleaseRequest": {
-            "type": "object",
-            "description": "Request to trigger escrow release to recipients",
-            "required": [
-                "escrowId",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted mode"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Release_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ReleaseResponse",
-    "$defs": {
-        "ReleaseResponse": {
-            "type": "object",
-            "description": "Response from releasing escrow assets to recipients",
-            "required": [
-                "escrow",
-                "finalizerResults",
-                "releases"
-            ],
-            "properties": {
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Released escrow agreement"
-                },
-                "finalizerResults": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/FinalizerResult"
-                    },
-                    "description": "Results of contract finalizer APIs"
-                },
-                "releases": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ReleaseResult"
-                    },
-                    "description": "Release results per recipient"
-                }
-            }
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
-                },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
-                },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        },
-        "FinalizerResult": {
-            "type": "object",
-            "description": "Result from a contract finalizer API call",
-            "required": [
-                "endpoint",
-                "success"
-            ],
-            "properties": {
-                "endpoint": {
-                    "type": "string",
-                    "description": "Finalizer endpoint"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether it succeeded"
-                },
-                "error": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error message if failed"
-                }
-            }
-        },
-        "ReleaseResult": {
-            "type": "object",
-            "description": "Result of releasing assets to a single recipient",
-            "required": [
-                "recipientPartyId",
-                "success"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Recipient party ID"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets released (null if failed)",
-                    "nullable": true
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether release succeeded"
-                },
-                "error": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error message if failed"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Release_Info = """
-{
-    "summary": "Trigger release",
-    "description": "Trigger release (for trusted modes or after consent).\nIf boundContractId is set, checks contract status first (must be fulfilled).\nRuns finalization flow before releasing remaining assets.\n",
-    "tags": [
-        "Completion"
-    ],
-    "deprecated": false,
-    "operationId": "release"
-}
-""";
-
-    /// <summary>Returns endpoint information for Release</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/release",
-            _Release_Info));
-
-    /// <summary>Returns request schema for Release</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/release",
-            "request-schema",
-            _Release_RequestSchema));
-
-    /// <summary>Returns response schema for Release</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/release",
-            "response-schema",
-            _Release_ResponseSchema));
-
-    /// <summary>Returns full schema for Release</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/release",
-            _Release_Info,
-            _Release_RequestSchema,
-            _Release_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for Refund
-
-    private static readonly string _Refund_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/RefundRequest",
-    "$defs": {
-        "RefundRequest": {
-            "type": "object",
-            "description": "Request to trigger escrow refund to depositors",
-            "required": [
-                "escrowId",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted mode"
-                },
-                "reason": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Reason for refund"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Refund_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/RefundResponse",
-    "$defs": {
-        "RefundResponse": {
-            "type": "object",
-            "description": "Response from refunding escrow assets to depositors",
-            "required": [
-                "escrow",
-                "refunds"
-            ],
-            "properties": {
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Refunded escrow agreement"
-                },
-                "refunds": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/RefundResult"
-                    },
-                    "description": "Refund results per depositor"
-                }
-            }
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
-                },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
-                },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        },
-        "RefundResult": {
-            "type": "object",
-            "description": "Result of refunding assets to a single depositor",
-            "required": [
-                "depositorPartyId",
-                "success"
-            ],
-            "properties": {
-                "depositorPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Depositor party ID"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets refunded (null if failed)",
-                    "nullable": true
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether refund succeeded"
-                },
-                "error": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error message if failed"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Refund_Info = """
-{
-    "summary": "Trigger refund",
-    "description": "Trigger refund (for trusted modes or consent).",
-    "tags": [
-        "Completion"
-    ],
-    "deprecated": false,
-    "operationId": "refund"
-}
-""";
-
-    /// <summary>Returns endpoint information for Refund</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/refund",
-            _Refund_Info));
-
-    /// <summary>Returns request schema for Refund</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/refund",
-            "request-schema",
-            _Refund_RequestSchema));
-
-    /// <summary>Returns response schema for Refund</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/refund",
-            "response-schema",
-            _Refund_ResponseSchema));
-
-    /// <summary>Returns full schema for Refund</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/refund",
-            _Refund_Info,
-            _Refund_RequestSchema,
-            _Refund_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for Cancel
-
-    private static readonly string _Cancel_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/CancelRequest",
-    "$defs": {
-        "CancelRequest": {
-            "type": "object",
-            "description": "Request to cancel escrow before fully funded",
-            "required": [
-                "escrowId",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                },
-                "reason": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Reason for cancellation"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Cancel_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/CancelResponse",
-    "$defs": {
-        "CancelResponse": {
-            "type": "object",
-            "description": "Response from cancelling an escrow",
-            "required": [
-                "escrow",
-                "refunds"
-            ],
-            "properties": {
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Cancelled escrow agreement"
-                },
-                "refunds": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/RefundResult"
-                    },
-                    "description": "Refund results for any deposits"
-                }
-            }
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
-                },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
-                },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        },
-        "RefundResult": {
-            "type": "object",
-            "description": "Result of refunding assets to a single depositor",
-            "required": [
-                "depositorPartyId",
-                "success"
-            ],
-            "properties": {
-                "depositorPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Depositor party ID"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets refunded (null if failed)",
-                    "nullable": true
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether refund succeeded"
-                },
-                "error": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error message if failed"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Cancel_Info = """
-{
-    "summary": "Cancel escrow before fully funded",
-    "description": "Cancel escrow before fully funded, refunding any deposits.",
-    "tags": [
-        "Completion"
-    ],
-    "deprecated": false,
-    "operationId": "cancel"
-}
-""";
-
-    /// <summary>Returns endpoint information for Cancel</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/cancel",
-            _Cancel_Info));
-
-    /// <summary>Returns request schema for Cancel</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/cancel",
-            "request-schema",
-            _Cancel_RequestSchema));
-
-    /// <summary>Returns response schema for Cancel</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/cancel",
-            "response-schema",
-            _Cancel_ResponseSchema));
-
-    /// <summary>Returns full schema for Cancel</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/cancel",
-            _Cancel_Info,
-            _Cancel_RequestSchema,
-            _Cancel_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for Dispute
-
-    private static readonly string _Dispute_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DisputeRequest",
-    "$defs": {
-        "DisputeRequest": {
-            "type": "object",
-            "description": "Request to raise a dispute on a funded escrow",
-            "required": [
-                "escrowId",
-                "partyId",
-                "partyType",
-                "reason",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party raising dispute"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "reason": {
-                    "type": "string",
-                    "description": "Reason for dispute"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Release token (proves party identity)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Dispute_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DisputeResponse",
-    "$defs": {
-        "DisputeResponse": {
-            "type": "object",
-            "description": "Response from raising a dispute on an escrow",
-            "required": [
-                "escrow"
-            ],
-            "properties": {
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Disputed escrow agreement"
-                }
-            }
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
-                },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
-                },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        }
-    }
-}
-""";
-
-    private static readonly string _Dispute_Info = """
-{
-    "summary": "Raise a dispute on funded escrow",
-    "description": "Raise a dispute on a funded escrow.",
-    "tags": [
-        "Completion"
-    ],
-    "deprecated": false,
-    "operationId": "dispute"
-}
-""";
-
-    /// <summary>Returns endpoint information for Dispute</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/dispute",
-            _Dispute_Info));
-
-    /// <summary>Returns request schema for Dispute</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/dispute",
-            "request-schema",
-            _Dispute_RequestSchema));
-
-    /// <summary>Returns response schema for Dispute</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/dispute",
-            "response-schema",
-            _Dispute_ResponseSchema));
-
-    /// <summary>Returns full schema for Dispute</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/dispute",
-            _Dispute_Info,
-            _Dispute_RequestSchema,
-            _Dispute_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for Resolve
-
-    private static readonly string _Resolve_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ResolveRequest",
-    "$defs": {
-        "ResolveRequest": {
-            "type": "object",
-            "description": "Request for arbiter to resolve a disputed escrow",
-            "required": [
-                "escrowId",
-                "arbiterId",
-                "arbiterType",
-                "resolution",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                },
-                "arbiterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Arbiter ID"
-                },
-                "arbiterType": {
-                    "type": "object",
-                    "description": "Arbiter type"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "Resolution decision for the dispute"
-                },
-                "splitAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/SplitAllocation"
-                    },
-                    "description": "For split resolution"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Resolution notes"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key"
-                }
-            }
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        },
-        "SplitAllocation": {
-            "type": "object",
-            "description": "Allocation of assets to a party in a split resolution",
-            "required": [
-                "partyId",
-                "partyType",
-                "assets"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party ID"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAssetInput"
-                    },
-                    "description": "Assets allocated to this party"
-                }
-            }
-        },
-        "EscrowAssetInput": {
-            "type": "object",
-            "description": "Input for specifying an asset in escrow operations",
-            "required": [
-                "assetType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset to deposit"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Currency code"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Currency amount"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Item name"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Item template ID (for stacks)"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Item template name"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "Item quantity (for stacks)"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Contract description"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Contract party role being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset ID"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Custom asset data"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        }
-    }
-}
-""";
-
-    private static readonly string _Resolve_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ResolveResponse",
-    "$defs": {
-        "ResolveResponse": {
-            "type": "object",
-            "description": "Response from arbiter resolving a disputed escrow",
-            "required": [
-                "escrow",
-                "transfers"
-            ],
-            "properties": {
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Resolved escrow agreement"
-                },
-                "transfers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/TransferResult"
-                    },
-                    "description": "Transfer results"
-                }
-            }
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
-                },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
-                },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        },
-        "TransferResult": {
-            "type": "object",
-            "description": "Result of transferring assets to a party during resolution",
-            "required": [
-                "partyId",
-                "success"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party ID"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets transferred (null if failed)",
-                    "nullable": true
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether transfer succeeded"
-                },
-                "error": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error message if failed"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Resolve_Info = """
-{
-    "summary": "Arbiter resolves disputed escrow",
-    "description": "Arbiter resolves a disputed escrow.",
-    "tags": [
-        "Arbiter"
-    ],
-    "deprecated": false,
-    "operationId": "resolve"
-}
-""";
-
-    /// <summary>Returns endpoint information for Resolve</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/resolve",
-            _Resolve_Info));
-
-    /// <summary>Returns request schema for Resolve</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/resolve",
-            "request-schema",
-            _Resolve_RequestSchema));
-
-    /// <summary>Returns response schema for Resolve</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/resolve",
-            "response-schema",
-            _Resolve_ResponseSchema));
-
-    /// <summary>Returns full schema for Resolve</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/resolve",
-            _Resolve_Info,
-            _Resolve_RequestSchema,
-            _Resolve_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for VerifyCondition
-
-    private static readonly string _VerifyCondition_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/VerifyConditionRequest",
-    "$defs": {
-        "VerifyConditionRequest": {
-            "type": "object",
-            "description": "Request to verify a condition for conditional escrow",
-            "required": [
-                "escrowId",
-                "conditionMet",
-                "verifierId",
-                "verifierType",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                },
-                "conditionMet": {
-                    "type": "boolean",
-                    "description": "Whether the condition was met"
-                },
-                "verifierId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Verifier entity ID"
-                },
-                "verifierType": {
-                    "type": "object",
-                    "description": "Verifier entity type"
-                },
-                "verificationData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Proof/evidence data"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _VerifyCondition_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/VerifyConditionResponse",
-    "$defs": {
-        "VerifyConditionResponse": {
-            "type": "object",
-            "description": "Response from verifying a condition on an escrow",
-            "required": [
-                "escrow",
-                "triggered"
-            ],
-            "properties": {
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Updated escrow agreement"
-                },
-                "triggered": {
-                    "type": "boolean",
-                    "description": "Whether this triggered release/refund"
-                }
-            }
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
-                },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
-                },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
-                },
-                "contractDescription": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        }
-    }
-}
-""";
-
-    private static readonly string _VerifyCondition_Info = """
-{
-    "summary": "Verify condition for conditional escrow",
-    "description": "Verify condition for conditional escrow (non-contract path).\nFor escrows with boundContractId, use contract milestones instead.\n",
-    "tags": [
-        "Condition"
-    ],
-    "deprecated": false,
-    "operationId": "verifyCondition"
-}
-""";
-
-    /// <summary>Returns endpoint information for VerifyCondition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/verify-condition",
-            _VerifyCondition_Info));
-
-    /// <summary>Returns request schema for VerifyCondition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/verify-condition",
-            "request-schema",
-            _VerifyCondition_RequestSchema));
-
-    /// <summary>Returns response schema for VerifyCondition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/verify-condition",
-            "response-schema",
-            _VerifyCondition_ResponseSchema));
-
-    /// <summary>Returns full schema for VerifyCondition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/verify-condition",
-            _VerifyCondition_Info,
-            _VerifyCondition_RequestSchema,
-            _VerifyCondition_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for ValidateEscrow
-
-    private static readonly string _ValidateEscrow_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ValidateEscrowRequest",
-    "$defs": {
-        "ValidateEscrowRequest": {
-            "type": "object",
-            "description": "Request to manually validate escrow assets",
-            "required": [
-                "escrowId"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _ValidateEscrow_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ValidateEscrowResponse",
-    "$defs": {
-        "ValidateEscrowResponse": {
-            "type": "object",
-            "description": "Response from validating escrow assets",
-            "required": [
-                "valid",
-                "failures",
-                "escrow"
-            ],
-            "properties": {
-                "valid": {
-                    "type": "boolean",
-                    "description": "Whether all assets are valid"
-                },
-                "failures": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Validation failures"
-                },
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Escrow agreement with validation results"
-                }
-            }
-        },
-        "ValidationFailure": {
-            "type": "object",
-            "description": "Records a validation check failure",
-            "required": [
-                "detectedAt",
-                "assetType",
-                "assetDescription",
-                "failureType",
-                "affectedPartyId",
-                "affectedPartyType"
-            ],
-            "properties": {
-                "detectedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the failure was detected"
-                },
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset affected"
-                },
-                "assetDescription": {
-                    "type": "string",
-                    "description": "Description of the affected asset"
-                },
-                "failureType": {
-                    "$ref": "#/$defs/ValidationFailureType",
-                    "description": "Type of validation failure"
-                },
-                "affectedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Which party deposit is affected"
-                },
-                "affectedPartyType": {
-                    "type": "object",
-                    "description": "Type of the affected party"
-                },
-                "details": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Additional failure details"
-                }
-            }
-        },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
-        "ValidationFailureType": {
-            "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\ n- balance_mismatch: Wallet balance does not match expected held amount\n",
-            "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
-            ]
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
                 },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
                 },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Notes about the resolution"
-                }
-            }
-        },
-        "EscrowType": {
-            "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
-            "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
-            ]
-        },
-        "EscrowTrustMode": {
-            "type": "string",
-            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
-            "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
-            ]
-        },
-        "EscrowParty": {
-            "type": "object",
-            "description": "A party in the escrow agreement",
-            "required": [
-                "partyId",
-                "partyType",
-                "role",
-                "consentRequired",
-                "depositTokenUsed",
-                "releaseTokenUsed"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party entity identifier"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "displayName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Display name for UI/logging"
-                },
-                "role": {
-                    "$ref": "#/$defs/EscrowPartyRole",
-                    "description": "Role of this party in the escrow"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether this party consent is required for release"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own wallet (where currency comes from/returns to)"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Party own container (where items come from/return to)"
-                },
-                "escrowWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
-                },
-                "escrowContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Escrow container for THIS party deposits (owned by escrow)"
-                },
-                "depositToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for depositing (full_consent mode)"
-                },
-                "depositTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the deposit token has been used"
-                },
-                "depositTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the deposit token was used"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token for consenting to release"
-                },
-                "releaseTokenUsed": {
-                    "type": "boolean",
-                    "description": "Whether the release token has been used"
-                },
-                "releaseTokenUsedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the release token was used"
-                }
-            }
-        },
-        "EscrowPartyRole": {
-            "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
-            "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
-            ]
-        },
-        "ExpectedDeposit": {
-            "type": "object",
-            "description": "Defines what a party should deposit",
-            "required": [
-                "partyId",
-                "partyType",
-                "expectedAssets",
-                "optional",
-                "fulfilled"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who should deposit"
-                },
-                "partyType": {
-                    "description": "Type of depositing party",
-                    "type": "object"
-                },
-                "expectedAssets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Expected assets from this party"
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Is this deposit optional"
-                },
-                "depositDeadline": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Deadline for this specific deposit"
-                },
-                "fulfilled": {
-                    "type": "boolean",
-                    "description": "Has this party fulfilled their deposit requirement"
-                }
-            }
-        },
-        "EscrowAsset": {
-            "type": "object",
-            "description": "An asset held in escrow",
-            "required": [
-                "assetType",
-                "sourceOwnerId",
-                "sourceOwnerType"
-            ],
-            "properties": {
-                "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type of asset held in escrow"
-                },
-                "currencyDefinitionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=currency - currency definition ID"
-                },
-                "currencyCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized currency code for display"
-                },
-                "currencyAmount": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Amount of currency"
-                },
-                "itemInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item - unique item instance ID"
-                },
-                "itemName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized item name for display"
-                },
-                "itemTemplateId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - stackable item template"
-                },
-                "itemTemplateName": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized template name for display"
-                },
-                "itemQuantity": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "For assetType=item_stack - quantity"
-                },
-                "contractInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For assetType=contract - contract instance ID"
-                },
-                "contractTemplateCode": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Denormalized contract template code"
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
                 },
-                "contractDescription": {
+                "confirmationDeadline": {
                     "type": "string",
-                    "nullable": true,
-                    "description": "Description of the contract"
-                },
-                "contractPartyRole": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Which party role in the contract is being escrowed"
-                },
-                "customAssetType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For assetType=custom - registered handler type"
-                },
-                "customAssetId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Custom asset identifier"
-                },
-                "customAssetData": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Handler-specific data"
-                },
-                "sourceOwnerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Where this asset came from (for refunds)"
-                },
-                "sourceOwnerType": {
-                    "type": "object",
-                    "description": "Type of the source owner"
-                },
-                "sourceContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Source wallet/container ID"
-                }
-            }
-        },
-        "EscrowDeposit": {
-            "type": "object",
-            "description": "Records an actual deposit",
-            "required": [
-                "id",
-                "escrowId",
-                "partyId",
-                "partyType",
-                "assets",
-                "depositedAt",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deposit record identifier"
-                },
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow this deposit belongs to"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party who deposited"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "assets": {
-                    "$ref": "#/$defs/EscrowAssetBundle",
-                    "description": "Assets deposited"
-                },
-                "depositedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the deposit was made"
-                },
-                "depositTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key for this deposit"
-                }
-            }
-        },
-        "EscrowAssetBundle": {
-            "type": "object",
-            "description": "Groups multiple assets for a single deposit or release",
-            "required": [
-                "bundleId",
-                "assets"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets in this bundle"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Summary for display"
-                },
-                "estimatedValue": {
-                    "type": "number",
-                    "nullable": true,
-                    "description": "Optional valuation for UI display"
-                }
-            }
-        },
-        "ReleaseAllocation": {
-            "type": "object",
-            "description": "Defines who gets what on release",
-            "required": [
-                "recipientPartyId",
-                "recipientPartyType",
-                "assets"
-            ],
-            "properties": {
-                "recipientPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party receiving assets"
-                },
-                "recipientPartyType": {
-                    "type": "object",
-                    "description": "Type of the recipient party"
-                },
-                "assets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowAsset"
-                    },
-                    "description": "Assets this recipient should receive"
-                },
-                "destinationWalletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver currency"
-                },
-                "destinationContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Where to deliver items"
-                }
-            }
-        },
-        "EscrowConsent": {
-            "type": "object",
-            "description": "Records a party consent decision",
-            "required": [
-                "partyId",
-                "partyType",
-                "consentType",
-                "consentedAt"
-            ],
-            "properties": {
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party giving consent"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "consentType": {
-                    "$ref": "#/$defs/EscrowConsentType",
-                    "description": "Type of consent given"
-                },
-                "consentedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When consent was given"
-                },
-                "releaseTokenUsed": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Token used (for audit)"
-                },
-                "notes": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional notes"
-                }
-            }
-        },
-        "EscrowConsentType": {
-            "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
-            "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
-            ]
-        },
-        "EscrowStatus": {
-            "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
-            "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
-            ]
-        },
-        "EscrowResolution": {
-            "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\ n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
-            "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
-            ]
-        }
-    }
-}
-""";
-
-    private static readonly string _ValidateEscrow_Info = """
-{
-    "summary": "Manually trigger validation",
-    "description": "Manually trigger validation on an active escrow.",
-    "tags": [
-        "Validation"
-    ],
-    "deprecated": false,
-    "operationId": "validateEscrow"
-}
-""";
-
-    /// <summary>Returns endpoint information for ValidateEscrow</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Escrow",
-            "POST",
-            "/escrow/validate",
-            _ValidateEscrow_Info));
-
-    /// <summary>Returns request schema for ValidateEscrow</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/validate",
-            "request-schema",
-            _ValidateEscrow_RequestSchema));
-
-    /// <summary>Returns response schema for ValidateEscrow</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/validate",
-            "response-schema",
-            _ValidateEscrow_ResponseSchema));
-
-    /// <summary>Returns full schema for ValidateEscrow</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Escrow",
-            "POST",
-            "/escrow/validate",
-            _ValidateEscrow_Info,
-            _ValidateEscrow_RequestSchema,
-            _ValidateEscrow_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for Reaffirm
-
-    private static readonly string _Reaffirm_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ReaffirmRequest",
-    "$defs": {
-        "ReaffirmRequest": {
-            "type": "object",
-            "description": "Request to re-affirm after validation failure",
-            "required": [
-                "escrowId",
-                "partyId",
-                "partyType",
-                "idempotencyKey"
-            ],
-            "properties": {
-                "escrowId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Escrow ID"
-                },
-                "partyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Party reaffirming"
-                },
-                "partyType": {
-                    "description": "Type of entity (Account, Character, etc.)",
-                    "type": "object"
-                },
-                "releaseToken": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Release token"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "description": "Idempotency key"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _Reaffirm_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ReaffirmResponse",
-    "$defs": {
-        "ReaffirmResponse": {
-            "type": "object",
-            "description": "Response from party re-affirming after validation failure",
-            "required": [
-                "escrow",
-                "allReaffirmed"
-            ],
-            "properties": {
-                "escrow": {
-                    "$ref": "#/$defs/EscrowAgreement",
-                    "description": "Reaffirmed escrow agreement"
-                },
-                "allReaffirmed": {
-                    "type": "boolean",
-                    "description": "Whether all parties have reaffirmed"
-                }
-            }
-        },
-        "EscrowAgreement": {
-            "type": "object",
-            "description": "Main escrow agreement record",
-            "required": [
-                "id",
-                "escrowType",
-                "trustMode",
-                "parties",
-                "expectedDeposits",
-                "deposits",
-                "consents",
-                "status",
-                "requiredConsentsForRelease",
-                "createdAt",
-                "createdBy",
-                "createdByType",
-                "expiresAt"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique escrow agreement identifier"
-                },
-                "escrowType": {
-                    "$ref": "#/$defs/EscrowType",
-                    "description": "Type of escrow agreement"
-                },
-                "trustMode": {
-                    "$ref": "#/$defs/EscrowTrustMode",
-                    "description": "Trust mode for the escrow"
-                },
-                "trustedPartyId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "For single_party_trusted - which party has authority"
-                },
-                "trustedPartyType": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of the trusted party"
-                },
-                "initiatorServiceId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "For initiator_trusted - which service created this"
-                },
-                "parties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowParty"
-                    },
-                    "description": "All parties involved in the escrow"
-                },
-                "expectedDeposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ExpectedDeposit"
-                    },
-                    "description": "What deposits are expected from each party"
-                },
-                "deposits": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowDeposit"
-                    },
-                    "description": "Actual deposits received"
-                },
-                "releaseAllocations": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ReleaseAllocation"
-                    },
-                    "description": "How assets should be distributed on release"
-                },
-                "boundContractId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Contract governing conditions for this escrow"
-                },
-                "consents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/EscrowConsent"
-                    },
-                    "description": "Consent decisions from parties"
-                },
-                "status": {
-                    "$ref": "#/$defs/EscrowStatus",
-                    "description": "Current escrow status"
-                },
-                "requiredConsentsForRelease": {
-                    "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
-                },
-                "lastValidatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow was last validated"
-                },
-                "validationFailures": {
-                    "type": "array",
-                    "nullable": true,
-                    "items": {
-                        "$ref": "#/$defs/ValidationFailure"
-                    },
-                    "description": "Any validation failures detected"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the escrow was created"
-                },
-                "createdBy": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Who created the escrow"
-                },
-                "createdByType": {
-                    "type": "object",
-                    "description": "Type of the creator entity"
-                },
-                "fundedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When all expected deposits were received"
-                },
-                "expiresAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Auto-refund if not completed by this time"
-                },
-                "completedAt": {
-                    "type": "string",
                     "format": "date-time",
-                    "nullable": true,
-                    "description": "When the escrow reached terminal state"
-                },
-                "referenceType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "What this escrow is for (e.g., trade, auction, contract)"
-                },
-                "referenceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the referenced entity"
-                },
-                "description": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Human-readable description"
-                },
-                "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": true,
-                    "description": "Game/application specific metadata"
-                },
-                "resolution": {
-                    "$ref": "#/$defs/EscrowResolution",
-                    "description": "How the escrow was resolved",
-                    "nullable": true
-                },
-                "resolutionNotes": {
-                    "type": "string",
                     "nullable": true,
-                    "description": "Notes about the resolution"
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
@@ -12738,6 +5638,7877 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _RecordConsent_Info = """
+{
+    "summary": "Record party consent",
+    "description": "Record party consent for release, refund, or re-affirmation.",
+    "tags": [
+        "Consent"
+    ],
+    "deprecated": false,
+    "operationId": "recordConsent"
+}
+""";
+
+    /// <summary>Returns endpoint information for RecordConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent",
+            _RecordConsent_Info));
+
+    /// <summary>Returns request schema for RecordConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent",
+            "request-schema",
+            _RecordConsent_RequestSchema));
+
+    /// <summary>Returns response schema for RecordConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent",
+            "response-schema",
+            _RecordConsent_ResponseSchema));
+
+    /// <summary>Returns full schema for RecordConsent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecordConsent_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent",
+            _RecordConsent_Info,
+            _RecordConsent_RequestSchema,
+            _RecordConsent_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetConsentStatus
+
+    private static readonly string _GetConsentStatus_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetConsentStatusRequest",
+    "$defs": {
+        "GetConsentStatusRequest": {
+            "type": "object",
+            "description": "Request to get consent status for all parties",
+            "required": [
+                "escrowId"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetConsentStatus_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetConsentStatusResponse",
+    "$defs": {
+        "GetConsentStatusResponse": {
+            "type": "object",
+            "description": "Response containing consent status for all parties",
+            "required": [
+                "partiesRequiringConsent",
+                "consentsReceived",
+                "consentsRequired",
+                "canRelease",
+                "canRefund"
+            ],
+            "properties": {
+                "partiesRequiringConsent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PartyConsentStatus"
+                    },
+                    "description": "Consent status per party"
+                },
+                "consentsReceived": {
+                    "type": "integer",
+                    "description": "Number of consents received"
+                },
+                "consentsRequired": {
+                    "type": "integer",
+                    "description": "Number of consents required"
+                },
+                "canRelease": {
+                    "type": "boolean",
+                    "description": "Whether release can proceed"
+                },
+                "canRefund": {
+                    "type": "boolean",
+                    "description": "Whether refund can proceed"
+                }
+            }
+        },
+        "PartyConsentStatus": {
+            "type": "object",
+            "description": "Consent status for a single party",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentGiven"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party ID"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party display name"
+                },
+                "consentGiven": {
+                    "type": "boolean",
+                    "description": "Whether consent was given"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given (if any)",
+                    "nullable": true
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When consent was given"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\ n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _GetConsentStatus_Info = """
+{
+    "summary": "Get consent status for escrow",
+    "description": "Get consent status for all parties in an escrow.",
+    "tags": [
+        "Consent"
+    ],
+    "deprecated": false,
+    "operationId": "getConsentStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetConsentStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent/status",
+            _GetConsentStatus_Info));
+
+    /// <summary>Returns request schema for GetConsentStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent/status",
+            "request-schema",
+            _GetConsentStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetConsentStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent/status",
+            "response-schema",
+            _GetConsentStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetConsentStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/consent/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConsentStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/consent/status",
+            _GetConsentStatus_Info,
+            _GetConsentStatus_RequestSchema,
+            _GetConsentStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Release
+
+    private static readonly string _Release_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ReleaseRequest",
+    "$defs": {
+        "ReleaseRequest": {
+            "type": "object",
+            "description": "Request to trigger escrow release to recipients",
+            "required": [
+                "escrowId",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted mode"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Release_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ReleaseResponse",
+    "$defs": {
+        "ReleaseResponse": {
+            "type": "object",
+            "description": "Response from releasing escrow assets to recipients",
+            "required": [
+                "escrow",
+                "finalizerResults",
+                "releases"
+            ],
+            "properties": {
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Released escrow agreement"
+                },
+                "finalizerResults": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/FinalizerResult"
+                    },
+                    "description": "Results of contract finalizer APIs"
+                },
+                "releases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ReleaseResult"
+                    },
+                    "description": "Release results per recipient"
+                }
+            }
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        },
+        "FinalizerResult": {
+            "type": "object",
+            "description": "Result from a contract finalizer API call",
+            "required": [
+                "endpoint",
+                "success"
+            ],
+            "properties": {
+                "endpoint": {
+                    "type": "string",
+                    "description": "Finalizer endpoint"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether it succeeded"
+                },
+                "error": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if failed"
+                }
+            }
+        },
+        "ReleaseResult": {
+            "type": "object",
+            "description": "Result of releasing assets to a single recipient",
+            "required": [
+                "recipientPartyId",
+                "success"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Recipient party ID"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets released (null if failed)",
+                    "nullable": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether release succeeded"
+                },
+                "error": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Release_Info = """
+{
+    "summary": "Trigger release",
+    "description": "Trigger release (for trusted modes or after consent).\nIf boundContractId is set, checks contract status first (must be fulfilled).\nRuns finalization flow before releasing remaining assets.\n",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "release"
+}
+""";
+
+    /// <summary>Returns endpoint information for Release</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/release",
+            _Release_Info));
+
+    /// <summary>Returns request schema for Release</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/release",
+            "request-schema",
+            _Release_RequestSchema));
+
+    /// <summary>Returns response schema for Release</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/release",
+            "response-schema",
+            _Release_ResponseSchema));
+
+    /// <summary>Returns full schema for Release</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/release/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Release_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/release",
+            _Release_Info,
+            _Release_RequestSchema,
+            _Release_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Refund
+
+    private static readonly string _Refund_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RefundRequest",
+    "$defs": {
+        "RefundRequest": {
+            "type": "object",
+            "description": "Request to trigger escrow refund to depositors",
+            "required": [
+                "escrowId",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted mode"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for refund"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Refund_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RefundResponse",
+    "$defs": {
+        "RefundResponse": {
+            "type": "object",
+            "description": "Response from refunding escrow assets to depositors",
+            "required": [
+                "escrow",
+                "refunds"
+            ],
+            "properties": {
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Refunded escrow agreement"
+                },
+                "refunds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RefundResult"
+                    },
+                    "description": "Refund results per depositor"
+                }
+            }
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        },
+        "RefundResult": {
+            "type": "object",
+            "description": "Result of refunding assets to a single depositor",
+            "required": [
+                "depositorPartyId",
+                "success"
+            ],
+            "properties": {
+                "depositorPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Depositor party ID"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets refunded (null if failed)",
+                    "nullable": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether refund succeeded"
+                },
+                "error": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Refund_Info = """
+{
+    "summary": "Trigger refund",
+    "description": "Trigger refund (for trusted modes or consent).",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "refund"
+}
+""";
+
+    /// <summary>Returns endpoint information for Refund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/refund",
+            _Refund_Info));
+
+    /// <summary>Returns request schema for Refund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/refund",
+            "request-schema",
+            _Refund_RequestSchema));
+
+    /// <summary>Returns response schema for Refund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/refund",
+            "response-schema",
+            _Refund_ResponseSchema));
+
+    /// <summary>Returns full schema for Refund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/refund/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Refund_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/refund",
+            _Refund_Info,
+            _Refund_RequestSchema,
+            _Refund_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Cancel
+
+    private static readonly string _Cancel_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CancelRequest",
+    "$defs": {
+        "CancelRequest": {
+            "type": "object",
+            "description": "Request to cancel escrow before fully funded",
+            "required": [
+                "escrowId",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Cancel_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CancelResponse",
+    "$defs": {
+        "CancelResponse": {
+            "type": "object",
+            "description": "Response from cancelling an escrow",
+            "required": [
+                "escrow",
+                "refunds"
+            ],
+            "properties": {
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Cancelled escrow agreement"
+                },
+                "refunds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RefundResult"
+                    },
+                    "description": "Refund results for any deposits"
+                }
+            }
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        },
+        "RefundResult": {
+            "type": "object",
+            "description": "Result of refunding assets to a single depositor",
+            "required": [
+                "depositorPartyId",
+                "success"
+            ],
+            "properties": {
+                "depositorPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Depositor party ID"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets refunded (null if failed)",
+                    "nullable": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether refund succeeded"
+                },
+                "error": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Cancel_Info = """
+{
+    "summary": "Cancel escrow before fully funded",
+    "description": "Cancel escrow before fully funded, refunding any deposits.",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "cancel"
+}
+""";
+
+    /// <summary>Returns endpoint information for Cancel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cancel",
+            _Cancel_Info));
+
+    /// <summary>Returns request schema for Cancel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cancel",
+            "request-schema",
+            _Cancel_RequestSchema));
+
+    /// <summary>Returns response schema for Cancel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cancel",
+            "response-schema",
+            _Cancel_ResponseSchema));
+
+    /// <summary>Returns full schema for Cancel</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cancel/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Cancel_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cancel",
+            _Cancel_Info,
+            _Cancel_RequestSchema,
+            _Cancel_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Dispute
+
+    private static readonly string _Dispute_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DisputeRequest",
+    "$defs": {
+        "DisputeRequest": {
+            "type": "object",
+            "description": "Request to raise a dispute on a funded escrow",
+            "required": [
+                "escrowId",
+                "partyId",
+                "partyType",
+                "reason",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party raising dispute"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Reason for dispute"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Release token (proves party identity)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Dispute_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DisputeResponse",
+    "$defs": {
+        "DisputeResponse": {
+            "type": "object",
+            "description": "Response from raising a dispute on an escrow",
+            "required": [
+                "escrow"
+            ],
+            "properties": {
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Disputed escrow agreement"
+                }
+            }
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _Dispute_Info = """
+{
+    "summary": "Raise a dispute on funded escrow",
+    "description": "Raise a dispute on a funded escrow.",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "dispute"
+}
+""";
+
+    /// <summary>Returns endpoint information for Dispute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/dispute",
+            _Dispute_Info));
+
+    /// <summary>Returns request schema for Dispute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/dispute",
+            "request-schema",
+            _Dispute_RequestSchema));
+
+    /// <summary>Returns response schema for Dispute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/dispute",
+            "response-schema",
+            _Dispute_ResponseSchema));
+
+    /// <summary>Returns full schema for Dispute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/dispute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Dispute_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/dispute",
+            _Dispute_Info,
+            _Dispute_RequestSchema,
+            _Dispute_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ConfirmRelease
+
+    private static readonly string _ConfirmRelease_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmReleaseRequest",
+    "$defs": {
+        "ConfirmReleaseRequest": {
+            "type": "object",
+            "description": "Request to confirm receipt of released assets",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "partyId",
+                "releaseToken"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow being confirmed."
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The party confirming receipt."
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "description": "The party's release token (received via confirmation shortcut)."
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional confirmation notes."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRelease_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmReleaseResponse",
+    "$defs": {
+        "ConfirmReleaseResponse": {
+            "type": "object",
+            "description": "Response from confirming release receipt",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "confirmed",
+                "allPartiesConfirmed"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow ID."
+                },
+                "confirmed": {
+                    "type": "boolean",
+                    "description": "Whether this party's confirmation was recorded."
+                },
+                "allPartiesConfirmed": {
+                    "type": "boolean",
+                    "description": "Whether all parties have now confirmed (triggers Released transition)."
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status after confirmation.",
+                    "nullable": true
+                }
+            }
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\ n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRelease_Info = """
+{
+    "summary": "Confirm receipt of released assets",
+    "description": "Called by parties to confirm they received their released assets.\nRequired when ReleaseMode is party_required or service_and_party.\n",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "confirmRelease"
+}
+""";
+
+    /// <summary>Returns endpoint information for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            _ConfirmRelease_Info));
+
+    /// <summary>Returns request schema for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            "request-schema",
+            _ConfirmRelease_RequestSchema));
+
+    /// <summary>Returns response schema for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            "response-schema",
+            _ConfirmRelease_ResponseSchema));
+
+    /// <summary>Returns full schema for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            _ConfirmRelease_Info,
+            _ConfirmRelease_RequestSchema,
+            _ConfirmRelease_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ConfirmRefund
+
+    private static readonly string _ConfirmRefund_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmRefundRequest",
+    "$defs": {
+        "ConfirmRefundRequest": {
+            "type": "object",
+            "description": "Request to confirm receipt of refunded assets",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "partyId"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow being confirmed."
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The party confirming receipt of refund."
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional confirmation notes."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRefund_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmRefundResponse",
+    "$defs": {
+        "ConfirmRefundResponse": {
+            "type": "object",
+            "description": "Response from confirming refund receipt",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "confirmed",
+                "allPartiesConfirmed"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow ID."
+                },
+                "confirmed": {
+                    "type": "boolean",
+                    "description": "Whether this party's confirmation was recorded."
+                },
+                "allPartiesConfirmed": {
+                    "type": "boolean",
+                    "description": "Whether all parties have now confirmed (triggers Refunded transition)."
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status after confirmation.",
+                    "nullable": true
+                }
+            }
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\ n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRefund_Info = """
+{
+    "summary": "Confirm receipt of refunded assets",
+    "description": "Called by parties to confirm they received their refunded deposits.\nRequired when RefundMode is party_required.\n",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "confirmRefund"
+}
+""";
+
+    /// <summary>Returns endpoint information for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            _ConfirmRefund_Info));
+
+    /// <summary>Returns request schema for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            "request-schema",
+            _ConfirmRefund_RequestSchema));
+
+    /// <summary>Returns response schema for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            "response-schema",
+            _ConfirmRefund_ResponseSchema));
+
+    /// <summary>Returns full schema for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            _ConfirmRefund_Info,
+            _ConfirmRefund_RequestSchema,
+            _ConfirmRefund_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Resolve
+
+    private static readonly string _Resolve_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ResolveRequest",
+    "$defs": {
+        "ResolveRequest": {
+            "type": "object",
+            "description": "Request for arbiter to resolve a disputed escrow",
+            "required": [
+                "escrowId",
+                "arbiterId",
+                "arbiterType",
+                "resolution",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                },
+                "arbiterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Arbiter ID"
+                },
+                "arbiterType": {
+                    "type": "object",
+                    "description": "Arbiter type"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "Resolution decision for the dispute"
+                },
+                "splitAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/SplitAllocation"
+                    },
+                    "description": "For split resolution"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Resolution notes"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key"
+                }
+            }
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "SplitAllocation": {
+            "type": "object",
+            "description": "Allocation of assets to a party in a split resolution",
+            "required": [
+                "partyId",
+                "partyType",
+                "assets"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party ID"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAssetInput"
+                    },
+                    "description": "Assets allocated to this party"
+                }
+            }
+        },
+        "EscrowAssetInput": {
+            "type": "object",
+            "description": "Input for specifying an asset in escrow operations",
+            "required": [
+                "assetType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset to deposit"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Currency amount"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item name"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Item template ID (for stacks)"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item template name"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Item quantity (for stacks)"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Contract description"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Contract party role being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset ID"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Custom asset data"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _Resolve_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ResolveResponse",
+    "$defs": {
+        "ResolveResponse": {
+            "type": "object",
+            "description": "Response from arbiter resolving a disputed escrow",
+            "required": [
+                "escrow",
+                "transfers"
+            ],
+            "properties": {
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Resolved escrow agreement"
+                },
+                "transfers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransferResult"
+                    },
+                    "description": "Transfer results"
+                }
+            }
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        },
+        "TransferResult": {
+            "type": "object",
+            "description": "Result of transferring assets to a party during resolution",
+            "required": [
+                "partyId",
+                "success"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party ID"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets transferred (null if failed)",
+                    "nullable": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether transfer succeeded"
+                },
+                "error": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Resolve_Info = """
+{
+    "summary": "Arbiter resolves disputed escrow",
+    "description": "Arbiter resolves a disputed escrow.",
+    "tags": [
+        "Arbiter"
+    ],
+    "deprecated": false,
+    "operationId": "resolve"
+}
+""";
+
+    /// <summary>Returns endpoint information for Resolve</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/resolve",
+            _Resolve_Info));
+
+    /// <summary>Returns request schema for Resolve</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/resolve",
+            "request-schema",
+            _Resolve_RequestSchema));
+
+    /// <summary>Returns response schema for Resolve</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/resolve",
+            "response-schema",
+            _Resolve_ResponseSchema));
+
+    /// <summary>Returns full schema for Resolve</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/resolve/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Resolve_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/resolve",
+            _Resolve_Info,
+            _Resolve_RequestSchema,
+            _Resolve_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for VerifyCondition
+
+    private static readonly string _VerifyCondition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/VerifyConditionRequest",
+    "$defs": {
+        "VerifyConditionRequest": {
+            "type": "object",
+            "description": "Request to verify a condition for conditional escrow",
+            "required": [
+                "escrowId",
+                "conditionMet",
+                "verifierId",
+                "verifierType",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                },
+                "conditionMet": {
+                    "type": "boolean",
+                    "description": "Whether the condition was met"
+                },
+                "verifierId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Verifier entity ID"
+                },
+                "verifierType": {
+                    "type": "object",
+                    "description": "Verifier entity type"
+                },
+                "verificationData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Proof/evidence data"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _VerifyCondition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/VerifyConditionResponse",
+    "$defs": {
+        "VerifyConditionResponse": {
+            "type": "object",
+            "description": "Response from verifying a condition on an escrow",
+            "required": [
+                "escrow",
+                "triggered"
+            ],
+            "properties": {
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Updated escrow agreement"
+                },
+                "triggered": {
+                    "type": "boolean",
+                    "description": "Whether this triggered release/refund"
+                }
+            }
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _VerifyCondition_Info = """
+{
+    "summary": "Verify condition for conditional escrow",
+    "description": "Verify condition for conditional escrow (non-contract path).\nFor escrows with boundContractId, use contract milestones instead.\n",
+    "tags": [
+        "Condition"
+    ],
+    "deprecated": false,
+    "operationId": "verifyCondition"
+}
+""";
+
+    /// <summary>Returns endpoint information for VerifyCondition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/verify-condition",
+            _VerifyCondition_Info));
+
+    /// <summary>Returns request schema for VerifyCondition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/verify-condition",
+            "request-schema",
+            _VerifyCondition_RequestSchema));
+
+    /// <summary>Returns response schema for VerifyCondition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/verify-condition",
+            "response-schema",
+            _VerifyCondition_ResponseSchema));
+
+    /// <summary>Returns full schema for VerifyCondition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/verify-condition/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyCondition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/verify-condition",
+            _VerifyCondition_Info,
+            _VerifyCondition_RequestSchema,
+            _VerifyCondition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ValidateEscrow
+
+    private static readonly string _ValidateEscrow_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateEscrowRequest",
+    "$defs": {
+        "ValidateEscrowRequest": {
+            "type": "object",
+            "description": "Request to manually validate escrow assets",
+            "required": [
+                "escrowId"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ValidateEscrow_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateEscrowResponse",
+    "$defs": {
+        "ValidateEscrowResponse": {
+            "type": "object",
+            "description": "Response from validating escrow assets",
+            "required": [
+                "valid",
+                "failures",
+                "escrow"
+            ],
+            "properties": {
+                "valid": {
+                    "type": "boolean",
+                    "description": "Whether all assets are valid"
+                },
+                "failures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Validation failures"
+                },
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Escrow agreement with validation results"
+                }
+            }
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\ n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\ n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ValidateEscrow_Info = """
+{
+    "summary": "Manually trigger validation",
+    "description": "Manually trigger validation on an active escrow.",
+    "tags": [
+        "Validation"
+    ],
+    "deprecated": false,
+    "operationId": "validateEscrow"
+}
+""";
+
+    /// <summary>Returns endpoint information for ValidateEscrow</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/validate",
+            _ValidateEscrow_Info));
+
+    /// <summary>Returns request schema for ValidateEscrow</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/validate",
+            "request-schema",
+            _ValidateEscrow_RequestSchema));
+
+    /// <summary>Returns response schema for ValidateEscrow</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/validate",
+            "response-schema",
+            _ValidateEscrow_ResponseSchema));
+
+    /// <summary>Returns full schema for ValidateEscrow</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/validate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateEscrow_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/validate",
+            _ValidateEscrow_Info,
+            _ValidateEscrow_RequestSchema,
+            _ValidateEscrow_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Reaffirm
+
+    private static readonly string _Reaffirm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ReaffirmRequest",
+    "$defs": {
+        "ReaffirmRequest": {
+            "type": "object",
+            "description": "Request to re-affirm after validation failure",
+            "required": [
+                "escrowId",
+                "partyId",
+                "partyType",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow ID"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party reaffirming"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Release token"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Reaffirm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ReaffirmResponse",
+    "$defs": {
+        "ReaffirmResponse": {
+            "type": "object",
+            "description": "Response from party re-affirming after validation failure",
+            "required": [
+                "escrow",
+                "allReaffirmed"
+            ],
+            "properties": {
+                "escrow": {
+                    "$ref": "#/$defs/EscrowAgreement",
+                    "description": "Reaffirmed escrow agreement"
+                },
+                "allReaffirmed": {
+                    "type": "boolean",
+                    "description": "Whether all parties have reaffirmed"
+                }
+            }
+        },
+        "EscrowAgreement": {
+            "type": "object",
+            "description": "Main escrow agreement record",
+            "required": [
+                "id",
+                "escrowType",
+                "trustMode",
+                "parties",
+                "expectedDeposits",
+                "deposits",
+                "consents",
+                "status",
+                "requiredConsentsForRelease",
+                "createdAt",
+                "createdBy",
+                "createdByType",
+                "expiresAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique escrow agreement identifier"
+                },
+                "escrowType": {
+                    "$ref": "#/$defs/EscrowType",
+                    "description": "Type of escrow agreement"
+                },
+                "trustMode": {
+                    "$ref": "#/$defs/EscrowTrustMode",
+                    "description": "Trust mode for the escrow"
+                },
+                "trustedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For single_party_trusted - which party has authority"
+                },
+                "trustedPartyType": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of the trusted party"
+                },
+                "initiatorServiceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For initiator_trusted - which service created this"
+                },
+                "parties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowParty"
+                    },
+                    "description": "All parties involved in the escrow"
+                },
+                "expectedDeposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExpectedDeposit"
+                    },
+                    "description": "What deposits are expected from each party"
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowDeposit"
+                    },
+                    "description": "Actual deposits received"
+                },
+                "releaseAllocations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ReleaseAllocation"
+                    },
+                    "description": "How assets should be distributed on release"
+                },
+                "boundContractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Contract governing conditions for this escrow"
+                },
+                "consents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowConsent"
+                    },
+                    "description": "Consent decisions from parties"
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status"
+                },
+                "requiredConsentsForRelease": {
+                    "type": "integer",
+                    "description": "How many parties must consent for release (-1 = all required)"
+                },
+                "lastValidatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow was last validated"
+                },
+                "validationFailures": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ValidationFailure"
+                    },
+                    "description": "Any validation failures detected"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the escrow was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Who created the escrow"
+                },
+                "createdByType": {
+                    "type": "object",
+                    "description": "Type of the creator entity"
+                },
+                "fundedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When all expected deposits were received"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Auto-refund if not completed by this time"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the escrow reached terminal state"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "What this escrow is for (e.g., trade, auction, contract)"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the referenced entity"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Game/application specific metadata"
+                },
+                "resolution": {
+                    "$ref": "#/$defs/EscrowResolution",
+                    "description": "How the escrow was resolved",
+                    "nullable": true
+                },
+                "resolutionNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
+                }
+            }
+        },
+        "EscrowType": {
+            "type": "string",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "enum": [
+                "two_party",
+                "multi_party",
+                "conditional",
+                "auction"
+            ]
+        },
+        "EscrowTrustMode": {
+            "type": "string",
+            "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
+            "enum": [
+                "full_consent",
+                "initiator_trusted",
+                "single_party_trusted"
+            ]
+        },
+        "EscrowParty": {
+            "type": "object",
+            "description": "A party in the escrow agreement",
+            "required": [
+                "partyId",
+                "partyType",
+                "role",
+                "consentRequired",
+                "depositTokenUsed",
+                "releaseTokenUsed"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party entity identifier"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for UI/logging"
+                },
+                "role": {
+                    "$ref": "#/$defs/EscrowPartyRole",
+                    "description": "Role of this party in the escrow"
+                },
+                "consentRequired": {
+                    "type": "boolean",
+                    "description": "Whether this party consent is required for release"
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own wallet (where currency comes from/returns to)"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Party own container (where items come from/return to)"
+                },
+                "escrowWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow wallet for THIS party deposits (owned by escrow)"
+                },
+                "escrowContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Escrow container for THIS party deposits (owned by escrow)"
+                },
+                "depositToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for depositing (full_consent mode)"
+                },
+                "depositTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the deposit token has been used"
+                },
+                "depositTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deposit token was used"
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token for consenting to release"
+                },
+                "releaseTokenUsed": {
+                    "type": "boolean",
+                    "description": "Whether the release token has been used"
+                },
+                "releaseTokenUsedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the release token was used"
+                }
+            }
+        },
+        "EscrowPartyRole": {
+            "type": "string",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "enum": [
+                "depositor",
+                "recipient",
+                "depositor_recipient",
+                "arbiter",
+                "observer"
+            ]
+        },
+        "ExpectedDeposit": {
+            "type": "object",
+            "description": "Defines what a party should deposit",
+            "required": [
+                "partyId",
+                "partyType",
+                "expectedAssets",
+                "optional",
+                "fulfilled"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who should deposit"
+                },
+                "partyType": {
+                    "description": "Type of depositing party",
+                    "type": "object"
+                },
+                "expectedAssets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Expected assets from this party"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Is this deposit optional"
+                },
+                "depositDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for this specific deposit"
+                },
+                "fulfilled": {
+                    "type": "boolean",
+                    "description": "Has this party fulfilled their deposit requirement"
+                }
+            }
+        },
+        "EscrowAsset": {
+            "type": "object",
+            "description": "An asset held in escrow",
+            "required": [
+                "assetType",
+                "sourceOwnerId",
+                "sourceOwnerType"
+            ],
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset held in escrow"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=currency - currency definition ID"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized currency code for display"
+                },
+                "currencyAmount": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Amount of currency"
+                },
+                "itemInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item - unique item instance ID"
+                },
+                "itemName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized item name for display"
+                },
+                "itemTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - stackable item template"
+                },
+                "itemTemplateName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized template name for display"
+                },
+                "itemQuantity": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "For assetType=item_stack - quantity"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "For assetType=contract - contract instance ID"
+                },
+                "contractTemplateCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Denormalized contract template code"
+                },
+                "contractDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description of the contract"
+                },
+                "contractPartyRole": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which party role in the contract is being escrowed"
+                },
+                "customAssetType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For assetType=custom - registered handler type"
+                },
+                "customAssetId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom asset identifier"
+                },
+                "customAssetData": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Handler-specific data"
+                },
+                "sourceOwnerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Where this asset came from (for refunds)"
+                },
+                "sourceOwnerType": {
+                    "type": "object",
+                    "description": "Type of the source owner"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet/container ID"
+                }
+            }
+        },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
+        "EscrowDeposit": {
+            "type": "object",
+            "description": "Records an actual deposit",
+            "required": [
+                "id",
+                "escrowId",
+                "partyId",
+                "partyType",
+                "assets",
+                "depositedAt",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deposit record identifier"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Escrow this deposit belongs to"
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party who deposited"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "assets": {
+                    "$ref": "#/$defs/EscrowAssetBundle",
+                    "description": "Assets deposited"
+                },
+                "depositedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deposit was made"
+                },
+                "depositTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "description": "Idempotency key for this deposit"
+                }
+            }
+        },
+        "EscrowAssetBundle": {
+            "type": "object",
+            "description": "Groups multiple assets for a single deposit or release",
+            "required": [
+                "bundleId",
+                "assets"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Bundle identifier"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets in this bundle"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Summary for display"
+                },
+                "estimatedValue": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Optional valuation for UI display"
+                }
+            }
+        },
+        "ReleaseAllocation": {
+            "type": "object",
+            "description": "Defines who gets what on release",
+            "required": [
+                "recipientPartyId",
+                "recipientPartyType",
+                "assets"
+            ],
+            "properties": {
+                "recipientPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party receiving assets"
+                },
+                "recipientPartyType": {
+                    "type": "object",
+                    "description": "Type of the recipient party"
+                },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EscrowAsset"
+                    },
+                    "description": "Assets this recipient should receive"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver currency"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Where to deliver items"
+                }
+            }
+        },
+        "EscrowConsent": {
+            "type": "object",
+            "description": "Records a party consent decision",
+            "required": [
+                "partyId",
+                "partyType",
+                "consentType",
+                "consentedAt"
+            ],
+            "properties": {
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Party giving consent"
+                },
+                "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
+                    "type": "object"
+                },
+                "consentType": {
+                    "$ref": "#/$defs/EscrowConsentType",
+                    "description": "Type of consent given"
+                },
+                "consentedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When consent was given"
+                },
+                "releaseTokenUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token used (for audit)"
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional notes"
+                }
+            }
+        },
+        "EscrowConsentType": {
+            "type": "string",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "enum": [
+                "release",
+                "refund",
+                "dispute",
+                "reaffirm"
+            ]
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        },
+        "ValidationFailure": {
+            "type": "object",
+            "description": "Records a validation check failure",
+            "required": [
+                "detectedAt",
+                "assetType",
+                "assetDescription",
+                "failureType",
+                "affectedPartyId",
+                "affectedPartyType"
+            ],
+            "properties": {
+                "detectedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the failure was detected"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type of asset affected"
+                },
+                "assetDescription": {
+                    "type": "string",
+                    "description": "Description of the affected asset"
+                },
+                "failureType": {
+                    "$ref": "#/$defs/ValidationFailureType",
+                    "description": "Type of validation failure"
+                },
+                "affectedPartyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Which party deposit is affected"
+                },
+                "affectedPartyType": {
+                    "type": "object",
+                    "description": "Type of the affected party"
+                },
+                "details": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": true,
+                    "description": "Additional failure details"
+                }
+            }
+        },
+        "ValidationFailureType": {
+            "type": "string",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "enum": [
+                "asset_missing",
+                "asset_mutated",
+                "asset_expired",
+                "balance_mismatch"
+            ]
+        },
+        "EscrowResolution": {
+            "type": "string",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "enum": [
+                "released",
+                "refunded",
+                "split",
+                "expired_refunded",
+                "cancelled_refunded",
+                "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }

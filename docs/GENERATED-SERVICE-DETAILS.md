@@ -16,7 +16,7 @@ This document provides a compact reference of all Bannou services.
 | [Asset](#asset) | 1.0.0 | 20 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 14 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Character](#character) | 1.0.0 | 10 | Character management service for game worlds. |
+| [Character](#character) | 1.0.0 | 11 | Character management service for game worlds. |
 | [Character Encounter](#character-encounter) | 1.0.0 | 19 | Character encounter tracking service for memorable interacti... |
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
@@ -26,11 +26,11 @@ This document provides a compact reference of all Bannou services.
 | [Currency](#currency) | 1.0.0 | 32 | Multi-currency management service for game economies. |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
-| [Escrow](#escrow) | 1.0.0 | 20 | Full-custody orchestration layer for multi-party asset excha... |
+| [Escrow](#escrow) | 1.0.0 | 22 | Full-custody orchestration layer for multi-party asset excha... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Game Session](#game-session) | 2.0.0 | 11 | Minimal game session management for games. |
 | [Inventory](#inventory) | 1.0.0 | 16 | Container and inventory management service for games. |
-| [Item](#item) | 1.0.0 | 13 | Item template and instance management service. |
+| [Item](#item) | 1.0.0 | 14 | Item template and instance management service. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 17 | Location management service for game worlds. |
 | [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for game worlds. |
@@ -192,6 +192,8 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 **Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Deep Dive**: [docs/plugins/ESCROW.md](plugins/ESCROW.md)
 
 Full-custody orchestration layer for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes (full-consent requiring cryptographic tokens, initiator-trusted, single-party-trusted). Features a 13-state finite state machine, SHA-256-based token generation for deposit and release authorization, idempotent deposit handling, contract-bound conditional releases, per-party pending count tracking, custom asset type handler registration for extensibility, periodic validation with reaffirmation flow, and arbiter-mediated dispute resolution with split allocation support. Handles currency, items, item stacks, contracts, and custom asset types. Does NOT perform actual asset transfers itself - publishes events that downstream services (lib-currency, lib-inventory, lib-contract) consume to execute the physical movements.
+
+**Release/Refund Modes**: Configurable confirmation flows via `ReleaseMode` and `RefundMode` enums. For unbound escrows, `ReleaseMode` controls whether releases complete immediately or require downstream service and/or party confirmations. Contract-bound escrows skip release mode logic entirely - they rely on contract fulfillment verification.
 
 ---
 
@@ -399,7 +401,7 @@ Public-facing website service for browser-based access to registration, news, ac
 ## Summary
 
 - **Total services**: 42
-- **Total endpoints**: 547
+- **Total endpoints**: 551
 
 ---
 

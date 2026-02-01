@@ -141,33 +141,39 @@ paths:
         flow\"\n                },\n                \"required\": {\n                    \"type\": \"boolean\",\n        \
         \            \"description\": \"Whether milestone must be completed\"\n                },\n                \"deadline\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Relative deadline (ISO 8601 duration)\"\n                },\n                \"onComplete\": {\n             \
-        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"APIs to
-        call on completion\"\n                },\n                \"onExpire\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                 \
-        \   },\n                    \"nullable\": true,\n                    \"description\": \"APIs to call if deadline passes\"\
-        \n                }\n            }\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n  \
-        \          \"description\": \"Pre-configured API call to execute on contract events\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"serviceName\",\n                \"endpoint\",\n         \
-        \       \"payloadTemplate\"\n            ],\n            \"properties\": {\n                \"serviceName\": {\n \
-        \                   \"type\": \"string\",\n                    \"description\": \"Target service name\"\n        \
-        \        },\n                \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Target endpoint path\"\n                },\n                \"payloadTemplate\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"JSON payload with variable placeholders\"\n                },\n\
-        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Human-readable description\"\n                },\n                \"\
-        executionMode\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                 \
-        \       \"sync\",\n                        \"async\",\n                        \"fire_and_forget\"\n             \
-        \       ],\n                    \"default\": \"sync\",\n                    \"description\": \"How to execute the
-        API call\"\n                },\n                \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional validation rules for the
-        response\"\n                }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed
-        by lib-contract to validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n        \
-        \    \"additionalProperties\": false,\n            \"properties\": {\n                \"successConditions\": {\n \
-        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\
-        \n                    },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
+        : \"Relative deadline (ISO 8601 duration)\"\n                },\n                \"deadlineBehavior\": {\n       \
+        \             \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Behavior when deadline passes for optional milestones (default skip). Required milestones
+        always trigger breach.\"\n                },\n                \"onComplete\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n          \
+        \          },\n                    \"nullable\": true,\n                    \"description\": \"APIs to call on completion\"\
+        \n                },\n                \"onExpire\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n           \
+        \         \"nullable\": true,\n                    \"description\": \"APIs to call if deadline passes\"\n        \
+        \        }\n            }\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Behavior when optional milestone deadline passes\",\n            \"enum\": [\n \
+        \               \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n        },\n    \
+        \    \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\": \"Pre-configured API call
+        to execute on contract events\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
+        \            \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\n            ],\n\
+        \            \"properties\": {\n                \"serviceName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Target service name\"\n                },\n                \"endpoint\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\n      \
+        \          },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description\"\n                },\n                \"executionMode\": {\n                    \"\
+        type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n                        \"\
+        async\",\n                        \"fire_and_forget\"\n                    ],\n                    \"default\": \"\
+        sync\",\n                    \"description\": \"How to execute the API call\"\n                },\n              \
+        \  \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Optional validation rules for the response\"\n         \
+        \       }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\": \"object\",\n     \
+        \       \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed by lib-contract to
+        validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"successConditions\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\n  \
+        \                  },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
         fail, checks permanent failure conditions.\\n\"\n                },\n                \"permanentFailureConditions\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/ValidationCondition\"\n                    },\n                    \"description\": \"Conditions that
@@ -288,33 +294,38 @@ paths:
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether milestone must be completed\"\
         \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
         \     \"nullable\": true,\n                    \"description\": \"Relative deadline (ISO 8601 duration)\"\n      \
-        \          },\n                \"onComplete\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"APIs to call on completion\"\n                },\n\
-        \                \"onExpire\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"APIs to call if deadline passes\"\n                }\n           \
-        \ }\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\": \"Pre-configured
-        API call to execute on contract events\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\n      \
-        \      ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Target service name\"\n                },\n                \"endpoint\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\n  \
-        \              },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Human-readable description\"\n                },\n                \"executionMode\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n                        \"\
-        async\",\n                        \"fire_and_forget\"\n                    ],\n                    \"default\": \"\
-        sync\",\n                    \"description\": \"How to execute the API call\"\n                },\n              \
-        \  \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Optional validation rules for the response\"\n         \
-        \       }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\": \"object\",\n     \
-        \       \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed by lib-contract to
-        validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"successConditions\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\n  \
-        \                  },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
+        \          },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones (default skip). Required milestones always trigger breach.\"\n                },\n           \
+        \     \"onComplete\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"APIs to call on completion\"\n                },\n                \"onExpire\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"APIs to call if deadline passes\"\n                }\n            }\n        },\n        \"MilestoneDeadlineBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\"\
+        ,\n            \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n   \
+        \         ]\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Pre-configured API call to execute on contract events\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\
+        \n            ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Target service name\"\n                },\n                \"\
+        endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\
+        \n                },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Human-readable description\"\n                },\n                \"executionMode\":
+        {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n\
+        \                        \"async\",\n                        \"fire_and_forget\"\n                    ],\n       \
+        \             \"default\": \"sync\",\n                    \"description\": \"How to execute the API call\"\n     \
+        \           },\n                \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional validation rules for the
+        response\"\n                }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed
+        by lib-contract to validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n        \
+        \    \"additionalProperties\": false,\n            \"properties\": {\n                \"successConditions\": {\n \
+        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\
+        \n                    },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
         fail, checks permanent failure conditions.\\n\"\n                },\n                \"permanentFailureConditions\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/ValidationCondition\"\n                    },\n                    \"description\": \"Conditions that
@@ -476,33 +487,38 @@ paths:
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether milestone must be completed\"\
         \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
         \     \"nullable\": true,\n                    \"description\": \"Relative deadline (ISO 8601 duration)\"\n      \
-        \          },\n                \"onComplete\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"APIs to call on completion\"\n                },\n\
-        \                \"onExpire\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"APIs to call if deadline passes\"\n                }\n           \
-        \ }\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\": \"Pre-configured
-        API call to execute on contract events\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\n      \
-        \      ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Target service name\"\n                },\n                \"endpoint\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\n  \
-        \              },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Human-readable description\"\n                },\n                \"executionMode\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n                        \"\
-        async\",\n                        \"fire_and_forget\"\n                    ],\n                    \"default\": \"\
-        sync\",\n                    \"description\": \"How to execute the API call\"\n                },\n              \
-        \  \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Optional validation rules for the response\"\n         \
-        \       }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\": \"object\",\n     \
-        \       \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed by lib-contract to
-        validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"successConditions\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\n  \
-        \                  },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
+        \          },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones (default skip). Required milestones always trigger breach.\"\n                },\n           \
+        \     \"onComplete\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"APIs to call on completion\"\n                },\n                \"onExpire\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"APIs to call if deadline passes\"\n                }\n            }\n        },\n        \"MilestoneDeadlineBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\"\
+        ,\n            \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n   \
+        \         ]\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Pre-configured API call to execute on contract events\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\
+        \n            ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Target service name\"\n                },\n                \"\
+        endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\
+        \n                },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Human-readable description\"\n                },\n                \"executionMode\":
+        {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n\
+        \                        \"async\",\n                        \"fire_and_forget\"\n                    ],\n       \
+        \             \"default\": \"sync\",\n                    \"description\": \"How to execute the API call\"\n     \
+        \           },\n                \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional validation rules for the
+        response\"\n                }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed
+        by lib-contract to validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n        \
+        \    \"additionalProperties\": false,\n            \"properties\": {\n                \"successConditions\": {\n \
+        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\
+        \n                    },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
         fail, checks permanent failure conditions.\\n\"\n                },\n                \"permanentFailureConditions\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/ValidationCondition\"\n                    },\n                    \"description\": \"Conditions that
@@ -677,33 +693,38 @@ paths:
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether milestone must be completed\"\
         \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
         \     \"nullable\": true,\n                    \"description\": \"Relative deadline (ISO 8601 duration)\"\n      \
-        \          },\n                \"onComplete\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"APIs to call on completion\"\n                },\n\
-        \                \"onExpire\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"APIs to call if deadline passes\"\n                }\n           \
-        \ }\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\": \"Pre-configured
-        API call to execute on contract events\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\n      \
-        \      ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Target service name\"\n                },\n                \"endpoint\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\n  \
-        \              },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Human-readable description\"\n                },\n                \"executionMode\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n                        \"\
-        async\",\n                        \"fire_and_forget\"\n                    ],\n                    \"default\": \"\
-        sync\",\n                    \"description\": \"How to execute the API call\"\n                },\n              \
-        \  \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Optional validation rules for the response\"\n         \
-        \       }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\": \"object\",\n     \
-        \       \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed by lib-contract to
-        validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"successConditions\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\n  \
-        \                  },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
+        \          },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones (default skip). Required milestones always trigger breach.\"\n                },\n           \
+        \     \"onComplete\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"APIs to call on completion\"\n                },\n                \"onExpire\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"APIs to call if deadline passes\"\n                }\n            }\n        },\n        \"MilestoneDeadlineBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\"\
+        ,\n            \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n   \
+        \         ]\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Pre-configured API call to execute on contract events\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\
+        \n            ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Target service name\"\n                },\n                \"\
+        endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\
+        \n                },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Human-readable description\"\n                },\n                \"executionMode\":
+        {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n\
+        \                        \"async\",\n                        \"fire_and_forget\"\n                    ],\n       \
+        \             \"default\": \"sync\",\n                    \"description\": \"How to execute the API call\"\n     \
+        \           },\n                \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional validation rules for the
+        response\"\n                }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed
+        by lib-contract to validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n        \
+        \    \"additionalProperties\": false,\n            \"properties\": {\n                \"successConditions\": {\n \
+        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\
+        \n                    },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
         fail, checks permanent failure conditions.\\n\"\n                },\n                \"permanentFailureConditions\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/ValidationCondition\"\n                    },\n                    \"description\": \"Conditions that
@@ -868,33 +889,38 @@ paths:
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether milestone must be completed\"\
         \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
         \     \"nullable\": true,\n                    \"description\": \"Relative deadline (ISO 8601 duration)\"\n      \
-        \          },\n                \"onComplete\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"APIs to call on completion\"\n                },\n\
-        \                \"onExpire\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"APIs to call if deadline passes\"\n                }\n           \
-        \ }\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\": \"Pre-configured
-        API call to execute on contract events\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\n      \
-        \      ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Target service name\"\n                },\n                \"endpoint\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\n  \
-        \              },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Human-readable description\"\n                },\n                \"executionMode\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n                        \"\
-        async\",\n                        \"fire_and_forget\"\n                    ],\n                    \"default\": \"\
-        sync\",\n                    \"description\": \"How to execute the API call\"\n                },\n              \
-        \  \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Optional validation rules for the response\"\n         \
-        \       }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\": \"object\",\n     \
-        \       \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed by lib-contract to
-        validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"successConditions\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\n  \
-        \                  },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
+        \          },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones (default skip). Required milestones always trigger breach.\"\n                },\n           \
+        \     \"onComplete\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"APIs to call on completion\"\n                },\n                \"onExpire\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"APIs to call if deadline passes\"\n                }\n            }\n        },\n        \"MilestoneDeadlineBehavior\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\"\
+        ,\n            \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n   \
+        \         ]\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Pre-configured API call to execute on contract events\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\
+        \n            ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Target service name\"\n                },\n                \"\
+        endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\
+        \n                },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Human-readable description\"\n                },\n                \"executionMode\":
+        {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n\
+        \                        \"async\",\n                        \"fire_and_forget\"\n                    ],\n       \
+        \             \"default\": \"sync\",\n                    \"description\": \"How to execute the API call\"\n     \
+        \           },\n                \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional validation rules for the
+        response\"\n                }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed
+        by lib-contract to validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n        \
+        \    \"additionalProperties\": false,\n            \"properties\": {\n                \"successConditions\": {\n \
+        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\
+        \n                    },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
         fail, checks permanent failure conditions.\\n\"\n                },\n                \"permanentFailureConditions\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/ValidationCondition\"\n                    },\n                    \"description\": \"Conditions that
@@ -1151,12 +1177,20 @@ paths:
         \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When completed\"\n                },\n                \"failedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When failed\"\n                },\n                \"deadline\": {\n                    \"type\"\
+        description\": \"When failed\"\n                },\n                \"activatedAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Absolute deadline\"\n                }\n            }\n        },\n        \"MilestoneStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"active\",\n                \"completed\",\n    \
-        \            \"failed\",\n                \"skipped\"\n            ]\n        }\n    }\n}"
+        \           \"description\": \"When this milestone became active\"\n                },\n                \"deadline\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Absolute deadline (computed from activatedAt + duration)\"\
+        \n                },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones\"\n                }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n            \"enum\": [\n  \
+        \              \"pending\",\n                \"active\",\n                \"completed\",\n                \"failed\"\
+        ,\n                \"skipped\"\n            ]\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\",\n        \
+        \    \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create contract instance from template\",\n    \"description\": \"Creates
         a new contract instance from a template. The instance starts\\nin 'draft' status and must be proposed to parties before
         activation.\\n\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1295,12 +1329,20 @@ paths:
         \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When completed\"\n                },\n                \"failedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When failed\"\n                },\n                \"deadline\": {\n                    \"type\"\
+        description\": \"When failed\"\n                },\n                \"activatedAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Absolute deadline\"\n                }\n            }\n        },\n        \"MilestoneStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"active\",\n                \"completed\",\n    \
-        \            \"failed\",\n                \"skipped\"\n            ]\n        }\n    }\n}"
+        \           \"description\": \"When this milestone became active\"\n                },\n                \"deadline\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Absolute deadline (computed from activatedAt + duration)\"\
+        \n                },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones\"\n                }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n            \"enum\": [\n  \
+        \              \"pending\",\n                \"active\",\n                \"completed\",\n                \"failed\"\
+        ,\n                \"skipped\"\n            ]\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\",\n        \
+        \    \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Propose contract to parties (starts consent flow)\",\n    \"description\"\
         : \"Moves a draft contract to 'proposed' status and notifies parties.\\nParties must consent before the contract becomes
         active.\\n\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -1442,12 +1484,20 @@ paths:
         \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When completed\"\n                },\n                \"failedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When failed\"\n                },\n                \"deadline\": {\n                    \"type\"\
+        description\": \"When failed\"\n                },\n                \"activatedAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Absolute deadline\"\n                }\n            }\n        },\n        \"MilestoneStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"active\",\n                \"completed\",\n    \
-        \            \"failed\",\n                \"skipped\"\n            ]\n        }\n    }\n}"
+        \           \"description\": \"When this milestone became active\"\n                },\n                \"deadline\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Absolute deadline (computed from activatedAt + duration)\"\
+        \n                },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones\"\n                }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n            \"enum\": [\n  \
+        \              \"pending\",\n                \"active\",\n                \"completed\",\n                \"failed\"\
+        ,\n                \"skipped\"\n            ]\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\",\n        \
+        \    \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Party consents to contract\",\n    \"description\": \"Records a party's
         consent to a proposed contract. When all required\\nparties consent, the contract moves to 'accepted' then 'active'
         status.\\n\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -1581,12 +1631,20 @@ paths:
         \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When completed\"\n                },\n                \"failedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When failed\"\n                },\n                \"deadline\": {\n                    \"type\"\
+        description\": \"When failed\"\n                },\n                \"activatedAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Absolute deadline\"\n                }\n            }\n        },\n        \"MilestoneStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"active\",\n                \"completed\",\n    \
-        \            \"failed\",\n                \"skipped\"\n            ]\n        }\n    }\n}"
+        \           \"description\": \"When this milestone became active\"\n                },\n                \"deadline\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Absolute deadline (computed from activatedAt + duration)\"\
+        \n                },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones\"\n                }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n            \"enum\": [\n  \
+        \              \"pending\",\n                \"active\",\n                \"completed\",\n                \"failed\"\
+        ,\n                \"skipped\"\n            ]\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\",\n        \
+        \    \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get instance by ID\",\n    \"description\": \"Retrieves a contract instance
         by its unique ID.\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getContractInstance\"\n}"
@@ -1749,12 +1807,20 @@ paths:
         \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When completed\"\n                },\n                \"failedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When failed\"\n                },\n                \"deadline\": {\n                    \"type\"\
+        description\": \"When failed\"\n                },\n                \"activatedAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Absolute deadline\"\n                }\n            }\n        },\n        \"MilestoneStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"active\",\n                \"completed\",\n    \
-        \            \"failed\",\n                \"skipped\"\n            ]\n        }\n    }\n}"
+        \           \"description\": \"When this milestone became active\"\n                },\n                \"deadline\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Absolute deadline (computed from activatedAt + duration)\"\
+        \n                },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones\"\n                }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n            \"enum\": [\n  \
+        \              \"pending\",\n                \"active\",\n                \"completed\",\n                \"failed\"\
+        ,\n                \"skipped\"\n            ]\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\",\n        \
+        \    \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query instances by party, template, status\",\n    \"description\": \"\
         Queries contract instances with various filters. At least one filter\\nmust be provided.\\n\",\n    \"tags\": [\n\
         \        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryContractInstances\"\n}"
@@ -1899,12 +1965,20 @@ paths:
         \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When completed\"\n                },\n                \"failedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When failed\"\n                },\n                \"deadline\": {\n                    \"type\"\
+        description\": \"When failed\"\n                },\n                \"activatedAt\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Absolute deadline\"\n                }\n            }\n        },\n        \"MilestoneStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"active\",\n                \"completed\",\n    \
-        \            \"failed\",\n                \"skipped\"\n            ]\n        }\n    }\n}"
+        \           \"description\": \"When this milestone became active\"\n                },\n                \"deadline\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Absolute deadline (computed from activatedAt + duration)\"\
+        \n                },\n                \"deadlineBehavior\": {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Behavior when deadline passes for
+        optional milestones\"\n                }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Current status of a milestone\",\n            \"enum\": [\n  \
+        \              \"pending\",\n                \"active\",\n                \"completed\",\n                \"failed\"\
+        ,\n                \"skipped\"\n            ]\n        },\n        \"MilestoneDeadlineBehavior\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Behavior when optional milestone deadline passes\",\n        \
+        \    \"enum\": [\n                \"skip\",\n                \"warn\",\n                \"breach\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Request early termination\",\n    \"description\": \"Requests early termination
         of an active contract. Depending on the\\ncontract's termination policy, this may require mutual consent or\\nincur
         penalties.\\n\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1991,11 +2065,11 @@ paths:
         $ref\": \"#/$defs/BreachStatus\",\n                    \"description\": \"Current status\"\n                }\n  \
         \          }\n        },\n        \"BreachType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Type of contract breach\",\n            \"enum\": [\n                \"term_violation\",\n                \"milestone_missed\"\
-        ,\n                \"unauthorized_action\",\n                \"non_payment\"\n            ]\n        },\n        \"\
-        BreachStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current status of a breach record\"\
-        ,\n            \"enum\": [\n                \"detected\",\n                \"cure_period\",\n                \"cured\"\
-        ,\n                \"consequences_applied\",\n                \"disputed\",\n                \"forgiven\"\n      \
-        \      ]\n        }\n    }\n}"
+        ,\n                \"milestone_deadline\",\n                \"unauthorized_action\",\n                \"non_payment\"\
+        \n            ]\n        },\n        \"BreachStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a breach record\",\n            \"enum\": [\n                \"detected\",\n               \
+        \ \"cure_period\",\n                \"cured\",\n                \"consequences_applied\",\n                \"disputed\"\
+        ,\n                \"forgiven\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current status and milestone progress\",\n    \"description\": \"Gets
         the current status of a contract including milestone progress,\\npending consents, and any active breaches.\\n\",\n\
         \    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getContractInstanceStatus\"\
@@ -2062,12 +2136,19 @@ paths:
         nullable\": true,\n                    \"description\": \"When completed\"\n                },\n                \"\
         failedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n       \
         \             \"nullable\": true,\n                    \"description\": \"When failed\"\n                },\n    \
-        \            \"deadline\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Absolute deadline\"\n         \
-        \       }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Current status of a milestone\",\n            \"enum\": [\n                \"pending\",\n\
-        \                \"active\",\n                \"completed\",\n                \"failed\",\n                \"skipped\"\
-        \n            ]\n        }\n    }\n}"
+        \            \"activatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this milestone became active\"\
+        \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Absolute deadline (computed from activatedAt + duration)\"\n                },\n                \"deadlineBehavior\"\
+        : {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Behavior when deadline passes for optional milestones\"\n                }\n\
+        \            }\n        },\n        \"MilestoneStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a milestone\",\n            \"enum\": [\n                \"pending\",\n                \"active\"\
+        ,\n                \"completed\",\n                \"failed\",\n                \"skipped\"\n            ]\n     \
+        \   },\n        \"MilestoneDeadlineBehavior\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Behavior when optional milestone deadline passes\",\n            \"enum\": [\n                \"skip\",\n      \
+        \          \"warn\",\n                \"breach\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"External system reports milestone completed\",\n    \"description\": \"\
         Called by external systems to report that a milestone's conditions\\nhave been met. Triggers onComplete prebound APIs
         and may advance\\ncontract status.\\n\",\n    \"tags\": [\n        \"Milestones\"\n    ],\n    \"deprecated\": false,\n\
@@ -2134,12 +2215,19 @@ paths:
         nullable\": true,\n                    \"description\": \"When completed\"\n                },\n                \"\
         failedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n       \
         \             \"nullable\": true,\n                    \"description\": \"When failed\"\n                },\n    \
-        \            \"deadline\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Absolute deadline\"\n         \
-        \       }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Current status of a milestone\",\n            \"enum\": [\n                \"pending\",\n\
-        \                \"active\",\n                \"completed\",\n                \"failed\",\n                \"skipped\"\
-        \n            ]\n        }\n    }\n}"
+        \            \"activatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this milestone became active\"\
+        \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Absolute deadline (computed from activatedAt + duration)\"\n                },\n                \"deadlineBehavior\"\
+        : {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Behavior when deadline passes for optional milestones\"\n                }\n\
+        \            }\n        },\n        \"MilestoneStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a milestone\",\n            \"enum\": [\n                \"pending\",\n                \"active\"\
+        ,\n                \"completed\",\n                \"failed\",\n                \"skipped\"\n            ]\n     \
+        \   },\n        \"MilestoneDeadlineBehavior\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Behavior when optional milestone deadline passes\",\n            \"enum\": [\n                \"skip\",\n      \
+        \          \"warn\",\n                \"breach\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"External system reports milestone failed\",\n    \"description\": \"Called
         by external systems to report that a milestone has failed\\n(e.g., deadline passed, conditions cannot be met). Triggers
         onExpire\\nprebound APIs and may record a breach.\\n\",\n    \"tags\": [\n        \"Milestones\"\n    ],\n    \"deprecated\"\
@@ -2199,12 +2287,19 @@ paths:
         nullable\": true,\n                    \"description\": \"When completed\"\n                },\n                \"\
         failedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n       \
         \             \"nullable\": true,\n                    \"description\": \"When failed\"\n                },\n    \
-        \            \"deadline\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Absolute deadline\"\n         \
-        \       }\n            }\n        },\n        \"MilestoneStatus\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Current status of a milestone\",\n            \"enum\": [\n                \"pending\",\n\
-        \                \"active\",\n                \"completed\",\n                \"failed\",\n                \"skipped\"\
-        \n            ]\n        }\n    }\n}"
+        \            \"activatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this milestone became active\"\
+        \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Absolute deadline (computed from activatedAt + duration)\"\n                },\n                \"deadlineBehavior\"\
+        : {\n                    \"$ref\": \"#/$defs/MilestoneDeadlineBehavior\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Behavior when deadline passes for optional milestones\"\n                }\n\
+        \            }\n        },\n        \"MilestoneStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a milestone\",\n            \"enum\": [\n                \"pending\",\n                \"active\"\
+        ,\n                \"completed\",\n                \"failed\",\n                \"skipped\"\n            ]\n     \
+        \   },\n        \"MilestoneDeadlineBehavior\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Behavior when optional milestone deadline passes\",\n            \"enum\": [\n                \"skip\",\n      \
+        \          \"warn\",\n                \"breach\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get milestone details and status\",\n    \"description\": \"Gets the current
         state of a specific milestone.\",\n    \"tags\": [\n        \"Milestones\"\n    ],\n    \"deprecated\": false,\n \
         \   \"operationId\": \"getMilestone\"\n}"
@@ -2255,8 +2350,8 @@ paths:
         \                    \"maxLength\": 2000,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Breach description\"\n                }\n            }\n        },\n        \"BreachType\": {\n            \"\
         type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n        \
-        \        \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n  \
-        \              \"non_payment\"\n            ]\n        }\n    }\n}"
+        \        \"term_violation\",\n                \"milestone_missed\",\n                \"milestone_deadline\",\n   \
+        \             \"unauthorized_action\",\n                \"non_payment\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BreachResponse\"\
         ,\n    \"$defs\": {\n        \"BreachResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Breach record details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -2286,11 +2381,12 @@ paths:
         \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
         consequences were applied\"\n                }\n            }\n        },\n        \"BreachType\": {\n           \
         \ \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n    \
-        \            \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n\
-        \                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n        \
-        \        \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
-        ,\n                \"disputed\",\n                \"forgiven\"\n            ]\n        }\n    }\n}"
+        \            \"term_violation\",\n                \"milestone_missed\",\n                \"milestone_deadline\",\n\
+        \                \"unauthorized_action\",\n                \"non_payment\"\n            ]\n        },\n        \"\
+        BreachStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current status of a breach record\"\
+        ,\n            \"enum\": [\n                \"detected\",\n                \"cure_period\",\n                \"cured\"\
+        ,\n                \"consequences_applied\",\n                \"disputed\",\n                \"forgiven\"\n      \
+        \      ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Report a contract breach\",\n    \"description\": \"Reports a breach of
         contract terms. This can be called by parties\\nor external systems. The breach enters a grace period for cure\\nif
         configured.\\n\",\n    \"tags\": [\n        \"Breaches\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -2362,11 +2458,12 @@ paths:
         \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
         consequences were applied\"\n                }\n            }\n        },\n        \"BreachType\": {\n           \
         \ \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n    \
-        \            \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n\
-        \                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n        \
-        \        \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
-        ,\n                \"disputed\",\n                \"forgiven\"\n            ]\n        }\n    }\n}"
+        \            \"term_violation\",\n                \"milestone_missed\",\n                \"milestone_deadline\",\n\
+        \                \"unauthorized_action\",\n                \"non_payment\"\n            ]\n        },\n        \"\
+        BreachStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current status of a breach record\"\
+        ,\n            \"enum\": [\n                \"detected\",\n                \"cure_period\",\n                \"cured\"\
+        ,\n                \"consequences_applied\",\n                \"disputed\",\n                \"forgiven\"\n      \
+        \      ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark breach as cured (system/admin action)\",\n    \"description\": \"\
         Marks a breach as cured within the grace period. This prevents\\nconsequences from being applied. Called by systems
         that verify\\nthe breach has been remedied.\\n\",\n    \"tags\": [\n        \"Breaches\"\n    ],\n    \"deprecated\"\
@@ -2431,11 +2528,12 @@ paths:
         \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
         consequences were applied\"\n                }\n            }\n        },\n        \"BreachType\": {\n           \
         \ \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n    \
-        \            \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n\
-        \                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n        \
-        \        \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
-        ,\n                \"disputed\",\n                \"forgiven\"\n            ]\n        }\n    }\n}"
+        \            \"term_violation\",\n                \"milestone_missed\",\n                \"milestone_deadline\",\n\
+        \                \"unauthorized_action\",\n                \"non_payment\"\n            ]\n        },\n        \"\
+        BreachStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current status of a breach record\"\
+        ,\n            \"enum\": [\n                \"detected\",\n                \"cure_period\",\n                \"cured\"\
+        ,\n                \"consequences_applied\",\n                \"disputed\",\n                \"forgiven\"\n      \
+        \      ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get breach details\",\n    \"description\": \"Retrieves details of a specific
         breach record.\",\n    \"tags\": [\n        \"Breaches\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getBreach\"\n}"
@@ -3179,30 +3277,28 @@ paths:
         \n                },\n                \"contractId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"description\": \"Contract instance ID\"\n                },\n\
         \                \"distributions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/DistributionRecord\"\n                    },\n                    \"\
-        nullable\": true,\n                    \"description\": \"Records of what was moved where\"\n                },\n\
-        \                \"executedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When execution occurred\"\
-        \n                }\n            }\n        },\n        \"DistributionRecord\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Record of an asset distribution\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"clauseId\",\n                \"clauseType\",\n                \"assetType\"\
-        ,\n                \"amount\"\n            ],\n            \"properties\": {\n                \"clauseId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Clause that was executed\"\n    \
-        \            },\n                \"clauseType\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Type of clause (fee, distribution)\"\n                },\n                \"assetType\": {\n\
-        \                    \"type\": \"object\",\n                    \"description\": \"Type of asset (currency, item,
-        etc.)\"\n                },\n                \"amount\": {\n                    \"type\": \"number\",\n          \
-        \          \"description\": \"Amount transferred\"\n                },\n                \"sourceWalletId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source wallet ID (for currency)\"\n                },\n          \
-        \      \"destinationWalletId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Destination wallet ID (for currency)\"\
-        \n                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source container ID (for items)\"\n                },\n                \"destinationContainerId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Destination container ID (for items)\"\n                }\n        \
-        \    }\n        }\n    }\n}"
+        \                        \"$ref\": \"#/$defs/ClauseDistributionResult\"\n                    },\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Per-clause distribution outcomes with success/failure
+        details\"\n                },\n                \"executedAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When execution occurred\"\n                }\n            }\n        },\n        \"ClauseDistributionResult\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Outcome of a single clause distribution during
+        contract execution.\\nUsed in ContractExecutedEvent to provide per-clause success/failure details.\\nDeliberately
+        excludes wallet/container IDs - consumers tracking these should\\ncorrelate via clauseId to their own records.\\n\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"clauseId\",\n    \
+        \            \"clauseType\",\n                \"assetType\",\n                \"amount\",\n                \"succeeded\"\
+        \n            ],\n            \"properties\": {\n                \"clauseId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"The clause that was executed\"\
+        \n                },\n                \"clauseType\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Type of clause (e.g., currency_transfer, item_transfer, fee)\"\n                },\n  \
+        \              \"assetType\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Descriptive type of asset involved (e.g., \\\"currency\\\", \\\"item\\\").\\nProvides human-readable context for what
+        was transferred.\\n\"\n                },\n                \"amount\": {\n                    \"type\": \"number\"\
+        ,\n                    \"description\": \"Quantity transferred (currency amount, item count, etc.)\"\n           \
+        \     },\n                \"succeeded\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this clause executed successfully\"\n                },\n                \"failureReason\": {\n      \
+        \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"If succeeded is false, describes what went wrong\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Execute all contract clauses (idempotent)\",\n    \"description\": \"Executes
         all contract distribution clauses - distribute assets per clauses,\\ncollect fees, mark contract as executed. This
         is idempotent - calling twice\\nreturns the same result without re-executing. Contract must be in fulfilled\\nstatus
@@ -3240,8 +3336,16 @@ components:
       enum:
       - term_violation
       - milestone_missed
+      - milestone_deadline
       - unauthorized_action
       - non_payment
+    MilestoneDeadlineBehavior:
+      type: string
+      description: Behavior when optional milestone deadline passes
+      enum:
+      - skip
+      - warn
+      - breach
     BreachStatus:
       type: string
       description: Current status of a breach record
@@ -4031,6 +4135,11 @@ components:
           type: string
           nullable: true
           description: Relative deadline (ISO 8601 duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones (default skip). Required milestones always 
+            trigger breach.
         onComplete:
           type: array
           items:
@@ -4079,11 +4188,20 @@ components:
           format: date-time
           nullable: true
           description: When failed
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this milestone became active
         deadline:
           type: string
           format: date-time
           nullable: true
-          description: Absolute deadline
+          description: Absolute deadline (computed from activatedAt + duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones
     MilestoneProgressSummary:
       type: object
       description: Brief milestone progress
@@ -5020,48 +5138,43 @@ components:
           maxLength: 64
           nullable: true
           description: Idempotency key for the execution
-    DistributionRecord:
+    ClauseDistributionResult:
       type: object
-      description: Record of an asset distribution
+      description: |
+        Outcome of a single clause distribution during contract execution.
+        Used in ContractExecutedEvent to provide per-clause success/failure details.
+        Deliberately excludes wallet/container IDs - consumers tracking these should
+        correlate via clauseId to their own records.
       additionalProperties: false
       required:
       - clauseId
       - clauseType
       - assetType
       - amount
+      - succeeded
       properties:
         clauseId:
           type: string
-          description: Clause that was executed
+          format: uuid
+          description: The clause that was executed
         clauseType:
           type: string
-          description: Type of clause (fee, distribution)
+          description: Type of clause (e.g., currency_transfer, item_transfer, fee)
         assetType:
-          $ref: './escrow-api.yaml#/components/schemas/AssetType'
-          description: Type of asset (currency, item, etc.)
+          type: string
+          description: |
+            Descriptive type of asset involved (e.g., "currency", "item").
+            Provides human-readable context for what was transferred.
         amount:
           type: number
-          description: Amount transferred
-        sourceWalletId:
+          description: Quantity transferred (currency amount, item count, etc.)
+        succeeded:
+          type: boolean
+          description: Whether this clause executed successfully
+        failureReason:
           type: string
-          format: uuid
           nullable: true
-          description: Source wallet ID (for currency)
-        destinationWalletId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination wallet ID (for currency)
-        sourceContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Source container ID (for items)
-        destinationContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination container ID (for items)
+          description: If succeeded is false, describes what went wrong
     ExecuteContractResponse:
       type: object
       description: Response from executing a contract
@@ -5083,9 +5196,9 @@ components:
         distributions:
           type: array
           items:
-            $ref: '#/components/schemas/DistributionRecord'
+            $ref: '#/components/schemas/ClauseDistributionResult'
           nullable: true
-          description: Records of what was moved where
+          description: Per-clause distribution outcomes with success/failure details
         executedAt:
           type: string
           format: date-time

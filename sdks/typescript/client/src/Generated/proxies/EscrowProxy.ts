@@ -259,6 +259,42 @@ export class EscrowProxy {
   }
 
   /**
+   * Confirm receipt of released assets
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async confirmReleaseAsync(
+    request: Schemas['ConfirmReleaseRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ConfirmReleaseResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ConfirmReleaseRequest'],
+      Schemas['ConfirmReleaseResponse']
+    >('/escrow/confirm-release', request, channel, timeout);
+  }
+
+  /**
+   * Confirm receipt of refunded assets
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async confirmRefundAsync(
+    request: Schemas['ConfirmRefundRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ConfirmRefundResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ConfirmRefundRequest'],
+      Schemas['ConfirmRefundResponse']
+    >('/escrow/confirm-refund', request, channel, timeout);
+  }
+
+  /**
    * Arbiter resolves disputed escrow
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

@@ -203,4 +203,22 @@ public sealed class CharacterProxy
         return _client.InvokeAsync<GetCharactersByRealmRequest, CharacterListResponse>(
             "/character/by-realm", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Transfer character to a different realm
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CharacterResponse on success.</returns>
+    public Task<ApiResponse<CharacterResponse>> TransferCharacterToRealmAsync(
+        TransferCharacterToRealmRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<TransferCharacterToRealmRequest, CharacterResponse>(
+            "/character/transfer-realm", request, channel, timeout, cancellationToken);
+    }
 }

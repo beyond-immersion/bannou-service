@@ -3138,6 +3138,48 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/escrow/confirm-release': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Confirm receipt of released assets
+     * @description Called by parties to confirm they received their released assets.
+     *     Required when ReleaseMode is party_required or service_and_party.
+     */
+    post: operations['confirmRelease'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/confirm-refund': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Confirm receipt of refunded assets
+     * @description Called by parties to confirm they received their refunded deposits.
+     *     Required when RefundMode is party_required.
+     */
+    post: operations['confirmRefund'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/escrow/resolve': {
     parameters: {
       query?: never;
@@ -7709,7 +7751,12 @@ export interface components {
      * @description Type of contract breach
      * @enum {string}
      */
-    BreachType: 'term_violation' | 'milestone_missed' | 'unauthorized_action' | 'non_payment';
+    BreachType:
+      | 'term_violation'
+      | 'milestone_missed'
+      | 'milestone_deadline'
+      | 'unauthorized_action'
+      | 'non_payment';
     /** @description Request to retrieve metadata for multiple assets */
     BulkGetAssetsRequest: {
       /** @description Asset IDs to retrieve (max 100) */
@@ -8366,6 +8413,32 @@ export interface components {
      * @enum {string}
      */
     ClauseCategory: 'validation' | 'execution' | 'both';
+    /**
+     * @description Outcome of a single clause distribution during contract execution.
+     *     Used in ContractExecutedEvent to provide per-clause success/failure details.
+     *     Deliberately excludes wallet/container IDs - consumers tracking these should
+     *     correlate via clauseId to their own records.
+     */
+    ClauseDistributionResult: {
+      /**
+       * Format: uuid
+       * @description The clause that was executed
+       */
+      clauseId: string;
+      /** @description Type of clause (e.g., currency_transfer, item_transfer, fee) */
+      clauseType: string;
+      /**
+       * @description Descriptive type of asset involved (e.g., "currency", "item").
+       *     Provides human-readable context for what was transferred.
+       */
+      assetType: string;
+      /** @description Quantity transferred (currency amount, item count, etc.) */
+      amount: number;
+      /** @description Whether this clause executed successfully */
+      succeeded: boolean;
+      /** @description If succeeded is false, describes what went wrong */
+      failureReason?: string | null;
+    };
     /** @description Summary of a clause type */
     ClauseTypeSummary: {
       /** @description Unique identifier */
@@ -8761,6 +8834,66 @@ export interface components {
      * @enum {string}
      */
     CompressionType: 'lz4' | 'lzma' | 'none';
+    /** @description Request to confirm receipt of refunded assets */
+    ConfirmRefundRequest: {
+      /**
+       * Format: uuid
+       * @description The escrow being confirmed.
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description The party confirming receipt of refund.
+       */
+      partyId: string;
+      /** @description Optional confirmation notes. */
+      notes?: string | null;
+    };
+    /** @description Response from confirming refund receipt */
+    ConfirmRefundResponse: {
+      /**
+       * Format: uuid
+       * @description The escrow ID.
+       */
+      escrowId: string;
+      /** @description Whether this party's confirmation was recorded. */
+      confirmed: boolean;
+      /** @description Whether all parties have now confirmed (triggers Refunded transition). */
+      allPartiesConfirmed: boolean;
+      /** @description Current escrow status after confirmation. */
+      status?: components['schemas']['EscrowStatus'];
+    };
+    /** @description Request to confirm receipt of released assets */
+    ConfirmReleaseRequest: {
+      /**
+       * Format: uuid
+       * @description The escrow being confirmed.
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description The party confirming receipt.
+       */
+      partyId: string;
+      /** @description The party's release token (received via confirmation shortcut). */
+      releaseToken: string;
+      /** @description Optional confirmation notes. */
+      notes?: string | null;
+    };
+    /** @description Response from confirming release receipt */
+    ConfirmReleaseResponse: {
+      /**
+       * Format: uuid
+       * @description The escrow ID.
+       */
+      escrowId: string;
+      /** @description Whether this party's confirmation was recorded. */
+      confirmed: boolean;
+      /** @description Whether all parties have now confirmed (triggers Released transition). */
+      allPartiesConfirmed: boolean;
+      /** @description Current escrow status after confirmation. */
+      status?: components['schemas']['EscrowStatus'];
+    };
     /** @description A bundle entry in an asset conflict */
     ConflictingBundleEntry: {
       /** @description Bundle containing this version */
@@ -9724,6 +9857,13 @@ export interface components {
       metadata?: {
         [key: string]: unknown;
       } | null;
+      /**
+       * @description How release confirmation is handled. Defaults to service_only if not specified.
+       *     Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+       */
+      releaseMode?: components['schemas']['ReleaseMode'] | null;
+      /** @description How refund confirmation is handled. Defaults to immediate if not specified. */
+      refundMode?: components['schemas']['RefundMode'] | null;
       /** @description Idempotency key for this operation */
       idempotencyKey: string;
     };
@@ -10727,37 +10867,6 @@ export interface components {
       /** @description Disputed escrow agreement */
       escrow: components['schemas']['EscrowAgreement'];
     };
-    /** @description Record of an asset distribution */
-    DistributionRecord: {
-      /** @description Clause that was executed */
-      clauseId: string;
-      /** @description Type of clause (fee, distribution) */
-      clauseType: string;
-      /** @description Type of asset (currency, item, etc.) */
-      assetType: components['schemas']['AssetType'];
-      /** @description Amount transferred */
-      amount: number;
-      /**
-       * Format: uuid
-       * @description Source wallet ID (for currency)
-       */
-      sourceWalletId?: string | null;
-      /**
-       * Format: uuid
-       * @description Destination wallet ID (for currency)
-       */
-      destinationWalletId?: string | null;
-      /**
-       * Format: uuid
-       * @description Source container ID (for items)
-       */
-      sourceContainerId?: string | null;
-      /**
-       * Format: uuid
-       * @description Destination container ID (for items)
-       */
-      destinationContainerId?: string | null;
-    };
     /** @description Complete document with all metadata and content */
     Document: {
       /**
@@ -11358,6 +11467,15 @@ export interface components {
       resolution?: components['schemas']['EscrowResolution'];
       /** @description Notes about the resolution */
       resolutionNotes?: string | null;
+      /** @description How release confirmation is handled for this escrow. */
+      releaseMode?: components['schemas']['ReleaseMode'];
+      /** @description How refund confirmation is handled for this escrow. */
+      refundMode?: components['schemas']['RefundMode'];
+      /**
+       * Format: date-time
+       * @description Deadline for party confirmations when in Releasing/Refunding state.
+       */
+      confirmationDeadline?: string | null;
     };
     /** @description An asset held in escrow */
     EscrowAsset: {
@@ -11822,8 +11940,8 @@ export interface components {
        * @description Contract instance ID
        */
       contractId?: string;
-      /** @description Records of what was moved where */
-      distributions?: components['schemas']['DistributionRecord'][] | null;
+      /** @description Per-clause distribution outcomes with success/failure details */
+      distributions?: components['schemas']['ClauseDistributionResult'][] | null;
       /**
        * Format: date-time
        * @description When execution occurred
@@ -15125,13 +15243,23 @@ export interface components {
       /** @description Latest schema version */
       latestVersion?: string | null;
     };
-    /** @description Request to list all game services */
+    /** @description Request to list all game services with optional pagination */
     ListServicesRequest: {
       /**
        * @description If true, only return active services
        * @default false
        */
       activeOnly: boolean;
+      /**
+       * @description Number of services to skip for pagination (offset)
+       * @default 0
+       */
+      skip: number;
+      /**
+       * @description Maximum number of services to return (limit)
+       * @default 50
+       */
+      take: number;
     };
     /** @description Response containing list of game services */
     ListServicesResponse: {
@@ -15855,6 +15983,11 @@ export interface components {
       /** @description Non-fatal migration warnings */
       warnings?: string[];
     };
+    /**
+     * @description Behavior when optional milestone deadline passes
+     * @enum {string}
+     */
+    MilestoneDeadlineBehavior: 'skip' | 'warn' | 'breach';
     /** @description Milestone definition in a template */
     MilestoneDefinition: {
       /** @description Unique milestone code within template */
@@ -15869,6 +16002,8 @@ export interface components {
       required: boolean;
       /** @description Relative deadline (ISO 8601 duration) */
       deadline?: string | null;
+      /** @description Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach. */
+      deadlineBehavior?: components['schemas']['MilestoneDeadlineBehavior'];
       /** @description APIs to call on completion */
       onComplete?: components['schemas']['PreboundApi'][] | null;
       /** @description APIs to call if deadline passes */
@@ -15898,9 +16033,16 @@ export interface components {
       failedAt?: string | null;
       /**
        * Format: date-time
-       * @description Absolute deadline
+       * @description When this milestone became active
+       */
+      activatedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description Absolute deadline (computed from activatedAt + duration)
        */
       deadline?: string | null;
+      /** @description Behavior when deadline passes for optional milestones */
+      deadlineBehavior?: components['schemas']['MilestoneDeadlineBehavior'];
     };
     /** @description Brief milestone progress */
     MilestoneProgressSummary: {
@@ -17692,6 +17834,12 @@ export interface components {
       /** @description Refresh token issued during authentication to obtain a new access token */
       refreshToken: string;
     };
+    /**
+     * @description Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+     *     Refunds typically use 'immediate' since parties get their own assets back.
+     * @enum {string}
+     */
+    RefundMode: 'immediate' | 'service_only' | 'party_required';
     /** @description Request to trigger escrow refund to depositors */
     RefundRequest: {
       /**
@@ -17977,6 +18125,18 @@ export interface components {
        */
       holdId: string;
     };
+    /**
+     * @description Controls how release confirmation is handled:
+     *     - immediate: Finalizing → Released (skip Releasing state entirely).
+     *       ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+     *       Assets are marked as released BEFORE downstream services confirm transfers.
+     *       If downstream services fail, manual intervention may be required.
+     *     - service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+     *     - party_required: Wait for all parties to call /confirm-release.
+     *     - service_and_party: Wait for both service completion AND party confirmation.
+     * @enum {string}
+     */
+    ReleaseMode: 'immediate' | 'service_only' | 'party_required' | 'service_and_party';
     /** @description Request to trigger escrow release to recipients */
     ReleaseRequest: {
       /**
@@ -25681,6 +25841,90 @@ export interface operations {
       };
       /** @description Dispute failed */
       400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  confirmRelease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConfirmReleaseRequest'];
+      };
+    };
+    responses: {
+      /** @description Confirmation recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConfirmReleaseResponse'];
+        };
+      };
+      /** @description Confirmation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Escrow not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  confirmRefund: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConfirmRefundRequest'];
+      };
+    };
+    responses: {
+      /** @description Confirmation recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConfirmRefundResponse'];
+        };
+      };
+      /** @description Confirmation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Escrow not found */
+      404: {
         headers: {
           [name: string]: unknown;
         };

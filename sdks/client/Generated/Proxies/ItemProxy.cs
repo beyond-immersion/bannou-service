@@ -189,6 +189,24 @@ public sealed class ItemProxy
     }
 
     /// <summary>
+    /// Unbind item from character
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ItemInstanceResponse on success.</returns>
+    public Task<ApiResponse<ItemInstanceResponse>> UnbindItemInstanceAsync(
+        UnbindItemInstanceRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UnbindItemInstanceRequest, ItemInstanceResponse>(
+            "/item/instance/unbind", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Destroy item instance
     /// </summary>
     /// <param name="request">The request payload.</param>

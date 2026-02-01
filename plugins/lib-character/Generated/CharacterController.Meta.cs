@@ -1988,4 +1988,169 @@ public partial class CharacterController
             _GetCharactersByRealm_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for TransferCharacterToRealm
+
+    private static readonly string _TransferCharacterToRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferCharacterToRealmRequest",
+    "$defs": {
+        "TransferCharacterToRealmRequest": {
+            "description": "Request payload for transferring a character to a different realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to transfer"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to transfer the character to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferCharacterToRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterResponse",
+    "$defs": {
+        "CharacterResponse": {
+            "description": "Complete character data returned from character operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "status",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status of the character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
+        },
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferCharacterToRealm_Info = """
+{
+    "summary": "Transfer character to a different realm",
+    "description": "Moves a character from their current realm to a new target realm.\nUpdates all indexes, validates the target realm exists and is active,\nand publishes realm transition events.\n",
+    "tags": [
+        "Character Management"
+    ],
+    "deprecated": false,
+    "operationId": "transferCharacterToRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            _TransferCharacterToRealm_Info));
+
+    /// <summary>Returns request schema for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            "request-schema",
+            _TransferCharacterToRealm_RequestSchema));
+
+    /// <summary>Returns response schema for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            "response-schema",
+            _TransferCharacterToRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            _TransferCharacterToRealm_Info,
+            _TransferCharacterToRealm_RequestSchema,
+            _TransferCharacterToRealm_ResponseSchema));
+
+    #endregion
 }

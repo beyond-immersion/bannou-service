@@ -165,20 +165,26 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `ClauseTypeRegisteredEvent` | Registration | `clause-type.registered` | Event published when a new clause type is register... |
 | `ContractAcceptedEvent` | Custom | `contract-accepted` | Event published when all required parties consent |
 | `ContractActivatedEvent` | Custom | `contract-activated` | Event published when contract becomes active |
 | `ContractBreachCuredEvent` | Custom | `contract-breach-cured` | Event published when a breach is cured |
 | `ContractBreachDetectedEvent` | Custom | `contract-breach-detected` | Event published when a breach is recorded |
 | `ContractConsentReceivedEvent` | Custom | `contract-consent-received` | Event published when one party consents |
+| `ContractExecutedEvent` | Custom | `contract-executed` | Event published when contract clauses are executed... |
 | `ContractExpiredEvent` | Expiration | `contract.expired` | Event published when contract reaches natural expi... |
 | `ContractFulfilledEvent` | Custom | `contract-fulfilled` | Event published when all required milestones compl... |
+| `ContractLockedEvent` | Custom | `contract-locked` | Event published when a contract is locked under gu... |
 | `ContractMilestoneCompletedEvent` | Custom | `contract-milestone-completed` | Event published when a milestone is completed |
 | `ContractMilestoneFailedEvent` | Custom | `contract-milestone-failed` | Event published when a milestone fails |
+| `ContractPartyTransferredEvent` | Custom | `contract-party-transferred` | Event published when a party role is transferred t... |
 | `ContractPreboundApiExecutedEvent` | Custom | `contract-prebound-api-executed` | Event published when a prebound API is executed |
 | `ContractPreboundApiFailedEvent` | Custom | `contract-prebound-api-failed` | Event published when a prebound API call fails |
 | `ContractPreboundApiValidationFailedEvent` | Custom | `contract-prebound-api-validation-failed` | Event published when a prebound API response fails... |
 | `ContractProposedEvent` | Custom | `contract-proposed` | Event published when a contract is proposed to par... |
+| `ContractTemplateValuesSetEvent` | Custom | `contract-template-values-set` | Event published when template values are set on a ... |
 | `ContractTerminatedEvent` | Custom | `contract-terminated` | Event published when contract is terminated early |
+| `ContractUnlockedEvent` | Custom | `contract-unlocked` | Event published when a contract is released from g... |
 
 ### Currency
 
@@ -225,7 +231,9 @@ This document lists all events defined in Bannou's event schemas.
 | `EscrowFinalizingEvent` | Custom | `escrow-finalizing` | Event published when finalization begins |
 | `EscrowFundedEvent` | Custom | `escrow-funded` | Event published when all expected deposits are rec... |
 | `EscrowRefundedEvent` | Custom | `escrow-refunded` | Event published when assets are refunded |
+| `EscrowRefundingEvent` | Custom | `escrow-refunding` | Event published when escrow transitions to Refundi... |
 | `EscrowReleasedEvent` | Custom | `escrow-released` | Event published when assets are released |
+| `EscrowReleasingEvent` | Custom | `escrow-releasing` | Event published when escrow transitions to Releasi... |
 | `EscrowResolvedEvent` | Custom | `escrow-resolved` | Event published when an arbiter resolves a dispute |
 | `EscrowValidationFailedEvent` | Custom | `escrow-validation-failed` | Event published when validation detects asset chan... |
 | `EscrowValidationReaffirmedEvent` | Custom | `escrow-validation-reaffirmed` | Event published when a party reaffirms after valid... |

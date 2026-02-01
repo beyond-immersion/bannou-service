@@ -3329,6 +3329,228 @@ public partial class ItemController
 
     #endregion
 
+    #region Meta Endpoints for UnbindItemInstance
+
+    private static readonly string _UnbindItemInstance_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UnbindItemInstanceRequest",
+    "$defs": {
+        "UnbindItemInstanceRequest": {
+            "type": "object",
+            "description": "Request to unbind an item from a character",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "reason"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Instance ID to unbind"
+                },
+                "reason": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Reason for unbinding (admin, expiration, transfer_override)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UnbindItemInstance_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ItemInstanceResponse",
+    "$defs": {
+        "ItemInstanceResponse": {
+            "type": "object",
+            "description": "Item instance details",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "templateId",
+                "containerId",
+                "realmId",
+                "quantity",
+                "originType",
+                "createdAt"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique instance identifier"
+                },
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Reference to the item template"
+                },
+                "containerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Container holding this item"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this instance exists in"
+                },
+                "quantity": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Item quantity"
+                },
+                "slotIndex": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Slot position in slot-based containers"
+                },
+                "slotX": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "X position in grid-based containers"
+                },
+                "slotY": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Y position in grid-based containers"
+                },
+                "rotated": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether item is rotated in grid"
+                },
+                "currentDurability": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Current durability"
+                },
+                "boundToId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Character ID this item is bound to"
+                },
+                "boundAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When item was bound"
+                },
+                "customStats": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Instance-specific stat modifications"
+                },
+                "customName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Player-assigned custom name"
+                },
+                "instanceMetadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Other instance-specific data"
+                },
+                "originType": {
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
+                },
+                "originId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source entity ID"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Instance creation timestamp"
+                },
+                "modifiedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last modification timestamp"
+                }
+            }
+        },
+        "ItemOriginType": {
+            "type": "string",
+            "description": "How an item instance was created",
+            "enum": [
+                "loot",
+                "quest",
+                "craft",
+                "trade",
+                "purchase",
+                "spawn",
+                "other"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _UnbindItemInstance_Info = """
+{
+    "summary": "Unbind item from character",
+    "description": "Removes the binding from a soulbound item. This is an admin-only operation\nfor returning bound items to tradeable state. Requires a reason for audit trail.\n",
+    "tags": [
+        "Item Instance"
+    ],
+    "deprecated": false,
+    "operationId": "unbindItemInstance"
+}
+""";
+
+    /// <summary>Returns endpoint information for UnbindItemInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/instance/unbind/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindItemInstance_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Item",
+            "POST",
+            "/item/instance/unbind",
+            _UnbindItemInstance_Info));
+
+    /// <summary>Returns request schema for UnbindItemInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/instance/unbind/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindItemInstance_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Item",
+            "POST",
+            "/item/instance/unbind",
+            "request-schema",
+            _UnbindItemInstance_RequestSchema));
+
+    /// <summary>Returns response schema for UnbindItemInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/instance/unbind/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindItemInstance_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Item",
+            "POST",
+            "/item/instance/unbind",
+            "response-schema",
+            _UnbindItemInstance_ResponseSchema));
+
+    /// <summary>Returns full schema for UnbindItemInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/item/instance/unbind/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindItemInstance_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Item",
+            "POST",
+            "/item/instance/unbind",
+            _UnbindItemInstance_Info,
+            _UnbindItemInstance_RequestSchema,
+            _UnbindItemInstance_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for DestroyItemInstance
 
     private static readonly string _DestroyItemInstance_RequestSchema = """
