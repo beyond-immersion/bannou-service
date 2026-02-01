@@ -403,6 +403,7 @@ Dispute Resolution
 ### Bugs (Fix Immediately)
 
 1. **Releasing state is unreachable**: The `ValidTransitions` map includes `Finalizing -> Releasing -> Released`, but `ReleaseAsync` transitions directly from `Finalizing` to `Released`, never using the `Releasing` intermediate state. Either remove `Releasing` from the state machine or implement a two-phase release (start → complete).
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/210 -->
 
 2. **Status index key pattern mismatch**: Status index keys use `{status}:{escrowId}` pattern in some places but the store accessor method `GetStatusIndexKey(EscrowStatus)` only returns `{status}`. The escrow ID is appended manually with `$"{GetStatusIndexKey(status)}:{escrowId}"` - inconsistent key construction could cause lookup failures.
 
@@ -446,4 +447,9 @@ Dispute Resolution
 
 ## Work Tracking
 
-*No active work items tracked. Use `/audit-plugin` to investigate and track gaps.*
+### Pending Design Review
+
+1. **Releasing state is unreachable** - [Issue #210](https://github.com/beyond-immersion/bannou-service/issues/210) (2026-01-31)
+   - State machine defines `Finalizing -> Releasing -> Released` but code skips `Releasing`
+   - Same issue affects `Refunding` state
+   - Needs design decision: remove unused states or implement two-phase transitions

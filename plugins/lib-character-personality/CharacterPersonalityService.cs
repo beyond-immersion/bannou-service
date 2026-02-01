@@ -113,6 +113,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             {
                 CharacterId = body.CharacterId,
                 Traits = body.Traits.ToDictionary(t => t.Axis, t => t.Value),
+                ArchetypeHint = body.ArchetypeHint,
                 Version = isNew ? 1 : existing!.Version + 1,
                 CreatedAtUnix = isNew ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : existing!.CreatedAtUnix,
                 UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -831,6 +832,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 Axis = t.Key,
                 Value = t.Value
             }).ToList(),
+            ArchetypeHint = data.ArchetypeHint,
             Version = data.Version,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix),
             UpdatedAt = data.UpdatedAtUnix != data.CreatedAtUnix
@@ -906,6 +908,7 @@ internal class PersonalityData
 {
     public Guid CharacterId { get; set; }
     public Dictionary<TraitAxis, float> Traits { get; set; } = new();
+    public string? ArchetypeHint { get; set; }
     public int Version { get; set; }
     public long CreatedAtUnix { get; set; }
     public long UpdatedAtUnix { get; set; }

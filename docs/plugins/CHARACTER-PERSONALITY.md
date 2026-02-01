@@ -215,9 +215,10 @@ None. The service is feature-complete for its scope.
 
 1. **Trait decay**: Gradual regression toward neutral (0.0) over time without reinforcing experiences.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/201 -->
-2. **Personality archetypes**: Pre-defined trait combinations for quick character creation.
-3. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
-4. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.
+2. ~~**ArchetypeHint field not persisted**~~: **FIXED** (2026-01-31) - The `archetypeHint` field defined in the schema was not being stored or returned by the service. Now properly persisted in `PersonalityData` and mapped to responses. Note: This is a hint string only - pre-defined archetype templates for quick character creation remain a separate potential extension.
+3. **Pre-defined archetype templates**: Template system that maps archetype codes (e.g., "guardian", "trickster") to pre-configured trait combinations for quick character creation.
+4. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
+5. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.
 
 ---
 
@@ -259,4 +260,6 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-*No active work items.*
+### Completed
+
+- **2026-01-31**: Fixed `archetypeHint` field not being persisted - added `ArchetypeHint` property to `PersonalityData`, wired up in `SetPersonalityAsync` and `MapToPersonalityResponse`.

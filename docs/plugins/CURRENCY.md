@@ -401,6 +401,7 @@ Escrow Integration Flow
 ## Stubs & Unimplemented Features
 
 1. **Global supply analytics**: `GetGlobalSupply` returns all zeros. Comment indicates production would use pre-computed aggregates from balance data. No aggregation logic exists.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/211 -->
 2. **Wallet distribution analytics**: `GetWalletDistribution` returns all zeros for wallet count, averages, percentiles, and Gini coefficient. No statistical computation is implemented.
 3. **Currency expiration**: The `CurrencyExpiredEvent` is defined in the events schema and the definition model has `Expires`, `ExpirationPolicy`, `ExpirationDate`, `ExpirationDuration`, and `SeasonId` fields, but no background task or lazy check implements expiration logic.
 4. **Hold expiration**: The `CurrencyHoldExpiredEvent` is defined in the events schema but no mechanism (background task or lazy check) auto-releases expired holds. Expired holds remain Active and continue to reduce effective balance.
@@ -461,4 +462,6 @@ No bugs identified. All enum types are stored as proper enums in models; string 
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-No active work items at this time.
+### Pending Design
+
+- **Global supply analytics** - Needs design decisions on aggregation strategy, minted/burned semantics, and escrow integration. Issue: https://github.com/beyond-immersion/bannou-service/issues/211
