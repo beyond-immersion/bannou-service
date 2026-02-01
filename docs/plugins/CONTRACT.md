@@ -408,14 +408,13 @@ Prebound API Batched Execution
 
 ## Stubs & Unimplemented Features
 
-1. **Territory constraint checking**: The `ConstraintType.Territory` case in CheckContractConstraint is a stub with only a comment "Would need to check territory overlap with proposed action". No actual territory logic exists.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/197 -->
-2. **Time commitment constraint checking**: The `ConstraintType.Time_commitment` case is similarly stubbed with no implementation.
-3. **Milestone deadline computation**: `MilestoneInstanceResponse.Deadline` is always returned as null with comment "Would need to compute absolute deadline". No deadline enforcement or expiration logic exists for milestones.
+1. ~~**Territory constraint checking**~~: **FIXED** (2026-02-01) - Validates location hierarchy overlap with exclusive/inclusive modes via `ILocationClient.GetLocationAncestorsAsync`. Custom terms `territoryLocationIds`, `territoryMode`, and proposedAction `locationId` drive the constraint logic.
+2. ~~**Time commitment constraint checking**~~: **FIXED** (2026-02-01) - Detects conflicting exclusive time commitments across active contracts by checking date range overlaps for contracts with `timeCommitment: true` and `timeCommitmentType: exclusive`.
+3. ~~**Milestone deadline computation**~~: **FIXED** (2026-02-01) - Computes absolute deadlines from `ActivatedAt + ParseIsoDuration(Deadline)`. Lazy enforcement in `GetMilestoneAsync` and `GetContractInstanceStatusAsync` processes overdue milestones. Background service `ContractMilestoneExpirationService` periodically checks all active contracts. Optional milestones use `DeadlineBehavior` (skip/warn/breach).
 4. **ContractSummary.TemplateName**: Always returned as null in QueryActiveContracts and CheckConstraint responses with comment "Would need to load template". Template name is not resolved for summary queries.
 5. **Clause validation handler request/response mappings**: `ClauseHandlerModel.RequestMapping` and `ResponseMapping` are stored but never used in actual validation/execution logic.
 6. **Contract expiration lifecycle**: The `ContractExpiredEvent` schema exists but no background job or scheduled check transitions Active contracts to Expired when effectiveUntil is reached. Expiration only occurs lazily on consent timeout.
-7. **Breach threshold enforcement**: `Terms.BreachThreshold` is stored but not used to automatically terminate contracts after N breaches.
+7. ~~**Breach threshold enforcement**~~: **FIXED** (2026-02-01) - Auto-terminates contracts when active breach count (Detected or CurePeriod status) reaches `Terms.BreachThreshold`. Called from `ReportBreachInternalAsync` after each new breach is recorded.
 8. **Payment schedule/frequency enforcement**: PaymentSchedule and PaymentFrequency terms are stored but no scheduled payment logic or enforcement exists.
 
 ---
@@ -423,9 +422,9 @@ Prebound API Batched Execution
 ## Potential Extensions
 
 1. **Active expiration job**: Background service that periodically scans Active contracts for effectiveUntil < now and transitions them to Expired with event publication.
-2. **Milestone deadline enforcement**: Compute absolute deadlines from ISO 8601 durations relative to contract activation or previous milestone completion. Fail milestones automatically when deadline passes.
-3. **Territory and time constraint implementations**: Integrate with location/mapping service for territory overlap detection. Implement time commitment tracking for scheduling conflicts.
-4. **Breach escalation pipeline**: Auto-terminate contracts when BreachThreshold is exceeded. Configurable escalation (cure_period -> consequence -> termination).
+2. ~~**Milestone deadline enforcement**~~: *Implemented* - See `ContractMilestoneExpirationService` and lazy enforcement in get operations.
+3. ~~**Territory and time constraint implementations**~~: *Implemented* - Territory uses `ILocationClient` for hierarchy checks, time commitment detects exclusive overlaps.
+4. ~~**Breach escalation pipeline**~~: *Implemented* - Auto-terminate on breach threshold. Cure period and consequence application remain manual.
 5. **Clause type handler chaining**: Allow clause types with both validation AND execution handlers to validate before executing, with configurable failure behavior.
 6. **Template inheritance**: Allow templates to extend other templates, inheriting milestones, terms, and party roles with overrides.
 7. **Bulk contract operations**: Batch creation from a single template for multi-entity scenarios (e.g., guild-wide contracts).
