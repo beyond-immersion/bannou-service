@@ -373,7 +373,7 @@ Optimistic Concurrency Pattern (Checkout)
 2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained. [Issue #187](https://github.com/beyond-immersion/bannou-service/issues/187)
 
 3. **SceneCheckoutExpiredEvent**: The topic constant and event type exist, but no background process monitors and expires stale checkouts. Expiry is checked lazily when another user attempts checkout (can take over expired locks), but the event is never published.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:ISSUE_URL_PLACEHOLDER -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/254 -->
 
 4. **SceneReferenceBrokenEvent**: The topic and event type are defined in the events schema, but no code path currently publishes this event. It would need to be triggered when a scene is force-deleted despite references (currently blocked by the 409 Conflict check).
 

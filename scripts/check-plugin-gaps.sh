@@ -24,10 +24,15 @@ fi
 #   - Implementation Gaps
 #   - Bugs (Fix Immediately)
 #   - Design Considerations (Requires Planning)
+#
+# NOT scanned (these are not gaps):
+#   - Intentional Quirks (Documented Behavior)
+#   - Known Quirks & Caveats (parent section)
 TOTAL_ITEMS=$(awk '
-/^## Stubs|^### Stubs|^## Potential Extensions|^### Potential Extensions|^## Implementation Gaps|^### Implementation Gaps|^## Bugs|^### Bugs|^#### Bugs|^#### Design Considerations/ { in_section=1; next }
-/^##[^#]|^---$/ { in_section=0 }
-in_section && /^[0-9]+\. \*\*/ { count++ }
+/^## Stubs|^### Stubs|^## Potential Extensions|^### Potential Extensions|^## Implementation Gaps|^### Implementation Gaps|^## Bugs|^### Bugs|^#### Bugs|^### Design Considerations|^#### Design Considerations/ { in_section=1; next }
+/^##[^#]|^###[^#]|^---$/ { in_section=0 }
+# Match both regular items (1. **text**) and strikethrough items (1. ~~**text**~~)
+in_section && /^[0-9]+\. (\*\*|~~\*\*)/ { count++ }
 END { print count+0 }
 ' "$PLUGIN_FILE")
 
