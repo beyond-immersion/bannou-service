@@ -34,6 +34,24 @@ await _stateStore.SaveAsync(key, value, cancellationToken: ct);
 await _stateStore.SaveAsync(key, value, new StateOptions { Ttl = TimeSpan.FromMinutes(30) }); // TTL
 var (value, etag) = await _stateStore.GetWithETagAsync(key, ct); // Optimistic concurrency
 
+// lib-state: Use ICacheableStateStore<T> for sets and sorted sets (Redis + InMemory only)
+var cacheStore = stateStoreFactory.GetCacheableStore<MyModel>(StateStoreDefinitions.MyCache);
+await cacheStore.AddToSetAsync("my-set", item, ct);  // Set operations
+await cacheStore.SortedSetAddAsync("leaderboard", memberId, score, ct);  // Sorted set for rankings
+var topTen = await cacheStore.SortedSetRangeByRankAsync("leaderboard", 0, 9, descending: true, ct);
+
+// lib-state: Use IRedisOperations for atomic operations (Lua scripts, counters, hashes)
+var redisOps = stateStoreFactory.GetRedisOperations();  // Returns null in InMemory mode
+if (redisOps != null)
+{
+    // Lua scripts for complex atomic operations
+    var result = await redisOps.ScriptEvaluateAsync(script, keys, values, ct);
+    // Atomic counters
+    var count = await redisOps.IncrementAsync("counter:visits", 1, ct);
+    // Hash operations for structured data
+    await redisOps.HashSetAsync("user:123", "lastSeen", DateTimeOffset.UtcNow.ToString(), ct);
+}
+
 // lib-messaging: Use IMessageBus for event publishing
 await _messageBus.PublishAsync("entity.action", evt, cancellationToken: ct);
 await _messageSubscriber.SubscribeAsync<MyEvent>("topic", async (evt, ct) => await HandleAsync(evt, ct));
@@ -89,6 +107,49 @@ _stateStore = stateStoreFactory.GetStore<AccountModel>("account-statestore"); //
 | MySQL | Persistent queryable data | `account-statestore`, `character-statestore` |
 
 Backend selection is handled by `IStateStoreFactory` based on configurations defined in `schemas/state-stores.yaml`.
+
+### State Store Interface Hierarchy
+
+lib-state provides specialized interfaces for different capabilities:
+
+| Interface | Backends | Purpose |
+|-----------|----------|---------|
+| `IStateStore<T>` | All (Redis, MySQL, InMemory) | Core CRUD, bulk operations, ETags |
+| `ICacheableStateStore<T>` | Redis, InMemory | Sets and Sorted Sets for caching/rankings |
+| `IQueryableStateStore<T>` | MySQL only | LINQ expression queries with pagination |
+| `IJsonQueryableStateStore<T>` | MySQL only | JSON path queries within stored documents |
+| `ISearchableStateStore<T>` | Redis+Search only | Full-text search with FT.* commands |
+| `IRedisOperations` | Redis only | Lua scripts, atomic counters, hashes, TTL |
+
+**Factory Methods**:
+```csharp
+// Core operations (all backends)
+var store = factory.GetStore<T>(storeName);
+
+// Set/Sorted Set operations (Redis + InMemory - throws for MySQL)
+var cacheStore = factory.GetCacheableStore<T>(storeName);
+
+// LINQ queries (MySQL - throws for Redis)
+var queryStore = factory.GetQueryableStore<T>(storeName);
+
+// JSON path queries (MySQL - throws for Redis)
+var jsonStore = factory.GetJsonQueryableStore<T>(storeName);
+
+// Full-text search (Redis+Search - throws if search not enabled)
+var searchStore = factory.GetSearchableStore<T>(storeName);
+
+// Low-level Redis access (returns null if not using Redis backend)
+var redisOps = factory.GetRedisOperations();
+```
+
+**When to Use IRedisOperations**:
+- Lua scripts for atomic multi-key operations
+- Atomic counters (`INCR`/`DECR`)
+- Hash operations (`HGET`/`HSET`/`HINCRBY`)
+- TTL manipulation (`EXPIRE`/`TTL`/`PERSIST`)
+- Cross-store atomic operations (keys from different stores in one Lua script)
+
+**Important**: Keys passed to `IRedisOperations` are NOT prefixed - they are raw Redis keys. This enables cross-store atomic operations but requires you to manage key prefixes manually.
 
 ### Infrastructure Lib Backend Access
 

@@ -137,6 +137,8 @@ var data = await _stateStore.GetAsync(key);
 
 State stores are defined in `schemas/state-stores.yaml` and code is generated to `StateStoreDefinitions.cs` - change the schema, not the code.
 
+The factory provides specialized interfaces for backend-specific capabilities: `ICacheableStateStore<T>` for Redis sets/sorted sets, `IQueryableStateStore<T>` for MySQL LINQ queries, and `IRedisOperations` for Lua scripts and atomic operations. See [Plugin Development Guide](guides/PLUGIN_DEVELOPMENT.md) for details.
+
 ### Pub/Sub Messaging (lib-messaging)
 Services publish and subscribe to events without knowing the message broker details:
 ```csharp

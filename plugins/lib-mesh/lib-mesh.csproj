@@ -11,4 +11,9 @@
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Lua scripts for distributed circuit breaker atomic operations -->
+    <EmbeddedResource Include="Scripts\*.lua" />
+  </ItemGroup>
+
 </Project>

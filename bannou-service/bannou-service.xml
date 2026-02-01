@@ -21653,6 +21653,48 @@
             Why the endpoint was removed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CircuitState">
+            <summary>
+            Circuit breaker state for mesh endpoints
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent">
+            <summary>
+            Published when circuit breaker state changes for an app-id.
+            <br/>Consumed by all mesh instances to update local caches.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.AppId">
+            <summary>
+            The app-id whose circuit state changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.NewState">
+            <summary>
+            The new circuit breaker state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.PreviousState">
+            <summary>
+            Previous circuit state (null for first state change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.ConsecutiveFailures">
+            <summary>
+            Current consecutive failure count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.ChangedAt">
+            <summary>
+            When the state change occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.OpenedAt">
+            <summary>
+            When the circuit was opened (null if not Open state)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent">
             <summary>
             Simple health ping event published to verify pub/sub path is active.
@@ -78449,6 +78491,9 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.MeshAppidIndex">
             <summary>App-ID to instance-ID mapping index</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.MeshCircuitBreaker">
+            <summary>Distributed circuit breaker state for cross-instance failure tracking</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.MeshEndpoints">
             <summary>Service endpoint registration and health status</summary>

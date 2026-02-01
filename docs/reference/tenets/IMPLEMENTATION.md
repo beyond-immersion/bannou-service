@@ -925,22 +925,21 @@ public string OwnerId { get; set; } = string.Empty;  // NO - use Guid
 
 There are exactly TWO places where string conversion is acceptable:
 
-#### 1. State Store Set APIs (Infrastructure Constraint)
+#### 1. State Store Set APIs (Generic TItem)
 
-The `AddToSetAsync`/`RemoveFromSetAsync` APIs require string members. This is a lib-state API constraint:
+The `ICacheableStateStore<T>` set operations use generic `TItem` parameters and handle serialization automatically:
 
 ```csharp
-// ACCEPTABLE: State store set API requires string values
-await _store.AddToSetAsync(indexKey, gameServiceId.ToString(), ct);
+// CORRECT: Use proper types with generic set APIs
+var cacheStore = _stateStoreFactory.GetCacheableStore<MyModel>(StateStoreDefinitions.MyCache);
+await cacheStore.AddToSetAsync(indexKey, gameServiceId, ct);  // Guid serialized automatically
 
-// ACCEPTABLE: Parsing back when reading from set
-foreach (var idStr in await _store.GetSetMembersAsync(indexKey, ct))
-{
-    if (Guid.TryParse(idStr, out var id)) { ... }
-}
+// Reading back preserves types
+var ids = await cacheStore.GetSetAsync<Guid>(indexKey, ct);  // Returns IReadOnlyList<Guid>
+foreach (var id in ids) { ... }  // No parsing needed
 ```
 
-The internal model should still use `Guid` - only the set API call uses string.
+The set APIs serialize items via `BannouJson`, so `Guid`, `enum`, and other types work directly.
 
 #### 2. External Third-Party APIs (Outside Bannou's Control)
 

@@ -18,6 +18,9 @@ info:
     - topic: bannou.full-service-mappings
       event: FullServiceMappingsEvent
       handler: HandleServiceMappings
+    - topic: mesh.circuit.changed
+      event: MeshCircuitStateChangedEvent
+      handler: HandleCircuitStateChanged
   x-event-publications:
     - topic: mesh.endpoint.registered
       event: MeshEndpointRegisteredEvent
@@ -25,6 +28,9 @@ info:
     - topic: mesh.endpoint.deregistered
       event: MeshEndpointDeregisteredEvent
       description: Published when an endpoint is removed from the mesh
+    - topic: mesh.circuit.changed
+      event: MeshCircuitStateChangedEvent
+      description: Published when circuit breaker state changes for an app-id
 
 paths: {}
 
@@ -95,3 +101,52 @@ components:
             - HealthCheckFailed
             - CircuitBreakerTripped
           description: Why the endpoint was removed
+
+    # =========================================================================
+    # Circuit Breaker Events
+    # =========================================================================
+    CircuitState:
+      type: string
+      enum:
+        - Closed
+        - Open
+        - HalfOpen
+      description: Circuit breaker state for mesh endpoints
+
+    MeshCircuitStateChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when circuit breaker state changes for an app-id.
+        Consumed by all mesh instances to update local caches.
+      required:
+        - appId
+        - newState
+        - consecutiveFailures
+        - changedAt
+      properties:
+        appId:
+          type: string
+          description: The app-id whose circuit state changed
+        newState:
+          $ref: '#/components/schemas/CircuitState'
+          description: The new circuit breaker state
+        previousState:
+          $ref: '#/components/schemas/CircuitState'
+          nullable: true
+          description: Previous circuit state (null for first state change)
+        consecutiveFailures:
+          type: integer
+          minimum: 0
+          description: Current consecutive failure count
+        changedAt:
+          type: string
+          format: date-time
+          description: When the state change occurred
+        openedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the circuit was opened (null if not Open state)

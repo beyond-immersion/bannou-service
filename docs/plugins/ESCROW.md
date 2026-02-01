@@ -465,7 +465,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 1. **~~Releasing state is unreachable~~** (FIXED): The `Releasing` state is now used for event-driven confirmation flow via `ReleaseMode`. When mode is not `immediate`, the flow is `Finalizing` → `Releasing` → (await confirmations) → `Released`. See the [Release Modes](#release-modes) section for details.
 <!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
 
-2. **~~Status index key pattern mismatch~~** (FIXED): Status index now uses Redis Sets via `AddToSetAsync`/`RemoveFromSetAsync`/`GetSetMembersAsync` for consistent key construction. The `UpdateStatusIndexAsync` helper ensures atomic updates when transitioning states.
+2. **~~Status index key pattern mismatch~~** (FIXED): Status index now uses Redis Sets via `ICacheableStateStore<T>` (`AddToSetAsync`/`RemoveFromSetAsync`/`GetSetAsync`) for consistent key construction. The `UpdateStatusIndexAsync` helper ensures atomic updates when transitioning states.
 <!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
 
 3. **~~Party pending count race on failure~~** (FIXED): Escrow creation now uses try/finally pattern with rollback. If creation fails after incrementing pending counts, the counts are decremented in the exception handler to maintain consistency.

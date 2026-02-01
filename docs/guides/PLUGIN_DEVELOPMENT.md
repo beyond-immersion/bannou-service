@@ -186,7 +186,9 @@ make test-edge                # WebSocket tests
 
 ### State Management
 
-Use `lib-state` for data persistence (supports Redis and MySQL backends):
+Use `lib-state` for data persistence. The factory provides specialized interfaces for different capabilities:
+
+#### Core Operations (All Backends)
 
 ```csharp
 // In service constructor - use StateStoreDefinitions constants (schema-first)
@@ -209,7 +211,82 @@ await _stateStore.DeleteAsync(key, ct);
 // Optimistic concurrency with ETags
 var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
 var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
+
+// Bulk operations
+var items = await _stateStore.GetBulkAsync(keys, ct);
+await _stateStore.SaveBulkAsync(keyValuePairs, ct);
 ```
+
+#### Sets and Sorted Sets (Redis + InMemory Only)
+
+Use `ICacheableStateStore<T>` for set membership and leaderboard operations:
+
+```csharp
+private readonly ICacheableStateStore<MyModel> _cacheStore;
+
+public MyService(IStateStoreFactory stateStoreFactory)
+{
+    _cacheStore = stateStoreFactory.GetCacheableStore<MyModel>(StateStoreDefinitions.MyCache);
+}
+
+// Set operations - unique item collections
+await _cacheStore.AddToSetAsync("online-users", userId, ct);
+await _cacheStore.RemoveFromSetAsync("online-users", userId, ct);
+var isOnline = await _cacheStore.SetContainsAsync("online-users", userId, ct);
+var allOnline = await _cacheStore.GetSetAsync<string>("online-users", ct);
+
+// Sorted set operations - ranked data (leaderboards, priority queues)
+await _cacheStore.SortedSetAddAsync("leaderboard:daily", memberId, score, ct);
+var rank = await _cacheStore.SortedSetRankAsync("leaderboard:daily", memberId, descending: true, ct);
+var topTen = await _cacheStore.SortedSetRangeByRankAsync("leaderboard:daily", 0, 9, descending: true, ct);
+await _cacheStore.SortedSetIncrementAsync("leaderboard:daily", memberId, pointsEarned, ct);
+```
+
+#### Low-Level Redis Operations (Lua Scripts, Counters, Hashes)
+
+Use `IRedisOperations` for atomic operations not covered by higher-level interfaces:
+
+```csharp
+public MyService(IStateStoreFactory stateStoreFactory)
+{
+    // Returns null in InMemory mode - always check!
+    _redisOps = stateStoreFactory.GetRedisOperations();
+}
+
+// Lua scripts for complex atomic operations
+if (_redisOps != null)
+{
+    var result = await _redisOps.ScriptEvaluateAsync(
+        luaScript,
+        new RedisKey[] { "key1", "key2" },
+        new RedisValue[] { "arg1", "arg2" },
+        ct);
+
+    // Atomic counters
+    var visits = await _redisOps.IncrementAsync("counter:page-visits", 1, ct);
+
+    // Hash operations for structured data within a key
+    await _redisOps.HashSetAsync("user:123", "lastLogin", DateTime.UtcNow.ToString("O"), ct);
+    var lastLogin = await _redisOps.HashGetAsync("user:123", "lastLogin", ct);
+    await _redisOps.HashIncrementAsync("user:123", "loginCount", 1, ct);
+
+    // TTL manipulation
+    await _redisOps.ExpireAsync("session:abc", TimeSpan.FromMinutes(30), ct);
+    var ttl = await _redisOps.TimeToLiveAsync("session:abc", ct);
+}
+```
+
+**Important**: Keys passed to `IRedisOperations` are NOT prefixed - they are raw Redis keys. This enables cross-store atomic operations in Lua scripts but requires manual key management.
+
+#### Interface Summary
+
+| Interface | Factory Method | Backends | Use Case |
+|-----------|---------------|----------|----------|
+| `IStateStore<T>` | `GetStore<T>()` | All | Core CRUD, bulk ops, ETags |
+| `ICacheableStateStore<T>` | `GetCacheableStore<T>()` | Redis, InMemory | Sets, sorted sets |
+| `IQueryableStateStore<T>` | `GetQueryableStore<T>()` | MySQL | LINQ queries |
+| `ISearchableStateStore<T>` | `GetSearchableStore<T>()` | Redis+Search | Full-text search |
+| `IRedisOperations` | `GetRedisOperations()` | Redis | Lua scripts, counters, hashes |
 
 State store backend is configured via `IStateStoreFactory` service configuration.
 

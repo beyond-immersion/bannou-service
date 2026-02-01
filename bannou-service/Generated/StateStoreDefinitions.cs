@@ -190,6 +190,8 @@ public static class StateStoreDefinitions
     // Mesh Service
     /// <summary>App-ID to instance-ID mapping index</summary>
     public const string MeshAppidIndex = "mesh-appid-index";
+    /// <summary>Distributed circuit breaker state for cross-instance failure tracking</summary>
+    public const string MeshCircuitBreaker = "mesh-circuit-breaker";
     /// <summary>Service endpoint registration and health status</summary>
     public const string MeshEndpoints = "mesh-endpoints";
     /// <summary>Global endpoint index for discovery</summary>
@@ -338,6 +340,7 @@ public static class StateStoreDefinitions
             [Mapping] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mapping" },
             [Matchmaking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mm" },
             [MeshAppidIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:appid" },
+            [MeshCircuitBreaker] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:cb" },
             [MeshEndpoints] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:endpoint" },
             [MeshGlobalIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:idx" },
             [MessagingExternalSubs] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "msg:subs" },
@@ -434,6 +437,7 @@ public static class StateStoreDefinitions
             [Mapping] = new StoreMetadata("Mapping", "Spatial map data and channels", "redis"),
             [Matchmaking] = new StoreMetadata("Matchmaking", "Matchmaking queue and ticket state", "redis"),
             [MeshAppidIndex] = new StoreMetadata("Mesh", "App-ID to instance-ID mapping index", "redis"),
+            [MeshCircuitBreaker] = new StoreMetadata("Mesh", "Distributed circuit breaker state for cross-instance failure tracking", "redis"),
             [MeshEndpoints] = new StoreMetadata("Mesh", "Service endpoint registration and health status", "redis"),
             [MeshGlobalIndex] = new StoreMetadata("Mesh", "Global endpoint index for discovery", "redis"),
             [MessagingExternalSubs] = new StoreMetadata("Messaging", "External subscription recovery data", "redis"),

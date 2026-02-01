@@ -261,7 +261,6 @@ Stack Operations
 4. **RemoveItem does not clear item's ContainerId**: When RemoveItemFromContainer is called, the item's ContainerId field in lib-item is not cleared. The item still references the container it was removed from until AddItemToContainer places it elsewhere. See [#164](https://github.com/beyond-immersion/bannou-service/issues/164) for the design discussion on configurable drop behavior.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/164 -->
 
-5. ~~**Partial quantity transfer not implemented**~~: **FIXED** (2026-02-01) - TransferItemAsync now handles partial transfers by calling SplitStackAsync first when quantity is specified and less than the item's total quantity. The split item is then moved to the target container. Validation added for quantity exceeding available amount (returns BadRequest). For partial transfers, the response InstanceId is the new split item, not the original.
 
 ---
 
@@ -285,9 +284,7 @@ Stack Operations
 
 ### Bugs (Fix Immediately)
 
-1. ~~**RemoveItem does not decrement counters if lock fails on source**~~: **NOT A BUG** (2026-01-31) - Code review confirms lock is acquired BEFORE any counter modifications (line 852-857), so lock failure results in clean rejection with no state changes. Moved to Intentional Quirks as documentation of safe behavior.
-
-2. ~~**MergeStacks only locks source container**~~: **FIXED** (2026-01-30) - MergeStacks now acquires locks on both containers when items are in different containers, using deterministic ordering (smaller GUID first) to prevent deadlocks.
+*No known bugs at this time.*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -295,17 +292,21 @@ Stack Operations
 
 2. **List index locking separate from container lock**: Owner/type indexes use `ListLockTimeoutSeconds` (default 15s, shorter than container locks). Index lock failure is non-fatal - a warning is logged but the main operation succeeds. This means index state can drift from container state if locks fail.
 
-2. **Nesting depth validation uses parent's limit**: When creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children.
+3. **Nesting depth validation uses parent's limit**: When creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children.
 
-3. **Missing parent returns BadRequest not NotFound**: If `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound.
+4. **MergeStacks uses deterministic lock ordering**: When merging stacks across different containers, locks are acquired in GUID order (smaller GUID first) to prevent deadlocks. Both containers are locked for the duration of the merge. Operations may briefly conflict if another operation is locking in the opposite order.
 
-4. **Container deletion with "destroy" continues on item failure**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed. This can orphan items.
+5. **Partial transfer returns split item ID**: When `TransferItemAsync` is called with a quantity less than the item's total, the stack is split first, then the split portion is moved. The response `InstanceId` is the newly created split item, not the original. The original retains the remainder.
 
-5. **Merge stack source destruction failure non-fatal**: When stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity in lib-item.
+6. **Missing parent returns BadRequest not NotFound**: If `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound.
 
-6. **WeightContribution.None treated as "use default"**: If `WeightContribution.None` is explicitly specified in a create request, it's replaced with `DefaultWeightContribution` from config. There's no way to explicitly set "no weight propagation" unless the default is changed.
+7. **Container deletion with "destroy" continues on item failure**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed. This can orphan items.
 
-7. **DeleteContainer returns ServiceUnavailable on item service failure**: This is intentional to prevent orphaning items, but callers must handle this gracefully.
+8. **Merge stack source destruction failure non-fatal**: When stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity in lib-item.
+
+9. **WeightContribution.None treated as "use default"**: If `WeightContribution.None` is explicitly specified in a create request, it's replaced with `DefaultWeightContribution` from config. There's no way to explicitly set "no weight propagation" unless the default is changed.
+
+10. **DeleteContainer returns ServiceUnavailable on item service failure**: This is intentional to prevent orphaning items, but callers must handle this gracefully.
 
 ### Design Considerations (Requires Planning)
 
@@ -333,7 +334,7 @@ Stack Operations
 - **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Design and implementation of configurable drop behavior for removed items. Current `RemoveItemFromContainer` leaves items in limbo (container counters updated but item's ContainerId unchanged). Issue tracks adding per-container drop configuration, a `/inventory/drop` endpoint, and location-owned ground containers.
 
 ### Completed
-- **2026-02-01**: Implemented partial quantity transfer in TransferItemAsync - now splits stack first when partial quantity requested, then moves the split item
+- **2026-02-01**: Partial quantity transfer implemented in TransferItemAsync - splits stack first when partial quantity requested, then moves the split item (behavior now documented in Intentional Quirks)
 - **2026-02-01**: Audit added NEEDS_DESIGN marker to "RemoveItem does not clear ContainerId" gap - already tracked by issue #164 with comprehensive design discussion
-- **2026-01-31**: Audit confirmed "RemoveItem counter decrement on lock fail" is not a bug - lock is acquired before any modifications. Moved to Intentional Quirks.
-- **2026-01-30**: Fixed MergeStacks race condition - now locks both containers with deterministic ordering
+- **2026-01-31**: Audit confirmed "RemoveItem counter decrement on lock fail" is not a bug - lock is acquired before any modifications (behavior now documented in Intentional Quirks)
+- **2026-01-30**: Fixed MergeStacks race condition - now locks both containers with deterministic ordering (behavior now documented in Intentional Quirks)

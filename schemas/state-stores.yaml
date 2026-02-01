@@ -419,6 +419,12 @@ x-state-stores:
     service: Mesh
     purpose: Global endpoint index for discovery
 
+  mesh-circuit-breaker:
+    backend: redis
+    prefix: "mesh:cb"
+    service: Mesh
+    purpose: Distributed circuit breaker state for cross-instance failure tracking
+
   # ============================================================================
   # Music Stores
   # ============================================================================
