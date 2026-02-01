@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
@@ -27,9 +28,11 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private readonly Mock<IStateStore<LocationIndexData>> _mockLocationIndexStore;
     private readonly Mock<IStateStore<GlobalCharacterIndexData>> _mockGlobalIndexStore;
     private readonly Mock<IStateStore<CustomTypeIndexData>> _mockCustomTypeIndexStore;
+    private readonly Mock<IStateStore<TypeEncounterIndexData>> _mockTypeEncounterIndexStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<CharacterEncounterService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
 
     private const string STATE_STORE = "character-encounter-statestore";
 
@@ -44,9 +47,11 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockLocationIndexStore = new Mock<IStateStore<LocationIndexData>>();
         _mockGlobalIndexStore = new Mock<IStateStore<GlobalCharacterIndexData>>();
         _mockCustomTypeIndexStore = new Mock<IStateStore<CustomTypeIndexData>>();
+        _mockTypeEncounterIndexStore = new Mock<IStateStore<TypeEncounterIndexData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<CharacterEncounterService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -73,6 +78,25 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockStateStoreFactory
             .Setup(f => f.GetStore<CustomTypeIndexData>(STATE_STORE))
             .Returns(_mockCustomTypeIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<TypeEncounterIndexData>(STATE_STORE))
+            .Returns(_mockTypeEncounterIndexStore.Object);
+
+        // Default character client setup - all characters exist
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(It.IsAny<GetCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = Guid.NewGuid(), Name = "Test Character" });
+
+        // Default type-encounter index setup
+        _mockTypeEncounterIndexStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TypeEncounterIndexData?)null);
+        _mockTypeEncounterIndexStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((TypeEncounterIndexData?)null, (string?)null));
+        _mockTypeEncounterIndexStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<TypeEncounterIndexData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Default message bus setup
         _mockMessageBus
@@ -90,7 +114,68 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             Configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockCharacterClient.Object);
+    }
+
+    /// <summary>
+    /// Sets up the character client to make a specific character not found.
+    /// </summary>
+    private void SetupCharacterNotFound(Guid characterId)
+    {
+        _mockCharacterClient
+            .Setup(c => c.GetCharacterAsync(
+                It.Is<GetCharacterRequest>(r => r.CharacterId == characterId),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+    }
+
+    /// <summary>
+    /// Sets up an existing encounter for duplicate detection tests.
+    /// </summary>
+    private void SetupExistingEncounter(Guid encounterId, List<Guid> participantIds, string typeCode, DateTimeOffset timestamp)
+    {
+        var sortedParticipants = participantIds.OrderBy(id => id).ToList();
+        var pairKey = $"{sortedParticipants[0]}:{sortedParticipants[1]}";
+
+        // Setup pair index to return this encounter
+        _mockPairIndexStore
+            .Setup(s => s.GetAsync($"pair-idx-{pairKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PairIndexData
+            {
+                CharacterIdA = sortedParticipants[0],
+                CharacterIdB = sortedParticipants[1],
+                EncounterIds = new List<Guid> { encounterId }
+            });
+
+        // Setup encounter data
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EncounterData
+            {
+                EncounterId = encounterId,
+                EncounterTypeCode = typeCode.ToUpperInvariant(),
+                ParticipantIds = participantIds,
+                Timestamp = timestamp.ToUnixTimeSeconds(),
+                RealmId = Guid.NewGuid(),
+                Outcome = EncounterOutcome.NEUTRAL,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+    }
+
+    /// <summary>
+    /// Sets up the type-encounter index with existing encounters for a type.
+    /// </summary>
+    private void SetupTypeHasEncounters(string typeCode, int count)
+    {
+        var encounterIds = Enumerable.Range(0, count).Select(_ => Guid.NewGuid()).ToList();
+        _mockTypeEncounterIndexStore
+            .Setup(s => s.GetAsync($"type-enc-idx-{typeCode.ToUpperInvariant()}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TypeEncounterIndexData
+            {
+                TypeCode = typeCode.ToUpperInvariant(),
+                EncounterIds = encounterIds
+            });
     }
 
     #region Constructor Tests
@@ -1302,6 +1387,270 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockPerspectiveStore.Verify(
             s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    #endregion
+
+    #region Gap 1: Duplicate Detection Tests
+
+    [Fact]
+    public async Task RecordEncounterAsync_DuplicateEncounter_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+        var existingEncounterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var timestamp = DateTimeOffset.UtcNow;
+
+        SetupTypeExists("DIALOGUE", CreateTestEncounterType("DIALOGUE", "Dialogue", isBuiltIn: true));
+        SetupExistingEncounter(existingEncounterId, new List<Guid> { charA, charB }, "DIALOGUE", timestamp);
+
+        var request = new RecordEncounterRequest
+        {
+            EncounterTypeCode = "DIALOGUE",
+            RealmId = realmId,
+            ParticipantIds = new List<Guid> { charA, charB },
+            Outcome = EncounterOutcome.NEUTRAL,
+            Timestamp = timestamp.AddMinutes(2) // Within 5 minute tolerance
+        };
+
+        // Act
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RecordEncounterAsync_SameParticipantsDifferentType_Succeeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+        var existingEncounterId = Guid.NewGuid();
+        var timestamp = DateTimeOffset.UtcNow;
+
+        SetupTypeExists("DIALOGUE", CreateTestEncounterType("DIALOGUE", "Dialogue", isBuiltIn: true));
+        SetupTypeExists("COMBAT", CreateTestEncounterType("COMBAT", "Combat", isBuiltIn: true));
+        SetupEmptyIndexes();
+        SetupDefaultSaves();
+
+        // Setup existing DIALOGUE encounter
+        var sortedParticipants = new List<Guid> { charA, charB }.OrderBy(id => id).ToList();
+        var pairKey = $"{sortedParticipants[0]}:{sortedParticipants[1]}";
+        _mockPairIndexStore
+            .Setup(s => s.GetAsync($"pair-idx-{pairKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PairIndexData
+            {
+                CharacterIdA = sortedParticipants[0],
+                CharacterIdB = sortedParticipants[1],
+                EncounterIds = new List<Guid> { existingEncounterId }
+            });
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{existingEncounterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EncounterData
+            {
+                EncounterId = existingEncounterId,
+                EncounterTypeCode = "DIALOGUE", // Different type
+                ParticipantIds = new List<Guid> { charA, charB },
+                Timestamp = timestamp.ToUnixTimeSeconds(),
+                RealmId = Guid.NewGuid(),
+                Outcome = EncounterOutcome.NEUTRAL,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        var request = new RecordEncounterRequest
+        {
+            EncounterTypeCode = "COMBAT", // Different type
+            RealmId = Guid.NewGuid(),
+            ParticipantIds = new List<Guid> { charA, charB },
+            Outcome = EncounterOutcome.NEUTRAL,
+            Timestamp = timestamp
+        };
+
+        // Act
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+
+        // Assert - Should succeed because type is different
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task RecordEncounterAsync_TimestampOutsideTolerance_Succeeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+        var existingEncounterId = Guid.NewGuid();
+        var existingTimestamp = DateTimeOffset.UtcNow.AddMinutes(-10); // 10 minutes ago
+
+        SetupTypeExists("DIALOGUE", CreateTestEncounterType("DIALOGUE", "Dialogue", isBuiltIn: true));
+        SetupEmptyIndexes();
+        SetupDefaultSaves();
+
+        // Setup existing encounter with old timestamp
+        var sortedParticipants = new List<Guid> { charA, charB }.OrderBy(id => id).ToList();
+        var pairKey = $"{sortedParticipants[0]}:{sortedParticipants[1]}";
+        _mockPairIndexStore
+            .Setup(s => s.GetAsync($"pair-idx-{pairKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PairIndexData
+            {
+                CharacterIdA = sortedParticipants[0],
+                CharacterIdB = sortedParticipants[1],
+                EncounterIds = new List<Guid> { existingEncounterId }
+            });
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{existingEncounterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EncounterData
+            {
+                EncounterId = existingEncounterId,
+                EncounterTypeCode = "DIALOGUE",
+                ParticipantIds = new List<Guid> { charA, charB },
+                Timestamp = existingTimestamp.ToUnixTimeSeconds(),
+                RealmId = Guid.NewGuid(),
+                Outcome = EncounterOutcome.NEUTRAL,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        var request = new RecordEncounterRequest
+        {
+            EncounterTypeCode = "DIALOGUE",
+            RealmId = Guid.NewGuid(),
+            ParticipantIds = new List<Guid> { charA, charB },
+            Outcome = EncounterOutcome.NEUTRAL,
+            Timestamp = DateTimeOffset.UtcNow // Now (more than 5 min from existing)
+        };
+
+        // Act
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+
+        // Assert - Should succeed because timestamp is outside tolerance
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    #endregion
+
+    #region Gap 2: Type-in-Use Validation Tests
+
+    [Fact]
+    public async Task DeleteEncounterTypeAsync_TypeInUse_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeData = CreateTestEncounterType("CUSTOM", "Custom Type", isBuiltIn: false);
+        SetupTypeExists("CUSTOM", typeData);
+        SetupTypeHasEncounters("CUSTOM", 5); // Type is in use by 5 encounters
+
+        // Act
+        var status = await service.DeleteEncounterTypeAsync(
+            new DeleteEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    [Fact]
+    public async Task DeleteEncounterTypeAsync_TypeNotInUse_Succeeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeData = CreateTestEncounterType("CUSTOM", "Custom Type", isBuiltIn: false);
+        SetupTypeExists("CUSTOM", typeData);
+        // Type-encounter index is empty by default (set up in constructor)
+
+        _mockTypeStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<EncounterTypeData>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockCustomTypeIndexStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CustomTypeIndexData { TypeCodes = new List<string> { "CUSTOM" } });
+        _mockCustomTypeIndexStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CustomTypeIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Act
+        var status = await service.DeleteEncounterTypeAsync(
+            new DeleteEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+    }
+
+    #endregion
+
+    #region Gap 3: Character Validation Tests
+
+    [Fact]
+    public async Task RecordEncounterAsync_CharacterNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+
+        SetupTypeExists("DIALOGUE", CreateTestEncounterType("DIALOGUE", "Dialogue", isBuiltIn: true));
+        SetupEmptyIndexes();
+        SetupCharacterNotFound(charB); // charB does not exist
+
+        var request = new RecordEncounterRequest
+        {
+            EncounterTypeCode = "DIALOGUE",
+            RealmId = Guid.NewGuid(),
+            ParticipantIds = new List<Guid> { charA, charB },
+            Outcome = EncounterOutcome.NEUTRAL,
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RecordEncounterAsync_AllCharactersExist_Succeeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        SetupTypeExists("DIALOGUE", CreateTestEncounterType("DIALOGUE", "Dialogue", isBuiltIn: true));
+        SetupEmptyIndexes();
+        SetupDefaultSaves();
+        // Default character client setup already returns success for all characters
+
+        var request = new RecordEncounterRequest
+        {
+            EncounterTypeCode = "DIALOGUE",
+            RealmId = realmId,
+            ParticipantIds = new List<Guid> { charA, charB },
+            Outcome = EncounterOutcome.POSITIVE,
+            Context = "Met at the tavern",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion

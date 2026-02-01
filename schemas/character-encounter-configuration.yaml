@@ -105,3 +105,10 @@ x-service-configuration:
       description: Automatically seed built-in encounter types on service startup
       env: CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP
       default: true
+    DuplicateTimestampToleranceMinutes:
+      type: integer
+      description: Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.
+      env: CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES
+      default: 5
+      minimum: 0
+      maximum: 60

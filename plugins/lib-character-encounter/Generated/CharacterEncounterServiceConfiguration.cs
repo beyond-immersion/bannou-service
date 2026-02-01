@@ -173,4 +173,11 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     /// </summary>
     public bool SeedBuiltInTypesOnStartup { get; set; } = true;
 
+    /// <summary>
+    /// Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.
+    /// Environment variable: CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 60)]
+    public int DuplicateTimestampToleranceMinutes { get; set; } = 5;
+
 }

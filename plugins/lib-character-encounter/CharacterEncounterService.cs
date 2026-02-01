@@ -1,5 +1,7 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -28,6 +30,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CharacterEncounterService> _logger;
     private readonly CharacterEncounterServiceConfiguration _configuration;
+    private readonly ICharacterClient _characterClient;
 
     // Key prefixes for different data types
     private const string ENCOUNTER_KEY_PREFIX = "enc-";
@@ -38,6 +41,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private const string LOCATION_INDEX_PREFIX = "loc-idx-";
     private const string GLOBAL_CHAR_INDEX_KEY = "global-char-idx";
     private const string CUSTOM_TYPE_INDEX_KEY = "custom-type-idx";
+    private const string TYPE_ENCOUNTER_INDEX_PREFIX = "type-enc-idx-";
 
     // Event topics
     private const string ENCOUNTER_RECORDED_TOPIC = "encounter.recorded";
@@ -65,12 +69,14 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         IStateStoreFactory stateStoreFactory,
         ILogger<CharacterEncounterService> logger,
         CharacterEncounterServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ICharacterClient characterClient)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _characterClient = characterClient;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
@@ -329,6 +335,14 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return StatusCodes.BadRequest;
             }
 
+            // Check if type is in use by any encounters
+            var encounterCount = await GetTypeEncounterCountAsync(body.Code.ToUpperInvariant(), cancellationToken);
+            if (encounterCount > 0)
+            {
+                _logger.LogWarning("Cannot delete encounter type {Code}: {Count} encounters using it", body.Code, encounterCount);
+                return StatusCodes.Conflict;
+            }
+
             // Soft-delete by marking inactive
             data.IsActive = false;
             await store.SaveAsync(key, data, cancellationToken: cancellationToken);
@@ -471,9 +485,24 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return (StatusCodes.BadRequest, null);
             }
 
+            var participantIds = body.ParticipantIds.Distinct().ToList();
+
+            // Check for duplicate encounter (same participants, type, timestamp within tolerance)
+            if (await IsDuplicateEncounterAsync(participantIds, body.EncounterTypeCode.ToUpperInvariant(), body.Timestamp, cancellationToken))
+            {
+                _logger.LogWarning("Duplicate encounter detected for type {Type} with {Count} participants",
+                    body.EncounterTypeCode, participantIds.Count);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Validate all participant characters exist
+            if (!await ValidateCharactersExistAsync(participantIds, cancellationToken))
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
             var encounterId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
-            var participantIds = body.ParticipantIds.Distinct().ToList();
 
             // Create encounter record
             var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
@@ -492,6 +521,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             };
 
             await encounterStore.SaveAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", encounterData, cancellationToken: cancellationToken);
+
+            // Add to type-encounter index for type-in-use validation
+            await AddToTypeEncounterIndexAsync(body.EncounterTypeCode.ToUpperInvariant(), encounterId, cancellationToken);
 
             // Create perspectives for each participant
             var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
@@ -1238,6 +1270,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 await RemoveFromLocationIndexAsync(encounter.LocationId.Value, body.EncounterId, cancellationToken);
             }
 
+            // Remove from type-encounter index
+            await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, body.EncounterId, cancellationToken);
+
             // Publish event
             await _messageBus.TryPublishAsync(ENCOUNTER_DELETED_TOPIC, new EncounterDeletedEvent
             {
@@ -1332,6 +1367,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 {
                     await RemoveFromLocationIndexAsync(encounter.LocationId.Value, encounterId, cancellationToken);
                 }
+
+                // Remove from type-encounter index
+                await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, encounterId, cancellationToken);
 
                 // Publish event (+1 for target character's perspective deleted in first loop)
                 await _messageBus.TryPublishAsync(ENCOUNTER_DELETED_TOPIC, new EncounterDeletedEvent
@@ -1598,6 +1636,89 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         return index?.EncounterIds.ToList() ?? new List<Guid>();
     }
 
+    /// <summary>
+    /// Checks if a duplicate encounter already exists with the same participants, type, and timestamp within tolerance.
+    /// </summary>
+    private async Task<bool> IsDuplicateEncounterAsync(
+        List<Guid> participantIds,
+        string encounterTypeCode,
+        DateTimeOffset timestamp,
+        CancellationToken cancellationToken)
+    {
+        var toleranceMinutes = _configuration.DuplicateTimestampToleranceMinutes;
+        var sortedParticipants = participantIds.OrderBy(id => id).ToList();
+        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+
+        // Collect candidate encounter IDs from pair indexes (any pair will do for duplicate check)
+        var candidateEncounterIds = new HashSet<Guid>();
+
+        // Check first pair only for efficiency - if a duplicate exists, it will be in this pair's index
+        if (sortedParticipants.Count >= 2)
+        {
+            var pairEncounterIds = await GetPairEncounterIdsAsync(sortedParticipants[0], sortedParticipants[1], cancellationToken);
+            foreach (var encounterId in pairEncounterIds)
+            {
+                candidateEncounterIds.Add(encounterId);
+            }
+        }
+
+        // Check each candidate for duplicate match
+        foreach (var encounterId in candidateEncounterIds)
+        {
+            var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
+            if (encounter == null)
+            {
+                continue;
+            }
+
+            // Check type match
+            if (!encounter.EncounterTypeCode.Equals(encounterTypeCode, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // Check exact participant match (sorted comparison)
+            var existingParticipants = encounter.ParticipantIds.OrderBy(id => id).ToList();
+            if (!sortedParticipants.SequenceEqual(existingParticipants))
+            {
+                continue;
+            }
+
+            // Check timestamp within tolerance
+            var existingTimestamp = DateTimeOffset.FromUnixTimeSeconds(encounter.Timestamp);
+            var timeDiff = Math.Abs((timestamp - existingTimestamp).TotalMinutes);
+            if (timeDiff <= toleranceMinutes)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Validates that all character IDs exist via the Character service.
+    /// </summary>
+    private async Task<bool> ValidateCharactersExistAsync(List<Guid> characterIds, CancellationToken cancellationToken)
+    {
+        var validationTasks = characterIds.Select(async characterId =>
+        {
+            try
+            {
+                await _characterClient.GetCharacterAsync(new GetCharacterRequest { CharacterId = characterId }, cancellationToken);
+                return true;
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Character {CharacterId} not found during encounter recording", characterId);
+                return false;
+            }
+        });
+
+        var results = await Task.WhenAll(validationTasks);
+        return results.All(exists => exists);
+    }
+
     private async Task AddToCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
@@ -1775,6 +1896,83 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     }
 
     /// <summary>
+    /// Adds an encounter ID to the type-encounter index for the given encounter type code.
+    /// Uses optimistic concurrency with ETag-based retry pattern.
+    /// </summary>
+    private async Task AddToTypeEncounterIndexAsync(string typeCode, Guid encounterId, CancellationToken cancellationToken)
+    {
+        var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+            index ??= new TypeEncounterIndexData { TypeCode = typeCode };
+
+            if (!index.EncounterIds.Contains(encounterId))
+            {
+                index.EncounterIds.Add(encounterId);
+                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification on type-encounter index {TypeCode}, retrying (attempt {Attempt})",
+                        typeCode, attempt + 1);
+                    continue;
+                }
+            }
+
+            return;
+        }
+
+        _logger.LogWarning("Failed to add encounter {EncounterId} to type-encounter index {TypeCode} after 3 attempts",
+            encounterId, typeCode);
+    }
+
+    /// <summary>
+    /// Removes an encounter ID from the type-encounter index for the given encounter type code.
+    /// Uses optimistic concurrency with ETag-based retry pattern.
+    /// </summary>
+    private async Task RemoveFromTypeEncounterIndexAsync(string typeCode, Guid encounterId, CancellationToken cancellationToken)
+    {
+        var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+            if (index == null)
+            {
+                return;
+            }
+
+            index.EncounterIds.Remove(encounterId);
+            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification on type-encounter index {TypeCode} during remove, retrying (attempt {Attempt})",
+                    typeCode, attempt + 1);
+                continue;
+            }
+
+            return;
+        }
+
+        _logger.LogWarning("Failed to remove encounter {EncounterId} from type-encounter index {TypeCode} after 3 attempts",
+            encounterId, typeCode);
+    }
+
+    /// <summary>
+    /// Gets the count of encounters using the given encounter type code.
+    /// </summary>
+    private async Task<int> GetTypeEncounterCountAsync(string typeCode, CancellationToken cancellationToken)
+    {
+        var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
+        var index = await indexStore.GetAsync(key, cancellationToken);
+        return index?.EncounterIds.Count ?? 0;
+    }
+
+    /// <summary>
     /// Prunes encounters for a character if they exceed MaxEncountersPerCharacter.
     /// Removes oldest encounters (by timestamp) first.
     /// </summary>
@@ -1839,6 +2037,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     {
                         await RemoveFromLocationIndexAsync(encounter.LocationId.Value, encounterId, cancellationToken);
                     }
+
+                    // Clean up type-encounter index
+                    await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, encounterId, cancellationToken);
                 }
             }
         }
@@ -1910,6 +2111,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                         {
                             await RemoveFromLocationIndexAsync(encounter.LocationId.Value, encounterId, cancellationToken);
                         }
+
+                        // Clean up type-encounter index
+                        await RemoveFromTypeEncounterIndexAsync(encounter.EncounterTypeCode, encounterId, cancellationToken);
                     }
                 }
             }
@@ -2380,4 +2584,14 @@ internal class GlobalCharacterIndexData
 internal class CustomTypeIndexData
 {
     public List<string> TypeCodes { get; set; } = new();
+}
+
+/// <summary>
+/// Index tracking encounter IDs using a specific encounter type code.
+/// Used for validating type deletion (409 if encounters exist using the type).
+/// </summary>
+internal class TypeEncounterIndexData
+{
+    public string TypeCode { get; set; } = string.Empty;
+    public List<Guid> EncounterIds { get; set; } = new();
 }

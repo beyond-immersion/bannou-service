@@ -309,9 +309,12 @@ Index Architecture
 ## Stubs & Unimplemented Features
 
 1. **Scheduled decay mode**: The `MemoryDecayMode` configuration accepts "scheduled" but only "lazy" mode is implemented. No background service exists to periodically process decay. The `DecayMemories` admin endpoint partially fills this gap but must be called externally.
-2. **Duplicate encounter detection**: The API schema documents a 409 response for "Duplicate encounter (same participants, timestamp, and type)" but the implementation does not check for duplicates. Recording the same encounter twice creates two separate records.
-3. **Delete type with encounters validation**: The schema documents a 409 response for "Cannot delete - type is in use by encounters" but the implementation does not validate whether any encounters reference the type before soft-deleting it.
-4. **Character existence validation**: The schema documents a 404 response for "One or more characters not found" on RecordEncounter, but the implementation does not call any character service to validate participant IDs exist.
+
+2. ~~**Duplicate encounter detection**~~: **FIXED** (2026-02-01) - `IsDuplicateEncounterAsync` validates participants, type, and timestamp within configurable tolerance (`DuplicateTimestampToleranceMinutes`). Returns 409 Conflict on match.
+
+3. ~~**Delete type with encounters validation**~~: **FIXED** (2026-02-01) - `GetTypeEncounterCountAsync` counts encounters using a type via `type-enc-idx-{CODE}` index. `DeleteEncounterTypeAsync` returns 409 Conflict if count > 0.
+
+4. ~~**Character existence validation**~~: **FIXED** (2026-02-01) - `ValidateCharactersExistAsync` calls `ICharacterClient.GetCharacterAsync` for each participant in parallel. Returns 404 if any character not found.
 
 ---
 
@@ -368,4 +371,6 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-No active work items at this time.
+### Completed
+
+- **2026-02-01**: Verified duplicate encounter detection, type-in-use validation, and character existence validation are all implemented. Updated stubs section to reflect FIXED status. Closed #216.
