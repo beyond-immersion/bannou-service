@@ -1154,33 +1154,32 @@ components:
 
     ListContractTemplatesRequest:
       type: object
-      description: Request to list contract templates
+      description: Request to list contract templates with cursor-based pagination.
       additionalProperties: false
       properties:
         realmId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by realm (null includes cross-realm templates)
+          description: Filter by realm (null includes cross-realm templates).
         isActive:
           type: boolean
           nullable: true
-          description: Filter by active status
+          description: Filter by active status.
         searchTerm:
           type: string
           nullable: true
-          description: Search in name and description
-        page:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Page number (1-based)
+          description: Search in name and description.
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-          description: Results per page
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
 
     UpdateContractTemplateRequest:
       type: object
@@ -1306,31 +1305,24 @@ components:
 
     ListContractTemplatesResponse:
       type: object
-      description: Paginated list of contract templates
+      description: Paginated list of contract templates.
       additionalProperties: false
       required:
       - templates
-      - totalCount
-      - page
-      - pageSize
+      - hasMore
       properties:
         templates:
           type: array
           items:
             $ref: '#/components/schemas/ContractTemplateResponse'
-          description: List of templates
-        totalCount:
-          type: integer
-          description: Total matching templates
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Results per page
-        hasNextPage:
+          description: Templates in this page.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
           type: boolean
-          description: Whether more results exist
+          description: Whether more results exist beyond this page.
 
     # =========================================================================
     # Instance Models
@@ -1428,40 +1420,39 @@ components:
 
     QueryContractInstancesRequest:
       type: object
-      description: Request to query contract instances
+      description: Request to query contract instances with cursor-based pagination.
       additionalProperties: false
       properties:
         partyEntityId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by party entity ID
+          description: Filter by party entity ID.
         partyEntityType:
           $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
-          description: Filter by party entity type
+          description: Filter by party entity type.
         templateId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by template
+          description: Filter by template.
         statuses:
           type: array
           items:
             $ref: '#/components/schemas/ContractStatus'
           nullable: true
-          description: Filter by statuses
-        page:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Page number (1-based)
+          description: Filter by statuses.
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-          description: Results per page
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
 
     TerminateContractInstanceRequest:
       type: object
@@ -1594,31 +1585,24 @@ components:
 
     QueryContractInstancesResponse:
       type: object
-      description: Paginated list of contract instances
+      description: Paginated list of contract instances.
       additionalProperties: false
       required:
       - contracts
-      - totalCount
-      - page
-      - pageSize
+      - hasMore
       properties:
         contracts:
           type: array
           items:
             $ref: '#/components/schemas/ContractInstanceResponse'
-          description: List of contracts
-        totalCount:
-          type: integer
-          description: Total matching contracts
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Results per page
-        hasNextPage:
+          description: Contracts in this page.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
           type: boolean
-          description: Whether more results exist
+          description: Whether more results exist beyond this page.
 
     ContractInstanceStatusResponse:
       type: object

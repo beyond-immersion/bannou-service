@@ -98,3 +98,12 @@ x-service-configuration:
       env: CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS
       default: 30
       description: Startup delay before first milestone deadline check in seconds
+
+    # Pagination Configuration
+    defaultPageSize:
+      type: integer
+      env: CONTRACT_DEFAULT_PAGE_SIZE
+      default: 20
+      minimum: 1
+      maximum: 100
+      description: Default page size for paginated endpoints when not specified in request

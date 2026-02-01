@@ -1053,14 +1053,16 @@ public partial class CharacterService : ICharacterService
                     {
                         PartyEntityId = body.CharacterId,
                         PartyEntityType = EntityType.Character,
-                        Page = 1,
+                        Cursor = null,
                         PageSize = 1 // Only need to know if any exist
                     },
                     cancellationToken);
 
-                if (contractResult != null && contractResult.TotalCount > 0)
+                if (contractResult != null && contractResult.Contracts.Count > 0)
                 {
-                    referenceCount += contractResult.TotalCount;
+                    // With cursor-based pagination, we don't have total count.
+                    // Indicate at least one reference exists; exact count requires full enumeration.
+                    referenceCount += contractResult.HasMore ? 2 : contractResult.Contracts.Count;
                     if (!referenceTypes.Contains(REFERENCE_TYPE_CONTRACT))
                         referenceTypes.Add(REFERENCE_TYPE_CONTRACT);
                 }

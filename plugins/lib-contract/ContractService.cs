@@ -388,7 +388,11 @@ public partial class ContractService : IContractService
     {
         try
         {
-            _logger.LogDebug("Listing contract templates");
+            _logger.LogDebug("Listing contract templates with cursor-based pagination");
+
+            // Decode cursor to get offset (null cursor = start from beginning)
+            var offset = DecodeCursorOffset(body.Cursor);
+            var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
             // Get all template IDs
             var allTemplateIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
@@ -399,10 +403,8 @@ public partial class ContractService : IContractService
                 return (StatusCodes.OK, new ListContractTemplatesResponse
                 {
                     Templates = new List<ContractTemplateResponse>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false
+                    NextCursor = null,
+                    HasMore = false
                 });
             }
 
@@ -438,23 +440,19 @@ public partial class ContractService : IContractService
                     (t.Description?.ToLowerInvariant().Contains(searchLower) ?? false));
             }
 
-            // Pagination
-            var totalCount = filtered.Count();
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var paged = filtered
-                .OrderByDescending(t => t.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            // Cursor-based pagination: fetch pageSize + 1 to detect hasMore
+            var sorted = filtered.OrderByDescending(t => t.CreatedAt).ToList();
+            var paged = sorted.Skip(offset).Take(pageSize + 1).ToList();
+
+            var hasMore = paged.Count > pageSize;
+            var resultItems = paged.Take(pageSize).ToList();
+            var nextCursor = hasMore ? EncodeCursorOffset(offset + pageSize) : null;
 
             return (StatusCodes.OK, new ListContractTemplatesResponse
             {
-                Templates = paged.Select(MapTemplateToResponse).ToList(),
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = (page * pageSize) < totalCount
+                Templates = resultItems.Select(MapTemplateToResponse).ToList(),
+                NextCursor = nextCursor,
+                HasMore = hasMore
             });
         }
         catch (Exception ex)
@@ -1014,7 +1012,11 @@ public partial class ContractService : IContractService
     {
         try
         {
-            _logger.LogDebug("Querying contract instances");
+            _logger.LogDebug("Querying contract instances with cursor-based pagination");
+
+            // Decode cursor to get offset (null cursor = start from beginning)
+            var offset = DecodeCursorOffset(body.Cursor);
+            var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
             List<string> contractIds;
 
@@ -1055,10 +1057,8 @@ public partial class ContractService : IContractService
                 return (StatusCodes.OK, new QueryContractInstancesResponse
                 {
                     Contracts = new List<ContractInstanceResponse>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false
+                    NextCursor = null,
+                    HasMore = false
                 });
             }
 
@@ -1085,21 +1085,19 @@ public partial class ContractService : IContractService
                 filtered = filtered.Where(c => c.TemplateId == templateId);
             }
 
-            // Pagination
-            var totalCount = filtered.Count();
-            var paged = filtered
-                .OrderByDescending(c => c.CreatedAt)
-                .Skip((body.Page - 1) * body.PageSize)
-                .Take(body.PageSize)
-                .ToList();
+            // Cursor-based pagination: fetch pageSize + 1 to detect hasMore
+            var sorted = filtered.OrderByDescending(c => c.CreatedAt).ToList();
+            var paged = sorted.Skip(offset).Take(pageSize + 1).ToList();
+
+            var hasMore = paged.Count > pageSize;
+            var resultItems = paged.Take(pageSize).ToList();
+            var nextCursor = hasMore ? EncodeCursorOffset(offset + pageSize) : null;
 
             return (StatusCodes.OK, new QueryContractInstancesResponse
             {
-                Contracts = paged.Select(MapInstanceToResponse).ToList(),
-                TotalCount = totalCount,
-                Page = body.Page,
-                PageSize = body.PageSize,
-                HasNextPage = (body.Page * body.PageSize) < totalCount
+                Contracts = resultItems.Select(MapInstanceToResponse).ToList(),
+                NextCursor = nextCursor,
+                HasMore = hasMore
             });
         }
         catch (Exception ex)
@@ -3070,6 +3068,55 @@ public partial class ContractService : IContractService
             Reason = reason,
             WasBreachRelated = wasBreachRelated
         });
+    }
+
+    #endregion
+
+    #region Cursor Encoding/Decoding
+
+    /// <summary>
+    /// Encodes an offset into an opaque cursor string.
+    /// Uses base64 encoding of a JSON payload for forward compatibility.
+    /// </summary>
+    /// <param name="offset">The offset to encode.</param>
+    /// <returns>A base64-encoded cursor string.</returns>
+    private static string EncodeCursorOffset(int offset)
+    {
+        var payload = BannouJson.Serialize(new CursorPayload { Offset = offset });
+        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(payload));
+    }
+
+    /// <summary>
+    /// Decodes a cursor string to extract the offset.
+    /// Returns 0 for null, empty, or invalid cursors (graceful fallback to first page).
+    /// </summary>
+    /// <param name="cursor">The cursor string to decode, or null.</param>
+    /// <returns>The decoded offset, or 0 if cursor is invalid.</returns>
+    private static int DecodeCursorOffset(string? cursor)
+    {
+        if (string.IsNullOrEmpty(cursor))
+            return 0;
+
+        try
+        {
+            var bytes = Convert.FromBase64String(cursor);
+            var json = System.Text.Encoding.UTF8.GetString(bytes);
+            var payload = BannouJson.Deserialize<CursorPayload>(json);
+            return payload?.Offset ?? 0;
+        }
+        catch
+        {
+            // Invalid cursor format - gracefully fall back to first page
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Internal record for cursor payload serialization.
+    /// </summary>
+    private sealed record CursorPayload
+    {
+        public int Offset { get; init; }
     }
 
     #endregion

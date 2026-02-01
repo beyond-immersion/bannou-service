@@ -954,6 +954,20 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
     /// <inheritdoc/>
     /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
+        string key,
+        double minScore,
+        double maxScore,
+        int offset = 0,
+        int count = -1,
+        bool descending = false,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
     public Task<long> SortedSetCountAsync(
         string key,
         CancellationToken ct = default)

@@ -116,6 +116,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | `IdempotencyTtlSeconds` | `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | `86400` | TTL for idempotency key storage (24 hours) |
 | `MilestoneDeadlineCheckIntervalSeconds` | `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | `300` | Interval between milestone deadline checks (5 minutes) |
 | `MilestoneDeadlineStartupDelaySeconds` | `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | `30` | Startup delay before first milestone deadline check |
+| `DefaultPageSize` | `CONTRACT_DEFAULT_PAGE_SIZE` | `20` | Default page size for paginated endpoints (cursor-based pagination) |
 
 ---
 
@@ -145,7 +146,7 @@ Service lifetime is **Scoped** (per-request). Background service `ContractMilest
 
 - **CreateContractTemplate** (`/contract/template/create`): Validates milestone count against `MaxMilestonesPerTemplate`. Validates prebound API count per milestone against `MaxPreboundApisPerMilestone` (checks both onComplete and onExpire lists). Validates deadline format (ISO 8601 duration via `XmlConvert.ToTimeSpan`). Checks template code uniqueness via code index. Saves template, code-to-id mapping, and adds to all-templates list. Publishes `contract-template.created`.
 - **GetContractTemplate** (`/contract/template/get`): Supports lookup by template ID or code (via code index). Returns full template with party roles, milestones, default terms, and enforcement mode.
-- **ListContractTemplates** (`/contract/template/list`): Loads all templates via bulk get. Filters by realmId, isActive, and search term (case-insensitive name/description substring match). Paginated with OrderByDescending(CreatedAt).
+- **ListContractTemplates** (`/contract/template/list`): Cursor-based pagination. Filters by realmId, isActive, and search term (case-insensitive name/description substring match). Returns templates ordered by CreatedAt descending. Request accepts optional `cursor` (opaque, from previous response) and `pageSize` (defaults to `DefaultPageSize`). Response includes `templates`, `nextCursor` (null if no more results), and `hasMore`.
 - **UpdateContractTemplate** (`/contract/template/update`): Mutable fields only: name, description, isActive, gameMetadata. Tracks changed fields for event. Does not update milestones, party roles, or terms. Publishes `contract-template.updated` with changedFields list.
 - **DeleteContractTemplate** (`/contract/template/delete`): Soft-delete (marks inactive). Checks for active instances first (Draft/Proposed/Pending/Active statuses). Returns Conflict if active instances exist. Publishes `contract-template.deleted`.
 
@@ -155,7 +156,7 @@ Service lifetime is **Scoped** (per-request). Background service `ContractMilest
 - **ProposeContractInstance** (`/contract/instance/propose`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Transitions Draft to Proposed. Uses ETag-based optimistic concurrency. Persists state first, then updates status indexes, then publishes `contract.proposed`.
 - **ConsentToContract** (`/contract/instance/consent`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Requires Proposed status. Lazy expiration check: computes deadline from ProposedAt + DefaultConsentTimeoutDays, transitions to Expired if past. Validates party exists and has not already consented. Records consent with timestamp. On all-consented: transitions to Active (immediate) or Pending (future effectiveFrom). Activates first milestone on activation. Persists state first, then publishes consent-received, and conditionally accepted/activated.
 - **GetContractInstance** (`/contract/instance/get`): Simple key lookup, returns full instance response.
-- **QueryContractInstances** (`/contract/instance/query`): Uses party index, template index, or status index union based on provided filters. Requires at least one filter (partyEntityId+type, templateId, or statuses). Bulk loads, applies additional status/template filters, paginates. Requires at least one filter criterion or returns BadRequest.
+- **QueryContractInstances** (`/contract/instance/query`): Cursor-based pagination. Uses party index, template index, or status index union based on provided filters. Requires at least one filter (partyEntityId+type, templateId, or statuses). Bulk loads, applies additional status/template filters. Request accepts optional `cursor` (opaque) and `pageSize` (defaults to `DefaultPageSize`). Response includes `contracts`, `nextCursor` (null if no more results), and `hasMore`. Returns BadRequest if no filter criterion provided.
 - **TerminateContractInstance** (`/contract/instance/terminate`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Validates requesting entity is a party. Checks `Terms.BreachThreshold` and auto-terminates if active breach count exceeds threshold. Transitions to Terminated. ETag concurrency. Persists state first, then updates indexes, then publishes `contract.terminated`.
 - **GetContractInstanceStatus** (`/contract/instance/get-status`): Aggregates milestone progress, pending consents, active breaches, and days until expiration. Breach IDs loaded in bulk with status filtering. Triggers lazy milestone deadline enforcement.
 
@@ -555,7 +556,7 @@ When a clause execution fails:
 
 1. **Per-milestone onApiFailure flag** ([#246](https://github.com/beyond-immersion/bannou-service/issues/246)): Currently prebound API failures are always non-blocking. Adding a per-milestone flag would require API schema changes (new field on MilestoneDefinition), model regeneration, and careful design of retry semantics. Requires design discussion before implementation.
 
-2. **Cursor-based pagination** ([#247](https://github.com/beyond-immersion/bannou-service/issues/247)): Current index storage uses `List<string>` which doesn't support cursor-based pagination efficiently. Would require migrating to Redis sorted sets, designing cursor encoding, updating all index operations, and planning a migration strategy for existing data. Significant architectural change.
+2. ~~**Cursor-based pagination** ([#247](https://github.com/beyond-immersion/bannou-service/issues/247))~~: **IMPLEMENTED**. `ListContractTemplates` and `QueryContractInstances` now use cursor-based pagination with opaque cursor tokens. Cursors encode offset for forward compatibility. State store has Redis Search enabled for future filtered queries at scale. Configuration property `DefaultPageSize` controls default page size (20).
 
 ---
 

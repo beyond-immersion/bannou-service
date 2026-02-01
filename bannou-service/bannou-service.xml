@@ -38468,32 +38468,32 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest">
             <summary>
-            Request to list contract templates
+            Request to list contract templates with cursor-based pagination.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.RealmId">
             <summary>
-            Filter by realm (null includes cross-realm templates)
+            Filter by realm (null includes cross-realm templates).
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.IsActive">
             <summary>
-            Filter by active status
+            Filter by active status.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.SearchTerm">
             <summary>
-            Search in name and description
+            Search in name and description.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.Cursor">
             <summary>
-            Page number (1-based)
+            Opaque cursor from previous response. Null for first page.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.PageSize">
             <summary>
-            Results per page
+            Number of items per page. Uses service default if not specified.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest">
@@ -38623,32 +38623,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse">
             <summary>
-            Paginated list of contract templates
+            Paginated list of contract templates.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.Templates">
             <summary>
-            List of templates
+            Templates in this page.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.TotalCount">
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.NextCursor">
             <summary>
-            Total matching templates
+            Cursor for next page. Null if no more results.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.HasMore">
             <summary>
-            Current page number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.PageSize">
-            <summary>
-            Results per page
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.HasNextPage">
-            <summary>
-            Whether more results exist
+            Whether more results exist beyond this page.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest">
@@ -38733,37 +38723,37 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest">
             <summary>
-            Request to query contract instances
+            Request to query contract instances with cursor-based pagination.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PartyEntityId">
             <summary>
-            Filter by party entity ID
+            Filter by party entity ID.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PartyEntityType">
             <summary>
-            Filter by party entity type
+            Filter by party entity type.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.TemplateId">
             <summary>
-            Filter by template
+            Filter by template.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Statuses">
             <summary>
-            Filter by statuses
+            Filter by statuses.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Cursor">
             <summary>
-            Page number (1-based)
+            Opaque cursor from previous response. Null for first page.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PageSize">
             <summary>
-            Results per page
+            Number of items per page. Uses service default if not specified.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest">
@@ -38893,32 +38883,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse">
             <summary>
-            Paginated list of contract instances
+            Paginated list of contract instances.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.Contracts">
             <summary>
-            List of contracts
+            Contracts in this page.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.TotalCount">
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.NextCursor">
             <summary>
-            Total matching contracts
+            Cursor for next page. Null if no more results.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.Page">
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.HasMore">
             <summary>
-            Current page number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.PageSize">
-            <summary>
-            Results per page
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.HasNextPage">
-            <summary>
-            Whether more results exist
+            Whether more results exist beyond this page.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse">
@@ -80038,6 +80018,21 @@
             <param name="descending">If true, rank by highest score first (default for leaderboards).</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>List of members with their scores, ordered by rank.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.SortedSetRangeByScoreAsync(System.String,System.Double,System.Double,System.Int32,System.Int32,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Get members by score range (e.g., all scores between min and max).
+            Supports cursor-based pagination via score boundaries.
+            </summary>
+            <param name="key">The sorted set key.</param>
+            <param name="minScore">Minimum score (inclusive). Use double.NegativeInfinity for unbounded.</param>
+            <param name="maxScore">Maximum score (exclusive). Use double.PositiveInfinity for unbounded.</param>
+            <param name="offset">Number of results to skip within the range.</param>
+            <param name="count">Maximum number of results to return. Use -1 for unlimited.</param>
+            <param name="descending">If true, iterate from maxScore to minScore.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>List of members with their scores, ordered by score.</returns>
             <exception cref="T:System.NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.SortedSetCountAsync(System.String,System.Threading.CancellationToken)">

@@ -301,7 +301,7 @@ public static class StateStoreDefinitions
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
-            [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract" },
+            [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract", EnableSearch = true },
             [CurrencyBalanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:balance" },
             [CurrencyBalances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_balances" },
             [CurrencyDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_definitions" },

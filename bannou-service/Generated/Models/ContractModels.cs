@@ -470,43 +470,42 @@ public partial class GetContractTemplateRequest
 }
 
 /// <summary>
-/// Request to list contract templates
+/// Request to list contract templates with cursor-based pagination.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListContractTemplatesRequest
 {
 
     /// <summary>
-    /// Filter by realm (null includes cross-realm templates)
+    /// Filter by realm (null includes cross-realm templates).
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Filter by active status
+    /// Filter by active status.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool? IsActive { get; set; } = default!;
 
     /// <summary>
-    /// Search in name and description
+    /// Search in name and description.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("searchTerm")]
     public string? SearchTerm { get; set; } = default!;
 
     /// <summary>
-    /// Page number (1-based)
+    /// Opaque cursor from previous response. Null for first page.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("page")]
-    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int Page { get; set; } = 1;
+    [System.Text.Json.Serialization.JsonPropertyName("cursor")]
+    public string? Cursor { get; set; } = default!;
 
     /// <summary>
-    /// Results per page
+    /// Number of items per page. Uses service default if not specified.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int PageSize { get; set; } = 20;
+    public int? PageSize { get; set; } = default!;
 
 }
 
@@ -689,14 +688,14 @@ public partial class ContractTemplateResponse
 }
 
 /// <summary>
-/// Paginated list of contract templates
+/// Paginated list of contract templates.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListContractTemplatesResponse
 {
 
     /// <summary>
-    /// List of templates
+    /// Templates in this page.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templates")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -704,28 +703,16 @@ public partial class ListContractTemplatesResponse
     public System.Collections.Generic.ICollection<ContractTemplateResponse> Templates { get; set; } = new System.Collections.ObjectModel.Collection<ContractTemplateResponse>();
 
     /// <summary>
-    /// Total matching templates
+    /// Cursor for next page. Null if no more results.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
-    public int TotalCount { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("nextCursor")]
+    public string? NextCursor { get; set; } = default!;
 
     /// <summary>
-    /// Current page number
+    /// Whether more results exist beyond this page.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("page")]
-    public int Page { get; set; } = default!;
-
-    /// <summary>
-    /// Results per page
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
-    public int PageSize { get; set; } = default!;
-
-    /// <summary>
-    /// Whether more results exist
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
-    public bool HasNextPage { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("hasMore")]
+    public bool HasMore { get; set; } = default!;
 
 }
 
@@ -854,51 +841,50 @@ public partial class GetContractInstanceRequest
 }
 
 /// <summary>
-/// Request to query contract instances
+/// Request to query contract instances with cursor-based pagination.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryContractInstancesRequest
 {
 
     /// <summary>
-    /// Filter by party entity ID
+    /// Filter by party entity ID.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyEntityId")]
     public System.Guid? PartyEntityId { get; set; } = default!;
 
     /// <summary>
-    /// Filter by party entity type
+    /// Filter by party entity type.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyEntityType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType? PartyEntityType { get; set; } = default!;
 
     /// <summary>
-    /// Filter by template
+    /// Filter by template.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     public System.Guid? TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Filter by statuses
+    /// Filter by statuses.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statuses")]
     // TODO(system.text.json): Add string enum item converter
     public System.Collections.Generic.ICollection<ContractStatus>? Statuses { get; set; } = default!;
 
     /// <summary>
-    /// Page number (1-based)
+    /// Opaque cursor from previous response. Null for first page.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("page")]
-    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int Page { get; set; } = 1;
+    [System.Text.Json.Serialization.JsonPropertyName("cursor")]
+    public string? Cursor { get; set; } = default!;
 
     /// <summary>
-    /// Results per page
+    /// Number of items per page. Uses service default if not specified.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int PageSize { get; set; } = 20;
+    public int? PageSize { get; set; } = default!;
 
 }
 
@@ -1083,14 +1069,14 @@ public partial class ContractInstanceResponse
 }
 
 /// <summary>
-/// Paginated list of contract instances
+/// Paginated list of contract instances.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryContractInstancesResponse
 {
 
     /// <summary>
-    /// List of contracts
+    /// Contracts in this page.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contracts")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -1098,28 +1084,16 @@ public partial class QueryContractInstancesResponse
     public System.Collections.Generic.ICollection<ContractInstanceResponse> Contracts { get; set; } = new System.Collections.ObjectModel.Collection<ContractInstanceResponse>();
 
     /// <summary>
-    /// Total matching contracts
+    /// Cursor for next page. Null if no more results.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
-    public int TotalCount { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("nextCursor")]
+    public string? NextCursor { get; set; } = default!;
 
     /// <summary>
-    /// Current page number
+    /// Whether more results exist beyond this page.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("page")]
-    public int Page { get; set; } = default!;
-
-    /// <summary>
-    /// Results per page
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
-    public int PageSize { get; set; } = default!;
-
-    /// <summary>
-    /// Whether more results exist
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
-    public bool HasNextPage { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("hasMore")]
+    public bool HasMore { get; set; } = default!;
 
 }
 

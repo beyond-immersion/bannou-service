@@ -443,6 +443,7 @@ x-state-stores:
     prefix: contract
     service: Contract
     purpose: Contract templates, instances, breaches, and indexes
+    enableSearch: true
 
   # ============================================================================
   # Currency Stores

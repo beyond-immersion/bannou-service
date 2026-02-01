@@ -478,6 +478,9 @@ public class TelemetryProviderTests
         public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(string key, long start, long stop, bool descending = true, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<(string member, double score)>>(new List<(string, double)>());
 
+        public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(string key, double minScore, double maxScore, int offset = 0, int count = -1, bool descending = false, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<(string member, double score)>>(new List<(string, double)>());
+
         public Task<long> SortedSetCountAsync(string key, CancellationToken cancellationToken = default)
             => Task.FromResult(0L);
 

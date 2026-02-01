@@ -359,6 +359,28 @@ public interface IStateStore<TValue>
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get members by score range (e.g., all scores between min and max).
+    /// Supports cursor-based pagination via score boundaries.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="minScore">Minimum score (inclusive). Use double.NegativeInfinity for unbounded.</param>
+    /// <param name="maxScore">Maximum score (exclusive). Use double.PositiveInfinity for unbounded.</param>
+    /// <param name="offset">Number of results to skip within the range.</param>
+    /// <param name="count">Maximum number of results to return. Use -1 for unlimited.</param>
+    /// <param name="descending">If true, iterate from maxScore to minScore.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of members with their scores, ordered by score.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
+        string key,
+        double minScore,
+        double maxScore,
+        int offset = 0,
+        int count = -1,
+        bool descending = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Get the number of members in a sorted set.
     /// </summary>
     /// <param name="key">The sorted set key.</param>

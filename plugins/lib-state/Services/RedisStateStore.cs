@@ -704,6 +704,49 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
+        string key,
+        double minScore,
+        double maxScore,
+        int offset = 0,
+        int count = -1,
+        bool descending = false,
+        CancellationToken cancellationToken = default)
+    {
+        var sortedSetKey = GetSortedSetKey(key);
+
+        // ZRANGEBYSCORE with LIMIT offset count
+        // For descending, we use ZREVRANGEBYSCORE (swap min/max)
+        var entries = descending
+            ? await _database.SortedSetRangeByScoreWithScoresAsync(
+                sortedSetKey,
+                minScore,
+                maxScore,
+                Exclude.None,
+                Order.Descending,
+                offset,
+                count)
+            : await _database.SortedSetRangeByScoreWithScoresAsync(
+                sortedSetKey,
+                minScore,
+                maxScore,
+                Exclude.None,
+                Order.Ascending,
+                offset,
+                count);
+
+        var result = entries
+            .Select(e => (member: e.Element.ToString(), score: e.Score))
+            .ToList();
+
+        _logger.LogDebug(
+            "Retrieved {Count} entries from sorted set '{Key}' by score (min: {Min}, max: {Max}, offset: {Offset}, count: {RequestedCount}, descending: {Descending})",
+            result.Count, key, minScore, maxScore, offset, count, descending);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
     public async Task<long> SortedSetCountAsync(
         string key,
         CancellationToken cancellationToken = default)

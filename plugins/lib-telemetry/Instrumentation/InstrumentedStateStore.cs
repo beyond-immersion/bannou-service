@@ -581,6 +581,33 @@ public class InstrumentedStateStore<TValue> : IStateStore<TValue>
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
+        string key,
+        double minScore,
+        double maxScore,
+        int offset = 0,
+        int count = -1,
+        bool descending = false,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = StartOperation("sorted_set_range_by_score");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _inner.SortedSetRangeByScoreAsync(key, minScore, maxScore, offset, count, descending, cancellationToken);
+            RecordSuccess(activity, "sorted_set_range_by_score", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordFailure(activity, "sorted_set_range_by_score", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<long> SortedSetCountAsync(string key, CancellationToken cancellationToken = default)
     {
         using var activity = StartOperation("sorted_set_count");

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.RealmHistory;
 using BeyondImmersion.BannouService.Services;
@@ -19,7 +20,7 @@ public class RealmHistoryServiceTests
     private readonly RealmHistoryServiceConfiguration _configuration;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<RealmParticipationData>> _mockParticipationStore;
-    private readonly Mock<IStateStore<RealmParticipationIndexData>> _mockIndexStore;
+    private readonly Mock<IStateStore<HistoryIndexData>> _mockIndexStore;
     private readonly Mock<IStateStore<RealmLoreData>> _mockLoreStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -32,7 +33,7 @@ public class RealmHistoryServiceTests
         _configuration = new RealmHistoryServiceConfiguration();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockParticipationStore = new Mock<IStateStore<RealmParticipationData>>();
-        _mockIndexStore = new Mock<IStateStore<RealmParticipationIndexData>>();
+        _mockIndexStore = new Mock<IStateStore<HistoryIndexData>>();
         _mockLoreStore = new Mock<IStateStore<RealmLoreData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -42,7 +43,7 @@ public class RealmHistoryServiceTests
             .Setup(f => f.GetStore<RealmParticipationData>(STATE_STORE))
             .Returns(_mockParticipationStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<RealmParticipationIndexData>(STATE_STORE))
+            .Setup(f => f.GetStore<HistoryIndexData>(STATE_STORE))
             .Returns(_mockIndexStore.Object);
         _mockStateStoreFactory
             .Setup(f => f.GetStore<RealmLoreData>(STATE_STORE))
@@ -107,7 +108,7 @@ public class RealmHistoryServiceTests
         };
 
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RealmParticipationIndexData?)null);
+            .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
         var (status, result) = await service.RecordRealmParticipationAsync(request, CancellationToken.None);
@@ -142,10 +143,10 @@ public class RealmHistoryServiceTests
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
-        var existingIndex = new RealmParticipationIndexData
+        var existingIndex = new HistoryIndexData
         {
-            RealmId = realmId,
-            ParticipationIds = new List<Guid> { Guid.NewGuid() }
+            EntityId = realmId.ToString(),
+            RecordIds = new List<string> { Guid.NewGuid().ToString() }
         };
 
         var request = new RecordRealmParticipationRequest
@@ -162,7 +163,7 @@ public class RealmHistoryServiceTests
         _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingIndex);
         _mockIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("realm-participation-event-")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RealmParticipationIndexData?)null);
+            .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
         await service.RecordRealmParticipationAsync(request, CancellationToken.None);
@@ -170,7 +171,7 @@ public class RealmHistoryServiceTests
         // Assert - Index should now have 2 participation IDs
         _mockIndexStore.Verify(s => s.SaveAsync(
             $"realm-participation-index-{realmId}",
-            It.Is<RealmParticipationIndexData>(i => i.ParticipationIds.Count == 2),
+            It.Is<HistoryIndexData>(i => i.RecordIds.Count == 2),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -194,7 +195,7 @@ public class RealmHistoryServiceTests
         };
 
         _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RealmParticipationIndexData?)null);
+            .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
         var (status, result) = await service.GetRealmParticipationAsync(request, CancellationToken.None);
@@ -218,10 +219,10 @@ public class RealmHistoryServiceTests
         var warParticipationId = Guid.NewGuid();
         var treatyParticipationId = Guid.NewGuid();
 
-        var index = new RealmParticipationIndexData
+        var index = new HistoryIndexData
         {
-            RealmId = realmId,
-            ParticipationIds = new List<Guid> { warParticipationId, treatyParticipationId }
+            EntityId = realmId.ToString(),
+            RecordIds = new List<string> { warParticipationId.ToString(), treatyParticipationId.ToString() }
         };
 
         var warParticipation = new RealmParticipationData

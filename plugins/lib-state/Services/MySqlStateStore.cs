@@ -1016,6 +1016,19 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     }
 
     /// <inheritdoc/>
+    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
+        string key,
+        double minScore,
+        double maxScore,
+        int offset = 0,
+        int count = -1,
+        bool descending = false,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
     public Task<long> SortedSetCountAsync(
         string key,
         CancellationToken cancellationToken = default)

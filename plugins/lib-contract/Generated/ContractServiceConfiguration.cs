@@ -143,4 +143,11 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MilestoneDeadlineStartupDelaySeconds { get; set; } = 30;
 
+    /// <summary>
+    /// Default page size for paginated endpoints when not specified in request
+    /// Environment variable: CONTRACT_DEFAULT_PAGE_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int DefaultPageSize { get; set; } = 20;
+
 }
