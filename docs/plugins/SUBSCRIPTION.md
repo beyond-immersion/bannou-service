@@ -175,7 +175,7 @@ State Key Relationships & Index Cleanup
 
 1. ~~**`AuthorizationSuffix` config property**~~: **FIXED** (2026-01-31) - Removed the dead configuration property from schema, regenerated configuration class, and removed unused property accessor from service.
 
-2. **Misleading code comment**: Line 49 in `SubscriptionService.cs` says "Register event handlers via partial class (SubscriptionServiceEvents.cs)" but no such file exists. The service doesn't consume any external events.
+2. ~~**Misleading code comment**~~: **FIXED** (2026-02-01) - Updated the comment on line 49 in `SubscriptionService.cs` to accurately reflect that the service only publishes events, it doesn't consume them.
 
 ---
 
@@ -240,4 +240,5 @@ None identified.
 
 | Date | Gap | Action |
 |------|-----|--------|
+| 2026-02-01 | Misleading code comment referencing non-existent file | Fixed comment on line 49 to accurately reflect the service only publishes events |
 | 2026-01-31 | Dead `AuthorizationSuffix` config property | Removed from schema, regenerated config, removed service accessor, removed test |

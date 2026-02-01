@@ -34,6 +34,10 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
+        // Register the memory decay scheduler background service
+        // This only activates when MemoryDecayMode is set to Scheduled
+        services.AddHostedService<MemoryDecaySchedulerService>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 

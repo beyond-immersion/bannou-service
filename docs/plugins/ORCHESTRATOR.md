@@ -413,6 +413,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 | ~~Volume pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneVolumesAsync()` - CAUTION: Can cause data loss. Kubernetes returns unsupported (PVCs require explicit management) |
 | ~~Image pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneImagesAsync()` - prunes dangling images, reports reclaimed bytes. Kubernetes returns kubelet-managed message |
 | Queue depth tracking (pool status) | Hardcoded 0 | Comment: "We don't have a queue yet" |
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/252 -->
 | Auto-scaling (pool) | No trigger | Thresholds are stored but no background job evaluates them |
 | Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored but no background timer |
 | Log timestamp parsing | Partial | Attempts to parse timestamps from log lines but falls back to UtcNow |

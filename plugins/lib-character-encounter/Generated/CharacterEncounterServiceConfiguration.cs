@@ -84,6 +84,20 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     public MemoryDecayMode MemoryDecayMode { get; set; } = MemoryDecayMode.Lazy;
 
     /// <summary>
+    /// Interval between scheduled decay checks in minutes (only used when MemoryDecayMode is 'scheduled')
+    /// Environment variable: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
+    public int ScheduledDecayCheckIntervalMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Startup delay before first scheduled decay check in seconds (allows other services to initialize)
+    /// Environment variable: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int ScheduledDecayStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
     /// Hours between decay checks (used for calculating decay amount)
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS
     /// </summary>

@@ -46,7 +46,7 @@ public partial class SubscriptionService : ISubscriptionService
         _configuration = configuration;
         _serviceClient = serviceClient;
 
-        // Register event handlers via partial class (SubscriptionServiceEvents.cs)
+        // No event handlers registered - this service only publishes events, it doesn't consume them
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

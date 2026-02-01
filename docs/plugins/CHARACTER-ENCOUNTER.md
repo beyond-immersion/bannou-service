@@ -81,6 +81,8 @@ Character encounter tracking service for memorable interactions between characte
 | `ServerSalt` | `CHARACTER_ENCOUNTER_SERVER_SALT` | `bannou-dev-encounter-salt-change-in-production` | Shared server salt for GUID generation |
 | `MemoryDecayEnabled` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | `true` | Enable/disable memory decay system |
 | `MemoryDecayMode` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` | `lazy` | Decay mode: 'lazy' (on access) or 'scheduled' |
+| `ScheduledDecayCheckIntervalMinutes` | `CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES` | `60` | Minutes between scheduled decay checks (only when mode is 'scheduled') |
+| `ScheduledDecayStartupDelaySeconds` | `CHARACTER_ENCOUNTER_SCHEDULED_DECAY_STARTUP_DELAY_SECONDS` | `30` | Startup delay before first scheduled decay check |
 | `MemoryDecayIntervalHours` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS` | `24` | Hours per decay interval |
 | `MemoryDecayRate` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE` | `0.05` | Strength reduction per interval (0.0-1.0) |
 | `MemoryFadeThreshold` | `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | `0.1` | Strength below which memories are forgotten |
@@ -105,13 +107,14 @@ Character encounter tracking service for memorable interactions between characte
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterEncounterService>` | Scoped | Structured logging |
-| `CharacterEncounterServiceConfiguration` | Singleton | All 19 config properties |
+| `CharacterEncounterServiceConfiguration` | Singleton | All 21 config properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access for all data types |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event subscription registration |
 | `ICharacterClient` | Scoped | Cross-service character validation |
+| `MemoryDecaySchedulerService` | Hosted | Background service for scheduled memory decay (only active when MemoryDecayMode is 'scheduled') |
 
-Service lifetime is **Scoped** (per-request). No background services. No distributed locks used.
+Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). No distributed locks used.
 
 ---
 
@@ -312,7 +315,7 @@ Index Architecture
 
 ## Stubs & Unimplemented Features
 
-1. **Scheduled decay mode**: The `MemoryDecayMode` configuration accepts "scheduled" but only "lazy" mode is implemented. No background service exists to periodically process decay. The `DecayMemories` admin endpoint partially fills this gap but must be called externally.
+1. ~~**Scheduled decay mode**~~: **FIXED** (2026-02-01) - Added `MemoryDecaySchedulerService` background service that activates when `MemoryDecayMode` is set to `scheduled`. Iterates through all characters using the global character index and applies decay to perspectives based on elapsed time. Uses configurable check interval (default 60 minutes) and startup delay (default 30 seconds). Publishes `encounter.memory.faded` events when perspectives cross the fade threshold.
 
 2. ~~**Duplicate encounter detection**~~: **FIXED** (2026-02-01) - `IsDuplicateEncounterAsync` validates participants, type, and timestamp within configurable tolerance (`DuplicateTimestampToleranceMinutes`). Returns 409 Conflict on match.
 
@@ -376,4 +379,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **2026-02-01**: Implemented scheduled decay mode. Added `MemoryDecaySchedulerService` background service with configurable check interval and startup delay. Configuration schema updated with `ScheduledDecayCheckIntervalMinutes` and `ScheduledDecayStartupDelaySeconds` properties.
 - **2026-02-01**: Verified duplicate encounter detection, type-in-use validation, and character existence validation are all implemented. Updated stubs section to reflect FIXED status. Closed #216.

@@ -233,6 +233,7 @@ Character Key Architecture (Realm-Partitioned)
 1. ~~**Full reference counting**~~: **FIXED** (2026-01-31) - Now checks relationships, encounters, contracts, and actors. History events and documentation references would require new query APIs from those services.
 2. ~~**Realm transfer**~~: **FIXED** (2026-02-01) - Added `/character/transfer-realm` endpoint that validates target realm, acquires distributed lock, moves character data between realm-partitioned keys, updates both realm and global indexes, and publishes `character.realm.left`, `character.realm.joined`, and `character.updated` events.
 3. **Batch compression**: Compress multiple dead characters in one operation.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 4. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
 
 ---

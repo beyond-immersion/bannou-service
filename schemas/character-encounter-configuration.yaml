@@ -30,6 +30,20 @@ x-service-configuration:
       description: Memory decay mode - 'lazy' applies decay on access, 'scheduled' uses background processing
       env: CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE
       default: lazy
+    ScheduledDecayCheckIntervalMinutes:
+      type: integer
+      description: Interval between scheduled decay checks in minutes (only used when MemoryDecayMode is 'scheduled')
+      env: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES
+      default: 60
+      minimum: 1
+      maximum: 1440
+    ScheduledDecayStartupDelaySeconds:
+      type: integer
+      description: Startup delay before first scheduled decay check in seconds (allows other services to initialize)
+      env: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_STARTUP_DELAY_SECONDS
+      default: 30
+      minimum: 0
+      maximum: 300
     MemoryDecayIntervalHours:
       type: integer
       description: Hours between decay checks (used for calculating decay amount)
