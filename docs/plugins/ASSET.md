@@ -297,6 +297,7 @@ Client                    Asset Service                     MinIO Storage
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/227 -->
 
 2. **Filesystem/Azure/R2 storage providers**: `StorageProvider` config accepts `minio`, `s3`, `r2`, `azure`, `filesystem` but only MinIO/S3-compatible backends have an implementation (`MinioStorageProvider`). Other backends would require new `IAssetStorageProvider` implementations.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/239 -->
 
 3. **Deleted bundle cleanup**: `DeletedBundleRetentionDays` is configurable but there is no background task that purges bundles past their retention window. Soft-deleted bundles accumulate indefinitely until manually cleaned.
 

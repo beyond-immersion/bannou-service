@@ -18,10 +18,11 @@ Binding agreement management between entities with milestone-based progression, 
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Redis persistence for templates, instances, breaches, indexes, clause types, and idempotency cache |
-| lib-state (`IDistributedLockProvider`) | Contract-instance locks for state transition serialization (60-second TTL); index-level locks for concurrent list modification safety (15-second TTL) |
+| lib-state (`IDistributedLockProvider`) | Contract-instance locks for state transition serialization (60-second TTL); index-level locks for concurrent list modification safety (15-second TTL); milestone-check locks for background service (30-second TTL) |
 | lib-messaging (`IMessageBus`) | Publishing contract lifecycle events, prebound API execution events, error events |
 | lib-mesh (`IServiceNavigator`) | Executing prebound APIs (milestone callbacks, clause validation, clause execution) |
 | lib-mesh (`IEventConsumer`) | Event consumer registration (reserved for future event subscriptions) |
+| lib-location (`ILocationClient`) | Territory constraint checking via location hierarchy ancestry queries |
 
 ---
 
@@ -105,13 +106,15 @@ This plugin does not consume external events. The events schema explicitly decla
 | `MaxPartiesPerContract` | `CONTRACT_MAX_PARTIES_PER_CONTRACT` | `20` | Hard cap on party count per instance (overrides template) |
 | `MaxMilestonesPerTemplate` | `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | `50` | Maximum milestones allowed in a template definition |
 | `MaxPreboundApisPerMilestone` | `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | `10` | Cap on onComplete/onExpire API lists per milestone |
-| `MaxActiveContractsPerEntity` | `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | `100` | Max active contracts per entity (0 = unlimited) |
+| `MaxActiveContractsPerEntity` | `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | `100` | **Bug [#242](https://github.com/beyond-immersion/bannou-service/issues/242)**: Actually counts ALL contracts, not just active. Will be renamed to `MaxTotalContractsPerEntity`. |
 | `PreboundApiBatchSize` | `CONTRACT_PREBOUND_API_BATCH_SIZE` | `10` | APIs executed concurrently per batch (sequential between batches) |
 | `PreboundApiTimeoutMs` | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | `30000` | Per-API timeout in milliseconds (30s default) |
-| `ClauseValidationCacheStalenessSeconds` | `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | `15` | How old a cached validation result can be before revalidation |
+| `ClauseValidationCacheStalenessSeconds` | `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | `15` | **Dead config [#241](https://github.com/beyond-immersion/bannou-service/issues/241)**: Cache is request-scoped, this value is never used. Pending removal. |
 | `ContractLockTimeoutSeconds` | `CONTRACT_LOCK_TIMEOUT_SECONDS` | `60` | Lock timeout for contract-level distributed locks |
 | `IndexLockTimeoutSeconds` | `CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS` | `15` | Lock timeout for index update distributed locks |
 | `IdempotencyTtlSeconds` | `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | `86400` | TTL for idempotency key storage (24 hours) |
+| `MilestoneDeadlineCheckIntervalSeconds` | `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | `300` | Interval between milestone deadline checks (5 minutes) |
+| `MilestoneDeadlineStartupDelaySeconds` | `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | `30` | Startup delay before first milestone deadline check |
 
 ---
 
@@ -120,14 +123,16 @@ This plugin does not consume external events. The events schema explicitly decla
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<ContractService>` | Scoped | Structured logging |
-| `ContractServiceConfiguration` | Singleton | All 12 config properties |
+| `ContractServiceConfiguration` | Singleton | All 14 config properties (see Configuration table for known issues) |
 | `IStateStoreFactory` | Singleton | Redis state store access |
-| `IDistributedLockProvider` | Singleton | Contract-instance locks (`contract-instance`, 60s TTL) for mutation serialization; index-level locks (15s TTL) for list operations |
+| `IDistributedLockProvider` | Singleton | Contract-instance locks (`contract-instance`, 60s TTL) for mutation serialization; index-level locks (15s TTL) for list operations; milestone-check locks (30s TTL) for background service |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IServiceNavigator` | Scoped | Prebound API execution (milestone callbacks, clause execution) |
 | `IEventConsumer` | Scoped | Event consumer registration (unused in v1) |
+| `ILocationClient` | Scoped | Territory constraint checking via ancestry queries |
+| `ContractMilestoneExpirationService` | Singleton (BackgroundService) | Periodic milestone deadline enforcement |
 
-Service lifetime is **Scoped** (per-request). No background services. Partial classes split into:
+Service lifetime is **Scoped** (per-request). Background service `ContractMilestoneExpirationService` runs continuously. Partial classes split into:
 - `ContractService.cs` - Core operations (templates, instances, milestones, breaches, metadata, constraints, helpers, event publishing, internal models)
 - `ContractServiceClauseValidation.cs` - Clause validation with ConcurrentDictionary-based cache
 - `ContractServiceEscrowIntegration.cs` - Guardian system, clause type system, execution system
@@ -138,7 +143,7 @@ Service lifetime is **Scoped** (per-request). No background services. Partial cl
 
 ### Template Operations (5 endpoints)
 
-- **CreateContractTemplate** (`/contract/template/create`): Validates milestone count against `MaxMilestonesPerTemplate`. Validates prebound API count per milestone against `MaxPreboundApisPerMilestone` (checks both onComplete and onExpire lists). Checks template code uniqueness via code index. Saves template, code-to-id mapping, and adds to all-templates list. Publishes `contract-template.created`.
+- **CreateContractTemplate** (`/contract/template/create`): Validates milestone count against `MaxMilestonesPerTemplate`. Validates prebound API count per milestone against `MaxPreboundApisPerMilestone` (checks both onComplete and onExpire lists). Validates deadline format (ISO 8601 duration via `XmlConvert.ToTimeSpan`). Checks template code uniqueness via code index. Saves template, code-to-id mapping, and adds to all-templates list. Publishes `contract-template.created`.
 - **GetContractTemplate** (`/contract/template/get`): Supports lookup by template ID or code (via code index). Returns full template with party roles, milestones, default terms, and enforcement mode.
 - **ListContractTemplates** (`/contract/template/list`): Loads all templates via bulk get. Filters by realmId, isActive, and search term (case-insensitive name/description substring match). Paginated with OrderByDescending(CreatedAt).
 - **UpdateContractTemplate** (`/contract/template/update`): Mutable fields only: name, description, isActive, gameMetadata. Tracks changed fields for event. Does not update milestones, party roles, or terms. Publishes `contract-template.updated` with changedFields list.
@@ -151,18 +156,18 @@ Service lifetime is **Scoped** (per-request). No background services. Partial cl
 - **ConsentToContract** (`/contract/instance/consent`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Requires Proposed status. Lazy expiration check: computes deadline from ProposedAt + DefaultConsentTimeoutDays, transitions to Expired if past. Validates party exists and has not already consented. Records consent with timestamp. On all-consented: transitions to Active (immediate) or Pending (future effectiveFrom). Activates first milestone on activation. Persists state first, then publishes consent-received, and conditionally accepted/activated.
 - **GetContractInstance** (`/contract/instance/get`): Simple key lookup, returns full instance response.
 - **QueryContractInstances** (`/contract/instance/query`): Uses party index, template index, or status index union based on provided filters. Requires at least one filter (partyEntityId+type, templateId, or statuses). Bulk loads, applies additional status/template filters, paginates. Requires at least one filter criterion or returns BadRequest.
-- **TerminateContractInstance** (`/contract/instance/terminate`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Validates requesting entity is a party. Transitions to Terminated. ETag concurrency. Persists state first, then updates indexes, then publishes `contract.terminated`.
-- **GetContractInstanceStatus** (`/contract/instance/get-status`): Aggregates milestone progress, pending consents, active breaches, and days until expiration. Breach IDs loaded in bulk with status filtering.
+- **TerminateContractInstance** (`/contract/instance/terminate`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Validates requesting entity is a party. Checks `Terms.BreachThreshold` and auto-terminates if active breach count exceeds threshold. Transitions to Terminated. ETag concurrency. Persists state first, then updates indexes, then publishes `contract.terminated`.
+- **GetContractInstanceStatus** (`/contract/instance/get-status`): Aggregates milestone progress, pending consents, active breaches, and days until expiration. Breach IDs loaded in bulk with status filtering. Triggers lazy milestone deadline enforcement.
 
 ### Milestone Operations (3 endpoints)
 
 - **CompleteMilestone** (`/contract/milestone/complete`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Validates milestone in Active or Pending state. Marks Completed. Activates next milestone by sequence. If all required milestones complete: transitions contract from Active to Fulfilled. ETag concurrency. Persists state first, then updates indexes, then executes onComplete prebound APIs in configured batch size (parallel within batch, sequential between batches), then publishes milestone completed event.
 - **FailMilestone** (`/contract/milestone/fail`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Validates Active or Pending state. Required milestones get Failed status (triggers breach flag); optional milestones get Skipped. ETag concurrency. Persists state first, then executes onExpire prebound APIs in batches, then publishes milestone failed event with wasRequired and triggeredBreach flags.
-- **GetMilestone** (`/contract/milestone/get`): Returns single milestone status by code within a contract.
+- **GetMilestone** (`/contract/milestone/get`): Returns single milestone status by code within a contract. Triggers lazy milestone deadline enforcement: checks if milestone is overdue (ActivatedAt + ParseIsoDuration(Deadline) < now), and if overdue applies DeadlineBehavior (skip/warn/breach for optional, breach for required).
 
 ### Breach Operations (3 endpoints)
 
-- **ReportBreach** (`/contract/breach/report`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Creates breach record with Detected or Cure_period status based on terms.GracePeriodForCure (parsed as ISO 8601 "PnD" format). Links breach ID to contract instance. ETag concurrency on instance. Publishes `contract.breach.detected`.
+- **ReportBreach** (`/contract/breach/report`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Creates breach record with Detected or Cure_period status based on terms.GracePeriodForCure (parsed as ISO 8601 via XmlConvert.ToTimeSpan). Links breach ID to contract instance. Checks breach threshold and auto-terminates if exceeded. ETag concurrency on instance. Publishes `contract.breach.detected`.
 - **CureBreach** (`/contract/breach/cure`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Validates breach in Detected or Cure_period state. Marks Cured with timestamp. ETag concurrency on breach. Publishes `contract.breach.cured` with cure evidence.
 - **GetBreach** (`/contract/breach/get`): Simple key lookup by breach ID.
 
@@ -173,7 +178,12 @@ Service lifetime is **Scoped** (per-request). No background services. Partial cl
 
 ### Constraint Operations (2 endpoints)
 
-- **CheckContractConstraint** (`/contract/check-constraint`): Loads entity's active contracts. Checks custom terms for constraint-related flags based on ConstraintType: Exclusivity (checks "exclusivity" custom term), Non_compete (checks "nonCompete" custom term), Territory and Time_commitment (stubs - not implemented). Returns allowed=true with no conflicts, or allowed=false with conflicting contract summaries and reason.
+- **CheckContractConstraint** (`/contract/check-constraint`): Loads entity's active contracts. Checks custom terms for constraint-related flags based on ConstraintType:
+  - **Exclusivity**: checks "exclusivity" custom term
+  - **Non_compete**: checks "nonCompete" custom term
+  - **Territory**: validates location hierarchy overlap with exclusive/inclusive modes via `ILocationClient.GetLocationAncestorsAsync`. Custom terms `territoryLocationIds`, `territoryMode`, and proposedAction `locationId` drive the constraint logic.
+  - **Time_commitment**: detects conflicting exclusive time commitments across active contracts by checking date range overlaps for contracts with `timeCommitment: true` and `timeCommitmentType: exclusive`.
+  Returns allowed=true with no conflicts, or allowed=false with conflicting contract summaries and reason.
 - **QueryActiveContracts** (`/contract/query-active`): Loads entity's contracts, filters to Active status only. Optional templateCodes filter with wildcard prefix matching (TrimEnd('*') + StartsWith). Returns contract summaries with roles.
 
 ### Guardian Operations (3 endpoints)
@@ -262,6 +272,24 @@ Milestone Progression
        │
        └── FailMilestone(M3)
             └── M3.Required=false → Skipped (no breach)
+
+
+Milestone Deadline Enforcement
+================================
+
+  Background Service (ContractMilestoneExpirationService):
+       │
+       ├── Every MilestoneDeadlineCheckIntervalSeconds (default 300s)
+       ├── Load all contracts from status-idx:active
+       ├── For each contract:
+       │    ├── Acquire milestone-check:{contractId} lock (30s)
+       │    └── For each Active milestone with Deadline:
+       │         ├── Compute absoluteDeadline = ActivatedAt + ParseIsoDuration(Deadline)
+       │         └── If now > absoluteDeadline → invoke GetMilestoneAsync (triggers lazy enforcement)
+       │
+       └── Lazy enforcement also triggers on:
+            ├── GetMilestoneAsync (per-milestone check)
+            └── GetContractInstanceStatusAsync (all milestones)
 
 
 Consent Flow
@@ -367,12 +395,13 @@ Breach Handling
 
   ReportBreach(contractId, breachingEntityId, breachType)
        │
-       ├── Check terms.GracePeriodForCure (ISO 8601 "PnD")
-       │    ├── Present → Status: Cure_period, CureDeadline = now + days
+       ├── Check terms.GracePeriodForCure (ISO 8601 via XmlConvert.ToTimeSpan)
+       │    ├── Present → Status: Cure_period, CureDeadline = now + duration
        │    └── Absent → Status: Detected
        │
        ├── Save breach record (BREACH_PREFIX + breachId)
        ├── Link breachId to contract.BreachIds
+       ├── Check breach threshold → auto-terminate if exceeded
        └── Publish contract.breach.detected
 
   CureBreach(breachId, cureEvidence)
@@ -408,83 +437,158 @@ Prebound API Batched Execution
 
 ## Stubs & Unimplemented Features
 
-1. ~~**Territory constraint checking**~~: **FIXED** (2026-02-01) - Validates location hierarchy overlap with exclusive/inclusive modes via `ILocationClient.GetLocationAncestorsAsync`. Custom terms `territoryLocationIds`, `territoryMode`, and proposedAction `locationId` drive the constraint logic.
-2. ~~**Time commitment constraint checking**~~: **FIXED** (2026-02-01) - Detects conflicting exclusive time commitments across active contracts by checking date range overlaps for contracts with `timeCommitment: true` and `timeCommitmentType: exclusive`.
-3. ~~**Milestone deadline computation**~~: **FIXED** (2026-02-01) - Computes absolute deadlines from `ActivatedAt + ParseIsoDuration(Deadline)`. Lazy enforcement in `GetMilestoneAsync` and `GetContractInstanceStatusAsync` processes overdue milestones. Background service `ContractMilestoneExpirationService` periodically checks all active contracts. Optional milestones use `DeadlineBehavior` (skip/warn/breach).
-4. **ContractSummary.TemplateName**: Always returned as null in QueryActiveContracts and CheckConstraint responses with comment "Would need to load template". Template name is not resolved for summary queries.
-5. **Clause validation handler request/response mappings**: `ClauseHandlerModel.RequestMapping` and `ResponseMapping` are stored but never used in actual validation/execution logic.
-6. **Contract expiration lifecycle**: The `ContractExpiredEvent` schema exists but no background job or scheduled check transitions Active contracts to Expired when effectiveUntil is reached. Expiration only occurs lazily on consent timeout.
-7. ~~**Breach threshold enforcement**~~: **FIXED** (2026-02-01) - Auto-terminates contracts when active breach count (Detected or CurePeriod status) reaches `Terms.BreachThreshold`. Called from `ReportBreachInternalAsync` after each new breach is recorded.
-8. **Payment schedule/frequency enforcement**: PaymentSchedule and PaymentFrequency terms are stored but no scheduled payment logic or enforcement exists.
+1. **ContractSummary.TemplateName**: Always returned as null in QueryActiveContracts and CheckConstraint responses with comment "Would need to load template". Template name is not resolved for summary queries.
+2. **Clause validation handler request/response mappings**: `ClauseHandlerModel.RequestMapping` and `ResponseMapping` are stored but never used in actual validation/execution logic.
+3. **Contract expiration lifecycle**: The `ContractExpiredEvent` schema exists but no background job or scheduled check transitions Active contracts to Expired when effectiveUntil is reached. Expiration only occurs lazily on consent timeout.
+4. **Payment schedule/frequency enforcement**: PaymentSchedule and PaymentFrequency terms are stored but no scheduled payment logic or enforcement exists.
 
 ---
 
 ## Potential Extensions
 
 1. **Active expiration job**: Background service that periodically scans Active contracts for effectiveUntil < now and transitions them to Expired with event publication.
-2. ~~**Milestone deadline enforcement**~~: *Implemented* - See `ContractMilestoneExpirationService` and lazy enforcement in get operations.
-3. ~~**Territory and time constraint implementations**~~: *Implemented* - Territory uses `ILocationClient` for hierarchy checks, time commitment detects exclusive overlaps.
-4. ~~**Breach escalation pipeline**~~: *Implemented* - Auto-terminate on breach threshold. Cure period and consequence application remain manual.
-5. **Clause type handler chaining**: Allow clause types with both validation AND execution handlers to validate before executing, with configurable failure behavior.
-6. **Template inheritance**: Allow templates to extend other templates, inheriting milestones, terms, and party roles with overrides.
-7. **Bulk contract operations**: Batch creation from a single template for multi-entity scenarios (e.g., guild-wide contracts).
+2. **Clause type handler chaining**: Allow clause types with both validation AND execution handlers to validate before executing, with configurable failure behavior.
+3. **Template inheritance**: Allow templates to extend other templates, inheriting milestones, terms, and party roles with overrides.
+4. **Bulk contract operations**: Batch creation from a single template for multi-entity scenarios (e.g., guild-wide contracts).
+
+---
+
+## Duration Format Reference
+
+Contract service uses ISO 8601 durations for milestone deadlines and breach cure periods. Parsing is handled by `System.Xml.XmlConvert.ToTimeSpan`.
+
+**Supported Formats**:
+| Format | Example | Meaning |
+|--------|---------|---------|
+| `PnD` | `P10D` | 10 days |
+| `PnM` | `P3M` | 3 months |
+| `PnY` | `P1Y` | 1 year |
+| `PTnH` | `PT12H` | 12 hours |
+| `PTnM` | `PT30M` | 30 minutes |
+| `PTnS` | `PT90S` | 90 seconds |
+| Combined | `P1DT12H` | 1 day, 12 hours |
+| Combined | `P1Y2M3DT4H5M6S` | 1 year, 2 months, 3 days, 4 hours, 5 minutes, 6 seconds |
+
+**Error Handling**: Invalid formats silently return null, resulting in no deadline/cure period being set. The milestone or breach proceeds without time constraints.
+
+---
+
+## Milestone Deadline Architecture
+
+The contract service uses a **hybrid lazy + background** approach for milestone deadline enforcement.
+
+### Why This Design?
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Pure polling** | Guaranteed timing | Expensive (scans all contracts continuously) |
+| **Pure lazy** | Zero overhead when idle | Stale milestones if never accessed |
+| **Hybrid** (current) | Low overhead + eventual guarantee | Slight delay for unaccessed milestones |
+
+### How It Works
+
+1. **Primary: Lazy Enforcement** - When `GetMilestone` or `GetContractInstanceStatus` is called, the service checks if any active milestones are overdue and applies the configured `DeadlineBehavior`.
+
+2. **Backup: Background Service** - `ContractMilestoneExpirationService` runs every `MilestoneDeadlineCheckIntervalSeconds` (default 5 minutes), scanning active contracts and triggering lazy enforcement for overdue milestones.
+
+### Deadline Behavior
+
+When a milestone deadline is exceeded:
+
+| Milestone Type | DeadlineBehavior | Result |
+|----------------|------------------|--------|
+| Required | (always) | Milestone fails, breach triggered |
+| Optional | `skip` | Milestone marked Skipped |
+| Optional | `warn` | Milestone stays Active, warning logged |
+| Optional | `breach` | Milestone fails, breach triggered |
+
+---
+
+## Partial Execution & Reconciliation
+
+Contract clause execution is **intentionally non-transactional**. Cross-service transactions are avoided because:
+- They require distributed coordination (2PC, sagas)
+- They couple services together
+- They reduce availability
+
+### Failure Handling Pattern
+
+When a clause execution fails:
+1. Previous successful clauses are NOT rolled back
+2. The failure is recorded in `ContractExecutedEvent.distributionResults` with `succeeded: false`
+3. The contract is still marked as executed (ExecutedAt set)
+4. Escrow can correlate failures via `clauseId` to its template value mappings
+
+### Reconciliation Responsibility
+
+**Escrow** handles reconciliation for contract-bound agreements:
+- Receives `contract.executed` event with per-clause results
+- Matches `clauseId` to the template values it set during deposit
+- For partial failures: may hold funds, initiate refunds, or escalate to arbiter
+
+**External systems** consuming contract events should:
+- Check `distributionResults` for failures
+- Implement compensating actions if needed
+- Use idempotency keys to safely retry
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs (Tracked Issues)
 
-1. ~~**T25 (Internal POCO uses string for enum)**~~: **FIXED** (2026-02-01) - Superseded by bug #3 fix. The `DistributionRecord` schema model was deleted entirely. The internal `DistributionRecordModel` no longer contains AssetType (clauseType already implies asset type). Contract is a foundational service and should not reference escrow's AssetType enum.
+| Issue | Description | Status |
+|-------|-------------|--------|
+| [#241](https://github.com/beyond-immersion/bannou-service/issues/241) | `ClauseValidationCacheStalenessSeconds` is dead config (T21 violation) | Open |
+| [#242](https://github.com/beyond-immersion/bannou-service/issues/242) | `MaxActiveContractsPerEntity` counts ALL contracts, not just active | Open |
+| [#243](https://github.com/beyond-immersion/bannou-service/issues/243) | `ParseClauseAmount` returns 0 on missing base_amount instead of failing | Open |
 
-2. ~~**T5 (ContractExecutedEvent not schema-defined)**~~: **FIXED** (2026-02-01) - Moved all 6 escrow integration events (ContractLockedEvent, ContractUnlockedEvent, ContractPartyTransferredEvent, ClauseTypeRegisteredEvent, ContractTemplateValuesSetEvent, ContractExecutedEvent) from inline definitions to schema. Added to x-event-publications and components/schemas in contract-events.yaml. Event publishing code now uses proper EntityType/ClauseCategory enums instead of strings.
+### Planned Enhancements
 
-3. ~~**ContractExecutedEvent lacks per-party distribution details**~~: **FIXED** (2026-02-01) - Added `ClauseDistributionResult` model with per-clause success/failure tracking (`clauseId`, `clauseType`, `amount`, `succeeded`, `failureReason`). `ContractExecutedEvent` now includes `distributionResults` array. Deleted duplicate `DistributionRecord` model. Removed wallet/container IDs and assetType fields (contract is a foundational service with no escrow/inventory awareness - escrow knows the mapping from template values it set, clauseType already implies asset type). Implementation updated to always return distribution records including failures.
+| Issue | Description | Status |
+|-------|-------------|--------|
+| [#244](https://github.com/beyond-immersion/bannou-service/issues/244) | Add `IndexLockFailureMode` configuration (warn vs fail) | Open |
+| [#245](https://github.com/beyond-immersion/bannou-service/issues/245) | Add `TermsMergeMode` configuration (shallow vs deep) | Open |
+| [#246](https://github.com/beyond-immersion/bannou-service/issues/246) | Add per-milestone `onApiFailure` flag | Open |
+| [#247](https://github.com/beyond-immersion/bannou-service/issues/247) | Implement cursor-based pagination for listings and indexes | Open |
 
-Note: `PartyModel.Role` and similar Role properties are intentionally strings - they represent user-defined template roles (e.g., "buyer", "seller", "guarantor") not a fixed enum.
+### Intentional Design Decisions
 
-### Intentional Quirks
+1. **Consent expiration is lazy**: Contracts do not automatically expire when `DefaultConsentTimeoutDays` passes. The check only triggers on the next `ConsentToContract` call. This avoids background job overhead for checking all Proposed contracts. Proposed contracts with no further consent attempts remain in Proposed status harmlessly until accessed.
 
-1. **Consent expiration is lazy**: Contracts do not automatically expire when DefaultConsentTimeoutDays passes. The check only triggers on the next ConsentToContract call. A proposed contract with no further consent attempts will remain in Proposed status indefinitely.
+2. **Index lock failure is non-fatal (currently)**: When `AddToListAsync`/`RemoveFromListAsync` cannot acquire the 15-second distributed lock, the operation logs a warning and continues. The index may become stale. This prioritizes availability over strict consistency. See [#244](https://github.com/beyond-immersion/bannou-service/issues/244) for making this configurable.
 
-2. **Index lock failure is non-fatal**: When AddToListAsync/RemoveFromListAsync cannot acquire the 15-second distributed lock, the operation logs a warning but returns without error. The index may become stale.
+3. **Serial clause execution within type category**: Fee clauses and distribution clauses execute sequentially (clause-by-clause), not in parallel. This prevents race conditions on shared wallets. Parallel execution would require distributed locks per-wallet, adding complexity.
 
-3. **GracePeriodForCure only supports "PnD" format**: The ISO 8601 duration parser is simplified to only handle "P" prefix and "D" suffix (days). Other duration formats (hours, months, etc.) are silently ignored, resulting in no cure deadline.
+4. **Prebound API failures are non-blocking (currently)**: Failed prebound API executions (milestone callbacks) publish failure events but do not fail the milestone completion. The milestone is still marked complete. See [#246](https://github.com/beyond-immersion/bannou-service/issues/246) for making this configurable per-milestone.
 
-### Design Considerations (Requires Planning)
-
-1. **N+1 pattern for listing**: ListContractTemplates and QueryContractInstances load all keys from an index list, then bulk-fetch all entries. For large deployments, these lists can grow unbounded.
-
-2. **No pagination on index operations**: Party indexes and status indexes are unbounded lists. An entity with many contracts will have a large party-idx list that is loaded entirely on each query.
-
-3. **In-memory clause validation cache is effectively request-scoped**: The `ConcurrentDictionary<string, CachedValidationResult>` in ContractServiceClauseValidation is an instance field on a Scoped service (`ServiceLifetime.Scoped`). Each HTTP request gets a new service instance with a fresh cache. The cache provides no cross-request benefit — it only helps within a single `ValidateAllClausesAsync` call if the same clause appears multiple times (unlikely). The staleness threshold configuration (`ClauseValidationCacheStalenessSeconds`) is effectively dead configuration since the cache never persists between requests.
-
-4. **Clause execution is not transactional**: If one clause in ExecuteContract fails, previously executed clauses are NOT rolled back. The distributions list will be partial, and the contract is still marked as executed with whatever succeeded.
-
-5. **Template terms merge is shallow**: MergeTerms performs a single-level merge. CustomTerms dictionary merge is also shallow (instance values override template values by key, no deep merge of nested objects).
-
-6. **Prebound API failures are non-blocking**: Failed prebound API executions (milestone callbacks) publish failure events but do not fail the milestone completion. The milestone is still marked complete even if its onComplete APIs fail.
-
-7. **Serial clause execution within type category**: Fee clauses and distribution clauses each execute sequentially (clause-by-clause), not in parallel. Only the APIs within a single milestone's callback list are batched in parallel.
-
-8. **QueryActiveContracts wildcard matching**: Template code filtering uses `StartsWith` with `TrimEnd('*')`, meaning "trade*" matches "trade_goods", "trade_services", etc. The asterisk is only meaningful at the end of the pattern.
-
-9. **MaxActiveContractsPerEntity counts all contracts, not just active ones**: The party index accumulates ALL contract IDs ever associated with an entity (including terminated, fulfilled, expired). Party indexes are never pruned. The effective limit is "max total contracts ever" rather than "max active". Fixing requires either pruning indexes on termination/fulfillment, or filtering by status at check time.
-
-10. **ParseClauseAmount percentage mode returns 0 on missing base_amount**: When a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method logs a warning and returns 0. A percentage-typed fee clause executes as a zero-amount transfer. Whether this should fail the clause execution entirely (returning a failure status instead of 0) is a design decision.
+5. **Template terms merge is shallow (currently)**: `MergeTerms` performs a single-level merge. CustomTerms dictionary values are replaced by key, not deep-merged. See [#245](https://github.com/beyond-immersion/bannou-service/issues/245) for adding deep merge option.
 
 ---
 
 ## Work Tracking
 
-This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+This section tracks active development work. For detailed analysis, see [CONTRACT-QUIRKS-ANALYSIS.md](CONTRACT-QUIRKS-ANALYSIS.md).
 
-### Active
+### Open Issues
 
-(No active work items)
+| Category | Issue | Title |
+|----------|-------|-------|
+| Bug | [#241](https://github.com/beyond-immersion/bannou-service/issues/241) | Remove dead ClauseValidationCacheStalenessSeconds config |
+| Bug | [#242](https://github.com/beyond-immersion/bannou-service/issues/242) | Fix MaxActiveContractsPerEntity to count active contracts |
+| Bug | [#243](https://github.com/beyond-immersion/bannou-service/issues/243) | ParseClauseAmount should fail on missing base_amount |
+| Enhancement | [#244](https://github.com/beyond-immersion/bannou-service/issues/244) | Add IndexLockFailureMode configuration |
+| Enhancement | [#245](https://github.com/beyond-immersion/bannou-service/issues/245) | Add TermsMergeMode configuration |
+| Enhancement | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) | Add per-milestone onApiFailure flag |
+| Scalability | [#247](https://github.com/beyond-immersion/bannou-service/issues/247) | Implement cursor-based pagination |
 
 ### Completed
 
-- **2026-02-01**: Issue #218 - Added per-clause distribution details to `ContractExecutedEvent`. Created `ClauseDistributionResult` model with success/failure tracking. Removed wallet/container IDs and assetType (foundational service principle - escrow knows mapping from template values, clauseType implies asset type). Deleted duplicate `DistributionRecord` model.
-- **2026-02-01**: Fixed T5 violation - moved all 6 escrow integration events from inline definitions to contract-events.yaml schema. Issue #217 closed.
-- **2026-01-31**: Fixed T25 violation - `DistributionRecordModel.AssetType` now uses proper `AssetType` enum. Schema updated to use `$ref` to escrow-api.yaml enum. (audit-plugin) - Note: Superseded by Issue #218 fix which removed AssetType entirely.
+- **2026-02-01**: Quirks analysis and issue creation. Created issues #241-#247. Reorganized documentation with new sections for Duration Format Reference, Milestone Deadline Architecture, and Partial Execution & Reconciliation.
+- **2026-02-01**: Issue #218 - Added per-clause distribution details to `ContractExecutedEvent`.
+- **2026-02-01**: Issue #217 - Moved 6 escrow integration events from inline definitions to schema.
+- **2026-02-01**: Implemented territory constraint checking via `ILocationClient`.
+- **2026-02-01**: Implemented time commitment constraint checking.
+- **2026-02-01**: Implemented milestone deadline computation and enforcement with `ContractMilestoneExpirationService`.
+- **2026-02-01**: Implemented breach threshold enforcement.
+- **2026-01-31**: Fixed T25 violation for DistributionRecordModel (superseded by #218).

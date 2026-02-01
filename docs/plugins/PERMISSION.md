@@ -215,7 +215,9 @@ None. The service is feature-complete for its scope.
 2. **Fine-grained caching**: Cache compiled permissions per-service instead of per-session for more granular invalidation.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/209 -->
 3. **Permission delegation**: Allow services to grant temporary elevated permissions to specific sessions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/234 -->
 4. **Audit trail**: Log permission checks and changes for security auditing.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/235 -->
 
 ---
 
@@ -238,10 +240,13 @@ None identified.
 ### Design Considerations
 
 1. **Full session recompilation on service registration**: Every time a service registers, ALL active sessions are recompiled. With many concurrent sessions and frequent service restarts, this generates O(sessions * services) Redis operations.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/236 -->
 
 2. **Permission matrix stored as individual keys**: Each `service:state:role` combination is a separate Redis key. For 40 services with 3 states and 4 roles, this is 480 keys. Queries during recompilation read many keys per session.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/237 -->
 
 3. **Read-modify-write on session sets**: `activeConnections`/`activeSessions` set operations without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:ISSUE_URL_PLACEHOLDER -->
 
 ---
 

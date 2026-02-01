@@ -441,8 +441,7 @@ Circuit Breaker State Machine
 3. **JSON Schema validation**: SchemaMigrator.ValidateAgainstSchema only verifies data is valid JSON. Full JSON Schema (draft-07) validation is not implemented. Comment notes potential use of JsonSchema.Net library.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/229 -->
 
-4. **Auto-collapse during cleanup**: CleanupService logs delta chains that could be collapsed when AutoCollapseEnabled is true, but does not actually perform the collapse. It only identifies candidates.
-<!-- AUDIT:IN_PROGRESS:2026-02-01 -->
+4. ~~**Auto-collapse during cleanup**~~: **FIXED** (2026-02-01) - CleanupService now calls VersionCleanupManager.CollapseExcessiveDeltaChainsAsync when AutoCollapseEnabled is true, collapsing delta chains that exceed MaxDeltaChainLength. Collapsed versions are converted from delta to full snapshot, stored in hot cache, and queued for async upload.
 
 5. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit.
 
@@ -466,7 +465,7 @@ Circuit Breaker State Machine
 
 5. **Streaming save/load**: For saves exceeding hot cache size limits, support chunked upload/download without holding entire blob in memory.
 
-6. **Auto-collapse implementation**: During CleanupService runs, actually collapse identified delta chains rather than just logging them.
+6. ~~**Auto-collapse implementation**~~: **FIXED** (2026-02-01) - See Stubs section item 4.
 
 7. **Retention policy per-slot**: Allow slots to define custom retention policies beyond MaxVersions and RetentionDays (e.g., keep first version of each day, weekly snapshots).
 
@@ -525,6 +524,10 @@ Circuit Breaker State Machine
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+### Completed
+
+- **Auto-collapse during cleanup** - Implemented in VersionCleanupManager.CollapseExcessiveDeltaChainsAsync; CleanupService now calls this when AutoCollapseEnabled is true. (2026-02-01)
 
 ### Needs Design Review
 

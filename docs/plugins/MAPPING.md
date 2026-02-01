@@ -361,6 +361,7 @@ Authoring Workflow
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/208 -->
 
 4. **MapSnapshotRequestedEvent not consumed**: The schema defines `MapSnapshotRequestedEvent` for consumer-initiated snapshot requests, but the service does not subscribe to it.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/240 -->
 
 5. **Large payload support for PublishMapUpdate**: The publish endpoint rejects payloads exceeding `InlinePayloadMaxBytes` (returns 400). The code comment notes "MVP: reject large payloads; full impl would use lib-asset." Only RequestSnapshot handles large-to-asset offloading.
 
