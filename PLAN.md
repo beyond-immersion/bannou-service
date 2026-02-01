@@ -4,13 +4,14 @@
 **Created:** 2026-02-01
 **Status:** Awaiting Approval
 **Audited:** 2026-02-01 (TENET compliance verified)
+**Updated:** 2026-02-01 (Updated to use `IRedisOperations` from #255)
 
 ---
 
 ## Executive Summary
 
 This plan implements an event-backed local cache pattern for the distributed circuit breaker:
-- **Redis** stores authoritative circuit breaker state
+- **Redis** stores authoritative circuit breaker state (via `IRedisOperations`)
 - **Local `ConcurrentDictionary`** provides zero-latency reads on the hot path
 - **RabbitMQ pub/sub** propagates state changes across instances
 - **Lua scripts** ensure atomic failure/success recording
@@ -18,10 +19,12 @@ This plan implements an event-backed local cache pattern for the distributed cir
 Performance characteristics:
 - State checks: **0ms** (local ConcurrentDictionary)
 - Success recording: **0ms** (no-op if circuit is closed)
-- Failure recording: **1-2ms** (Redis Lua script)
+- Failure recording: **1-2ms** (Redis Lua script via `IRedisOperations`)
 - State propagation: **~10-50ms** (pub/sub latency, acceptable)
 
 **Configuration Model:** No new configuration options. The distributed circuit breaker is always-on when `CircuitBreakerEnabled=true`. Per IMPLEMENTATION TENETS (T9 Multi-Instance Safety), the per-instance implementation was a TENET violation, not an alternative mode. Adding opt-in configuration would create dead code paths and testing burden.
+
+**Dependency:** This plan uses `IRedisOperations` from lib-state (#255, completed).
 
 ---
 
@@ -116,11 +119,8 @@ Add to `x-event-subscriptions`:
 
 ## Phase 2: Lua Scripts for Atomic Operations
 
-**TENET Note (T4 Infrastructure Libs):** Direct Redis access via Lua scripts is acceptable here because:
-1. lib-mesh is foundational infrastructure (same tier as lib-state, lib-messaging)
-2. `MeshStateManager` already has direct `IDatabase` access
-3. `RedisDistributedLockProvider` in lib-state uses the same pattern
-4. Circuit breaker requires atomic read-modify-write operations that `IStateStore<T>` doesn't support
+**T4 Compliance:** These Lua scripts are executed via `IStateStoreFactory.GetRedisOperations().ScriptEvaluateAsync()`,
+which is the proper lib-state interface for atomic Redis operations. No direct Redis connection is created.
 
 ### 2.1 Create Scripts Directory
 
@@ -338,14 +338,14 @@ public static class MeshLuaScripts
 **File:** `plugins/lib-mesh/Services/DistributedCircuitBreaker.cs`
 
 Key design points:
-- Lazy Redis initialization (follows `RedisDistributedLockProvider` pattern)
+- Uses `IStateStoreFactory.GetRedisOperations()` for Redis access (T4 compliant)
 - Local `ConcurrentDictionary` cache for zero-latency reads
 - Event publishing on state changes via `IMessageBus`
 - Direct `IMessageSubscriber` subscription for cache updates (infrastructure pattern)
-- Implements `IAsyncDisposable` for Redis connection cleanup
+- Graceful degradation when `IRedisOperations` is null (InMemory mode)
 
 The class will:
-1. Accept `StateStoreFactoryConfiguration` for Redis connection string
+1. Accept `IStateStoreFactory` to obtain `IRedisOperations`
 2. Accept `IMessageBus` for event publishing
 3. Accept `IMessageSubscriber` for event subscription (not `IEventConsumer` - see note below)
 4. Provide async methods: `GetStateAsync`, `RecordSuccessAsync`, `RecordFailureAsync`
@@ -369,23 +369,38 @@ public async Task<CircuitState> GetStateAsync(string appId, CancellationToken ct
         return cached.State;
     }
 
+    // Get IRedisOperations - may be null in InMemory mode
+    var redisOps = _stateStoreFactory.GetRedisOperations();
+    if (redisOps == null)
+    {
+        // InMemory mode: fall back to local-only circuit breaker
+        // This is acceptable for testing; production requires Redis
+        _logger.LogDebug("Redis unavailable (InMemory mode), using local-only circuit breaker for {AppId}", appId);
+        return _localCache.TryGetValue(appId, out var local) ? local.State : CircuitState.Closed;
+    }
+
     try
     {
-        var database = await EnsureInitializedAsync();
-        // ... Lua script execution ...
+        var result = await redisOps.ScriptEvaluateAsync(
+            MeshLuaScripts.GetCircuitState,
+            new RedisKey[] { $"mesh:cb:{appId}" },
+            new RedisValue[] { DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), _resetTimeoutMs },
+            ct);
+
+        // Parse result and update local cache...
     }
     catch (Exception ex)
     {
         // T7: Log error, emit error event, gracefully degrade
-        _logger.LogError(ex, "Redis unavailable for circuit breaker, defaulting to Closed for {AppId}", appId);
+        _logger.LogError(ex, "Redis error for circuit breaker, defaulting to Closed for {AppId}", appId);
         await _messageBus.TryPublishErrorAsync(
             serviceId: "mesh",
             operation: "GetCircuitState",
             errorType: ex.GetType().Name,
             message: ex.Message);
 
-        // Fail-open: allow traffic when Redis is unavailable
-        // This prevents Redis outage from cascading to all service calls
+        // Fail-open: allow traffic when Redis has errors
+        // This prevents Redis issues from cascading to all service calls
         return CircuitState.Closed;
     }
 }
@@ -400,7 +415,7 @@ public async Task<CircuitState> GetStateAsync(string appId, CancellationToken ct
 Changes required:
 
 1. **Constructor changes:**
-   - Add `StateStoreFactoryConfiguration stateConfig` parameter
+   - Add `IStateStoreFactory stateStoreFactory` parameter
    - Add `IMessageBus messageBus` parameter
    - Add `IMessageSubscriber messageSubscriber` parameter
    - Create `DistributedCircuitBreaker` instance (passing dependencies)
@@ -418,9 +433,9 @@ Changes required:
    - Replace `Dictionary<string, ...> + lock` with `ConcurrentDictionary<string, ...>`
    - Use `TryGetValue`, `TryAdd`, `TryRemove` instead of lock-protected operations
 
-6. **Update disposal:**
-   - Change `IDisposable` to `IAsyncDisposable`
-   - Add `await _circuitBreaker.DisposeAsync()` in `DisposeAsync`
+6. **No disposal changes needed:**
+   - `DistributedCircuitBreaker` does not own any connections (uses `IRedisOperations` from factory)
+   - Event subscriptions are managed by `IMessageSubscriber` lifecycle
 
 ---
 
@@ -438,11 +453,12 @@ Test scenarios:
 4. State transitions: HalfOpen → Open on failure (probe failed)
 5. Event publishing: Verify `MeshCircuitStateChangedEvent` published on state change
 6. Event consumption: Verify local cache updated when event received
-7. Graceful degradation: Returns `Closed` when Redis unavailable (fail-open)
-8. Local cache hit: Verify no Redis call when cache is fresh
-9. Concurrent failures: Multiple instances recording failures atomically
+7. Graceful degradation: Returns `Closed` when `IRedisOperations` is null (InMemory mode)
+8. Graceful degradation: Returns `Closed` when Redis throws exception
+9. Local cache hit: Verify no Redis call when cache is fresh
+10. Concurrent failures: Multiple instances recording failures atomically
 
-Use Moq to mock `IDatabase`, `IMessageBus`, and `IMessageSubscriber`.
+Use Moq to mock `IStateStoreFactory`, `IRedisOperations`, `IMessageBus`, and `IMessageSubscriber`.
 
 ---
 
@@ -484,13 +500,12 @@ Updates:
 | CircuitState enum type | IMPLEMENTATION | T25 Type Safety Across All Models |
 | Event schema with $ref | FOUNDATION | T1 Schema-First, T5 Event-Driven Architecture |
 | No sentinel values in Lua | IMPLEMENTATION | T26 No Sentinel Values |
-| Direct Redis (justified) | FOUNDATION | T4 Infrastructure Libs (exception documented) |
+| Uses `IRedisOperations` from lib-state | FOUNDATION | T4 Infrastructure Libs Pattern |
 | ConcurrentDictionary cache | IMPLEMENTATION | T9 Multi-Instance Safety |
 | Event-backed local cache | IMPLEMENTATION | T9 Multi-Instance Safety (explicitly allowed pattern) |
 | Graceful degradation | IMPLEMENTATION | T7 Error Handling |
 | TryPublishErrorAsync on failure | IMPLEMENTATION | T7 Error Handling |
 | Async methods with await | IMPLEMENTATION | T23 Async Method Pattern |
-| IAsyncDisposable | IMPLEMENTATION | T24 Using Statement Pattern |
 | Tests in lib-mesh.tests | QUALITY | T11 Testing Requirements, TESTING.md |
 | XML documentation | QUALITY | T19 XML Documentation |
 | No opt-in config | IMPLEMENTATION | T9 (violation, not alternative), T21 (no dead config) |
@@ -501,7 +516,8 @@ Updates:
 
 | Risk | Mitigation | TENET Basis |
 |------|------------|-------------|
-| Redis unavailable | Fail-open: return Closed state, emit error event, allow traffic | T7, T9 |
+| Redis unavailable (InMemory mode) | Local-only circuit breaker; acceptable for testing | T7, T9 |
+| Redis connection errors | Fail-open: return Closed state, emit error event, allow traffic | T7, T9 |
 | Event delivery delay | Acceptable ~50ms eventual consistency; local cache prevents stale reads from blocking | T9 |
 | Lua script errors | Comprehensive try/catch with logging and TryPublishErrorAsync | T7 |
 | Concurrent state changes | Lua scripts are atomic within Redis; events are idempotent | T9 |
@@ -512,3 +528,4 @@ Updates:
 ## Changelog
 
 - **2026-02-01 (Audit):** Fixed T25 violation (enum type), T26 violation (sentinel values), test location (TESTING.md), added T4/T7 specifics, configuration rationale
+- **2026-02-01 (Update):** Updated to use `IRedisOperations` from lib-state (#255) instead of direct Redis connection; removed `IAsyncDisposable` requirement; updated test mocking strategy

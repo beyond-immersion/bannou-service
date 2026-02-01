@@ -240,13 +240,17 @@ public class Program
             // Register MeshStateManager (uses IStateStoreFactory for Redis)
             serviceCollection.AddSingleton<IMeshStateManager, MeshStateManager>();
 
+            // Register NullTelemetryProvider (http-tester doesn't need telemetry)
+            serviceCollection.AddSingleton<ITelemetryProvider, NullTelemetryProvider>();
+
             // Register MeshInvocationClient using factory pattern (same as MeshServicePlugin)
             serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
             {
                 var stateManager = sp.GetRequiredService<IMeshStateManager>();
                 var config = sp.GetRequiredService<MeshServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-                return new MeshInvocationClient(stateManager, config, logger);
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                return new MeshInvocationClient(stateManager, config, logger, telemetryProvider);
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)

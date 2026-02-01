@@ -1448,11 +1448,7 @@ public class ContractTestHandler : BaseHttpTestHandler
             // Create a template to ensure at least one exists
             var template = await CreateEmploymentTemplateAsync(contractClient, "list_templates");
 
-            var listed = await contractClient.ListContractTemplatesAsync(new ListContractTemplatesRequest
-            {
-                Page = 1,
-                PageSize = 100
-            });
+            var listed = await contractClient.ListContractTemplatesAsync(new ListContractTemplatesRequest());
 
             if (listed.Templates == null || listed.Templates.Count == 0)
                 return TestResult.Failed("No templates returned");
@@ -1546,9 +1542,7 @@ public class ContractTestHandler : BaseHttpTestHandler
             var byParty = await contractClient.QueryContractInstancesAsync(new QueryContractInstancesRequest
             {
                 PartyEntityId = charA.CharacterId,
-                PartyEntityType = EntityType.Character,
-                Page = 1,
-                PageSize = 10
+                PartyEntityType = EntityType.Character
             });
 
             if (byParty.Contracts == null || byParty.Contracts.Count == 0)
@@ -1561,9 +1555,7 @@ public class ContractTestHandler : BaseHttpTestHandler
             // Query by status
             var byStatus = await contractClient.QueryContractInstancesAsync(new QueryContractInstancesRequest
             {
-                Statuses = new List<ContractStatus> { ContractStatus.Active },
-                Page = 1,
-                PageSize = 10
+                Statuses = new List<ContractStatus> { ContractStatus.Active }
             });
 
             if (byStatus.Contracts == null || byStatus.Contracts.Count == 0)
