@@ -438,7 +438,7 @@ public class ConnectServiceTests
     public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()
     {
         // Arrange
-        var service = CreateConnectService();
+        using var service = CreateConnectService();
         var sessionId = Guid.NewGuid();
         var eventData = new AuthEvent
         {
@@ -464,7 +464,7 @@ public class ConnectServiceTests
     public async Task ProcessServiceRegistrationAsync_WithValidEvent_ShouldPublishRecompileEvent()
     {
         // Arrange
-        var service = CreateConnectService();
+        using var service = CreateConnectService();
         var serviceId = Guid.NewGuid();
         var eventData = new ServiceRegistrationEvent
         {
@@ -497,7 +497,7 @@ public class ConnectServiceTests
     public async Task ProcessClientMessageEventAsync_WhenClientNotConnected_ReturnsError()
     {
         // Arrange
-        var service = CreateConnectService();
+        using var service = CreateConnectService();
         var eventData = new ClientMessageEvent
         {
             ClientId = "client-789",
@@ -526,7 +526,7 @@ public class ConnectServiceTests
     public async Task ProcessClientRPCEventAsync_WhenClientNotConnected_ReturnsError()
     {
         // Arrange
-        var service = CreateConnectService();
+        using var service = CreateConnectService();
         var eventData = new ClientRPCEvent
         {
             ClientId = "client-rpc-999",
