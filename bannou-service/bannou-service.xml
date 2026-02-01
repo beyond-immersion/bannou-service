@@ -38002,6 +38002,11 @@
             Type of contract breach
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MilestoneDeadlineBehavior">
+            <summary>
+            Behavior when optional milestone deadline passes
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Contract.BreachStatus">
             <summary>
             Current status of a breach record
@@ -38782,6 +38787,11 @@
             Relative deadline (ISO 8601 duration)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.DeadlineBehavior">
+            <summary>
+            Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.OnComplete">
             <summary>
             APIs to call on completion
@@ -38832,9 +38842,19 @@
             When failed
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.ActivatedAt">
+            <summary>
+            When this milestone became active
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Deadline">
             <summary>
-            Absolute deadline
+            Absolute deadline (computed from activatedAt + duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.DeadlineBehavior">
+            <summary>
+            Behavior when deadline passes for optional milestones
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.MilestoneProgressSummary">
@@ -45756,6 +45776,32 @@
             <returns>Dispute raised</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ConfirmReleaseAsync(BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of released assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their released assets.
+            <br/>Required when ReleaseMode is party_required or service_and_party.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ConfirmRefundAsync(BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of refunded assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their refunded deposits.
+            <br/>Required when RefundMode is party_required.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ResolveAsync(BeyondImmersion.BannouService.Escrow.ResolveRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -46082,6 +46128,32 @@
             <returns>Dispute raised</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ConfirmReleaseAsync(BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of released assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their released assets.
+            <br/>Required when ReleaseMode is party_required or service_and_party.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ConfirmRefundAsync(BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Confirm receipt of refunded assets
+            </summary>
+            <remarks>
+            Called by parties to confirm they received their refunded deposits.
+            <br/>Required when RefundMode is party_required.
+            </remarks>
+            <returns>Confirmation recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ResolveAsync(BeyondImmersion.BannouService.Escrow.ResolveRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -46315,6 +46387,35 @@
             <br/>
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReleaseMode">
+            <summary>
+            Controls how release confirmation is handled:
+            <br/>- immediate: Finalizing → Released (skip Releasing state entirely).
+            <br/>  ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+            <br/>  Assets are marked as released BEFORE downstream services confirm transfers.
+            <br/>  If downstream services fail, manual intervention may be required.
+            <br/>- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+            <br/>- party_required: Wait for all parties to call /confirm-release.
+            <br/>- service_and_party: Wait for both service completion AND party confirmation.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.RefundMode">
+            <summary>
+            Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+            <br/>Refunds typically use 'immediate' since parties get their own assets back.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmationTimeoutBehavior">
+            <summary>
+            What happens when confirmation timeout expires:
+            <br/>- auto_confirm: If service events received, auto-confirm parties (default).
+            <br/>- dispute: Transition to Disputed state, require arbiter intervention.
+            <br/>- refund: Treat as failed, transition to Refunding.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAgreement">
             <summary>
             Main escrow agreement record
@@ -46458,6 +46559,21 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ResolutionNotes">
             <summary>
             Notes about the resolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ReleaseMode">
+            <summary>
+            How release confirmation is handled for this escrow.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.RefundMode">
+            <summary>
+            How refund confirmation is handled for this escrow.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ConfirmationDeadline">
+            <summary>
+            Deadline for party confirmations when in Releasing/Refunding state.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.AdditionalProperties">
@@ -47013,6 +47129,18 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.Metadata">
             <summary>
             Application metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.ReleaseMode">
+            <summary>
+            How release confirmation is handled. Defaults to service_only if not specified.
+            <br/>Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.RefundMode">
+            <summary>
+            How refund confirmation is handled. Defaults to immediate if not specified.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.IdempotencyKey">
@@ -48098,6 +48226,101 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.DisputeResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest">
+            <summary>
+            Request to confirm receipt of released assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.EscrowId">
+            <summary>
+            The escrow being confirmed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.PartyId">
+            <summary>
+            The party confirming receipt.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.ReleaseToken">
+            <summary>
+            The party's release token (received via confirmation shortcut).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseRequest.Notes">
+            <summary>
+            Optional confirmation notes.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse">
+            <summary>
+            Response from confirming release receipt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.EscrowId">
+            <summary>
+            The escrow ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.Confirmed">
+            <summary>
+            Whether this party's confirmation was recorded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.AllPartiesConfirmed">
+            <summary>
+            Whether all parties have now confirmed (triggers Released transition).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmReleaseResponse.Status">
+            <summary>
+            Current escrow status after confirmation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest">
+            <summary>
+            Request to confirm receipt of refunded assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest.EscrowId">
+            <summary>
+            The escrow being confirmed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest.PartyId">
+            <summary>
+            The party confirming receipt of refund.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundRequest.Notes">
+            <summary>
+            Optional confirmation notes.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse">
+            <summary>
+            Response from confirming refund receipt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.EscrowId">
+            <summary>
+            The escrow ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.Confirmed">
+            <summary>
+            Whether this party's confirmation was recorded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.AllPartiesConfirmed">
+            <summary>
+            Whether all parties have now confirmed (triggers Refunded transition).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConfirmRefundResponse.Status">
+            <summary>
+            Current escrow status after confirmation.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Escrow.ResolveRequest">

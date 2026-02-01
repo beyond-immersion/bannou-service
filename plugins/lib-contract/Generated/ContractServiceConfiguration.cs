@@ -125,4 +125,16 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int IdempotencyTtlSeconds { get; set; } = 86400;
 
+    /// <summary>
+    /// Interval between milestone deadline checks in seconds (default 5 minutes)
+    /// Environment variable: CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    public int MilestoneDeadlineCheckIntervalSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Startup delay before first milestone deadline check in seconds
+    /// Environment variable: CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int MilestoneDeadlineStartupDelaySeconds { get; set; } = 30;
+
 }

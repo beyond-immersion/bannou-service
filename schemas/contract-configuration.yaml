@@ -78,3 +78,16 @@ x-service-configuration:
       env: CONTRACT_IDEMPOTENCY_TTL_SECONDS
       default: 86400
       description: TTL in seconds for idempotency key storage (default 24 hours)
+
+    # Milestone Deadline Background Service
+    milestoneDeadlineCheckIntervalSeconds:
+      type: integer
+      env: CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS
+      default: 300
+      description: Interval between milestone deadline checks in seconds (default 5 minutes)
+
+    milestoneDeadlineStartupDelaySeconds:
+      type: integer
+      env: CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS
+      default: 30
+      description: Startup delay before first milestone deadline check in seconds

@@ -45,6 +45,10 @@ public static class EscrowTopics
     public const string EscrowValidationFailed = "escrow.validation.failed";
     /// <summary>Validation reaffirmed event topic.</summary>
     public const string EscrowValidationReaffirmed = "escrow.validation.reaffirmed";
+    /// <summary>Escrow releasing event topic (transitioning to Releasing state).</summary>
+    public const string EscrowReleasing = "escrow.releasing";
+    /// <summary>Escrow refunding event topic (transitioning to Refunding state).</summary>
+    public const string EscrowRefunding = "escrow.refunding";
 }
 
 /// <summary>
@@ -484,7 +488,10 @@ public partial class EscrowService : IEscrowService
             Description = model.Description,
             Metadata = model.Metadata,
             Resolution = model.Resolution,
-            ResolutionNotes = model.ResolutionNotes
+            ResolutionNotes = model.ResolutionNotes,
+            ReleaseMode = model.ReleaseMode,
+            RefundMode = model.RefundMode,
+            ConfirmationDeadline = model.ConfirmationDeadline
         };
     }
 
@@ -729,6 +736,10 @@ internal class EscrowAgreementModel
     public object? Metadata { get; set; }
     public EscrowResolution? Resolution { get; set; }
     public string? ResolutionNotes { get; set; }
+    public ReleaseMode ReleaseMode { get; set; } = ReleaseMode.ServiceOnly;
+    public RefundMode RefundMode { get; set; } = RefundMode.Immediate;
+    public List<ReleaseConfirmationModel>? ReleaseConfirmations { get; set; }
+    public DateTimeOffset? ConfirmationDeadline { get; set; }
 }
 
 /// <summary>
@@ -934,6 +945,19 @@ internal class ValidationTrackingEntry
     public DateTimeOffset LastValidatedAt { get; set; }
     public DateTimeOffset NextValidationDue { get; set; }
     public int FailedValidationCount { get; set; }
+}
+
+/// <summary>
+/// Internal model for tracking release/refund confirmations per party.
+/// </summary>
+internal class ReleaseConfirmationModel
+{
+    public Guid PartyId { get; set; }
+    public EntityType PartyType { get; set; }
+    public bool ServiceConfirmed { get; set; }
+    public bool PartyConfirmed { get; set; }
+    public DateTimeOffset? ServiceConfirmedAt { get; set; }
+    public DateTimeOffset? PartyConfirmedAt { get; set; }
 }
 
 #endregion

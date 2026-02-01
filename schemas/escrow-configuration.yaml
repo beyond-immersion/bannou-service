@@ -29,21 +29,11 @@ x-service-configuration:
       env: ESCROW_EXPIRATION_GRACE_PERIOD
       default: "PT1H"
       description: Grace period after expiration before auto-refund (ISO 8601 duration)
-    tokenAlgorithm:
-      type: string
-      env: ESCROW_TOKEN_ALGORITHM
-      default: hmac_sha256
-      description: Algorithm used for token generation
     tokenLength:
       type: integer
       env: ESCROW_TOKEN_LENGTH
       default: 32
       description: Token length in bytes (before encoding)
-    tokenSecret:
-      type: string
-      env: ESCROW_TOKEN_SECRET
-      nullable: true
-      description: Token secret for HMAC (must be set in production)
     expirationCheckInterval:
       type: string
       env: ESCROW_EXPIRATION_CHECK_INTERVAL
@@ -92,3 +82,39 @@ x-service-configuration:
       env: ESCROW_DEFAULT_LIST_LIMIT
       default: 50
       description: Default limit for listing escrows when not specified
+
+    defaultReleaseMode:
+      type: string
+      env: ESCROW_DEFAULT_RELEASE_MODE
+      default: service_only
+      description: Default release confirmation mode (immediate/service_only/party_required/service_and_party)
+
+    defaultRefundMode:
+      type: string
+      env: ESCROW_DEFAULT_REFUND_MODE
+      default: immediate
+      description: Default refund confirmation mode (immediate/service_only/party_required)
+
+    confirmationTimeoutSeconds:
+      type: integer
+      env: ESCROW_CONFIRMATION_TIMEOUT_SECONDS
+      default: 300
+      description: Timeout for party confirmations in seconds (default 5 minutes)
+
+    confirmationTimeoutBehavior:
+      type: string
+      env: ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR
+      default: auto_confirm
+      description: What happens on confirmation timeout (auto_confirm/dispute/refund)
+
+    confirmationTimeoutCheckIntervalSeconds:
+      type: integer
+      env: ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS
+      default: 30
+      description: How often the background service checks for expired confirmations
+
+    confirmationTimeoutBatchSize:
+      type: integer
+      env: ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE
+      default: 100
+      description: Maximum escrows to process per timeout check cycle

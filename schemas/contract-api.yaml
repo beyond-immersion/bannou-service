@@ -977,8 +977,17 @@ components:
       enum:
       - term_violation
       - milestone_missed
+      - milestone_deadline
       - unauthorized_action
       - non_payment
+
+    MilestoneDeadlineBehavior:
+      type: string
+      description: Behavior when optional milestone deadline passes
+      enum:
+      - skip
+      - warn
+      - breach
 
     BreachStatus:
       type: string
@@ -1818,6 +1827,10 @@ components:
           type: string
           nullable: true
           description: Relative deadline (ISO 8601 duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach.
         onComplete:
           type: array
           items:
@@ -1867,11 +1880,20 @@ components:
           format: date-time
           nullable: true
           description: When failed
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this milestone became active
         deadline:
           type: string
           format: date-time
           nullable: true
-          description: Absolute deadline
+          description: Absolute deadline (computed from activatedAt + duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones
 
     MilestoneProgressSummary:
       type: object

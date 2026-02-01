@@ -427,6 +427,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /escrow/confirm-release:
+    post:
+      operationId: confirmRelease
+      tags:
+      - Completion
+      summary: Confirm receipt of released assets
+      description: |
+        Called by parties to confirm they received their released assets.
+        Required when ReleaseMode is party_required or service_and_party.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmReleaseRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmReleaseResponse'
+        '400':
+          description: Confirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/confirm-refund:
+    post:
+      operationId: confirmRefund
+      tags:
+      - Completion
+      summary: Confirm receipt of refunded assets
+      description: |
+        Called by parties to confirm they received their refunded deposits.
+        Required when RefundMode is party_required.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmRefundRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmRefundResponse'
+        '400':
+          description: Confirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ===========================================================================
   # Arbiter (1 endpoint)
   # ===========================================================================
@@ -807,6 +883,45 @@ components:
       - deposit
       - release
 
+    ReleaseMode:
+      type: string
+      description: |
+        Controls how release confirmation is handled:
+        - immediate: Finalizing → Released (skip Releasing state entirely).
+          ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+          Assets are marked as released BEFORE downstream services confirm transfers.
+          If downstream services fail, manual intervention may be required.
+        - service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+        - party_required: Wait for all parties to call /confirm-release.
+        - service_and_party: Wait for both service completion AND party confirmation.
+      enum:
+      - immediate
+      - service_only
+      - party_required
+      - service_and_party
+
+    RefundMode:
+      type: string
+      description: |
+        Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+        Refunds typically use 'immediate' since parties get their own assets back.
+      enum:
+      - immediate
+      - service_only
+      - party_required
+
+    ConfirmationTimeoutBehavior:
+      type: string
+      description: |
+        What happens when confirmation timeout expires:
+        - auto_confirm: If service events received, auto-confirm parties (default).
+        - dispute: Transition to Disputed state, require arbiter intervention.
+        - refund: Treat as failed, transition to Refunding.
+      enum:
+      - auto_confirm
+      - dispute
+      - refund
+
     # ==========================================================================
     # Core Models
     # ==========================================================================
@@ -952,6 +1067,17 @@ components:
           type: string
           nullable: true
           description: Notes about the resolution
+        releaseMode:
+          $ref: '#/components/schemas/ReleaseMode'
+          description: How release confirmation is handled for this escrow.
+        refundMode:
+          $ref: '#/components/schemas/RefundMode'
+          description: How refund confirmation is handled for this escrow.
+        confirmationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline for party confirmations when in Releasing/Refunding state.
 
     EscrowParty:
       type: object
@@ -1433,6 +1559,18 @@ components:
           nullable: true
           additionalProperties: true
           description: Application metadata
+        releaseMode:
+          allOf:
+            - $ref: '#/components/schemas/ReleaseMode'
+          nullable: true
+          description: |
+            How release confirmation is handled. Defaults to service_only if not specified.
+            Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+        refundMode:
+          allOf:
+            - $ref: '#/components/schemas/RefundMode'
+          nullable: true
+          description: How refund confirmation is handled. Defaults to immediate if not specified.
         idempotencyKey:
           type: string
           description: Idempotency key for this operation
@@ -2311,6 +2449,100 @@ components:
         escrow:
           $ref: '#/components/schemas/EscrowAgreement'
           description: Disputed escrow agreement
+
+    ConfirmReleaseRequest:
+      type: object
+      description: Request to confirm receipt of released assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      - releaseToken
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt.
+        releaseToken:
+          type: string
+          description: The party's release token (received via confirmation shortcut).
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+
+    ConfirmReleaseResponse:
+      type: object
+      description: Response from confirming release receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Released transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
+
+    ConfirmRefundRequest:
+      type: object
+      description: Request to confirm receipt of refunded assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt of refund.
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+
+    ConfirmRefundResponse:
+      type: object
+      description: Response from confirming refund receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Refunded transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
 
     # ==========================================================================
     # Request/Response Models - Arbiter

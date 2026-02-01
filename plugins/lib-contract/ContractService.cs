@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -36,6 +37,7 @@ public partial class ContractService : IContractService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ContractService> _logger;
     private readonly ContractServiceConfiguration _configuration;
+    private readonly ILocationClient _locationClient;
 
     // State store key prefixes
     private const string TEMPLATE_PREFIX = "template:";
@@ -87,6 +89,92 @@ public partial class ContractService : IContractService
     }
 
     /// <summary>
+    /// Parses an ISO 8601 duration string (e.g., "P10D", "PT2H", "P1DT12H") into a TimeSpan.
+    /// </summary>
+    /// <param name="duration">The ISO 8601 duration string.</param>
+    /// <returns>The parsed TimeSpan, or null if the format is invalid or duration is null/empty.</returns>
+    private static TimeSpan? ParseIsoDuration(string? duration)
+    {
+        if (string.IsNullOrEmpty(duration)) return null;
+        try
+        {
+            return System.Xml.XmlConvert.ToTimeSpan(duration);
+        }
+        catch (FormatException)
+        {
+            // Invalid format - log warning handled at call site
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Safely extracts a list of GUIDs from custom terms dictionary.
+    /// Handles JsonElement arrays from JSON deserialization.
+    /// </summary>
+    /// <param name="customTerms">The custom terms dictionary.</param>
+    /// <param name="key">The key to look up.</param>
+    /// <returns>List of parsed GUIDs, or empty list if key not found or parsing fails.</returns>
+    private static List<Guid> GetCustomTermGuidList(IDictionary<string, object>? customTerms, string key)
+    {
+        if (customTerms == null || !customTerms.TryGetValue(key, out var value))
+            return new List<Guid>();
+
+        if (value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            var result = new List<Guid>();
+            foreach (var item in element.EnumerateArray())
+            {
+                if (item.ValueKind == System.Text.Json.JsonValueKind.String &&
+                    Guid.TryParse(item.GetString(), out var guid))
+                {
+                    result.Add(guid);
+                }
+            }
+            return result;
+        }
+        return new List<Guid>();
+    }
+
+    /// <summary>
+    /// Safely extracts a string value from custom terms dictionary.
+    /// Handles both native string values and JsonElement values from JSON deserialization.
+    /// </summary>
+    /// <param name="customTerms">The custom terms dictionary.</param>
+    /// <param name="key">The key to look up.</param>
+    /// <returns>The string value, or null if key not found or not a string.</returns>
+    private static string? GetCustomTermString(IDictionary<string, object>? customTerms, string key)
+    {
+        if (customTerms == null || !customTerms.TryGetValue(key, out var value))
+            return null;
+
+        if (value is string str) return str;
+        if (value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.String)
+            return element.GetString();
+        return null;
+    }
+
+    /// <summary>
+    /// Safely extracts a GUID from a proposed action object.
+    /// Handles JsonElement objects from JSON deserialization.
+    /// </summary>
+    /// <param name="proposedAction">The proposed action object.</param>
+    /// <param name="key">The property key to look up.</param>
+    /// <returns>The parsed GUID, or null if not found or parsing fails.</returns>
+    private static Guid? GetProposedActionGuid(object? proposedAction, string key)
+    {
+        if (proposedAction is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            if (element.TryGetProperty(key, out var prop) &&
+                prop.ValueKind == System.Text.Json.JsonValueKind.String &&
+                Guid.TryParse(prop.GetString(), out var guid))
+            {
+                return guid;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Initializes a new instance of the ContractService.
     /// </summary>
     public ContractService(
@@ -96,7 +184,8 @@ public partial class ContractService : IContractService
         IDistributedLockProvider lockProvider,
         ILogger<ContractService> logger,
         ContractServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ILocationClient locationClient)
     {
         _messageBus = messageBus;
         _navigator = navigator;
@@ -104,6 +193,7 @@ public partial class ContractService : IContractService
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
+        _locationClient = locationClient;
 
         // Register event handlers via partial class if needed
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -139,7 +229,7 @@ public partial class ContractService : IContractService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Validate prebound API count per milestone
+            // Validate prebound API count per milestone and deadline format
             if (body.Milestones != null)
             {
                 foreach (var milestone in body.Milestones)
@@ -153,6 +243,15 @@ public partial class ContractService : IContractService
                         _logger.LogWarning(
                             "Milestone {Code} exceeds prebound API limit: onComplete={OnComplete}, onExpire={OnExpire}, max={Max}",
                             milestone.Code, onCompleteCount, onExpireCount, _configuration.MaxPreboundApisPerMilestone);
+                        return (StatusCodes.BadRequest, null);
+                    }
+
+                    // Validate deadline format if specified (ISO 8601 duration)
+                    if (!string.IsNullOrEmpty(milestone.Deadline) && ParseIsoDuration(milestone.Deadline) == null)
+                    {
+                        _logger.LogWarning(
+                            "Milestone {Code} has invalid deadline format: {Deadline}. Expected ISO 8601 duration (e.g., P10D, PT2H)",
+                            milestone.Code, milestone.Deadline);
                         return (StatusCodes.BadRequest, null);
                     }
                 }
@@ -186,6 +285,7 @@ public partial class ContractService : IContractService
                     Sequence = m.Sequence,
                     Required = m.Required,
                     Deadline = m.Deadline,
+                    DeadlineBehavior = m.DeadlineBehavior,
                     OnComplete = m.OnComplete?.Select(MapPreboundApiToModel).ToList(),
                     OnExpire = m.OnExpire?.Select(MapPreboundApiToModel).ToList()
                 }).ToList(),
@@ -565,6 +665,7 @@ public partial class ContractService : IContractService
                 Required = m.Required,
                 Status = MilestoneStatus.Pending,
                 Deadline = m.Deadline,
+                DeadlineBehavior = m.DeadlineBehavior,
                 OnComplete = m.OnComplete,
                 OnExpire = m.OnExpire
             }).ToList();
@@ -790,6 +891,7 @@ public partial class ContractService : IContractService
                     {
                         model.Status = ContractStatus.Active;
                         model.Milestones[0].Status = MilestoneStatus.Active;
+                        model.Milestones[0].ActivatedAt = DateTimeOffset.UtcNow;
                     }
                     else
                     {
@@ -1191,6 +1293,7 @@ public partial class ContractService : IContractService
                 if (currentIndex >= 0 && currentIndex + 1 < milestones.Count)
                 {
                     milestones[currentIndex + 1].Status = MilestoneStatus.Active;
+                    milestones[currentIndex + 1].ActivatedAt = DateTimeOffset.UtcNow;
                     model.CurrentMilestoneIndex = currentIndex + 1;
                 }
             }
@@ -1711,11 +1814,87 @@ public partial class ContractService : IContractService
                             break;
 
                         case ConstraintType.Territory:
-                            // Would need to check territory overlap with proposed action
+                            if (GetCustomTermBool(customTerms, "territory"))
+                            {
+                                var territoryLocationIds = GetCustomTermGuidList(customTerms, "territoryLocationIds");
+                                var territoryMode = GetCustomTermString(customTerms, "territoryMode") ?? "exclusive";
+                                var proposedLocationId = GetProposedActionGuid(body.ProposedAction, "locationId");
+
+                                if (territoryLocationIds.Count == 0 || !proposedLocationId.HasValue)
+                                {
+                                    // Missing constraint data - cannot evaluate
+                                    _logger.LogWarning(
+                                        "Territory constraint check missing data: territoryLocationIds={Count}, proposedLocationId={HasValue}",
+                                        territoryLocationIds.Count, proposedLocationId.HasValue);
+                                    return (StatusCodes.BadRequest, null);
+                                }
+
+                                // Get location ancestry - let ApiException propagate on failure (T7)
+                                var ancestryResponse = await _locationClient.GetLocationAncestorsAsync(
+                                    new GetLocationAncestorsRequest { LocationId = proposedLocationId.Value },
+                                    cancellationToken);
+
+                                // Build set of all relevant location IDs (proposed + ancestors)
+                                var locationHierarchy = new HashSet<Guid> { proposedLocationId.Value };
+                                foreach (var ancestor in ancestryResponse.Locations)
+                                {
+                                    locationHierarchy.Add(ancestor.LocationId);
+                                }
+
+                                // Check for overlap
+                                var hasOverlap = territoryLocationIds.Any(tid => locationHierarchy.Contains(tid));
+
+                                if (territoryMode == "exclusive" && hasOverlap)
+                                {
+                                    hasViolation = true;
+                                    reason = "Proposed location overlaps with exclusive territory in active contract";
+                                }
+                                else if (territoryMode == "inclusive" && !hasOverlap)
+                                {
+                                    hasViolation = true;
+                                    reason = "Proposed location is outside inclusive territory in active contract";
+                                }
+                            }
                             break;
 
                         case ConstraintType.TimeCommitment:
-                            // Would need to check time commitment overlap
+                            if (GetCustomTermBool(customTerms, "timeCommitment"))
+                            {
+                                var timeCommitmentType = GetCustomTermString(customTerms, "timeCommitmentType") ?? "partial";
+
+                                // Only exclusive commitments can conflict
+                                if (timeCommitmentType == "exclusive")
+                                {
+                                    // Check against all other active exclusive contracts
+                                    foreach (var otherContract in activeContracts)
+                                    {
+                                        if (otherContract.ContractId == contract.ContractId)
+                                            continue;
+
+                                        var otherCustomTerms = otherContract.Terms?.CustomTerms;
+                                        if (otherCustomTerms == null) continue;
+
+                                        var otherHasTimeCommitment = GetCustomTermBool(otherCustomTerms, "timeCommitment");
+                                        var otherTimeCommitmentType = GetCustomTermString(otherCustomTerms, "timeCommitmentType") ?? "partial";
+
+                                        if (!otherHasTimeCommitment || otherTimeCommitmentType != "exclusive")
+                                            continue;
+
+                                        // Check date range overlap: thisFrom <= otherUntil && thisUntil >= otherFrom
+                                        var thisFrom = contract.EffectiveFrom ?? DateTimeOffset.MinValue;
+                                        var thisUntil = contract.EffectiveUntil ?? DateTimeOffset.MaxValue;
+                                        var otherFrom = otherContract.EffectiveFrom ?? DateTimeOffset.MinValue;
+                                        var otherUntil = otherContract.EffectiveUntil ?? DateTimeOffset.MaxValue;
+
+                                        if (thisFrom <= otherUntil && thisUntil >= otherFrom)
+                                        {
+                                            hasViolation = true;
+                                            reason = "Entity has conflicting exclusive time commitments in active contracts";
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                             break;
                     }
                 }
@@ -2292,6 +2471,17 @@ public partial class ContractService : IContractService
 
     private MilestoneInstanceResponse MapMilestoneToResponse(MilestoneInstanceModel model)
     {
+        // Compute absolute deadline from ActivatedAt + duration
+        DateTimeOffset? absoluteDeadline = null;
+        if (model.ActivatedAt.HasValue && !string.IsNullOrEmpty(model.Deadline))
+        {
+            var duration = ParseIsoDuration(model.Deadline);
+            if (duration.HasValue)
+            {
+                absoluteDeadline = model.ActivatedAt.Value.Add(duration.Value);
+            }
+        }
+
         return new MilestoneInstanceResponse
         {
             Code = model.Code,
@@ -2301,7 +2491,9 @@ public partial class ContractService : IContractService
             Status = model.Status,
             CompletedAt = model.CompletedAt,
             FailedAt = model.FailedAt,
-            Deadline = null // Would need to compute absolute deadline
+            ActivatedAt = model.ActivatedAt,
+            Deadline = absoluteDeadline,
+            DeadlineBehavior = model.DeadlineBehavior
         };
     }
 
@@ -2645,6 +2837,7 @@ internal class MilestoneDefinitionModel
     public int Sequence { get; set; }
     public bool Required { get; set; }
     public string? Deadline { get; set; }
+    public MilestoneDeadlineBehavior? DeadlineBehavior { get; set; }
     public List<PreboundApiModel>? OnComplete { get; set; }
     public List<PreboundApiModel>? OnExpire { get; set; }
 }
@@ -2724,6 +2917,8 @@ internal class MilestoneInstanceModel
     public bool Required { get; set; }
     public MilestoneStatus Status { get; set; } = MilestoneStatus.Pending;
     public string? Deadline { get; set; }
+    public MilestoneDeadlineBehavior? DeadlineBehavior { get; set; }
+    public DateTimeOffset? ActivatedAt { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
     public DateTimeOffset? FailedAt { get; set; }
     public List<PreboundApiModel>? OnComplete { get; set; }

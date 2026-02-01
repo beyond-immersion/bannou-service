@@ -616,6 +616,30 @@ DefaultCompression:
   description: Default compression algorithm
 ```
 
+### Rule 7: Single-Line Descriptions Only
+
+Configuration property descriptions MUST be single-line. Multi-line YAML literal blocks (`|`) or folded blocks (`>`) break the C# comment generation.
+
+```yaml
+# BAD: Multi-line description breaks generated C# comments
+DefaultMode:
+  type: string
+  env: MY_SERVICE_DEFAULT_MODE
+  default: automatic
+  description: |
+    Controls the default operating mode.
+    Values: automatic, manual, hybrid
+
+# GOOD: Single-line description
+DefaultMode:
+  type: string
+  env: MY_SERVICE_DEFAULT_MODE
+  default: automatic
+  description: Default operating mode (automatic/manual/hybrid)
+```
+
+**Why this matters**: The configuration generator creates C# XML documentation comments from descriptions. Multi-line descriptions produce malformed `<summary>` blocks that cause compile errors.
+
 ---
 
 ## API Schema Rules
@@ -1015,6 +1039,7 @@ Before submitting schema changes, verify:
 - [ ] No `type: object` properties (use string with documented format)
 - [ ] Optional properties have `nullable: true`
 - [ ] Enum types use `$ref` to API schema
+- [ ] All descriptions are single-line (no `|` or `>` YAML blocks)
 
 ### Event Schemas
 - [ ] Only canonical event definitions (no `$ref` to other service events)

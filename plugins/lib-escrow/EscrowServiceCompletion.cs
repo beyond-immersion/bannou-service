@@ -668,4 +668,372 @@ public partial class EscrowService
             return (StatusCodes.InternalServerError, null);
         }
     }
+
+    /// <summary>
+    /// Confirms receipt of released assets by a party.
+    /// Required when ReleaseMode is party_required or service_and_party.
+    /// Uses optimistic concurrency (ETag) to prevent concurrent state transitions.
+    /// </summary>
+    public async Task<(StatusCodes, ConfirmReleaseResponse?)> ConfirmReleaseAsync(
+        ConfirmReleaseRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var agreementKey = GetAgreementKey(body.EscrowId);
+
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
+
+                if (agreementModel == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+
+                if (agreementModel.Status != EscrowStatus.Releasing)
+                {
+                    _logger.LogWarning("Cannot confirm release for escrow {EscrowId}: status is {Status}, expected Releasing",
+                        body.EscrowId, agreementModel.Status);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                // Validate release token
+                var party = agreementModel.Parties?.FirstOrDefault(p => p.PartyId == body.PartyId);
+                if (party == null)
+                {
+                    _logger.LogWarning("Party {PartyId} not found in escrow {EscrowId}",
+                        body.PartyId, body.EscrowId);
+                    return (StatusCodes.NotFound, null);
+                }
+
+                if (party.ReleaseToken != body.ReleaseToken)
+                {
+                    _logger.LogWarning("Invalid release token for party {PartyId} in escrow {EscrowId}",
+                        body.PartyId, body.EscrowId);
+                    return (StatusCodes.Forbidden, null);
+                }
+
+                // Find and update confirmation record
+                var confirmation = agreementModel.ReleaseConfirmations?
+                    .FirstOrDefault(c => c.PartyId == body.PartyId);
+                if (confirmation == null)
+                {
+                    _logger.LogWarning("No confirmation record for party {PartyId} in escrow {EscrowId}",
+                        body.PartyId, body.EscrowId);
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                if (confirmation.PartyConfirmed)
+                {
+                    // Already confirmed - return success idempotently
+                    return (StatusCodes.OK, new ConfirmReleaseResponse
+                    {
+                        EscrowId = body.EscrowId,
+                        Confirmed = true,
+                        AllPartiesConfirmed = CheckAllConfirmationsComplete(agreementModel),
+                        Status = agreementModel.Status
+                    });
+                }
+
+                var now = DateTimeOffset.UtcNow;
+                confirmation.PartyConfirmed = true;
+                confirmation.PartyConfirmedAt = now;
+
+                // Check if all required confirmations are complete
+                var allConfirmed = CheckAllConfirmationsComplete(agreementModel);
+                var previousStatus = agreementModel.Status;
+
+                if (allConfirmed)
+                {
+                    agreementModel.Status = EscrowStatus.Released;
+                    agreementModel.CompletedAt = now;
+                    agreementModel.Resolution = EscrowResolution.Released;
+                }
+
+                var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification during confirm release for escrow {EscrowId}, retrying (attempt {Attempt})",
+                        body.EscrowId, attempt + 1);
+                    continue;
+                }
+
+                if (allConfirmed)
+                {
+                    // Update status index
+                    var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                    await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
+
+                    var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Released)}:{body.EscrowId}";
+                    var statusEntry = new StatusIndexEntry
+                    {
+                        EscrowId = body.EscrowId,
+                        Status = EscrowStatus.Released,
+                        ExpiresAt = agreementModel.ExpiresAt,
+                        AddedAt = now
+                    };
+                    await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
+
+                    // Decrement pending counts
+                    foreach (var p in agreementModel.Parties ?? new List<EscrowPartyModel>())
+                    {
+                        await DecrementPartyPendingCountAsync(p.PartyId, p.PartyType, cancellationToken);
+                    }
+
+                    // Publish released event
+                    await PublishReleasedEventAsync(agreementModel, now, cancellationToken);
+
+                    _logger.LogInformation("Escrow {EscrowId} fully released after all party confirmations",
+                        body.EscrowId);
+                }
+                else
+                {
+                    _logger.LogInformation("Party {PartyId} confirmed release for escrow {EscrowId}, awaiting other confirmations",
+                        body.PartyId, body.EscrowId);
+                }
+
+                return (StatusCodes.OK, new ConfirmReleaseResponse
+                {
+                    EscrowId = body.EscrowId,
+                    Confirmed = true,
+                    AllPartiesConfirmed = allConfirmed,
+                    Status = agreementModel.Status
+                });
+            }
+
+            _logger.LogWarning("Failed to confirm release for escrow {EscrowId} after {MaxRetries} attempts",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
+            return (StatusCodes.Conflict, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to confirm release for escrow {EscrowId}", body.EscrowId);
+            await EmitErrorAsync("ConfirmRelease", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Confirms receipt of refunded assets by a party.
+    /// Required when RefundMode is party_required.
+    /// Uses optimistic concurrency (ETag) to prevent concurrent state transitions.
+    /// </summary>
+    public async Task<(StatusCodes, ConfirmRefundResponse?)> ConfirmRefundAsync(
+        ConfirmRefundRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var agreementKey = GetAgreementKey(body.EscrowId);
+
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
+
+                if (agreementModel == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+
+                if (agreementModel.Status != EscrowStatus.Refunding)
+                {
+                    _logger.LogWarning("Cannot confirm refund for escrow {EscrowId}: status is {Status}, expected Refunding",
+                        body.EscrowId, agreementModel.Status);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                // Verify party is a depositor
+                var party = agreementModel.Parties?.FirstOrDefault(p => p.PartyId == body.PartyId);
+                if (party == null)
+                {
+                    _logger.LogWarning("Party {PartyId} not found in escrow {EscrowId}",
+                        body.PartyId, body.EscrowId);
+                    return (StatusCodes.NotFound, null);
+                }
+
+                // Find and update confirmation record
+                var confirmation = agreementModel.ReleaseConfirmations?
+                    .FirstOrDefault(c => c.PartyId == body.PartyId);
+                if (confirmation == null)
+                {
+                    _logger.LogWarning("No confirmation record for party {PartyId} in escrow {EscrowId}",
+                        body.PartyId, body.EscrowId);
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                if (confirmation.PartyConfirmed)
+                {
+                    // Already confirmed - return success idempotently
+                    return (StatusCodes.OK, new ConfirmRefundResponse
+                    {
+                        EscrowId = body.EscrowId,
+                        Confirmed = true,
+                        AllPartiesConfirmed = CheckAllRefundConfirmationsComplete(agreementModel),
+                        Status = agreementModel.Status
+                    });
+                }
+
+                var now = DateTimeOffset.UtcNow;
+                confirmation.PartyConfirmed = true;
+                confirmation.PartyConfirmedAt = now;
+
+                // Check if all required confirmations are complete
+                var allConfirmed = CheckAllRefundConfirmationsComplete(agreementModel);
+                var previousStatus = agreementModel.Status;
+
+                if (allConfirmed)
+                {
+                    agreementModel.Status = EscrowStatus.Refunded;
+                    agreementModel.CompletedAt = now;
+                    agreementModel.Resolution = EscrowResolution.Refunded;
+                }
+
+                var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification during confirm refund for escrow {EscrowId}, retrying (attempt {Attempt})",
+                        body.EscrowId, attempt + 1);
+                    continue;
+                }
+
+                if (allConfirmed)
+                {
+                    // Update status index
+                    var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                    await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
+
+                    var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Refunded)}:{body.EscrowId}";
+                    var statusEntry = new StatusIndexEntry
+                    {
+                        EscrowId = body.EscrowId,
+                        Status = EscrowStatus.Refunded,
+                        ExpiresAt = agreementModel.ExpiresAt,
+                        AddedAt = now
+                    };
+                    await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
+
+                    // Decrement pending counts
+                    foreach (var p in agreementModel.Parties ?? new List<EscrowPartyModel>())
+                    {
+                        await DecrementPartyPendingCountAsync(p.PartyId, p.PartyType, cancellationToken);
+                    }
+
+                    // Publish refunded event
+                    await PublishRefundedEventAsync(agreementModel, now, cancellationToken);
+
+                    _logger.LogInformation("Escrow {EscrowId} fully refunded after all party confirmations",
+                        body.EscrowId);
+                }
+                else
+                {
+                    _logger.LogInformation("Party {PartyId} confirmed refund for escrow {EscrowId}, awaiting other confirmations",
+                        body.PartyId, body.EscrowId);
+                }
+
+                return (StatusCodes.OK, new ConfirmRefundResponse
+                {
+                    EscrowId = body.EscrowId,
+                    Confirmed = true,
+                    AllPartiesConfirmed = allConfirmed,
+                    Status = agreementModel.Status
+                });
+            }
+
+            _logger.LogWarning("Failed to confirm refund for escrow {EscrowId} after {MaxRetries} attempts",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
+            return (StatusCodes.Conflict, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to confirm refund for escrow {EscrowId}", body.EscrowId);
+            await EmitErrorAsync("ConfirmRefund", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #region Helper Methods for Confirmation
+
+    /// <summary>
+    /// Checks if all release confirmations are complete based on ReleaseMode.
+    /// </summary>
+    private static bool CheckAllConfirmationsComplete(EscrowAgreementModel agreement)
+    {
+        if (agreement.ReleaseConfirmations == null || !agreement.ReleaseConfirmations.Any())
+        {
+            return true;
+        }
+
+        return agreement.ReleaseMode switch
+        {
+            ReleaseMode.ServiceOnly => agreement.ReleaseConfirmations.All(c => c.ServiceConfirmed),
+            ReleaseMode.PartyRequired => agreement.ReleaseConfirmations.All(c => c.PartyConfirmed),
+            ReleaseMode.ServiceAndParty => agreement.ReleaseConfirmations.All(c => c.ServiceConfirmed && c.PartyConfirmed),
+            _ => true // Immediate mode should not reach here
+        };
+    }
+
+    /// <summary>
+    /// Checks if all refund confirmations are complete based on RefundMode.
+    /// </summary>
+    private static bool CheckAllRefundConfirmationsComplete(EscrowAgreementModel agreement)
+    {
+        if (agreement.ReleaseConfirmations == null || !agreement.ReleaseConfirmations.Any())
+        {
+            return true;
+        }
+
+        return agreement.RefundMode switch
+        {
+            RefundMode.ServiceOnly => agreement.ReleaseConfirmations.All(c => c.ServiceConfirmed),
+            RefundMode.PartyRequired => agreement.ReleaseConfirmations.All(c => c.PartyConfirmed),
+            _ => true // Immediate mode should not reach here
+        };
+    }
+
+    /// <summary>
+    /// Publishes the EscrowReleasedEvent.
+    /// </summary>
+    private async Task PublishReleasedEventAsync(EscrowAgreementModel agreementModel, DateTimeOffset timestamp, CancellationToken cancellationToken)
+    {
+        var releaseEvent = new EscrowReleasedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = timestamp,
+            EscrowId = agreementModel.EscrowId,
+            Recipients = agreementModel.ReleaseAllocations?.Select(a => new RecipientInfo
+            {
+                PartyId = a.RecipientPartyId,
+                PartyType = a.RecipientPartyType,
+                AssetSummary = GenerateAssetSummary(a.Assets)
+            }).ToList() ?? new List<RecipientInfo>(),
+            Resolution = EscrowResolution.Released,
+            CompletedAt = timestamp
+        };
+        await _messageBus.TryPublishAsync(EscrowTopics.EscrowReleased, releaseEvent, cancellationToken);
+    }
+
+    /// <summary>
+    /// Publishes the EscrowRefundedEvent.
+    /// </summary>
+    private async Task PublishRefundedEventAsync(EscrowAgreementModel agreementModel, DateTimeOffset timestamp, CancellationToken cancellationToken)
+    {
+        var refundEvent = new EscrowRefundedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = timestamp,
+            EscrowId = agreementModel.EscrowId,
+            Depositors = agreementModel.Deposits?.Select(d => new DepositorInfo
+            {
+                PartyId = d.PartyId,
+                PartyType = d.PartyType,
+                AssetSummary = GenerateAssetSummary(d.Assets?.Assets)
+            }).ToList() ?? new List<DepositorInfo>(),
+            Resolution = EscrowResolution.Refunded,
+            CompletedAt = timestamp
+        };
+        await _messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
+    }
+
+    #endregion
 }

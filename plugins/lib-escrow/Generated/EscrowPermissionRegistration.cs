@@ -247,6 +247,36 @@ public static class EscrowPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/escrow/confirm-release",
+            Method = ServiceEndpointMethod.POST,
+            Description = "confirmRelease",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/escrow/confirm-refund",
+            Method = ServiceEndpointMethod.POST,
+            Description = "confirmRefund",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/escrow/resolve",
             Method = ServiceEndpointMethod.POST,
             Description = "resolve",
