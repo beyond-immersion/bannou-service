@@ -16,7 +16,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 | lib-state (IStateStoreFactory) | All session data, refresh tokens, OAuth links, and password reset tokens in Redis |
 | lib-messaging (IMessageBus) | Publishing session lifecycle events and audit events |
 | lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password |
-| lib-subscription (ISubscriptionClient) | Fetches active subscriptions during token generation and subscription change propagation |
+| lib-subscription (ISubscriptionClient) | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions; see Bugs section |
 | AppConfiguration (DI singleton) | JWT secret, issuer, audience, and ServiceDomain via constructor-injected config |
 
 **External NuGet dependencies:**
@@ -68,7 +68,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 |-------|---------|--------|
 | `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, and publishes `session.invalidated` |
 | `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session |
-| `subscription.updated` | `HandleSubscriptionUpdatedAsync` | Re-fetches subscriptions from Subscription service, updates all sessions with new authorizations, publishes `session.updated` per session |
+| `subscription.updated` | `HandleSubscriptionUpdatedAsync` | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions; see Bugs section |
 
 ## Configuration
 
@@ -107,7 +107,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `AuthServiceConfiguration` | Typed access to auth-specific config (OAuth, mock, TTLs) |
 | `AppConfiguration` | App-wide config: JWT secret/issuer/audience, ServiceDomain, EffectiveAppId |
 | `IAccountClient` | Service mesh client for account CRUD operations |
-| `ISubscriptionClient` | Service mesh client for subscription queries |
+| `ISubscriptionClient` | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
 | `IStateStoreFactory` | Redis state store access (sessions, password resets, account-session indexes) |
 | `IMessageBus` | Audit event publishing |
 | `ITokenService` | JWT generation, refresh token management, token validation |
@@ -150,9 +150,9 @@ Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOA
 ```
 Login/Register/OAuth ──► TokenService.GenerateAccessTokenAsync()
                               │
-                              ├─ SubscriptionClient.QueryCurrent() ──► authorizations
+                              ├─ ⚠️ SubscriptionClient.QueryCurrent() ──► WRONG (DELETE THIS)
                               │
-                              ├─ session:{key} ◄── SessionDataModel (roles, auths, expiry)
+                              ├─ session:{key} ◄── SessionDataModel (roles only, not "auths")
                               │
                               ├─ account-sessions:{accountId} ◄── [key1, key2, ...]
                               │
@@ -166,8 +166,8 @@ Login/Register/OAuth ──► TokenService.GenerateAccessTokenAsync()
                                      ├─ Verify JWT signature
                                      ├─ Extract session_key (opaque Redis lookup key)
                                      ├─ Load session from Redis via SessionService
-                                     ├─ Validate data integrity (null roles/auths = corruption)
-                                     └─ Return roles + authorizations + remaining time
+                                     ├─ Validate data integrity (null roles = corruption)
+                                     └─ Return roles + remaining time (NOT authorizations)
 
 account.deleted event ──► SessionService.InvalidateAllSessions ──► session.invalidated event
                                                                           │
@@ -202,7 +202,16 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **Subscription integration is architecturally wrong (SERVICE_HIERARCHY violation - DELETE)**: Auth has NO business with subscriptions. The entire subscription integration must be deleted:
+   - Remove `ISubscriptionClient` from `AuthService.cs` constructor
+   - Remove `ISubscriptionClient` from `Services/TokenService.cs` constructor
+   - Delete `PropagateSubscriptionChangesAsync` method from `AuthService.cs`
+   - Delete `HandleSubscriptionUpdatedAsync` event handler from `AuthServiceEvents.cs`
+   - Remove subscription query logic from `TokenService.GenerateAccessTokenAsync`
+   - Remove `subscription.updated` from `schemas/auth-events.yaml` subscriptions
+   - Remove "authorizations" field from session state model if it exists solely for this
+
+   **Why this is wrong**: Auth's responsibility is JWTs and roles ONLY. Roles change only via Auth's own APIs. Subscription-based access is handled by services checking subscriptions directly and calling Permission to grant states. The pattern `stubName:authorized` should not exist. See `docs/reference/SERVICE_HIERARCHY_VIOLATIONS.md` entry #3 for full analysis.
 
 ### Intentional Quirks
 

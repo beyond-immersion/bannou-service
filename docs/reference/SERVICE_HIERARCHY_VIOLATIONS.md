@@ -1,319 +1,335 @@
 # Service Hierarchy Violations Tracker
 
 > **Created**: 2026-02-01
-> **Purpose**: Track and remediate violations of the service dependency hierarchy defined in SERVICE_HIERARCHY.md
+> **Updated**: 2026-02-02 (comprehensive audit with new 5-layer model)
+> **Purpose**: Track and remediate violations of the service dependency hierarchy
 
-This document tracks known violations of the service hierarchy, their intended purpose, and suggested remediation patterns.
+This document tracks known violations of the service hierarchy, their severity under the 5-layer model, and suggested remediation patterns.
+
+---
+
+## Quick Reference: Layer Assignments (v2.0)
+
+| Layer | Name | Services |
+|-------|------|----------|
+| **L0** | Infrastructure | lib-state, lib-messaging, lib-mesh |
+| **L1** | App Foundation | account, auth, connect, permission, contract |
+| **L2** | Game Foundation | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory |
+| **L3** | App Features | asset, telemetry, orchestrator, documentation, website, testing, mesh, messaging, state |
+| **L4** | Game Features | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, game-session, escrow, character-personality, character-history, character-encounter, realm-history |
+
+\* Analytics is L4 for event consumption only - observes but doesn't invoke game services. Nothing should depend on Analytics.
+
+**Not in hierarchy**: lib-common (shared types only), lib-*.tests (test projects)
 
 ---
 
 ## Violation Categories
 
-1. **Client Injection Violations**: Service A (lower layer) injects IServiceBClient where B is a higher layer
-2. **Event Subscription Violations**: Service A subscribes to events defined by higher-layer Service B
-3. **Suggested/Planned Violations**: Deep dive docs or issues suggesting patterns that would violate hierarchy
+1. **Foundation → Feature**: L1/L2 service depends on L3/L4 service (CRITICAL)
+2. **App Feature → Game**: L3 service depends on L2/L4 service (CRITICAL - domain violation)
+3. **Feature → Feature (no graceful handling)**: L3/L4 depends on L3/L4 without null-checking (MODERATE)
+4. **Event Subscription Violations**: Lower layer subscribes to higher layer events (CRITICAL)
 
 ---
 
-## Quick Reference: Layer Assignments
+## Confirmed Client Injection Violations
 
-| Layer | Services |
-|-------|----------|
-| **L0** | lib-state, lib-messaging, lib-mesh |
-| **L1** | telemetry, orchestrator, analytics |
-| **L2a** | account, game-service, relationship-type, species, connect |
-| **L2b** | auth, realm, relationship, permission |
-| **L2c** | character, location, currency, contract |
-| **L3** | character-personality, character-history, character-encounter, realm-history, subscription, game-session, escrow, inventory, item |
-| **L4** | actor, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, asset, music, documentation, website |
+### 1. Character → Actor/Encounter (CRITICAL)
 
----
-
-## Confirmed Violations
-
-### 1. Character → Actor/Encounter/Contract (CONFIRMED)
-
-**Service**: lib-character (Layer 2c)
+**Service**: lib-character (L2 Game Foundation)
 **Violating Dependencies**:
-- `IActorClient` (Layer 4)
-- `ICharacterEncounterClient` (Layer 3)
-- `IContractClient` (Layer 2c - peer, questionable)
+- `IActorClient` (L4)
+- `ICharacterEncounterClient` (L4)
 
 **Location**: `CharacterService.cs` constructor, `CheckCharacterReferencesAsync` method
 
-**Original Intent**: Count references to a character for cleanup eligibility. Character needs to know if any actors, encounters, or contracts reference it before allowing deletion.
+**Violation Type**: L2 → L4 (Foundation depending on Feature)
 
-**Can this be inverted?**: Yes
+**Original Intent**: Count references to a character for cleanup eligibility.
 
-**Suggested Fix**:
-Character defines `character.reference.registered` and `character.reference.unregistered` events in its schema. Actor, Encounter, and Contract services publish to these topics when they create/delete references to characters. Character maintains reference counts by consuming its own events.
+**Suggested Fix**: Character defines `character.reference.registered/unregistered` events. Actor and Encounter publish to these topics. Character maintains reference counts by consuming its own events.
 
-**Status**: Documented in CHARACTER.md, fix pending
+**Status**: Documented in #259, fix pending
 
 ---
 
-### 2. Character → CharacterPersonality/CharacterHistory (CONFIRMED)
+### 2. Character → CharacterPersonality/CharacterHistory (CRITICAL)
 
-**Service**: lib-character (Layer 2c)
+**Service**: lib-character (L2 Game Foundation)
 **Violating Dependencies**:
-- `ICharacterPersonalityClient` (Layer 3)
-- `ICharacterHistoryClient` (Layer 3)
+- `ICharacterPersonalityClient` (L4)
+- `ICharacterHistoryClient` (L4)
 
 **Location**: `CharacterService.cs` constructor, `GetEnrichedCharacterAsync` and `CompressCharacterAsync` methods
 
-**Is this a clear violation?**: Yes. Layer 2c depending on Layer 3.
+**Violation Type**: L2 → L4 (Foundation depending on Feature)
 
 **Original Intent**:
-1. **Enrichment**: When fetching a character, optionally include personality traits, combat preferences, and backstory from extension services.
-2. **Compression**: When archiving a dead character, summarize personality/history data and optionally delete source data.
-
-**Can this be inverted?**: Partially.
+1. **Enrichment**: Optionally include personality/history when fetching character
+2. **Compression**: Summarize data when archiving dead character
 
 **Suggested Fix**:
-- **For enrichment**: This is an aggregation pattern. Consider creating a dedicated "CharacterAggregator" in Layer 4 that fetches from Character + extensions. Clients call the aggregator, not Character directly for enriched data.
-- **For compression**: Character publishes `character.compression.requested` event. CharacterPersonality and CharacterHistory subscribe, generate their summaries, and publish `character.compression.data-ready` with the summary text. Character collects responses and creates archive.
+- **Enrichment**: Create "CharacterAggregator" in L4 that fetches from Character + extensions. Clients call aggregator for enriched data.
+- **Compression**: Character publishes `character.compression.requested`. Extensions subscribe, generate summaries, publish `character.compression.data-ready`.
 
-**Status**: Needs design discussion
+**Status**: Documented in #259, needs design discussion
 
 ---
 
-### 3. Auth → Subscription (CONFIRMED)
+### 3. Auth → Subscription (CRITICAL - DELETE)
 
-**Service**: lib-auth (Layer 2b)
+**Service**: lib-auth (L1 App Foundation)
 **Violating Dependencies**:
-- `ISubscriptionClient` (Layer 3)
+- `ISubscriptionClient` (L2)
 
-**Location**: `AuthService.cs` line 1210, `PropagateSubscriptionChangesAsync` method
+**Location**:
+- `AuthService.cs` constructor - `ISubscriptionClient` injection
+- `AuthService.cs` `PropagateSubscriptionChangesAsync` method
+- `AuthServiceEvents.cs` `HandleSubscriptionUpdatedAsync` method
+- `Services/TokenService.cs` constructor - `ISubscriptionClient` injection
+- `schemas/auth-events.yaml` subscription to `subscription.updated`
 
-**Is this a clear violation?**: Yes. Layer 2b depending on Layer 3.
+**Violation Type**: L1 → L2 (App Foundation depending on Game Foundation) - **ARCHITECTURAL ERROR**
 
-**Original Intent**: When subscription state changes, Auth needs to update session authorization state. It queries Subscription service to get current subscriptions and updates all sessions for that account.
+**Why This Is Especially Wrong**:
+Auth (L1) is app-level infrastructure that should work for ANY deployment, including non-game deployments. Subscription (L2) is game-specific. Auth has NO business with subscriptions.
 
-**Can this be inverted?**: Yes.
+**Suggested Fix**: **DELETE** all subscription-related code from Auth:
+- Remove `ISubscriptionClient` from both `AuthService.cs` and `TokenService.cs`
+- Delete `PropagateSubscriptionChangesAsync` method
+- Delete `HandleSubscriptionUpdatedAsync` event handler
+- Remove `subscription.updated` from `auth-events.yaml`
 
-**Suggested Fix**:
-The `subscription.updated` event (which Auth already subscribes to) should include ALL the authorization data Auth needs in the event payload itself - specifically the `stubName:authorized` formatted strings. Auth shouldn't need to call back to Subscription; the event should be self-contained.
-
-Current flow: Auth receives `subscription.updated` → calls `ISubscriptionClient.QueryCurrentSubscriptionsAsync` → formats data
-Fixed flow: Subscription publishes `subscription.updated` with formatted authorizations included → Auth just uses event data
-
-**Status**: Needs fix
+**Status**: **P0 - Needs immediate deletion**
 
 ---
 
-### 4. Species → Character (CONFIRMED)
+### 4. Analytics → Multiple L2/L4 Services (RESOLVED - RECLASSIFIED)
 
-**Service**: lib-species (Layer 2a)
-**Violating Dependencies**:
-- `ICharacterClient` (Layer 2c)
+**Service**: lib-analytics (now L4 Game Features)
+**Former Violating Dependencies**:
+- `IGameServiceClient` (L2)
+- `IGameSessionClient` (L4)
+- `IRealmClient` (L2)
+- `ICharacterClient` (L2)
 
-**Location**: `SpeciesService.cs` lines 547, 698, 1057, 1072
+**Resolution**: Analytics reclassified from L3 to L4.
 
-**Is this a clear violation?**: Yes. Layer 2a depending on Layer 2c (higher sub-layer).
+**Rationale**: Analytics is L4 not because it *depends* on game services in the traditional sense, but because it *observes* them via event subscriptions. Key characteristics:
+- Analytics consumes events from L2/L4 (game-session, character-history, realm-history)
+- Analytics does NOT invoke L2/L4 service APIs for its core function (only event consumption)
+- If any "dependency" is disabled, Analytics gracefully continues (events just stop arriving)
+- Analytics should be the most optional plugin - nothing in L1/L2/L3 should call it
+- Only L4 services like Matchmaking have legitimate reasons to call Analytics APIs
 
-**Original Intent**:
-1. Check if any characters use a species before allowing deletion (reference counting)
-2. During species merge, update all characters from old species to new species
-
-**Can this be inverted?**: Yes, same pattern as Character reference counting.
-
-**Suggested Fix**:
-Species defines `species.reference.registered` and `species.reference.unregistered` events. Character publishes to these when creating/updating/deleting characters. Species maintains reference counts.
-
-For species merge: Species publishes `species.merge.requested` event with old/new species IDs. Character subscribes and handles the migration of its own data.
-
-**Status**: Needs fix
+**Status**: ✅ RESOLVED by reclassification to L4
 
 ---
 
-### 5. RelationshipType → Relationship (CONFIRMED)
+### 5. Website → Game Services (DESIGN VIOLATION - STUB HIDES IT)
 
-**Service**: lib-relationship-type (Layer 2a)
-**Violating Dependencies**:
-- `IRelationshipClient` (Layer 2b)
+**Service**: lib-website (L3 App Features)
+**Current Implementation**: Complete stub - all methods return `NotImplemented`
 
-**Location**: `RelationshipTypeService.cs` lines 624, 974, 994
+**Violation Type**: L3 → L2 (App Feature depending on Game Foundation) - **DESIGN VIOLATION**
 
-**Is this a clear violation?**: Yes. Layer 2a depending on Layer 2b.
+**Why It's Hidden**: The service is currently a stub with no client injections. Every method just logs and returns `NotImplemented`. The violation will manifest when someone implements these endpoints.
 
-**Original Intent**:
-1. Check if any relationships use a type before deletion (reference counting)
-2. During type merge, update all relationships from old type to new type
+**Schema-Defined Endpoints That Require L2 Dependencies**:
+- `GetAccountCharactersAsync` → needs `ICharacterClient` (L2)
+- `GetSubscriptionAsync` → needs `ISubscriptionClient` (L2)
+- `GetAccountSubscriptionAsync` → needs `ISubscriptionClient` (L2)
 
-**Can this be inverted?**: Yes, same pattern.
+**The Problem**: The API schema (`website-api.yaml`) was designed without considering hierarchy constraints. When implemented, Website (L3) would need to call Character and Subscription (L2), which violates the domain boundary.
 
-**Suggested Fix**:
-RelationshipType defines `relationship-type.reference.registered/unregistered` events. Relationship publishes to these. For merge: RelationshipType publishes `relationship-type.merge.requested`, Relationship subscribes and migrates.
+**Options**:
+1. **Remove game endpoints from Website schema**: Website only handles CMS pages, news, downloads, contact forms - no game data
+2. **Create game-portal (L4)**: Move character/subscription endpoints to a dedicated L4 service
+3. **Redesign as aggregation via events**: Website subscribes to events for cached views (complex)
 
-**Status**: Needs fix
+**Suggested Fix**: Option 1 or 2 - Remove these endpoints from Website schema, or create a separate "game-portal" L4 service for game-specific web views.
+
+**Status**: P1 - Schema needs redesign before implementation
 
 ---
 
-### 6. GameSession → Voice (CONFIRMED)
+### 6. GameSession → Voice (MODERATE - DESIGN ISSUE)
 
-**Service**: lib-game-session (Layer 3)
-**Violating Dependencies**:
-- `IVoiceClient` (Layer 4)
+**Service**: lib-game-session (L4 Game Features)
+**Dependency**: `IVoiceClient` (L4)
 
 **Location**: `GameSessionService.cs` lines 301-306, 796-840, 1205-1239
 
-**Is this a clear violation?**: Yes. Layer 3 depending on Layer 4.
+**Violation Type**: L4 → L4 (technically allowed with graceful degradation)
 
-**Original Intent**: Game sessions can optionally have voice chat rooms. When creating/ending sessions, voice rooms are created/destroyed.
+**Issue**: While L4 → L4 is technically allowed, this dependency should be inverted. GameSession shouldn't know about Voice - Voice should react to GameSession events.
 
-**Can this be inverted?**: Yes.
+**Original Intent**: Create/destroy voice rooms when sessions start/end.
 
-**Suggested Fix**:
-Voice subscribes to `game-session.created` and `game-session.ended` events. When a session is created with `VoiceEnabled=true`, Voice autonomously creates a room and publishes `voice.room.created` with the room ID. GameSession subscribes to capture the room ID for its state.
+**Suggested Fix**: Voice subscribes to `game-session.created` and `game-session.ended` events. When session has `VoiceEnabled=true`, Voice creates room and publishes `voice.room.created`. GameSession optionally subscribes to capture room ID.
 
-Alternative: Re-classify Voice as Layer 3 if it's tightly coupled to game sessions.
-
-**Status**: Needs design discussion
+**Status**: P3 - Design improvement
 
 ---
 
-### 7. Analytics → Multiple L2/L3 Services (DESIGN DISCUSSION)
+## Confirmed Event Subscription Violations
 
-**Service**: lib-analytics (Layer 1)
-**Dependencies**:
-- `IGameServiceClient` (Layer 2a)
-- `IGameSessionClient` (Layer 3)
-- `IRealmClient` (Layer 2b)
-- `ICharacterClient` (Layer 2c)
+### 7. Auth subscribes to subscription.updated (CRITICAL)
 
-**Location**: `AnalyticsService.cs` constructor, lines 1312, 1411, 1480
+**Subscriber**: lib-auth (L1 App Foundation)
+**Topic**: `subscription.updated`
+**Publisher**: lib-subscription (L2 Game Foundation)
 
-**Is this a clear violation?**: Nuanced. L1 is "observability" and should be optional.
+**Location**: `schemas/auth-events.yaml`
 
-**Original Intent**: Analytics receives events and needs to look up additional context (which game service a session belongs to, which realm a character is in) for proper categorization.
+**Violation Type**: L1 subscribing to L2 event
 
-**Can this be inverted?**: Yes, via event enrichment.
+**Why This Is Wrong**: Same as #3 above - Auth has no business with subscriptions.
 
-**Suggested Fix**:
-Events should be "fat" - include all context Analytics needs at publish time. Instead of:
-```csharp
-// Publisher sends minimal event
-await _messageBus.PublishAsync("game-session.created", new { SessionId = id });
-// Analytics has to call back to get GameServiceId, RealmId, etc.
-```
-
-Do:
-```csharp
-// Publisher includes all relevant context
-await _messageBus.PublishAsync("game-session.created", new {
-    SessionId = id,
-    GameServiceId = gsId,
-    RealmId = realmId,
-    // etc.
-});
-// Analytics has everything it needs
-```
-
-This eliminates L1 dependencies on L2/L3 clients.
-
-**Status**: Needs design discussion - significant change to event schemas
+**Status**: Part of #3 deletion - **P0**
 
 ---
 
-### 8. Connect → Auth (QUESTIONABLE)
+### 8-10. Analytics event subscriptions (RESOLVED - RECLASSIFIED)
 
-**Service**: lib-connect (Layer 2a)
-**Dependency**: `IAuthClient` (Layer 2b)
+**Former Violations**: Analytics (when L3) subscribing to L4 events:
+- `game-session.action.performed`, `game-session.created`, `game-session.deleted`
+- `character-history.participation.recorded`, `character-history.backstory.*`
+- `realm-history.participation.recorded`, `realm-history.lore.*`
 
-**Location**: `ConnectService.cs` line 481
+**Resolution**: Analytics reclassified to L4. As an L4 service, it can freely subscribe to L2/L4 events.
 
-**Is this a clear violation?**: Questionable.
-
-**Original Intent**: When a WebSocket connection is established with a Bearer token, Connect calls Auth to validate the JWT and get session info.
-
-**Analysis**:
-Connect is the edge gateway. Auth handles authentication. When someone connects, their token must be validated. This seems like a fundamental flow where the gateway (Connect) needs authentication (Auth).
-
-Options:
-1. **Accept it**: Token validation is a fundamental cross-cutting concern
-2. **Move Connect to L2b**: Peers with Auth
-3. **Invert via shared infrastructure**: Token validation could be infrastructure (L0) rather than a service call
-
-**Status**: Needs discussion - may be acceptable as-is
+**Status**: ✅ RESOLVED by reclassification (part of #4)
 
 ---
 
-## Event Subscription Violations
+## Resolved in v2.0 (No Longer Violations)
 
-### 9. Auth subscribes to `subscription.updated` (CONFIRMED)
+| Old Concern | Old Status | New Status | Reason |
+|-------------|------------|------------|--------|
+| Species → Character | L2a → L2c | **OK** | Both L2, same-layer allowed |
+| RelationshipType → Relationship | L2a → L2b | **OK** | Both L2, same-layer allowed |
+| Connect → Auth | L2a → L2b | **OK** | Both L1, same-layer allowed |
+| Character → Contract | Peer dependency | **OK** | L2 → L1, correct direction |
+| Subscription → GameService | - | **OK** | Both L2, same-layer allowed |
+| Inventory → Item | - | **OK** | Both L2, same-layer allowed |
+| Escrow → Currency/Item | - | **OK** | L4 → L2, correct direction |
+| Actor → Character | - | **OK** | L4 → L2, correct direction |
+| Matchmaking → GameSession | - | **OK** | L4 → L4, with graceful degradation |
+| Analytics → L2/L4 | L3 → L2/L4 | **OK** | Reclassified to L4 (event-consumption-only) |
+| Analytics event subs | L3 → L4 events | **OK** | Reclassified to L4, can subscribe to any events |
 
-**Service**: lib-auth (Layer 2b)
-**Subscribes to**: `subscription.updated` from Subscription (Layer 3)
-
-**Location**: `schemas/auth-events.yaml` line 434
-
-**Is this a clear violation?**: Yes - same issue as #3 above.
-
-**Original Intent**: When subscriptions change, Auth needs to update session authorizations.
-
-**Suggested Fix**: Same as #3 - the event payload should include all data Auth needs. Auth shouldn't need to know about Subscription's API, just its event schema.
-
-**Note**: Subscribing to an event is LESS of a violation than injecting a client, because the coupling is weaker (just the event schema, not the full API). But it still creates a dependency on the higher layer's event contract.
-
-**Status**: Part of fix for #3
-
----
-
-### 10. Analytics subscribes to L3 events (DESIGN DISCUSSION)
-
-**Service**: lib-analytics (Layer 1)
-**Subscribes to**:
-- `game-session.action.performed` from GameSession (Layer 3)
-- `game-session.created` from GameSession (Layer 3)
-- `game-session.deleted` from GameSession (Layer 3)
-- `character-history.*` events from CharacterHistory (Layer 3)
-
-**Location**: `schemas/analytics-events.yaml`
-
-**Is this a clear violation?**: This is the approved pattern for L1 - observability services SHOULD consume events from all layers. The issue is they shouldn't INJECT clients (issue #7).
-
-**Status**: Event subscriptions are OK; client injections need fixing
+**Note**: Website is NOT resolved - the stub implementation hides a design-level violation. See #5.
 
 ---
 
----
+## Event Subscription Analysis
 
-## Potential Issues (Need Discussion)
+### Acceptable Patterns
 
-### Layer 2 Sub-Layer Dependencies
+**L4 subscribing to L1/L2/L3 events**: Correct direction
+- Achievement subscribes to `analytics.score.updated` (L4 → L3) ✓
+- Leaderboard subscribes to `analytics.rating.updated` (L4 → L3) ✓
+- Actor subscribes to `character.deleted` (L4 → L2) ✓
+- Actor subscribes to `session.disconnected` (L4 → L1) ✓
+- GameSession subscribes to `subscription.updated` (L4 → L2) ✓
+- CharacterEncounter subscribes to `character.deleted` (L4 → L2) ✓
+- Escrow subscribes to `contract.fulfilled/terminated` (L4 → L1) ✓
 
-Several L2a services depend on L2b services. This might indicate the sub-layer assignments need adjustment:
+**L3 subscribing to L1 events**: Correct direction
+- (none currently, but would be acceptable)
 
-| Service | Layer | Depends On | Their Layer |
-|---------|-------|------------|-------------|
-| species | L2a | realm | L2b |
-| connect | L2a | auth | L2b |
+**L2 subscribing to L1/L2 events**: Correct direction
+- (most L2 services don't subscribe to external events)
 
-**Question**: Should L2a services be allowed to depend on L2b, or do we need to:
-1. Re-classify some services
-2. Apply the same strict "no upward dependency" rule within Layer 2
+### Violation Patterns
 
----
+**L1 subscribing to L2 events**: Wrong direction
+- ❌ Auth subscribes to `subscription.updated` (L1 → L2) - **DELETE**
 
-## Investigation Queue
+### Resolved Event Subscriptions
 
----
-
-## Deep Dive Suggestions That Would Violate Hierarchy
-
-*To be populated after scanning deep dive documents*
-
----
-
-## GitHub Issues Suggesting Violations
-
-*To be populated after scanning open issues*
+**Analytics (now L4) subscribing to L2/L4 events**: Now OK
+- ✅ Analytics subscribes to `game-session.*` (L4 → L4)
+- ✅ Analytics subscribes to `character-history.*` (L4 → L4)
+- ✅ Analytics subscribes to `realm-history.*` (L4 → L4)
 
 ---
 
-## Remediation Progress
+## Related GitHub Issues
 
-| Violation | Service | Status | Issue/PR |
-|-----------|---------|--------|----------|
-| Reference counting | character | Documented | - |
+### Issue #259: Resource Lifecycle Management (Root Cause)
 
+The fundamental architecture problem: foundational services need to check consumer references for safe deletion, which drives them to take reverse dependencies.
+
+**Proposed Solutions**:
+- Pattern A: Resource Reference Registry (L0 infrastructure)
+- Pattern E: x-references Schema Extension
+- Pattern G: Register/Unregister Events with Prebound Cleanup
+
+**Recommended**: Hybrid of A+E+G
+
+### Issue #152: Missing Deletion Event Cascades
+
+**Missing event consumers**:
+- `character.deleted` → character-history (not consumed)
+- `character.deleted` → character-personality (not consumed)
+- `realm.deleted` → realm-history (not consumed)
+- `account.deleted` → permission (not consumed)
+
+### Issue #153: Escrow Asset Transfer Events Unconsumed
+
+Escrow publishes `escrow.released` and `escrow.refunded` but no service consumes them, causing assets to remain locked.
+
+### Issue #154: Session Lifecycle Events Incomplete
+
+- Voice doesn't consume `session.disconnected`
+- Matchmaking doesn't republish shortcuts on reconnect
+
+### Issue #170: Realm Reference Counting
+
+Realm deletion needs to verify no Location/Character references, but shouldn't query them directly.
+
+---
+
+## Remediation Priority
+
+| Priority | # | Violation | Reason |
+|----------|---|-----------|--------|
+| **P0** | 3, 7 | Auth → Subscription | Architectural error - breaks app/game domain boundary |
+| **P1** | 5 | Website schema → L2 | Schema defines endpoints requiring L2 deps (hidden by stub) |
+| **P2** | 1 | Character → Actor/Encounter | Foundation depending on feature |
+| **P2** | 2 | Character → Personality/History | Foundation depending on feature |
+| **P3** | 6 | GameSession → Voice | Design improvement - invert dependency |
+| ✅ | 4, 8-10 | Analytics | Resolved by reclassification to L4 |
+
+---
+
+## Summary
+
+| Category | Count | Status |
+|----------|-------|--------|
+| L1 → L2 (App Foundation → Game Foundation) | 1 | **P0 - Auth → Subscription** |
+| L3 → L2 (App Feature → Game Foundation) | 1 | **P1 - Website schema design** |
+| L2 → L4 (Game Foundation → Game Features) | 2 | P2 - Character violations |
+| L4 → L4 (Design issues) | 1 | P3 - GameSession → Voice |
+| **Total active violations** | **5** | **1 P0, 1 P1, 2 P2, 1 P3** |
+| ✅ Resolved by reclassification | 4 | Analytics moved to L4 |
+
+---
+
+## Next Steps
+
+1. **P0**: Delete Auth's subscription dependencies immediately
+2. **P1**: Redesign Website schema - remove character/subscription endpoints or create game-portal (L4)
+3. **P2**: Implement reference registration pattern for Character (#259)
+4. **P2**: Implement missing event cascades (#152)
+5. **P3**: Invert GameSession → Voice dependency
+
+**Completed**:
+- ✅ Analytics reclassified to L4 (event-consumption-only service, most optional plugin)
+
+---
+
+*This document is updated alongside SERVICE_HIERARCHY.md. All violations must be tracked here until remediated.*

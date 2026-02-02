@@ -9,7 +9,9 @@
 
 ## Overview
 
-The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that Auth and GameSession services consume for real-time authorization updates. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
+The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that GameSession service consumes for real-time shortcut publishing. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
+
+> **Note**: Auth service previously consumed subscription events incorrectly. This was an architectural error - Auth should only manage JWTs and roles. See `docs/reference/SERVICE_HIERARCHY_VIOLATIONS.md` entry #3.
 
 ---
 
@@ -28,12 +30,14 @@ The Subscription service manages user subscriptions to game services, controllin
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-auth (`AuthService`) | Calls `QueryCurrentSubscriptionsAsync` via `ISubscriptionClient` during session creation |
-| lib-auth (`TokenService`) | Calls `ISubscriptionClient` for subscription validation during token operations |
-| lib-auth (`AuthServiceEvents`) | Subscribes to `subscription.updated` event to propagate authorization changes to active sessions |
+| ~~lib-auth (`AuthService`)~~ | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
+| ~~lib-auth (`TokenService`)~~ | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
+| ~~lib-auth (`AuthServiceEvents`)~~ | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
 | lib-game-session (`GameSessionService`) | Calls `ISubscriptionClient` to validate subscriptions during session join |
 | lib-game-session (`GameSessionStartupService`) | Calls `ISubscriptionClient` for subscription discovery at startup |
 | lib-game-session (`GameSessionServiceEvents`) | Subscribes to `subscription.updated` event to update subscription cache and publish/revoke shortcuts |
+
+> **Note**: The Auth dependencies listed above are architectural errors that need to be deleted. Auth should only manage JWTs and roles. See `docs/reference/SERVICE_HIERARCHY_VIOLATIONS.md` entry #3 for details.
 
 ---
 
