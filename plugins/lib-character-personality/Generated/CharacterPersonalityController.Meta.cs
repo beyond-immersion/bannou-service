@@ -1753,4 +1753,117 @@ public partial class CharacterPersonalityController
             _DeleteCombatPreferences_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for CleanupByCharacter
+
+    private static readonly string _CleanupByCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterRequest",
+    "$defs": {
+        "CleanupByCharacterRequest": {
+            "type": "object",
+            "description": "Request to cleanup all personality data for a deleted character",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character that was deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterResponse",
+    "$defs": {
+        "CleanupByCharacterResponse": {
+            "type": "object",
+            "description": "Response from character cleanup operation",
+            "additionalProperties": false,
+            "required": [
+                "personalityDeleted",
+                "combatPreferencesDeleted",
+                "success"
+            ],
+            "properties": {
+                "personalityDeleted": {
+                    "type": "boolean",
+                    "description": "Whether personality traits were found and deleted"
+                },
+                "combatPreferencesDeleted": {
+                    "type": "boolean",
+                    "description": "Whether combat preferences were found and deleted"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether cleanup completed successfully"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_Info = """
+{
+    "summary": "Cleanup all personality data for a deleted character",
+    "description": "Called by lib-resource cleanup coordination when a character is deleted.\nRemoves BOTH personality traits AND combat preferences for the specified character.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+    "tags": [
+        "Resource Cleanup"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/cleanup-by-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/cleanup-by-character",
+            _CleanupByCharacter_Info));
+
+    /// <summary>Returns request schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/cleanup-by-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/cleanup-by-character",
+            "request-schema",
+            _CleanupByCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/cleanup-by-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/cleanup-by-character",
+            "response-schema",
+            _CleanupByCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/cleanup-by-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/cleanup-by-character",
+            _CleanupByCharacter_Info,
+            _CleanupByCharacter_RequestSchema,
+            _CleanupByCharacter_ResponseSchema));
+
+    #endregion
 }

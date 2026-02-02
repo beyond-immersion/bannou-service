@@ -593,6 +593,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 EncounterTimestamp = body.Timestamp
             }, cancellationToken: cancellationToken);
 
+            // Register character references with lib-resource for cleanup coordination
+            foreach (var participantId in participantIds)
+            {
+                await RegisterCharacterReferenceAsync(encounterId.ToString(), participantId, cancellationToken);
+            }
+
             _logger.LogInformation("Recorded encounter {EncounterId} with {Count} perspectives",
                 encounterId, perspectives.Count);
 
@@ -1284,6 +1290,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 DeletedByCharacterCleanup = false,
                 CleanupCharacterId = null
             }, cancellationToken: cancellationToken);
+
+            // Unregister character references with lib-resource
+            foreach (var participantId in participantIds)
+            {
+                await UnregisterCharacterReferenceAsync(body.EncounterId.ToString(), participantId, cancellationToken);
+            }
 
             _logger.LogInformation("Deleted encounter {EncounterId} with {Count} perspectives",
                 body.EncounterId, perspectivesDeleted);

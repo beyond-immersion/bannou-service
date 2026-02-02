@@ -183,4 +183,22 @@ public sealed class CharacterPersonalityProxy
         return _client.SendEventAsync<DeleteCombatPreferencesRequest>(
             "/character-personality/delete-combat", request, channel, cancellationToken);
     }
+
+    /// <summary>
+    /// Cleanup all personality data for a deleted character
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupByCharacterResponse on success.</returns>
+    public Task<ApiResponse<CleanupByCharacterResponse>> CleanupByCharacterAsync(
+        CleanupByCharacterRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupByCharacterRequest, CleanupByCharacterResponse>(
+            "/character-personality/cleanup-by-character", request, channel, timeout, cancellationToken);
+    }
 }

@@ -550,6 +550,52 @@ paths:
         \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Stop a running actor\",\n    \"description\": \"\",\n    \"tags\": [],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"StopActor\"\n}"
+  /actor/cleanup-by-character:
+    post:
+      operationId: CleanupByCharacter
+      summary: Cleanup actors referencing a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Stops and removes all actors that reference the specified characterId.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to cleanup actors referencing a deleted character\",\n          \
+        \  \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n             \
+        \   \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"ID of the character that was deleted\"\n                }\n            }\n  \
+        \      }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Response from character cleanup operation\",\n    \
+        \        \"required\": [\n                \"actorsCleanedUp\",\n                \"success\"\n            ],\n    \
+        \        \"properties\": {\n                \"actorsCleanedUp\": {\n                    \"type\": \"integer\",\n \
+        \                   \"description\": \"Number of actors that were stopped and cleaned up\"\n                },\n \
+        \               \"actorIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    },\n                    \"description\": \"IDs of actors
+        that were cleaned up\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether cleanup completed successfully\"\n                }\n          \
+        \  }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cleanup actors referencing a deleted character\",\n    \"description\"\
+        : \"Called by lib-resource cleanup coordination when a character is deleted.\\nStops and removes all actors that reference
+        the specified characterId.\\nThis endpoint is designed for internal service-to-service calls during\\ncascading resource
+        cleanup.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CleanupByCharacter\"\n}"
   /actor/list:
     post:
       operationId: ListActors
@@ -1433,6 +1479,36 @@ components:
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup actors referencing a deleted character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+    CleanupByCharacterResponse:
+      type: object
+      additionalProperties: false
+      description: Response from character cleanup operation
+      required:
+      - actorsCleanedUp
+      - success
+      properties:
+        actorsCleanedUp:
+          type: integer
+          description: Number of actors that were stopped and cleaned up
+        actorIds:
+          type: array
+          items:
+            type: string
+          description: IDs of actors that were cleaned up
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
     ListActorsRequest:
       type: object
       additionalProperties: false

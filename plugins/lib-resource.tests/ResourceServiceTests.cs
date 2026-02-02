@@ -55,7 +55,6 @@ public class ResourceServiceTests
         {
             DefaultGracePeriodSeconds = 3600, // 1 hour for faster tests
             CleanupCallbackTimeoutSeconds = 30,
-            MaxCallbackRetries = 3,
             CleanupLockExpirySeconds = 300,
             DefaultCleanupPolicy = CleanupPolicy.BEST_EFFORT
         };
@@ -217,7 +216,6 @@ public class ResourceServiceTests
 
         Assert.Equal(604800, config.DefaultGracePeriodSeconds); // 7 days
         Assert.Equal(30, config.CleanupCallbackTimeoutSeconds);
-        Assert.Equal(3, config.MaxCallbackRetries);
         Assert.Equal(300, config.CleanupLockExpirySeconds);
         Assert.Equal(CleanupPolicy.BEST_EFFORT, config.DefaultCleanupPolicy);
     }

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,12 +92,15 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
 
     /// <summary>
     /// Running phase - calls existing IBannouService lifecycle if present.
+    /// Also registers cleanup callbacks with lib-resource (must happen after all plugins are started).
     /// </summary>
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
 
         Logger?.LogDebug("CharacterHistory service running");
+
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         try
         {
@@ -110,6 +114,36 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during CharacterHistory service running phase");
+        }
+
+        // Register cleanup callbacks with lib-resource for character reference tracking.
+        // This MUST happen in OnRunningAsync (not OnStartAsync) because OnRunningAsync runs
+        // AFTER all plugins have completed StartAsync, ensuring lib-resource is available.
+        // Registering during OnStartAsync would be unsafe because plugin load order isn't guaranteed.
+        try
+        {
+            using var scope = serviceProvider.CreateScope();
+            var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
+            if (resourceClient != null)
+            {
+                var success = await CharacterHistoryService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+                if (success)
+                {
+                    Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
+                }
+                else
+                {
+                    Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
+                }
+            }
+            else
+            {
+                Logger?.LogDebug("IResourceClient not available - cleanup callbacks not registered (lib-resource may not be enabled)");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register cleanup callbacks with lib-resource");
         }
     }
 

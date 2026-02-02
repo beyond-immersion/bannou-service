@@ -778,6 +778,50 @@ public partial class EvolveCombatRequest
 
 }
 
+/// <summary>
+/// Request to cleanup all personality data for a deleted character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterRequest
+{
+
+    /// <summary>
+    /// ID of the character that was deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from character cleanup operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterResponse
+{
+
+    /// <summary>
+    /// Whether personality traits were found and deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("personalityDeleted")]
+    public bool PersonalityDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Whether combat preferences were found and deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("combatPreferencesDeleted")]
+    public bool CombatPreferencesDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Whether cleanup completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

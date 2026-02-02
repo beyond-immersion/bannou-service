@@ -445,7 +445,7 @@ public partial class ResourceService : IResourceService
             }).ToList();
 
             // Apply configured timeout for cleanup callbacks
-            // Note: MaxCallbackRetries is defined but IServiceNavigator doesn't support per-call retry configuration
+            // Note: Retry logic is handled by lib-mesh at the infrastructure level (MESH_MAX_RETRIES)
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.CleanupCallbackTimeoutSeconds));
 

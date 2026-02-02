@@ -171,6 +171,24 @@ public sealed class ActorProxy
     }
 
     /// <summary>
+    /// Cleanup actors referencing a deleted character
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupByCharacterResponse on success.</returns>
+    public Task<ApiResponse<CleanupByCharacterResponse>> CleanupByCharacterAsync(
+        CleanupByCharacterRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupByCharacterRequest, CleanupByCharacterResponse>(
+            "/actor/cleanup-by-character", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// List actors with optional filters
     /// </summary>
     /// <param name="request">The request payload.</param>

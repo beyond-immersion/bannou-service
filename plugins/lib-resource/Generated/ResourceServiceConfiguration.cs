@@ -68,13 +68,6 @@ public class ResourceServiceConfiguration : IServiceConfiguration
     public int CleanupCallbackTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
-    /// Max retries per cleanup callback on transient failure
-    /// Environment variable: RESOURCE_MAX_CALLBACK_RETRIES
-    /// </summary>
-    [ConfigRange(Minimum = 0, Maximum = 10)]
-    public int MaxCallbackRetries { get; set; } = 3;
-
-    /// <summary>
     /// Distributed lock timeout during cleanup execution
     /// Environment variable: RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS
     /// </summary>

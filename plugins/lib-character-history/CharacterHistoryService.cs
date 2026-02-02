@@ -163,6 +163,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 Role = body.Role
             }, cancellationToken: cancellationToken);
 
+            // Register character reference with lib-resource for cleanup coordination
+            await RegisterCharacterReferenceAsync(participationId.ToString(), body.CharacterId, cancellationToken);
+
             _logger.LogInformation("Recorded participation {ParticipationId} for character {CharacterId}",
                 participationId, body.CharacterId);
 
@@ -332,6 +335,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 return StatusCodes.NotFound;
             }
 
+            // Unregister character reference before deletion
+            await UnregisterCharacterReferenceAsync(body.ParticipationId.ToString(), data.CharacterId, cancellationToken);
+
             // Use helper to remove record and update both indices
             await _participationHelper.RemoveRecordAsync(
                 body.ParticipationId.ToString(),
@@ -468,6 +474,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                     CharacterId = body.CharacterId,
                     ElementCount = result.Backstory.Elements.Count
                 }, cancellationToken: cancellationToken);
+
+                // Register character reference with lib-resource for cleanup coordination (only on new backstory)
+                await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
             }
             else
             {
@@ -539,6 +548,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                     CharacterId = body.CharacterId,
                     ElementCount = result.Backstory.Elements.Count
                 }, cancellationToken: cancellationToken);
+
+                // Register character reference with lib-resource for cleanup coordination (only on new backstory)
+                await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
             }
             else
             {
@@ -590,6 +602,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 return StatusCodes.NotFound;
             }
 
+            // Unregister character reference for backstory
+            await UnregisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
+
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(BACKSTORY_DELETED_TOPIC, new CharacterBackstoryDeletedEvent
             {
@@ -632,11 +647,29 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
+            // Get all participations first to unregister their character references
+            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                cancellationToken);
+
+            // Unregister all character references for participations
+            foreach (var record in participationRecords)
+            {
+                await UnregisterCharacterReferenceAsync(record.ParticipationId.ToString(), body.CharacterId, cancellationToken);
+            }
+
             // Use helper to delete all participations and update event indices
             var participationsDeleted = await _participationHelper.RemoveAllByPrimaryKeyAsync(
                 body.CharacterId.ToString(),
                 record => record.EventId.ToString(),
                 cancellationToken);
+
+            // Check if backstory exists to unregister its reference
+            var existingBackstory = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+            if (existingBackstory != null)
+            {
+                await UnregisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
+            }
 
             // Use helper to delete backstory
             var backstoryDeleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);

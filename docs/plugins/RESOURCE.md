@@ -34,12 +34,12 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-character (planned) | Calls `/resource/check` before deletion; calls `/resource/cleanup/execute` to coordinate cascading cleanup |
-| lib-actor (planned) | Publishes `resource.reference.registered` when creating actors that reference characters; registers cleanup callback |
-| lib-character-encounter (planned) | Publishes reference events for character encounters; registers cleanup callback |
+| lib-character | Queries `/resource/check` for L4 references in `CheckCharacterReferencesAsync` |
+| lib-actor | Publishes `resource.reference.registered/unregistered` in SpawnActorAsync/StopActorAsync; cleanup via `/actor/cleanup-by-character` |
+| lib-character-encounter | Publishes reference events in RecordEncounterAsync/DeleteEncounterAsync; cleanup via `/character-encounter/delete-by-character` |
+| lib-character-history | Publishes reference events for participations and backstory; cleanup via `/character-history/delete-all` |
+| lib-character-personality | Publishes reference events for personality/combat prefs; cleanup via `/character-personality/cleanup-by-character` |
 | lib-scene (planned) | Publishes reference events for scene-to-character references; registers cleanup callback |
-
-**Note**: No consumers are currently implemented. All dependents are planned for Phase 3+.
 
 ---
 
@@ -88,7 +88,6 @@ Resource reference tracking and lifecycle management for foundational resources.
 | `CleanupLockExpirySeconds` | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | 300 | Yes | Distributed lock timeout during cleanup |
 | `DefaultCleanupPolicy` | `RESOURCE_DEFAULT_CLEANUP_POLICY` | BEST_EFFORT | Yes | Policy when not specified per-request |
 | `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | Yes | Timeout for cleanup callback execution |
-| `MaxCallbackRetries` | `RESOURCE_MAX_CALLBACK_RETRIES` | 3 | **No** | Requires `IServiceNavigator` interface enhancement |
 
 ---
 
@@ -191,7 +190,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 2. **`OnDeleteAction` enum**: Defined in schema (`CASCADE`, `RESTRICT`, `DETACH`) but not used anywhere in the service. May be intended for future per-reference deletion behavior configuration.
 
-3. ~~**Timeout configuration**~~: **IMPLEMENTED** (2026-02-02) - `CleanupCallbackTimeoutSeconds` is now applied via `CancellationTokenSource` for cleanup callback execution. `MaxCallbackRetries` still requires `IServiceNavigator` interface enhancement.
+3. ~~**Timeout configuration**~~: **IMPLEMENTED** (2026-02-02) - `CleanupCallbackTimeoutSeconds` is now applied via `CancellationTokenSource` for cleanup callback execution. Retry logic is handled by lib-mesh at the infrastructure level (`MESH_MAX_RETRIES`).
 
 ---
 
@@ -278,7 +277,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 2. ~~**Orphaned configuration: `CleanupCallbackTimeoutSeconds` is never used**~~: **FIXED** (2026-02-02) - Now used via `CancellationTokenSource.CreateLinkedTokenSource` with configured timeout for cleanup callback execution.
 
-3. **Orphaned configuration: `MaxCallbackRetries` is never used**: Defined but `IServiceNavigator` interface doesn't support per-call retry configuration. Requires interface enhancement in lib-mesh to fully implement.
+3. ~~**Orphaned configuration: `MaxCallbackRetries` is never used**~~: **REMOVED** (2026-02-02) - Removed from schema. Retry logic is handled by lib-mesh at the infrastructure level (`MESH_MAX_RETRIES`). See GitHub issue for ServiceNavigator refactoring to properly use IMeshInvocationClient.
 
 4. ~~**Silent parse failure in `ParseIsoDuration`**~~: **FIXED** (2026-02-02) - `ParseIsoDuration` removed. Integer seconds are used directly from the request, eliminating parse failures entirely.
 
@@ -296,7 +295,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**No consumers yet**~~: **RESOLVED** (2026-02-02) - Actor service is now fully integrated as the first consumer. It registers/unregisters character references in SpawnActorAsync/StopActorAsync and has a cleanup endpoint at `/actor/cleanup-by-character`.
+1. ~~**No consumers yet**~~: **RESOLVED** (2026-02-02) - All L4 character consumers now integrated: Actor, CharacterEncounter, CharacterHistory, and CharacterPersonality. CharacterService queries lib-resource for L4 references in CheckCharacterReferencesAsync.
 
 2. **`OnDeleteAction` enum unused**: Schema defines CASCADE/RESTRICT/DETACH actions but they're not implemented. Needs design decision: should this be per-reference-type configuration, or per-reference, or removed from schema?
 
@@ -322,10 +321,13 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] Phase 3: Actor service wired up - `RegisterCharacterReferenceAsync` in SpawnActorAsync, `UnregisterCharacterReferenceAsync` in StopActorAsync
 - [x] Phase 3: Cleanup endpoint `/actor/cleanup-by-character` added to actor-api.yaml and implemented
 - [x] Phase 3: `RegisterResourceCleanupCallbacksAsync` wired up in ActorServicePlugin.OnRunningAsync
+- [x] Phase 4: CharacterService queries lib-resource for L4 references in CheckCharacterReferencesAsync
+- [x] Phase 4: character-encounter integrated - x-references, cleanup endpoint `/character-encounter/delete-by-character`
+- [x] Phase 4: character-history integrated - x-references, cleanup via existing `/character-history/delete-all`
+- [x] Phase 4: character-personality integrated - x-references, cleanup endpoint `/character-personality/cleanup-by-character`
 
 ### Pending
-- [ ] Phase 4: Migration of CharacterService to use lib-resource
-- [ ] Wire up `MaxCallbackRetries` (requires `IServiceNavigator` interface enhancement)
+None - lib-resource integration complete for all L4 character consumers.
 
 ---
 

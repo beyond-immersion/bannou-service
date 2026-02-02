@@ -31,13 +31,8 @@ x-service-configuration:
       maximum: 300
       description: Timeout for each cleanup callback execution
 
-    MaxCallbackRetries:
-      type: integer
-      env: RESOURCE_MAX_CALLBACK_RETRIES
-      default: 3
-      minimum: 0
-      maximum: 10
-      description: Max retries per cleanup callback on transient failure
+    # NOTE: Retry configuration is handled by lib-mesh (MESH_MAX_RETRIES, MESH_RETRY_DELAY_MILLISECONDS)
+    # at the infrastructure level. Per-service retry config was removed as redundant.
 
     # === Distributed Lock Configuration ===
     CleanupLockExpirySeconds:

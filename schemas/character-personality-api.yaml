@@ -35,6 +35,17 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  # The personality service stores BOTH personality traits AND combat preferences for characters.
+  # A single cleanup endpoint handles deletion of both data types for a given character.
+  x-references:
+    - target: character
+      sourceType: character-personality
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /character-personality/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -305,6 +316,34 @@ paths:
           description: Combat preferences deleted successfully
         '404':
           description: No combat preferences found for this character
+
+  # Resource Cleanup Endpoint
+  /character-personality/cleanup-by-character:
+    post:
+      summary: Cleanup all personality data for a deleted character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes BOTH personality traits AND combat preferences for the specified character.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
 
 components:
   schemas:
@@ -790,3 +829,36 @@ components:
           description: |
             Optional context for logging and debugging (e.g., enemy type,
             ally count, location). Not used in evolution calculations.
+
+    # Resource Cleanup Models
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to cleanup all personality data for a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Response from character cleanup operation
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - personalityDeleted
+      - combatPreferencesDeleted
+      - success
+      properties:
+        personalityDeleted:
+          type: boolean
+          description: Whether personality traits were found and deleted
+        combatPreferencesDeleted:
+          type: boolean
+          description: Whether combat preferences were found and deleted
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully

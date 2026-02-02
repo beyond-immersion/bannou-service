@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -126,6 +128,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             // Publish event using typed events per IMPLEMENTATION TENETS
             if (isNew)
             {
+                // Register character reference for new personality per IMPLEMENTATION TENETS
+                await RegisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
+
                 await _messageBus.TryPublishAsync(PERSONALITY_CREATED_TOPIC, new PersonalityCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -364,6 +369,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return StatusCodes.NotFound;
             }
 
+            // Unregister character reference before deletion per IMPLEMENTATION TENETS
+            await UnregisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
+
             await store.DeleteAsync(key, cancellationToken);
 
             // Publish deletion event using typed events per IMPLEMENTATION TENETS
@@ -470,6 +478,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             // Publish event using typed events per IMPLEMENTATION TENETS
             if (isNew)
             {
+                // Register character reference for new combat preferences per IMPLEMENTATION TENETS
+                await RegisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
+
                 await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_CREATED_TOPIC, new CombatPreferencesCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -529,6 +540,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return StatusCodes.NotFound;
             }
 
+            // Unregister character reference before deletion per IMPLEMENTATION TENETS
+            await UnregisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
+
             await store.DeleteAsync(key, cancellationToken);
 
             // Publish deletion event using typed events per IMPLEMENTATION TENETS
@@ -556,6 +570,95 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCodes.InternalServerError;
+        }
+    }
+
+    // ============================================================================
+    // Resource Cleanup Methods
+    // ============================================================================
+
+    /// <summary>
+    /// Cleans up all personality data (traits and combat preferences) for a deleted character.
+    /// Called by lib-resource cleanup coordination during cascading resource cleanup.
+    /// </summary>
+    public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
+        CleanupByCharacterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Cleaning up all personality data for deleted character {CharacterId}", body.CharacterId);
+
+        var personalityDeleted = false;
+        var combatPreferencesDeleted = false;
+
+        try
+        {
+            // Delete personality traits if they exist
+            var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
+            var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+            var existingPersonality = await personalityStore.GetAsync(personalityKey, cancellationToken);
+
+            if (existingPersonality != null)
+            {
+                await personalityStore.DeleteAsync(personalityKey, cancellationToken);
+                personalityDeleted = true;
+
+                // Publish deletion event
+                await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CharacterId = body.CharacterId
+                }, cancellationToken: cancellationToken);
+
+                _logger.LogInformation("Personality deleted for character {CharacterId} during cleanup", body.CharacterId);
+            }
+
+            // Delete combat preferences if they exist
+            var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
+            var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+            var existingCombat = await combatStore.GetAsync(combatKey, cancellationToken);
+
+            if (existingCombat != null)
+            {
+                await combatStore.DeleteAsync(combatKey, cancellationToken);
+                combatPreferencesDeleted = true;
+
+                // Publish deletion event
+                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_DELETED_TOPIC, new CombatPreferencesDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CharacterId = body.CharacterId
+                }, cancellationToken: cancellationToken);
+
+                _logger.LogInformation("Combat preferences deleted for character {CharacterId} during cleanup", body.CharacterId);
+            }
+
+            _logger.LogInformation(
+                "Cleanup completed for character {CharacterId}: personality={PersonalityDeleted}, combat={CombatDeleted}",
+                body.CharacterId, personalityDeleted, combatPreferencesDeleted);
+
+            return (StatusCodes.OK, new CleanupByCharacterResponse
+            {
+                PersonalityDeleted = personalityDeleted,
+                CombatPreferencesDeleted = combatPreferencesDeleted,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during character cleanup for {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "CleanupByCharacter",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/cleanup-by-character",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

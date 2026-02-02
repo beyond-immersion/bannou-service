@@ -35,6 +35,14 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-references:
+  - target: character
+    sourceType: character-personality
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /character-personality/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -773,6 +781,55 @@ paths:
         the combat preferences for a character. Typically called during\\ncharacter compression or deletion.\\n\",\n    \"\
         tags\": [\n        \"Combat Preferences\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteCombatPreferences\"\
         \n}"
+  /character-personality/cleanup-by-character:
+    post:
+      summary: Cleanup all personality data for a deleted character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes BOTH personality traits AND combat preferences for the specified character.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to cleanup all personality data for a deleted character\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
+        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the character that was deleted\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Response from character cleanup operation\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"personalityDeleted\",\n                \"combatPreferencesDeleted\",\n\
+        \                \"success\"\n            ],\n            \"properties\": {\n                \"personalityDeleted\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether personality traits
+        were found and deleted\"\n                },\n                \"combatPreferencesDeleted\": {\n                  \
+        \  \"type\": \"boolean\",\n                    \"description\": \"Whether combat preferences were found and deleted\"\
+        \n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"Whether cleanup completed successfully\"\n                }\n            }\n        }\n \
+        \   }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cleanup all personality data for a deleted character\",\n    \"description\"\
+        : \"Called by lib-resource cleanup coordination when a character is deleted.\\nRemoves BOTH personality traits AND
+        combat preferences for the specified character.\\nThis endpoint is designed for internal service-to-service calls
+        during\\ncascading resource cleanup.\\n\",\n    \"tags\": [\n        \"Resource Cleanup\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"cleanupByCharacter\"\n}"
 components:
   schemas:
     TraitAxis:
@@ -1229,3 +1286,32 @@ components:
           description: |
             Optional context for logging and debugging (e.g., enemy type,
             ally count, location). Not used in evolution calculations.
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to cleanup all personality data for a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+    CleanupByCharacterResponse:
+      type: object
+      description: Response from character cleanup operation
+      additionalProperties: false
+      required:
+      - personalityDeleted
+      - combatPreferencesDeleted
+      - success
+      properties:
+        personalityDeleted:
+          type: boolean
+          description: Whether personality traits were found and deleted
+        combatPreferencesDeleted:
+          type: boolean
+          description: Whether combat preferences were found and deleted
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
