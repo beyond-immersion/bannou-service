@@ -780,6 +780,49 @@ If your `GetAccountResponse` returns an `AuthMethodInfo` object, then `AccountCr
 | Arrays of primitives | No | Inline is fine |
 | Arrays of objects | **YES** | The object type must be shared |
 
+### When NOT to Create Enums (Service Hierarchy Consideration)
+
+**Rule**: Do NOT define enums that enumerate services, resources, or entity types from other layers of the service hierarchy.
+
+A service should not "know about" services in higher layers (see [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md)). Creating an enum that lists higher-layer services or their entity types creates implicit coupling that defeats the purpose of layer isolation.
+
+**Examples of FORBIDDEN enums**:
+
+```yaml
+# WRONG: L1 service enumerating L3/L4 services
+ResourceSourceType:
+  type: string
+  enum: [ACTOR, CHARACTER_ENCOUNTER, CONTRACT, SCENE, SAVE_DATA]
+  # This enum means lib-resource (L1) "knows about" Actor (L4), Scene (L4), etc.
+
+# WRONG: Foundation service enumerating all possible entity types
+EntityType:
+  type: string
+  enum: [CHARACTER, ACTOR, SCENE, INVENTORY, CONTRACT]
+  # If this is in an L1/L2 service, it couples to L3/L4 entity types
+```
+
+**Correct approach**: Use **opaque string identifiers** when the service is intentionally generic and shouldn't have knowledge of its consumers:
+
+```yaml
+# CORRECT: Generic reference tracking without layer coupling
+RegisterReferenceRequest:
+  properties:
+    resourceType:
+      type: string
+      description: Type of resource being referenced (caller provides, e.g., "character")
+    sourceType:
+      type: string
+      description: Type of entity holding the reference (caller provides, e.g., "actor")
+```
+
+**When enums ARE appropriate**:
+- The enum values are all within the service's own layer or lower
+- The enum represents a closed set that the service owns (e.g., `AuthProvider` in Auth service)
+- The enum is defined in `common-api.yaml` for system-wide concepts that ALL layers share
+
+**Test**: Before creating an enum, ask: "Would adding a new service/entity type in a higher layer require modifying this enum?" If yes, use a string instead.
+
 ### Correct Pattern
 
 ```yaml

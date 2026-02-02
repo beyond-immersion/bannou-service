@@ -333,6 +333,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `MeshCircuitStateChangedEvent` | Custom | `mesh-circuit-state-changed` | Published when circuit breaker state changes for a... |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
 

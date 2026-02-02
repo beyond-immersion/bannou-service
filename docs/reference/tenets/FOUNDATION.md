@@ -151,6 +151,72 @@ var redisOps = factory.GetRedisOperations();
 
 **Important**: Keys passed to `IRedisOperations` are NOT prefixed - they are raw Redis keys. This enables cross-store atomic operations but requires you to manage key prefixes manually.
 
+### Lua Script Requirements (STRICT)
+
+**Rule**: Lua scripts via `IRedisOperations.ScriptEvaluateAsync()` are a **last resort**. Always prefer built-in interface methods first.
+
+**Before Writing a Lua Script, Verify**:
+1. `ICacheableStateStore<T>` methods (sets, sorted sets) don't solve the problem
+2. `IRedisOperations` atomic counters (`IncrementAsync`/`DecrementAsync`) are insufficient
+3. `IRedisOperations` hash operations don't meet the need
+4. `IDistributedLockProvider` + separate operations won't work (often acceptable for cleanup flows)
+
+Lua scripts should only be used when **atomicity across multiple distinct operations is genuinely required** and the above alternatives are insufficient.
+
+**Absolute Restrictions**:
+
+| Restriction | Reason |
+|-------------|--------|
+| **FORBIDDEN: Loops/iteration in scripts** | Lua scripts block Redis (single-threaded). Loops scale O(N) and cause latency spikes affecting ALL clients. |
+| **FORBIDDEN: Inline script strings** | Scripts MUST be in `.lua` files under `Scripts/`, loaded via a `{Plugin}LuaScripts.cs` helper, embedded as resources. |
+| **FORBIDDEN: Large dataset processing** | Scripts cannot be killed once they perform a write. Long-running scripts make Redis unresponsive. |
+| **FORBIDDEN: Blocking commands** | `BLPOP`, `BRPOP`, etc. cannot be used in Lua scripts. |
+
+**Required Pattern** (see lib-mesh and lib-state for examples):
+
+```
+plugins/lib-{service}/
+├── Scripts/
+│   └── MyOperation.lua          # Embedded resource
+├── Services/
+│   └── {Service}LuaScripts.cs   # Static loader class
+└── lib-{service}.csproj         # <EmbeddedResource Include="Scripts\*.lua" />
+```
+
+**Loader Class Pattern**:
+```csharp
+public static class MyServiceLuaScripts
+{
+    public static string MyOperation => GetScript("MyOperation");
+
+    private static string GetScript(string name)
+    {
+        return _scriptCache.GetOrAdd(name, n =>
+        {
+            var resourceName = $"BeyondImmersion.BannouService.MyService.Scripts.{n}.lua";
+            using var stream = typeof(MyServiceLuaScripts).Assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Lua script '{n}' not found");
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        });
+    }
+
+    private static readonly ConcurrentDictionary<string, string> _scriptCache = new();
+}
+```
+
+**Script Best Practices**:
+- Use `redis.pcall()` instead of `redis.call()` to handle errors gracefully
+- Keep scripts minimal - do the atomic part only, handle results in C#
+- Parameterize all scripts (use KEYS[] and ARGV[]) - unparameterized scripts waste Redis memory via script cache
+- Test scripts in pre-production with realistic data volumes
+
+**Why These Restrictions Matter**:
+- Redis is single-threaded - a slow script blocks ALL operations cluster-wide
+- Once a script performs any write, it cannot be terminated (`SCRIPT KILL` fails)
+- Memory allocated by Lua isn't controlled by Redis `maxmemory` - scripts can OOM the server
+- Each unique script text is cached in Redis memory forever (until `SCRIPT FLUSH`)
+
 ### Infrastructure Lib Backend Access
 
 Each infrastructure lib accesses its specific backend directly - this is their purpose:
@@ -540,6 +606,10 @@ When a package changes license, pin to the last permissive version with XML comm
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use IMeshInvocationClient or generated clients via lib-mesh |
+| Lua script when interface method exists | T4 | Use `ICacheableStateStore` or `IRedisOperations` methods |
+| Inline Lua script string | T4 | Move to `.lua` file with loader class |
+| Loop/iteration in Lua script | T4 | Restructure to avoid iteration; use C# for loops |
+| Lua script for large dataset | T4 | Use distributed lock + separate operations |
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Service class missing `partial` | T6 | Add `partial` keyword |

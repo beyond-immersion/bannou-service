@@ -111,30 +111,6 @@ public partial class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// Gets game server status. Not yet implemented - planned for future release.
-    /// </summary>
-    public async Task<(StatusCodes, ServerStatusResponse?)> GetServerStatusAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogDebug("MethodGetServerStatusAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting server status");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "website",
-                operation: "GetServerStatus",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
     /// Gets download links. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(Platform? platform = null, CancellationToken cancellationToken = default)
@@ -199,30 +175,6 @@ public partial class WebsiteService : IWebsiteService
             await _messageBus.TryPublishErrorAsync(
                 serviceName: "website",
                 operation: "GetAccountProfile",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
-    /// Gets account characters. Not yet implemented - planned for future release.
-    /// </summary>
-    public async Task<(StatusCodes, CharacterListResponse?)> GetAccountCharactersAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogDebug("MethodGetAccountCharactersAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting account characters");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "website",
-                operation: "GetAccountCharacters",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
                 stack: ex.StackTrace,
@@ -377,30 +329,6 @@ public partial class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// Gets subscription information. Not yet implemented - planned for future release.
-    /// </summary>
-    public async Task<(StatusCodes, SubscriptionResponse?)> GetSubscriptionAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogDebug("MethodGetSubscriptionAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting subscription");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "website",
-                operation: "GetSubscription",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <summary>
     /// Deletes a page. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<StatusCodes> DeletePageAsync(string slug, CancellationToken cancellationToken = default)
@@ -460,30 +388,6 @@ public partial class WebsiteService : IWebsiteService
     {
         _logger.LogDebug("Registering Website service permissions...");
         await WebsitePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
-    /// <summary>
-    /// Gets account subscription information. Not yet implemented - planned for future release.
-    /// </summary>
-    public async Task<(StatusCodes, SubscriptionResponse?)> GetAccountSubscriptionAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogDebug("MethodGetAccountSubscriptionAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting account subscription");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "website",
-                operation: "GetAccountSubscription",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion

@@ -45,11 +45,6 @@ public partial interface IWebsiteService : IBannouService
         Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int? limit = 10, int? offset = 0, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetServerStatus operation
-        /// </summary>
-        Task<(StatusCodes, ServerStatusResponse?)> GetServerStatusAsync(CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
         /// GetDownloads operation
         /// </summary>
         Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(Platform? platform, CancellationToken cancellationToken = default(CancellationToken));
@@ -63,11 +58,6 @@ public partial interface IWebsiteService : IBannouService
         /// GetAccountProfile operation
         /// </summary>
         Task<(StatusCodes, AccountProfile?)> GetAccountProfileAsync(CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// GetAccountCharacters operation
-        /// </summary>
-        Task<(StatusCodes, CharacterListResponse?)> GetAccountCharactersAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// ListPages operation
@@ -108,10 +98,5 @@ public partial interface IWebsiteService : IBannouService
         /// UpdateTheme operation
         /// </summary>
         Task<StatusCodes> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// GetAccountSubscription operation
-        /// </summary>
-        Task<(StatusCodes, SubscriptionResponse?)> GetAccountSubscriptionAsync(CancellationToken cancellationToken = default(CancellationToken));
 
 }

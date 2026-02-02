@@ -53,7 +53,7 @@ Support... |
 Tracks which ac... |
 | [Telemetry](#telemetry) | 1.0.0 | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Voice](#voice) | 1.1.0 | 7 | Voice communication coordination service for P2P and room-ba... |
-| [Website](#website) | 1.0.0 | 17 | Public-facing website service for registration, information,... |
+| [Website](#website) | 1.0.0 | 14 | Public-facing website service for registration, information,... |
 
 ---
 
@@ -363,13 +363,38 @@ Realm-scoped species management for the Arcadia game world. Manages playable and
 
 The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
 
+### Interface Hierarchy (as of 2026-02-01)
+
+```
+IStateStore<T>                    - Core CRUD (all backends)
+├── ICacheableStateStore<T>       - Sets + Sorted Sets (Redis + InMemory)
+├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
+│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
+└── ISearchableStateStore<T>      - Full-text search (Redis+Search only)
+
+IRedisOperations                  - Low-level Redis access (Lua scripts, hashes, atomic counters)
+```
+
+**Backend Support Matrix**:
+
+| Interface | Redis | MySQL | InMemory | RedisSearch |
+|-----------|:-----:|:-----:|:--------:|:-----------:|
+| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
+| `ICacheableStateStore<T>` | ✅ | ❌ | ✅ | ✅ |
+| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
+| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
+
 ---
 
 ## Subscription {#subscription}
 
 **Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
-The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that Auth and GameSession services consume for real-time authorization updates. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
+The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that GameSession service consumes for real-time shortcut publishing. Includes a background expiration worker (`SubscriptionExpirationService`) that periodically checks for expired subscriptions and deactivates them. The service is internal-only (never internet-facing) and serves as the canonical source for subscription state.
+
+> **Note**: Auth service previously consumed subscription events incorrectly. This was an architectural error - Auth should only manage JWTs and roles. See `docs/reference/SERVICE_HIERARCHY_VIOLATIONS.md` entry #3.
 
 ---
 
@@ -394,14 +419,14 @@ The Voice service provides WebRTC-based voice communication for game sessions, s
 
 **Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml` | **Deep Dive**: [docs/plugins/WEBSITE.md](plugins/WEBSITE.md)
 
-Public-facing website service for browser-based access to registration, news, account management, game downloads, CMS page management, and server status. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint logs a debug message and returns `StatusCodes.NotImplemented` (except `GetAccountSubscriptionAsync` which throws `NotImplementedException`). No business logic, state storage, or cross-service calls are implemented. The schema defines a comprehensive CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account/character/subscription views. When implemented, this service will require integration with account, character, subscription, realm, and potentially auth services via generated clients.
+Public-facing website service for browser-based access to news, account profile viewing, game downloads, CMS page management, and contact forms. This is a **pure CMS service** in Layer 3 (App Features) that intentionally does NOT access game data (characters, subscriptions, realms) to respect the service hierarchy. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint logs a debug message and returns `StatusCodes.NotImplemented`. No business logic, state storage, or cross-service calls are implemented. The schema defines a CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account profile viewing. When implemented, this service will require integration with the account service via generated clients, plus state stores for CMS data.
 
 ---
 
 ## Summary
 
 - **Total services**: 42
-- **Total endpoints**: 551
+- **Total endpoints**: 548
 
 ---
 

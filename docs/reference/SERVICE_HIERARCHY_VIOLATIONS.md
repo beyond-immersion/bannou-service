@@ -127,30 +127,24 @@ Auth (L1) is app-level infrastructure that should work for ANY deployment, inclu
 
 ---
 
-### 5. Website → Game Services (DESIGN VIOLATION - STUB HIDES IT)
+### 5. Website → Game Services (RESOLVED)
 
 **Service**: lib-website (L3 App Features)
-**Current Implementation**: Complete stub - all methods return `NotImplemented`
+**Former Violating Schema Elements**:
+- `GetAccountCharactersAsync` → needed `ICharacterClient` (L2)
+- `GetServerStatusAsync` → needed realm data (L2)
+- `GetAccountSubscriptionAsync` → needed `ISubscriptionClient` (L2)
 
-**Violation Type**: L3 → L2 (App Feature depending on Game Foundation) - **DESIGN VIOLATION**
+**Resolution**: Applied Option 1 - Removed game-related endpoints from Website schema. Website now serves as pure CMS (pages, news, downloads, contact forms) with no game data dependencies.
 
-**Why It's Hidden**: The service is currently a stub with no client injections. Every method just logs and returns `NotImplemented`. The violation will manifest when someone implements these endpoints.
+**Removed from schema**:
+- `/website/server-status` endpoint
+- `/website/account/characters` endpoint
+- `/website/account/subscription` endpoint
+- `ServerStatusResponse`, `RealmStatus`, `CharacterListResponse`, `CharacterSummary`, `SubscriptionResponse` schemas
+- `characterSlots`, `usedSlots` fields from `AccountProfile`
 
-**Schema-Defined Endpoints That Require L2 Dependencies**:
-- `GetAccountCharactersAsync` → needs `ICharacterClient` (L2)
-- `GetSubscriptionAsync` → needs `ISubscriptionClient` (L2)
-- `GetAccountSubscriptionAsync` → needs `ISubscriptionClient` (L2)
-
-**The Problem**: The API schema (`website-api.yaml`) was designed without considering hierarchy constraints. When implemented, Website (L3) would need to call Character and Subscription (L2), which violates the domain boundary.
-
-**Options**:
-1. **Remove game endpoints from Website schema**: Website only handles CMS pages, news, downloads, contact forms - no game data
-2. **Create game-portal (L4)**: Move character/subscription endpoints to a dedicated L4 service
-3. **Redesign as aggregation via events**: Website subscribes to events for cached views (complex)
-
-**Suggested Fix**: Option 1 or 2 - Remove these endpoints from Website schema, or create a separate "game-portal" L4 service for game-specific web views.
-
-**Status**: P1 - Schema needs redesign before implementation
+**Status**: ✅ RESOLVED by schema redesign
 
 ---
 
@@ -219,8 +213,7 @@ Auth (L1) is app-level infrastructure that should work for ANY deployment, inclu
 | Matchmaking → GameSession | - | **OK** | L4 → L4, with graceful degradation |
 | Analytics → L2/L4 | L3 → L2/L4 | **OK** | Reclassified to L4 (event-consumption-only) |
 | Analytics event subs | L3 → L4 events | **OK** | Reclassified to L4, can subscribe to any events |
-
-**Note**: Website is NOT resolved - the stub implementation hides a design-level violation. See #5.
+| Website → L2 | L3 → L2 | **OK** | Schema redesigned to pure CMS (no game endpoints) |
 
 ---
 
@@ -298,11 +291,11 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 | Priority | # | Violation | Reason |
 |----------|---|-----------|--------|
 | **P0** | 3, 7 | Auth → Subscription | Architectural error - breaks app/game domain boundary |
-| **P1** | 5 | Website schema → L2 | Schema defines endpoints requiring L2 deps (hidden by stub) |
 | **P2** | 1 | Character → Actor/Encounter | Foundation depending on feature |
 | **P2** | 2 | Character → Personality/History | Foundation depending on feature |
 | **P3** | 6 | GameSession → Voice | Design improvement - invert dependency |
 | ✅ | 4, 8-10 | Analytics | Resolved by reclassification to L4 |
+| ✅ | 5 | Website schema | Resolved by removing game-related endpoints |
 
 ---
 
@@ -311,24 +304,24 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 | Category | Count | Status |
 |----------|-------|--------|
 | L1 → L2 (App Foundation → Game Foundation) | 1 | **P0 - Auth → Subscription** |
-| L3 → L2 (App Feature → Game Foundation) | 1 | **P1 - Website schema design** |
 | L2 → L4 (Game Foundation → Game Features) | 2 | P2 - Character violations |
 | L4 → L4 (Design issues) | 1 | P3 - GameSession → Voice |
-| **Total active violations** | **5** | **1 P0, 1 P1, 2 P2, 1 P3** |
+| **Total active violations** | **4** | **1 P0, 2 P2, 1 P3** |
 | ✅ Resolved by reclassification | 4 | Analytics moved to L4 |
+| ✅ Resolved by schema redesign | 1 | Website game endpoints removed |
 
 ---
 
 ## Next Steps
 
 1. **P0**: Delete Auth's subscription dependencies immediately
-2. **P1**: Redesign Website schema - remove character/subscription endpoints or create game-portal (L4)
-3. **P2**: Implement reference registration pattern for Character (#259)
-4. **P2**: Implement missing event cascades (#152)
-5. **P3**: Invert GameSession → Voice dependency
+2. **P2**: Implement reference registration pattern for Character (#259)
+3. **P2**: Implement missing event cascades (#152)
+4. **P3**: Invert GameSession → Voice dependency
 
 **Completed**:
 - ✅ Analytics reclassified to L4 (event-consumption-only service, most optional plugin)
+- ✅ Website schema redesigned - removed game-related endpoints (characters, subscription, server-status)
 
 ---
 

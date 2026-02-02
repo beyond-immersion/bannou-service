@@ -49,7 +49,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
-| [Bannou Website Service API](#website) | `client.Website` | 15 | Public-facing website service for registration, information,... |
+| [Bannou Website Service API](#website) | `client.Website` | 12 | Public-facing website service for registration, information,... |
 
 ---
 
@@ -1642,8 +1642,6 @@ Public-facing website service for registration, information, and account managem
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `GetAccountprofileAsync` | - | `AccountProfile` | Get account profile for logged-in user |
-| `GetAccountcharactersAsync` | - | `CharacterListResponse` | Get character list for logged-in user |
-| `GetAccountsubscriptionAsync` | - | `SubscriptionResponse` | Get subscription status |
 
 ### CMS
 
@@ -1680,14 +1678,13 @@ Public-facing website service for registration, information, and account managem
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `GetStatusAsync` | - | `StatusResponse` | Get website status and version |
-| `GetServerstatusAsync` | - | `ServerStatusResponse` | Get game server status for all realms |
 
 ---
 
 ## Summary
 
 - **Total services**: 41
-- **Total methods**: 545
+- **Total methods**: 542
 
 ---
 

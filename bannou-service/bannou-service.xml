@@ -76269,14 +76269,6 @@
             <returns>News items retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.GetServerStatusAsync(System.Threading.CancellationToken)">
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get game server status for all realms
-            </summary>
-            <returns>Server status information</returns>
-            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-        </member>
         <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.GetDownloadsAsync(System.Nullable{BeyondImmersion.BannouService.Website.Platform},System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
@@ -76301,14 +76293,6 @@
             Get account profile for logged-in user
             </summary>
             <returns>Account profile retrieved</returns>
-            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.GetAccountCharactersAsync(System.Threading.CancellationToken)">
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get character list for logged-in user
-            </summary>
-            <returns>Character list retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.ListPagesAsync(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
@@ -76380,14 +76364,6 @@
             Update theme configuration
             </summary>
             <returns>Theme updated</returns>
-            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.GetAccountSubscriptionAsync(System.Threading.CancellationToken)">
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get subscription status
-            </summary>
-            <returns>Subscription information retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Website.WebsiteClient">
@@ -76490,14 +76466,6 @@
             <returns>News items retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.GetServerStatusAsync(System.Threading.CancellationToken)">
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get game server status for all realms
-            </summary>
-            <returns>Server status information</returns>
-            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-        </member>
         <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.GetDownloadsAsync(System.Nullable{BeyondImmersion.BannouService.Website.Platform},System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
@@ -76522,14 +76490,6 @@
             Get account profile for logged-in user
             </summary>
             <returns>Account profile retrieved</returns>
-            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.GetAccountCharactersAsync(System.Threading.CancellationToken)">
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get character list for logged-in user
-            </summary>
-            <returns>Character list retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.ListPagesAsync(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
@@ -76601,14 +76561,6 @@
             Update theme configuration
             </summary>
             <returns>Theme updated</returns>
-            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.GetAccountSubscriptionAsync(System.Threading.CancellationToken)">
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get subscription status
-            </summary>
-            <returns>Subscription information retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Website.WebsiteClient.ObjectResponseResult`1">
@@ -77065,56 +77017,6 @@
             URL of the featured image for the news item
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Website.ServerStatusResponse">
-            <summary>
-            Aggregated status of all game server realms
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.ServerStatusResponse.GlobalStatus">
-            <summary>
-            Overall status across all game realms
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.ServerStatusResponse.Realms">
-            <summary>
-            Status information for each game realm
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.RealmStatus">
-            <summary>
-            Status and population information for a single game realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.RealmId">
-            <summary>
-            Unique identifier for the game realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Name">
-            <summary>
-            Display name of the game realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Status">
-            <summary>
-            Current operational status of the realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Population">
-            <summary>
-            Current player population level
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.PlayerCount">
-            <summary>
-            Current number of players online
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Ping">
-            <summary>
-            Latency in milliseconds
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Website.DownloadsResponse">
             <summary>
             Collection of available game client downloads by platform
@@ -77238,91 +77140,6 @@
         <member name="P:BeyondImmersion.BannouService.Website.AccountProfile.LastLogin">
             <summary>
             Date and time of the last successful login
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.AccountProfile.CharacterSlots">
-            <summary>
-            Total number of character slots available
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.AccountProfile.UsedSlots">
-            <summary>
-            Number of character slots currently in use
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.CharacterListResponse">
-            <summary>
-            List of all characters belonging to an account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterListResponse.Characters">
-            <summary>
-            List of characters owned by the account
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.CharacterSummary">
-            <summary>
-            Brief overview of a character for display in character lists
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.CharacterId">
-            <summary>
-            Unique identifier for the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Name">
-            <summary>
-            Name of the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Realm">
-            <summary>
-            Name of the realm the character belongs to
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Level">
-            <summary>
-            Current level of the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Class">
-            <summary>
-            Character class or profession
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.LastPlayed">
-            <summary>
-            Date and time of last gameplay session
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.SubscriptionResponse">
-            <summary>
-            Current subscription status and plan details for an account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.Status">
-            <summary>
-            Current state of the subscription
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.Type">
-            <summary>
-            Subscription tier or plan type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.ExpiresAt">
-            <summary>
-            Date and time when the subscription expires
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.AutoRenew">
-            <summary>
-            Whether automatic renewal is enabled
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.Benefits">
-            <summary>
-            List of benefits included in the subscription
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Website.ErrorResponse">

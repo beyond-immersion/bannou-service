@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Website;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Website;
 
@@ -631,87 +646,6 @@ public partial class NewsItem
 }
 
 /// <summary>
-/// Aggregated status of all game server realms
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServerStatusResponse
-{
-
-    /// <summary>
-    /// Overall status across all game realms
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("globalStatus")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ServerStatusResponseGlobalStatus GlobalStatus { get; set; } = default!;
-
-    /// <summary>
-    /// Status information for each game realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realms")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<RealmStatus> Realms { get; set; } = new System.Collections.ObjectModel.Collection<RealmStatus>();
-
-}
-
-/// <summary>
-/// Status and population information for a single game realm
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RealmStatus
-{
-
-    /// <summary>
-    /// Unique identifier for the game realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Display name of the game realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Current operational status of the realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmStatusStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Current player population level
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("population")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmStatusPopulation Population { get; set; } = default!;
-
-    /// <summary>
-    /// Current number of players online
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("playerCount")]
-    public int? PlayerCount { get; set; } = default!;
-
-    /// <summary>
-    /// Latency in milliseconds
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ping")]
-    public int? Ping { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Collection of available game client downloads by platform
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -904,131 +838,6 @@ public partial class AccountProfile
     [System.Text.Json.Serialization.JsonPropertyName("lastLogin")]
     public System.DateTimeOffset? LastLogin { get; set; } = default!;
 
-    /// <summary>
-    /// Total number of character slots available
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterSlots")]
-    public int CharacterSlots { get; set; } = default!;
-
-    /// <summary>
-    /// Number of character slots currently in use
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("usedSlots")]
-    public int UsedSlots { get; set; } = default!;
-
-}
-
-/// <summary>
-/// List of all characters belonging to an account
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CharacterListResponse
-{
-
-    /// <summary>
-    /// List of characters owned by the account
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characters")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<CharacterSummary> Characters { get; set; } = new System.Collections.ObjectModel.Collection<CharacterSummary>();
-
-}
-
-/// <summary>
-/// Brief overview of a character for display in character lists
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CharacterSummary
-{
-
-    /// <summary>
-    /// Unique identifier for the character
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Name of the character
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Name of the realm the character belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Realm { get; set; } = default!;
-
-    /// <summary>
-    /// Current level of the character
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("level")]
-    public int Level { get; set; } = default!;
-
-    /// <summary>
-    /// Character class or profession
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("class")]
-    public string? Class { get; set; } = default!;
-
-    /// <summary>
-    /// Date and time of last gameplay session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("lastPlayed")]
-    public System.DateTimeOffset? LastPlayed { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Current subscription status and plan details for an account
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SubscriptionResponse
-{
-
-    /// <summary>
-    /// Current state of the subscription
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SubscriptionResponseStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Subscription tier or plan type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("type")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SubscriptionResponseType Type { get; set; } = default!;
-
-    /// <summary>
-    /// Date and time when the subscription expires
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether automatic renewal is enabled
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("autoRenew")]
-    public bool AutoRenew { get; set; } = default!;
-
-    /// <summary>
-    /// List of benefits included in the subscription
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("benefits")]
-    public System.Collections.Generic.ICollection<string> Benefits { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -1112,66 +921,6 @@ public enum NavigationItemTarget
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServerStatusResponseGlobalStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"online")]
-    Online = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
-    Partial = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"offline")]
-    Offline = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-    Maintenance = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmStatusStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"online")]
-    Online = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"offline")]
-    Offline = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-    Maintenance = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmStatusPopulation
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"low")]
-    Low = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"medium")]
-    Medium = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"high")]
-    High = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ContactRequestCategory
 {
 
@@ -1189,46 +938,6 @@ public enum ContactRequestCategory
 
     [System.Runtime.Serialization.EnumMember(Value = @"business")]
     Business = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SubscriptionResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
-    Active = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"inactive")]
-    Inactive = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"trial")]
-    Trial = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
-    Expired = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SubscriptionResponseType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"free")]
-    Free = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"basic")]
-    Basic = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"premium")]
-    Premium = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"lifetime")]
-    Lifetime = 3,
 
 }
 #pragma warning restore CS1591

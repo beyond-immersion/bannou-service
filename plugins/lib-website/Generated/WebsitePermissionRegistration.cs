@@ -112,21 +112,6 @@ public static class WebsitePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/website/server-status",
-            Method = ServiceEndpointMethod.GET,
-            Description = "getServerStatus",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "anonymous",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/website/downloads",
             Method = ServiceEndpointMethod.GET,
             Description = "getDownloads",
@@ -160,21 +145,6 @@ public static class WebsitePermissionRegistration
             Path = "/website/account/profile",
             Method = ServiceEndpointMethod.GET,
             Description = "getAccountProfile",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/website/account/characters",
-            Method = ServiceEndpointMethod.GET,
-            Description = "getAccountCharacters",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -300,21 +270,6 @@ public static class WebsitePermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/website/account/subscription",
-            Method = ServiceEndpointMethod.GET,
-            Description = "getAccountSubscription",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
