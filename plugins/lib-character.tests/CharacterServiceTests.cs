@@ -1,10 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Character;
-using BeyondImmersion.BannouService.CharacterEncounter;
-using BeyondImmersion.BannouService.CharacterHistory;
-using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
@@ -43,13 +39,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<ILogger<CharacterService>> _mockLogger;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<ISpeciesClient> _mockSpeciesClient;
-    private readonly Mock<ICharacterPersonalityClient> _mockPersonalityClient;
-    private readonly Mock<ICharacterHistoryClient> _mockHistoryClient;
     private readonly Mock<IRelationshipClient> _mockRelationshipClient;
     private readonly Mock<IRelationshipTypeClient> _mockRelationshipTypeClient;
-    private readonly Mock<ICharacterEncounterClient> _mockEncounterClient;
     private readonly Mock<IContractClient> _mockContractClient;
-    private readonly Mock<IActorClient> _mockActorClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "character-statestore";
@@ -68,13 +60,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockLogger = new Mock<ILogger<CharacterService>>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockSpeciesClient = new Mock<ISpeciesClient>();
-        _mockPersonalityClient = new Mock<ICharacterPersonalityClient>();
-        _mockHistoryClient = new Mock<ICharacterHistoryClient>();
         _mockRelationshipClient = new Mock<IRelationshipClient>();
         _mockRelationshipTypeClient = new Mock<IRelationshipTypeClient>();
-        _mockEncounterClient = new Mock<ICharacterEncounterClient>();
         _mockContractClient = new Mock<IContractClient>();
-        _mockActorClient = new Mock<IActorClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
@@ -128,13 +116,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             Configuration,
             _mockRealmClient.Object,
             _mockSpeciesClient.Object,
-            _mockPersonalityClient.Object,
-            _mockHistoryClient.Object,
             _mockRelationshipClient.Object,
             _mockRelationshipTypeClient.Object,
-            _mockEncounterClient.Object,
             _mockContractClient.Object,
-            _mockActorClient.Object,
             _mockEventConsumer.Object);
     }
 

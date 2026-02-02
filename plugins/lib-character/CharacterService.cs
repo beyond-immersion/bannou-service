@@ -49,10 +49,11 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_COMPRESSED_TOPIC = "character.compressed";
 
     // Reference type constants
+    // NOTE: Per SERVICE_HIERARCHY (L2 cannot depend on L4), we only track references from
+    // same-layer or lower services. Actor/Encounter references (L4) should be tracked via
+    // event-driven reference registration pattern if needed in the future.
     private const string REFERENCE_TYPE_RELATIONSHIP = "RELATIONSHIP";
-    private const string REFERENCE_TYPE_ENCOUNTER = "ENCOUNTER";
     private const string REFERENCE_TYPE_CONTRACT = "CONTRACT";
-    private const string REFERENCE_TYPE_ACTOR = "ACTOR";
 
     // Grace period for cleanup eligibility - from configuration in days, converted to seconds at usage
 
@@ -64,13 +65,9 @@ public partial class CharacterService : ICharacterService
         CharacterServiceConfiguration configuration,
         IRealmClient realmClient,
         ISpeciesClient speciesClient,
-        ICharacterPersonalityClient personalityClient,
-        ICharacterHistoryClient historyClient,
         IRelationshipClient relationshipClient,
         IRelationshipTypeClient relationshipTypeClient,
-        ICharacterEncounterClient encounterClient,
         IContractClient contractClient,
-        IActorClient actorClient,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -80,13 +77,9 @@ public partial class CharacterService : ICharacterService
         _configuration = configuration;
         _realmClient = realmClient;
         _speciesClient = speciesClient;
-        _personalityClient = personalityClient;
-        _historyClient = historyClient;
         _relationshipClient = relationshipClient;
         _relationshipTypeClient = relationshipTypeClient;
-        _encounterClient = encounterClient;
         _contractClient = contractClient;
-        _actorClient = actorClient;
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -607,7 +600,11 @@ public partial class CharacterService : ICharacterService
     #region Enriched Character & Compression Operations
 
     /// <summary>
-    /// Gets a character with optional enriched data (personality, backstory, family tree).
+    /// Gets a character with optional enriched data (family tree).
+    /// NOTE: Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like
+    /// CharacterPersonality or CharacterHistory. Personality, backstory, and combat
+    /// preferences are not included in this response. For fully enriched character data,
+    /// callers should aggregate from L4 services directly or use a future L4 aggregator service.
     /// </summary>
     public async Task<(StatusCodes, EnrichedCharacterResponse?)> GetEnrichedCharacterAsync(
         GetEnrichedCharacterRequest body,
@@ -639,88 +636,19 @@ public partial class CharacterService : ICharacterService
                 UpdatedAt = character.UpdatedAt
             };
 
-            // Fetch personality if requested
-            if (body.IncludePersonality)
+            // NOTE: Personality, CombatPreferences, and Backstory are NOT included.
+            // Per SERVICE_HIERARCHY, Character (L2) cannot depend on CharacterPersonality or
+            // CharacterHistory (L4). Callers needing this data should call those services directly.
+            if (body.IncludePersonality || body.IncludeCombatPreferences || body.IncludeBackstory)
             {
-                try
-                {
-                    var personalityResult = await _personalityClient.GetPersonalityAsync(
-                        new CharacterPersonality.GetPersonalityRequest { CharacterId = body.CharacterId },
-                        cancellationToken);
-
-                    if (personalityResult != null)
-                    {
-                        response.Personality = new PersonalitySnapshot
-                        {
-                            Traits = personalityResult.Traits.ToDictionary(t => t.Axis.ToString(), t => t.Value),
-                            Version = personalityResult.Version
-                        };
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == 404)
-                {
-                    _logger.LogDebug("No personality found for character {CharacterId}", body.CharacterId);
-                }
+                _logger.LogDebug(
+                    "Enrichment flags for personality/combat/backstory were set for character {CharacterId}, " +
+                    "but these are not included per SERVICE_HIERARCHY (L2 cannot depend on L4). " +
+                    "Callers should aggregate from L4 services directly.",
+                    body.CharacterId);
             }
 
-            // Fetch combat preferences if requested
-            if (body.IncludeCombatPreferences)
-            {
-                try
-                {
-                    var combatResult = await _personalityClient.GetCombatPreferencesAsync(
-                        new CharacterPersonality.GetCombatPreferencesRequest { CharacterId = body.CharacterId },
-                        cancellationToken);
-
-                    if (combatResult != null)
-                    {
-                        response.CombatPreferences = new CombatPreferencesSnapshot
-                        {
-                            Style = combatResult.Preferences.Style.ToString(),
-                            PreferredRange = combatResult.Preferences.PreferredRange.ToString(),
-                            GroupRole = combatResult.Preferences.GroupRole.ToString(),
-                            RiskTolerance = combatResult.Preferences.RiskTolerance,
-                            RetreatThreshold = combatResult.Preferences.RetreatThreshold,
-                            ProtectAllies = combatResult.Preferences.ProtectAllies
-                        };
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == 404)
-                {
-                    _logger.LogDebug("No combat preferences found for character {CharacterId}", body.CharacterId);
-                }
-            }
-
-            // Fetch backstory if requested
-            if (body.IncludeBackstory)
-            {
-                try
-                {
-                    var backstoryResult = await _historyClient.GetBackstoryAsync(
-                        new CharacterHistory.GetBackstoryRequest { CharacterId = body.CharacterId },
-                        cancellationToken);
-
-                    if (backstoryResult != null)
-                    {
-                        response.Backstory = new BackstorySnapshot
-                        {
-                            Elements = backstoryResult.Elements.Select(e => new BackstoryElementSnapshot
-                            {
-                                ElementType = e.ElementType.ToString(),
-                                Key = e.Key,
-                                Value = e.Value,
-                                Strength = e.Strength
-                            }).ToList()
-                        };
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == 404)
-                {
-                    _logger.LogDebug("No backstory found for character {CharacterId}", body.CharacterId);
-                }
-            }
-
-            // Fetch family tree if requested
+            // Fetch family tree if requested (uses Relationship service - L2, allowed)
             if (body.IncludeFamilyTree)
             {
                 response.FamilyTree = await BuildFamilyTreeAsync(body.CharacterId, cancellationToken);
@@ -751,6 +679,10 @@ public partial class CharacterService : ICharacterService
 
     /// <summary>
     /// Compresses a dead character to archive format for long-term storage.
+    /// NOTE: Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like
+    /// CharacterPersonality or CharacterHistory. Archives include only family summary
+    /// (from Relationships, L2). Personality and history data should be handled by
+    /// subscribing L4 services via the character.compressed event.
     /// </summary>
     public async Task<(StatusCodes, CharacterArchive?)> CompressCharacterAsync(
         CompressCharacterRequest body,
@@ -791,54 +723,10 @@ public partial class CharacterService : ICharacterService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Generate text summaries
-            string? personalitySummary = null;
-            var keyBackstoryPoints = new List<string>();
-            var majorLifeEvents = new List<string>();
-            string? familySummary = null;
-
-            // Get personality summary
-            try
-            {
-                var personalityResult = await _personalityClient.GetPersonalityAsync(
-                    new CharacterPersonality.GetPersonalityRequest { CharacterId = body.CharacterId },
-                    cancellationToken);
-
-                if (personalityResult != null)
-                {
-                    personalitySummary = GeneratePersonalitySummary(personalityResult.Traits);
-                }
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogDebug("No personality to summarize for character {CharacterId}", body.CharacterId);
-            }
-
-            // Get backstory/history summaries
-            try
-            {
-                var historyResult = await _historyClient.SummarizeHistoryAsync(
-                    new SummarizeHistoryRequest
-                    {
-                        CharacterId = body.CharacterId,
-                        MaxBackstoryPoints = _configuration.CompressionMaxBackstoryPoints,
-                        MaxLifeEvents = _configuration.CompressionMaxLifeEvents
-                    },
-                    cancellationToken);
-
-                if (historyResult != null)
-                {
-                    keyBackstoryPoints = historyResult.KeyBackstoryPoints.ToList();
-                    majorLifeEvents = historyResult.MajorLifeEvents.ToList();
-                }
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogDebug("No history to summarize for character {CharacterId}", body.CharacterId);
-            }
-
-            // Get family summary
-            familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
+            // NOTE: Per SERVICE_HIERARCHY, we cannot call CharacterPersonality or CharacterHistory (L4).
+            // Personality summary and backstory/history summaries are NOT included.
+            // L4 services should subscribe to character.compressed event to handle their own cleanup.
+            string? familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
 
             var archive = new CharacterArchive
             {
@@ -849,10 +737,10 @@ public partial class CharacterService : ICharacterService
                 BirthDate = character.BirthDate,
                 DeathDate = character.DeathDate.Value,
                 CompressedAt = DateTimeOffset.UtcNow,
-                PersonalitySummary = personalitySummary,
-                KeyBackstoryPoints = keyBackstoryPoints,
-                MajorLifeEvents = majorLifeEvents,
-                FamilySummary = familySummary
+                PersonalitySummary = null, // L4 data not available per SERVICE_HIERARCHY
+                KeyBackstoryPoints = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
+                MajorLifeEvents = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
+                FamilySummary = familySummary // From Relationships (L2), allowed
             };
 
             // Store archive
@@ -860,27 +748,18 @@ public partial class CharacterService : ICharacterService
             await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
                 .SaveAsync(archiveKey, MapToArchiveModel(archive), cancellationToken: cancellationToken);
 
-            // Optionally delete source data
+            // NOTE: deleteSourceData flag cannot delete L4 service data per SERVICE_HIERARCHY.
+            // L4 services should subscribe to character.compressed event to handle their own cleanup.
             if (body.DeleteSourceData)
             {
-                try
-                {
-                    await _personalityClient.DeletePersonalityAsync(
-                        new CharacterPersonality.DeletePersonalityRequest { CharacterId = body.CharacterId },
-                        cancellationToken);
-                }
-                catch (ApiException ex) when (ex.StatusCode == 404) { /* Ignore if not found */ }
-
-                try
-                {
-                    await _historyClient.DeleteAllHistoryAsync(
-                        new DeleteAllHistoryRequest { CharacterId = body.CharacterId },
-                        cancellationToken);
-                }
-                catch (ApiException ex) when (ex.StatusCode == 404) { /* Ignore if not found */ }
+                _logger.LogDebug(
+                    "DeleteSourceData=true for character {CharacterId}, but Character (L2) cannot call " +
+                    "CharacterPersonality or CharacterHistory (L4) to delete their data per SERVICE_HIERARCHY. " +
+                    "L4 services should subscribe to character.compressed event.",
+                    body.CharacterId);
             }
 
-            // Publish compression event
+            // Publish compression event - L4 services can subscribe to clean up their data
             await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new CharacterCompressedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -960,6 +839,11 @@ public partial class CharacterService : ICharacterService
 
     /// <summary>
     /// Checks reference count for cleanup eligibility.
+    /// NOTE: Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like Actor
+    /// or CharacterEncounter. Reference counting only checks same-layer or lower services
+    /// (Relationships at L2, Contracts at L1). For comprehensive reference tracking including
+    /// L4 services, implement the event-driven reference registration pattern where L4 services
+    /// publish to character.reference.registered/unregistered topics.
     /// </summary>
     public async Task<(StatusCodes, CharacterRefCount?)> CheckCharacterReferencesAsync(
         CheckReferencesRequest body,
@@ -982,11 +866,11 @@ public partial class CharacterService : ICharacterService
                 .GetAsync(archiveKey, cancellationToken);
             var isCompressed = archiveModel != null;
 
-            // Count references from relationship service
+            // Count references from same-layer or lower services only (per SERVICE_HIERARCHY)
             var referenceTypes = new List<string>();
             var referenceCount = 0;
 
-            // Check relationships
+            // Check relationships (L2 - allowed)
             try
             {
                 // Query for relationships where this character is entity1 or entity2
@@ -1013,31 +897,11 @@ public partial class CharacterService : ICharacterService
                 _logger.LogDebug("No relationships found for character {CharacterId}", body.CharacterId);
             }
 
-            // Check character encounters
-            try
-            {
-                var encounterResult = await _encounterClient.QueryByCharacterAsync(
-                    new QueryByCharacterRequest
-                    {
-                        CharacterId = body.CharacterId,
-                        Page = 1,
-                        PageSize = 1 // Only need to know if any exist, not all of them
-                    },
-                    cancellationToken);
+            // NOTE: Per SERVICE_HIERARCHY, we cannot call Actor or CharacterEncounter (L4).
+            // L4 references should be tracked via event-driven reference registration pattern
+            // where L4 services publish to character.reference.registered/unregistered topics.
 
-                if (encounterResult != null && encounterResult.TotalCount > 0)
-                {
-                    referenceCount += encounterResult.TotalCount;
-                    if (!referenceTypes.Contains(REFERENCE_TYPE_ENCOUNTER))
-                        referenceTypes.Add(REFERENCE_TYPE_ENCOUNTER);
-                }
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogDebug("No encounters found for character {CharacterId}", body.CharacterId);
-            }
-
-            // Check contracts where character is a party
+            // Check contracts where character is a party (L1 - allowed)
             try
             {
                 var contractResult = await _contractClient.QueryContractInstancesAsync(
@@ -1062,29 +926,6 @@ public partial class CharacterService : ICharacterService
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
                 _logger.LogDebug("No contracts found for character {CharacterId}", body.CharacterId);
-            }
-
-            // Check actors associated with this character (NPC brains)
-            try
-            {
-                var actorResult = await _actorClient.ListActorsAsync(
-                    new ListActorsRequest
-                    {
-                        CharacterId = body.CharacterId,
-                        Limit = 1 // Only need to know if any exist
-                    },
-                    cancellationToken);
-
-                if (actorResult != null && actorResult.Actors.Count > 0)
-                {
-                    referenceCount += actorResult.Total;
-                    if (!referenceTypes.Contains(REFERENCE_TYPE_ACTOR))
-                        referenceTypes.Add(REFERENCE_TYPE_ACTOR);
-                }
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogDebug("No actors found for character {CharacterId}", body.CharacterId);
             }
 
             // Get/update reference tracking data with optimistic concurrency
@@ -1343,40 +1184,6 @@ public partial class CharacterService : ICharacterService
         {
             return new FamilyTreeResponse();
         }
-    }
-
-    /// <summary>
-    /// Generates a text summary of personality traits.
-    /// </summary>
-    private string GeneratePersonalitySummary(ICollection<CharacterPersonality.TraitValue> traits)
-    {
-        var descriptions = new List<string>();
-        var threshold = (float)_configuration.PersonalityTraitThreshold;
-        var negThreshold = -threshold;
-
-        foreach (var trait in traits)
-        {
-            var desc = trait.Axis.ToString() switch
-            {
-                "OPENNESS" => trait.Value > threshold ? "creative" : trait.Value < negThreshold ? "traditional" : null,
-                "CONSCIENTIOUSNESS" => trait.Value > threshold ? "organized" : trait.Value < negThreshold ? "spontaneous" : null,
-                "EXTRAVERSION" => trait.Value > threshold ? "outgoing" : trait.Value < negThreshold ? "reserved" : null,
-                "AGREEABLENESS" => trait.Value > threshold ? "cooperative" : trait.Value < negThreshold ? "competitive" : null,
-                "NEUROTICISM" => trait.Value > threshold ? "anxious" : trait.Value < negThreshold ? "calm" : null,
-                "HONESTY" => trait.Value > threshold ? "sincere" : trait.Value < negThreshold ? "deceptive" : null,
-                "AGGRESSION" => trait.Value > threshold ? "confrontational" : trait.Value < negThreshold ? "pacifist" : null,
-                "LOYALTY" => trait.Value > threshold ? "devoted" : trait.Value < negThreshold ? "self-serving" : null,
-                _ => null
-            };
-
-            if (desc != null)
-                descriptions.Add(desc);
-        }
-
-        if (descriptions.Count == 0)
-            return "balanced personality";
-
-        return string.Join(", ", descriptions);
     }
 
     /// <summary>
