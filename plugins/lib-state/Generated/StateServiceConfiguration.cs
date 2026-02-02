@@ -77,4 +77,16 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ConnectionTimeoutSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// Maximum number of connection retry attempts for MySQL initialization
+    /// Environment variable: STATE_CONNECTION_RETRY_COUNT
+    /// </summary>
+    public int ConnectionRetryCount { get; set; } = 10;
+
+    /// <summary>
+    /// Minimum delay in milliseconds between MySQL connection retry attempts
+    /// Environment variable: STATE_MIN_RETRY_DELAY_MS
+    /// </summary>
+    public int MinRetryDelayMs { get; set; } = 1000;
+
 }

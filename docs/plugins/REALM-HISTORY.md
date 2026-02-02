@@ -168,7 +168,7 @@ None. The service is feature-complete for its scope.
 3. **AI-powered summarization**: Replace template-based summaries with LLM-generated narrative text.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/269 -->
 4. **Realm timeline visualization**: Chronological event data suitable for timeline UI rendering.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:ISSUE_URL_PLACEHOLDER -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/270 -->
 
 ---
 
@@ -193,8 +193,10 @@ None identified.
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering and pagination**: All list operations load full indexes, fetch all records via bulk fetch, filter in memory, then paginate. For realms with very high participation counts (thousands of events), this loads everything into memory.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/200 -->
 
 2. **No index cleanup on orphaned events**: Event indexes accumulate participation IDs. If a realm is deleted but its participations aren't cleaned up through `DeleteAll`, event indexes contain stale entries pointing to deleted records.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/272 -->
 
 3. **Lore stored as single document**: All lore elements for a realm are stored in one `RealmLoreData` object. Very large lore collections (hundreds of elements) would be loaded/saved atomically on every modification.
 
@@ -215,9 +217,12 @@ None identified.
 ## Work Tracking
 
 ### Pending Design Review
+- **2026-02-02**: [#200](https://github.com/beyond-immersion/bannou-service/issues/200) - Store-level pagination for list operations (shared issue with character-history; in-memory pagination causes memory pressure for realms with many participations)
 - **2026-02-02**: [#266](https://github.com/beyond-immersion/bannou-service/issues/266) - Event-level aggregation (API design decisions needed: metrics, role breakdowns, filtering, new endpoint vs enhancement)
 - **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (BLOCKED: requires realm hierarchy which contradicts current Realm service design of "peer worlds with no hierarchical relationships")
 - **2026-02-02**: [#269](https://github.com/beyond-immersion/bannou-service/issues/269) - AI-powered summarization (BLOCKED on character-history #230 which tracks shared LLM infrastructure work)
+- **2026-02-02**: [#270](https://github.com/beyond-immersion/bannou-service/issues/270) - Timeline visualization (may already be satisfied by existing `GetRealmParticipation` endpoint which returns chronologically-sorted data)
+- **2026-02-02**: [#272](https://github.com/beyond-immersion/bannou-service/issues/272) - Orphaned event index cleanup (no subscription to `realm.deleted`, empty indexes not deleted)
 
 ### Completed
 

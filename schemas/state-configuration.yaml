@@ -42,6 +42,16 @@ x-service-configuration:
       description: Total timeout in seconds for establishing Redis/MySQL connections
       env: STATE_CONNECTION_TIMEOUT_SECONDS
       default: 60
+    ConnectionRetryCount:
+      type: integer
+      description: Maximum number of connection retry attempts for MySQL initialization
+      env: STATE_CONNECTION_RETRY_COUNT
+      default: 10
+    MinRetryDelayMs:
+      type: integer
+      description: Minimum delay in milliseconds between MySQL connection retry attempts
+      env: STATE_MIN_RETRY_DELAY_MS
+      default: 1000
     # Note: DefaultConsistency was removed as dead config (IMPLEMENTATION TENETS T21).
     # Consistency is specified per-request via StateOptions.Consistency, not as a global default.
     # The ConsistencyLevel enum remains available in state-api.yaml for per-request use.

@@ -120,6 +120,8 @@ This plugin does not consume external events.
 | `RedisConnectionString` | `STATE_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis host:port |
 | `MySqlConnectionString` | `STATE_MYSQL_CONNECTION_STRING` | `"server=bannou-mysql;..."` | Full MySQL connection string |
 | `ConnectionTimeoutSeconds` | `STATE_CONNECTION_TIMEOUT_SECONDS` | `60` | Database connection timeout |
+| `ConnectionRetryCount` | `STATE_CONNECTION_RETRY_COUNT` | `10` | Max MySQL connection retry attempts |
+| `MinRetryDelayMs` | `STATE_MIN_RETRY_DELAY_MS` | `1000` | Min delay between MySQL retry attempts |
 
 **Note:** `DefaultConsistency`, `EnableMetrics`, and `EnableTracing` were removed as dead config. Telemetry is now controlled centrally via lib-telemetry. Consistency is specified per-request via `StateOptions.Consistency`.
 
@@ -286,6 +288,16 @@ State Store Architecture (Interface Hierarchy)
 
 7. **No state change events**: The State service intentionally does not publish lifecycle events (StateChanged, StoreMigration, StoreHealth) for state mutations. This was a deliberate design decision because publishing events for every save/delete operation would be prohibitively expensive given the high operation volume across all services. Error events are still published via `TryPublishErrorAsync` for operational visibility. See `schemas/state-events.yaml` for documentation of this decision.
 
+8. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. This is intentional - enforcement was considered and rejected for these reasons:
+   - All services are in the same trust boundary (same codebase, same deployment)
+   - Adding access control would require ambient context or passed parameters to identify the "current service" at call time
+   - Significant performance overhead for every state store access
+   - Would break the clean DI pattern where services just inject `IStateStoreFactory`
+   - The generated `StateStoreDefinitions` constants guide correct usage via convention
+   - This is internal infrastructure, not an external API requiring authorization
+
+9. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
+
 ### Design Considerations (Requires Planning)
 
 1. ~~**Unused config properties**~~: **FIXED** (2026-02-01) - All three properties (`DefaultConsistency`, `EnableMetrics`, `EnableTracing`) removed from schema as dead config. `DefaultConsistency` removed in this audit; `EnableMetrics`/`EnableTracing` removed previously when telemetry was centralized to lib-telemetry.
@@ -293,15 +305,15 @@ State Store Architecture (Interface Hierarchy)
 2. **MySQL query loads all into memory**: `QueryAsync` and `QueryPagedAsync` in MySqlStateStore load all entries from the store, deserialize each one, then filter in memory. For very large stores this could be memory-intensive. Consider SQL-level filtering.
    <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/251 -->
 
-3. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. No enforcement of store ownership. Relies on convention (services only access their own stores).
+3. ~~**No store-level access control**~~: **MOVED TO QUIRKS** (2026-02-02) - Intentional design decision. See Intentional Quirks #8.
 
 4. ~~**Set and sorted set operation support varies by backend**~~: **FIXED** (2026-02-01) - Set and Sorted Set operations are now consolidated in `ICacheableStateStore<T>` interface. Services call `GetCacheableStore<T>()` for stores needing these operations. MySQL throws `InvalidOperationException` at factory call time (compile-time safety via interface segregation). Redis, RedisSearch, and InMemory all support the full `ICacheableStateStore<T>` interface including sorted sets.
 
-5. **Connection initialization retry**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry (relies on StackExchange.Redis auto-reconnect).
+5. ~~**Connection initialization retry**~~: **MOVED TO QUIRKS** (2026-02-02) - Intentional asymmetry. See Intentional Quirks #9.
 
-6. **Hardcoded retry delay minimum**: The retry delay uses a hardcoded minimum of 1000ms in `StateStoreFactory.cs:121`. Should be a configuration property (`MinRetryDelayMs`).
+6. ~~**Hardcoded retry delay minimum**~~: **FIXED** (2026-02-02) - Added `MinRetryDelayMs` to `state-configuration.yaml` (env: `STATE_MIN_RETRY_DELAY_MS`, default: 1000). The retry delay calculation now uses this configurable value.
 
-7. **ConnectionRetryCount not in schema**: `ConnectionRetryCount` has a hardcoded default of `10` in `StateStoreFactoryConfiguration` but is not exposed in the configuration schema. Should be added to `state-configuration.yaml`.
+7. ~~**ConnectionRetryCount not in schema**~~: **FIXED** (2026-02-02) - Added `ConnectionRetryCount` to `state-configuration.yaml` (env: `STATE_CONNECTION_RETRY_COUNT`, default: 10).
 
 8. ~~**RedisDistributedLockProvider direct Redis connection**~~: **FIXED** (2026-02-01) - `RedisDistributedLockProvider` now uses `IStateStoreFactory.GetRedisOperations()` instead of managing its own `ConnectionMultiplexer`. When Redis is unavailable (`UseInMemory=true`), it falls back to an in-memory lock implementation using `ConcurrentDictionary` with TTL-based expiration. Error events are still not published (infrastructure libs avoid event publishing to prevent circular dependencies).
 
@@ -325,3 +337,6 @@ This section tracks active development work on items from the quirks/bugs lists 
   - Updated all services using Set/Sorted Set operations to call `GetCacheableStore<T>()` instead of `GetStore<T>()`
   - Added `InstrumentedCacheableStateStore<T>` telemetry decorator
   - MySQL backend now throws `InvalidOperationException` at factory call time rather than runtime `NotSupportedException`
+- **2026-02-02**: Reclassified "No store-level access control" from Design Considerations to Intentional Quirks. Investigation confirmed this is an intentional design decision: all services are in the same trust boundary, enforcement would add performance overhead and complexity, and the `StateStoreDefinitions` constants provide convention-based guidance.
+- **2026-02-02**: Reclassified "Connection initialization retry asymmetry" from Design Considerations to Intentional Quirks. StackExchange.Redis has built-in auto-reconnect; EF Core/MySQL does not. The asymmetry is by design.
+- **2026-02-02**: Added `ConnectionRetryCount` and `MinRetryDelayMs` to `state-configuration.yaml`. Both were previously hardcoded in `StateStoreFactoryConfiguration`. Now configurable via `STATE_CONNECTION_RETRY_COUNT` (default: 10) and `STATE_MIN_RETRY_DELAY_MS` (default: 1000).

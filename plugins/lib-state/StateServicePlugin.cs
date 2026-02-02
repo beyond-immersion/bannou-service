@@ -91,7 +91,10 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             RedisConnectionString = !string.IsNullOrEmpty(stateConfig.RedisConnectionString)
                 ? stateConfig.RedisConnectionString
                 : "localhost:6379",
-            MySqlConnectionString = stateConfig.MySqlConnectionString
+            MySqlConnectionString = stateConfig.MySqlConnectionString,
+            ConnectionTimeoutSeconds = stateConfig.ConnectionTimeoutSeconds,
+            ConnectionRetryCount = stateConfig.ConnectionRetryCount,
+            MinRetryDelayMs = stateConfig.MinRetryDelayMs
         };
 
         // Load store configurations from generated definitions (schema-first approach)

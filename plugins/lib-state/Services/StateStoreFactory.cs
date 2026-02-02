@@ -45,6 +45,11 @@ public class StateStoreFactoryConfiguration
     public int ConnectionTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
+    /// Minimum delay in milliseconds between MySQL connection retry attempts.
+    /// </summary>
+    public int MinRetryDelayMs { get; set; } = 1000;
+
+    /// <summary>
     /// Store configurations by name.
     /// </summary>
     public Dictionary<string, StoreConfiguration> Stores { get; set; } = new();
@@ -132,7 +137,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             {
                 var maxRetries = _configuration.ConnectionRetryCount;
                 var totalTimeoutSeconds = _configuration.ConnectionTimeoutSeconds;
-                var retryDelayMs = Math.Max(1000, (totalTimeoutSeconds * 1000) / Math.Max(1, maxRetries));
+                var retryDelayMs = Math.Max(_configuration.MinRetryDelayMs, (totalTimeoutSeconds * 1000) / Math.Max(1, maxRetries));
 
                 _logger.LogDebug(
                     "Initializing MySQL connection (timeout: {TotalTimeout}s, retries: {MaxRetries})",

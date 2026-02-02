@@ -251,6 +251,8 @@ None currently tracked.
 
 7. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be resolved (type deleted, RelationshipType service unavailable), the relationship is excluded from the family tree with no indication in the response. This is intentional graceful degradation: partial valid data is preferred over failing the entire enrichment. A warning is logged (`"Could not look up relationship type {TypeId}"`) for observability. The alternative (returning uncategorized relationships) would break the structured Parents/Children/Siblings/Spouse/PastLives response format.
 
+8. **INCARNATION tracking is directional (past lives only)**: The `PastLives` field only populates when the queried character is Entity2 in an INCARNATION relationship. This is semantically correct: INCARNATION means "Entity1 died and was reincarnated as Entity2". When querying Entity2, Entity1 is correctly shown as a past life. When querying Entity1, Entity2 is NOT shown because that would be a "future incarnation" (you wouldn't know your future incarnations). The field is named `PastLives`, not `Incarnations`, reinforcing this semantic meaning.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
@@ -262,9 +264,10 @@ None currently tracked.
 
 4. ~~**Family tree silently skips unknown relationship types**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks; this is intentional graceful degradation, not a design gap.
 
-5. **INCARNATION tracking is directional**: Only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
+5. ~~**INCARNATION tracking is directional**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks; this is correct semantic behavior, not a design gap.
 
 6. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/271 -->
 
 7. **"orphaned" label ignores parent death status**: Adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died.
 
@@ -286,6 +289,7 @@ No active work items.
 
 ### Historical
 
+- **2026-02-02**: Moved "INCARNATION tracking is directional" from Design Considerations to Intentional Quirks - this is correct semantic behavior (past lives, not future incarnations).
 - **2026-02-02**: Moved "Family tree silently skips unknown relationship types" from Design Considerations to Intentional Quirks - this is intentional graceful degradation (partial data preferred over error).
 - **2026-02-02**: Moved "Global index double-write" from Design Considerations to Intentional Quirks - this is an intentional performance pattern, not a planning consideration.
 - **2026-02-02**: Parallelized family tree lookups - `BuildFamilyTreeAsync` now uses `Task.WhenAll` for relationship type lookups and `GetBulkAsync` for character loading, reducing N+M sequential calls to 2 bulk operations.
