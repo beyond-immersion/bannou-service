@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
@@ -34,6 +35,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IStateStore<CharacterModel>> _mockCharacterStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<CharacterArchiveModel>> _mockArchiveStore;
+    private readonly Mock<IStateStore<RefCountData>> _mockRefCountStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<CharacterService>> _mockLogger;
@@ -43,6 +46,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IRelationshipTypeClient> _mockRelationshipTypeClient;
     private readonly Mock<IContractClient> _mockContractClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     private const string STATE_STORE = "character-statestore";
     private const string CHARACTER_KEY_PREFIX = "character:";
@@ -55,6 +59,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockCharacterStore = new Mock<IStateStore<CharacterModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockArchiveStore = new Mock<IStateStore<CharacterArchiveModel>>();
+        _mockRefCountStore = new Mock<IStateStore<RefCountData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<CharacterService>>();
@@ -64,6 +70,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockRelationshipTypeClient = new Mock<IRelationshipTypeClient>();
         _mockContractClient = new Mock<IContractClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -75,6 +82,12 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<string>>(STATE_STORE))
             .Returns(_mockListStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<CharacterArchiveModel>(STATE_STORE))
+            .Returns(_mockArchiveStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<RefCountData>(STATE_STORE))
+            .Returns(_mockRefCountStore.Object);
 
         // Default lock acquisition to succeed
         var mockLockResponse = new Mock<ILockResponse>();
@@ -106,7 +119,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
     }
 
-    private CharacterService CreateService()
+    private CharacterService CreateService(IResourceClient? resourceClient = null)
     {
         return new CharacterService(
             _mockStateStoreFactory.Object,
@@ -119,7 +132,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             _mockRelationshipClient.Object,
             _mockRelationshipTypeClient.Object,
             _mockContractClient.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            resourceClient ?? _mockResourceClient.Object);
     }
 
     /// <summary>
@@ -729,6 +743,310 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.NotNull(response);
         Assert.Single(response.Characters);
         Assert.Equal("Target Species Character", response.Characters.First().Name);
+    }
+
+    #endregion
+
+    #region CheckCharacterReferences Tests (lib-resource integration)
+
+    [Fact]
+    public async Task CheckCharacterReferencesAsync_WhenResourceClientReturnsReferences_IncludesInCount()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new CheckReferencesRequest { CharacterId = characterId };
+
+        // Setup character exists
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup no archive (not compressed)
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterArchiveModel?)null);
+
+        // Setup no L2 relationships
+        _mockRelationshipClient
+            .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListRelationshipsResponse { Relationships = new List<RelationshipResponse>(), TotalCount = 0 });
+
+        // Setup lib-resource returns L4 references
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(
+                It.Is<Resource.CheckReferencesRequest>(req => req.ResourceType == "character" && req.ResourceId == characterId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CheckReferencesResponse
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                RefCount = 3,
+                Sources = new List<ResourceReference>
+                {
+                    new() { SourceType = "character-encounter", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow },
+                    new() { SourceType = "character-personality", SourceId = characterId.ToString(), RegisteredAt = DateTimeOffset.UtcNow },
+                    new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+                }
+            });
+
+        // Setup no contracts
+        _mockContractClient
+            .Setup(c => c.QueryContractInstancesAsync(It.IsAny<QueryContractInstancesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        // Setup refcount store
+        _mockRefCountStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new RefCountData { CharacterId = characterId }, "etag1"));
+        _mockRefCountStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag2");
+
+        // Act
+        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.ReferenceCount);
+        Assert.Contains("CHARACTER-ENCOUNTER", response.ReferenceTypes);
+        Assert.Contains("CHARACTER-PERSONALITY", response.ReferenceTypes);
+        Assert.Contains("ACTOR", response.ReferenceTypes);
+    }
+
+    [Fact]
+    public async Task CheckCharacterReferencesAsync_WhenResourceClientReturns404_StillSucceeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new CheckReferencesRequest { CharacterId = characterId };
+
+        // Setup character exists
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup no archive
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterArchiveModel?)null);
+
+        // Setup L2 relationship exists
+        _mockRelationshipClient
+            .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListRelationshipsResponse
+            {
+                Relationships = new List<RelationshipResponse>
+                {
+                    new() { RelationshipId = Guid.NewGuid() }
+                },
+                TotalCount = 1
+            });
+
+        // Setup lib-resource returns 404 (no L4 references registered)
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        // Setup no contracts
+        _mockContractClient
+            .Setup(c => c.QueryContractInstancesAsync(It.IsAny<QueryContractInstancesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        // Setup refcount store
+        _mockRefCountStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((RefCountData?)null, (string?)null));
+        _mockRefCountStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.ReferenceCount); // Only L2 relationship counted
+        Assert.Contains("RELATIONSHIP", response.ReferenceTypes);
+    }
+
+    [Fact]
+    public async Task CheckCharacterReferencesAsync_WhenResourceClientUnavailable_GracefulDegradation()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new CheckReferencesRequest { CharacterId = characterId };
+
+        // Setup character exists
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup no archive
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterArchiveModel?)null);
+
+        // Setup L2 relationship exists
+        _mockRelationshipClient
+            .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListRelationshipsResponse
+            {
+                Relationships = new List<RelationshipResponse>
+                {
+                    new() { RelationshipId = Guid.NewGuid() }
+                },
+                TotalCount = 1
+            });
+
+        // Setup lib-resource throws service unavailable (not 404)
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Service unavailable", 503, null, null, null));
+
+        // Setup no contracts
+        _mockContractClient
+            .Setup(c => c.QueryContractInstancesAsync(It.IsAny<QueryContractInstancesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        // Setup refcount store
+        _mockRefCountStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((RefCountData?)null, (string?)null));
+        _mockRefCountStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+
+        // Assert - Still succeeds with L2 data only (graceful degradation)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.ReferenceCount); // Only L2 relationship counted
+        Assert.Contains("RELATIONSHIP", response.ReferenceTypes);
+    }
+
+    [Fact]
+    public async Task CheckCharacterReferencesAsync_CombinesL2AndL4References()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new CheckReferencesRequest { CharacterId = characterId };
+
+        // Setup character exists
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup no archive
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterArchiveModel?)null);
+
+        // Setup L2 relationships (2 refs)
+        _mockRelationshipClient
+            .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListRelationshipsResponse
+            {
+                Relationships = new List<RelationshipResponse>
+                {
+                    new() { RelationshipId = Guid.NewGuid() },
+                    new() { RelationshipId = Guid.NewGuid() }
+                },
+                TotalCount = 2
+            });
+
+        // Setup lib-resource L4 references (3 refs)
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CheckReferencesResponse
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                RefCount = 3,
+                Sources = new List<ResourceReference>
+                {
+                    new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+                }
+            });
+
+        // Setup contracts (1 ref)
+        _mockContractClient
+            .Setup(c => c.QueryContractInstancesAsync(It.IsAny<QueryContractInstancesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueryContractInstancesResponse
+            {
+                Contracts = new List<ContractInstanceSummary>
+                {
+                    new() { InstanceId = Guid.NewGuid() }
+                },
+                HasMore = false
+            });
+
+        // Setup refcount store
+        _mockRefCountStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((RefCountData?)null, (string?)null));
+        _mockRefCountStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<RefCountData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+
+        // Assert - Total = 2 (L2 rel) + 3 (L4 from lib-resource) + 1 (contracts) = 6
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(6, response.ReferenceCount);
+        Assert.Contains("RELATIONSHIP", response.ReferenceTypes);
+        Assert.Contains("ACTOR", response.ReferenceTypes);
+        Assert.Contains("CONTRACT", response.ReferenceTypes);
+    }
+
+    [Fact]
+    public async Task CheckCharacterReferencesAsync_WhenCharacterNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var request = new CheckReferencesRequest { CharacterId = characterId };
+
+        // Setup character not found
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    /// <summary>
+    /// Helper to setup character exists in state store
+    /// </summary>
+    private void SetupCharacterExists(Guid characterId, Guid realmId)
+    {
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test Character",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
     }
 
     #endregion

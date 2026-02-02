@@ -53,7 +53,8 @@ public partial class ResourceService : IResourceService
         IServiceNavigator navigator,
         IDistributedLockProvider lockProvider,
         ILogger<ResourceService> logger,
-        ResourceServiceConfiguration configuration)
+        ResourceServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -69,6 +70,9 @@ public partial class ResourceService : IResourceService
             StateStoreDefinitions.ResourceCleanup);
         _graceStore = stateStoreFactory.GetStore<GracePeriodRecord>(
             StateStoreDefinitions.ResourceGrace);
+
+        // Register event handlers via partial class (ResourceServiceEvents.cs)
+        RegisterEventConsumers(eventConsumer);
     }
 
     // =========================================================================

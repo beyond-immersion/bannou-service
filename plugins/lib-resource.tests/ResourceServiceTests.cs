@@ -22,6 +22,7 @@ public class ResourceServiceTests
     private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<ResourceService>> _mockLogger;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly ResourceServiceConfiguration _configuration;
     private readonly Mock<ICacheableStateStore<ResourceReferenceEntry>> _mockRefStore;
     private readonly Mock<IStateStore<GracePeriodRecord>> _mockGraceStore;
@@ -45,6 +46,7 @@ public class ResourceServiceTests
         _mockNavigator = new Mock<IServiceNavigator>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<ResourceService>>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         _mockRefStore = new Mock<ICacheableStateStore<ResourceReferenceEntry>>();
         _mockGraceStore = new Mock<IStateStore<GracePeriodRecord>>();
@@ -179,7 +181,8 @@ public class ResourceServiceTests
             _mockNavigator.Object,
             _mockLockProvider.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockEventConsumer.Object);
     }
 
     private void ClearCaptures()

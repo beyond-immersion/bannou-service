@@ -73,8 +73,6 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### Consumed Events
 
-> **⚠️ BUG**: Event consumers are defined but **never registered**. See Bugs section for details.
-
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
 | `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | `HandleReferenceRegisteredAsync` - delegates to `RegisterReferenceAsync` |
@@ -103,7 +101,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 | `IDistributedLockProvider` | Acquiring cleanup locks |
 | `IMessageBus` | Publishing events |
 | `IServiceNavigator` | Executing cleanup callbacks |
-| `IEventConsumer` | **MISSING** - Required for event subscription registration (see Bugs section) |
+| `IEventConsumer` | Registering event subscription handlers |
 
 **Internal Types** (defined in ResourceService.cs):
 | Type | Role |
@@ -274,7 +272,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### Bugs (Fix Immediately)
 
-1. **Event consumers never registered**: The `RegisterEventConsumers` method in `ResourceServiceEvents.cs` is never called. The `ResourceService` constructor does not inject `IEventConsumer` and does not call `RegisterEventConsumers`, meaning events published to `resource.reference.registered` and `resource.reference.unregistered` are **never consumed** by the service. Higher-layer services publishing these events have no effect - references are only tracked when the API endpoints are called directly. **Fix**: Add `IEventConsumer eventConsumer` to constructor and call `RegisterEventConsumers(eventConsumer)` as done in other services (e.g., ActorService line 101).
+None.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -302,6 +300,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] Schema files (api, events, configuration)
 - [x] State store definitions
 - [x] Service implementation with ICacheableStateStore
+- [x] Event handlers for reference tracking wired up via IEventConsumer
 - [x] SERVICE_HIERARCHY.md updated
 - [x] Unit tests for reference counting logic (25 tests)
 - [x] Bug fixes: ParseIsoDuration removed, CleanupCallbackTimeoutSeconds wired up, serviceName defaults to sourceType
@@ -319,7 +318,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] Phase 4: character-personality integrated - x-references, cleanup endpoint `/character-personality/cleanup-by-character`
 
 ### Pending
-- [ ] **CRITICAL**: Wire up event consumer registration - add `IEventConsumer` to constructor and call `RegisterEventConsumers()`. Without this, events from L4 services have no effect (see Bugs section).
+None - lib-resource integration complete for all L4 character consumers.
 
 ---
 
