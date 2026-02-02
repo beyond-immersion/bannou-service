@@ -253,6 +253,10 @@ None currently tracked.
 
 8. **INCARNATION tracking is directional (past lives only)**: The `PastLives` field only populates when the queried character is Entity2 in an INCARNATION relationship. This is semantically correct: INCARNATION means "Entity1 died and was reincarnated as Entity2". When querying Entity2, Entity1 is correctly shown as a past life. When querying Entity1, Entity2 is NOT shown because that would be a "future incarnation" (you wouldn't know your future incarnations). The field is named `PastLives`, not `Incarnations`, reinforcing this semantic meaning.
 
+9. **"orphaned" means no parent relationships, not dead parents**: The family summary adds "orphaned" when `Parents.Count == 0` (no parent relationships exist), NOT when parents have died. Dead parents are included in the `Parents` list with `IsAlive = false`. This distinguishes between characters who never had parent records in the game world versus characters whose parents died - a meaningful semantic distinction for backstory generation.
+
+10. **"single parent household" counts relationships, not expected parents**: The family summary adds "single parent household" when exactly one parent relationship exists. It doesn't infer that two parents were expected - it simply reports the current relationship count. A character with one MOTHER relationship shows "single parent household" regardless of whether a FATHER relationship "should" exist.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
@@ -269,9 +273,9 @@ None currently tracked.
 6. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/271 -->
 
-7. **"orphaned" label ignores parent death status**: Adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died.
+7. ~~**"orphaned" label ignores parent death status**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks #9; the current behavior is semantically correct ("orphaned" = no parent relationships, not "parents died"). Dead parents are included in the Parents list with `IsAlive = false`.
 
-8. **"single parent household" is literal**: Adds this label when exactly one parent exists. Doesn't consider whether two parents were expected.
+8. ~~**"single parent household" is literal**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks #10; the behavior is intentionally literal - it counts relationships, not inferred expectations.
 
 9. ~~**Family tree character lookups are sequential**~~: **FIXED** (2026-02-02) - `BulkLoadCharactersAsync` now bulk-fetches all related characters via `GetBulkAsync` (2 bulk operations total: global index lookup, then character data).
 
@@ -289,6 +293,7 @@ No active work items.
 
 ### Historical
 
+- **2026-02-02**: Moved "orphaned" and "single parent household" labels from Design Considerations to Intentional Quirks (#9, #10) - current behavior is semantically correct (orphaned = no parent relationships, single parent = one relationship exists).
 - **2026-02-02**: Moved "INCARNATION tracking is directional" from Design Considerations to Intentional Quirks - this is correct semantic behavior (past lives, not future incarnations).
 - **2026-02-02**: Moved "Family tree silently skips unknown relationship types" from Design Considerations to Intentional Quirks - this is intentional graceful degradation (partial data preferred over error).
 - **2026-02-02**: Moved "Global index double-write" from Design Considerations to Intentional Quirks - this is an intentional performance pattern, not a planning consideration.
