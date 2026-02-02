@@ -228,6 +228,7 @@ None. The service is feature-complete for its scope.
 3. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/262 -->
 4. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:ISSUE_URL_PLACEHOLDER -->
 
 ---
 

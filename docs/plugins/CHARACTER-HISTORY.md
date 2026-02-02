@@ -214,8 +214,7 @@ None currently identified.
 
 4. ~~**GUID parsing without validation in helper config**~~: **REMOVED** (2026-02-01) - The documented concern was invalid. The `SetEntityId` delegate is only called when WRITING new data (with the `entityId` parameter from the request, which is already a valid GUID string from `Guid.ToString()`). It is never called during READ operations or deserialization of stored data. Corrupted store data cannot trigger this code path.
 
-5. **DeleteAll is O(n) with secondary index cleanup**: Iterates all participation records for a character, extracting event IDs via lambda, and removes from each event index individually. For characters with hundreds of participations, this generates many state store operations.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/261 -->
+5. ~~**DeleteAll is O(n) with secondary index cleanup**~~: **FIXED** (2026-02-02) - Rewrote `DualIndexHelper.RemoveAllByPrimaryKeyAsync` to use bulk operations (`GetBulkAsync`, `SaveBulkAsync`, `DeleteBulkAsync`). Now uses O(1) database round-trips (~7 operations) regardless of record count, instead of ~4N operations. Both lib-character-history and lib-realm-history benefit from this shared helper optimization.
 
 6. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
 
@@ -246,9 +245,9 @@ None currently identified.
 - **2026-01-31**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Add configurable backstory element count limit (prevent unbounded growth)
 - **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
-- **2026-02-02**: [#261](https://github.com/beyond-immersion/bannou-service/issues/261) - DeleteAll O(n) secondary index cleanup optimization (requires batch delete infrastructure decisions)
 
 ### Completed
+- **2026-02-02**: [#261](https://github.com/beyond-immersion/bannou-service/issues/261) - Optimized `RemoveAllByPrimaryKeyAsync` in `DualIndexHelper` to use bulk operations, reducing database round-trips from ~4N to ~7 regardless of record count. Both lib-character-history and lib-realm-history benefit.
 - **2026-02-02**: Verified and removed "Schema promises 409 Conflict but implementation allows duplicates" bug - fix is clean with no non-obvious behavior (simple input validation before creation).
 - **2026-02-02**: Corrected lib-character dependent documentation - lib-character (L2) cannot call this service per SERVICE_HIERARCHY.
 - **2026-02-02**: Added lib-resource dependency and resource reference tracking events documentation.

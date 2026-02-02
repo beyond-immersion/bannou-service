@@ -1062,6 +1062,7 @@ public partial class CharacterService : ICharacterService
 
     /// <summary>
     /// Builds family tree from relationships.
+    /// Uses parallel lookups for relationship types and bulk loading for related characters.
     /// </summary>
     private async Task<FamilyTreeResponse?> BuildFamilyTreeAsync(Guid characterId, CancellationToken cancellationToken)
     {
@@ -1080,31 +1081,22 @@ public partial class CharacterService : ICharacterService
                 return new FamilyTreeResponse();
             }
 
-            // Build type code lookup from relationship type IDs
+            // Build type code lookup from relationship type IDs - PARALLEL
             var uniqueTypeIds = result.Relationships
                 .Select(r => r.RelationshipTypeId)
                 .Distinct()
                 .ToList();
 
-            var typeCodeLookup = new Dictionary<Guid, string>();
-            foreach (var typeId in uniqueTypeIds)
-            {
-                try
-                {
-                    var typeResponse = await _relationshipTypeClient.GetRelationshipTypeAsync(
-                        new GetRelationshipTypeRequest { RelationshipTypeId = typeId },
-                        cancellationToken);
-                    if (typeResponse != null)
-                    {
-                        typeCodeLookup[typeId] = typeResponse.Code;
-                    }
-                }
-                catch (ApiException)
-                {
-                    // If we can't look up the type, skip it
-                    _logger.LogWarning("Could not look up relationship type {TypeId}", typeId);
-                }
-            }
+            var typeCodeLookup = await BuildTypeCodeLookupAsync(uniqueTypeIds, cancellationToken);
+
+            // Collect all related character IDs for bulk loading
+            var relatedCharacterIds = result.Relationships
+                .Select(r => r.Entity1Id == characterId ? r.Entity2Id : r.Entity1Id)
+                .Distinct()
+                .ToList();
+
+            // Bulk load all related characters in one call
+            var characterLookup = await BulkLoadCharactersAsync(relatedCharacterIds, cancellationToken);
 
             var familyTree = new FamilyTreeResponse
             {
@@ -1125,8 +1117,8 @@ public partial class CharacterService : ICharacterService
                     continue; // Skip relationships with unknown types
                 }
 
-                // Get related character info
-                var relatedCharacter = await FindCharacterByIdAsync(relatedId.ToString(), cancellationToken);
+                // Get related character info from pre-loaded lookup
+                characterLookup.TryGetValue(relatedId, out var relatedCharacter);
                 var name = relatedCharacter?.Name;
                 var isAlive = relatedCharacter?.Status == CharacterStatus.Alive;
 
@@ -1225,6 +1217,107 @@ public partial class CharacterService : ICharacterService
         {
             return new FamilyTreeResponse();
         }
+    }
+
+    /// <summary>
+    /// Builds relationship type code lookup using parallel API calls.
+    /// </summary>
+    private async Task<Dictionary<Guid, string>> BuildTypeCodeLookupAsync(
+        List<Guid> typeIds,
+        CancellationToken cancellationToken)
+    {
+        var typeCodeLookup = new Dictionary<Guid, string>();
+
+        if (typeIds.Count == 0)
+            return typeCodeLookup;
+
+        // Launch all lookups in parallel
+        var lookupTasks = typeIds.Select(async typeId =>
+        {
+            try
+            {
+                var typeResponse = await _relationshipTypeClient.GetRelationshipTypeAsync(
+                    new GetRelationshipTypeRequest { RelationshipTypeId = typeId },
+                    cancellationToken);
+                return (typeId, code: typeResponse?.Code);
+            }
+            catch (ApiException)
+            {
+                _logger.LogWarning("Could not look up relationship type {TypeId}", typeId);
+                return (typeId, code: (string?)null);
+            }
+        }).ToList();
+
+        var results = await Task.WhenAll(lookupTasks);
+
+        foreach (var (typeId, code) in results)
+        {
+            if (code != null)
+            {
+                typeCodeLookup[typeId] = code;
+            }
+        }
+
+        return typeCodeLookup;
+    }
+
+    /// <summary>
+    /// Bulk loads characters by ID using the global index for realm resolution.
+    /// Returns a dictionary for O(1) lookup during family tree construction.
+    /// </summary>
+    private async Task<Dictionary<Guid, CharacterModel>> BulkLoadCharactersAsync(
+        List<Guid> characterIds,
+        CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<Guid, CharacterModel>();
+
+        if (characterIds.Count == 0)
+            return result;
+
+        var store = _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character);
+        var globalIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Character);
+
+        // Step 1: Bulk load global index entries to get realm IDs
+        var globalIndexKeys = characterIds
+            .Select(id => $"character-global-index:{id}")
+            .ToList();
+
+        var globalIndexResults = await globalIndexStore.GetBulkAsync(globalIndexKeys, cancellationToken);
+
+        // Step 2: Build character keys from realm mappings
+        var characterKeys = new List<string>();
+        var keyToIdMap = new Dictionary<string, Guid>();
+
+        foreach (var (globalIndexKey, realmId) in globalIndexResults)
+        {
+            if (string.IsNullOrEmpty(realmId))
+                continue;
+
+            // Extract character ID from global index key (format: "character-global-index:{id}")
+            var characterIdStr = globalIndexKey.Replace("character-global-index:", "");
+            if (Guid.TryParse(characterIdStr, out var characterId))
+            {
+                var characterKey = BuildCharacterKey(realmId, characterIdStr);
+                characterKeys.Add(characterKey);
+                keyToIdMap[characterKey] = characterId;
+            }
+        }
+
+        if (characterKeys.Count == 0)
+            return result;
+
+        // Step 3: Bulk load all characters
+        var characterResults = await store.GetBulkAsync(characterKeys, cancellationToken);
+
+        foreach (var (key, character) in characterResults)
+        {
+            if (character != null && keyToIdMap.TryGetValue(key, out var characterId))
+            {
+                result[characterId] = character;
+            }
+        }
+
+        return result;
     }
 
     /// <summary>

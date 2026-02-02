@@ -225,7 +225,7 @@ Character Key Architecture (Realm-Partitioned)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 2. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/263 -->
-3. **Parallel family tree lookups**: Currently `BuildFamilyTreeAsync` makes sequential calls for each relationship type and character. Could parallelize these for better performance.
+3. ~~**Parallel family tree lookups**~~: **FIXED** (2026-02-02) - `BuildFamilyTreeAsync` now uses `Task.WhenAll` for parallel relationship type lookups and `GetBulkAsync` for bulk character loading. Reduces N+M sequential calls to 2 bulk operations.
 
 ---
 
@@ -253,7 +253,7 @@ None currently tracked.
 
 2. **Global index double-write**: Both realm index and global index are updated on create/delete. Extra write for resilience across restarts but adds complexity.
 
-3. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
+3. ~~**Family tree type lookups are sequential**~~: **FIXED** (2026-02-02) - `BuildTypeCodeLookupAsync` now uses `Task.WhenAll` to parallelize all relationship type API calls.
 
 4. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
 
@@ -265,7 +265,7 @@ None currently tracked.
 
 8. **"single parent household" is literal**: Adds this label when exactly one parent exists. Doesn't consider whether two parents were expected.
 
-9. **Family tree character lookups are sequential**: Calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
+9. ~~**Family tree character lookups are sequential**~~: **FIXED** (2026-02-02) - `BulkLoadCharactersAsync` now bulk-fetches all related characters via `GetBulkAsync` (2 bulk operations total: global index lookup, then character data).
 
 10. **L4 cleanup not implemented**: CharacterPersonality and CharacterHistory do NOT subscribe to `character.compressed` or `character.deleted`. When characters are compressed or deleted, L4 data (personality traits, combat preferences, backstory, life events) is orphaned. The `DeleteSourceData` flag on compression is currently advisory-only with no effect.
 
@@ -281,6 +281,7 @@ No active work items.
 
 ### Historical
 
+- **2026-02-02**: Parallelized family tree lookups - `BuildFamilyTreeAsync` now uses `Task.WhenAll` for relationship type lookups and `GetBulkAsync` for character loading, reducing N+M sequential calls to 2 bulk operations.
 - **2026-02-02**: Removed dead configuration properties (`CompressionMaxBackstoryPoints`, `CompressionMaxLifeEvents`, `PersonalityTraitThreshold`) from schema - these were designed for L4 data inclusion that SERVICE_HIERARCHY now prohibits.
 - **2026-02-02**: Documentation audit - removed stale hierarchy violation warnings. Code was already using correct event-driven pattern via `IResourceClient` for L4 reference counting; doc was out of date.
 - **2026-02-01**: Implemented realm transfer feature (`/character/transfer-realm` endpoint). Validates target realm, acquires distributed lock, atomically moves character between realm-partitioned keys, updates realm and global indexes, publishes realm transition and update events.

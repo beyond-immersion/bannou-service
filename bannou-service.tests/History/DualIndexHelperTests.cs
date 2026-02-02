@@ -418,28 +418,54 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var record1 = new TestRecord { Id = "rec-1", EventId = "event-1" };
         var record2 = new TestRecord { Id = "rec-2", EventId = "event-2" };
 
+        // Mock primary index lookup
         mockIndexStore.Setup(s => s.GetAsync($"{PrimaryIndexPrefix}{primaryKey}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(primaryIndex);
-        mockRecordStore.Setup(s => s.GetAsync($"{RecordPrefix}rec-1", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(record1);
-        mockRecordStore.Setup(s => s.GetAsync($"{RecordPrefix}rec-2", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(record2);
+
+        // Mock bulk get for records (new optimized implementation)
+        mockRecordStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> keys, CancellationToken _) =>
+            {
+                var result = new Dictionary<string, TestRecord>();
+                foreach (var key in keys)
+                {
+                    if (key == $"{RecordPrefix}rec-1") result[key] = record1;
+                    if (key == $"{RecordPrefix}rec-2") result[key] = record2;
+                }
+                return result;
+            });
 
         var event1Index = new HistoryIndexData { EntityId = "event-1", RecordIds = new List<string> { "rec-1" } };
         var event2Index = new HistoryIndexData { EntityId = "event-2", RecordIds = new List<string> { "rec-2" } };
 
-        mockIndexStore.Setup(s => s.GetAsync($"{SecondaryIndexPrefix}event-1", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(event1Index);
-        mockIndexStore.Setup(s => s.GetAsync($"{SecondaryIndexPrefix}event-2", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(event2Index);
+        // Mock bulk get for secondary indices
+        mockIndexStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> keys, CancellationToken _) =>
+            {
+                var result = new Dictionary<string, HistoryIndexData>();
+                foreach (var key in keys)
+                {
+                    if (key == $"{SecondaryIndexPrefix}event-1") result[key] = event1Index;
+                    if (key == $"{SecondaryIndexPrefix}event-2") result[key] = event2Index;
+                }
+                return result;
+            });
+
+        // Mock bulk save for secondary indices
+        mockIndexStore.Setup(s => s.SaveBulkAsync(It.IsAny<IEnumerable<KeyValuePair<string, HistoryIndexData>>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Mock bulk delete for records
+        mockRecordStore.Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> keys, CancellationToken _) => keys.Count());
 
         // Act
         var result = await helper.RemoveAllByPrimaryKeyAsync(primaryKey, r => r.EventId);
 
         // Assert
         Assert.Equal(2, result);
-        mockRecordStore.Verify(s => s.DeleteAsync($"{RecordPrefix}rec-1", It.IsAny<CancellationToken>()), Times.Once);
-        mockRecordStore.Verify(s => s.DeleteAsync($"{RecordPrefix}rec-2", It.IsAny<CancellationToken>()), Times.Once);
+        mockRecordStore.Verify(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()), Times.Once);
+        mockRecordStore.Verify(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()), Times.Once);
         mockIndexStore.Verify(s => s.DeleteAsync($"{PrimaryIndexPrefix}{primaryKey}", It.IsAny<CancellationToken>()), Times.Once);
     }
 
