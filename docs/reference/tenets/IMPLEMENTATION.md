@@ -955,6 +955,37 @@ if (Enum.TryParse<SteamStatus>(statusStr, out var status)) { ... }
 
 Note: This applies to TRUE external APIs, not other Bannou services. Bannou-to-Bannou calls use generated clients with proper types.
 
+#### 3. Intentionally Generic Services (Service Hierarchy Isolation)
+
+When a lower-layer service is **intentionally generic** and must not enumerate higher-layer services or entity types, use opaque string identifiers instead of enums. This prevents implicit coupling that violates [SERVICE_HIERARCHY.md](../SERVICE_HIERARCHY.md).
+
+```csharp
+// ACCEPTABLE: lib-resource (L1) uses strings to avoid enumerating L2+ services
+public class RegisterReferenceRequest
+{
+    public string ResourceType { get; set; } = string.Empty;  // "character", "realm" - caller provides
+    public Guid ResourceId { get; set; }
+    public string SourceType { get; set; } = string.Empty;    // "actor", "scene" - caller provides
+    public Guid SourceId { get; set; }
+}
+
+// The service doesn't validate these strings against an enum because:
+// 1. lib-resource (L1) must not "know about" Actor (L4) or Scene (L4)
+// 2. Adding a new L4 service shouldn't require modifying L1 schemas
+// 3. The string is an opaque identifier, not a value to be matched against
+
+// WRONG: Creating an enum defeats the purpose
+public enum ResourceSourceType { ACTOR, SCENE, ... }  // L1 now depends on L4 types!
+```
+
+**When to apply this exception**:
+- The service is **intentionally generic** (a registry, tracker, or router)
+- The service is at a **lower layer** than its consumers
+- Creating an enum would require **updating the schema** when higher-layer services are added
+- The value is an **opaque identifier** used as a key, not a value with semantic meaning
+
+**See also**: [SCHEMA-RULES.md "When NOT to Create Enums"](../SCHEMA-RULES.md#when-not-to-create-enums-service-hierarchy-consideration)
+
 ### Why Tests Use Proper Types Too
 
 Test code follows the same rules. If a test is setting `DeploymentMode = "bannou"` as a string, the test is **wrong** - it should use `DeploymentMode = DeploymentMode.Bannou`.
@@ -991,14 +1022,15 @@ The type system catches mistakes at compile time. String-based tests would compi
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |
-| String field for enum in ANY model | T25 | Use the generated enum type |
+| String field for enum in ANY model | T25 | Use the generated enum type (exception: opaque identifiers for hierarchy isolation) |
 | String field for GUID in ANY model | T25 | Use `Guid` type |
 | `Enum.Parse` anywhere in service code | T25 | Your model is wrong - fix the type |
 | `.ToString()` when assigning enum | T25 | Assign enum directly |
 | String comparison for enum value | T25 | Use enum equality operator |
 | Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
-| String in request/response/event model | T25 | Schema should define enum type |
+| String in request/response/event model | T25 | Schema should define enum type (exception: opaque identifiers for hierarchy isolation) |
 | String in configuration class | T25 | Config schema should define enum type |
+| Enum enumerating higher-layer services | T25 | Use opaque string identifiers - see SCHEMA-RULES.md |
 
 > **Schema-related violations** (shared type in events schema, API `$ref` to events, cross-service `$ref`) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
 
@@ -1145,14 +1177,15 @@ If existing code uses sentinel values, the fix is:
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |
-| String field for enum in ANY model | T25 | Use the generated enum type |
+| String field for enum in ANY model | T25 | Use the generated enum type (exception: opaque identifiers for hierarchy isolation) |
 | String field for GUID in ANY model | T25 | Use `Guid` type |
 | `Enum.Parse` anywhere in service code | T25 | Your model is wrong - fix the type |
 | `.ToString()` when assigning enum | T25 | Assign enum directly |
 | String comparison for enum value | T25 | Use enum equality operator |
 | Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
-| String in request/response/event model | T25 | Schema should define enum type |
+| String in request/response/event model | T25 | Schema should define enum type (exception: opaque identifiers for hierarchy isolation) |
 | String in configuration class | T25 | Config schema should define enum type |
+| Enum enumerating higher-layer services | T25 | Use opaque string identifiers - see SCHEMA-RULES.md |
 | Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
 | Using `-1` to mean "no index" | T26 | Make field `int?` nullable |
 | Using empty string for "absent" | T26 | Make field `string?` nullable |
