@@ -213,7 +213,23 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### For Higher-Layer Services (L3/L4)
 
-1. **At startup**: Register cleanup callbacks via `/resource/cleanup/define`
+1. **At startup (OnRunningAsync)**: Register cleanup callbacks via `/resource/cleanup/define`
+
+   **CRITICAL**: Cleanup callback registration MUST happen in `OnRunningAsync`, NOT `OnStartAsync`.
+   The `OnRunningAsync` lifecycle hook runs AFTER all plugins have completed their `StartAsync` phase,
+   ensuring lib-resource is fully available. Registering during `OnStartAsync` is unsafe because
+   plugin load order is not guaranteed beyond infrastructure plugins (lib-state, lib-messaging, lib-mesh).
+
+   ```csharp
+   // In YourServicePlugin.OnRunningAsync():
+   var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
+   if (resourceClient != null)
+   {
+       await YourService.RegisterResourceCleanupCallbacksAsync(resourceClient, ct);
+   }
+   ```
+
+   The generated `RegisterResourceCleanupCallbacksAsync` method (from `x-references` schema extension) calls:
    ```csharp
    POST /resource/cleanup/define
    {
@@ -276,9 +292,11 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 4. **Cleanup lock uses refcount store name**: The distributed lock is acquired with `storeName: StateStoreDefinitions.ResourceRefcounts` even though it's a logical lock, not a data lock. This is intentional - the lock protects the refcount state.
 
+5. **Cleanup callbacks registered in OnRunningAsync**: Consumer plugins MUST register their cleanup callbacks in `OnRunningAsync`, not `OnStartAsync`. This is because `OnRunningAsync` runs after ALL plugins have completed their `StartAsync` phase, guaranteeing lib-resource is available. Plugin load order is not guaranteed beyond infrastructure plugins (L0), so registering during `OnStartAsync` could fail if lib-resource hasn't started yet. See ActorServicePlugin for the reference implementation.
+
 ### Design Considerations (Requires Planning)
 
-1. **No consumers yet**: All planned dependents (actor, character-encounter, scene) are not yet integrated. The service is complete but untested with real reference tracking workflows.
+1. ~~**No consumers yet**~~: **RESOLVED** (2026-02-02) - Actor service is now fully integrated as the first consumer. It registers/unregisters character references in SpawnActorAsync/StopActorAsync and has a cleanup endpoint at `/actor/cleanup-by-character`.
 
 2. **`OnDeleteAction` enum unused**: Schema defines CASCADE/RESTRICT/DETACH actions but they're not implemented. Needs design decision: should this be per-reference-type configuration, or per-reference, or removed from schema?
 
@@ -303,7 +321,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] Phase 3: sourceId changed to opaque string (supports non-Guid IDs like Actor's `brain-{guid}` format)
 - [x] Phase 3: Actor service wired up - `RegisterCharacterReferenceAsync` in SpawnActorAsync, `UnregisterCharacterReferenceAsync` in StopActorAsync
 - [x] Phase 3: Cleanup endpoint `/actor/cleanup-by-character` added to actor-api.yaml and implemented
-- [x] Phase 3: `RegisterResourceCleanupCallbacksAsync` wired up in ActorServicePlugin.OnStartAsync
+- [x] Phase 3: `RegisterResourceCleanupCallbacksAsync` wired up in ActorServicePlugin.OnRunningAsync
 
 ### Pending
 - [ ] Phase 4: Migration of CharacterService to use lib-resource
