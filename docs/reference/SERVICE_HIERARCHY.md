@@ -110,7 +110,7 @@ These services provide the core application infrastructure that ANY Bannou deplo
 
 **Why Resource is L1**: Resource provides the machinery for reference tracking and cleanup coordination. Higher-layer services (L3/L4) publish reference events when they create/delete references to foundational resources (L2). This service maintains reference counts and coordinates cleanup callbacks, enabling safe deletion of foundational resources without hierarchy violations.
 
-**Why Contract is L1**: Contract provides the machinery for resource lifecycle management (consent flows, blocking, template substitution via `IServiceNavigator`). This infrastructure will power the cascading deletion system across all layers, making it application-level infrastructure rather than game-specific.
+**Why Contract is L1**: Contract has zero dependencies on other plugins (only infrastructure libs) and provides reusable FSM + consent flow machinery that any layer can leverage. For example, Escrow (L4) uses Contract under-the-hood for its state machine and multi-party consent logic. This makes Contract application-level infrastructure rather than game-specific.
 
 ---
 

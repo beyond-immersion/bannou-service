@@ -1,7 +1,7 @@
 # Service Hierarchy Violations Tracker
 
 > **Created**: 2026-02-01
-> **Updated**: 2026-02-02 (comprehensive audit with new 5-layer model)
+> **Updated**: 2026-02-02 (Character L4 dependencies removed)
 > **Purpose**: Track and remediate violations of the service dependency hierarchy
 
 This document tracks known violations of the service hierarchy, their severity under the 5-layer model, and suggested remediation patterns.
@@ -35,10 +35,10 @@ This document tracks known violations of the service hierarchy, their severity u
 
 ## Confirmed Client Injection Violations
 
-### 1. Character → Actor/Encounter (CRITICAL)
+### 1. Character → Actor/Encounter (RESOLVED)
 
 **Service**: lib-character (L2 Game Foundation)
-**Violating Dependencies**:
+**Former Violating Dependencies**:
 - `IActorClient` (L4)
 - `ICharacterEncounterClient` (L4)
 
@@ -48,16 +48,21 @@ This document tracks known violations of the service hierarchy, their severity u
 
 **Original Intent**: Count references to a character for cleanup eligibility.
 
-**Suggested Fix**: Character defines `character.reference.registered/unregistered` events. Actor and Encounter publish to these topics. Character maintains reference counts by consuming its own events.
+**Resolution**: Removed `IActorClient` and `ICharacterEncounterClient` from CharacterService. The `CheckCharacterReferencesAsync` method now only checks references from same-layer or lower services:
+- Relationships (L2) - allowed
+- Contracts (L1) - allowed
+- Actor/Encounter references (L4) - **no longer checked** (per SERVICE_HIERARCHY)
 
-**Status**: Documented in #259, fix pending
+For comprehensive reference tracking including L4 services, the recommended pattern is event-driven reference registration where L4 services publish to `character.reference.registered/unregistered` topics. This can be implemented in the future if needed.
+
+**Status**: ✅ RESOLVED by removing L4 dependencies
 
 ---
 
-### 2. Character → CharacterPersonality/CharacterHistory (CRITICAL)
+### 2. Character → CharacterPersonality/CharacterHistory (RESOLVED)
 
 **Service**: lib-character (L2 Game Foundation)
-**Violating Dependencies**:
+**Former Violating Dependencies**:
 - `ICharacterPersonalityClient` (L4)
 - `ICharacterHistoryClient` (L4)
 
@@ -69,11 +74,15 @@ This document tracks known violations of the service hierarchy, their severity u
 1. **Enrichment**: Optionally include personality/history when fetching character
 2. **Compression**: Summarize data when archiving dead character
 
-**Suggested Fix**:
-- **Enrichment**: Create "CharacterAggregator" in L4 that fetches from Character + extensions. Clients call aggregator for enriched data.
-- **Compression**: Character publishes `character.compression.requested`. Extensions subscribe, generate summaries, publish `character.compression.data-ready`.
+**Resolution**: Removed `ICharacterPersonalityClient` and `ICharacterHistoryClient` from CharacterService.
 
-**Status**: Documented in #259, needs design discussion
+- **GetEnrichedCharacterAsync**: Now returns only base character data and family tree (via L2 Relationships). Include flags for personality/backstory/combatPreferences are logged but ignored. Callers needing enriched data should aggregate from L4 services directly or use a future L4 aggregator service.
+
+- **CompressCharacterAsync**: Archives now include only family summary (L2 Relationships). Personality and history data are NOT summarized. The `character.compressed` event is published so L4 services can subscribe to handle their own cleanup. The `deleteSourceData` flag cannot delete L4 service data per SERVICE_HIERARCHY.
+
+**Future Enhancement**: If enrichment is needed, create "CharacterAggregator" in L4 that fetches from Character + extensions. For compression summaries, L4 services can subscribe to `character.compressed` and generate/store summaries independently.
+
+**Status**: ✅ RESOLVED by removing L4 dependencies
 
 ---
 
@@ -279,9 +288,9 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 | Priority | # | Violation | Reason |
 |----------|---|-----------|--------|
-| **P2** | 1 | Character → Actor/Encounter | Foundation depending on feature |
-| **P2** | 2 | Character → Personality/History | Foundation depending on feature |
 | **P3** | 6 | GameSession → Voice | Design improvement - invert dependency |
+| ✅ | 1 | Character → Actor/Encounter | Resolved by removing L4 dependencies |
+| ✅ | 2 | Character → Personality/History | Resolved by removing L4 dependencies |
 | ✅ | 3, 7 | Auth → Subscription | Resolved by deletion |
 | ✅ | 4, 8-10 | Analytics | Resolved by reclassification to L4 |
 | ✅ | 5 | Website schema | Resolved by removing game-related endpoints |
@@ -293,9 +302,10 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 | Category | Count | Status |
 |----------|-------|--------|
 | L1 → L2 (App Foundation → Game Foundation) | 0 | ✅ All resolved |
-| L2 → L4 (Game Foundation → Game Features) | 2 | P2 - Character violations |
+| L2 → L4 (Game Foundation → Game Features) | 0 | ✅ All resolved |
 | L4 → L4 (Design issues) | 1 | P3 - GameSession → Voice |
-| **Total active violations** | **3** | **2 P2, 1 P3** |
+| **Total active violations** | **1** | **1 P3** |
+| ✅ Resolved by removal | 2 | Character → Actor/Encounter/Personality/History |
 | ✅ Resolved by deletion | 2 | Auth → Subscription removed |
 | ✅ Resolved by reclassification | 4 | Analytics moved to L4 |
 | ✅ Resolved by schema redesign | 1 | Website game endpoints removed |
@@ -304,11 +314,13 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 ## Next Steps
 
-1. **P2**: Implement reference registration pattern for Character (#259)
-2. **P2**: Implement missing event cascades (#152)
-3. **P3**: Invert GameSession → Voice dependency
+1. **P2**: Implement missing event cascades (#152)
+2. **P3**: Invert GameSession → Voice dependency
+3. **Optional**: Implement event-driven reference registration for L4 reference tracking (if comprehensive cleanup eligibility checking is needed)
 
 **Completed**:
+- ✅ Character → Actor/Encounter dependencies removed (IActorClient and ICharacterEncounterClient removed from CharacterService; CheckCharacterReferencesAsync now only checks L2/L1 services)
+- ✅ Character → Personality/History dependencies removed (ICharacterPersonalityClient and ICharacterHistoryClient removed from CharacterService; GetEnrichedCharacterAsync returns base data only, CompressCharacterAsync archives without L4 summaries)
 - ✅ Auth → Subscription dependency deleted (ISubscriptionClient removed from AuthService and TokenService, event subscription removed)
 - ✅ Analytics reclassified to L4 (event-consumption-only service, most optional plugin)
 - ✅ Website schema redesigned - removed game-related endpoints (characters, subscription, server-status)

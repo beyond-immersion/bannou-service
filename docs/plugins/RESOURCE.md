@@ -22,10 +22,10 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis state stores for reference sets, cleanup callbacks, and grace periods |
-| lib-state (`ICacheableStateStore`) | Set operations for atomic reference tracking |
-| lib-state (`IDistributedLockProvider`) | Distributed locks during cleanup execution |
-| lib-messaging (`IMessageBus`) | Publishing grace period and cleanup failure events |
+| lib-state (`IStateStoreFactory`) | Get Redis state stores for reference sets, cleanup callbacks, and grace periods |
+| lib-state (`ICacheableStateStore<T>`) | Set operations (`AddToSetAsync`, `RemoveFromSetAsync`, `GetSetAsync`, `SetCountAsync`, `DeleteSetAsync`) for atomic reference tracking |
+| lib-state (`IDistributedLockProvider`) | Distributed locks during cleanup execution to prevent concurrent cleanup |
+| lib-messaging (`IMessageBus`) | Publishing `resource.grace-period.started` and `resource.cleanup.callback-failed` events |
 | lib-mesh (`IServiceNavigator`) | Executing cleanup callbacks via `ExecutePreboundApiBatchAsync` |
 
 ---
@@ -39,24 +39,26 @@ Resource reference tracking and lifecycle management for foundational resources.
 | lib-character-encounter (planned) | Publishes reference events for character encounters; registers cleanup callback |
 | lib-scene (planned) | Publishes reference events for scene-to-character references; registers cleanup callback |
 
+**Note**: No consumers are currently implemented. All dependents are planned for Phase 3+.
+
 ---
 
 ## State Storage
 
 **Stores**: 3 state stores (all Redis-backed)
 
-| Store | Backend | Purpose |
-|-------|---------|---------|
-| `resource-refcounts` | Redis | Reference tracking via sets |
-| `resource-cleanup` | Redis | Cleanup callback definitions |
-| `resource-grace` | Redis | Grace period timestamps |
+| Store | Backend | Key Prefix | Purpose |
+|-------|---------|------------|---------|
+| `resource-refcounts` | Redis | `resource:ref` | Reference tracking via sets |
+| `resource-cleanup` | Redis | `resource:cleanup` | Cleanup callback definitions |
+| `resource-grace` | Redis | `resource:grace` | Grace period timestamps |
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `{resourceType}:{resourceId}:sources` | Set of `ResourceReferenceEntry` | All entities referencing this resource |
 | `{resourceType}:{resourceId}:grace` | `GracePeriodRecord` | When refcount became zero |
 | `callback:{resourceType}:{sourceType}` | `CleanupCallbackDefinition` | Cleanup endpoint for a source type |
-| `callback-index:{resourceType}` | Set of `string` | Source types with registered callbacks |
+| `callback-index:{resourceType}` | Set of `string` | Source types with registered callbacks (for enumeration without KEYS/SCAN) |
 
 ---
 
@@ -66,117 +68,144 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `resource.grace-period.started` | `ResourceGracePeriodStartedEvent` | Resource refcount reaches zero |
-| `resource.cleanup.callback-failed` | `ResourceCleanupCallbackFailedEvent` | Cleanup callback returns non-2xx |
+| `resource.grace-period.started` | `ResourceGracePeriodStartedEvent` | Resource refcount reaches zero via `UnregisterReferenceAsync` |
+| `resource.cleanup.callback-failed` | `ResourceCleanupCallbackFailedEvent` | Cleanup callback returns non-2xx during `ExecuteCleanupAsync` |
 
 ### Consumed Events
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | `HandleReferenceRegisteredAsync` - adds to reference set |
-| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | `HandleReferenceUnregisteredAsync` - removes from reference set |
+| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | `HandleReferenceRegisteredAsync` - delegates to `RegisterReferenceAsync` |
+| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | `HandleReferenceUnregisteredAsync` - delegates to `UnregisterReferenceAsync` |
 
 ---
 
 ## Configuration
 
-| Property | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `DefaultGracePeriodSeconds` | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | 604800 (7 days) | Grace period before cleanup eligible |
-| `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | Timeout per cleanup callback |
-| `MaxCallbackRetries` | `RESOURCE_MAX_CALLBACK_RETRIES` | 3 | Retries per callback on transient failure |
-| `CleanupLockExpirySeconds` | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | 300 | Distributed lock timeout during cleanup |
-| `DefaultCleanupPolicy` | `RESOURCE_DEFAULT_CLEANUP_POLICY` | BEST_EFFORT | Policy when not specified per-request |
+| Property | Env Var | Default | Used | Purpose |
+|----------|---------|---------|------|---------|
+| `DefaultGracePeriodSeconds` | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | 604800 (7 days) | Yes | Grace period before cleanup eligible |
+| `CleanupLockExpirySeconds` | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | 300 | Yes | Distributed lock timeout during cleanup |
+| `DefaultCleanupPolicy` | `RESOURCE_DEFAULT_CLEANUP_POLICY` | BEST_EFFORT | Yes | Policy when not specified per-request |
+| `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | **No** | Defined but never used (T21 violation) |
+| `MaxCallbackRetries` | `RESOURCE_MAX_CALLBACK_RETRIES` | 3 | **No** | Defined but never used (T21 violation) |
 
 ---
 
-## API Endpoints
+## DI Services & Helpers
+
+| Service | Role |
+|---------|------|
+| `ILogger<ResourceService>` | Structured logging |
+| `ResourceServiceConfiguration` | Typed configuration access |
+| `IStateStoreFactory` | State store access for all three stores |
+| `IDistributedLockProvider` | Acquiring cleanup locks |
+| `IMessageBus` | Publishing events |
+| `IServiceNavigator` | Executing cleanup callbacks |
+
+**Internal Types** (defined in ResourceService.cs):
+| Type | Role |
+|------|------|
+| `ResourceReferenceEntry` | Set member for reference tracking; equality based on `SourceType` + `SourceId` |
+| `GracePeriodRecord` | Records when refcount became zero |
+| `CleanupCallbackDefinition` | Stores callback registration (service, endpoint, template) |
+
+---
+
+## API Endpoints (Implementation Notes)
 
 ### Reference Management
 
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /resource/register` | Register a reference (also done via events) |
-| `POST /resource/unregister` | Unregister a reference (also done via events) |
-| `POST /resource/check` | Check refcount and cleanup eligibility |
-| `POST /resource/list` | List all references to a resource |
+| Endpoint | Notes |
+|----------|-------|
+| `POST /resource/register` | Uses `AddToSetAsync` for atomic add; clears grace period if new reference added |
+| `POST /resource/unregister` | Uses `RemoveFromSetAsync`; publishes `grace-period.started` event when refcount reaches zero |
+| `POST /resource/check` | Derives refcount from `SetCountAsync`; computes `isCleanupEligible` from grace period timestamp |
+| `POST /resource/list` | Returns all set members; supports `filterSourceType` and `limit` |
 
 ### Cleanup Management
 
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /resource/cleanup/define` | Register a cleanup callback for a resource type |
-| `POST /resource/cleanup/execute` | Execute cleanup for a resource (with lock and validation) |
+| Endpoint | Notes |
+|----------|-------|
+| `POST /resource/cleanup/define` | Upserts callback definition; maintains `callback-index:{resourceType}` set for enumeration |
+| `POST /resource/cleanup/execute` | Full cleanup flow: pre-check → lock → re-validate → execute callbacks → clear state |
+
+**Cleanup Execution Flow**:
+1. Pre-check refcount and grace period (without lock)
+2. If blocked, return early with reason
+3. Acquire distributed lock on `cleanup:{resourceType}:{resourceId}`
+4. Re-validate refcount under lock (race protection)
+5. Get all callbacks via index set
+6. Execute callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel
+7. Per cleanup policy: abort or continue on failures
+8. Delete grace period record and reference set
+9. Release lock
 
 ---
 
-## Core Concepts
-
-### Reference Tracking via Sets
-
-References are stored in Redis sets using `ICacheableStateStore.AddToSetAsync/RemoveFromSetAsync`. The set membership IS the source of truth - there's no separate counter. Count is derived via `SetCountAsync` (Redis SCARD).
+## Visual Aid
 
 ```
-Key: character:{characterId}:sources
-Members:
-  - {SourceType: "actor", SourceId: "abc-123", RegisteredAt: "2024-01-01T..."}
-  - {SourceType: "scene", SourceId: "def-456", RegisteredAt: "2024-01-02T..."}
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Resource State Store Layout                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  resource-refcounts (Redis)                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Key: {resourceType}:{resourceId}:sources                            │   │
+│  │ Type: Redis Set                                                     │   │
+│  │ Members: [                                                          │   │
+│  │   { SourceType: "actor", SourceId: "abc-123", RegisteredAt: "..." },│   │
+│  │   { SourceType: "scene", SourceId: "def-456", RegisteredAt: "..." } │   │
+│  │ ]                                                                   │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  resource-grace (Redis)                                                     │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Key: {resourceType}:{resourceId}:grace                              │   │
+│  │ Type: JSON object                                                   │   │
+│  │ Value: { ResourceType, ResourceId, ZeroTimestamp }                  │   │
+│  │ Created: When refcount becomes zero                                 │   │
+│  │ Deleted: When cleanup executes OR new reference registered          │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  resource-cleanup (Redis)                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Key: callback:{resourceType}:{sourceType}                           │   │
+│  │ Type: JSON object                                                   │   │
+│  │ Value: { ServiceName, CallbackEndpoint, PayloadTemplate, ... }      │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Key: callback-index:{resourceType}                                  │   │
+│  │ Type: Redis Set (for enumeration without KEYS/SCAN)                 │   │
+│  │ Members: [ "actor", "scene", "encounter" ]                          │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Grace Period
+---
 
-When a resource's refcount reaches zero, the service:
-1. Records `lastZeroTimestamp` in the grace store
-2. Publishes `resource.grace-period.started` event
-3. Returns `gracePeriodEndsAt` in subsequent `/resource/check` responses
+## Stubs & Unimplemented Features
 
-Cleanup is only eligible after the grace period passes. This prevents premature deletion during transient states (e.g., migration, reprocessing).
+1. **`idempotencyKey` field in RegisterReferenceRequest**: Defined in schema but never used by service. Intended for deduplication of registration requests.
 
-### Cleanup Execution Flow
+2. **`OnDeleteAction` enum**: Defined in schema (`CASCADE`, `RESTRICT`, `DETACH`) but not used anywhere in the service. May be intended for future per-reference deletion behavior configuration.
 
-```
-1. Foundational service calls /resource/check
-   → Returns refcount, isCleanupEligible, blockers list
+3. **Timeout and Retry configuration**: `CleanupCallbackTimeoutSeconds` and `MaxCallbackRetries` are defined but not passed to `IServiceNavigator.ExecutePreboundApiBatchAsync`. Callbacks currently use whatever timeout/retry the navigator defaults to.
 
-2. If refCount > 0: Reject with blockers list
+---
 
-3. If isCleanupEligible = false: Reject with gracePeriodEndsAt
+## Potential Extensions
 
-4. Foundational service calls /resource/cleanup/execute:
-   a. Acquire distributed lock on resource:{type}:{id}
-   b. Re-validate refcount=0 under lock (via SetCountAsync)
-   c. If refcount changed → return 409 Conflict
-   d. Execute cleanup callbacks via IServiceNavigator.ExecutePreboundApiBatchAsync
-   e. Per cleanup policy: abort or continue on failures
-   f. Clear grace period and reference set
-   g. Release lock
+1. **Per-resource-type cleanup policies**: Currently `DefaultCleanupPolicy` applies globally; could add per-resource-type configuration via `DefineCleanupRequest`.
 
-5. Foundational service proceeds with actual deletion
-```
+2. **Automatic cleanup scheduler**: Background service that periodically scans for resources past grace period and triggers cleanup (opt-in per resource type).
 
-### Cleanup Policies
+3. **Reference type metadata**: Allow consumers to attach metadata to references (e.g., reference strength, priority for cleanup ordering).
 
-| Policy | Behavior |
-|--------|----------|
-| `BEST_EFFORT` | Proceed even if some callbacks fail |
-| `ALL_REQUIRED` | Abort if any callback fails |
+4. **Cleanup callback ordering**: Currently all callbacks execute in parallel; could add priority/ordering for sequential cleanup dependencies.
 
-### Callback Registration
-
-Services register cleanup callbacks at startup:
-
-```json
-POST /resource/cleanup/define
-{
-  "resourceType": "character",
-  "sourceType": "actor",
-  "serviceName": "actor",
-  "callbackEndpoint": "/actor/cleanup-by-character",
-  "payloadTemplate": "{\"characterId\": \"{{resourceId}}\"}"
-}
-```
-
-When cleanup executes, the template is substituted with context values and the endpoint is called.
+5. **Reference lifecycle hooks**: Pre-register/post-unregister hooks for validation or side effects.
 
 ---
 
@@ -185,6 +214,16 @@ When cleanup executes, the template is substituted with context values and the e
 ### For Higher-Layer Services (L3/L4)
 
 1. **At startup**: Register cleanup callbacks via `/resource/cleanup/define`
+   ```csharp
+   POST /resource/cleanup/define
+   {
+     "resourceType": "character",
+     "sourceType": "actor",
+     "serviceName": "actor",
+     "callbackEndpoint": "/actor/cleanup-by-character",
+     "payloadTemplate": "{\"characterId\": \"{{resourceId}}\"}"
+   }
+   ```
 
 2. **On entity creation with reference**: Publish event
    ```csharp
@@ -202,89 +241,48 @@ When cleanup executes, the template is substituted with context values and the e
 3. **On entity deletion**: Publish event
    ```csharp
    await _messageBus.TryPublishAsync("resource.reference.unregistered",
-       new ResourceReferenceUnregisteredEvent
-       {
-           ResourceType = "character",
-           ResourceId = characterId,
-           SourceType = "actor",
-           SourceId = actorId,
-           Timestamp = DateTimeOffset.UtcNow
-       }, ct);
+       new ResourceReferenceUnregisteredEvent { ... }, ct);
    ```
 
-4. **Implement cleanup endpoint**: Handle cascading deletion
-   ```csharp
-   public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
-       CleanupByCharacterRequest body, CancellationToken ct)
-   {
-       // Delete all actors referencing this character
-       // (References already unregistered by lib-resource before this callback)
-       ...
-   }
-   ```
+4. **Implement cleanup endpoint**: Handle cascading deletion when called back
 
 ### For Foundational Services (L2)
 
-1. **Before deletion**: Check references
-   ```csharp
-   var (status, check) = await _resourceClient.CheckReferencesAsync(
-       new CheckReferencesRequest
-       {
-           ResourceType = "character",
-           ResourceId = characterId
-       }, ct);
-
-   if (check.RefCount > 0)
-   {
-       return (StatusCodes.Conflict, new DeleteResponse
-       {
-           Success = false,
-           Blockers = check.Sources.Select(s => $"{s.SourceType}:{s.SourceId}").ToList()
-       });
-   }
-   ```
-
-2. **Execute cleanup**: Coordinate cascading deletion
-   ```csharp
-   var (status, result) = await _resourceClient.ExecuteCleanupAsync(
-       new ExecuteCleanupRequest
-       {
-           ResourceType = "character",
-           ResourceId = characterId,
-           GracePeriodOverride = "PT0S" // Skip grace period if desired
-       }, ct);
-
-   if (!result.Success)
-   {
-       return (StatusCodes.Conflict, new DeleteResponse
-       {
-           Success = false,
-           AbortReason = result.AbortReason
-       });
-   }
-   ```
-
+1. **Before deletion**: Check references via `/resource/check`
+2. **Execute cleanup**: Call `/resource/cleanup/execute`
 3. **Proceed with deletion**: After cleanup succeeds
-   ```csharp
-   await _characterStore.DeleteAsync(characterId, ct);
-   await _messageBus.TryPublishAsync("character.deleted", new CharacterDeletedEvent {...}, ct);
-   ```
 
 ---
 
-## Implementation Notes
+## Known Quirks & Caveats
 
-### Opaque String Identifiers
+### Bugs (Fix Immediately)
 
-`resourceType` and `sourceType` are intentionally strings, not enums. This is per SCHEMA-RULES.md "When NOT to Create Enums" - lib-resource (L1) must not enumerate L2+ services or entity types, as that would create implicit coupling.
+1. **Minute parsing in `ParseIsoDuration` is dead code**: Line 620 has `duration.Contains('M') && !duration.Contains("M")` which is always false (char 'M' and string "M" are equivalent for Contains). ISO 8601 durations with minutes (e.g., "PT5M") will not parse correctly.
 
-### Set-Based Reference Counting
+2. **Orphaned configuration: `CleanupCallbackTimeoutSeconds` is never used**: Defined in schema and generated config class, but never referenced in `ResourceService.cs`. The cleanup callbacks execute without any timeout override (T21 violation).
 
-The reference count is derived from set cardinality, not a separate counter. This avoids the need for Lua scripts to maintain atomicity across increment/decrement operations. The small race window between "remove + check count + set lastZero" is acceptable because cleanup execution always re-validates under distributed lock.
+3. **Orphaned configuration: `MaxCallbackRetries` is never used**: Same issue - defined but never passed to the callback execution logic (T21 violation).
 
-### Index Maintenance
+4. **Silent parse failure in `ParseIsoDuration`**: When ISO 8601 parsing fails, the catch block returns 0 instead of throwing or logging. This silently interprets invalid durations as "no grace period" which may bypass intended safety delays.
 
-Cleanup callbacks are indexed by resource type. When `DefineCleanupCallbackAsync` is called, it adds the source type to a callback index set, enabling efficient enumeration of all callbacks for a resource type.
+### Intentional Quirks (Documented Behavior)
+
+1. **Opaque string identifiers for resourceType/sourceType**: This is deliberate per SCHEMA-RULES.md - lib-resource (L1) must not enumerate L2+ services or entity types, so these are plain strings with no validation.
+
+2. **Set-based reference counting**: Reference count is derived from set cardinality (`SetCountAsync`), not a separate counter. This avoids Lua scripts for atomic increment/decrement. The small race window between operations is acceptable because cleanup always re-validates under distributed lock.
+
+3. **Event handlers delegate to API methods**: `HandleReferenceRegisteredAsync` and `HandleReferenceUnregisteredAsync` simply construct requests and call the API methods. This ensures consistent logic but means event processing pays the full API path cost.
+
+4. **Cleanup lock uses refcount store name**: The distributed lock is acquired with `storeName: StateStoreDefinitions.ResourceRefcounts` even though it's a logical lock, not a data lock. This is intentional - the lock protects the refcount state.
+
+### Design Considerations (Requires Planning)
+
+1. **No consumers yet**: All planned dependents (actor, character-encounter, scene) are not yet integrated. The service is complete but untested with real reference tracking workflows.
+
+2. **`OnDeleteAction` enum unused**: Schema defines CASCADE/RESTRICT/DETACH actions but they're not implemented. Needs design decision: should this be per-reference-type configuration, or per-reference, or removed from schema?
+
+3. **Callback index is never cleaned up**: When a cleanup callback is undefined/removed (no API for this exists), the source type remains in `callback-index:{resourceType}`. Not a bug since callbacks are typically permanent, but could accumulate stale entries.
 
 ---
 
