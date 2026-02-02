@@ -213,39 +213,68 @@ public class DualIndexHelper<TRecord> : IDualIndexHelper<TRecord> where TRecord 
         }
 
         var recordStore = _stateStoreFactory.GetStore<TRecord>(_stateStoreName);
-        var deletedCount = 0;
 
-        // Process each record
-        foreach (var recordId in primaryIndex.RecordIds.ToList())
+        // Build record key to ID mapping for later extraction
+        var recordIdToKey = primaryIndex.RecordIds
+            .ToDictionary(id => $"{_recordKeyPrefix}{id}", id => id);
+        var recordKeys = recordIdToKey.Keys.ToList();
+
+        // Bulk get all records (1 operation instead of N)
+        var records = await recordStore.GetBulkAsync(recordKeys, cancellationToken);
+
+        // Group records by secondary key for efficient index updates
+        var recordsBySecondaryKey = new Dictionary<string, List<string>>();
+        foreach (var (recordKey, record) in records)
         {
-            var recordKey = $"{_recordKeyPrefix}{recordId}";
-            var record = await recordStore.GetAsync(recordKey, cancellationToken);
-
-            if (record != null)
+            var secondaryKey = getSecondaryKey(record);
+            if (!string.IsNullOrEmpty(secondaryKey))
             {
-                // Get secondary key and update that index
-                var secondaryKey = getSecondaryKey(record);
-                if (!string.IsNullOrEmpty(secondaryKey))
+                if (!recordsBySecondaryKey.TryGetValue(secondaryKey, out var recordIds))
                 {
-                    var secondaryIndexKey = $"{_secondaryIndexPrefix}{secondaryKey}";
-                    var secondaryIndex = await indexStore.GetAsync(secondaryIndexKey, cancellationToken);
-                    if (secondaryIndex != null)
-                    {
-                        secondaryIndex.RecordIds.Remove(recordId);
-                        await indexStore.SaveAsync(secondaryIndexKey, secondaryIndex, cancellationToken: cancellationToken);
-                    }
+                    recordIds = new List<string>();
+                    recordsBySecondaryKey[secondaryKey] = recordIds;
                 }
-
-                // Delete the record
-                await recordStore.DeleteAsync(recordKey, cancellationToken);
-                deletedCount++;
+                recordIds.Add(recordIdToKey[recordKey]);
             }
         }
+
+        // Bulk get all secondary indices (1 operation instead of N)
+        if (recordsBySecondaryKey.Count > 0)
+        {
+            var secondaryIndexKeys = recordsBySecondaryKey.Keys
+                .Select(sk => $"{_secondaryIndexPrefix}{sk}")
+                .ToList();
+            var secondaryIndices = await indexStore.GetBulkAsync(secondaryIndexKeys, cancellationToken);
+
+            // Update indices in-memory
+            var updatedIndices = new Dictionary<string, HistoryIndexData>();
+            foreach (var (secondaryKey, recordIdsToRemove) in recordsBySecondaryKey)
+            {
+                var indexKey = $"{_secondaryIndexPrefix}{secondaryKey}";
+                if (secondaryIndices.TryGetValue(indexKey, out var index))
+                {
+                    foreach (var recordId in recordIdsToRemove)
+                    {
+                        index.RecordIds.Remove(recordId);
+                    }
+                    updatedIndices[indexKey] = index;
+                }
+            }
+
+            // Bulk save updated secondary indices (1 operation instead of N)
+            if (updatedIndices.Count > 0)
+            {
+                await indexStore.SaveBulkAsync(updatedIndices, cancellationToken: cancellationToken);
+            }
+        }
+
+        // Bulk delete all records (1 operation instead of N)
+        var actualDeletedCount = await recordStore.DeleteBulkAsync(recordKeys, cancellationToken);
 
         // Delete the primary index
         await indexStore.DeleteAsync(primaryIndexKey, cancellationToken);
 
-        return deletedCount;
+        return actualDeletedCount;
     }
 
     /// <inheritdoc />

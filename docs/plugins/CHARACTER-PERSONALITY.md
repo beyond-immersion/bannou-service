@@ -18,8 +18,9 @@ Machine-readable personality traits and combat preferences for NPC behavior deci
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for personality and combat preference data |
-| lib-messaging (`IMessageBus`) | Publishing personality/combat lifecycle and evolution events |
+| lib-messaging (`IMessageBus`) | Publishing personality/combat lifecycle events, evolution events, and resource reference events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-resource (via events) | Publishes `resource.reference.registered` / `resource.reference.unregistered` events for character reference tracking |
 
 ---
 
@@ -27,8 +28,9 @@ Machine-readable personality traits and combat preferences for NPC behavior deci
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-actor (`PersonalityCache`) | Caches personalities with configurable TTL; loads via `ICharacterPersonalityClient` on miss; returns stale data if load fails |
-| lib-character | Fetches personality/combat prefs for enriched character response; deletes on character compression |
+| lib-actor (`PersonalityCache`) | Caches personality traits, combat preferences, and backstory with configurable TTL via `PersonalityCacheTtlMinutes`; loads via `ICharacterPersonalityClient` on miss; returns stale data if load fails |
+| lib-character | References `ICharacterPersonalityClient` for enriched character responses (includes personality traits and combat prefs via query params) |
+| lib-resource | Receives `resource.reference.registered/unregistered` events for cleanup coordination; calls `/cleanup-by-character` endpoint on cascade delete |
 
 ---
 
@@ -54,11 +56,13 @@ Both types share the same state store, distinguished by key prefix.
 | `personality.created` | `PersonalityCreatedEvent` | New personality created via Set |
 | `personality.updated` | `PersonalityUpdatedEvent` | Existing personality modified via Set |
 | `personality.evolved` | `PersonalityEvolvedEvent` | Experience causes probabilistic trait evolution |
-| `personality.deleted` | `PersonalityDeletedEvent` | Personality removed |
+| `personality.deleted` | `PersonalityDeletedEvent` | Personality removed (via Delete or CleanupByCharacter) |
 | `combat-preferences.created` | `CombatPreferencesCreatedEvent` | New combat preferences created via Set |
 | `combat-preferences.updated` | `CombatPreferencesUpdatedEvent` | Existing combat preferences modified via Set |
 | `combat-preferences.evolved` | `CombatPreferencesEvolvedEvent` | Combat experience causes preference evolution |
-| `combat-preferences.deleted` | `CombatPreferencesDeletedEvent` | Combat preferences removed |
+| `combat-preferences.deleted` | `CombatPreferencesDeletedEvent` | Combat preferences removed (via Delete or CleanupByCharacter) |
+| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | New personality or combat prefs created (registers character reference) |
+| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | Personality or combat prefs deleted (unregisters character reference) |
 
 ### Consumed Events
 
@@ -138,6 +142,10 @@ Probabilistic trait evolution based on experience type and intensity:
 - **SetCombat** (`/character-personality/set-combat`): Create-or-update. Uses proper enum types internally (`CombatStyle`, `PreferredRange`, `GroupRole`).
 - **DeleteCombat** (`/character-personality/delete-combat`): Simple removal.
 
+### Resource Cleanup
+
+- **CleanupByCharacter** (`/character-personality/cleanup-by-character`): Called by lib-resource during cascading cleanup when a character is deleted. Removes BOTH personality traits AND combat preferences for the character. Returns `CleanupByCharacterResponse` indicating what was deleted. Does not return 404 if data doesn't exist—reports success with `personalityDeleted=false`/`combatPreferencesDeleted=false`.
+
 ### Combat Evolution (`/character-personality/evolve-combat`)
 
 Same probability formula as personality evolution. Combat experience types trigger style/role transitions and float adjustments:
@@ -215,11 +223,11 @@ None. The service is feature-complete for its scope.
 
 1. **Trait decay**: Gradual regression toward neutral (0.0) over time without reinforcing experiences.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/201 -->
-2. ~~**ArchetypeHint field not persisted**~~: **FIXED** (2026-01-31) - The `archetypeHint` field defined in the schema was not being stored or returned by the service. Now properly persisted in `PersonalityData` and mapped to responses. Note: This is a hint string only - pre-defined archetype templates for quick character creation remain a separate potential extension.
-3. **Pre-defined archetype templates**: Template system that maps archetype codes (e.g., "guardian", "trickster") to pre-configured trait combinations for quick character creation.
+2. **Pre-defined archetype templates**: Template system that maps archetype codes (e.g., "guardian", "trickster") to pre-configured trait combinations for quick character creation. The `archetypeHint` field exists and is persisted, but no template system interprets it.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/256 -->
-4. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
-5. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.
+3. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/262 -->
+4. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.
 
 ---
 
@@ -227,7 +235,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**Evolution concurrency exhaustion reports success falsely**~~: **FIXED** (2026-02-02) - Both `RecordExperienceAsync` and `EvolveCombatPreferencesAsync` now track whether the optimistic concurrency save succeeded. If all retries are exhausted, the response sets `PersonalityEvolved=false` / `PreferencesEvolved=false` and logs a warning. The experience is still considered "recorded" (returned OK) since the probability was rolled, but evolution is not reported as successful if the state wasn't persisted.
 
 ### Intentional Quirks
 
@@ -249,11 +257,9 @@ No bugs identified.
 
 2. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
 
-3. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires.
+3. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires (`PersonalityCacheTtlMinutes` config).
 
-4. **Evolution concurrency exhaustion is silent**: If optimistic concurrency retries are exhausted during `RecordExperience` or `EvolveCombatPreferences`, the method returns OK with `evolved=true` but the state was never saved. The evolution rolled successfully but the save failed silently. Consider whether this should return a different status or set `evolved=false`.
-
-5. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
+4. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
 
 ---
 
@@ -263,4 +269,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-- **2026-01-31**: Fixed `archetypeHint` field not being persisted - added `ArchetypeHint` property to `PersonalityData`, wired up in `SetPersonalityAsync` and `MapToPersonalityResponse`.
+- **2026-02-02**: Fixed evolution concurrency exhaustion false positive - both evolution methods now track save success and set `evolved=false` if all retries exhausted.
+
+See AUDIT markers in Potential Extensions section for items awaiting design decisions.

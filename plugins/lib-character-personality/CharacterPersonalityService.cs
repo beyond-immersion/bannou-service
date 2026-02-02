@@ -209,6 +209,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             if (evolved)
             {
                 var affectedTraits = GetAffectedTraits(body.ExperienceType);
+                var saveSucceeded = false;
 
                 // Optimistic concurrency retry loop: re-read fresh data on conflict
                 for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
@@ -249,6 +250,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                     {
                         result.ChangedTraits = changedTraits;
                         result.NewVersion = data.Version;
+                        saveSucceeded = true;
 
                         await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
                         {
@@ -268,6 +270,15 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
                     _logger.LogDebug("Concurrent modification during personality evolution for character {CharacterId}, retrying (attempt {Attempt})",
                         body.CharacterId, attempt + 1);
+                }
+
+                // If all retries exhausted without success, evolution did not persist
+                if (!saveSucceeded)
+                {
+                    _logger.LogWarning(
+                        "Personality evolution for character {CharacterId} failed after {MaxRetries} retries due to concurrent modifications; evolution rolled but not persisted",
+                        body.CharacterId, _configuration.MaxConcurrencyRetries);
+                    result.PersonalityEvolved = false;
                 }
             }
 
@@ -696,6 +707,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             if (evolved)
             {
+                var saveSucceeded = false;
+
                 // Optimistic concurrency retry loop: re-read fresh data on conflict
                 for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
                 {
@@ -722,6 +735,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                     {
                         result.NewPreferences = MapToCombatPreferences(data);
                         result.NewVersion = data.Version;
+                        saveSucceeded = true;
 
                         await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
                         {
@@ -740,6 +754,16 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
                     _logger.LogDebug("Concurrent modification during combat evolution for character {CharacterId}, retrying (attempt {Attempt})",
                         body.CharacterId, attempt + 1);
+                }
+
+                // If all retries exhausted without success, evolution did not persist
+                if (!saveSucceeded)
+                {
+                    _logger.LogWarning(
+                        "Combat preferences evolution for character {CharacterId} failed after {MaxRetries} retries due to concurrent modifications; evolution rolled but not persisted",
+                        body.CharacterId, _configuration.MaxConcurrencyRetries);
+                    result.PreferencesEvolved = false;
+                    result.PreviousPreferences = null;
                 }
             }
 

@@ -49,23 +49,3 @@ x-service-configuration:
       description: Grace period in days before cleanup of dead character references (default 30 days)
       env: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
       default: 30
-
-    # Compression Configuration
-    CompressionMaxBackstoryPoints:
-      type: integer
-      description: Maximum number of backstory points to include in character compression summary
-      env: CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS
-      default: 5
-    CompressionMaxLifeEvents:
-      type: integer
-      description: Maximum number of major life events to include in character compression summary
-      env: CHARACTER_COMPRESSION_MAX_LIFE_EVENTS
-      default: 10
-
-    # Personality Summary Configuration
-    PersonalityTraitThreshold:
-      type: number
-      format: double
-      description: Threshold for personality trait classification (values above this are positive, below negative are opposite)
-      env: CHARACTER_PERSONALITY_TRAIT_THRESHOLD
-      default: 0.3

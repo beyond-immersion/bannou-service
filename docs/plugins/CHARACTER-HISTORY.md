@@ -20,6 +20,7 @@ Historical event participation and backstory management for characters. Tracks w
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and backstory |
 | lib-messaging (`IMessageBus`) | Publishing participation and backstory lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-resource (events) | Publishes `resource.reference.registered` and `resource.reference.unregistered` events for character reference tracking |
 
 ---
 
@@ -27,9 +28,11 @@ Historical event participation and backstory management for characters. Tracks w
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-character | Fetches backstory for enriched character response; calls `SummarizeHistoryAsync` and `DeleteAllHistoryAsync` during character compression |
 | lib-actor | Reads backstory via `ICharacterHistoryClient` (PersonalityCache) to inform NPC behavior decisions |
 | lib-analytics | Subscribes to `character-history.participation.recorded`, `character-history.backstory.created`, `character-history.backstory.updated` for historical analytics |
+| lib-resource | Consumes `resource.reference.registered/unregistered` events to track character references for cleanup coordination |
+
+**Note**: lib-character (L2) does **not** call this service per SERVICE_HIERARCHY - L2 cannot depend on L4. The character service explicitly notes it cannot call CharacterHistory. Callers needing history data must call this service directly.
 
 ---
 
@@ -58,6 +61,8 @@ Historical event participation and backstory management for characters. Tracks w
 | `character-history.backstory.updated` | `CharacterBackstoryUpdatedEvent` | Existing backstory modified |
 | `character-history.backstory.deleted` | `CharacterBackstoryDeletedEvent` | All backstory deleted |
 | `character-history.deleted` | `CharacterHistoryDeletedEvent` | All history (participation + backstory) deleted |
+| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | Participation or backstory created (tracks character references) |
+| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | Participation or backstory deleted (unregisters character references) |
 
 ### Consumed Events
 
@@ -82,10 +87,11 @@ The generated `CharacterHistoryServiceConfiguration` contains only the framework
 | `ILogger<CharacterHistoryService>` | Scoped | Structured logging |
 | `CharacterHistoryServiceConfiguration` | Singleton | Framework config (empty) |
 | `IStateStoreFactory` | Singleton | State store access |
-| `IMessageBus` | Scoped | Event publishing |
+| `IMessageBus` | Scoped | Event publishing (including resource reference events) |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
 | `IDualIndexHelper<ParticipationData>` | (inline) | Dual-index CRUD for participations |
 | `IBackstoryStorageHelper<BackstoryData, BackstoryElementData>` | (inline) | Backstory CRUD with merge semantics |
+| `CharacterHistoryReferenceTracking` | (partial class) | Generated helper methods for resource reference registration/unregistration |
 
 Service lifetime is **Scoped** (per-request).
 
@@ -95,7 +101,7 @@ Service lifetime is **Scoped** (per-request).
 
 ### Participation Operations (4 endpoints)
 
-- **Record** (`/character-history/record-participation`): Creates unique participation ID. Stores record and updates dual indexes (character and event). Stores enum values as strings. Publishes recorded event.
+- **Record** (`/character-history/record-participation`): Checks for existing participation for same characterId+eventId (returns 409 Conflict if duplicate). Creates unique participation ID. Stores record and updates dual indexes (character and event). Registers character reference with lib-resource. Publishes recorded event.
 - **GetParticipation** (`/character-history/get-participation`): Fetches all records for a character via primary index, filters by event category and minimum significance, sorts by event date descending, paginates in-memory (max 100 per page).
 - **GetEventParticipants** (`/character-history/get-event-participants`): Inverse query via secondary (event) index. Filters by role, sorts by significance descending.
 - **DeleteParticipation** (`/character-history/delete-participation`): Retrieves record first (to get index keys for cleanup), removes from both indexes, publishes deletion event.
@@ -109,7 +115,7 @@ Service lifetime is **Scoped** (per-request).
 
 ### Management Operations (2 endpoints)
 
-- **DeleteAll** (`/character-history/delete-all`): Uses `RemoveAllByPrimaryKeyAsync` with lambda to extract secondary keys for cleanup. Also deletes backstory. Returns participation count and backstory boolean. Called by character service during compression.
+- **DeleteAll** (`/character-history/delete-all`): Unregisters all character references first, then uses `RemoveAllByPrimaryKeyAsync` with lambda to extract secondary keys for cleanup. Also deletes backstory. Returns participation count and backstory boolean. Called via lib-resource cleanup callback during character deletion.
 - **Summarize** (`/character-history/summarize`): Template-based text generation. Selects top N backstory elements by strength (default 5, max 20) and top N participations by significance (default 10, max 20). Uses switch-case text patterns.
 
 ---
@@ -186,7 +192,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Schema promises 409 Conflict but implementation allows duplicates**~~: **FIXED** (2026-01-31) - `RecordParticipationAsync` now checks for existing participation records for the same characterId+eventId pair before creating a new record, returning `StatusCodes.Conflict` if a duplicate exists. The check uses `GetRecordsByPrimaryKeyAsync` to fetch all participations for the character and `.Any(r => r.EventId == body.EventId)` to detect duplicates.
+None currently identified.
 
 ### Intentional Quirks
 
@@ -209,6 +215,7 @@ None. The service is feature-complete for its scope.
 4. ~~**GUID parsing without validation in helper config**~~: **REMOVED** (2026-02-01) - The documented concern was invalid. The `SetEntityId` delegate is only called when WRITING new data (with the `entityId` parameter from the request, which is already a valid GUID string from `Guid.ToString()`). It is never called during READ operations or deserialization of stored data. Corrupted store data cannot trigger this code path.
 
 5. **DeleteAll is O(n) with secondary index cleanup**: Iterates all participation records for a character, extracting event IDs via lambda, and removes from each event index individually. For characters with hundreds of participations, this generates many state store operations.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/261 -->
 
 6. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure. On deserialization from JSON, becomes `JsonElement` or similar untyped object. No schema validation.
 
@@ -239,8 +246,12 @@ None. The service is feature-complete for its scope.
 - **2026-01-31**: [#207](https://github.com/beyond-immersion/bannou-service/issues/207) - Add configurable backstory element count limit (prevent unbounded growth)
 - **2026-02-01**: [#230](https://github.com/beyond-immersion/bannou-service/issues/230) - AI-powered summarization (requires building new LLM service infrastructure)
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
+- **2026-02-02**: [#261](https://github.com/beyond-immersion/bannou-service/issues/261) - DeleteAll O(n) secondary index cleanup optimization (requires batch delete infrastructure decisions)
 
 ### Completed
+- **2026-02-02**: Verified and removed "Schema promises 409 Conflict but implementation allows duplicates" bug - fix is clean with no non-obvious behavior (simple input validation before creation).
+- **2026-02-02**: Corrected lib-character dependent documentation - lib-character (L2) cannot call this service per SERVICE_HIERARCHY.
+- **2026-02-02**: Added lib-resource dependency and resource reference tracking events documentation.
 - **2026-02-01**: Removed "GUID parsing without validation in helper config" from Design Considerations - the documented concern was invalid. The `SetEntityId` delegate is only called when writing new data with validated request parameters, never during reads or deserialization.
 - **2026-02-01**: Reclassified "Helper abstractions are inline" from Design Considerations to Intentional Quirks - the inline construction is intentional design, and testing via `IStateStoreFactory` mocking is straightforward. The original "requires constructor inspection" claim was inaccurate.
 - **2026-01-31**: Fixed duplicate participation bug - `RecordParticipationAsync` now returns 409 Conflict when character+event pair already exists, matching schema contract.

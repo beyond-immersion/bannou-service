@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with optional cross-service data (personality, backstory, family tree), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility.
+The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from Relationship service, L2), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility. Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like CharacterPersonality or CharacterHistory - callers needing that data should aggregate from L4 services directly.
 
 ---
 
@@ -23,13 +23,10 @@ The Character service manages game world characters for Arcadia. Characters are 
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-realm (`IRealmClient`) | Validates realm exists and is active before character creation |
 | lib-species (`ISpeciesClient`) | Validates species exists and belongs to the specified realm |
-| lib-character-personality (`ICharacterPersonalityClient`) | Fetches personality/combat prefs for enrichment; deletes on compression |
-| lib-character-history (`ICharacterHistoryClient`) | Fetches backstory for enrichment; summarizes/deletes on compression |
 | lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting |
 | lib-relationship-type (`IRelationshipTypeClient`) | Maps relationship type IDs to codes for family tree categorization |
-| lib-character-encounter (`ICharacterEncounterClient`) | ⚠️ **HIERARCHY VIOLATION** - Layer 3 service, remove |
-| lib-contract (`IContractClient`) | ⚠️ **HIERARCHY VIOLATION** - Layer 2c peer, questionable |
-| lib-actor (`IActorClient`) | ⚠️ **HIERARCHY VIOLATION** - Layer 4 service, remove |
+| lib-contract (`IContractClient`) | Queries contracts where character is a party (L1 - allowed) |
+| lib-resource (`IResourceClient`) | Queries L4 references (Actor, Encounter) via event-driven pattern (L1 - allowed) |
 
 > **Refactoring Consideration**: This plugin injects 9 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
@@ -39,11 +36,11 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-analytics | Subscribes to `character.updated` for cache invalidation |
-| lib-character-encounter | Subscribes to `character.deleted` to clean up encounter data |
+| lib-analytics | Calls `ICharacterClient` for realm resolution; subscribes to `character.updated` for cache invalidation |
+| lib-character-encounter | Calls `ICharacterClient` for character name enrichment; subscribes to `character.deleted` to clean up encounter data |
 | lib-species | Calls `ICharacterClient` to check character references during species deprecation |
-| lib-character-personality | Provides personality data called by Character for enrichment |
-| lib-character-history | Provides backstory/history data called by Character for enrichment |
+
+> **Note**: CharacterPersonality and CharacterHistory (L4) do NOT currently subscribe to `character.compressed` or `character.deleted`. The documentation previously claimed they did. If L4 cleanup is needed, those services should add event subscriptions.
 
 ---
 
@@ -93,10 +90,7 @@ This plugin does not consume external events.
 | `RealmIndexUpdateMaxRetries` | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for realm index |
 | `LockTimeoutSeconds` | `CHARACTER_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition |
 | `CleanupGracePeriodDays` | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | `30` | Days at zero references before cleanup eligible |
-| `CompressionMaxBackstoryPoints` | `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | `5` | Max backstory points in compression summary |
-| `CompressionMaxLifeEvents` | `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | `10` | Max life events in compression summary |
-| `PersonalityTraitThreshold` | `CHARACTER_PERSONALITY_TRAIT_THRESHOLD` | `0.3` | Threshold for trait classification (>threshold = positive, <-threshold = negative) |
-| `CharacterRetentionDays` | `CHARACTER_RETENTION_DAYS` | `90` | Days to retain deleted characters (stub for unimplemented purge feature) |
+| `CharacterRetentionDays` | `CHARACTER_RETENTION_DAYS` | `90` | ⚠️ **STUB** - days to retain deleted characters (unimplemented purge feature) |
 
 ---
 
@@ -111,13 +105,10 @@ This plugin does not consume external events.
 | `IMessageBus` | Scoped | Event publishing |
 | `IRealmClient` | Scoped | Realm validation |
 | `ISpeciesClient` | Scoped | Species validation |
-| `ICharacterPersonalityClient` | Scoped | Enrichment and compression |
-| `ICharacterHistoryClient` | Scoped | Enrichment and compression |
 | `IRelationshipClient` | Scoped | Family tree and reference counting |
 | `IRelationshipTypeClient` | Scoped | Relationship code lookup |
-| `ICharacterEncounterClient` | Scoped | Encounter reference counting |
-| `IContractClient` | Scoped | Contract reference counting |
-| `IActorClient` | Scoped | Actor reference counting (NPC brains) |
+| `IContractClient` | Scoped | Contract reference counting (L1 - allowed) |
+| `IResourceClient` | Scoped | L4 reference counting via event-driven pattern |
 | `IEventConsumer` | Scoped | Event registration (no handlers defined) |
 
 Service lifetime is **Scoped** (per-request).
@@ -137,16 +128,16 @@ Service lifetime is **Scoped** (per-request).
 
 ### Enriched Character (`/character/get-enriched`)
 
-Opt-in enrichment via boolean flags to avoid unnecessary service calls:
+Per SERVICE_HIERARCHY, Character (L2) can only enrich with data from L2 or lower services. The following flags are available:
 
-| Flag | Source Service | Data Retrieved |
-|------|---------------|----------------|
-| `includePersonality` | CharacterPersonality | Trait axes as `Dictionary<string, float>` |
-| `includeCombatPreferences` | CharacterPersonality | Style, range, role, risk/retreat |
-| `includeBackstory` | CharacterHistory | `BackstoryElementSnapshot` list |
-| `includeFamilyTree` | Relationship + RelationshipType | Parents, children, siblings, spouse, past lives |
+| Flag | Source Service | Status |
+|------|---------------|--------|
+| `includePersonality` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
+| `includeCombatPreferences` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
+| `includeBackstory` | CharacterHistory (L4) | **NOT INCLUDED** - callers should call L4 directly |
+| `includeFamilyTree` | Relationship + RelationshipType (L2) | ✅ Included |
 
-Each enrichment section is independently try-caught. Failures return null for that section (graceful degradation). Main response still returns with available data.
+If L4 enrichment flags are set, the service logs a debug message explaining the SERVICE_HIERARCHY constraint but does not fail.
 
 **Family tree categorization** uses string-based type code matching:
 - Parents: PARENT, MOTHER, FATHER, STEP_PARENT
@@ -159,12 +150,13 @@ Each enrichment section is independently try-caught. Failures return null for th
 
 Preconditions: Must be `Status=Dead` with `DeathDate` set.
 
-Compression steps:
-1. **Personality summary**: Maps trait values to text via threshold logic (>0.3 = "creative", <-0.3 = "traditional")
-2. **History summary**: Calls `SummarizeHistoryAsync()` with configurable max backstory/event limits
-3. **Family summary**: Text like "married to Elena, parent of 3, reincarnated from 2 past life(s)"
-4. **Archive creation**: Stores text summaries in MySQL under `archive:{characterId}`
-5. **Optional source deletion**: If `DeleteSourceData=true`, deletes personality and history data
+Per SERVICE_HIERARCHY, Character (L2) cannot call CharacterPersonality or CharacterHistory (L4) during compression. The archive includes only L2 data:
+
+1. **Family summary**: Text like "married to Elena, parent of 3, reincarnated from 2 past life(s)" (from Relationship service, L2)
+2. **Archive creation**: Stores character data and family summary in MySQL under `archive:{characterId}`
+3. **Event publication**: Publishes `character.compressed` event so L4 services can clean up their own data
+
+**Note**: `DeleteSourceData` flag is advisory only - Character cannot delete L4 data directly. L4 services (CharacterPersonality, CharacterHistory) should subscribe to `character.compressed` to handle cleanup, but currently DO NOT (see Design Considerations #10).
 
 ### Archive Retrieval (`/character/get-archive`)
 
@@ -232,6 +224,7 @@ Character Key Architecture (Realm-Partitioned)
 1. **Batch compression**: Compress multiple dead characters in one operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 2. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/263 -->
 3. **Parallel family tree lookups**: Currently `BuildFamilyTreeAsync` makes sequential calls for each relationship type and character. Could parallelize these for better performance.
 
 ---
@@ -240,13 +233,13 @@ Character Key Architecture (Realm-Partitioned)
 
 ### Bugs (Fix Immediately)
 
-1. **Dependency inversion in reference counting (SERVICE_HIERARCHY violation)**: `CheckCharacterReferencesAsync` directly calls `ICharacterEncounterClient`, `IContractClient`, and `IActorClient` to count references. This inverts the dependency hierarchy - Character (Layer 2) should NOT depend on Layer 3/4 services. **Correct fix**: Character should define `character.reference.registered` and `character.reference.unregistered` events in its own schema that it consumes. Higher-layer services publish TO those topics when they create/delete references. Character maintains refcounts without knowing who the publishers are. See `docs/reference/SERVICE_HIERARCHY.md` for the full pattern.
+None currently tracked.
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
 
-2. **Silent deletion on compression**: When `DeleteSourceData=true`, exceptions from personality/history deletion are caught and ignored (only 404s are explicitly handled). Archive is created even if source data deletion fails.
+2. **DeleteSourceData flag is advisory**: When `DeleteSourceData=true` on compression, Character (L2) logs a debug message but cannot delete L4 service data (personality, history) per SERVICE_HIERARCHY. L4 services should subscribe to `character.compressed` event to clean up their own data.
 
 3. **Fail-closed validation**: If realm or species validation services are unavailable, character creation throws `InvalidOperationException` rather than proceeding. This is intentional to prevent data integrity issues.
 
@@ -274,6 +267,8 @@ Character Key Architecture (Realm-Partitioned)
 
 9. **Family tree character lookups are sequential**: Calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
 
+10. **L4 cleanup not implemented**: CharacterPersonality and CharacterHistory do NOT subscribe to `character.compressed` or `character.deleted`. When characters are compressed or deleted, L4 data (personality traits, combat preferences, backstory, life events) is orphaned. The `DeleteSourceData` flag on compression is currently advisory-only with no effect.
+
 ---
 
 ## Work Tracking
@@ -286,6 +281,8 @@ No active work items.
 
 ### Historical
 
+- **2026-02-02**: Removed dead configuration properties (`CompressionMaxBackstoryPoints`, `CompressionMaxLifeEvents`, `PersonalityTraitThreshold`) from schema - these were designed for L4 data inclusion that SERVICE_HIERARCHY now prohibits.
+- **2026-02-02**: Documentation audit - removed stale hierarchy violation warnings. Code was already using correct event-driven pattern via `IResourceClient` for L4 reference counting; doc was out of date.
 - **2026-02-01**: Implemented realm transfer feature (`/character/transfer-realm` endpoint). Validates target realm, acquires distributed lock, atomically moves character between realm-partitioned keys, updates realm and global indexes, publishes realm transition and update events.
 - **2026-01-31**: Expanded reference counting in `CheckCharacterReferencesAsync` to check encounters, contracts, and actors in addition to relationships.
 - **2026-01-31**: Added distributed locking to `UpdateCharacterAsync` and `CompressCharacterAsync` per [GitHub Issue #189](https://github.com/beyond-immersion/bannou-service/issues/189).

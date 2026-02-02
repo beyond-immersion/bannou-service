@@ -89,22 +89,4 @@ public class CharacterServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int CleanupGracePeriodDays { get; set; } = 30;
 
-    /// <summary>
-    /// Maximum number of backstory points to include in character compression summary
-    /// Environment variable: CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS
-    /// </summary>
-    public int CompressionMaxBackstoryPoints { get; set; } = 5;
-
-    /// <summary>
-    /// Maximum number of major life events to include in character compression summary
-    /// Environment variable: CHARACTER_COMPRESSION_MAX_LIFE_EVENTS
-    /// </summary>
-    public int CompressionMaxLifeEvents { get; set; } = 10;
-
-    /// <summary>
-    /// Threshold for personality trait classification (values above this are positive, below negative are opposite)
-    /// Environment variable: CHARACTER_PERSONALITY_TRAIT_THRESHOLD
-    /// </summary>
-    public double PersonalityTraitThreshold { get; set; } = 0.3;
-
 }
