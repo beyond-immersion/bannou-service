@@ -162,9 +162,13 @@ None. The service is feature-complete for its scope.
 ## Potential Extensions
 
 1. **Event-level aggregation**: Compute aggregate impact scores per event across all participating realms.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/266 -->
 2. **Lore inheritance**: Child realms inheriting lore elements from parent realms (if realm hierarchy is added).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/268 -->
 3. **AI-powered summarization**: Replace template-based summaries with LLM-generated narrative text.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/269 -->
 4. **Realm timeline visualization**: Chronological event data suitable for timeline UI rendering.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:ISSUE_URL_PLACEHOLDER -->
 
 ---
 
@@ -209,6 +213,11 @@ None identified.
 ---
 
 ## Work Tracking
+
+### Pending Design Review
+- **2026-02-02**: [#266](https://github.com/beyond-immersion/bannou-service/issues/266) - Event-level aggregation (API design decisions needed: metrics, role breakdowns, filtering, new endpoint vs enhancement)
+- **2026-02-02**: [#268](https://github.com/beyond-immersion/bannou-service/issues/268) - Lore inheritance (BLOCKED: requires realm hierarchy which contradicts current Realm service design of "peer worlds with no hierarchical relationships")
+- **2026-02-02**: [#269](https://github.com/beyond-immersion/bannou-service/issues/269) - AI-powered summarization (BLOCKED on character-history #230 which tracks shared LLM infrastructure work)
 
 ### Completed
 

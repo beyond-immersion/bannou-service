@@ -247,15 +247,20 @@ None currently tracked.
 
 5. **Lock timeout is configurable but short by default**: The `LockTimeoutSeconds` configuration (default 30s) controls how long a lock can be held. Operations should complete well within this window; the timeout is a safety net for crashed processes.
 
+6. **Global index double-write on create/delete/transfer**: Both realm index (`realm-index:{realmId}` → list of character IDs) and global index (`character-global-index:{characterId}` → realm ID) are maintained. This enables O(1) character lookup by ID (global index → realm ID → character data) without scanning realm indexes. The extra write is intentional for performance: `FindCharacterByIdAsync` reads the global index first to resolve the realm, then fetches the character data with the full realm-partitioned key.
+
+7. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be resolved (type deleted, RelationshipType service unavailable), the relationship is excluded from the family tree with no indication in the response. This is intentional graceful degradation: partial valid data is preferred over failing the entire enrichment. A warning is logged (`"Could not look up relationship type {TypeId}"`) for observability. The alternative (returning uncategorized relationships) would break the structured Parents/Children/Siblings/Spouse/PastLives response format.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/267 -->
 
-2. **Global index double-write**: Both realm index and global index are updated on create/delete. Extra write for resilience across restarts but adds complexity.
+2. ~~**Global index double-write**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks; this is an intentional performance/resilience pattern, not a design consideration requiring planning.
 
 3. ~~**Family tree type lookups are sequential**~~: **FIXED** (2026-02-02) - `BuildTypeCodeLookupAsync` now uses `Task.WhenAll` to parallelize all relationship type API calls.
 
-4. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
+4. ~~**Family tree silently skips unknown relationship types**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks; this is intentional graceful degradation, not a design gap.
 
 5. **INCARNATION tracking is directional**: Only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
 
@@ -281,6 +286,8 @@ No active work items.
 
 ### Historical
 
+- **2026-02-02**: Moved "Family tree silently skips unknown relationship types" from Design Considerations to Intentional Quirks - this is intentional graceful degradation (partial data preferred over error).
+- **2026-02-02**: Moved "Global index double-write" from Design Considerations to Intentional Quirks - this is an intentional performance pattern, not a planning consideration.
 - **2026-02-02**: Parallelized family tree lookups - `BuildFamilyTreeAsync` now uses `Task.WhenAll` for relationship type lookups and `GetBulkAsync` for character loading, reducing N+M sequential calls to 2 bulk operations.
 - **2026-02-02**: Removed dead configuration properties (`CompressionMaxBackstoryPoints`, `CompressionMaxLifeEvents`, `PersonalityTraitThreshold`) from schema - these were designed for L4 data inclusion that SERVICE_HIERARCHY now prohibits.
 - **2026-02-02**: Documentation audit - removed stale hierarchy violation warnings. Code was already using correct event-driven pattern via `IResourceClient` for L4 reference counting; doc was out of date.

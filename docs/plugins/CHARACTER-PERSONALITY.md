@@ -228,7 +228,7 @@ None. The service is feature-complete for its scope.
 3. **Cross-trait interactions**: Evolution in one trait influences related traits (e.g., high aggression reduces agreeableness ceiling).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/262 -->
 4. **Combat style transitions**: Currently limited paths (no TACTICAL reversion). Could add full transition matrix.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:ISSUE_URL_PLACEHOLDER -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/264 -->
 
 ---
 
@@ -252,15 +252,20 @@ None. The service is feature-complete for its scope.
 
 6. **BERSERKER only exits via DEFEAT**: The only code path leaving BERSERKER style is the 40% chance on DEFEAT experience. No other experience type offers an exit.
 
+7. **Actor service cache invalidation is event-driven**: lib-actor's `PersonalityCache` subscribes to `personality.evolved` and `combat-preferences.evolved` events and invalidates the cache immediately on receipt. However, if the personality service is unavailable when an actor needs to reload data (after invalidation or cache miss), the cache returns stale data if available (graceful degradation). This is intentional - actors continue running with last-known personality rather than failing.
+
 ### Design Considerations (Requires Planning)
 
 1. **Combat style transitions are limited**: Only specific transitions exist (DEFENSIVE->BALANCED->AGGRESSIVE->BERSERKER). TACTICAL is only reachable via ambush success. No general transition matrix.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/264 -->
 
 2. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/265 -->
 
-3. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires (`PersonalityCacheTtlMinutes` config).
+3. ~~**Actor service caches personalities**~~: **CORRECTED** (2026-02-02) - The description was inaccurate. lib-actor DOES subscribe to `personality.evolved` and `combat-preferences.evolved` events and immediately invalidates the cache on receipt. Actors will use stale data ONLY if the personality service is unavailable when loading (graceful degradation). Moved to Intentional Quirks #7 with accurate description.
 
 4. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/264 -->
 
 ---
 
@@ -271,5 +276,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **2026-02-02**: Fixed evolution concurrency exhaustion false positive - both evolution methods now track save success and set `evolved=false` if all retries exhausted.
+- **2026-02-02**: Corrected Design Consideration #3 about actor cache - documentation was inaccurate. lib-actor DOES invalidate cache on evolution events. Moved accurate description to Intentional Quirks #7.
 
 See AUDIT markers in Potential Extensions section for items awaiting design decisions.
