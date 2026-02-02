@@ -34,7 +34,7 @@ public partial class CharacterService : ICharacterService
     private readonly IRelationshipClient _relationshipClient;
     private readonly IRelationshipTypeClient _relationshipTypeClient;
     private readonly IContractClient _contractClient;
-    private readonly IResourceClient? _resourceClient;
+    private readonly IResourceClient _resourceClient;
 
     // Key prefixes for realm-partitioned storage
     private const string CHARACTER_KEY_PREFIX = "character:";
@@ -69,7 +69,7 @@ public partial class CharacterService : ICharacterService
         IRelationshipTypeClient relationshipTypeClient,
         IContractClient contractClient,
         IEventConsumer eventConsumer,
-        IResourceClient? resourceClient = null)
+        IResourceClient resourceClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -81,7 +81,7 @@ public partial class CharacterService : ICharacterService
         _relationshipClient = relationshipClient;
         _relationshipTypeClient = relationshipTypeClient;
         _contractClient = contractClient;
-        _resourceClient = resourceClient;
+        _resourceClient = resourceClient ?? throw new ArgumentNullException(nameof(resourceClient));
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -902,47 +902,44 @@ public partial class CharacterService : ICharacterService
             // Check L4 references via lib-resource (L1 - allowed)
             // L4 services (Actor, CharacterEncounter, etc.) register their references with lib-resource
             // via event-driven registration. We query lib-resource to get those reference counts.
-            if (_resourceClient != null)
+            try
             {
-                try
-                {
-                    var resourceCheck = await _resourceClient.CheckReferencesAsync(
-                        new Resource.CheckReferencesRequest
-                        {
-                            ResourceType = "character",
-                            ResourceId = body.CharacterId
-                        }, cancellationToken);
-
-                    if (resourceCheck != null && resourceCheck.RefCount > 0)
+                var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                    new Resource.CheckReferencesRequest
                     {
-                        referenceCount += resourceCheck.RefCount;
+                        ResourceType = "character",
+                        ResourceId = body.CharacterId
+                    }, cancellationToken);
 
-                        // Add source types from lib-resource response to reference types list
-                        if (resourceCheck.Sources != null)
+                if (resourceCheck != null && resourceCheck.RefCount > 0)
+                {
+                    referenceCount += resourceCheck.RefCount;
+
+                    // Add source types from lib-resource response to reference types list
+                    if (resourceCheck.Sources != null)
+                    {
+                        foreach (var source in resourceCheck.Sources)
                         {
-                            foreach (var source in resourceCheck.Sources)
+                            // Normalize source type to uppercase for consistency with L2 constants
+                            var normalizedType = source.SourceType.ToUpperInvariant();
+                            if (!referenceTypes.Contains(normalizedType))
                             {
-                                // Normalize source type to uppercase for consistency with L2 constants
-                                var normalizedType = source.SourceType.ToUpperInvariant();
-                                if (!referenceTypes.Contains(normalizedType))
-                                {
-                                    referenceTypes.Add(normalizedType);
-                                }
+                                referenceTypes.Add(normalizedType);
                             }
                         }
                     }
                 }
-                catch (ApiException ex) when (ex.StatusCode == 404)
-                {
-                    // No references registered in lib-resource - this is normal
-                    _logger.LogDebug("No lib-resource references found for character {CharacterId}", body.CharacterId);
-                }
-                catch (ApiException ex)
-                {
-                    // lib-resource is unavailable - log but don't fail the entire check
-                    // This is graceful degradation: we still return L2 reference info
-                    _logger.LogWarning(ex, "lib-resource unavailable when checking references for character {CharacterId}, L4 references may be missing", body.CharacterId);
-                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // No references registered in lib-resource - this is normal
+                _logger.LogDebug("No lib-resource references found for character {CharacterId}", body.CharacterId);
+            }
+            catch (ApiException ex)
+            {
+                // lib-resource is unavailable - log but don't fail the entire check
+                // This is graceful degradation: we still return L2 reference info
+                _logger.LogWarning(ex, "lib-resource unavailable when checking references for character {CharacterId}, L4 references may be missing", body.CharacterId);
             }
 
             // Check contracts where character is a party (L1 - allowed)

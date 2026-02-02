@@ -247,10 +247,13 @@ public class Program
             serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
             {
                 var stateManager = sp.GetRequiredService<IMeshStateManager>();
+                var stateStoreFactory = sp.GetRequiredService<IStateStoreFactory>();
+                var messageBus = sp.GetRequiredService<IMessageBus>();
+                var messageSubscriber = sp.GetRequiredService<IMessageSubscriber>();
                 var config = sp.GetRequiredService<MeshServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
                 var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
-                return new MeshInvocationClient(stateManager, config, logger, telemetryProvider);
+                return new MeshInvocationClient(stateManager, stateStoreFactory, messageBus, messageSubscriber, config, logger, telemetryProvider);
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)

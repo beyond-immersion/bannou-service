@@ -769,7 +769,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup no L2 relationships
         _mockRelationshipClient
             .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListRelationshipsResponse { Relationships = new List<RelationshipResponse>(), TotalCount = 0 });
+            .ReturnsAsync(new RelationshipListResponse { Relationships = new List<RelationshipResponse>(), TotalCount = 0 });
 
         // Setup lib-resource returns L4 references
         _mockResourceClient
@@ -834,7 +834,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup L2 relationship exists
         _mockRelationshipClient
             .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListRelationshipsResponse
+            .ReturnsAsync(new RelationshipListResponse
             {
                 Relationships = new List<RelationshipResponse>
                 {
@@ -891,7 +891,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup L2 relationship exists
         _mockRelationshipClient
             .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListRelationshipsResponse
+            .ReturnsAsync(new RelationshipListResponse
             {
                 Relationships = new List<RelationshipResponse>
                 {
@@ -948,7 +948,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup L2 relationships (2 refs)
         _mockRelationshipClient
             .Setup(r => r.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListRelationshipsResponse
+            .ReturnsAsync(new RelationshipListResponse
             {
                 Relationships = new List<RelationshipResponse>
                 {
@@ -977,9 +977,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(c => c.QueryContractInstancesAsync(It.IsAny<QueryContractInstancesRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new QueryContractInstancesResponse
             {
-                Contracts = new List<ContractInstanceSummary>
+                Contracts = new List<ContractInstanceResponse>
                 {
-                    new() { InstanceId = Guid.NewGuid() }
+                    new() { ContractId = Guid.NewGuid() }
                 },
                 HasMore = false
             });
