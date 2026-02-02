@@ -65,6 +65,96 @@ public static class ResourcePermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/register",
+            Method = ServiceEndpointMethod.POST,
+            Description = "registerReference",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/unregister",
+            Method = ServiceEndpointMethod.POST,
+            Description = "unregisterReference",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/check",
+            Method = ServiceEndpointMethod.POST,
+            Description = "checkReferences",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "listReferences",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/cleanup/define",
+            Method = ServiceEndpointMethod.POST,
+            Description = "defineCleanupCallback",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/cleanup/execute",
+            Method = ServiceEndpointMethod.POST,
+            Description = "executeCleanup",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

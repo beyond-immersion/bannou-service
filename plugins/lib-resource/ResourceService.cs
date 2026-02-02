@@ -290,11 +290,14 @@ public partial class ResourceService : IResourceService
         var existing = await _cleanupStore.GetAsync(callbackKey, cancellationToken);
         var previouslyDefined = existing != null;
 
+        // ServiceName defaults to SourceType when not specified
+        var serviceName = body.ServiceName ?? body.SourceType;
+
         var callback = new CleanupCallbackDefinition
         {
             ResourceType = body.ResourceType,
             SourceType = body.SourceType,
-            ServiceName = body.ServiceName,
+            ServiceName = serviceName,
             CallbackEndpoint = body.CallbackEndpoint,
             PayloadTemplate = body.PayloadTemplate,
             Description = body.Description,
@@ -309,7 +312,7 @@ public partial class ResourceService : IResourceService
         _logger.LogInformation(
             "Cleanup callback {Action} for {ResourceType}/{SourceType}: {ServiceName}{Endpoint}",
             previouslyDefined ? "updated" : "registered",
-            body.ResourceType, body.SourceType, body.ServiceName, body.CallbackEndpoint);
+            body.ResourceType, body.SourceType, serviceName, body.CallbackEndpoint);
 
         return (StatusCodes.OK, new DefineCleanupResponse
         {
@@ -356,10 +359,8 @@ public partial class ResourceService : IResourceService
             });
         }
 
-        // Check grace period (can be overridden)
-        var gracePeriodSeconds = body.GracePeriodOverride != null
-            ? ParseIsoDuration(body.GracePeriodOverride)
-            : _configuration.DefaultGracePeriodSeconds;
+        // Check grace period (can be overridden, 0 means skip grace period check)
+        var gracePeriodSeconds = body.GracePeriodSeconds ?? _configuration.DefaultGracePeriodSeconds;
 
         if (!preCheckResult.IsCleanupEligible && gracePeriodSeconds > 0)
         {
@@ -443,11 +444,16 @@ public partial class ResourceService : IResourceService
                 Description = c.Description
             }).ToList();
 
+            // Apply configured timeout for cleanup callbacks
+            // Note: MaxCallbackRetries is defined but IServiceNavigator doesn't support per-call retry configuration
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.CleanupCallbackTimeoutSeconds));
+
             var results = await _navigator.ExecutePreboundApiBatchAsync(
                 apiDefinitions,
                 context,
                 BatchExecutionMode.Parallel,
-                cancellationToken);
+                timeoutCts.Token);
 
             for (var i = 0; i < results.Count; i++)
             {
@@ -585,56 +591,17 @@ public partial class ResourceService : IResourceService
     }
 
     /// <summary>
-    /// Parses an ISO 8601 duration string to seconds.
-    /// Supports simple patterns like "PT0S", "PT1H", "P7D".
+    /// Maintains the callback index set for efficient enumeration.
+    /// Adds the source type to the index for the given resource type.
     /// </summary>
-    private static int ParseIsoDuration(string? duration)
+    private async Task MaintainCallbackIndexAsync(
+        string resourceType,
+        string sourceType,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(duration)) return 0;
-
-        try
-        {
-            // Try to parse as TimeSpan for simple cases
-            if (TimeSpan.TryParse(duration.Replace("PT", "").Replace("P", ""), out var ts))
-            {
-                return (int)ts.TotalSeconds;
-            }
-
-            // Handle ISO 8601 patterns manually
-            duration = duration.ToUpperInvariant();
-            var seconds = 0;
-
-            if (duration.Contains('D'))
-            {
-                var days = int.Parse(duration.Split('D')[0].Replace("P", ""));
-                seconds += days * 86400;
-                duration = duration.Split('D')[1];
-            }
-
-            if (duration.Contains('H'))
-            {
-                var hours = int.Parse(duration.Split('H')[0].Replace("T", "").Replace("P", ""));
-                seconds += hours * 3600;
-            }
-
-            if (duration.Contains('M') && !duration.Contains("M"))
-            {
-                var minutes = int.Parse(duration.Split('M')[0].Split('H').Last().Replace("T", ""));
-                seconds += minutes * 60;
-            }
-
-            if (duration.Contains('S'))
-            {
-                var secs = int.Parse(duration.Split('S')[0].Split('M').Last().Split('H').Last().Replace("T", ""));
-                seconds += secs;
-            }
-
-            return seconds;
-        }
-        catch
-        {
-            return 0; // Default to no grace period on parse error
-        }
+        var indexKey = $"callback-index:{resourceType}";
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
+        await cacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
     }
 }
 

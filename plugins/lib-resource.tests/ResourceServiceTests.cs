@@ -12,16 +12,6 @@ using Moq;
 namespace BeyondImmersion.BannouService.Resource.Tests;
 
 /// <summary>
-/// Mock ILockResponse for testing distributed lock behavior.
-/// </summary>
-internal class MockLockResponse : ILockResponse
-{
-    public bool Success { get; }
-    public MockLockResponse(bool success) => Success = success;
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
-}
-
-/// <summary>
 /// Unit tests for ResourceService reference counting and cleanup logic.
 /// Tests verify atomic reference tracking, grace period management, and cleanup policies.
 /// </summary>
@@ -631,9 +621,11 @@ public class ResourceServiceTests
             .ReturnsAsync(graceRecord);
 
         // Setup lock to fail
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
         _mockLockProvider
             .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MockLockResponse(false));
+            .ReturnsAsync(failedLockResponse.Object);
 
         var request = new ExecuteCleanupRequest
         {
@@ -671,9 +663,11 @@ public class ResourceServiceTests
             .ReturnsAsync(graceRecord);
 
         // Setup successful lock acquisition
+        var successLockResponse = new Mock<ILockResponse>();
+        successLockResponse.Setup(l => l.Success).Returns(true);
         _mockLockProvider
             .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MockLockResponse(true));
+            .ReturnsAsync(successLockResponse.Object);
 
         var request = new ExecuteCleanupRequest
         {
@@ -715,9 +709,11 @@ public class ResourceServiceTests
             .ReturnsAsync(graceRecord);
 
         // Setup successful lock
+        var successLockResponse = new Mock<ILockResponse>();
+        successLockResponse.Setup(l => l.Success).Returns(true);
         _mockLockProvider
             .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MockLockResponse(true));
+            .ReturnsAsync(successLockResponse.Object);
 
         var request = new ExecuteCleanupRequest
         {

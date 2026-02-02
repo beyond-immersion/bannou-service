@@ -42,7 +42,8 @@ paths:
       description: |
         Records that sourceType:sourceId references resourceType:resourceId.
         Typically called via event handlers, not directly.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -66,7 +67,8 @@ paths:
       description: |
         Records that sourceType:sourceId no longer references resourceType:resourceId.
         Typically called via event handlers, not directly.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -90,7 +92,8 @@ paths:
       description: |
         Returns the current reference count for a resource and whether it is
         eligible for cleanup (refcount=0 and grace period passed).
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -114,7 +117,8 @@ paths:
       description: |
         Returns all entities currently referencing a resource.
         Useful for debugging and understanding reference chains.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -143,7 +147,8 @@ paths:
         Services call this at startup to register their cleanup endpoints.
         When a resource is deleted, these callbacks are invoked to clean up
         dependent entities.
-      x-permissions: []
+      x-permissions:
+      - role: admin
       requestBody:
         required: true
         content:
@@ -168,7 +173,8 @@ paths:
         Validates refcount=0, grace period passed, acquires distributed lock,
         re-validates under lock, then executes all cleanup callbacks.
         Returns Conflict if refcount changed during execution.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -458,7 +464,6 @@ components:
       required:
       - resourceType
       - sourceType
-      - serviceName
       - callbackEndpoint
       - payloadTemplate
       properties:
@@ -470,7 +475,8 @@ components:
           description: Type of entity that will be cleaned up (opaque identifier)
         serviceName:
           type: string
-          description: Target service name for callback invocation via lib-mesh
+          nullable: true
+          description: Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)
         callbackEndpoint:
           type: string
           description: Endpoint path (e.g., /actor/cleanup-by-character)
@@ -519,10 +525,10 @@ components:
           type: string
           format: uuid
           description: ID of the resource to clean up
-        gracePeriodOverride:
-          type: string
+        gracePeriodSeconds:
+          type: integer
           nullable: true
-          description: Override grace period as ISO 8601 duration (e.g., "PT0S" to skip)
+          description: Override grace period in seconds (uses default if not specified, 0 to skip)
         cleanupPolicy:
           $ref: '#/components/schemas/CleanupPolicy'
           nullable: true

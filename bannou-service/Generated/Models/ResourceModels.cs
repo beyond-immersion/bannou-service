@@ -470,12 +470,10 @@ public partial class DefineCleanupRequest
     public string SourceType { get; set; } = default!;
 
     /// <summary>
-    /// Target service name for callback invocation via lib-mesh
+    /// Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
+    public string? ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Endpoint path (e.g., /actor/cleanup-by-character)
@@ -562,10 +560,10 @@ public partial class ExecuteCleanupRequest
     public System.Guid ResourceId { get; set; } = default!;
 
     /// <summary>
-    /// Override grace period as ISO 8601 duration (e.g., "PT0S" to skip)
+    /// Override grace period in seconds (uses default if not specified, 0 to skip)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gracePeriodOverride")]
-    public string? GracePeriodOverride { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("gracePeriodSeconds")]
+    public int? GracePeriodSeconds { get; set; } = default!;
 
     /// <summary>
     /// Override cleanup policy (uses resource default if not specified)
