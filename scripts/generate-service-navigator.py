@@ -176,6 +176,7 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
         "    private readonly IClientEventPublisher _clientEventPublisher;",
         "    private readonly IHttpClientFactory _httpClientFactory;",
         "    private readonly IServiceAppMappingResolver _appMappingResolver;",
+        "    private readonly IMeshInvocationClient _meshInvocationClient;",
         "    private readonly AppConfiguration _configuration;",
         "",
     ])
@@ -194,6 +195,7 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
     lines.append("        IClientEventPublisher clientEventPublisher,")
     lines.append("        IHttpClientFactory httpClientFactory,")
     lines.append("        IServiceAppMappingResolver appMappingResolver,")
+    lines.append("        IMeshInvocationClient meshInvocationClient,")
     lines.append("        AppConfiguration configuration,")
 
     # Add constructor parameters
@@ -205,6 +207,7 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
     lines.append("        _clientEventPublisher = clientEventPublisher;")
     lines.append("        _httpClientFactory = httpClientFactory;")
     lines.append("        _appMappingResolver = appMappingResolver;")
+    lines.append("        _meshInvocationClient = meshInvocationClient;")
     lines.append("        _configuration = configuration;")
 
     for client in clients:

@@ -503,6 +503,184 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         return endpoint != null;
     }
 
+    /// <inheritdoc/>
+    public async Task<HttpResponseMessage> InvokeRawAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken = default)
+    {
+        // Extract app-id and method from request headers/uri
+        if (!request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-app-id"), out var appId) ||
+            string.IsNullOrEmpty(appId))
+        {
+            throw new ArgumentException("Request must include mesh-app-id option. Use CreateInvokeMethodRequest to create requests.");
+        }
+
+        if (!request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-method"), out var methodName))
+        {
+            methodName = request.RequestUri?.PathAndQuery ?? "unknown";
+        }
+
+        // Start telemetry activity for this raw mesh invocation (distinct from normal invoke)
+        using var activity = _telemetryProvider?.StartActivity(
+            TelemetryComponents.Mesh,
+            "mesh.invoke.raw",
+            ActivityKind.Client);
+
+        var sw = Stopwatch.StartNew();
+        var success = false;
+        var retryCount = 0;
+
+        // Set activity tags for tracing - include raw_api marker
+        activity?.SetTag("rpc.system", "bannou-mesh");
+        activity?.SetTag("rpc.service", appId);
+        activity?.SetTag("rpc.method", methodName);
+        activity?.SetTag("bannou.mesh.app_id", appId);
+        activity?.SetTag("bannou.mesh.raw_api", true);
+
+        try
+        {
+            // NOTE: No circuit breaker check - this is intentional for raw API execution
+            // where target services may be optional/disabled
+
+            var maxAttempts = _configuration.MaxRetries + 1;
+            var delayMs = _configuration.RetryDelayMilliseconds;
+            HttpResponseMessage? lastResponse = null;
+            Exception? lastException = null;
+
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                // On retry, invalidate cache to potentially get a different endpoint
+                if (attempt > 0)
+                {
+                    retryCount++;
+                    _endpointCache.Invalidate(appId);
+
+                    _logger.LogDebug(
+                        "Retrying raw API {Method} on {AppId} (attempt {Attempt}/{MaxAttempts}, delay {DelayMs}ms)",
+                        methodName, appId, attempt + 1, maxAttempts, delayMs);
+
+                    RecordRetryMetric(appId, methodName, "transient_error");
+
+                    await Task.Delay(delayMs, cancellationToken);
+                    delayMs *= 2; // Exponential backoff
+                }
+
+                // Resolve endpoint
+                var endpoint = await ResolveEndpointAsync(appId, cancellationToken);
+                if (endpoint == null)
+                {
+                    if (attempt < maxAttempts - 1)
+                        continue; // Retry - endpoint might become available
+
+                    // NOTE: No circuit breaker failure recording for raw API
+                    activity?.SetStatus(ActivityStatusCode.Error, "No endpoints available");
+                    throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+                }
+
+                // Build target URL
+                var targetUri = BuildTargetUri(endpoint, methodName);
+                request.RequestUri = new Uri(targetUri);
+                activity?.SetTag("server.address", endpoint.Host);
+                activity?.SetTag("server.port", endpoint.Port);
+
+                if (attempt == 0)
+                {
+                    _logger.LogDebug(
+                        "Invoking raw API {Method} on {AppId} at {TargetUri}",
+                        methodName, appId, targetUri);
+                }
+
+                try
+                {
+                    lastResponse = await _httpClient.SendAsync(request, cancellationToken);
+                    activity?.SetTag("http.response.status_code", (int)lastResponse.StatusCode);
+
+                    if (!IsTransientError(lastResponse.StatusCode))
+                    {
+                        // Non-transient response (success or client error) - done
+                        // NOTE: No circuit breaker success recording for raw API
+                        success = lastResponse.IsSuccessStatusCode;
+                        if (success)
+                        {
+                            activity?.SetStatus(ActivityStatusCode.Ok);
+                        }
+                        else
+                        {
+                            activity?.SetStatus(ActivityStatusCode.Error, $"HTTP {(int)lastResponse.StatusCode}");
+                        }
+                        return lastResponse;
+                    }
+
+                    // Transient server error - retry if attempts remain
+                    _logger.LogDebug(
+                        "Transient error {StatusCode} from raw API {AppId}, {Remaining} retries remaining",
+                        (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
+
+                    lastException = null;
+                }
+                catch (HttpRequestException ex)
+                {
+                    lastException = ex;
+                    _endpointCache.Invalidate(appId);
+
+                    _logger.LogDebug(
+                        ex, "Connection failure to raw API {AppId}, {Remaining} retries remaining",
+                        appId, maxAttempts - attempt - 1);
+                }
+            }
+
+            // All attempts exhausted
+            // NOTE: No circuit breaker failure recording for raw API
+            activity?.SetTag("bannou.mesh.retry_count", retryCount);
+
+            if (lastException != null)
+            {
+                _logger.LogWarning(lastException, "Failed to invoke raw API {Method} on {AppId} after {Attempts} attempts",
+                    methodName, appId, maxAttempts);
+                activity?.SetStatus(ActivityStatusCode.Error, lastException.Message);
+                throw new MeshInvocationException(appId, methodName, lastException.Message, lastException);
+            }
+
+            // Return the last transient error response
+            if (lastResponse != null)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, $"HTTP {(int)lastResponse.StatusCode}");
+                return lastResponse;
+            }
+
+            activity?.SetStatus(ActivityStatusCode.Error, "No endpoints available");
+            throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+        }
+        finally
+        {
+            sw.Stop();
+            activity?.SetTag("bannou.mesh.retry_count", retryCount);
+            RecordRawInvocationMetrics(appId, methodName, success, retryCount, sw.Elapsed.TotalSeconds);
+        }
+    }
+
+    /// <summary>
+    /// Records metrics for a raw mesh invocation operation (no circuit breaker).
+    /// </summary>
+    private void RecordRawInvocationMetrics(string appId, string method, bool success, int retryCount, double durationSeconds)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("service", appId),
+            new KeyValuePair<string, object?>("method", method),
+            new KeyValuePair<string, object?>("success", success),
+            new KeyValuePair<string, object?>("raw_api", true)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Mesh, TelemetryMetrics.MeshRawInvocations, 1, tags);
+        _telemetryProvider.RecordHistogram(TelemetryComponents.Mesh, TelemetryMetrics.MeshDuration, durationSeconds, tags);
+    }
+
     private async Task<MeshEndpoint?> ResolveEndpointAsync(
         string appId,
         CancellationToken cancellationToken)

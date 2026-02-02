@@ -233,4 +233,10 @@ public static class TelemetryMetrics
     /// Counter for mesh retries.
     /// </summary>
     public const string MeshRetries = "bannou.mesh.retries";
+
+    /// <summary>
+    /// Counter for raw mesh invocations (no circuit breaker participation).
+    /// Used by prebound APIs where target services may be intentionally offline.
+    /// </summary>
+    public const string MeshRawInvocations = "bannou.mesh.raw_invocations";
 }

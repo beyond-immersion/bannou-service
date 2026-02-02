@@ -108,6 +108,30 @@ public interface IMeshInvocationClient
     Task<bool> IsServiceAvailableAsync(
         string appId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Invoke a method on a remote service with retries but WITHOUT circuit breaker participation.
+    /// Used for prebound APIs where target services may be intentionally offline (optional services).
+    /// Failures do NOT count toward circuit breaker thresholds.
+    /// </summary>
+    /// <param name="request">The HTTP request message to send.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The HTTP response message.</returns>
+    /// <remarks>
+    /// <para>
+    /// This method is designed for scenarios where:
+    /// - Target service may be intentionally disabled (optional services)
+    /// - Failures should not affect circuit breaker state for other callers
+    /// - Full telemetry instrumentation is still required
+    /// </para>
+    /// <para>
+    /// Uses mesh configuration for retry settings (MESH_MAX_RETRIES, MESH_RETRY_DELAY_MILLISECONDS).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="MeshInvocationException">Thrown when invocation fails after all retry attempts.</exception>
+    Task<HttpResponseMessage> InvokeRawAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

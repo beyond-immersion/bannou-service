@@ -73,6 +73,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceAppMappingResolver _appMappingResolver;
+    private readonly IMeshInvocationClient _meshInvocationClient;
     private readonly AppConfiguration _configuration;
 
     private readonly IAccountClient _account;
@@ -125,6 +126,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IClientEventPublisher clientEventPublisher,
         IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
+        IMeshInvocationClient meshInvocationClient,
         AppConfiguration configuration,
         IAccountClient account,
         IAchievementClient achievement,
@@ -172,6 +174,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _clientEventPublisher = clientEventPublisher;
         _httpClientFactory = httpClientFactory;
         _appMappingResolver = appMappingResolver;
+        _meshInvocationClient = meshInvocationClient;
         _configuration = configuration;
         _account = account;
         _achievement = achievement;

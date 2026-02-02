@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -513,6 +514,230 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    #endregion
+
+    #region Resource Reference Tracking Tests
+
+    [Fact]
+    public async Task RecordParticipationAsync_PublishesReferenceRegisteredEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        SetupDefaultMessageBus();
+        SetupEmptyCharacterIndex(characterId);
+        SetupEmptyEventIndex(eventId);
+        SetupParticipationSave();
+
+        ResourceReferenceRegisteredEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "resource.reference.registered"),
+                It.IsAny<ResourceReferenceRegisteredEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            {
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new RecordParticipationRequest
+        {
+            CharacterId = characterId,
+            EventId = eventId,
+            Role = "witness"
+        };
+
+        // Act
+        var (status, response) = await service.RecordParticipationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("character", capturedEvent.ResourceType);
+        Assert.Equal("character-history", capturedEvent.SourceType);
+        Assert.Equal(characterId, capturedEvent.ResourceId);
+        Assert.Equal(response.Participation.ParticipationId.ToString(), capturedEvent.SourceId);
+    }
+
+    [Fact]
+    public async Task SetBackstoryAsync_NewBackstory_PublishesReferenceRegisteredEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        SetupDefaultMessageBus();
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BackstoryData?)null);
+        _mockBackstoryStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BackstoryData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        ResourceReferenceRegisteredEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "resource.reference.registered"),
+                It.IsAny<ResourceReferenceRegisteredEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            {
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new SetBackstoryRequest
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElement>
+            {
+                new BackstoryElement { Type = BackstoryElementType.ORIGIN, Value = "Test origin" }
+            }
+        };
+
+        // Act
+        var (status, response) = await service.SetBackstoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("character", capturedEvent.ResourceType);
+        Assert.Equal("character-history", capturedEvent.SourceType);
+        Assert.Equal(characterId, capturedEvent.ResourceId);
+        Assert.Equal($"backstory-{characterId}", capturedEvent.SourceId);
+    }
+
+    [Fact]
+    public async Task SetBackstoryAsync_ExistingBackstory_DoesNotPublishReferenceEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        SetupDefaultMessageBus();
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BackstoryData
+            {
+                CharacterId = characterId,
+                Elements = new List<BackstoryElementData>(),
+                Version = 1
+            });
+        _mockBackstoryStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BackstoryData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var referenceEventPublished = false;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "resource.reference.registered"),
+                It.IsAny<ResourceReferenceRegisteredEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, _, _) =>
+            {
+                referenceEventPublished = true;
+            })
+            .ReturnsAsync(true);
+
+        var request = new SetBackstoryRequest
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElement>
+            {
+                new BackstoryElement { Type = BackstoryElementType.ORIGIN, Value = "Updated origin" }
+            }
+        };
+
+        // Act
+        var (status, _) = await service.SetBackstoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.False(referenceEventPublished, "Should not publish reference event for existing backstory update");
+    }
+
+    [Fact]
+    public async Task DeleteBackstoryAsync_PublishesReferenceUnregisteredEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        SetupDefaultMessageBus();
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BackstoryData
+            {
+                CharacterId = characterId,
+                Elements = new List<BackstoryElementData>(),
+                Version = 1
+            });
+        _mockBackstoryStore.Setup(s => s.DeleteAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        ResourceReferenceUnregisteredEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "resource.reference.unregistered"),
+                It.IsAny<ResourceReferenceUnregisteredEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceReferenceUnregisteredEvent, CancellationToken>((_, evt, _) =>
+            {
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new DeleteBackstoryRequest { CharacterId = characterId };
+
+        // Act
+        var status = await service.DeleteBackstoryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("character", capturedEvent.ResourceType);
+        Assert.Equal("character-history", capturedEvent.SourceType);
+        Assert.Equal(characterId, capturedEvent.ResourceId);
+        Assert.Equal($"backstory-{characterId}", capturedEvent.SourceId);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private void SetupDefaultMessageBus()
+    {
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+    }
+
+    private void SetupEmptyCharacterIndex(Guid characterId)
+    {
+        _mockIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockIndexStore.Setup(s => s.GetWithETagAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((HistoryIndexData?)null, (string?)null));
+        _mockIndexStore.Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HistoryIndexData>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+    }
+
+    private void SetupEmptyEventIndex(Guid eventId)
+    {
+        _mockIndexStore.Setup(s => s.GetAsync($"event-idx-{eventId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockIndexStore.Setup(s => s.GetWithETagAsync($"event-idx-{eventId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((HistoryIndexData?)null, (string?)null));
+    }
+
+    private void SetupParticipationSave()
+    {
+        _mockParticipationStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ParticipationData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
     }
 
     #endregion
