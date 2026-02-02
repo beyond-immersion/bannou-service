@@ -12,6 +12,14 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+  - target: character
+    sourceType: actor
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /actor/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
 paths:

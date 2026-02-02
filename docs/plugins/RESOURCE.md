@@ -296,10 +296,16 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] SERVICE_HIERARCHY.md updated
 - [x] Unit tests for reference counting logic (25 tests)
 - [x] Bug fixes: ParseIsoDuration removed, CleanupCallbackTimeoutSeconds wired up, serviceName defaults to sourceType
+- [x] Phase 2: Schema extension (`x-references`, `x-resource-lifecycle`) documented in SCHEMA-RULES.md
+- [x] Phase 2: `scripts/generate-references.py` code generator created
+- [x] Phase 2: Generator integrated into `scripts/generate-all-services.sh` pipeline
+- [x] Phase 2: Example `x-references` added to actor-api.yaml, generates `ActorReferenceTracking.cs`
+- [x] Phase 3: sourceId changed to opaque string (supports non-Guid IDs like Actor's `brain-{guid}` format)
+- [x] Phase 3: Actor service wired up - `RegisterCharacterReferenceAsync` in SpawnActorAsync, `UnregisterCharacterReferenceAsync` in StopActorAsync
+- [x] Phase 3: Cleanup endpoint `/actor/cleanup-by-character` added to actor-api.yaml and implemented
+- [x] Phase 3: `RegisterResourceCleanupCallbacksAsync` wired up in ActorServicePlugin.OnStartAsync
 
 ### Pending
-- [ ] Phase 2: Schema extension (`x-references`) and code generator
-- [ ] Phase 3: First consumer integration (Actor service)
 - [ ] Phase 4: Migration of CharacterService to use lib-resource
 - [ ] Wire up `MaxCallbackRetries` (requires `IServiceNavigator` interface enhancement)
 
@@ -309,4 +315,5 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 - [SERVICE_HIERARCHY.md](../reference/SERVICE_HIERARCHY.md) - Layer placement rationale
 - [TENETS.md](../reference/TENETS.md) - Compliance requirements
-- [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) - Why strings instead of enums
+- [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) - `x-references` and `x-resource-lifecycle` schema extensions
+- [Planning Document](~/.claude/plans/typed-crunching-muffin.md) - Full implementation plan with phases

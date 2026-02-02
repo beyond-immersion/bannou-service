@@ -232,7 +232,7 @@ public class ResourceServiceTests
         // Arrange
         var service = CreateService();
         var resourceId = Guid.NewGuid();
-        var sourceId = Guid.NewGuid();
+        var sourceId = Guid.NewGuid().ToString();
 
         var request = new RegisterReferenceRequest
         {
@@ -274,7 +274,7 @@ public class ResourceServiceTests
                 ResourceType = "character",
                 ResourceId = resourceId,
                 SourceType = "actor",
-                SourceId = Guid.NewGuid()
+                SourceId = Guid.NewGuid().ToString()
             };
             await service.RegisterReferenceAsync(request, CancellationToken.None);
         }
@@ -296,7 +296,7 @@ public class ResourceServiceTests
             ResourceType = "character",
             ResourceId = resourceId,
             SourceType = "actor",
-            SourceId = Guid.NewGuid()
+            SourceId = Guid.NewGuid().ToString()
         };
 
         // Act
@@ -317,14 +317,14 @@ public class ResourceServiceTests
         // Arrange
         var service = CreateService();
         var resourceId = Guid.NewGuid();
-        var sourceId = Guid.NewGuid();
+        var sourceId = Guid.NewGuid().ToString();
 
         // Pre-populate with 2 references
         var setKey = $"character:{resourceId}:sources";
         _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
         {
             new() { SourceType = "actor", SourceId = sourceId, RegisteredAt = DateTimeOffset.UtcNow },
-            new() { SourceType = "scene", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow }
+            new() { SourceType = "scene", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
         };
 
         var request = new UnregisterReferenceRequest
@@ -352,7 +352,7 @@ public class ResourceServiceTests
         // Arrange
         var service = CreateService();
         var resourceId = Guid.NewGuid();
-        var sourceId = Guid.NewGuid();
+        var sourceId = Guid.NewGuid().ToString();
 
         // Pre-populate with 1 reference
         var setKey = $"character:{resourceId}:sources";
@@ -393,7 +393,7 @@ public class ResourceServiceTests
         // Arrange
         var service = CreateService();
         var resourceId = Guid.NewGuid();
-        var sourceId = Guid.NewGuid();
+        var sourceId = Guid.NewGuid().ToString();
 
         // Pre-populate with 1 reference
         var setKey = $"character:{resourceId}:sources";
@@ -438,7 +438,7 @@ public class ResourceServiceTests
         var setKey = $"character:{resourceId}:sources";
         _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
         {
-            new() { SourceType = "actor", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow }
+            new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
         };
 
         var request = new CheckReferencesRequest
@@ -547,7 +547,7 @@ public class ResourceServiceTests
         var setKey = $"character:{resourceId}:sources";
         _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
         {
-            new() { SourceType = "actor", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow }
+            new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
         };
 
         var request = new ExecuteCleanupRequest
@@ -824,9 +824,9 @@ public class ResourceServiceTests
         var setKey = $"character:{resourceId}:sources";
         _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
         {
-            new() { SourceType = "actor", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow },
-            new() { SourceType = "scene", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow },
-            new() { SourceType = "encounter", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow }
+            new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow },
+            new() { SourceType = "scene", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow },
+            new() { SourceType = "encounter", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
         };
 
         var request = new ListReferencesRequest
@@ -856,9 +856,9 @@ public class ResourceServiceTests
         var setKey = $"character:{resourceId}:sources";
         _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
         {
-            new() { SourceType = "actor", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow },
-            new() { SourceType = "actor", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow },
-            new() { SourceType = "scene", SourceId = Guid.NewGuid(), RegisteredAt = DateTimeOffset.UtcNow }
+            new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow },
+            new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow },
+            new() { SourceType = "scene", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
         };
 
         var request = new ListReferencesRequest
@@ -893,7 +893,7 @@ public class ResourceServiceTests
             _simulatedSets[setKey].Add(new ResourceReferenceEntry
             {
                 SourceType = "actor",
-                SourceId = Guid.NewGuid(),
+                SourceId = Guid.NewGuid().ToString(),
                 RegisteredAt = DateTimeOffset.UtcNow
             });
         }

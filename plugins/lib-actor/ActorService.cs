@@ -636,6 +636,12 @@ public partial class ActorService : IActorService
             };
             await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
 
+            // Register character reference if actor is linked to a character
+            if (body.CharacterId.HasValue)
+            {
+                await RegisterCharacterReferenceAsync(actorId, body.CharacterId.Value, cancellationToken);
+            }
+
             _logger.LogInformation("Spawned actor {ActorId} from template {TemplateId}",
                 actorId, body.TemplateId);
 
@@ -895,6 +901,12 @@ public partial class ActorService : IActorService
                     return (StatusCodes.NotFound, null);
                 }
 
+                // Unregister character reference before stopping if actor is linked to a character
+                if (runner.CharacterId.HasValue)
+                {
+                    await UnregisterCharacterReferenceAsync(body.ActorId, runner.CharacterId.Value, cancellationToken);
+                }
+
                 using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
                 await runner.StopAsync(body.Graceful, stopCts.Token);
@@ -936,6 +948,12 @@ public partial class ActorService : IActorService
                     return (StatusCodes.NotFound, null);
                 }
 
+                // Unregister character reference before stopping if actor is linked to a character
+                if (assignment.CharacterId.HasValue)
+                {
+                    await UnregisterCharacterReferenceAsync(body.ActorId, assignment.CharacterId.Value, cancellationToken);
+                }
+
                 // Send stop command to pool node
                 var stopCommand = new StopActorCommand
                 {
@@ -963,6 +981,99 @@ public partial class ActorService : IActorService
             await _messageBus.TryPublishErrorAsync(
                 "actor",
                 "StopActor",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Cleans up all actors referencing a deleted character.
+    /// Called by lib-resource cleanup coordination during cascading resource cleanup.
+    /// </summary>
+    public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
+        CleanupByCharacterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Cleaning up actors for deleted character {CharacterId}", body.CharacterId);
+
+        var cleanedUpActorIds = new List<string>();
+
+        try
+        {
+            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+            {
+                // Bannou mode: find and stop all local actors with this character
+                var actorsToStop = _actorRegistry.GetAllRunners()
+                    .Where(r => r.CharacterId == body.CharacterId)
+                    .ToList();
+
+                foreach (var runner in actorsToStop)
+                {
+                    try
+                    {
+                        using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                        stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+                        await runner.StopAsync(graceful: true, stopCts.Token);
+                        _actorRegistry.TryRemove(runner.ActorId, out _);
+                        await runner.DisposeAsync();
+                        cleanedUpActorIds.Add(runner.ActorId);
+
+                        _logger.LogInformation("Cleaned up actor {ActorId} for character {CharacterId}",
+                            runner.ActorId, body.CharacterId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to cleanup actor {ActorId}", runner.ActorId);
+                    }
+                }
+            }
+            else
+            {
+                // Pool mode: find all assignments for this character and send stop commands
+                var assignments = await _poolManager.GetActorAssignmentsByCharacterAsync(body.CharacterId, cancellationToken);
+
+                foreach (var assignment in assignments)
+                {
+                    try
+                    {
+                        var stopCommand = new StopActorCommand
+                        {
+                            ActorId = assignment.ActorId,
+                            Graceful = true
+                        };
+                        await _messageBus.TryPublishAsync($"actor.node.{assignment.NodeAppId}.stop", stopCommand, cancellationToken: cancellationToken);
+                        await _poolManager.RemoveActorAssignmentAsync(assignment.ActorId, cancellationToken);
+                        cleanedUpActorIds.Add(assignment.ActorId);
+
+                        _logger.LogInformation("Sent cleanup stop for actor {ActorId} to node {NodeId}",
+                            assignment.ActorId, assignment.NodeId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to send cleanup stop for actor {ActorId}", assignment.ActorId);
+                    }
+                }
+            }
+
+            _logger.LogInformation("Cleaned up {Count} actors for character {CharacterId}",
+                cleanedUpActorIds.Count, body.CharacterId);
+
+            return (StatusCodes.OK, new CleanupByCharacterResponse
+            {
+                ActorsCleanedUp = cleanedUpActorIds.Count,
+                ActorIds = cleanedUpActorIds,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during character cleanup for {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "CleanupByCharacter",
                 "unexpected_exception",
                 ex.Message,
                 stack: ex.StackTrace,

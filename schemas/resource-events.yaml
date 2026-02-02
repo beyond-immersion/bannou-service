@@ -67,8 +67,7 @@ components:
           description: Type of entity holding the reference (opaque identifier, e.g., "actor")
         sourceId:
           type: string
-          format: uuid
-          description: ID of the entity holding the reference
+          description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
         timestamp:
           type: string
           format: date-time
@@ -100,8 +99,7 @@ components:
           description: Type of entity releasing the reference (opaque identifier)
         sourceId:
           type: string
-          format: uuid
-          description: ID of the entity releasing the reference
+          description: ID of the entity releasing the reference (opaque string, supports non-Guid IDs)
         timestamp:
           type: string
           format: date-time

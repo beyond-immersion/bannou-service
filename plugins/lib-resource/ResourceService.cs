@@ -606,9 +606,9 @@ internal class ResourceReferenceEntry
     public string SourceType { get; set; } = string.Empty;
 
     /// <summary>
-    /// ID of the entity holding the reference.
+    /// ID of the entity holding the reference (opaque string, supports non-Guid IDs).
     /// </summary>
-    public Guid SourceId { get; set; }
+    public string SourceId { get; set; } = string.Empty;
 
     /// <summary>
     /// When this reference was registered.

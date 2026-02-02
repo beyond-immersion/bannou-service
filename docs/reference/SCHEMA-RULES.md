@@ -169,6 +169,102 @@ x-service-configuration:
 
 See [Configuration Schema Rules](#configuration-schema-rules) for detailed requirements.
 
+### x-references (Resource Reference Tracking)
+
+Defined in consumer service API schemas (`*-api.yaml`), declares references to foundational resources for lifecycle management via lib-resource. This enables automatic reference tracking without violating the service hierarchy.
+
+**Purpose**: Higher-layer services (L3/L4) declare their references to foundational resources (L2) in their schemas. The code generator produces helper methods for publishing reference events and registering cleanup callbacks.
+
+```yaml
+# actor-api.yaml - Consumer service (L4) declares references
+info:
+  title: Actor Service API
+  version: 1.0.0
+  x-references:
+    - target: character                         # Resource type being referenced (L2 service entity)
+      sourceType: actor                         # This service's entity type (opaque string identifier)
+      field: characterId                        # Field holding the reference (for documentation)
+      onDelete: cascade                         # cascade | restrict | detach (documentation/intent)
+      cleanup:
+        endpoint: /actor/cleanup-by-character   # Cleanup callback endpoint
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'  # JSON template with {{resourceId}}
+```
+
+**Field definitions**:
+- `target`: Type of resource being referenced (opaque string, e.g., "character", "realm")
+- `sourceType`: This service's entity type (opaque string, e.g., "actor", "scene")
+- `field`: Field name holding the reference (informational, for documentation)
+- `onDelete`: Intended behavior when resource is deleted (documentation only, enforced by cleanup implementation)
+  - `cascade`: Delete dependent entities when resource is deleted
+  - `restrict`: Block resource deletion if references exist (not yet supported)
+  - `detach`: Set reference to null when resource is deleted (not yet supported)
+- `cleanup`: Cleanup callback configuration
+  - `endpoint`: Service endpoint to call during cleanup (e.g., `/actor/cleanup-by-character`)
+  - `payloadTemplate`: JSON template with `{{resourceId}}` placeholder
+
+**Generated output** (`lib-{service}/Generated/{Service}ReferenceTracking.Generated.cs`):
+- Helper methods: `Register{Target}ReferenceAsync()`, `Unregister{Target}ReferenceAsync()`
+- Cleanup callback registration via `IStartupTask`
+
+**Example usage in service code**:
+```csharp
+// After creating an actor that references a character
+await RegisterCharacterReferenceAsync(actor.ActorId, actor.CharacterId, cancellationToken);
+
+// Before deleting an actor
+await UnregisterCharacterReferenceAsync(actor.ActorId, actor.CharacterId, cancellationToken);
+```
+
+### x-resource-lifecycle (Resource Cleanup Configuration)
+
+Defined in foundational service API schemas (`*-api.yaml`), declares grace period and cleanup policy for resources that can be tracked by lib-resource.
+
+**Purpose**: Foundational services (L2) declare the cleanup behavior for their resources. This configuration is used by lib-resource when determining cleanup eligibility.
+
+```yaml
+# character-api.yaml - Foundational service (L2) declares lifecycle
+info:
+  title: Character Service API
+  version: 1.0.0
+  x-resource-lifecycle:
+    resourceType: character                     # Resource type identifier (must match x-references target)
+    gracePeriodSeconds: 604800                  # Grace period in seconds (7 days) before cleanup eligible
+    cleanupPolicy: BEST_EFFORT                  # BEST_EFFORT | ALL_REQUIRED
+```
+
+**Field definitions**:
+- `resourceType`: Resource type identifier (must match `target` in consumer x-references)
+- `gracePeriodSeconds`: Time in seconds after refcount reaches zero before cleanup is allowed (default: 604800 = 7 days)
+- `cleanupPolicy`: How to handle cleanup callback failures
+  - `BEST_EFFORT`: Proceed with deletion even if some callbacks fail
+  - `ALL_REQUIRED`: Abort deletion if any callback fails
+
+**Note**: This extension is documentation/configuration only - it does not generate code. The values are used when the foundational service calls `/resource/cleanup/execute` with `gracePeriodSeconds` and `cleanupPolicy` parameters.
+
+### Service Hierarchy Compliance
+
+The x-references pattern ensures compliance with the service hierarchy:
+
+1. **Consumer services (L3/L4)** declare `x-references` - they "know about" foundational resources
+2. **Foundational services (L2)** declare `x-resource-lifecycle` - they don't know about consumers
+3. **lib-resource (L1)** uses opaque string identifiers - no coupling to higher layers
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│ L4: Game Features (actor, scene, etc.)                        │
+│   → x-references: target: "character" (declares dependency)   │
+│   → Publishes: resource.reference.registered/unregistered     │
+├───────────────────────────────────────────────────────────────┤
+│ L2: Game Foundation (character, realm, etc.)                  │
+│   → x-resource-lifecycle: gracePeriodSeconds, cleanupPolicy   │
+│   → Calls: /resource/check, /resource/cleanup/execute         │
+├───────────────────────────────────────────────────────────────┤
+│ L1: App Foundation (lib-resource)                             │
+│   → Maintains refcounts, executes cleanup callbacks           │
+│   → Uses opaque strings for resourceType/sourceType           │
+└───────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## NRT (Nullable Reference Types) Rules
@@ -1102,6 +1198,18 @@ Before submitting schema changes, verify:
 - [ ] Event properties matching API response types use the **same type** via `$ref`
 - [ ] Shared types defined in `*-api.yaml`, not duplicated across schemas
 - [ ] All `$ref` paths are sibling-relative (no `../` prefix in source schemas)
+
+### Resource References (x-references)
+- [ ] Consumer services (L3/L4) with foundational dependencies declare `x-references` in their API schema
+- [ ] Each reference has `target`, `sourceType`, `field`, and `cleanup` configuration
+- [ ] `cleanup.endpoint` matches an actual endpoint in the service
+- [ ] `cleanup.payloadTemplate` is valid JSON with `{{resourceId}}` placeholder
+- [ ] `target` value matches the `resourceType` in the foundational service's `x-resource-lifecycle`
+
+### Resource Lifecycle (x-resource-lifecycle)
+- [ ] Foundational services (L2) with deletable resources declare `x-resource-lifecycle`
+- [ ] `gracePeriodSeconds` is a positive integer (use 0 only for immediate cleanup)
+- [ ] `cleanupPolicy` is either `BEST_EFFORT` or `ALL_REQUIRED`
 
 ### Final Steps
 - [ ] Run `scripts/generate-all-services.sh` and verify build passes

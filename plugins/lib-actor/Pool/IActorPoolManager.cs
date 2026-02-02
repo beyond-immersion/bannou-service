@@ -133,6 +133,15 @@ public interface IActorPoolManager
     Task<IReadOnlyList<ActorAssignment>> GetAssignmentsByTemplateAsync(string templateId, CancellationToken ct = default);
 
     /// <summary>
+    /// Lists all actor assignments for a specific character.
+    /// Used for resource cleanup when a character is deleted.
+    /// </summary>
+    /// <param name="characterId">Character ID to list assignments for.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of actor assignments referencing this character.</returns>
+    Task<IReadOnlyList<ActorAssignment>> GetActorAssignmentsByCharacterAsync(Guid characterId, CancellationToken ct = default);
+
+    /// <summary>
     /// Updates the status of an actor assignment.
     /// Called when ActorStatusChangedEvent is received.
     /// </summary>

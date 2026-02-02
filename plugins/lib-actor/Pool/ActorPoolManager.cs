@@ -425,6 +425,33 @@ public sealed class ActorPoolManager : IActorPoolManager
         return assignments;
     }
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<ActorAssignment>> GetActorAssignmentsByCharacterAsync(Guid characterId, CancellationToken ct = default)
+    {
+        // Get all actor IDs from the index
+        var index = await GetActorIndexAsync(ct);
+        var allActorIds = index.ActorsByNode.Values.SelectMany(ids => ids).ToList();
+
+        if (allActorIds.Count == 0)
+        {
+            return Array.Empty<ActorAssignment>();
+        }
+
+        var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
+        var assignments = new List<ActorAssignment>();
+
+        foreach (var actorId in allActorIds)
+        {
+            var assignment = await store.GetAsync(actorId, ct);
+            if (assignment != null && assignment.CharacterId == characterId)
+            {
+                assignments.Add(assignment);
+            }
+        }
+
+        return assignments;
+    }
+
     #endregion
 
     #region Capacity & Monitoring

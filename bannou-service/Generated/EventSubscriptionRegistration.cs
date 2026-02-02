@@ -54,7 +54,6 @@ public static class EventSubscriptionRegistration
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<AccountUpdatedEvent>("account.updated");
-        EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
 
         // From character-encounter-events.yaml
         EventSubscriptionRegistry.Register<CharacterDeletedEvent>("character.deleted");

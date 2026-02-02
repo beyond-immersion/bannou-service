@@ -36,7 +36,8 @@ paths:
       description: |
         Records that sourceType:sourceId references resourceType:resourceId.
         Typically called via event handlers, not directly.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -61,9 +62,9 @@ paths:
         : \"ID of the resource being referenced\"\n                },\n                \"sourceType\": {\n               \
         \     \"type\": \"string\",\n                    \"description\": \"Type of entity holding the reference (opaque identifier,
         e.g., \\\"actor\\\", \\\"scene\\\")\"\n                },\n                \"sourceId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity
-        holding the reference\"\n                },\n                \"idempotencyKey\": {\n                    \"type\":
-        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional key for idempotent
+        type\": \"string\",\n                    \"description\": \"ID of the entity holding the reference (opaque string,
+        supports non-Guid IDs)\"\n                },\n                \"idempotencyKey\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional key for idempotent
         registration\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterReferenceResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterReferenceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -90,7 +91,8 @@ paths:
       description: |
         Records that sourceType:sourceId no longer references resourceType:resourceId.
         Typically called via event handlers, not directly.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -115,8 +117,8 @@ paths:
         the resource being dereferenced\"\n                },\n                \"sourceType\": {\n                    \"type\"\
         : \"string\",\n                    \"description\": \"Type of entity releasing the reference (opaque identifier)\"\
         \n                },\n                \"sourceId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"description\": \"ID of the entity releasing the reference\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        \     \"description\": \"ID of the entity releasing the reference (opaque string, supports non-Guid IDs)\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnregisterReferenceResponse\"\
         ,\n    \"$defs\": {\n        \"UnregisterReferenceResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Response after unregistering a reference\",\n     \
@@ -145,7 +147,8 @@ paths:
       description: |
         Returns the current reference count for a resource and whether it is
         eligible for cleanup (refcount=0 and grace period passed).
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -192,10 +195,10 @@ paths:
         ,\n                \"registeredAt\"\n            ],\n            \"properties\": {\n                \"sourceType\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of entity holding the
         reference (opaque identifier)\"\n                },\n                \"sourceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity
-        holding the reference\"\n                },\n                \"registeredAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this reference
-        was registered\"\n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"description\": \"ID of the entity holding the reference (opaque string, supports
+        non-Guid IDs)\"\n                },\n                \"registeredAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this reference was
+        registered\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check reference count and cleanup eligibility\",\n    \"description\":
         \"Returns the current reference count for a resource and whether it is\\neligible for cleanup (refcount=0 and grace
         period passed).\\n\",\n    \"tags\": [\n        \"Reference Management\"\n    ],\n    \"deprecated\": false,\n   \
@@ -209,7 +212,8 @@ paths:
       description: |
         Returns all entities currently referencing a resource.
         Useful for debugging and understanding reference chains.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -253,9 +257,9 @@ paths:
         \           \"registeredAt\"\n            ],\n            \"properties\": {\n                \"sourceType\": {\n \
         \                   \"type\": \"string\",\n                    \"description\": \"Type of entity holding the reference
         (opaque identifier)\"\n                },\n                \"sourceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity holding the
-        reference\"\n                },\n                \"registeredAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"When this reference was registered\"\
+        ,\n                    \"description\": \"ID of the entity holding the reference (opaque string, supports non-Guid
+        IDs)\"\n                },\n                \"registeredAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"When this reference was registered\"\
         \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all references to a resource\",\n    \"description\": \"Returns all
         entities currently referencing a resource.\\nUseful for debugging and understanding reference chains.\\n\",\n    \"\
@@ -271,7 +275,8 @@ paths:
         Services call this at startup to register their cleanup endpoints.
         When a resource is deleted, these callbacks are invoked to clean up
         dependent entities.
-      x-permissions: []
+      x-permissions:
+      - role: admin
       requestBody:
         required: true
         content:
@@ -288,19 +293,20 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DefineCleanupRequest\"\
         ,\n    \"$defs\": {\n        \"DefineCleanupRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to define a cleanup callback for a resource type\",\n           \
-        \ \"required\": [\n                \"resourceType\",\n                \"sourceType\",\n                \"serviceName\"\
-        ,\n                \"callbackEndpoint\",\n                \"payloadTemplate\"\n            ],\n            \"properties\"\
-        : {\n                \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Type of resource this cleanup handles (opaque identifier)\"\n                },\n                \"sourceType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of entity that will be
-        cleaned up (opaque identifier)\"\n                },\n                \"serviceName\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Target service name for callback invocation via lib-mesh\"\n\
-        \                },\n                \"callbackEndpoint\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Endpoint path (e.g., /actor/cleanup-by-character)\"\n                },\n        \
-        \        \"payloadTemplate\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        JSON template with {{resourceId}} placeholder\"\n                },\n                \"description\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Human-readable description of cleanup action\"\n                }\n            }\n        }\n    }\n}"
+        \ \"required\": [\n                \"resourceType\",\n                \"sourceType\",\n                \"callbackEndpoint\"\
+        ,\n                \"payloadTemplate\"\n            ],\n            \"properties\": {\n                \"resourceType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of resource this cleanup
+        handles (opaque identifier)\"\n                },\n                \"sourceType\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Type of entity that will be cleaned up (opaque identifier)\"\
+        \n                },\n                \"serviceName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Target service name for callback invocation via
+        lib-mesh (defaults to sourceType if not specified)\"\n                },\n                \"callbackEndpoint\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Endpoint path (e.g., /actor/cleanup-by-character)\"\
+        \n                },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"JSON template with {{resourceId}} placeholder\"\n                },\n            \
+        \    \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Human-readable description of cleanup action\"\n                }\n          \
+        \  }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DefineCleanupResponse\"\
         ,\n    \"$defs\": {\n        \"DefineCleanupResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after defining a cleanup callback\",\n            \"required\":
@@ -327,7 +333,8 @@ paths:
         Validates refcount=0, grace period passed, acquires distributed lock,
         re-validates under lock, then executes all cleanup callbacks.
         Returns Conflict if refcount changed during execution.
-      x-permissions: []
+      x-permissions:
+      - role: developer
       requestBody:
         required: true
         content:
@@ -348,15 +355,15 @@ paths:
         \                \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Type of resource to clean up (opaque identifier)\"\n                },\n                \"resourceId\": {\n  \
         \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the resource to clean up\"\n                },\n                \"gracePeriodOverride\": {\n           \
-        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Override grace period as ISO 8601 duration (e.g., \\\"PT0S\\\" to skip)\"\n                },\n                \"\
-        cleanupPolicy\": {\n                    \"$ref\": \"#/$defs/CleanupPolicy\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Override cleanup policy (uses resource default if not specified)\"\n     \
-        \           }\n            }\n        },\n        \"CleanupPolicy\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n         \
-        \   \"description\": \"Policy for cleanup callback execution.\\nBEST_EFFORT: Proceed with deletion even if some callbacks
-        fail\\nALL_REQUIRED: Abort deletion if any callback fails\\n\"\n        }\n    }\n}"
+        : \"ID of the resource to clean up\"\n                },\n                \"gracePeriodSeconds\": {\n            \
+        \        \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Override grace period in seconds (uses default if not specified, 0 to skip)\"\n                },\n              \
+        \  \"cleanupPolicy\": {\n                    \"$ref\": \"#/$defs/CleanupPolicy\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Override cleanup policy (uses resource default if not specified)\"\
+        \n                }\n            }\n        },\n        \"CleanupPolicy\": {\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n   \
+        \         \"description\": \"Policy for cleanup callback execution.\\nBEST_EFFORT: Proceed with deletion even if some
+        callbacks fail\\nALL_REQUIRED: Abort deletion if any callback fails\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteCleanupResponse\"\
         ,\n    \"$defs\": {\n        \"ExecuteCleanupResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after attempting to execute cleanup\",\n            \"required\"\
@@ -437,8 +444,7 @@ components:
           description: Type of entity holding the reference (opaque identifier, e.g., "actor", "scene")
         sourceId:
           type: string
-          format: uuid
-          description: ID of the entity holding the reference
+          description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
         idempotencyKey:
           type: string
           nullable: true
@@ -488,8 +494,7 @@ components:
           description: Type of entity releasing the reference (opaque identifier)
         sourceId:
           type: string
-          format: uuid
-          description: ID of the entity releasing the reference
+          description: ID of the entity releasing the reference (opaque string, supports non-Guid IDs)
     UnregisterReferenceResponse:
       type: object
       additionalProperties: false
@@ -586,8 +591,7 @@ components:
           description: Type of entity holding the reference (opaque identifier)
         sourceId:
           type: string
-          format: uuid
-          description: ID of the entity holding the reference
+          description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
         registeredAt:
           type: string
           format: date-time
@@ -647,7 +651,6 @@ components:
       required:
       - resourceType
       - sourceType
-      - serviceName
       - callbackEndpoint
       - payloadTemplate
       properties:
@@ -659,7 +662,9 @@ components:
           description: Type of entity that will be cleaned up (opaque identifier)
         serviceName:
           type: string
-          description: Target service name for callback invocation via lib-mesh
+          nullable: true
+          description: Target service name for callback invocation via lib-mesh (defaults to sourceType if not 
+            specified)
         callbackEndpoint:
           type: string
           description: Endpoint path (e.g., /actor/cleanup-by-character)
@@ -706,10 +711,10 @@ components:
           type: string
           format: uuid
           description: ID of the resource to clean up
-        gracePeriodOverride:
-          type: string
+        gracePeriodSeconds:
+          type: integer
           nullable: true
-          description: Override grace period as ISO 8601 duration (e.g., "PT0S" to skip)
+          description: Override grace period in seconds (uses default if not specified, 0 to skip)
         cleanupPolicy:
           $ref: '#/components/schemas/CleanupPolicy'
           nullable: true

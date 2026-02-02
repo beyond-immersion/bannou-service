@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Actor;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -615,6 +630,50 @@ public partial class StopActorResponse
 }
 
 /// <summary>
+/// Request to cleanup actors referencing a deleted character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterRequest
+{
+
+    /// <summary>
+    /// ID of the character that was deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from character cleanup operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterResponse
+{
+
+    /// <summary>
+    /// Number of actors that were stopped and cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorsCleanedUp")]
+    public int ActorsCleanedUp { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of actors that were cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorIds")]
+    public System.Collections.Generic.ICollection<string> ActorIds { get; set; } = default!;
+
+    /// <summary>
+    /// Whether cleanup completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to list actor instances with optional filters
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -834,9 +893,9 @@ public partial class SpatialContext
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -885,9 +944,9 @@ public partial class NearbyObject
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -931,9 +990,9 @@ public partial class HazardInfo
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1214,9 +1273,9 @@ public partial class ActorOption
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1274,9 +1333,9 @@ public partial class OptionsQueryContext
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1469,9 +1528,9 @@ public partial class ChoreographyAction
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 

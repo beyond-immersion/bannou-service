@@ -48,8 +48,7 @@ public partial class ResourceController
                 },
                 "sourceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the entity holding the reference"
+                    "description": "ID of the entity holding the reference (opaque string, supports non-Guid IDs)"
                 },
                 "idempotencyKey": {
                     "type": "string",
@@ -188,8 +187,7 @@ public partial class ResourceController
                 },
                 "sourceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the entity releasing the reference"
+                    "description": "ID of the entity releasing the reference (opaque string, supports non-Guid IDs)"
                 }
             }
         }
@@ -398,8 +396,7 @@ public partial class ResourceController
                 },
                 "sourceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the entity holding the reference"
+                    "description": "ID of the entity holding the reference (opaque string, supports non-Guid IDs)"
                 },
                 "registeredAt": {
                     "type": "string",
@@ -561,8 +558,7 @@ public partial class ResourceController
                 },
                 "sourceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the entity holding the reference"
+                    "description": "ID of the entity holding the reference (opaque string, supports non-Guid IDs)"
                 },
                 "registeredAt": {
                     "type": "string",
@@ -643,7 +639,6 @@ public partial class ResourceController
             "required": [
                 "resourceType",
                 "sourceType",
-                "serviceName",
                 "callbackEndpoint",
                 "payloadTemplate"
             ],
@@ -658,7 +653,8 @@ public partial class ResourceController
                 },
                 "serviceName": {
                     "type": "string",
-                    "description": "Target service name for callback invocation via lib-mesh"
+                    "nullable": true,
+                    "description": "Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)"
                 },
                 "callbackEndpoint": {
                     "type": "string",
@@ -795,10 +791,10 @@ public partial class ResourceController
                     "format": "uuid",
                     "description": "ID of the resource to clean up"
                 },
-                "gracePeriodOverride": {
-                    "type": "string",
+                "gracePeriodSeconds": {
+                    "type": "integer",
                     "nullable": true,
-                    "description": "Override grace period as ISO 8601 duration (e.g., \"PT0S\" to skip)"
+                    "description": "Override grace period in seconds (uses default if not specified, 0 to skip)"
                 },
                 "cleanupPolicy": {
                     "$ref": "#/$defs/CleanupPolicy",

@@ -336,6 +336,16 @@ else
 fi
 echo ""
 
+# Generate resource reference tracking code (for x-references declarations)
+echo -e "${BLUE}🔗 Generating resource reference tracking code...${NC}"
+if python3 "$SCRIPT_DIR/generate-references.py"; then
+    echo -e "${GREEN}✅ Resource reference tracking generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate resource reference tracking${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate client event registry (for typed event subscriptions)
 echo -e "${BLUE}📡 Generating client event registry...${NC}"
 if python3 "$SCRIPT_DIR/generate-client-event-registry.py"; then

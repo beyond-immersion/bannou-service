@@ -12,6 +12,15 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+    - target: character
+      sourceType: actor
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /actor/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
 
@@ -184,6 +193,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StopActorResponse'
+
+  /actor/cleanup-by-character:
+    post:
+      operationId: CleanupByCharacter
+      summary: Cleanup actors referencing a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Stops and removes all actors that reference the specified characterId.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
 
   /actor/list:
     post:
@@ -732,6 +766,39 @@ components:
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
+
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup actors referencing a deleted character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      additionalProperties: false
+      description: Response from character cleanup operation
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actorsCleanedUp
+      - success
+      properties:
+        actorsCleanedUp:
+          type: integer
+          description: Number of actors that were stopped and cleaned up
+        actorIds:
+          type: array
+          items:
+            type: string
+          description: IDs of actors that were cleaned up
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
 
     ListActorsRequest:
       type: object

@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.PoolNode;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -137,6 +138,33 @@ public class ActorServicePlugin : BaseBannouPlugin
             {
                 Logger?.LogDebug("Calling IBannouService.OnStartAsync for Actor service");
                 await bannouService.OnStartAsync(CancellationToken.None);
+            }
+
+            // Register cleanup callbacks with lib-resource for character reference tracking
+            // This enables cascading cleanup when characters are deleted
+            try
+            {
+                var resourceClient = scope.ServiceProvider.GetService<IResourceClient>();
+                if (resourceClient != null)
+                {
+                    var success = await ActorService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+                    if (success)
+                    {
+                        Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
+                    }
+                    else
+                    {
+                        Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
+                    }
+                }
+                else
+                {
+                    Logger?.LogDebug("IResourceClient not available - cleanup callbacks not registered (lib-resource may not be enabled)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogWarning(ex, "Failed to register cleanup callbacks with lib-resource");
             }
 
             Logger?.LogInformation("Actor service started successfully");
