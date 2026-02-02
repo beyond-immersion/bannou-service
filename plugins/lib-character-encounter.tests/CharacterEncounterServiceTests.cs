@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -1687,6 +1688,141 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     {
         // Assert
         Assert.Equal("character-encounter", CharacterEncounterPermissionRegistration.ServiceId);
+    }
+
+    #endregion
+
+    #region Resource Reference Tracking Tests
+
+    [Fact]
+    public async Task RecordEncounterAsync_PublishesReferenceRegisteredEventForEachParticipant()
+    {
+        // Arrange
+        var service = CreateService();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+        var charC = Guid.NewGuid();
+
+        SetupTypeExists("COMBAT", CreateTestEncounterType("COMBAT", "Combat", isBuiltIn: true));
+        SetupEmptyIndexes();
+        SetupDefaultSaves();
+
+        var capturedReferenceEvents = new List<ResourceReferenceRegisteredEvent>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "resource.reference.registered"),
+                It.IsAny<ResourceReferenceRegisteredEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            {
+                capturedReferenceEvents.Add(evt);
+            })
+            .ReturnsAsync(true);
+
+        var request = new RecordEncounterRequest
+        {
+            EncounterTypeCode = "COMBAT",
+            RealmId = Guid.NewGuid(),
+            ParticipantIds = new List<Guid> { charA, charB, charC },
+            Outcome = EncounterOutcome.NEUTRAL
+        };
+
+        // Act
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Should have registered a reference for each participant (3 participants)
+        Assert.Equal(3, capturedReferenceEvents.Count);
+
+        // All events should have the same encounter ID as source
+        var encounterId = response.Encounter.EncounterId.ToString();
+        Assert.All(capturedReferenceEvents, evt =>
+        {
+            Assert.Equal("character", evt.ResourceType);
+            Assert.Equal("character-encounter", evt.SourceType);
+            Assert.Equal(encounterId, evt.SourceId);
+        });
+
+        // Each participant should have a reference registered
+        var referencedCharacterIds = capturedReferenceEvents.Select(e => e.ResourceId).ToHashSet();
+        Assert.Contains(charA, referencedCharacterIds);
+        Assert.Contains(charB, referencedCharacterIds);
+        Assert.Contains(charC, referencedCharacterIds);
+    }
+
+    [Fact]
+    public async Task DeleteEncounterAsync_PublishesReferenceUnregisteredEventForEachParticipant()
+    {
+        // Arrange
+        var service = CreateService();
+        var encounterId = Guid.NewGuid();
+        var charA = Guid.NewGuid();
+        var charB = Guid.NewGuid();
+        var perspectiveIdA = Guid.NewGuid();
+        var perspectiveIdB = Guid.NewGuid();
+
+        var encounter = CreateTestEncounter(encounterId, new List<Guid> { charA, charB });
+        var perspectiveA = CreateTestPerspective(perspectiveIdA, encounterId, charA);
+        var perspectiveB = CreateTestPerspective(perspectiveIdB, encounterId, charB);
+
+        _mockEncounterStore.Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>())).ReturnsAsync(encounter);
+        _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{charA}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterIndexData { CharacterId = charA, PerspectiveIds = new List<Guid> { perspectiveIdA } });
+        _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{charB}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterIndexData { CharacterId = charB, PerspectiveIds = new List<Guid> { perspectiveIdB } });
+        _mockCharIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
+
+        _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveIdA}", It.IsAny<CancellationToken>())).ReturnsAsync(perspectiveA);
+        _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveIdB}", It.IsAny<CancellationToken>())).ReturnsAsync(perspectiveB);
+        _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        _mockPairIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("pair-idx-")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PairIndexData { EncounterIds = new List<Guid> { encounterId } });
+        _mockPairIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PairIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
+
+        _mockGlobalIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GlobalCharacterIndexData { CharacterIds = new List<Guid> { charA, charB } });
+        _mockGlobalIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GlobalCharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
+
+        var capturedUnregisterEvents = new List<ResourceReferenceUnregisteredEvent>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "resource.reference.unregistered"),
+                It.IsAny<ResourceReferenceUnregisteredEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceReferenceUnregisteredEvent, CancellationToken>((_, evt, _) =>
+            {
+                capturedUnregisterEvents.Add(evt);
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, _) = await service.DeleteEncounterAsync(
+            new DeleteEncounterRequest { EncounterId = encounterId }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Should have unregistered a reference for each participant (2 participants)
+        Assert.Equal(2, capturedUnregisterEvents.Count);
+
+        // All events should have the encounter ID as source
+        Assert.All(capturedUnregisterEvents, evt =>
+        {
+            Assert.Equal("character", evt.ResourceType);
+            Assert.Equal("character-encounter", evt.SourceType);
+            Assert.Equal(encounterId.ToString(), evt.SourceId);
+        });
+
+        // Each participant should have their reference unregistered
+        var unregisteredCharacterIds = capturedUnregisterEvents.Select(e => e.ResourceId).ToHashSet();
+        Assert.Contains(charA, unregisteredCharacterIds);
+        Assert.Contains(charB, unregisteredCharacterIds);
     }
 
     #endregion
