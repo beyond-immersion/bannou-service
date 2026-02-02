@@ -431,7 +431,7 @@ public partial class ResourceService : IResourceService
         };
 
         var callbackResults = new List<CleanupCallbackResult>();
-        var cleanupPolicy = body.CleanupPolicy ?? ConvertToCleanupPolicy(_configuration.DefaultCleanupPolicy);
+        var cleanupPolicy = body.CleanupPolicy ?? _configuration.DefaultCleanupPolicy;
 
         if (callbacks.Count > 0)
         {
@@ -475,7 +475,7 @@ public partial class ResourceService : IResourceService
                         body.ResourceType, body.ResourceId);
 
                     // Publish failure event for monitoring
-                    await _messageBus.PublishAsync(
+                    await _messageBus.TryPublishAsync(
                         "resource.cleanup.callback-failed",
                         new ResourceCleanupCallbackFailedEvent
                         {
@@ -488,7 +488,7 @@ public partial class ResourceService : IResourceService
                             ErrorMessage = callbackResult.ErrorMessage,
                             Timestamp = DateTimeOffset.UtcNow
                         },
-                        cancellationToken: cancellationToken);
+                        cancellationToken);
                 }
             }
         }
@@ -635,21 +635,6 @@ public partial class ResourceService : IResourceService
         {
             return 0; // Default to no grace period on parse error
         }
-    }
-
-    /// <summary>
-    /// Parses cleanup policy from configuration string.
-    /// </summary>
-    private static CleanupPolicy ParseCleanupPolicy(string? policy)
-    {
-        if (string.IsNullOrEmpty(policy)) return CleanupPolicy.BEST_EFFORT;
-
-        return policy.ToUpperInvariant() switch
-        {
-            "ALL_REQUIRED" => CleanupPolicy.ALL_REQUIRED,
-            "BEST_EFFORT" => CleanupPolicy.BEST_EFFORT,
-            _ => CleanupPolicy.BEST_EFFORT
-        };
     }
 }
 

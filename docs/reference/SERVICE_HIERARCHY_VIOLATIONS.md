@@ -77,31 +77,21 @@ This document tracks known violations of the service hierarchy, their severity u
 
 ---
 
-### 3. Auth → Subscription (CRITICAL - DELETE)
+### 3. Auth → Subscription (RESOLVED)
 
 **Service**: lib-auth (L1 App Foundation)
-**Violating Dependencies**:
+**Former Violating Dependencies**:
 - `ISubscriptionClient` (L2)
 
-**Location**:
-- `AuthService.cs` constructor - `ISubscriptionClient` injection
-- `AuthService.cs` `PropagateSubscriptionChangesAsync` method
-- `AuthServiceEvents.cs` `HandleSubscriptionUpdatedAsync` method
-- `Services/TokenService.cs` constructor - `ISubscriptionClient` injection
-- `schemas/auth-events.yaml` subscription to `subscription.updated`
+**Resolution**: Deleted all subscription-related code from Auth:
+- Removed `ISubscriptionClient` from both `AuthService.cs` and `TokenService.cs`
+- Deleted `PropagateSubscriptionChangesAsync` method
+- Deleted `HandleSubscriptionUpdatedAsync` event handler
+- Removed `subscription.updated` from `auth-events.yaml`
 
-**Violation Type**: L1 → L2 (App Foundation depending on Game Foundation) - **ARCHITECTURAL ERROR**
+**Rationale**: Auth (L1) is app-level infrastructure that should work for ANY deployment. Subscription (L2) is game-specific. Services that need subscription state (like GameSession) already handle their own `subscription.updated` event subscriptions independently.
 
-**Why This Is Especially Wrong**:
-Auth (L1) is app-level infrastructure that should work for ANY deployment, including non-game deployments. Subscription (L2) is game-specific. Auth has NO business with subscriptions.
-
-**Suggested Fix**: **DELETE** all subscription-related code from Auth:
-- Remove `ISubscriptionClient` from both `AuthService.cs` and `TokenService.cs`
-- Delete `PropagateSubscriptionChangesAsync` method
-- Delete `HandleSubscriptionUpdatedAsync` event handler
-- Remove `subscription.updated` from `auth-events.yaml`
-
-**Status**: **P0 - Needs immediate deletion**
+**Status**: ✅ RESOLVED by deletion
 
 ---
 
@@ -169,19 +159,15 @@ Auth (L1) is app-level infrastructure that should work for ANY deployment, inclu
 
 ## Confirmed Event Subscription Violations
 
-### 7. Auth subscribes to subscription.updated (CRITICAL)
+### 7. Auth subscribes to subscription.updated (RESOLVED)
 
-**Subscriber**: lib-auth (L1 App Foundation)
+**Former Subscriber**: lib-auth (L1 App Foundation)
 **Topic**: `subscription.updated`
 **Publisher**: lib-subscription (L2 Game Foundation)
 
-**Location**: `schemas/auth-events.yaml`
+**Resolution**: Removed `subscription.updated` from `schemas/auth-events.yaml` as part of #3.
 
-**Violation Type**: L1 subscribing to L2 event
-
-**Why This Is Wrong**: Same as #3 above - Auth has no business with subscriptions.
-
-**Status**: Part of #3 deletion - **P0**
+**Status**: ✅ RESOLVED by deletion (part of #3)
 
 ---
 
@@ -239,9 +225,12 @@ Auth (L1) is app-level infrastructure that should work for ANY deployment, inclu
 ### Violation Patterns
 
 **L1 subscribing to L2 events**: Wrong direction
-- ❌ Auth subscribes to `subscription.updated` (L1 → L2) - **DELETE**
+- (none remaining)
 
 ### Resolved Event Subscriptions
+
+**Auth subscription removed**:
+- ✅ Auth no longer subscribes to `subscription.updated` (was L1 → L2)
 
 **Analytics (now L4) subscribing to L2/L4 events**: Now OK
 - ✅ Analytics subscribes to `game-session.*` (L4 → L4)
@@ -290,10 +279,10 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 | Priority | # | Violation | Reason |
 |----------|---|-----------|--------|
-| **P0** | 3, 7 | Auth → Subscription | Architectural error - breaks app/game domain boundary |
 | **P2** | 1 | Character → Actor/Encounter | Foundation depending on feature |
 | **P2** | 2 | Character → Personality/History | Foundation depending on feature |
 | **P3** | 6 | GameSession → Voice | Design improvement - invert dependency |
+| ✅ | 3, 7 | Auth → Subscription | Resolved by deletion |
 | ✅ | 4, 8-10 | Analytics | Resolved by reclassification to L4 |
 | ✅ | 5 | Website schema | Resolved by removing game-related endpoints |
 
@@ -303,10 +292,11 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 | Category | Count | Status |
 |----------|-------|--------|
-| L1 → L2 (App Foundation → Game Foundation) | 1 | **P0 - Auth → Subscription** |
+| L1 → L2 (App Foundation → Game Foundation) | 0 | ✅ All resolved |
 | L2 → L4 (Game Foundation → Game Features) | 2 | P2 - Character violations |
 | L4 → L4 (Design issues) | 1 | P3 - GameSession → Voice |
-| **Total active violations** | **4** | **1 P0, 2 P2, 1 P3** |
+| **Total active violations** | **3** | **2 P2, 1 P3** |
+| ✅ Resolved by deletion | 2 | Auth → Subscription removed |
 | ✅ Resolved by reclassification | 4 | Analytics moved to L4 |
 | ✅ Resolved by schema redesign | 1 | Website game endpoints removed |
 
@@ -314,12 +304,12 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 ## Next Steps
 
-1. **P0**: Delete Auth's subscription dependencies immediately
-2. **P2**: Implement reference registration pattern for Character (#259)
-3. **P2**: Implement missing event cascades (#152)
-4. **P3**: Invert GameSession → Voice dependency
+1. **P2**: Implement reference registration pattern for Character (#259)
+2. **P2**: Implement missing event cascades (#152)
+3. **P3**: Invert GameSession → Voice dependency
 
 **Completed**:
+- ✅ Auth → Subscription dependency deleted (ISubscriptionClient removed from AuthService and TokenService, event subscription removed)
 - ✅ Analytics reclassified to L4 (event-consumption-only service, most optional plugin)
 - ✅ Website schema redesigned - removed game-related endpoints (characters, subscription, server-status)
 

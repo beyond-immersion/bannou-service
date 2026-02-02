@@ -32,18 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Resource;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default cleanup policy when not specified per-resource-type
-/// </summary>
-public enum DefaultCleanupPolicy
-{
-    BEST_EFFORT,
-    ALL_REQUIRED,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Resource service.
 /// Properties are automatically bound from environment variables.
@@ -97,6 +85,6 @@ public class ResourceServiceConfiguration : IServiceConfiguration
     /// Default cleanup policy when not specified per-resource-type
     /// Environment variable: RESOURCE_DEFAULT_CLEANUP_POLICY
     /// </summary>
-    public DefaultCleanupPolicy DefaultCleanupPolicy { get; set; } = DefaultCleanupPolicy.BEST_EFFORT;
+    public CleanupPolicy DefaultCleanupPolicy { get; set; } = CleanupPolicy.BEST_EFFORT;
 
 }

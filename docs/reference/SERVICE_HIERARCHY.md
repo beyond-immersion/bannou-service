@@ -98,6 +98,7 @@ These services provide the core application infrastructure that ANY Bannou deplo
 | **connect** | WebSocket gateway, binary protocol routing |
 | **permission** | RBAC permission management, capability manifests |
 | **contract** | Binding agreements, lifecycle management, template execution |
+| **resource** | Reference tracking, cleanup coordination for foundational resources |
 
 **Rules**:
 - May depend on Layer 0 and other L1 services
@@ -106,6 +107,8 @@ These services provide the core application infrastructure that ANY Bannou deplo
 - Missing L1 service = crash (not graceful degradation)
 
 **Use Case**: "I need a real-time authenticated cloud service with authorization and agreement management."
+
+**Why Resource is L1**: Resource provides the machinery for reference tracking and cleanup coordination. Higher-layer services (L3/L4) publish reference events when they create/delete references to foundational resources (L2). This service maintains reference counts and coordinates cleanup callbacks, enabling safe deletion of foundational resources without hierarchy violations.
 
 **Why Contract is L1**: Contract provides the machinery for resource lifecycle management (consent flows, blocking, template substitution via `IServiceNavigator`). This infrastructure will power the cascading deletion system across all layers, making it application-level infrastructure rather than game-specific.
 
@@ -429,7 +432,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | Layer | Services |
 |-------|----------|
 | **L0** | lib-state, lib-messaging, lib-mesh |
-| **L1** | account, auth, connect, permission, contract |
+| **L1** | account, auth, connect, permission, contract, resource |
 | **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory |
 | **L3** | asset, telemetry, orchestrator, documentation, website, testing, mesh, messaging, state |
 | **L4** | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, game-session, escrow, character-personality, character-history, character-encounter, realm-history |

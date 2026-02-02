@@ -50,8 +50,7 @@ x-service-configuration:
 
     # === Default Cleanup Policy ===
     DefaultCleanupPolicy:
-      type: string
-      enum: [BEST_EFFORT, ALL_REQUIRED]
+      $ref: 'resource-api.yaml#/components/schemas/CleanupPolicy'
       env: RESOURCE_DEFAULT_CLEANUP_POLICY
       default: BEST_EFFORT
       description: Default cleanup policy when not specified per-resource-type

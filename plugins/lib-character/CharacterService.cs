@@ -1,10 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.CharacterEncounter;
-using BeyondImmersion.BannouService.CharacterHistory;
-using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
@@ -34,13 +30,9 @@ public partial class CharacterService : ICharacterService
     private readonly CharacterServiceConfiguration _configuration;
     private readonly IRealmClient _realmClient;
     private readonly ISpeciesClient _speciesClient;
-    private readonly ICharacterPersonalityClient _personalityClient;
-    private readonly ICharacterHistoryClient _historyClient;
     private readonly IRelationshipClient _relationshipClient;
     private readonly IRelationshipTypeClient _relationshipTypeClient;
-    private readonly ICharacterEncounterClient _encounterClient;
     private readonly IContractClient _contractClient;
-    private readonly IActorClient _actorClient;
 
     // Key prefixes for realm-partitioned storage
     private const string CHARACTER_KEY_PREFIX = "character:";
