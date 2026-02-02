@@ -154,6 +154,9 @@ public partial class RealmHistoryService : IRealmHistoryService
                 Role = body.Role
             }, cancellationToken: cancellationToken);
 
+            // Register realm reference with lib-resource for cleanup coordination
+            await RegisterRealmReferenceAsync(participationId.ToString(), body.RealmId, cancellationToken);
+
             _logger.LogDebug("Recorded participation {ParticipationId} for realm {RealmId}",
                 participationId, body.RealmId);
 
@@ -329,6 +332,9 @@ public partial class RealmHistoryService : IRealmHistoryService
                 return StatusCodes.NotFound;
             }
 
+            // Unregister realm reference before deletion
+            await UnregisterRealmReferenceAsync(body.ParticipationId.ToString(), data.RealmId, cancellationToken);
+
             // Use helper to remove record and update both indices
             await _participationHelper.RemoveRecordAsync(
                 body.ParticipationId.ToString(),
@@ -473,6 +479,9 @@ public partial class RealmHistoryService : IRealmHistoryService
                     RealmId = body.RealmId,
                     ElementCount = result.Backstory.Elements.Count
                 }, cancellationToken: cancellationToken);
+
+                // Register realm reference with lib-resource for cleanup coordination (only on new lore)
+                await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
             }
             else
             {
@@ -546,6 +555,9 @@ public partial class RealmHistoryService : IRealmHistoryService
                     RealmId = body.RealmId,
                     ElementCount = result.Backstory.Elements.Count
                 }, cancellationToken: cancellationToken);
+
+                // Register realm reference with lib-resource for cleanup coordination (only on new lore)
+                await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
             }
             else
             {
@@ -599,6 +611,9 @@ public partial class RealmHistoryService : IRealmHistoryService
                 return StatusCodes.NotFound;
             }
 
+            // Unregister realm reference for lore
+            await UnregisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
+
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(LORE_DELETED_TOPIC, new RealmLoreDeletedEvent
             {
@@ -642,11 +657,29 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
+            // Get all participations first to unregister their realm references
+            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.RealmId.ToString(),
+                cancellationToken);
+
+            // Unregister all realm references for participations
+            foreach (var record in participationRecords)
+            {
+                await UnregisterRealmReferenceAsync(record.ParticipationId.ToString(), body.RealmId, cancellationToken);
+            }
+
             // Use helper to delete all participations and update event indices
             var participationsDeleted = await _participationHelper.RemoveAllByPrimaryKeyAsync(
                 body.RealmId.ToString(),
                 record => record.EventId.ToString(),
                 cancellationToken);
+
+            // Check if lore exists to unregister its reference
+            var existingLore = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+            if (existingLore != null)
+            {
+                await UnregisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
+            }
 
             // Use helper to delete lore
             var loreDeleted = await _loreHelper.DeleteAsync(body.RealmId.ToString(), cancellationToken);

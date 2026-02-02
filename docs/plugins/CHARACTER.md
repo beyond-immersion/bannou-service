@@ -36,8 +36,8 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-analytics | Calls `ICharacterClient` for realm resolution; subscribes to `character.updated` for cache invalidation |
-| lib-character-encounter | Calls `ICharacterClient` for character name enrichment; subscribes to `character.deleted` to clean up encounter data |
+| lib-analytics | Subscribes to `character.updated` for cache invalidation; calls `ICharacterClient` for realm resolution |
+| lib-character-encounter | Subscribes to `character.deleted` to clean up encounter data; calls `ICharacterClient` for character name enrichment |
 | lib-species | Calls `ICharacterClient` to check character references during species deprecation |
 
 > **Note**: CharacterPersonality and CharacterHistory (L4) do NOT currently subscribe to `character.compressed` or `character.deleted`. The documentation previously claimed they did. If L4 cleanup is needed, those services should add event subscriptions.
@@ -71,8 +71,8 @@ Used by `IDistributedLockProvider` to ensure multi-instance safety for character
 | `character.created` | `CharacterCreatedEvent` | New character created |
 | `character.updated` | `CharacterUpdatedEvent` | Character metadata modified (includes `ChangedFields` list) |
 | `character.deleted` | `CharacterDeletedEvent` | Character permanently deleted |
-| `character.realm.joined` | `CharacterRealmJoinedEvent` | Character created in or transferred to a realm |
-| `character.realm.left` | `CharacterRealmLeftEvent` | Character deleted from a realm |
+| `character.realm.joined` | `CharacterRealmJoinedEvent` | Character created in or transferred to a realm (includes `PreviousRealmId` for transfers) |
+| `character.realm.left` | `CharacterRealmLeftEvent` | Character deleted from or transferred out of a realm (includes `Reason`: "deletion" or "transfer") |
 | `character.compressed` | `CharacterCompressedEvent` | Dead character archived (includes `DeletedSourceData` flag) |
 
 ### Consumed Events
@@ -225,7 +225,6 @@ Character Key Architecture (Realm-Partitioned)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 2. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/263 -->
-3. ~~**Parallel family tree lookups**~~: **FIXED** (2026-02-02) - `BuildFamilyTreeAsync` now uses `Task.WhenAll` for parallel relationship type lookups and `GetBulkAsync` for bulk character loading. Reduces N+M sequential calls to 2 bulk operations.
 
 ---
 
@@ -280,6 +279,7 @@ None currently tracked.
 9. ~~**Family tree character lookups are sequential**~~: **FIXED** (2026-02-02) - `BulkLoadCharactersAsync` now bulk-fetches all related characters via `GetBulkAsync` (2 bulk operations total: global index lookup, then character data).
 
 10. **L4 cleanup not implemented**: CharacterPersonality and CharacterHistory do NOT subscribe to `character.compressed` or `character.deleted`. When characters are compressed or deleted, L4 data (personality traits, combat preferences, backstory, life events) is orphaned. The `DeleteSourceData` flag on compression is currently advisory-only with no effect.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/273 -->
 
 ---
 
@@ -293,6 +293,7 @@ No active work items.
 
 ### Historical
 
+- **2026-02-02**: Removed FIXED item from Potential Extensions (parallel family tree lookups) - verified implemented via `Task.WhenAll` and `GetBulkAsync`, no quirks remain.
 - **2026-02-02**: Moved "orphaned" and "single parent household" labels from Design Considerations to Intentional Quirks (#9, #10) - current behavior is semantically correct (orphaned = no parent relationships, single parent = one relationship exists).
 - **2026-02-02**: Moved "INCARNATION tracking is directional" from Design Considerations to Intentional Quirks - this is correct semantic behavior (past lives, not future incarnations).
 - **2026-02-02**: Moved "Family tree silently skips unknown relationship types" from Design Considerations to Intentional Quirks - this is intentional graceful degradation (partial data preferred over error).

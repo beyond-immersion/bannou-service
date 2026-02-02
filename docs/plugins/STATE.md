@@ -28,11 +28,14 @@ IRedisOperations                  - Low-level Redis access (Lua scripts, hashes,
 | Interface | Redis | MySQL | InMemory | RedisSearch |
 |-----------|:-----:|:-----:|:--------:|:-----------:|
 | `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
-| `ICacheableStateStore<T>` | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ❌* |
 | `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
 | `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
+
+\* RedisSearchStateStore implements `ICacheableStateStore<T>` but throws `NotSupportedException` for all sorted set operations. This is because JSON storage mode required for RedisSearch indexing is incompatible with sorted set operations. Use `RedisStateStore` for stores requiring both sorted sets and caching.
 
 ---
 
@@ -137,6 +140,7 @@ This plugin does not consume external events.
 | `RedisDistributedLockProvider` | Singleton | Uses `IRedisOperations` for Lua-based safe unlock, falls back to in-memory locks |
 | `IRedisOperations` | - | Low-level Redis ops (Lua scripts, hashes, counters); obtained via `GetRedisOperations()` |
 | `RedisOperations` | Internal | Shares `ConnectionMultiplexer` with state stores |
+| `RedisLuaScripts` | Static | Loads and caches Lua scripts from embedded resources (`Scripts/*.lua`) |
 | `StateService` | Scoped | HTTP API implementation |
 
 ### Factory Methods
@@ -155,7 +159,7 @@ This plugin does not consume external events.
 | Class | Backend | Implements | Features |
 |-------|---------|------------|----------|
 | `RedisStateStore<T>` | Redis | `ICacheableStateStore<T>` | String ops, sets, sorted sets, TTL, transactions |
-| `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets, sorted sets |
+| `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets only (sorted sets throw NotSupportedException) |
 | `MySqlStateStore<T>` | MySQL | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core, JSON path queries (no sets/sorted sets) |
 | `InMemoryStateStore<T>` | Memory | `ICacheableStateStore<T>` | Static shared stores, sets, sorted sets, TTL via lazy cleanup |
 
@@ -209,10 +213,10 @@ State Store Architecture (Interface Hierarchy)
     IStateStore<T>  ◄────────────── Core CRUD (all backends)
          │
          ├── ICacheableStateStore<T>  ◄── Sets + Sorted Sets
-         │        │                        (Redis, InMemory)
-         │        ├── RedisStateStore<T>
-         │        ├── RedisSearchStateStore<T>
-         │        └── InMemoryStateStore<T>
+         │        │                        (Redis, InMemory; RedisSearch: Sets only)
+         │        ├── RedisStateStore<T>     (full support)
+         │        ├── RedisSearchStateStore<T> (Sets only - Sorted Sets throw)
+         │        └── InMemoryStateStore<T>  (full support)
          │
          ├── IQueryableStateStore<T>  ◄── LINQ queries
          │        │                        (MySQL only)
@@ -230,9 +234,10 @@ State Store Architecture (Interface Hierarchy)
 
     ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
     │ RedisStateStore │    │RedisSearchStore │    │  MySqlStateStore│
-    │ + ICacheable    │    │ + ICacheable    │    │ + IQueryable    │
-    │                 │    │ + ISearchable   │    │ + IJsonQueryable│
+    │ + ICacheable    │    │ + ICacheable*   │    │ + IQueryable    │
+    │ (Sets+ZSets)    │    │ + ISearchable   │    │ + IJsonQueryable│
     └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
+                           * Sets only; ZSets throw NotSupportedException
              │                      │                      │
     ┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐
     │     Redis       │    │   Redis + FT    │    │      MySQL      │
@@ -270,7 +275,7 @@ State Store Architecture (Interface Hierarchy)
 
 ### Bugs (Fix Immediately)
 
-1. ~~**RedisSearchStateStore.TrySaveAsync broken transaction**~~: **FIXED** (2026-01-31) - Replaced broken transaction pattern with Lua scripts (`TryCreateScript` and `TryUpdateScript`) that atomically check version and perform JSON.SET + metadata update. The `TryCreateScript` handles empty ETag (create-if-not-exists) semantics, while `TryUpdateScript` handles optimistic concurrency updates.
+1. ~~**RedisSearchStateStore.TrySaveAsync broken transaction**~~: **FIXED** (2026-01-31) - Replaced broken transaction pattern with Lua scripts (`TryCreate.lua` and `TryUpdate.lua` via `RedisLuaScripts`) that atomically check version and perform JSON.SET + metadata update. The `TryCreate` script handles empty ETag (create-if-not-exists) semantics, while `TryUpdate` handles optimistic concurrency updates.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -282,7 +287,7 @@ State Store Architecture (Interface Hierarchy)
 
 4. **MySQL JSON query operators**: `Contains` and `FullText` both use `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
 
-5. **TrySaveAsync empty ETag semantics differ by backend**: In Redis and MySQL, empty ETag means "create new entry if it doesn't exist" with atomic conflict detection. In InMemoryStateStore, TrySaveAsync with non-existent key returns null (no create-on-empty semantics).
+5. **TrySaveAsync empty ETag semantics differ by backend**: In Redis and MySQL, empty ETag means "create new entry if it doesn't exist" with atomic conflict detection. In InMemoryStateStore, TrySaveAsync requires a valid version number as ETag; empty or non-numeric ETags return null immediately (no create-on-empty semantics). Use `SaveAsync` for initial creation in InMemory mode.
 
 6. **RedisSearchStateStore falls back to string storage**: The `GetAsync` and `GetWithETagAsync` methods catch `WRONGTYPE` errors and fall back to `StringGet` for backwards compatibility with keys stored as strings before search was enabled.
 
@@ -297,6 +302,8 @@ State Store Architecture (Interface Hierarchy)
    - This is internal infrastructure, not an external API requiring authorization
 
 9. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
+
+10. **RedisSearchStateStore sorted set operations throw NotSupportedException**: Although `RedisSearchStateStore` implements `ICacheableStateStore<T>`, all 10 sorted set methods (`SortedSetAddAsync`, `SortedSetRemoveAsync`, etc.) throw `NotSupportedException`. This is because RedisSearch requires JSON storage mode (`JSON.SET`), which is incompatible with Redis sorted set commands (`ZADD`, etc.). Set operations (non-sorted) work correctly because they can operate on JSON-serialized string members. Services requiring both full-text search and sorted sets must use separate stores.
 
 ### Design Considerations (Requires Planning)
 
@@ -325,7 +332,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-- **2026-01-31**: Fixed `RedisSearchStateStore.TrySaveAsync` broken transaction. The original code created a Redis transaction with a condition but executed it with `FireAndForget`, then performed the actual JSON.SET outside the transaction. Replaced with two Lua scripts: `TryCreateScript` (for empty ETag create-if-not-exists) and `TryUpdateScript` (for optimistic concurrency updates). Lua scripts execute atomically on Redis server, ensuring proper concurrency control for JSON document storage.
+- **2026-01-31**: Fixed `RedisSearchStateStore.TrySaveAsync` broken transaction. The original code created a Redis transaction with a condition but executed it with `FireAndForget`, then performed the actual JSON.SET outside the transaction. Replaced with two Lua scripts: `TryCreate.lua` (for empty ETag create-if-not-exists) and `TryUpdate.lua` (for optimistic concurrency updates), loaded via `RedisLuaScripts` class from embedded resources. Lua scripts execute atomically on Redis server, ensuring proper concurrency control for JSON document storage.
 - **2026-01-31**: Moved "State change events" from Stubs & Unimplemented Features to Intentional Quirks. This was incorrectly categorized as a gap when it's actually a documented design decision. The decision to not publish state change events was intentional due to performance concerns (high operation volume would make per-operation event publishing prohibitively expensive).
 - **2026-01-31**: Marked "Store-level metrics" Potential Extension as IMPLEMENTED. lib-telemetry (#180) provides `InstrumentedStateStore<T>` wrappers that record operation counts, latencies, and tracing spans. Also marked "Bulk save operation" as IMPLEMENTED since `SaveBulkAsync()` already exists.
 - **2026-02-01**: Removed `DefaultConsistency` from `state-configuration.yaml` as dead config per IMPLEMENTATION TENETS (T21). The property was defined but never evaluated - consistency is specified per-request via `StateOptions.Consistency`. Also updated docs to reflect that `EnableMetrics`/`EnableTracing` were previously removed when telemetry was centralized to lib-telemetry.
@@ -340,3 +347,11 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-02**: Reclassified "No store-level access control" from Design Considerations to Intentional Quirks. Investigation confirmed this is an intentional design decision: all services are in the same trust boundary, enforcement would add performance overhead and complexity, and the `StateStoreDefinitions` constants provide convention-based guidance.
 - **2026-02-02**: Reclassified "Connection initialization retry asymmetry" from Design Considerations to Intentional Quirks. StackExchange.Redis has built-in auto-reconnect; EF Core/MySQL does not. The asymmetry is by design.
 - **2026-02-02**: Added `ConnectionRetryCount` and `MinRetryDelayMs` to `state-configuration.yaml`. Both were previously hardcoded in `StateStoreFactoryConfiguration`. Now configurable via `STATE_CONNECTION_RETRY_COUNT` (default: 10) and `STATE_MIN_RETRY_DELAY_MS` (default: 1000).
+- **2026-02-02**: Documentation maintenance - corrected several inaccuracies:
+  - Fixed backend support matrix: `RedisSearchStateStore` does NOT support sorted set operations (throws `NotSupportedException` for all 10 sorted set methods)
+  - Updated Store Implementation Classes table to clarify RedisSearchStateStore supports "sets only (sorted sets throw NotSupportedException)"
+  - Added Intentional Quirk #10 documenting RedisSearchStateStore sorted set limitation (JSON storage incompatible with ZADD commands)
+  - Fixed Lua script naming: corrected `TryCreateScript`/`TryUpdateScript` to actual names `TryCreate.lua`/`TryUpdate.lua` (via `RedisLuaScripts` class)
+  - Clarified InMemory TrySaveAsync semantics: requires valid numeric ETag, empty/non-numeric ETags return null immediately
+  - Added `RedisLuaScripts` to DI Services table
+  - Updated visual aid diagram with sorted set support annotations
