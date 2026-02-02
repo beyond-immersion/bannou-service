@@ -88,6 +88,7 @@ public static class EventSubscriptionRegistration
         // From mesh-events.yaml
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeats");
         EventSubscriptionRegistry.Register<FullServiceMappingsEvent>("bannou.full-service-mappings");
+        EventSubscriptionRegistry.Register<MeshCircuitStateChangedEvent>("mesh.circuit.changed");
 
         // From orchestrator-events.yaml
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeats");
@@ -98,5 +99,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionUpdatedEvent>("session.updated");
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+
+        // From resource-events.yaml
+        EventSubscriptionRegistry.Register<ResourceReferenceRegisteredEvent>("resource.reference.registered");
+        EventSubscriptionRegistry.Register<ResourceReferenceUnregisteredEvent>("resource.reference.unregistered");
     }
 }

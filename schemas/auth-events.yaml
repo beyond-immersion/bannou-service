@@ -19,10 +19,6 @@ info:
     - topic: account.updated
       event: AccountUpdatedEvent
       handler: HandleAccountUpdated
-    # Subscription changes from Subscription service
-    - topic: subscription.updated
-      event: SubscriptionUpdatedEvent
-      handler: HandleSubscriptionUpdated
   x-event-publications:
     # Session lifecycle events published by Auth service
     - topic: session.invalidated

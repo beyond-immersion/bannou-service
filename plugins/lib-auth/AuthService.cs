@@ -9,7 +9,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -23,7 +22,6 @@ namespace BeyondImmersion.BannouService.Auth;
 public partial class AuthService : IAuthService
 {
     private readonly IAccountClient _accountClient;
-    private readonly ISubscriptionClient _subscriptionClient;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
@@ -38,7 +36,6 @@ public partial class AuthService : IAuthService
 
     public AuthService(
         IAccountClient accountClient,
-        ISubscriptionClient subscriptionClient,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
@@ -51,7 +48,6 @@ public partial class AuthService : IAuthService
         IEventConsumer eventConsumer)
     {
         _accountClient = accountClient;
-        _subscriptionClient = subscriptionClient;
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
@@ -1191,91 +1187,6 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to propagate role changes for account {AccountId}", accountId);
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Propagate subscription/authorization changes to all active sessions for an account.
-    /// Called when subscription.updated event is received.
-    /// </summary>
-    public async Task PropagateSubscriptionChangesAsync(Guid accountId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            _logger.LogInformation("Propagating subscription changes for account {AccountId}", accountId);
-
-            // Fetch fresh authorizations from Subscription service
-            var authorizations = new List<string>();
-            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
-                new QueryCurrentSubscriptionsRequest { AccountId = accountId },
-                cancellationToken);
-
-            if (subscriptionsResponse?.Subscriptions != null)
-            {
-                // Format: "stubName:state" per IMPLEMENTATION TENETS
-                // Permission service parses this to update session authorization state
-                authorizations = subscriptionsResponse.Subscriptions
-                    .Select(s => $"{s.StubName}:authorized")
-                    .ToList();
-            }
-
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-
-            var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
-
-            if (sessionKeys == null || !sessionKeys.Any())
-            {
-                _logger.LogDebug("No sessions found for account {AccountId} to propagate subscription changes", accountId);
-                return;
-            }
-
-            foreach (var sessionKey in sessionKeys)
-            {
-                try
-                {
-                    var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
-
-                    if (session != null)
-                    {
-                        session.Authorizations = authorizations;
-
-                        // Preserve remaining TTL so sessions still expire on schedule
-                        var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
-                        if (remainingSeconds <= 0)
-                        {
-                            _logger.LogDebug("Session {SessionKey} already expired, skipping authorization update", sessionKey);
-                            continue;
-                        }
-
-                        await sessionStore.SaveAsync($"session:{sessionKey}", session,
-                            new StateOptions { Ttl = remainingSeconds }, cancellationToken);
-
-                        // Publish session.updated event for Permission service
-                        await _sessionService.PublishSessionUpdatedEventAsync(
-                            accountId,
-                            session.SessionId,
-                            session.Roles,
-                            authorizations,
-                            SessionUpdatedEventReason.Authorization_changed,
-                            cancellationToken);
-
-                        _logger.LogDebug("Updated authorizations for session {SessionKey}", sessionKey);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to update authorizations for session {SessionKey}", sessionKey);
-                }
-            }
-
-            _logger.LogInformation("Propagated subscription changes to {Count} sessions for account {AccountId}: {Authorizations}",
-                sessionKeys.Count, accountId, string.Join(", ", authorizations));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to propagate subscription changes for account {AccountId}", accountId);
             throw;
         }
     }

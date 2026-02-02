@@ -42,6 +42,7 @@ using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.RealmHistory;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Scene;
 using BeyondImmersion.BannouService.Species;
@@ -107,6 +108,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IRealmHistoryClient _realmHistory;
     private readonly IRelationshipClient _relationship;
     private readonly IRelationshipTypeClient _relationshipType;
+    private readonly IResourceClient _resource;
     private readonly ISaveLoadClient _saveLoad;
     private readonly ISceneClient _scene;
     private readonly ISpeciesClient _species;
@@ -157,6 +159,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IRealmHistoryClient realmHistory,
         IRelationshipClient relationship,
         IRelationshipTypeClient relationshipType,
+        IResourceClient resource,
         ISaveLoadClient saveLoad,
         ISceneClient scene,
         ISpeciesClient species,
@@ -203,6 +206,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _realmHistory = realmHistory;
         _relationship = relationship;
         _relationshipType = relationshipType;
+        _resource = resource;
         _saveLoad = saveLoad;
         _scene = scene;
         _species = species;
@@ -355,6 +359,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IRelationshipTypeClient RelationshipType => _relationshipType;
+
+    /// <inheritdoc />
+    public IResourceClient Resource => _resource;
 
     /// <inheritdoc />
     public ISaveLoadClient SaveLoad => _saveLoad;

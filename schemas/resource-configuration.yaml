@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  title: Resource Lifecycle Service Configuration
+  description: |
+    Configuration schema for Resource service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # === Grace Period Configuration ===
+    DefaultGracePeriodSeconds:
+      type: integer
+      env: RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS
+      default: 604800
+      minimum: 0
+      description: Default grace period in seconds before cleanup eligible (7 days default)
+
+    # === Cleanup Callback Configuration ===
+    CleanupCallbackTimeoutSeconds:
+      type: integer
+      env: RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+      description: Timeout for each cleanup callback execution
+
+    MaxCallbackRetries:
+      type: integer
+      env: RESOURCE_MAX_CALLBACK_RETRIES
+      default: 3
+      minimum: 0
+      maximum: 10
+      description: Max retries per cleanup callback on transient failure
+
+    # === Distributed Lock Configuration ===
+    CleanupLockExpirySeconds:
+      type: integer
+      env: RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS
+      default: 300
+      minimum: 60
+      maximum: 3600
+      description: Distributed lock timeout during cleanup execution
+
+    # === Default Cleanup Policy ===
+    DefaultCleanupPolicy:
+      type: string
+      enum: [BEST_EFFORT, ALL_REQUIRED]
+      env: RESOURCE_DEFAULT_CLEANUP_POLICY
+      default: BEST_EFFORT
+      description: Default cleanup policy when not specified per-resource-type

@@ -1,0 +1,183 @@
+openapi: 3.0.3
+info:
+  title: Resource Lifecycle Events
+  description: |
+    Event models for Resource service RabbitMQ pub/sub.
+    Handles reference registration/unregistration and cleanup coordination.
+
+    **Key Design Principle**: Higher-layer services (L3/L4) publish reference
+    events when they create/delete references to foundational resources (L2).
+    This service (L1) consumes those events and maintains reference counts.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Reference events - published by higher-layer services when they create/delete references
+    - topic: resource.reference.registered
+      event: ResourceReferenceRegisteredEvent
+      handler: HandleReferenceRegistered
+    - topic: resource.reference.unregistered
+      event: ResourceReferenceUnregisteredEvent
+      handler: HandleReferenceUnregistered
+  x-event-publications:
+    # Cleanup failure event for monitoring
+    - topic: resource.cleanup.callback-failed
+      event: ResourceCleanupCallbackFailedEvent
+      description: Published when a cleanup callback fails during resource deletion
+    # Grace period started event
+    - topic: resource.grace-period.started
+      event: ResourceGracePeriodStartedEvent
+      description: Published when a resource's refcount reaches zero and grace period begins
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Events this service SUBSCRIBES to
+    # =========================================================================
+
+    ResourceReferenceRegisteredEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published by higher-layer services when they create a reference to a
+        foundational resource. For example, when ActorService creates an actor
+        that references a character, it publishes this event.
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - sourceId
+      - timestamp
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being referenced (opaque identifier, e.g., "character")
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being referenced
+        sourceType:
+          type: string
+          description: Type of entity holding the reference (opaque identifier, e.g., "actor")
+        sourceId:
+          type: string
+          format: uuid
+          description: ID of the entity holding the reference
+        timestamp:
+          type: string
+          format: date-time
+          description: When the reference was registered
+
+    ResourceReferenceUnregisteredEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published by higher-layer services when they delete a reference to a
+        foundational resource. For example, when ActorService deletes an actor,
+        it publishes this event to release the character reference.
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - sourceId
+      - timestamp
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being dereferenced (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being dereferenced
+        sourceType:
+          type: string
+          description: Type of entity releasing the reference (opaque identifier)
+        sourceId:
+          type: string
+          format: uuid
+          description: ID of the entity releasing the reference
+        timestamp:
+          type: string
+          format: date-time
+          description: When the reference was unregistered
+
+    # =========================================================================
+    # Events this service PUBLISHES
+    # =========================================================================
+
+    ResourceCleanupCallbackFailedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a cleanup callback fails during resource deletion.
+        Used for monitoring and alerting on cleanup failures.
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - serviceName
+      - endpoint
+      - statusCode
+      - timestamp
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being cleaned up (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being cleaned up
+        sourceType:
+          type: string
+          description: Type of entity whose cleanup failed (opaque identifier)
+        serviceName:
+          type: string
+          description: Service whose callback failed
+        endpoint:
+          type: string
+          description: Endpoint that failed
+        statusCode:
+          type: integer
+          description: HTTP status code returned (0 if connection failed)
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details
+        timestamp:
+          type: string
+          format: date-time
+          description: When the failure occurred
+
+    ResourceGracePeriodStartedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a resource's reference count reaches zero.
+        The resource enters a grace period before becoming eligible for cleanup.
+      required:
+      - resourceType
+      - resourceId
+      - gracePeriodEndsAt
+      - timestamp
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource entering grace period (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource entering grace period
+        gracePeriodEndsAt:
+          type: string
+          format: date-time
+          description: When the grace period ends and cleanup becomes eligible
+        timestamp:
+          type: string
+          format: date-time
+          description: When the grace period started

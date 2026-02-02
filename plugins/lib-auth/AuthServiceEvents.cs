@@ -23,10 +23,6 @@ public partial class AuthService
         eventConsumer.RegisterHandler<IAuthService, AccountUpdatedEvent>(
             "account.updated",
             async (svc, evt) => await ((AuthService)svc).HandleAccountUpdatedAsync(evt));
-
-        eventConsumer.RegisterHandler<IAuthService, SubscriptionUpdatedEvent>(
-            "subscription.updated",
-            async (svc, evt) => await ((AuthService)svc).HandleSubscriptionUpdatedAsync(evt));
     }
 
     /// <summary>
@@ -72,19 +68,4 @@ public partial class AuthService
             evt.AccountId);
     }
 
-    /// <summary>
-    /// Handles subscription.updated events.
-    /// Propagates authorization changes to active sessions.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleSubscriptionUpdatedAsync(SubscriptionUpdatedEvent evt)
-    {
-        _logger.LogInformation("Processing subscription.updated event for AccountId: {AccountId}, StubName: {StubName}, Action: {Action}",
-            evt.AccountId, evt.StubName, evt.Action);
-
-        await PropagateSubscriptionChangesAsync(evt.AccountId, CancellationToken.None);
-
-        _logger.LogInformation("Successfully propagated subscription changes for account: {AccountId}",
-            evt.AccountId);
-    }
 }

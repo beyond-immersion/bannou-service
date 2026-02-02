@@ -594,3 +594,25 @@ x-state-stores:
     backend: mysql
     service: Escrow
     purpose: Custom asset type handler registrations
+
+  # ============================================================================
+  # Resource Lifecycle Stores
+  # ============================================================================
+
+  resource-refcounts:
+    backend: redis
+    prefix: "resource:ref"
+    service: Resource
+    purpose: Reference counts and source tracking per resource
+
+  resource-cleanup:
+    backend: redis
+    prefix: "resource:cleanup"
+    service: Resource
+    purpose: Cleanup callback definitions per resource type
+
+  resource-grace:
+    backend: redis
+    prefix: "resource:grace"
+    service: Resource
+    purpose: Grace period timestamps for resources with zero references

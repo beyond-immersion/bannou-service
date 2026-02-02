@@ -237,6 +237,14 @@ public static class StateStoreDefinitions
     /// <summary>Relationship type definitions</summary>
     public const string RelationshipType = "relationship-type-statestore";
 
+    // Resource Service
+    /// <summary>Cleanup callback definitions per resource type</summary>
+    public const string ResourceCleanup = "resource-cleanup";
+    /// <summary>Grace period timestamps for resources with zero references</summary>
+    public const string ResourceGrace = "resource-grace";
+    /// <summary>Reference counts and source tracking per resource</summary>
+    public const string ResourceRefcounts = "resource-refcounts";
+
     // SaveLoad Service
     /// <summary>Recently accessed save data cache</summary>
     public const string SaveLoadCache = "save-load-cache";
@@ -355,6 +363,9 @@ public static class StateStoreDefinitions
             [Realm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_statestore" },
             [Relationship] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_statestore" },
             [RelationshipType] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_type_statestore" },
+            [ResourceCleanup] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:cleanup" },
+            [ResourceGrace] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:grace" },
+            [ResourceRefcounts] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:ref" },
             [SaveLoadCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:cache" },
             [SaveLoadPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:pending" },
             [SaveLoadSchemas] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_schemas" },
@@ -452,6 +463,9 @@ public static class StateStoreDefinitions
             [Realm] = new StoreMetadata("Realm", "Realm definitions and configuration", "mysql"),
             [Relationship] = new StoreMetadata("Relationship", "Entity relationships", "mysql"),
             [RelationshipType] = new StoreMetadata("RelationshipType", "Relationship type definitions", "mysql"),
+            [ResourceCleanup] = new StoreMetadata("Resource", "Cleanup callback definitions per resource type", "redis"),
+            [ResourceGrace] = new StoreMetadata("Resource", "Grace period timestamps for resources with zero references", "redis"),
+            [ResourceRefcounts] = new StoreMetadata("Resource", "Reference counts and source tracking per resource", "redis"),
             [SaveLoadCache] = new StoreMetadata("SaveLoad", "Recently accessed save data cache", "redis"),
             [SaveLoadPending] = new StoreMetadata("SaveLoad", "Pending save operations", "redis"),
             [SaveLoadSchemas] = new StoreMetadata("SaveLoad", "Registered save data schemas", "mysql"),

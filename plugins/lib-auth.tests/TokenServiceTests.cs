@@ -6,7 +6,6 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -25,7 +24,6 @@ public class TokenServiceTests
 
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<ISessionService> _mockSessionService;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<TokenService>> _mockLogger;
@@ -40,7 +38,6 @@ public class TokenServiceTests
 
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockSubscriptionClient = new Mock<ISubscriptionClient>();
         _mockSessionService = new Mock<ISessionService>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<TokenService>>();
@@ -62,7 +59,6 @@ public class TokenServiceTests
 
         _service = new TokenService(
             _mockStateStoreFactory.Object,
-            _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             _configuration,
             _appConfiguration,
@@ -290,7 +286,6 @@ public class TokenServiceTests
         };
         var serviceWithEmptySecret = new TokenService(
             _mockStateStoreFactory.Object,
-            _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             _configuration,
             emptySecretConfig,
@@ -314,10 +309,6 @@ public class TokenServiceTests
             jwtIssuer: "",
             jwtAudience: "test-audience");
         var account = CreateTestAccount();
-
-        // Setup subscription client to return empty subscriptions
-        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(It.IsAny<QueryCurrentSubscriptionsRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act - should not throw (issuer validation is done at startup, not runtime)
         var result = await _service.GenerateAccessTokenAsync(account);
@@ -343,10 +334,6 @@ public class TokenServiceTests
             jwtAudience: "");
         var account = CreateTestAccount();
 
-        // Setup subscription client to return empty subscriptions
-        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(It.IsAny<QueryCurrentSubscriptionsRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404));
-
         // Act - should not throw (audience validation is done at startup, not runtime)
         var result = await _service.GenerateAccessTokenAsync(account);
 
@@ -364,19 +351,6 @@ public class TokenServiceTests
     {
         // Arrange
         var account = CreateTestAccount();
-
-        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
-            It.IsAny<QueryCurrentSubscriptionsRequest>(),
-            It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new QuerySubscriptionsResponse
-            {
-                Subscriptions = new List<SubscriptionInfo>
-                {
-                    new() { StubName = "auth1", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow },
-                    new() { StubName = "auth2", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow }
-                },
-                TotalCount = 2
-            });
 
         _mockSessionService.Setup(s => s.SaveSessionAsync(
             It.IsAny<string>(),
@@ -409,79 +383,11 @@ public class TokenServiceTests
     }
 
     [Fact]
-    public async Task GenerateAccessTokenAsync_WhenSubscriptionsNotFound_ShouldStillGenerateToken()
-    {
-        // Arrange
-        var account = CreateTestAccount();
-
-        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
-            It.IsAny<QueryCurrentSubscriptionsRequest>(),
-            It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404));
-
-        _mockSessionService.Setup(s => s.SaveSessionAsync(
-            It.IsAny<string>(),
-            It.IsAny<SessionDataModel>(),
-            It.IsAny<int?>(),
-            It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
-            It.IsAny<Guid>(),
-            It.IsAny<string>(),
-            It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
-            It.IsAny<Guid>(),
-            It.IsAny<string>(),
-            It.IsAny<int>(),
-            It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var (token, sessionId) = await _service.GenerateAccessTokenAsync(account);
-
-        // Assert - Should still generate a valid JWT
-        Assert.False(string.IsNullOrWhiteSpace(token));
-        Assert.NotEqual(Guid.Empty, sessionId);
-        Assert.Equal(3, token.Split('.').Length);
-    }
-
-    [Fact]
-    public async Task GenerateAccessTokenAsync_WhenSubscriptionsThrowsOtherError_ShouldRethrow()
-    {
-        // Arrange
-        var account = CreateTestAccount();
-
-        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
-            It.IsAny<QueryCurrentSubscriptionsRequest>(),
-            It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Server error"));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() =>
-            _service.GenerateAccessTokenAsync(account));
-    }
-
-    [Fact]
     public async Task GenerateAccessTokenAsync_ShouldSaveSessionWithCorrectData()
     {
         // Arrange
         var account = CreateTestAccount();
         SessionDataModel? capturedSession = null;
-
-        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
-            It.IsAny<QueryCurrentSubscriptionsRequest>(),
-            It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new QuerySubscriptionsResponse
-            {
-                Subscriptions = new List<SubscriptionInfo>
-                {
-                    new() { StubName = "auth1", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow }
-                },
-                TotalCount = 1
-            });
 
         _mockSessionService.Setup(s => s.SaveSessionAsync(
             It.IsAny<string>(),
@@ -515,7 +421,8 @@ public class TokenServiceTests
         Assert.Equal(account.AccountId, capturedSession.AccountId);
         Assert.Equal(account.Email, capturedSession.Email);
         Assert.Equal(account.DisplayName, capturedSession.DisplayName);
-        Assert.Contains("auth1", capturedSession.Authorizations);
+        // Authorizations are empty at session creation (subscription state handled by downstream services)
+        Assert.Empty(capturedSession.Authorizations);
     }
 
     #endregion

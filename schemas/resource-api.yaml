@@ -1,0 +1,596 @@
+openapi: 3.0.0
+info:
+  title: Resource Lifecycle API
+  version: 1.0.0
+  description: |
+    Resource reference tracking and lifecycle management.
+
+    Enables foundational services (L2) to safely delete resources by tracking
+    references from higher-layer consumers (L3/L4) without violating the
+    service hierarchy. Higher-layer services publish reference events when
+    they create/delete references to foundational resources. This service
+    maintains the reference counts and coordinates cleanup callbacks.
+
+    **Key Design Principle**: Foundational services (L2) define what resources
+    exist. This service (L1) tracks who references them. Consumers (L3/L4)
+    register their references via events and define cleanup callbacks.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Reference Management (4 endpoints)
+  # ===========================================================================
+
+  /resource/register:
+    post:
+      operationId: registerReference
+      tags:
+      - Reference Management
+      summary: Register a reference to a resource
+      description: |
+        Records that sourceType:sourceId references resourceType:resourceId.
+        Typically called via event handlers, not directly.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterReferenceRequest'
+      responses:
+        '200':
+          description: Reference registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterReferenceResponse'
+
+  /resource/unregister:
+    post:
+      operationId: unregisterReference
+      tags:
+      - Reference Management
+      summary: Remove a reference to a resource
+      description: |
+        Records that sourceType:sourceId no longer references resourceType:resourceId.
+        Typically called via event handlers, not directly.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnregisterReferenceRequest'
+      responses:
+        '200':
+          description: Reference unregistered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnregisterReferenceResponse'
+
+  /resource/check:
+    post:
+      operationId: checkReferences
+      tags:
+      - Reference Management
+      summary: Check reference count and cleanup eligibility
+      description: |
+        Returns the current reference count for a resource and whether it is
+        eligible for cleanup (refcount=0 and grace period passed).
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckReferencesRequest'
+      responses:
+        '200':
+          description: Reference status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckReferencesResponse'
+
+  /resource/list:
+    post:
+      operationId: listReferences
+      tags:
+      - Reference Management
+      summary: List all references to a resource
+      description: |
+        Returns all entities currently referencing a resource.
+        Useful for debugging and understanding reference chains.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListReferencesRequest'
+      responses:
+        '200':
+          description: List of references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListReferencesResponse'
+
+  # ===========================================================================
+  # Cleanup Management (2 endpoints)
+  # ===========================================================================
+
+  /resource/cleanup/define:
+    post:
+      operationId: defineCleanupCallback
+      tags:
+      - Cleanup Management
+      summary: Define cleanup callbacks for a resource type
+      description: |
+        Services call this at startup to register their cleanup endpoints.
+        When a resource is deleted, these callbacks are invoked to clean up
+        dependent entities.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineCleanupRequest'
+      responses:
+        '200':
+          description: Cleanup callback defined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefineCleanupResponse'
+
+  /resource/cleanup/execute:
+    post:
+      operationId: executeCleanup
+      tags:
+      - Cleanup Management
+      summary: Execute cleanup for a resource
+      description: |
+        Validates refcount=0, grace period passed, acquires distributed lock,
+        re-validates under lock, then executes all cleanup callbacks.
+        Returns Conflict if refcount changed during execution.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCleanupRequest'
+      responses:
+        '200':
+          description: Cleanup executed or rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteCleanupResponse'
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums (Only for lib-resource's OWN closed sets)
+    # NOTE: resourceType and sourceType are intentionally STRINGS, not enums.
+    # lib-resource (L1) must not enumerate L2+ services or entity types.
+    # See SCHEMA-RULES.md "When NOT to Create Enums"
+    # =========================================================================
+
+    OnDeleteAction:
+      type: string
+      enum: [CASCADE, RESTRICT, DETACH]
+      description: |
+        Action to take when the referenced resource is deleted.
+        CASCADE: Delete dependent entities when resource is deleted
+        RESTRICT: Block resource deletion if references exist
+        DETACH: Set reference to null when resource is deleted
+
+    CleanupPolicy:
+      type: string
+      enum: [BEST_EFFORT, ALL_REQUIRED]
+      description: |
+        Policy for cleanup callback execution.
+        BEST_EFFORT: Proceed with deletion even if some callbacks fail
+        ALL_REQUIRED: Abort deletion if any callback fails
+
+    # =========================================================================
+    # Reference Management Models
+    # =========================================================================
+
+    RegisterReferenceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a reference to a resource
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - sourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being referenced (opaque identifier, e.g., "character", "realm")
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being referenced
+        sourceType:
+          type: string
+          description: Type of entity holding the reference (opaque identifier, e.g., "actor", "scene")
+        sourceId:
+          type: string
+          format: uuid
+          description: ID of the entity holding the reference
+        idempotencyKey:
+          type: string
+          nullable: true
+          description: Optional key for idempotent registration
+
+    RegisterReferenceResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering a reference
+      required:
+      - resourceType
+      - resourceId
+      - newRefCount
+      - alreadyRegistered
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource referenced
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource referenced
+        newRefCount:
+          type: integer
+          description: Reference count after registration
+        alreadyRegistered:
+          type: boolean
+          description: True if this exact reference was already registered
+
+    UnregisterReferenceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unregister a reference to a resource
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - sourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being dereferenced (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being dereferenced
+        sourceType:
+          type: string
+          description: Type of entity releasing the reference (opaque identifier)
+        sourceId:
+          type: string
+          format: uuid
+          description: ID of the entity releasing the reference
+
+    UnregisterReferenceResponse:
+      type: object
+      additionalProperties: false
+      description: Response after unregistering a reference
+      required:
+      - resourceType
+      - resourceId
+      - newRefCount
+      - wasRegistered
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource dereferenced
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource dereferenced
+        newRefCount:
+          type: integer
+          description: Reference count after unregistration
+        wasRegistered:
+          type: boolean
+          description: True if this reference existed before unregistration
+        gracePeriodStartedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When grace period started (null if refCount > 0)
+
+    CheckReferencesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to check reference status for a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to check (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to check
+
+    CheckReferencesResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing reference status for a resource
+      required:
+      - resourceType
+      - resourceId
+      - refCount
+      - isCleanupEligible
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource checked
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource checked
+        refCount:
+          type: integer
+          description: Current reference count
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceReference'
+          nullable: true
+          description: List of entities referencing this resource (optional, for diagnostics)
+        isCleanupEligible:
+          type: boolean
+          description: True if refCount=0 and grace period has passed
+        gracePeriodEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When grace period ends (null if refCount > 0 or already passed)
+        lastZeroTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: When refCount last became zero
+
+    ResourceReference:
+      type: object
+      additionalProperties: false
+      description: A reference from a source entity to a resource
+      required:
+      - sourceType
+      - sourceId
+      - registeredAt
+      properties:
+        sourceType:
+          type: string
+          description: Type of entity holding the reference (opaque identifier)
+        sourceId:
+          type: string
+          format: uuid
+          description: ID of the entity holding the reference
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this reference was registered
+
+    ListReferencesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list all references to a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to list references for (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to list references for
+        filterSourceType:
+          type: string
+          nullable: true
+          description: Optional filter by source type (opaque identifier)
+        limit:
+          type: integer
+          default: 100
+          description: Maximum references to return
+
+    ListReferencesResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing list of references to a resource
+      required:
+      - resourceType
+      - resourceId
+      - references
+      - totalCount
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource listed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource listed
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceReference'
+          description: List of references
+        totalCount:
+          type: integer
+          description: Total reference count (may exceed returned list if limit applied)
+
+    # =========================================================================
+    # Cleanup Management Models
+    # =========================================================================
+
+    DefineCleanupRequest:
+      type: object
+      additionalProperties: false
+      description: Request to define a cleanup callback for a resource type
+      required:
+      - resourceType
+      - sourceType
+      - serviceName
+      - callbackEndpoint
+      - payloadTemplate
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this cleanup handles (opaque identifier)
+        sourceType:
+          type: string
+          description: Type of entity that will be cleaned up (opaque identifier)
+        serviceName:
+          type: string
+          description: Target service name for callback invocation via lib-mesh
+        callbackEndpoint:
+          type: string
+          description: Endpoint path (e.g., /actor/cleanup-by-character)
+        payloadTemplate:
+          type: string
+          description: JSON template with {{resourceId}} placeholder
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of cleanup action
+
+    DefineCleanupResponse:
+      type: object
+      additionalProperties: false
+      description: Response after defining a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - registered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type for callback (opaque identifier)
+        sourceType:
+          type: string
+          description: Source type for callback (opaque identifier)
+        registered:
+          type: boolean
+          description: True if callback was registered (or updated)
+        previouslyDefined:
+          type: boolean
+          description: True if this callback was already defined (updated)
+
+    ExecuteCleanupRequest:
+      type: object
+      additionalProperties: false
+      description: Request to execute cleanup for a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to clean up (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to clean up
+        gracePeriodOverride:
+          type: string
+          nullable: true
+          description: Override grace period as ISO 8601 duration (e.g., "PT0S" to skip)
+        cleanupPolicy:
+          $ref: '#/components/schemas/CleanupPolicy'
+          nullable: true
+          description: Override cleanup policy (uses resource default if not specified)
+
+    ExecuteCleanupResponse:
+      type: object
+      additionalProperties: false
+      description: Response after attempting to execute cleanup
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - callbackResults
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource cleaned up
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource cleaned up
+        success:
+          type: boolean
+          description: True if cleanup completed (per cleanup policy)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.)
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleanupCallbackResult'
+          description: Results of each cleanup callback
+        cleanupDurationMs:
+          type: integer
+          description: Total cleanup execution time in milliseconds
+
+    CleanupCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of executing a single cleanup callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      properties:
+        sourceType:
+          type: string
+          description: Source type that was cleaned up (opaque identifier)
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds

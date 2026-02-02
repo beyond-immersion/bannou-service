@@ -38,6 +38,7 @@ using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.RealmHistory;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Scene;
 using BeyondImmersion.BannouService.Species;
@@ -218,6 +219,11 @@ public partial interface IServiceNavigator
     /// Gets the RelationshipType service client.
     /// </summary>
     IRelationshipTypeClient RelationshipType { get; }
+
+    /// <summary>
+    /// Gets the Resource service client.
+    /// </summary>
+    IResourceClient Resource { get; }
 
     /// <summary>
     /// Gets the SaveLoad service client.

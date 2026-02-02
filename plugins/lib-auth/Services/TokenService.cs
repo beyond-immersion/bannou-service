@@ -4,7 +4,6 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,7 +19,6 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 public class TokenService : ITokenService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly ISubscriptionClient _subscriptionClient;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
@@ -32,7 +30,6 @@ public class TokenService : ITokenService
     /// </summary>
     public TokenService(
         IStateStoreFactory stateStoreFactory,
-        ISubscriptionClient subscriptionClient,
         ISessionService sessionService,
         AuthServiceConfiguration configuration,
         AppConfiguration appConfiguration,
@@ -40,7 +37,6 @@ public class TokenService : ITokenService
         ILogger<TokenService> logger)
     {
         _stateStoreFactory = stateStoreFactory;
-        _subscriptionClient = subscriptionClient;
         _sessionService = sessionService;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
@@ -57,39 +53,9 @@ public class TokenService : ITokenService
         var sessionKey = Guid.NewGuid().ToString("N");
         var sessionId = Guid.NewGuid();
 
-        // Fetch current subscriptions/authorizations for the account
+        // Authorizations are empty at session creation - subscription state is handled
+        // by downstream services that subscribe to subscription.updated events directly
         var authorizations = new List<string>();
-        try
-        {
-            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
-                new QueryCurrentSubscriptionsRequest { AccountId = account.AccountId },
-                cancellationToken);
-
-            if (subscriptionsResponse?.Subscriptions != null)
-            {
-                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
-                _logger.LogDebug("Fetched {Count} authorizations for account {AccountId}",
-                    authorizations.Count, account.AccountId);
-            }
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogDebug("No subscriptions found for account {AccountId}", account.AccountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to fetch subscriptions for account {AccountId} - login rejected", account.AccountId);
-            await _messageBus.TryPublishErrorAsync(
-                "auth",
-                "GenerateAccessToken",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "subscription",
-                endpoint: "post:/auth/login",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            throw;
-        }
 
         // Generate JTI for edge revocation tracking (used below in claims)
         var jti = Guid.NewGuid().ToString();

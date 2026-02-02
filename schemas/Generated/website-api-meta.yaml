@@ -182,54 +182,6 @@ paths:
         \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get latest news and announcements\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Content\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getNews\"\n}"
-  /website/server-status:
-    get:
-      summary: Get game server status for all realms
-      operationId: getServerStatus
-      tags:
-      - Status
-      x-permissions:
-      - role: anonymous
-        states: {}
-      responses:
-        '200':
-          description: Server status information
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerStatusResponse'
-      x-request-schema-json: '{}'
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ServerStatusResponse\"\
-        ,\n    \"$defs\": {\n        \"ServerStatusResponse\": {\n            \"description\": \"Aggregated status of all
-        game server realms\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"realms\",\n                \"globalStatus\"\n            ],\n            \"\
-        properties\": {\n                \"globalStatus\": {\n                    \"type\": \"string\",\n                \
-        \    \"enum\": [\n                        \"online\",\n                        \"partial\",\n                    \
-        \    \"offline\",\n                        \"maintenance\"\n                    ],\n                    \"description\"\
-        : \"Overall status across all game realms\"\n                },\n                \"realms\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmStatus\"\
-        \n                    },\n                    \"description\": \"Status information for each game realm\"\n      \
-        \          }\n            }\n        },\n        \"RealmStatus\": {\n            \"description\": \"Status and population
-        information for a single game realm\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"realmId\",\n                \"name\",\n                \"status\"\
-        ,\n                \"population\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier for the game realm\"\n                },\n                \"name\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Display name of the game realm\"\n                },\n\
-        \                \"status\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n     \
-        \                   \"online\",\n                        \"offline\",\n                        \"maintenance\",\n\
-        \                        \"full\"\n                    ],\n                    \"description\": \"Current operational
-        status of the realm\"\n                },\n                \"population\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"low\",\n                        \"medium\",\n      \
-        \                  \"high\",\n                        \"full\"\n                    ],\n                    \"description\"\
-        : \"Current player population level\"\n                },\n                \"playerCount\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Current
-        number of players online\"\n                },\n                \"ping\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Latency in milliseconds\",\n                    \"nullable\": true\n   \
-        \             }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get game server status for all realms\",\n    \"description\": \"\",\n\
-        \    \"tags\": [\n        \"Status\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getServerStatus\"\
-        \n}"
   /website/downloads:
     get:
       summary: Get download links for game clients
@@ -382,61 +334,9 @@ paths:
         ,\n                    \"description\": \"Date and time when the account was created\"\n                },\n     \
         \           \"lastLogin\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time of the last successful
-        login\"\n                },\n                \"characterSlots\": {\n                    \"type\": \"integer\",\n \
-        \                   \"description\": \"Total number of character slots available\"\n                },\n         \
-        \       \"usedSlots\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
-        of character slots currently in use\"\n                }\n            }\n        }\n    }\n}"
+        login\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account profile for logged-in user\",\n    \"description\": \"\",\n\
         \    \"tags\": [\n        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountProfile\"\
-        \n}"
-  /website/account/characters:
-    get:
-      summary: Get character list for logged-in user
-      operationId: getAccountCharacters
-      tags:
-      - Account
-      x-permissions:
-      - role: user
-        states: {}
-      security:
-      - BearerAuth: []
-      responses:
-        '200':
-          description: Character list retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CharacterListResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      x-request-schema-json: '{}'
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
-        ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"List of all characters belonging
-        to an account\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
-        required\": [\n                \"characters\"\n            ],\n            \"properties\": {\n                \"characters\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/CharacterSummary\"\n                    },\n                    \"description\": \"List of characters
-        owned by the account\"\n                }\n            }\n        },\n        \"CharacterSummary\": {\n          \
-        \  \"description\": \"Brief overview of a character for display in character lists\",\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n \
-        \               \"name\",\n                \"realm\",\n                \"level\"\n            ],\n            \"properties\"\
-        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique identifier for the character\"\n                },\n  \
-        \              \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name
-        of the character\"\n                },\n                \"realm\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Name of the realm the character belongs to\"\n                },\n       \
-        \         \"level\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current
-        level of the character\"\n                },\n                \"class\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Character class or profession\"\
-        \n                },\n                \"lastPlayed\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Date and time of last gameplay session\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get character list for logged-in user\",\n    \"description\": \"\",\n\
-        \    \"tags\": [\n        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountCharacters\"\
         \n}"
   /website/cms/pages:
     get:
@@ -1017,51 +917,6 @@ paths:
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Update theme configuration\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateTheme\"\n}"
-  /website/account/subscription:
-    get:
-      summary: Get subscription status
-      operationId: getAccountSubscription
-      tags:
-      - Account
-      x-permissions:
-      - role: user
-        states: {}
-      security:
-      - BearerAuth: []
-      responses:
-        '200':
-          description: Subscription information retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubscriptionResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      x-request-schema-json: '{}'
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubscriptionResponse\"\
-        ,\n    \"$defs\": {\n        \"SubscriptionResponse\": {\n            \"description\": \"Current subscription status
-        and plan details for an account\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"status\",\n                \"type\"\n            ],\n            \"\
-        properties\": {\n                \"status\": {\n                    \"type\": \"string\",\n                    \"\
-        enum\": [\n                        \"active\",\n                        \"inactive\",\n                        \"\
-        trial\",\n                        \"expired\"\n                    ],\n                    \"description\": \"Current
-        state of the subscription\"\n                },\n                \"type\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"free\",\n                        \"basic\",\n      \
-        \                  \"premium\",\n                        \"lifetime\"\n                    ],\n                  \
-        \  \"description\": \"Subscription tier or plan type\"\n                },\n                \"expiresAt\": {\n   \
-        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Date and time when the subscription expires\"\n                },\n\
-        \                \"autoRenew\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether automatic renewal is enabled\"\n                },\n                \"benefits\": {\n                \
-        \    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n      \
-        \              },\n                    \"description\": \"List of benefits included in the subscription\"\n      \
-        \          }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get subscription status\",\n    \"description\": \"\",\n    \"tags\": [\n\
-        \        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountSubscription\"\n}"
 components:
   securitySchemes:
     BearerAuth:
@@ -1450,68 +1305,6 @@ components:
           format: uri
           nullable: true
           description: URL of the featured image for the news item
-    ServerStatusResponse:
-      description: Aggregated status of all game server realms
-      type: object
-      additionalProperties: false
-      required:
-      - realms
-      - globalStatus
-      properties:
-        globalStatus:
-          type: string
-          enum:
-          - online
-          - partial
-          - offline
-          - maintenance
-          description: Overall status across all game realms
-        realms:
-          type: array
-          items:
-            $ref: '#/components/schemas/RealmStatus'
-          description: Status information for each game realm
-    RealmStatus:
-      description: Status and population information for a single game realm
-      type: object
-      additionalProperties: false
-      required:
-      - realmId
-      - name
-      - status
-      - population
-      properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Unique identifier for the game realm
-        name:
-          type: string
-          description: Display name of the game realm
-        status:
-          type: string
-          enum:
-          - online
-          - offline
-          - maintenance
-          - full
-          description: Current operational status of the realm
-        population:
-          type: string
-          enum:
-          - low
-          - medium
-          - high
-          - full
-          description: Current player population level
-        playerCount:
-          type: integer
-          nullable: true
-          description: Current number of players online
-        ping:
-          type: integer
-          description: Latency in milliseconds
-          nullable: true
     DownloadsResponse:
       description: Collection of available game client downloads by platform
       type: object
@@ -1642,93 +1435,6 @@ components:
           format: date-time
           nullable: true
           description: Date and time of the last successful login
-        characterSlots:
-          type: integer
-          description: Total number of character slots available
-        usedSlots:
-          type: integer
-          description: Number of character slots currently in use
-    CharacterListResponse:
-      description: List of all characters belonging to an account
-      type: object
-      additionalProperties: false
-      required:
-      - characters
-      properties:
-        characters:
-          type: array
-          items:
-            $ref: '#/components/schemas/CharacterSummary'
-          description: List of characters owned by the account
-    CharacterSummary:
-      description: Brief overview of a character for display in character lists
-      type: object
-      additionalProperties: false
-      required:
-      - characterId
-      - name
-      - realm
-      - level
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Unique identifier for the character
-        name:
-          type: string
-          description: Name of the character
-        realm:
-          type: string
-          description: Name of the realm the character belongs to
-        level:
-          type: integer
-          description: Current level of the character
-        class:
-          type: string
-          nullable: true
-          description: Character class or profession
-        lastPlayed:
-          type: string
-          format: date-time
-          nullable: true
-          description: Date and time of last gameplay session
-    SubscriptionResponse:
-      description: Current subscription status and plan details for an account
-      type: object
-      additionalProperties: false
-      required:
-      - status
-      - type
-      properties:
-        status:
-          type: string
-          enum:
-          - active
-          - inactive
-          - trial
-          - expired
-          description: Current state of the subscription
-        type:
-          type: string
-          enum:
-          - free
-          - basic
-          - premium
-          - lifetime
-          description: Subscription tier or plan type
-        expiresAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Date and time when the subscription expires
-        autoRenew:
-          type: boolean
-          description: Whether automatic renewal is enabled
-        benefits:
-          type: array
-          items:
-            type: string
-          description: List of benefits included in the subscription
     ErrorResponse:
       description: Standard error response with code and message
       type: object

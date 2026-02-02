@@ -47,6 +47,7 @@ public partial class BannouClient
     private RealmHistoryProxy? _realmHistory;
     private RelationshipProxy? _relationship;
     private RelationshipTypeProxy? _relationshipType;
+    private ResourceProxy? _resource;
     private SaveLoadProxy? _saveLoad;
     private SceneProxy? _scene;
     private SpeciesProxy? _species;
@@ -253,6 +254,12 @@ public partial class BannouClient
     /// </summary>
     public RelationshipTypeProxy RelationshipType =>
         _relationshipType ??= new RelationshipTypeProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Resource Lifecycle API operations.
+    /// </summary>
+    public ResourceProxy Resource =>
+        _resource ??= new ResourceProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Save-Load Service API operations.

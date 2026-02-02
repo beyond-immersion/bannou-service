@@ -8,7 +8,6 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -26,7 +25,6 @@ public class AuthServiceTests
     private readonly AuthServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly Mock<IAccountClient> _mockAccountClient;
-    private readonly Mock<ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<AuthService.PasswordResetData>> _mockPasswordResetStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
@@ -70,7 +68,6 @@ public class AuthServiceTests
             ServiceDomain = "localhost"
         };
         _mockAccountClient = new Mock<IAccountClient>();
-        _mockSubscriptionClient = new Mock<ISubscriptionClient>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockPasswordResetStore = new Mock<IStateStore<AuthService.PasswordResetData>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
@@ -113,7 +110,6 @@ public class AuthServiceTests
     {
         return new AuthService(
             _mockAccountClient.Object,
-            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
@@ -549,7 +545,6 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountClient.Object,
-            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             emptyConfig,
@@ -812,7 +807,6 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountClient.Object,
-            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
@@ -898,7 +892,6 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountClient.Object,
-            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             configWithoutSteam,
@@ -939,7 +932,6 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountClient.Object,
-            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
@@ -989,7 +981,6 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountClient.Object,
-            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
