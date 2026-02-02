@@ -549,7 +549,10 @@ public class CharacterHistoryServiceTests
         {
             CharacterId = characterId,
             EventId = eventId,
-            Role = "witness"
+            EventName = "Test Event",
+            EventCategory = EventCategory.WAR,
+            Role = ParticipationRole.WITNESS,
+            EventDate = DateTimeOffset.UtcNow
         };
 
         // Act
@@ -562,7 +565,7 @@ public class CharacterHistoryServiceTests
         Assert.Equal("character", capturedEvent.ResourceType);
         Assert.Equal("character-history", capturedEvent.SourceType);
         Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal(response.Participation.ParticipationId.ToString(), capturedEvent.SourceId);
+        Assert.Equal(response.ParticipationId.ToString(), capturedEvent.SourceId);
     }
 
     [Fact]
@@ -595,7 +598,7 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElement>
             {
-                new BackstoryElement { Type = BackstoryElementType.ORIGIN, Value = "Test origin" }
+                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "Test origin", Strength = 0.8f }
             }
         };
 
@@ -624,7 +627,8 @@ public class CharacterHistoryServiceTests
             {
                 CharacterId = characterId,
                 Elements = new List<BackstoryElementData>(),
-                Version = 1
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+                UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
             });
         _mockBackstoryStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BackstoryData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
@@ -646,7 +650,7 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElement>
             {
-                new BackstoryElement { Type = BackstoryElementType.ORIGIN, Value = "Updated origin" }
+                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "Updated origin", Strength = 0.8f }
             }
         };
 
@@ -671,7 +675,8 @@ public class CharacterHistoryServiceTests
             {
                 CharacterId = characterId,
                 Elements = new List<BackstoryElementData>(),
-                Version = 1
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
         _mockBackstoryStore.Setup(s => s.DeleteAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -722,7 +727,7 @@ public class CharacterHistoryServiceTests
             .ReturnsAsync((HistoryIndexData?)null);
         _mockIndexStore.Setup(s => s.GetWithETagAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(((HistoryIndexData?)null, (string?)null));
-        _mockIndexStore.Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HistoryIndexData>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<HistoryIndexData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
     }
 

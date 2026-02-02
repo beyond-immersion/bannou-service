@@ -73,6 +73,8 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### Consumed Events
 
+> **⚠️ BUG**: Event consumers are defined but **never registered**. See Bugs section for details.
+
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
 | `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | `HandleReferenceRegisteredAsync` - delegates to `RegisterReferenceAsync` |
@@ -101,6 +103,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 | `IDistributedLockProvider` | Acquiring cleanup locks |
 | `IMessageBus` | Publishing events |
 | `IServiceNavigator` | Executing cleanup callbacks |
+| `IEventConsumer` | **MISSING** - Required for event subscription registration (see Bugs section) |
 
 **Internal Types** (defined in ResourceService.cs):
 | Type | Role |
@@ -190,8 +193,6 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 2. **`OnDeleteAction` enum**: Defined in schema (`CASCADE`, `RESTRICT`, `DETACH`) but not used anywhere in the service. May be intended for future per-reference deletion behavior configuration.
 
-3. ~~**Timeout configuration**~~: **IMPLEMENTED** (2026-02-02) - `CleanupCallbackTimeoutSeconds` is now applied via `CancellationTokenSource` for cleanup callback execution. Retry logic is handled by lib-mesh at the infrastructure level (`MESH_MAX_RETRIES`).
-
 ---
 
 ## Potential Extensions
@@ -273,13 +274,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Minute parsing in `ParseIsoDuration` is dead code**~~: **FIXED** (2026-02-02) - Removed `ParseIsoDuration` entirely. Schema now uses `gracePeriodSeconds` (integer) instead of ISO 8601 duration strings, which is simpler and avoids parsing bugs.
-
-2. ~~**Orphaned configuration: `CleanupCallbackTimeoutSeconds` is never used**~~: **FIXED** (2026-02-02) - Now used via `CancellationTokenSource.CreateLinkedTokenSource` with configured timeout for cleanup callback execution.
-
-3. ~~**Orphaned configuration: `MaxCallbackRetries` is never used**~~: **REMOVED** (2026-02-02) - Removed from schema. Retry logic is handled by lib-mesh at the infrastructure level (`MESH_MAX_RETRIES`). See GitHub issue for ServiceNavigator refactoring to properly use IMeshInvocationClient.
-
-4. ~~**Silent parse failure in `ParseIsoDuration`**~~: **FIXED** (2026-02-02) - `ParseIsoDuration` removed. Integer seconds are used directly from the request, eliminating parse failures entirely.
+1. **Event consumers never registered**: The `RegisterEventConsumers` method in `ResourceServiceEvents.cs` is never called. The `ResourceService` constructor does not inject `IEventConsumer` and does not call `RegisterEventConsumers`, meaning events published to `resource.reference.registered` and `resource.reference.unregistered` are **never consumed** by the service. Higher-layer services publishing these events have no effect - references are only tracked when the API endpoints are called directly. **Fix**: Add `IEventConsumer eventConsumer` to constructor and call `RegisterEventConsumers(eventConsumer)` as done in other services (e.g., ActorService line 101).
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -295,11 +290,9 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**No consumers yet**~~: **RESOLVED** (2026-02-02) - All L4 character consumers now integrated: Actor, CharacterEncounter, CharacterHistory, and CharacterPersonality. CharacterService queries lib-resource for L4 references in CheckCharacterReferencesAsync.
+1. **`OnDeleteAction` enum unused**: Schema defines CASCADE/RESTRICT/DETACH actions but they're not implemented. Needs design decision: should this be per-reference-type configuration, or per-reference, or removed from schema?
 
-2. **`OnDeleteAction` enum unused**: Schema defines CASCADE/RESTRICT/DETACH actions but they're not implemented. Needs design decision: should this be per-reference-type configuration, or per-reference, or removed from schema?
-
-3. **Callback index is never cleaned up**: When a cleanup callback is undefined/removed (no API for this exists), the source type remains in `callback-index:{resourceType}`. Not a bug since callbacks are typically permanent, but could accumulate stale entries.
+2. **Callback index is never cleaned up**: When a cleanup callback is undefined/removed (no API for this exists), the source type remains in `callback-index:{resourceType}`. Not a bug since callbacks are typically permanent, but could accumulate stale entries.
 
 ---
 
@@ -309,7 +302,6 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] Schema files (api, events, configuration)
 - [x] State store definitions
 - [x] Service implementation with ICacheableStateStore
-- [x] Event handlers for reference tracking
 - [x] SERVICE_HIERARCHY.md updated
 - [x] Unit tests for reference counting logic (25 tests)
 - [x] Bug fixes: ParseIsoDuration removed, CleanupCallbackTimeoutSeconds wired up, serviceName defaults to sourceType
@@ -327,7 +319,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] Phase 4: character-personality integrated - x-references, cleanup endpoint `/character-personality/cleanup-by-character`
 
 ### Pending
-None - lib-resource integration complete for all L4 character consumers.
+- [ ] **CRITICAL**: Wire up event consumer registration - add `IEventConsumer` to constructor and call `RegisterEventConsumers()`. Without this, events from L4 services have no effect (see Bugs section).
 
 ---
 
