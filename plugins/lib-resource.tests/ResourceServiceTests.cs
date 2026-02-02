@@ -690,7 +690,7 @@ public class ResourceServiceTests
     }
 
     [Fact]
-    public async Task ExecuteCleanupAsync_GracePeriodOverride_SkipsGracePeriodCheck()
+    public async Task ExecuteCleanupAsync_GracePeriodSecondsZero_SkipsGracePeriodCheck()
     {
         // Arrange
         var service = CreateService();
@@ -719,7 +719,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId,
-            GracePeriodOverride = "PT0S" // Skip grace period
+            GracePeriodSeconds = 0 // Skip grace period
         };
 
         // Act

@@ -87,8 +87,8 @@ Resource reference tracking and lifecycle management for foundational resources.
 | `DefaultGracePeriodSeconds` | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | 604800 (7 days) | Yes | Grace period before cleanup eligible |
 | `CleanupLockExpirySeconds` | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | 300 | Yes | Distributed lock timeout during cleanup |
 | `DefaultCleanupPolicy` | `RESOURCE_DEFAULT_CLEANUP_POLICY` | BEST_EFFORT | Yes | Policy when not specified per-request |
-| `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | **No** | Defined but never used (T21 violation) |
-| `MaxCallbackRetries` | `RESOURCE_MAX_CALLBACK_RETRIES` | 3 | **No** | Defined but never used (T21 violation) |
+| `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | Yes | Timeout for cleanup callback execution |
+| `MaxCallbackRetries` | `RESOURCE_MAX_CALLBACK_RETRIES` | 3 | **No** | Requires `IServiceNavigator` interface enhancement |
 
 ---
 
@@ -127,7 +127,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 | Endpoint | Notes |
 |----------|-------|
-| `POST /resource/cleanup/define` | Upserts callback definition; maintains `callback-index:{resourceType}` set for enumeration |
+| `POST /resource/cleanup/define` | Upserts callback definition; maintains `callback-index:{resourceType}` set for enumeration; `serviceName` defaults to `sourceType` if not specified |
 | `POST /resource/cleanup/execute` | Full cleanup flow: pre-check → lock → re-validate → execute callbacks → clear state |
 
 **Cleanup Execution Flow**:
@@ -136,7 +136,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 3. Acquire distributed lock on `cleanup:{resourceType}:{resourceId}`
 4. Re-validate refcount under lock (race protection)
 5. Get all callbacks via index set
-6. Execute callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel
+6. Execute callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel with configured timeout (`CleanupCallbackTimeoutSeconds`)
 7. Per cleanup policy: abort or continue on failures
 8. Delete grace period record and reference set
 9. Release lock
@@ -191,7 +191,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 2. **`OnDeleteAction` enum**: Defined in schema (`CASCADE`, `RESTRICT`, `DETACH`) but not used anywhere in the service. May be intended for future per-reference deletion behavior configuration.
 
-3. **Timeout and Retry configuration**: `CleanupCallbackTimeoutSeconds` and `MaxCallbackRetries` are defined but not passed to `IServiceNavigator.ExecutePreboundApiBatchAsync`. Callbacks currently use whatever timeout/retry the navigator defaults to.
+3. ~~**Timeout configuration**~~: **IMPLEMENTED** (2026-02-02) - `CleanupCallbackTimeoutSeconds` is now applied via `CancellationTokenSource` for cleanup callback execution. `MaxCallbackRetries` still requires `IServiceNavigator` interface enhancement.
 
 ---
 
@@ -258,13 +258,13 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ### Bugs (Fix Immediately)
 
-1. **Minute parsing in `ParseIsoDuration` is dead code**: Line 620 has `duration.Contains('M') && !duration.Contains("M")` which is always false (char 'M' and string "M" are equivalent for Contains). ISO 8601 durations with minutes (e.g., "PT5M") will not parse correctly.
+1. ~~**Minute parsing in `ParseIsoDuration` is dead code**~~: **FIXED** (2026-02-02) - Removed `ParseIsoDuration` entirely. Schema now uses `gracePeriodSeconds` (integer) instead of ISO 8601 duration strings, which is simpler and avoids parsing bugs.
 
-2. **Orphaned configuration: `CleanupCallbackTimeoutSeconds` is never used**: Defined in schema and generated config class, but never referenced in `ResourceService.cs`. The cleanup callbacks execute without any timeout override (T21 violation).
+2. ~~**Orphaned configuration: `CleanupCallbackTimeoutSeconds` is never used**~~: **FIXED** (2026-02-02) - Now used via `CancellationTokenSource.CreateLinkedTokenSource` with configured timeout for cleanup callback execution.
 
-3. **Orphaned configuration: `MaxCallbackRetries` is never used**: Same issue - defined but never passed to the callback execution logic (T21 violation).
+3. **Orphaned configuration: `MaxCallbackRetries` is never used**: Defined but `IServiceNavigator` interface doesn't support per-call retry configuration. Requires interface enhancement in lib-mesh to fully implement.
 
-4. **Silent parse failure in `ParseIsoDuration`**: When ISO 8601 parsing fails, the catch block returns 0 instead of throwing or logging. This silently interprets invalid durations as "no grace period" which may bypass intended safety delays.
+4. ~~**Silent parse failure in `ParseIsoDuration`**~~: **FIXED** (2026-02-02) - `ParseIsoDuration` removed. Integer seconds are used directly from the request, eliminating parse failures entirely.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -294,12 +294,14 @@ Resource reference tracking and lifecycle management for foundational resources.
 - [x] Service implementation with ICacheableStateStore
 - [x] Event handlers for reference tracking
 - [x] SERVICE_HIERARCHY.md updated
+- [x] Unit tests for reference counting logic (25 tests)
+- [x] Bug fixes: ParseIsoDuration removed, CleanupCallbackTimeoutSeconds wired up, serviceName defaults to sourceType
 
 ### Pending
 - [ ] Phase 2: Schema extension (`x-references`) and code generator
 - [ ] Phase 3: First consumer integration (Actor service)
 - [ ] Phase 4: Migration of CharacterService to use lib-resource
-- [ ] Unit tests for reference counting logic
+- [ ] Wire up `MaxCallbackRetries` (requires `IServiceNavigator` interface enhancement)
 
 ---
 

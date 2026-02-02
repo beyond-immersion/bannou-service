@@ -589,20 +589,6 @@ public partial class ResourceService : IResourceService
 
         return callbacks;
     }
-
-    /// <summary>
-    /// Maintains the callback index set for efficient enumeration.
-    /// Adds the source type to the index for the given resource type.
-    /// </summary>
-    private async Task MaintainCallbackIndexAsync(
-        string resourceType,
-        string sourceType,
-        CancellationToken cancellationToken)
-    {
-        var indexKey = $"callback-index:{resourceType}";
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
-        await cacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
-    }
 }
 
 // =========================================================================
