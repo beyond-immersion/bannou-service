@@ -63,9 +63,7 @@ paths:
         \     \"type\": \"string\",\n                    \"description\": \"Type of entity holding the reference (opaque identifier,
         e.g., \\\"actor\\\", \\\"scene\\\")\"\n                },\n                \"sourceId\": {\n                    \"\
         type\": \"string\",\n                    \"description\": \"ID of the entity holding the reference (opaque string,
-        supports non-Guid IDs)\"\n                },\n                \"idempotencyKey\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional key for idempotent
-        registration\"\n                }\n            }\n        }\n    }\n}"
+        supports non-Guid IDs)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterReferenceResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterReferenceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after registering a reference\",\n            \"required\": [\n\
@@ -298,15 +296,21 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of resource this cleanup
         handles (opaque identifier)\"\n                },\n                \"sourceType\": {\n                    \"type\"\
         : \"string\",\n                    \"description\": \"Type of entity that will be cleaned up (opaque identifier)\"\
-        \n                },\n                \"serviceName\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Target service name for callback invocation via
-        lib-mesh (defaults to sourceType if not specified)\"\n                },\n                \"callbackEndpoint\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Endpoint path (e.g., /actor/cleanup-by-character)\"\
-        \n                },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"JSON template with {{resourceId}} placeholder\"\n                },\n            \
-        \    \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Human-readable description of cleanup action\"\n                }\n          \
-        \  }\n        }\n    }\n}"
+        \n                },\n                \"onDeleteAction\": {\n                    \"$ref\": \"#/$defs/OnDeleteAction\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Action to take when resource is
+        deleted (defaults to CASCADE if not specified)\"\n                },\n                \"serviceName\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)\"\n       \
+        \         },\n                \"callbackEndpoint\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Endpoint path (e.g., /actor/cleanup-by-character)\"\n                },\n               \
+        \ \"payloadTemplate\": {\n                    \"type\": \"string\",\n                    \"description\": \"JSON template
+        with {{resourceId}} placeholder\"\n                },\n                \"description\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable
+        description of cleanup action\"\n                }\n            }\n        },\n        \"OnDeleteAction\": {\n   \
+        \         \"type\": \"string\",\n            \"enum\": [\n                \"CASCADE\",\n                \"RESTRICT\"\
+        ,\n                \"DETACH\"\n            ],\n            \"description\": \"Action to take when the referenced resource
+        is deleted.\\nCASCADE: Delete dependent entities when resource is deleted\\nRESTRICT: Block resource deletion if references
+        exist\\nDETACH: Set reference to null when resource is deleted\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DefineCleanupResponse\"\
         ,\n    \"$defs\": {\n        \"DefineCleanupResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after defining a cleanup callback\",\n            \"required\":
@@ -445,10 +449,6 @@ components:
         sourceId:
           type: string
           description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
-        idempotencyKey:
-          type: string
-          nullable: true
-          description: Optional key for idempotent registration
     RegisterReferenceResponse:
       type: object
       additionalProperties: false
@@ -660,6 +660,10 @@ components:
         sourceType:
           type: string
           description: Type of entity that will be cleaned up (opaque identifier)
+        onDeleteAction:
+          $ref: '#/components/schemas/OnDeleteAction'
+          nullable: true
+          description: Action to take when resource is deleted (defaults to CASCADE if not specified)
         serviceName:
           type: string
           nullable: true

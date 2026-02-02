@@ -263,6 +263,29 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/actor/cleanup-by-character': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cleanup actors referencing a deleted character
+     * @description Called by lib-resource cleanup coordination when a character is deleted.
+     *     Stops and removes all actors that reference the specified characterId.
+     *     This endpoint is designed for internal service-to-service calls during
+     *     cascading resource cleanup.
+     */
+    post: operations['CleanupByCharacter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/actor/inject-perception': {
     parameters: {
       query?: never;
@@ -1523,6 +1546,29 @@ export interface paths {
      *     style, positioning, and retreat conditions.
      */
     post: operations['getCombatPreferences'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-personality/cleanup-by-character': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cleanup all personality data for a deleted character
+     * @description Called by lib-resource cleanup coordination when a character is deleted.
+     *     Removes BOTH personality traits AND combat preferences for the specified character.
+     *     This endpoint is designed for internal service-to-service calls during
+     *     cascading resource cleanup.
+     */
+    post: operations['cleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5192,6 +5238,112 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/resource/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register a reference to a resource
+     * @description Records that sourceType:sourceId references resourceType:resourceId.
+     *     Typically called via event handlers, not directly.
+     */
+    post: operations['registerReference'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/unregister': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove a reference to a resource
+     * @description Records that sourceType:sourceId no longer references resourceType:resourceId.
+     *     Typically called via event handlers, not directly.
+     */
+    post: operations['unregisterReference'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/check': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check reference count and cleanup eligibility
+     * @description Returns the current reference count for a resource and whether it is
+     *     eligible for cleanup (refcount=0 and grace period passed).
+     */
+    post: operations['checkReferences'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List all references to a resource
+     * @description Returns all entities currently referencing a resource.
+     *     Useful for debugging and understanding reference chains.
+     */
+    post: operations['listReferences'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/cleanup/execute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Execute cleanup for a resource
+     * @description Validates refcount=0, grace period passed, acquires distributed lock,
+     *     re-validates under lock, then executes all cleanup callbacks.
+     *     Returns Conflict if refcount changed during execution.
+     */
+    post: operations['executeCleanup'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/save-load/slot/create': {
     parameters: {
       query?: never;
@@ -6214,23 +6366,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/website/server-status': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get game server status for all realms */
-    get: operations['getServerStatus'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/website/downloads': {
     parameters: {
       query?: never;
@@ -6274,23 +6409,6 @@ export interface paths {
     };
     /** Get account profile for logged-in user */
     get: operations['getAccountProfile'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/website/account/characters': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get character list for logged-in user */
-    get: operations['getAccountCharacters'];
     put?: never;
     post?: never;
     delete?: never;
@@ -6371,23 +6489,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/website/account/subscription': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get subscription status */
-    get: operations['getAccountSubscription'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6453,10 +6554,6 @@ export interface components {
        * @description Date and time of the last successful login
        */
       lastLogin?: string | null;
-      /** @description Total number of character slots available */
-      characterSlots?: number;
-      /** @description Number of character slots currently in use */
-      usedSlots?: number;
     };
     /** @description Account information response */
     AccountResponse: {
@@ -8334,6 +8431,40 @@ export interface components {
       /** @description Explanation if not allowed */
       reason?: string | null;
     };
+    /** @description Request to check reference count for a character */
+    CheckReferencesRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the character to check references for
+       */
+      characterId: string;
+    };
+    /** @description Response containing reference status for a resource */
+    CheckReferencesResponse: {
+      /** @description Type of resource checked */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource checked
+       */
+      resourceId: string;
+      /** @description Current reference count */
+      refCount: number;
+      /** @description List of entities referencing this resource (optional, for diagnostics) */
+      sources?: components['schemas']['ResourceReference'][] | null;
+      /** @description True if refCount=0 and grace period has passed */
+      isCleanupEligible: boolean;
+      /**
+       * Format: date-time
+       * @description When grace period ends (null if refCount > 0 or already passed)
+       */
+      gracePeriodEndsAt?: string | null;
+      /**
+       * Format: date-time
+       * @description When refCount last became zero
+       */
+      lastZeroTimestamp?: string | null;
+    };
     /** @description Request to checkout a scene for editing */
     CheckoutRequest: {
       /**
@@ -8454,6 +8585,47 @@ export interface components {
       /** @description Whether this is a built-in type */
       isBuiltIn: boolean;
     };
+    /** @description Request to cleanup actors referencing a deleted character */
+    CleanupByCharacterRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the character that was deleted
+       */
+      characterId: string;
+    };
+    /** @description Response from character cleanup operation */
+    CleanupByCharacterResponse: {
+      /** @description Number of actors that were stopped and cleaned up */
+      actorsCleanedUp: number;
+      /** @description IDs of actors that were cleaned up */
+      actorIds?: string[];
+      /** @description Whether cleanup completed successfully */
+      success: boolean;
+    };
+    /** @description Result of executing a single cleanup callback */
+    CleanupCallbackResult: {
+      /** @description Source type that was cleaned up (opaque identifier) */
+      sourceType: string;
+      /** @description Service that was called */
+      serviceName: string;
+      /** @description Endpoint that was called */
+      endpoint: string;
+      /** @description Whether callback succeeded */
+      success: boolean;
+      /** @description HTTP status code from callback */
+      statusCode?: number | null;
+      /** @description Error message if callback failed */
+      errorMessage?: string | null;
+      /** @description Callback execution time in milliseconds */
+      durationMs?: number;
+    };
+    /**
+     * @description Policy for cleanup callback execution.
+     *     BEST_EFFORT: Proceed with deletion even if some callbacks fail
+     *     ALL_REQUIRED: Abort deletion if any callback fails
+     * @enum {string}
+     */
+    CleanupPolicy: 'BEST_EFFORT' | 'ALL_REQUIRED';
     /** @description Response containing the client's capability manifest with available API endpoints and shortcuts */
     ClientCapabilitiesResponse: {
       /**
@@ -11919,6 +12091,38 @@ export interface components {
       | 'RELIGIOUS'
       | 'CULTURAL'
       | 'PERSONAL';
+    /** @description Request to execute cleanup for a resource */
+    ExecuteCleanupRequest: {
+      /** @description Type of resource to clean up (opaque identifier) */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource to clean up
+       */
+      resourceId: string;
+      /** @description Override grace period in seconds (uses default if not specified, 0 to skip) */
+      gracePeriodSeconds?: number | null;
+      /** @description Override cleanup policy (uses resource default if not specified) */
+      cleanupPolicy?: components['schemas']['CleanupPolicy'];
+    };
+    /** @description Response after attempting to execute cleanup */
+    ExecuteCleanupResponse: {
+      /** @description Type of resource cleaned up */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource cleaned up
+       */
+      resourceId: string;
+      /** @description True if cleanup completed (per cleanup policy) */
+      success: boolean;
+      /** @description Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.) */
+      abortReason?: string | null;
+      /** @description Results of each cleanup callback */
+      callbackResults: components['schemas']['CleanupCallbackResult'][];
+      /** @description Total cleanup execution time in milliseconds */
+      cleanupDurationMs?: number;
+    };
     /** @description Request to execute contract clauses */
     ExecuteContractRequest: {
       /**
@@ -15061,6 +15265,37 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to list all references to a resource */
+    ListReferencesRequest: {
+      /** @description Type of resource to list references for (opaque identifier) */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource to list references for
+       */
+      resourceId: string;
+      /** @description Optional filter by source type (opaque identifier) */
+      filterSourceType?: string | null;
+      /**
+       * @description Maximum references to return
+       * @default 100
+       */
+      limit: number;
+    };
+    /** @description Response containing list of references to a resource */
+    ListReferencesResponse: {
+      /** @description Type of resource listed */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource listed
+       */
+      resourceId: string;
+      /** @description List of references */
+      references: components['schemas']['ResourceReference'][];
+      /** @description Total reference count (may exceed returned list if limit applied) */
+      totalCount: number;
+    };
     /** @description Request to list relationship types with optional filtering by category, hierarchy, and deprecation status */
     ListRelationshipTypesRequest: {
       /** @description Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all) */
@@ -17748,30 +17983,6 @@ export interface components {
        */
       updatedAt: string;
     };
-    /** @description Status and population information for a single game realm */
-    RealmStatus: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for the game realm
-       */
-      realmId: string;
-      /** @description Display name of the game realm */
-      name: string;
-      /**
-       * @description Current operational status of the realm
-       * @enum {string}
-       */
-      status: 'online' | 'offline' | 'maintenance' | 'full';
-      /**
-       * @description Current player population level
-       * @enum {string}
-       */
-      population: 'low' | 'medium' | 'high' | 'full';
-      /** @description Current number of players online */
-      playerCount?: number | null;
-      /** @description Latency in milliseconds */
-      ping?: number | null;
-    };
     /** @description Request to check if multiple realms exist and are available for use */
     RealmsExistBatchRequest: {
       /** @description List of realm IDs to validate (max 100) */
@@ -17854,6 +18065,34 @@ export interface components {
       success: boolean;
       /** @description Error message if failed */
       error?: string | null;
+    };
+    /** @description Request to register a reference to a resource */
+    RegisterReferenceRequest: {
+      /** @description Type of resource being referenced (opaque identifier, e.g., "character", "realm") */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource being referenced
+       */
+      resourceId: string;
+      /** @description Type of entity holding the reference (opaque identifier, e.g., "actor", "scene") */
+      sourceType: string;
+      /** @description ID of the entity holding the reference (opaque string, supports non-Guid IDs) */
+      sourceId: string;
+    };
+    /** @description Response after registering a reference */
+    RegisterReferenceResponse: {
+      /** @description Type of resource referenced */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource referenced
+       */
+      resourceId: string;
+      /** @description Reference count after registration */
+      newRefCount: number;
+      /** @description True if this exact reference was already registered */
+      alreadyRegistered: boolean;
     };
     /** @description Request to register a new user account */
     RegisterRequest: {
@@ -18436,6 +18675,18 @@ export interface components {
       scene: components['schemas']['Scene'];
       /** @description Depth level of this reference */
       depth?: number;
+    };
+    /** @description A reference from a source entity to a resource */
+    ResourceReference: {
+      /** @description Type of entity holding the reference (opaque identifier) */
+      sourceType: string;
+      /** @description ID of the entity holding the reference (opaque string, supports non-Guid IDs) */
+      sourceId: string;
+      /**
+       * Format: date-time
+       * @description When this reference was registered
+       */
+      registeredAt: string;
     };
     /**
      * @description Validation rules for API responses with three-outcome model.
@@ -19021,16 +19272,6 @@ export interface components {
       /** @description Most common emotional impact across encounters */
       dominantEmotion?: components['schemas']['EmotionalImpact'];
     };
-    /** @description Aggregated status of all game server realms */
-    ServerStatusResponse: {
-      /**
-       * @description Overall status across all game realms
-       * @enum {string}
-       */
-      globalStatus: 'online' | 'partial' | 'offline' | 'maintenance';
-      /** @description Status information for each game realm */
-      realms: components['schemas']['RealmStatus'][];
-    };
     /** @description Information about a game service */
     ServiceInfo: {
       /**
@@ -19597,28 +19838,6 @@ export interface components {
       /** @description Total number of subscriptions matching the filter */
       totalCount: number;
     };
-    /** @description Current subscription status and plan details for an account */
-    SubscriptionResponse: {
-      /**
-       * @description Current state of the subscription
-       * @enum {string}
-       */
-      status: 'active' | 'inactive' | 'trial' | 'expired';
-      /**
-       * @description Subscription tier or plan type
-       * @enum {string}
-       */
-      type: 'free' | 'basic' | 'premium' | 'lifetime';
-      /**
-       * Format: date-time
-       * @description Date and time when the subscription expires
-       */
-      expiresAt?: string | null;
-      /** @description Whether automatic renewal is enabled */
-      autoRenew?: boolean;
-      /** @description List of benefits included in the subscription */
-      benefits?: string[];
-    };
     /** @description Request to get related topic suggestions based on a source */
     SuggestRelatedRequest: {
       /** @description Documentation namespace for suggestions */
@@ -20149,6 +20368,39 @@ export interface components {
       slotName: string;
       /** @description Version to unpin */
       versionNumber: number;
+    };
+    /** @description Request to unregister a reference to a resource */
+    UnregisterReferenceRequest: {
+      /** @description Type of resource being dereferenced (opaque identifier) */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource being dereferenced
+       */
+      resourceId: string;
+      /** @description Type of entity releasing the reference (opaque identifier) */
+      sourceType: string;
+      /** @description ID of the entity releasing the reference (opaque string, supports non-Guid IDs) */
+      sourceId: string;
+    };
+    /** @description Response after unregistering a reference */
+    UnregisterReferenceResponse: {
+      /** @description Type of resource dereferenced */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource dereferenced
+       */
+      resourceId: string;
+      /** @description Reference count after unregistration */
+      newRefCount: number;
+      /** @description True if this reference existed before unregistration */
+      wasRegistered: boolean;
+      /**
+       * Format: date-time
+       * @description When grace period started (null if refCount > 0)
+       */
+      gracePeriodStartedAt?: string | null;
     };
     /** @description A scene reference that could not be resolved */
     UnresolvedReference: {
@@ -21469,6 +21721,30 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['StopActorResponse'];
+        };
+      };
+    };
+  };
+  CleanupByCharacter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CleanupByCharacterRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CleanupByCharacterResponse'];
         };
       };
     };
@@ -23329,6 +23605,30 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  cleanupByCharacter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CleanupByCharacterRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CleanupByCharacterResponse'];
+        };
       };
     };
   };
@@ -28803,6 +29103,126 @@ export interface operations {
       };
     };
   };
+  registerReference: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterReferenceRequest'];
+      };
+    };
+    responses: {
+      /** @description Reference registered */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RegisterReferenceResponse'];
+        };
+      };
+    };
+  };
+  unregisterReference: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnregisterReferenceRequest'];
+      };
+    };
+    responses: {
+      /** @description Reference unregistered */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnregisterReferenceResponse'];
+        };
+      };
+    };
+  };
+  checkReferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckReferencesRequest'];
+      };
+    };
+    responses: {
+      /** @description Reference status */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckReferencesResponse'];
+        };
+      };
+    };
+  };
+  listReferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListReferencesRequest'];
+      };
+    };
+    responses: {
+      /** @description List of references */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListReferencesResponse'];
+        };
+      };
+    };
+  };
+  executeCleanup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExecuteCleanupRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup executed or rejected */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecuteCleanupResponse'];
+        };
+      };
+    };
+  };
   CreateSlot: {
     parameters: {
       query?: never;
@@ -30360,26 +30780,6 @@ export interface operations {
       };
     };
   };
-  getServerStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Server status information */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ServerStatusResponse'];
-        };
-      };
-    };
-  };
   getDownloads: {
     parameters: {
       query?: {
@@ -30461,35 +30861,6 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['AccountProfile'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
-      };
-    };
-  };
-  getAccountCharacters: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Character list retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CharacterListResponse'];
         };
       };
       /** @description Unauthorized */
@@ -30678,35 +31049,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
-      };
-    };
-  };
-  getAccountSubscription: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Subscription information retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SubscriptionResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponse'];
-        };
       };
     };
   };

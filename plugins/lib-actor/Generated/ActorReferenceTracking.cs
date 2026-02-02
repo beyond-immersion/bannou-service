@@ -103,6 +103,7 @@ public partial class ActorService
                 {
                     ResourceType = "character",
                     SourceType = "actor",
+                    OnDeleteAction = OnDeleteAction.CASCADE,
                     ServiceName = "actor",
                     CallbackEndpoint = "/actor/cleanup-by-character",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",

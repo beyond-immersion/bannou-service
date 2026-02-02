@@ -617,6 +617,40 @@
         }
       }
     },
+    "/actor/cleanup-by-character": {
+      "post": {
+        "operationId": "CleanupByCharacter",
+        "summary": "Cleanup actors referencing a deleted character",
+        "description": "Called by lib-resource cleanup coordination when a character is deleted.\nStops and removes all actors that reference the specified characterId.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanupByCharacterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cleanup completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupByCharacterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/actor/inject-perception": {
       "post": {
         "operationId": "InjectPerception",
@@ -3059,6 +3093,43 @@
           },
           "404": {
             "description": "No combat preferences defined for this character"
+          }
+        }
+      }
+    },
+    "/character-personality/cleanup-by-character": {
+      "post": {
+        "summary": "Cleanup all personality data for a deleted character",
+        "operationId": "cleanupByCharacter",
+        "tags": [
+          "Resource Cleanup"
+        ],
+        "description": "Called by lib-resource cleanup coordination when a character is deleted.\nRemoves BOTH personality traits AND combat preferences for the specified character.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanupByCharacterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cleanup completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupByCharacterResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -10336,6 +10407,191 @@
         }
       }
     },
+    "/resource/register": {
+      "post": {
+        "operationId": "registerReference",
+        "tags": [
+          "Reference Management"
+        ],
+        "summary": "Register a reference to a resource",
+        "description": "Records that sourceType:sourceId references resourceType:resourceId.\nTypically called via event handlers, not directly.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterReferenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reference registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterReferenceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resource/unregister": {
+      "post": {
+        "operationId": "unregisterReference",
+        "tags": [
+          "Reference Management"
+        ],
+        "summary": "Remove a reference to a resource",
+        "description": "Records that sourceType:sourceId no longer references resourceType:resourceId.\nTypically called via event handlers, not directly.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterReferenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reference unregistered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnregisterReferenceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resource/check": {
+      "post": {
+        "operationId": "checkReferences",
+        "tags": [
+          "Reference Management"
+        ],
+        "summary": "Check reference count and cleanup eligibility",
+        "description": "Returns the current reference count for a resource and whether it is\neligible for cleanup (refcount=0 and grace period passed).\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckReferencesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reference status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckReferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resource/list": {
+      "post": {
+        "operationId": "listReferences",
+        "tags": [
+          "Reference Management"
+        ],
+        "summary": "List all references to a resource",
+        "description": "Returns all entities currently referencing a resource.\nUseful for debugging and understanding reference chains.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListReferencesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "List of references",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListReferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resource/cleanup/execute": {
+      "post": {
+        "operationId": "executeCleanup",
+        "tags": [
+          "Cleanup Management"
+        ],
+        "summary": "Execute cleanup for a resource",
+        "description": "Validates refcount=0, grace period passed, acquires distributed lock,\nre-validates under lock, then executes all cleanup callbacks.\nReturns Conflict if refcount changed during execution.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteCleanupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cleanup executed or rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteCleanupResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/save-load/slot/create": {
       "post": {
         "tags": [
@@ -12343,33 +12599,6 @@
         }
       }
     },
-    "/website/server-status": {
-      "get": {
-        "summary": "Get game server status for all realms",
-        "operationId": "getServerStatus",
-        "tags": [
-          "Status"
-        ],
-        "x-permissions": [
-          {
-            "role": "anonymous",
-            "states": {}
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Server status information",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerStatusResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/website/downloads": {
       "get": {
         "summary": "Get download links for game clients",
@@ -12489,48 +12718,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountProfile"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/website/account/characters": {
-      "get": {
-        "summary": "Get character list for logged-in user",
-        "operationId": "getAccountCharacters",
-        "tags": [
-          "Account"
-        ],
-        "x-permissions": [
-          {
-            "role": "user",
-            "states": {}
-          }
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Character list retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CharacterListResponse"
                 }
               }
             }
@@ -12844,48 +13031,6 @@
           }
         }
       }
-    },
-    "/website/account/subscription": {
-      "get": {
-        "summary": "Get subscription status",
-        "operationId": "getAccountSubscription",
-        "tags": [
-          "Account"
-        ],
-        "x-permissions": [
-          {
-            "role": "user",
-            "states": {}
-          }
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Subscription information retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -12988,14 +13133,6 @@
             "format": "date-time",
             "nullable": true,
             "description": "Date and time of the last successful login"
-          },
-          "characterSlots": {
-            "type": "integer",
-            "description": "Total number of character slots available"
-          },
-          "usedSlots": {
-            "type": "integer",
-            "description": "Number of character slots currently in use"
           }
         }
       },
@@ -16475,6 +16612,71 @@
           }
         }
       },
+      "CheckReferencesRequest": {
+        "description": "Request to check reference count for a character",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the character to check references for"
+          }
+        }
+      },
+      "CheckReferencesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response containing reference status for a resource",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "refCount",
+          "isCleanupEligible"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource checked"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource checked"
+          },
+          "refCount": {
+            "type": "integer",
+            "description": "Current reference count"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceReference"
+            },
+            "nullable": true,
+            "description": "List of entities referencing this resource (optional, for diagnostics)"
+          },
+          "isCleanupEligible": {
+            "type": "boolean",
+            "description": "True if refCount=0 and grace period has passed"
+          },
+          "gracePeriodEndsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When grace period ends (null if refCount > 0 or already passed)"
+          },
+          "lastZeroTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When refCount last became zero"
+          }
+        }
+      },
       "CheckoutRequest": {
         "type": "object",
         "description": "Request to checkout a scene for editing",
@@ -16721,6 +16923,98 @@
             "description": "Whether this is a built-in type"
           }
         }
+      },
+      "CleanupByCharacterRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to cleanup actors referencing a deleted character",
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the character that was deleted"
+          }
+        }
+      },
+      "CleanupByCharacterResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response from character cleanup operation",
+        "required": [
+          "actorsCleanedUp",
+          "success"
+        ],
+        "properties": {
+          "actorsCleanedUp": {
+            "type": "integer",
+            "description": "Number of actors that were stopped and cleaned up"
+          },
+          "actorIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of actors that were cleaned up"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether cleanup completed successfully"
+          }
+        }
+      },
+      "CleanupCallbackResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of executing a single cleanup callback",
+        "required": [
+          "sourceType",
+          "serviceName",
+          "endpoint",
+          "success"
+        ],
+        "properties": {
+          "sourceType": {
+            "type": "string",
+            "description": "Source type that was cleaned up (opaque identifier)"
+          },
+          "serviceName": {
+            "type": "string",
+            "description": "Service that was called"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Endpoint that was called"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether callback succeeded"
+          },
+          "statusCode": {
+            "type": "integer",
+            "nullable": true,
+            "description": "HTTP status code from callback"
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message if callback failed"
+          },
+          "durationMs": {
+            "type": "integer",
+            "description": "Callback execution time in milliseconds"
+          }
+        }
+      },
+      "CleanupPolicy": {
+        "type": "string",
+        "enum": [
+          "BEST_EFFORT",
+          "ALL_REQUIRED"
+        ],
+        "description": "Policy for cleanup callback execution.\nBEST_EFFORT: Proceed with deletion even if some callbacks fail\nALL_REQUIRED: Abort deletion if any callback fails\n"
       },
       "ClientCapabilitiesResponse": {
         "description": "Response containing the client's capability manifest with available API endpoints and shortcuts",
@@ -23082,6 +23376,78 @@
           "PERSONAL"
         ]
       },
+      "ExecuteCleanupRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to execute cleanup for a resource",
+        "required": [
+          "resourceType",
+          "resourceId"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource to clean up (opaque identifier)"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource to clean up"
+          },
+          "gracePeriodSeconds": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Override grace period in seconds (uses default if not specified, 0 to skip)"
+          },
+          "cleanupPolicy": {
+            "$ref": "#/components/schemas/CleanupPolicy",
+            "nullable": true,
+            "description": "Override cleanup policy (uses resource default if not specified)"
+          }
+        }
+      },
+      "ExecuteCleanupResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response after attempting to execute cleanup",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "success",
+          "callbackResults"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource cleaned up"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource cleaned up"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "True if cleanup completed (per cleanup policy)"
+          },
+          "abortReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.)"
+          },
+          "callbackResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CleanupCallbackResult"
+            },
+            "description": "Results of each cleanup callback"
+          },
+          "cleanupDurationMs": {
+            "type": "integer",
+            "description": "Total cleanup execution time in milliseconds"
+          }
+        }
+      },
       "ExecuteContractRequest": {
         "type": "object",
         "description": "Request to execute contract clauses",
@@ -28960,6 +29326,69 @@
           }
         }
       },
+      "ListReferencesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to list all references to a resource",
+        "required": [
+          "resourceType",
+          "resourceId"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource to list references for (opaque identifier)"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource to list references for"
+          },
+          "filterSourceType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional filter by source type (opaque identifier)"
+          },
+          "limit": {
+            "type": "integer",
+            "default": 100,
+            "description": "Maximum references to return"
+          }
+        }
+      },
+      "ListReferencesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response containing list of references to a resource",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "references",
+          "totalCount"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource listed"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource listed"
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceReference"
+            },
+            "description": "List of references"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total reference count (may exceed returned list if limit applied)"
+          }
+        }
+      },
       "ListRelationshipTypesRequest": {
         "description": "Request to list relationship types with optional filtering by category, hierarchy, and deprecation status",
         "type": "object",
@@ -34130,58 +34559,6 @@
           }
         }
       },
-      "RealmStatus": {
-        "description": "Status and population information for a single game realm",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "realmId",
-          "name",
-          "status",
-          "population"
-        ],
-        "properties": {
-          "realmId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier for the game realm"
-          },
-          "name": {
-            "type": "string",
-            "description": "Display name of the game realm"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "online",
-              "offline",
-              "maintenance",
-              "full"
-            ],
-            "description": "Current operational status of the realm"
-          },
-          "population": {
-            "type": "string",
-            "enum": [
-              "low",
-              "medium",
-              "high",
-              "full"
-            ],
-            "description": "Current player population level"
-          },
-          "playerCount": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Current number of players online"
-          },
-          "ping": {
-            "type": "integer",
-            "description": "Latency in milliseconds",
-            "nullable": true
-          }
-        }
-      },
       "RealmsExistBatchRequest": {
         "description": "Request to check if multiple realms exist and are available for use",
         "type": "object",
@@ -34378,6 +34755,66 @@
             "type": "string",
             "nullable": true,
             "description": "Error message if failed"
+          }
+        }
+      },
+      "RegisterReferenceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to register a reference to a resource",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "sourceType",
+          "sourceId"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource being referenced (opaque identifier, e.g., \"character\", \"realm\")"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource being referenced"
+          },
+          "sourceType": {
+            "type": "string",
+            "description": "Type of entity holding the reference (opaque identifier, e.g., \"actor\", \"scene\")"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "ID of the entity holding the reference (opaque string, supports non-Guid IDs)"
+          }
+        }
+      },
+      "RegisterReferenceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response after registering a reference",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "newRefCount",
+          "alreadyRegistered"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource referenced"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource referenced"
+          },
+          "newRefCount": {
+            "type": "integer",
+            "description": "Reference count after registration"
+          },
+          "alreadyRegistered": {
+            "type": "boolean",
+            "description": "True if this exact reference was already registered"
           }
         }
       },
@@ -35481,6 +35918,31 @@
           }
         }
       },
+      "ResourceReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A reference from a source entity to a resource",
+        "required": [
+          "sourceType",
+          "sourceId",
+          "registeredAt"
+        ],
+        "properties": {
+          "sourceType": {
+            "type": "string",
+            "description": "Type of entity holding the reference (opaque identifier)"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "ID of the entity holding the reference (opaque string, supports non-Guid IDs)"
+          },
+          "registeredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this reference was registered"
+          }
+        }
+      },
       "ResponseValidation": {
         "type": "object",
         "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
@@ -36490,34 +36952,6 @@
             "$ref": "#/components/schemas/EmotionalImpact",
             "nullable": true,
             "description": "Most common emotional impact across encounters"
-          }
-        }
-      },
-      "ServerStatusResponse": {
-        "description": "Aggregated status of all game server realms",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "realms",
-          "globalStatus"
-        ],
-        "properties": {
-          "globalStatus": {
-            "type": "string",
-            "enum": [
-              "online",
-              "partial",
-              "offline",
-              "maintenance"
-            ],
-            "description": "Overall status across all game realms"
-          },
-          "realms": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RealmStatus"
-            },
-            "description": "Status information for each game realm"
           }
         }
       },
@@ -37609,54 +38043,6 @@
           }
         }
       },
-      "SubscriptionResponse": {
-        "description": "Current subscription status and plan details for an account",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "status",
-          "type"
-        ],
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "active",
-              "inactive",
-              "trial",
-              "expired"
-            ],
-            "description": "Current state of the subscription"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "free",
-              "basic",
-              "premium",
-              "lifetime"
-            ],
-            "description": "Subscription tier or plan type"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date and time when the subscription expires"
-          },
-          "autoRenew": {
-            "type": "boolean",
-            "description": "Whether automatic renewal is enabled"
-          },
-          "benefits": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of benefits included in the subscription"
-          }
-        }
-      },
       "SuggestRelatedRequest": {
         "description": "Request to get related topic suggestions based on a source",
         "type": "object",
@@ -38650,6 +39036,72 @@
           "versionNumber": {
             "type": "integer",
             "description": "Version to unpin"
+          }
+        }
+      },
+      "UnregisterReferenceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to unregister a reference to a resource",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "sourceType",
+          "sourceId"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource being dereferenced (opaque identifier)"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource being dereferenced"
+          },
+          "sourceType": {
+            "type": "string",
+            "description": "Type of entity releasing the reference (opaque identifier)"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "ID of the entity releasing the reference (opaque string, supports non-Guid IDs)"
+          }
+        }
+      },
+      "UnregisterReferenceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response after unregistering a reference",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "newRefCount",
+          "wasRegistered"
+        ],
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource dereferenced"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the resource dereferenced"
+          },
+          "newRefCount": {
+            "type": "integer",
+            "description": "Reference count after unregistration"
+          },
+          "wasRegistered": {
+            "type": "boolean",
+            "description": "True if this reference existed before unregistration"
+          },
+          "gracePeriodStartedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When grace period started (null if refCount > 0)"
           }
         }
       },
@@ -40755,6 +41207,10 @@
     {
       "name": "Relationship",
       "description": "Generic relationship management service for entity-to-entity relationships."
+    },
+    {
+      "name": "Resource Lifecycle",
+      "description": "Resource reference tracking and lifecycle management."
     },
     {
       "name": "Save-Load",

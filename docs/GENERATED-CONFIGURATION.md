@@ -679,6 +679,15 @@ This document lists all configuration options defined in Bannou's configuration 
 | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | int | `100` | Maximum number of individual migration error details to trac... |
 | `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
 
+### Resource
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | int | `30` | Timeout for each cleanup callback execution |
+| `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | int | `300` | Distributed lock timeout during cleanup execution |
+| `RESOURCE_DEFAULT_CLEANUP_POLICY` | string | `BEST_EFFORT` | Default cleanup policy when not specified per-resource-type |
+| `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | int | `604800` | Default grace period in seconds before cleanup eligible (7 d... |
+
 ### Save Load
 
 | Environment Variable | Type | Default | Description |
@@ -802,9 +811,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 618
+- **Total properties**: 622
 - **Required (no default)**: 41
-- **Optional (has default)**: 577
+- **Optional (has default)**: 581
 
 ## Environment Variable Naming Convention
 

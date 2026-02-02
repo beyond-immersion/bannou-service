@@ -9,7 +9,7 @@
 
 ## Overview
 
-Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, four load balancing algorithms (RoundRobin, LeastConnections, Weighted, Random), a per-appId circuit breaker, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
+Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, five load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), a distributed per-appId circuit breaker with cross-instance synchronization, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection with automatic deregistration after consecutive failures. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
 
 ---
 
@@ -130,13 +130,13 @@ Service lifetime is **Scoped** (per-request) for MeshService itself. Infrastruct
 ### Service Discovery (2 endpoints)
 
 - **GetEndpoints** (`/mesh/endpoints/get`): Returns endpoints for an app-id. Filters by health status (default: healthy only) and optional service name. Returns healthy/total counts.
-- **ListEndpoints** (`/mesh/endpoints/list`): Admin-level listing of all endpoints. Groups by status for summary (healthy, degraded, unavailable). Supports app-id prefix filter. **Note**: `statusFilter` parameter is defined in schema but not implemented.
+- **ListEndpoints** (`/mesh/endpoints/list`): Admin-level listing of all endpoints. Groups by status for summary (healthy, degraded, unavailable). Supports app-id prefix filter and status filter (filters in-memory after fetching from Redis).
 
 ### Registration (3 endpoints)
 
 - **Register** (`/mesh/register`): Announces instance availability. Generates instance ID if not provided. Stores with configurable TTL. Publishes `mesh.endpoint.registered`. **Note**: `metadata` parameter is defined in schema but not stored.
 - **Deregister** (`/mesh/deregister`): Graceful shutdown removal. Looks up endpoint first (for app-id), removes from store, publishes `mesh.endpoint.deregistered` with reason=Graceful.
-- **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections). Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling. **Note**: `issues` parameter is defined in schema but not used.
+- **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections, issues). Issues are stored on the endpoint and visible in endpoint queries. Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling.
 
 ### Routing (2 endpoints)
 
@@ -228,28 +228,18 @@ Event-Driven Auto-Registration
 1. **Local routing mode is minimal**: `LocalMeshStateManager` provides in-memory state for testing but does not simulate failure scenarios or load balancing nuances. All calls return the same local endpoint regardless of app-id.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/162 -->
 
-2. ~~**Health check deregistration**~~: **FIXED** (2026-01-30) - `MeshHealthCheckService` now tracks consecutive failures per endpoint and deregisters after `HealthCheckFailureThreshold` (default 3) consecutive failures, publishing `MeshEndpointDeregisteredEvent` with `HealthCheckFailed` reason. Set threshold to 0 to disable deregistration (TTL expiry behavior).
-
-3. ~~**ListEndpointsRequest.statusFilter**~~: **FIXED** (2026-01-30) - Now implemented in `ListEndpointsAsync`.
-
-4. **RegisterEndpointRequest.metadata**: Defined in schema but never stored - metadata is silently discarded.
+2. **RegisterEndpointRequest.metadata**: Defined in schema but never stored - metadata is silently discarded.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
-
-5. ~~**HeartbeatRequest.issues**~~: **FIXED** (2026-01-30) - Added `issues` field to `MeshEndpoint` schema. Issues are now stored on heartbeat and visible in endpoint queries.
 
 ---
 
 ## Potential Extensions
 
-1. ~~**Weighted round-robin**~~: **IMPLEMENTED** (2026-01-30) - Added `WeightedRoundRobin` to `LoadBalancerAlgorithm` enum. Uses smooth weighted round-robin algorithm (nginx-style): each endpoint's current_weight is incremented by effective_weight (100 - LoadPercent) each round, highest current_weight wins, then is reduced by total effective weight. Provides predictable distribution proportional to inverse load.
+1. **Endpoint affinity**: Sticky routing for stateful services (session affinity based on request metadata).
 
-2. ~~**Distributed circuit breaker**~~: **IMPLEMENTED** (2026-02-01) - Circuit breaker state is now shared across instances via Redis + RabbitMQ events. Uses Lua scripts for atomic state transitions, local `ConcurrentDictionary` cache for 0ms reads on hot path, and `mesh.circuit.changed` events for cross-instance synchronization. Gracefully degrades to local-only tracking when Redis unavailable.
+2. **Graceful draining**: Endpoint status `ShuttingDown` could actively drain connections before full deregistration.
 
-3. **Endpoint affinity**: Sticky routing for stateful services (session affinity based on request metadata).
-
-4. **Graceful draining**: Endpoint status `ShuttingDown` could actively drain connections before full deregistration.
-
-5. ~~**Health check deregistration**~~: **IMPLEMENTED** (2026-01-30) - See Stubs section item 2.
+3. **Request-level timeout**: Add a configurable per-request timeout separate from connection timeout to prevent slow responses from blocking the retry loop indefinitely.
 
 ---
 
@@ -257,12 +247,8 @@ Event-Driven Auto-Registration
 
 ### Bugs (Fix Immediately)
 
-1. ~~**`ListEndpointsRequest.StatusFilter` not implemented**~~: **FIXED** (2026-01-30) - `ListEndpointsAsync` now applies `body.StatusFilter` via LINQ after fetching endpoints from the state manager. Filters in-memory since status is not indexed in Redis.
-
-2. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:173-186` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
+1. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:172-198` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
-
-3. ~~**`HeartbeatRequest.Issues` not used**~~: **FIXED** (2026-01-30) - `HeartbeatAsync` now passes `body.Issues` to `UpdateHeartbeatAsync`, which stores them on the `MeshEndpoint`. Issues are preserved during health checks and event-based heartbeats. Visible via `/mesh/endpoints/get`, `/mesh/endpoints/list`, and `/mesh/route` responses.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -272,7 +258,7 @@ Event-Driven Auto-Registration
 
 3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem - not a bug, but worth noting.
 
-4. ~~**Circuit breaker is per-instance, not distributed**~~: **FIXED** (2026-02-01) - Circuit breaker state is now shared across instances via Redis and synchronized via `mesh.circuit.changed` events. All instances see the same circuit state within event propagation latency.
+4. **Distributed circuit breaker uses eventual consistency**: Circuit breaker state is shared across instances via Redis + RabbitMQ events. All instances see the same circuit state within event propagation latency (~milliseconds). During the propagation window, different instances may briefly disagree about circuit state.
 
 5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop until the configured retry attempts are exhausted or cancellation is requested.
 
@@ -280,13 +266,13 @@ Event-Driven Auto-Registration
 
 7. **Empty service mappings reset to default routing**: When `HandleServiceMappingsAsync` receives a `FullServiceMappingsEvent` with empty mappings, it resets all routing to the default app-id ("bannou"). This is intentional for container teardown scenarios.
 
+8. **Health check deregistration uses configurable threshold**: After `HealthCheckFailureThreshold` (default 3) consecutive probe failures, endpoints are automatically deregistered with `HealthCheckFailed` reason. Set threshold to 0 to disable deregistration and rely solely on TTL expiry.
+
 ### Design Considerations (Requires Planning)
 
-1. ~~**EndpointCache uses Dictionary + lock, not ConcurrentDictionary**~~: **FIXED** (2026-02-01) - The `EndpointCache` inner class in MeshInvocationClient now uses `ConcurrentDictionary` for lock-free thread safety, consistent with IMPLEMENTATION TENETS (Multi-Instance Safety).
+1. **MeshInvocationClient is Singleton with mutable state**: The circuit breaker and endpoint cache are instance-level mutable state in a Singleton-lifetime service. Thread-safe by design (ConcurrentDictionary for all caches) but long-lived state accumulates.
 
-2. **MeshInvocationClient is Singleton with mutable state**: The circuit breaker and endpoint cache are instance-level mutable state in a Singleton-lifetime service. Thread-safe by design (ConcurrentDictionary for all caches) but long-lived state accumulates.
-
-3. **Event-backed local cache pattern for circuit breaker**: The distributed circuit breaker uses a hybrid architecture: Redis stores authoritative state (via atomic Lua scripts), local `ConcurrentDictionary` provides 0ms reads on hot path, and RabbitMQ events propagate state changes across instances. This pattern avoids Redis round-trip latency on every invocation while ensuring eventual consistency across the cluster.
+2. **Event-backed local cache pattern for circuit breaker**: The distributed circuit breaker uses a hybrid architecture: Redis stores authoritative state (via atomic Lua scripts), local `ConcurrentDictionary` provides 0ms reads on hot path, and RabbitMQ events propagate state changes across instances. This pattern avoids Redis round-trip latency on every invocation while ensuring eventual consistency across the cluster.
 
 3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. Uses `Interlocked.CompareExchange` for thread-safe first initialization and resets `_initialized` flag on failure to allow retry.
 

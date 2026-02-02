@@ -42,6 +42,7 @@ import { RealmProxy } from './proxies/RealmProxy.js';
 import { RealmHistoryProxy } from './proxies/RealmHistoryProxy.js';
 import { RelationshipProxy } from './proxies/RelationshipProxy.js';
 import { RelationshipTypeProxy } from './proxies/RelationshipTypeProxy.js';
+import { ResourceProxy } from './proxies/ResourceProxy.js';
 import { SaveLoadProxy } from './proxies/SaveLoadProxy.js';
 import { SceneProxy } from './proxies/SceneProxy.js';
 import { SessionsProxy } from './proxies/SessionsProxy.js';
@@ -86,6 +87,7 @@ interface ProxyCache {
   realmHistory?: RealmHistoryProxy;
   relationship?: RelationshipProxy;
   relationshipType?: RelationshipTypeProxy;
+  resource?: ResourceProxy;
   saveLoad?: SaveLoadProxy;
   scene?: SceneProxy;
   sessions?: SessionsProxy;
@@ -460,6 +462,18 @@ Object.defineProperty(BannouClient.prototype, 'relationshipType', {
 });
 
 /**
+ * Add lazy-initialized resource proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'resource', {
+  get(this: BannouClientWithCache): ResourceProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.resource ??= new ResourceProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
  * Add lazy-initialized saveLoad proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'saveLoad', {
@@ -678,6 +692,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for RelationshipType API endpoints.
      */
     readonly relationshipType: RelationshipTypeProxy;
+    /**
+     * Typed proxy for Resource API endpoints.
+     */
+    readonly resource: ResourceProxy;
     /**
      * Typed proxy for SaveLoad API endpoints.
      */

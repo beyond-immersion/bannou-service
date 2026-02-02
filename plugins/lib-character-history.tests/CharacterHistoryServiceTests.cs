@@ -1,8 +1,8 @@
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
-using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;

@@ -39,7 +39,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 | lib-character-encounter | Publishes reference events in RecordEncounterAsync/DeleteEncounterAsync; cleanup via `/character-encounter/delete-by-character` |
 | lib-character-history | Publishes reference events for participations and backstory; cleanup via `/character-history/delete-all` |
 | lib-character-personality | Publishes reference events for personality/combat prefs; cleanup via `/character-personality/cleanup-by-character` |
-| lib-scene (planned) | Publishes reference events for scene-to-character references; registers cleanup callback |
+| *lib-scene (not yet integrated)* | *Planned: would publish reference events for scene-to-character references; would register cleanup callback* |
 
 ---
 
@@ -47,11 +47,13 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 **Stores**: 3 state stores (all Redis-backed)
 
-| Store | Backend | Key Prefix | Purpose |
-|-------|---------|------------|---------|
+| Store | Backend | Schema Prefix | Purpose |
+|-------|---------|---------------|---------|
 | `resource-refcounts` | Redis | `resource:ref` | Reference tracking via sets |
 | `resource-cleanup` | Redis | `resource:cleanup` | Cleanup callback definitions |
 | `resource-grace` | Redis | `resource:grace` | Grace period timestamps |
+
+**Note**: The "Schema Prefix" column shows the prefix defined in `state-stores.yaml`. The actual Redis key is `{prefix}:{key}` where key patterns are shown below.
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -82,12 +84,14 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ## Configuration
 
-| Property | Env Var | Default | Used | Purpose |
-|----------|---------|---------|------|---------|
-| `DefaultGracePeriodSeconds` | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | 604800 (7 days) | Yes | Grace period before cleanup eligible |
-| `CleanupLockExpirySeconds` | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | 300 | Yes | Distributed lock timeout during cleanup |
-| `DefaultCleanupPolicy` | `RESOURCE_DEFAULT_CLEANUP_POLICY` | BEST_EFFORT | Yes | Policy when not specified per-request |
-| `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | Yes | Timeout for cleanup callback execution |
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `DefaultGracePeriodSeconds` | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | 604800 (7 days) | Grace period before cleanup eligible |
+| `CleanupLockExpirySeconds` | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | 300 | Distributed lock timeout during cleanup |
+| `DefaultCleanupPolicy` | `RESOURCE_DEFAULT_CLEANUP_POLICY` | BEST_EFFORT | Policy when not specified per-request |
+| `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | Timeout for cleanup callback execution |
+
+All configuration properties are verified as used in `ResourceService.cs`.
 
 ---
 
@@ -303,37 +307,40 @@ None.
 
 1. **Callback index is never cleaned up**: When a cleanup callback is undefined/removed (no API for this exists), the source type remains in `callback-index:{resourceType}`. Not a bug since callbacks are typically permanent, but could accumulate stale entries.
 
+2. **No API to undefine cleanup callbacks**: There is no endpoint to remove a previously registered cleanup callback. Currently, callbacks are intended to be permanent (registered at service startup). If callback removal is needed, consider adding `/resource/cleanup/undefine` endpoint that also cleans up the callback index.
+
 ---
 
 ## Work Tracking
 
-### Completed
-- [x] Schema files (api, events, configuration)
-- [x] State store definitions
-- [x] Service implementation with ICacheableStateStore
-- [x] Event handlers for reference tracking wired up via IEventConsumer
-- [x] SERVICE_HIERARCHY.md updated
-- [x] Unit tests for reference counting logic (25 tests)
-- [x] Bug fixes: ParseIsoDuration removed, CleanupCallbackTimeoutSeconds wired up, serviceName defaults to sourceType
-- [x] Phase 2: Schema extension (`x-references`, `x-resource-lifecycle`) documented in SCHEMA-RULES.md
-- [x] Phase 2: `scripts/generate-references.py` code generator created
-- [x] Phase 2: Generator integrated into `scripts/generate-all-services.sh` pipeline
-- [x] Phase 2: Example `x-references` added to actor-api.yaml, generates `ActorReferenceTracking.cs`
-- [x] Phase 3: sourceId changed to opaque string (supports non-Guid IDs like Actor's `brain-{guid}` format)
-- [x] Phase 3: Actor service wired up - `RegisterCharacterReferenceAsync` in SpawnActorAsync, `UnregisterCharacterReferenceAsync` in StopActorAsync
-- [x] Phase 3: Cleanup endpoint `/actor/cleanup-by-character` added to actor-api.yaml and implemented
-- [x] Phase 3: `RegisterResourceCleanupCallbacksAsync` wired up in ActorServicePlugin.OnRunningAsync
-- [x] Phase 4: CharacterService queries lib-resource for L4 references in CheckCharacterReferencesAsync
-- [x] Phase 4: character-encounter integrated - x-references, cleanup endpoint `/character-encounter/delete-by-character`
-- [x] Phase 4: character-history integrated - x-references, cleanup via existing `/character-history/delete-all`
-- [x] Phase 4: character-personality integrated - x-references, cleanup endpoint `/character-personality/cleanup-by-character`
+This section tracks active development work on items from the quirks/bugs lists above.
 
-- [x] OnDeleteAction enum wired up - per-callback deletion behavior (CASCADE/RESTRICT/DETACH)
-- [x] idempotencyKey stub removed from RegisterReferenceRequest schema
-- [x] Unit tests for OnDeleteAction functionality (30 total tests)
+### Active
 
-### Pending
-None - lib-resource integration complete for all L4 character consumers.
+*No active work items.*
+
+### Completed (Historical)
+
+The lib-resource service is feature-complete for the current integration requirements:
+- Schema files (api, events, configuration)
+- State store definitions (resource-refcounts, resource-cleanup, resource-grace)
+- Service implementation with ICacheableStateStore for atomic set operations
+- Event handlers for reference tracking wired up via IEventConsumer
+- Unit tests (30 tests covering reference counting, grace periods, cleanup policies)
+- OnDeleteAction enum (CASCADE/RESTRICT/DETACH) for per-callback deletion behavior
+
+**Integrated Consumers**:
+- lib-actor: `x-references` schema, `/actor/cleanup-by-character` endpoint
+- lib-character-encounter: `x-references` schema, `/character-encounter/delete-by-character` endpoint
+- lib-character-history: `x-references` schema, `/character-history/delete-all` cleanup
+- lib-character-personality: `x-references` schema, `/character-personality/cleanup-by-character` endpoint
+
+**Foundation Consumer**:
+- lib-character: Queries `/resource/check` in `CheckCharacterReferencesAsync`
+
+### Pending Integrations
+
+1. **lib-scene**: Not yet integrated with lib-resource. When scene references to characters are added, will need `x-references` schema extension and cleanup endpoint.
 
 ---
 

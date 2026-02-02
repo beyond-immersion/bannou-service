@@ -33,6 +33,7 @@ export { RealmProxy } from './RealmProxy.js';
 export { RealmHistoryProxy } from './RealmHistoryProxy.js';
 export { RelationshipProxy } from './RelationshipProxy.js';
 export { RelationshipTypeProxy } from './RelationshipTypeProxy.js';
+export { ResourceProxy } from './ResourceProxy.js';
 export { SaveLoadProxy } from './SaveLoadProxy.js';
 export { SceneProxy } from './SceneProxy.js';
 export { SessionsProxy } from './SessionsProxy.js';

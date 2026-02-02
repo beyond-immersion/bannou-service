@@ -103,6 +103,7 @@ public partial class CharacterEncounterService
                 {
                     ResourceType = "character",
                     SourceType = "character-encounter",
+                    OnDeleteAction = OnDeleteAction.CASCADE,
                     ServiceName = "character-encounter",
                     CallbackEndpoint = "/character-encounter/delete-by-character",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",

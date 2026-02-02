@@ -49,11 +49,6 @@ public partial class ResourceController
                 "sourceId": {
                     "type": "string",
                     "description": "ID of the entity holding the reference (opaque string, supports non-Guid IDs)"
-                },
-                "idempotencyKey": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional key for idempotent registration"
                 }
             }
         }
@@ -651,6 +646,11 @@ public partial class ResourceController
                     "type": "string",
                     "description": "Type of entity that will be cleaned up (opaque identifier)"
                 },
+                "onDeleteAction": {
+                    "$ref": "#/$defs/OnDeleteAction",
+                    "nullable": true,
+                    "description": "Action to take when resource is deleted (defaults to CASCADE if not specified)"
+                },
                 "serviceName": {
                     "type": "string",
                     "nullable": true,
@@ -670,6 +670,15 @@ public partial class ResourceController
                     "description": "Human-readable description of cleanup action"
                 }
             }
+        },
+        "OnDeleteAction": {
+            "type": "string",
+            "enum": [
+                "CASCADE",
+                "RESTRICT",
+                "DETACH"
+            ],
+            "description": "Action to take when the referenced resource is deleted.\nCASCADE: Delete dependent entities when resource is deleted\nRESTRICT: Block resource deletion if references exist\nDETACH: Set reference to null when resource is deleted\n"
         }
     }
 }

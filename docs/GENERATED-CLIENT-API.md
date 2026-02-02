@@ -11,7 +11,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 |---------|---------------|---------|-------------|
 | [Bannou Account Service API](#account) | `client.Account` | 16 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
-| [Actor Service API](#actor) | `client.Actor` | 15 | Distributed actor management and execution for NPC brains, e... |
+| [Actor Service API](#actor) | `client.Actor` | 16 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 13 | Authentication and session management service (Internet-faci... |
@@ -19,7 +19,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Service API](#character) | `client.Character` | 11 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
-| [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
+| [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 10 | Machine-readable personality traits for NPC behavior decisio... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
@@ -42,6 +42,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 10 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
 | [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
+| [Resource Lifecycle API](#resource) | `client.Resource` | 6 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
@@ -172,6 +173,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `SpawnactorAsync` | `SpawnActorRequest` | `ActorInstanceResponse` | Spawn a new actor from a template |
 | `GetActorAsync` | `GetActorRequest` | `ActorInstanceResponse` | Get actor instance (instantiate-on-access if template allows) |
 | `StopactorAsync` | `StopActorRequest` | `StopActorResponse` | Stop a running actor |
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup actors referencing a deleted character |
 | `ListActorsAsync` | `ListActorsRequest` | `ListActorsResponse` | List actors with optional filters |
 | `InjectperceptionAsync` | `InjectPerceptionRequest` | `InjectPerceptionResponse` | Inject a perception event into an actor's queue (testing) |
 | `QueryoptionsAsync` | `QueryOptionsRequest` | `QueryOptionsResponse` | Query an actor for its available options |
@@ -495,6 +497,12 @@ Machine-readable personality traits for NPC behavior decisions.
 | `SetpersonalityAsync` | `SetPersonalityRequest` | `PersonalityResponse` | Create or update personality for a character |
 | `BatchgetpersonalitiesAsync` | `BatchGetPersonalitiesRequest` | `BatchPersonalityResponse` | Get personalities for multiple characters |
 | `DeletePersonalityEventAsync` | `DeletePersonalityRequest` | *(fire-and-forget)* | Delete personality for a character |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all personality data for a deleted character |
 
 ---
 
@@ -1392,6 +1400,30 @@ Relationship type management service for game worlds.
 
 ---
 
+## Resource Lifecycle API {#resource}
+
+**Proxy**: `client.Resource` | **Version**: 1.0.0
+
+Resource reference tracking and lifecycle management.
+
+### Cleanup Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DefinecleanupcallbackAsync` | `DefineCleanupRequest` | `DefineCleanupResponse` | Define cleanup callbacks for a resource type |
+| `ExecutecleanupAsync` | `ExecuteCleanupRequest` | `ExecuteCleanupResponse` | Execute cleanup for a resource |
+
+### Reference Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterReferenceAsync` | `RegisterReferenceRequest` | `RegisterReferenceResponse` | Register a reference to a resource |
+| `UnregisterreferenceAsync` | `UnregisterReferenceRequest` | `UnregisterReferenceResponse` | Remove a reference to a resource |
+| `CheckreferencesAsync` | `CheckReferencesRequest` | `CheckReferencesResponse` | Check reference count and cleanup eligibility |
+| `ListReferencesAsync` | `ListReferencesRequest` | `ListReferencesResponse` | List all references to a resource |
+
+---
+
 ## Save-Load Service API {#save-load}
 
 **Proxy**: `client.SaveLoad` | **Version**: 1.0.0
@@ -1683,8 +1715,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 41
-- **Total methods**: 542
+- **Total services**: 42
+- **Total methods**: 550
 
 ---
 

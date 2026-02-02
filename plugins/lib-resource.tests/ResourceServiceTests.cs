@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -9,6 +8,7 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Collections.ObjectModel;
 
 namespace BeyondImmersion.BannouService.Resource.Tests;
 

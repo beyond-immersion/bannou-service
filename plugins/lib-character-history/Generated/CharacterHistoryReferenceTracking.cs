@@ -103,6 +103,7 @@ public partial class CharacterHistoryService
                 {
                     ResourceType = "character",
                     SourceType = "character-history",
+                    OnDeleteAction = OnDeleteAction.CASCADE,
                     ServiceName = "character-history",
                     CallbackEndpoint = "/character-history/delete-all",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",

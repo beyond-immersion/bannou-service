@@ -11,7 +11,7 @@ This document provides a compact reference of all Bannou services.
 |---------|---------|-----------|-------------|
 | [Account](#account) | 2.0.0 | 16 | Internal account management service (CRUD operations only, n... |
 | [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
-| [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
+| [Actor](#actor) | 1.0.0 | 16 | Distributed actor management and execution for NPC brains, e... |
 | [Analytics](#analytics) | 1.0.0 | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset](#asset) | 1.0.0 | 20 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 14 | Authentication and session management service (Internet-faci... |
@@ -19,7 +19,7 @@ This document provides a compact reference of all Bannou services.
 | [Character](#character) | 1.0.0 | 11 | Character management service for game worlds. |
 | [Character Encounter](#character-encounter) | 1.0.0 | 19 | Character encounter tracking service for memorable interacti... |
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
-| [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
+| [Character Personality](#character-personality) | 1.0.0 | 10 | Machine-readable personality traits for NPC behavior decisio... |
 | [Common](#common) | 1.0.0 | 0 | Shared type definitions used across multiple Bannou services... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract](#contract) | 1.0.0 | 30 | Binding agreements between entities with milestone-based pro... |
@@ -44,6 +44,7 @@ Des... |
 | [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for game worlds. |
+| [Resource](#resource) | 1.0.0 | 6 | Resource reference tracking and lifecycle management. |
 | [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
 Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
@@ -265,7 +266,7 @@ Ticket-based matchmaking with skill windows, query matching, party support, and 
 
 **Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml` | **Deep Dive**: [docs/plugins/MESH.md](plugins/MESH.md)
 
-Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, four load balancing algorithms (RoundRobin, LeastConnections, Weighted, Random), a per-appId circuit breaker, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
+Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, five load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), a distributed per-appId circuit breaker with cross-instance synchronization, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection with automatic deregistration after consecutive failures. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
 
 ---
 
@@ -330,6 +331,18 @@ A generic relationship management service for entity-to-entity relationships (ch
 **Version**: 2.0.0 | **Schema**: `schemas/relationship-type-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP-TYPE.md](plugins/RELATIONSHIP-TYPE.md)
 
 Hierarchical relationship type definitions for entity-to-entity relationships in the Arcadia game world. Defines the taxonomy of possible relationships (e.g., PARENT → FATHER/MOTHER, FRIEND, RIVAL) with parent-child hierarchy, inverse type tracking, and bidirectional flags. Supports deprecation with merge capability via `IRelationshipClient` to migrate existing relationships. Provides hierarchy queries (ancestors, children, `matchesHierarchy` for polymorphic matching), code-based lookups, and bulk seeding with dependency-ordered creation. Internal-only service (not internet-facing).
+
+---
+
+## Resource {#resource}
+
+**Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md)
+
+Resource reference tracking and lifecycle management for foundational resources. Enables foundational services (L2) to safely delete resources by tracking references from higher-layer consumers (L3/L4) without violating the service hierarchy. Higher-layer services publish reference events when they create/delete references to foundational resources. This service maintains the reference counts using Redis sets and coordinates cleanup callbacks when resources are deleted.
+
+**Key Design Principle**: lib-resource (L1) uses opaque string identifiers for `resourceType` and `sourceType`. It does NOT enumerate or validate these against any service registry - that would create implicit coupling to higher layers. The strings are just identifiers that consumers self-report.
+
+**Why L1**: Any layer can depend on L1. Resources being tracked are at L2 or higher, and their consumers are at L3/L4. By placing this service at L1, all layers can use it without hierarchy violations.
 
 ---
 
@@ -425,8 +438,8 @@ Public-facing website service for browser-based access to news, account profile 
 
 ## Summary
 
-- **Total services**: 42
-- **Total endpoints**: 548
+- **Total services**: 43
+- **Total endpoints**: 556
 
 ---
 

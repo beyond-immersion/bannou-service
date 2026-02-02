@@ -360,6 +360,15 @@ This document lists all events defined in Bannou's event schemas.
 | `RealmParticipationDeletedEvent` | Lifecycle (Deleted) | `realm-participation.deleted` | Published when a realm's participation record is d... |
 | `RealmParticipationRecordedEvent` | Custom | `realm-participation-recorded` | Published when a realm's participation in a histor... |
 
+### Resource
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ResourceCleanupCallbackFailedEvent` | Custom | `resource-cleanup-callback-failed` | Published when a cleanup callback fails during res... |
+| `ResourceGracePeriodStartedEvent` | Custom | `resource-grace-period-started` | Published when a resource's reference count reache... |
+| `ResourceReferenceRegisteredEvent` | Registration | `resource-reference.registered` | Published by higher-layer services when they creat... |
+| `ResourceReferenceUnregisteredEvent` | Registration | `resource-reference-unregistered` | Published by higher-layer services when they delet... |
+
 ### Save Load
 
 | Event | Type | Likely Topic | Description |
