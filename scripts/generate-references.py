@@ -258,6 +258,7 @@ def generate_reference_tracking_code(
             lines.append("                {")
             lines.append(f"                    ResourceType = \"{ref.target}\",")
             lines.append(f"                    SourceType = \"{ref.source_type}\",")
+            lines.append(f"                    OnDeleteAction = OnDeleteAction.{ref.on_delete.upper()},")
             lines.append(f"                    ServiceName = \"{service_name}\",")
             lines.append(f"                    CallbackEndpoint = \"{ref.cleanup_endpoint}\",")
             lines.append(f"                    PayloadTemplate = \"{escaped_template}\",")

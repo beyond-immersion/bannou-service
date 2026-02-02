@@ -242,10 +242,6 @@ components:
         sourceId:
           type: string
           description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
-        idempotencyKey:
-          type: string
-          nullable: true
-          description: Optional key for idempotent registration
 
     RegisterReferenceResponse:
       type: object
@@ -470,6 +466,10 @@ components:
         sourceType:
           type: string
           description: Type of entity that will be cleaned up (opaque identifier)
+        onDeleteAction:
+          $ref: '#/components/schemas/OnDeleteAction'
+          nullable: true
+          description: Action to take when resource is deleted (defaults to CASCADE if not specified)
         serviceName:
           type: string
           nullable: true

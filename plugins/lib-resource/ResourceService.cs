@@ -301,6 +301,7 @@ public partial class ResourceService : IResourceService
         {
             ResourceType = body.ResourceType,
             SourceType = body.SourceType,
+            OnDeleteAction = body.OnDeleteAction ?? OnDeleteAction.CASCADE,
             ServiceName = serviceName,
             CallbackEndpoint = body.CallbackEndpoint,
             PayloadTemplate = body.PayloadTemplate,
@@ -335,6 +336,13 @@ public partial class ResourceService : IResourceService
         var resourceKey = BuildResourceKey(body.ResourceType, body.ResourceId);
         var stopwatch = Stopwatch.StartNew();
 
+        // Get callbacks early to determine RESTRICT vs CASCADE/DETACH behavior
+        var callbacks = await GetCleanupCallbacksAsync(body.ResourceType, cancellationToken);
+        var restrictedSourceTypes = callbacks
+            .Where(c => c.OnDeleteAction == OnDeleteAction.RESTRICT)
+            .Select(c => c.SourceType)
+            .ToHashSet();
+
         // First check without lock
         var (preCheckStatus, preCheckResult) = await CheckReferencesAsync(
             new CheckReferencesRequest
@@ -349,18 +357,66 @@ public partial class ResourceService : IResourceService
             return (StatusCodes.InternalServerError, null);
         }
 
-        if (preCheckResult.RefCount > 0)
+        var currentSources = preCheckResult.Sources ?? new List<ResourceReference>();
+
+        // Check for RESTRICT violations first - these always block
+        var activeRestrictedRefs = currentSources
+            .Where(s => restrictedSourceTypes.Contains(s.SourceType))
+            .ToList();
+
+        if (activeRestrictedRefs.Count > 0)
         {
             stopwatch.Stop();
+            var blockers = string.Join(", ", activeRestrictedRefs
+                .GroupBy(r => r.SourceType)
+                .Select(g => $"{g.Key}:{g.Count()}"));
+
+            _logger.LogInformation(
+                "Cleanup blocked by RESTRICT policy: {ResourceType}:{ResourceId} has references: {Blockers}",
+                body.ResourceType, body.ResourceId, blockers);
+
             return (StatusCodes.OK, new ExecuteCleanupResponse
             {
                 ResourceType = body.ResourceType,
                 ResourceId = body.ResourceId,
                 Success = false,
-                AbortReason = $"Resource has {preCheckResult.RefCount} active reference(s)",
+                AbortReason = $"Blocked by RESTRICT policy from: {blockers}",
                 CallbackResults = new List<CleanupCallbackResult>(),
                 CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
             });
+        }
+
+        // Check for non-RESTRICT active references (unexpected - should have been cleaned up)
+        // These are from source types without registered callbacks, or callbacks not yet registered
+        var unresolvedRefs = currentSources
+            .Where(s => !restrictedSourceTypes.Contains(s.SourceType))
+            .ToList();
+
+        if (unresolvedRefs.Count > 0)
+        {
+            // Check if these refs have CASCADE/DETACH callbacks that will handle them
+            var handledSourceTypes = callbacks
+                .Where(c => c.OnDeleteAction != OnDeleteAction.RESTRICT)
+                .Select(c => c.SourceType)
+                .ToHashSet();
+
+            var unhandledRefs = unresolvedRefs
+                .Where(r => !handledSourceTypes.Contains(r.SourceType))
+                .ToList();
+
+            if (unhandledRefs.Count > 0)
+            {
+                stopwatch.Stop();
+                return (StatusCodes.OK, new ExecuteCleanupResponse
+                {
+                    ResourceType = body.ResourceType,
+                    ResourceId = body.ResourceId,
+                    Success = false,
+                    AbortReason = $"Resource has {unhandledRefs.Count} active reference(s) without registered cleanup callbacks",
+                    CallbackResults = new List<CleanupCallbackResult>(),
+                    CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
+                });
+            }
         }
 
         // Check grace period (can be overridden, 0 means skip grace period check)
@@ -407,28 +463,44 @@ public partial class ResourceService : IResourceService
             });
         }
 
-        // Re-validate under lock
-        var refCount = await _refStore.SetCountAsync(resourceKey, cancellationToken);
-        if (refCount > 0)
+        // Re-validate under lock - check if any new RESTRICT references appeared
+        var refCountUnderLock = await _refStore.SetCountAsync(resourceKey, cancellationToken);
+        if (refCountUnderLock != preCheckResult.RefCount)
         {
-            stopwatch.Stop();
-            _logger.LogInformation(
-                "Cleanup aborted: refcount changed to {RefCount} for {ResourceType}:{ResourceId}",
-                refCount, body.ResourceType, body.ResourceId);
+            // Refcount changed - need to re-check RESTRICT violations
+            var sourcesUnderLock = await _refStore.GetSetAsync<ResourceReferenceEntry>(resourceKey, cancellationToken);
+            var newRestrictedRefs = sourcesUnderLock
+                .Where(s => restrictedSourceTypes.Contains(s.SourceType))
+                .ToList();
 
-            return (StatusCodes.OK, new ExecuteCleanupResponse
+            if (newRestrictedRefs.Count > 0)
             {
-                ResourceType = body.ResourceType,
-                ResourceId = body.ResourceId,
-                Success = false,
-                AbortReason = $"Reference count changed to {refCount} during cleanup",
-                CallbackResults = new List<CleanupCallbackResult>(),
-                CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
-            });
+                stopwatch.Stop();
+                var blockers = string.Join(", ", newRestrictedRefs
+                    .GroupBy(r => r.SourceType)
+                    .Select(g => $"{g.Key}:{g.Count()}"));
+
+                _logger.LogInformation(
+                    "Cleanup blocked by RESTRICT policy (under lock): {ResourceType}:{ResourceId} has references: {Blockers}",
+                    body.ResourceType, body.ResourceId, blockers);
+
+                return (StatusCodes.OK, new ExecuteCleanupResponse
+                {
+                    ResourceType = body.ResourceType,
+                    ResourceId = body.ResourceId,
+                    Success = false,
+                    AbortReason = $"Blocked by RESTRICT policy from: {blockers}",
+                    CallbackResults = new List<CleanupCallbackResult>(),
+                    CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
+                });
+            }
         }
 
-        // Get and execute cleanup callbacks
-        var callbacks = await GetCleanupCallbacksAsync(body.ResourceType, cancellationToken);
+        // Only execute CASCADE and DETACH callbacks (RESTRICT callbacks block, not execute)
+        var executableCallbacks = callbacks
+            .Where(c => c.OnDeleteAction != OnDeleteAction.RESTRICT)
+            .ToList();
+
         var context = new Dictionary<string, object?>
         {
             ["resourceId"] = body.ResourceId.ToString(),
@@ -438,9 +510,9 @@ public partial class ResourceService : IResourceService
         var callbackResults = new List<CleanupCallbackResult>();
         var cleanupPolicy = body.CleanupPolicy ?? _configuration.DefaultCleanupPolicy;
 
-        if (callbacks.Count > 0)
+        if (executableCallbacks.Count > 0)
         {
-            var apiDefinitions = callbacks.Select(c => new PreboundApiDefinition
+            var apiDefinitions = executableCallbacks.Select(c => new PreboundApiDefinition
             {
                 ServiceName = c.ServiceName,
                 Endpoint = c.CallbackEndpoint,
@@ -462,7 +534,7 @@ public partial class ResourceService : IResourceService
             for (var i = 0; i < results.Count; i++)
             {
                 var result = results[i];
-                var callback = callbacks[i];
+                var callback = executableCallbacks[i];
 
                 var callbackResult = new CleanupCallbackResult
                 {
@@ -530,7 +602,7 @@ public partial class ResourceService : IResourceService
         stopwatch.Stop();
         _logger.LogInformation(
             "Cleanup completed for {ResourceType}:{ResourceId} with {CallbackCount} callback(s) in {DurationMs}ms",
-            body.ResourceType, body.ResourceId, callbacks.Count, stopwatch.ElapsedMilliseconds);
+            body.ResourceType, body.ResourceId, executableCallbacks.Count, stopwatch.ElapsedMilliseconds);
 
         return (StatusCodes.OK, new ExecuteCleanupResponse
         {
@@ -671,6 +743,14 @@ internal class CleanupCallbackDefinition
     /// Type of entity that will be cleaned up (opaque identifier).
     /// </summary>
     public string SourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Action to take when the resource is deleted.
+    /// CASCADE (default): Delete dependent entities via callback.
+    /// RESTRICT: Block deletion if references of this type exist.
+    /// DETACH: Nullify references via callback (consumer implements).
+    /// </summary>
+    public OnDeleteAction OnDeleteAction { get; set; } = OnDeleteAction.CASCADE;
 
     /// <summary>
     /// Target service name for callback invocation.

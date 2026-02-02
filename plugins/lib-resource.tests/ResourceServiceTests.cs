@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -914,6 +915,344 @@ public class ResourceServiceTests
         Assert.NotNull(response);
         Assert.Equal(10, response.TotalCount);
         Assert.Equal(5, response.References.Count);
+    }
+
+    #endregion
+
+    #region OnDeleteAction Tests
+
+    [Fact]
+    public async Task DefineCleanupCallbackAsync_WithOnDeleteAction_StoresCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var request = new DefineCleanupRequest
+        {
+            ResourceType = "character",
+            SourceType = "scene",
+            OnDeleteAction = OnDeleteAction.RESTRICT,
+            ServiceName = "scene",
+            CallbackEndpoint = "/scene/cleanup-by-character",
+            PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+            Description = "Block character deletion if scenes exist"
+        };
+
+        // Act
+        var (status, response) = await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Registered);
+
+        // Verify OnDeleteAction was stored
+        _mockCleanupStore.Verify(s => s.SaveAsync(
+            "callback:character:scene",
+            It.Is<CleanupCallbackDefinition>(c =>
+                c.OnDeleteAction == OnDeleteAction.RESTRICT),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DefineCleanupCallbackAsync_WithoutOnDeleteAction_DefaultsToCascade()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var request = new DefineCleanupRequest
+        {
+            ResourceType = "character",
+            SourceType = "actor",
+            ServiceName = "actor",
+            CallbackEndpoint = "/actor/cleanup-by-character",
+            PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}"
+        };
+
+        // Act
+        var (status, response) = await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify default OnDeleteAction is CASCADE
+        _mockCleanupStore.Verify(s => s.SaveAsync(
+            "callback:character:actor",
+            It.Is<CleanupCallbackDefinition>(c =>
+                c.OnDeleteAction == OnDeleteAction.CASCADE),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_WithRestrictCallback_AndActiveReferences_BlocksDeletion()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Pre-populate with active scene reference (RESTRICT type)
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
+        {
+            new() { SourceType = "scene", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+        };
+
+        // Setup grace period passed
+        var graceRecord = new GracePeriodRecord
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+        };
+
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(graceRecord);
+
+        // Setup RESTRICT callback for scene source type
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "scene" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:scene", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "scene",
+                OnDeleteAction = OnDeleteAction.RESTRICT,
+                ServiceName = "scene",
+                CallbackEndpoint = "/scene/cleanup-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        // Setup successful lock
+        var successLockResponse = new Mock<ILockResponse>();
+        successLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLockResponse.Object);
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            GracePeriodSeconds = 0 // Skip grace period check to get to RESTRICT logic
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("RESTRICT", response.AbortReason);
+        Assert.Contains("scene", response.AbortReason);
+
+        // Verify no callbacks were executed (blocked before execution)
+        _mockNavigator.Verify(n => n.ExecutePreboundApiBatchAsync(
+            It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+            It.IsAny<Dictionary<string, object?>>(),
+            It.IsAny<BatchExecutionMode>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_WithRestrictCallback_NoActiveRestrictedReferences_Proceeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No active references of RESTRICT type
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>(); // Empty - no references
+
+        // Setup grace period passed
+        var graceRecord = new GracePeriodRecord
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+        };
+
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(graceRecord);
+
+        // Setup RESTRICT callback for scene
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "scene" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:scene", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "scene",
+                OnDeleteAction = OnDeleteAction.RESTRICT,
+                ServiceName = "scene",
+                CallbackEndpoint = "/scene/cleanup-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        // Setup successful lock
+        var successLockResponse = new Mock<ILockResponse>();
+        successLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLockResponse.Object);
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // RESTRICT callbacks are not executed - verify no callbacks ran
+        // (RESTRICT type is filtered out from executableCallbacks)
+        _mockNavigator.Verify(n => n.ExecutePreboundApiBatchAsync(
+            It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+            It.IsAny<Dictionary<string, object?>>(),
+            It.IsAny<BatchExecutionMode>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_WithMixedPolicies_OnlyExecutesCascadeAndDetach()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No active references
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Setup grace period passed
+        var graceRecord = new GracePeriodRecord
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+        };
+
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(graceRecord);
+
+        // Setup mixed callbacks: CASCADE, RESTRICT, DETACH
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "actor", "scene", "encounter" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:scene", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "scene",
+                OnDeleteAction = OnDeleteAction.RESTRICT,
+                ServiceName = "scene",
+                CallbackEndpoint = "/scene/cleanup-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:encounter", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "encounter",
+                OnDeleteAction = OnDeleteAction.DETACH,
+                ServiceName = "encounter",
+                CallbackEndpoint = "/character-encounter/detach-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        // Setup successful lock
+        var successLockResponse = new Mock<ILockResponse>();
+        successLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLockResponse.Object);
+
+        // Setup navigator to return successful batch results
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiBatchAsync(
+                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<BatchExecutionMode>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            {
+                var results = new List<PreboundApiResult>();
+                foreach (var api in apis)
+                {
+                    results.Add(new PreboundApiResult
+                    {
+                        Api = api,
+                        SubstitutedPayload = "{}",
+                        SubstitutionSucceeded = true,
+                        Result = new RawApiResult
+                        {
+                            StatusCode = 200,
+                            ResponseBody = "{}",
+                            Duration = TimeSpan.FromMilliseconds(50)
+                        }
+                    });
+                }
+                return results;
+            });
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify only CASCADE and DETACH callbacks were executed (2 out of 3)
+        _mockNavigator.Verify(n => n.ExecutePreboundApiBatchAsync(
+            It.Is<IEnumerable<PreboundApiDefinition>>(apis =>
+                apis.Count() == 2 &&
+                apis.Any(a => a.ServiceName == "actor") &&
+                apis.Any(a => a.ServiceName == "encounter") &&
+                !apis.Any(a => a.ServiceName == "scene")),
+            It.IsAny<Dictionary<string, object?>>(),
+            It.IsAny<BatchExecutionMode>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

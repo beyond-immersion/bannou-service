@@ -108,7 +108,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 |------|------|
 | `ResourceReferenceEntry` | Set member for reference tracking; equality based on `SourceType` + `SourceId` |
 | `GracePeriodRecord` | Records when refcount became zero |
-| `CleanupCallbackDefinition` | Stores callback registration (service, endpoint, template) |
+| `CleanupCallbackDefinition` | Stores callback registration (service, endpoint, template, onDeleteAction) |
 
 ---
 
@@ -127,19 +127,28 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 | Endpoint | Notes |
 |----------|-------|
-| `POST /resource/cleanup/define` | Upserts callback definition; maintains `callback-index:{resourceType}` set for enumeration; `serviceName` defaults to `sourceType` if not specified |
-| `POST /resource/cleanup/execute` | Full cleanup flow: pre-check → lock → re-validate → execute callbacks → clear state |
+| `POST /resource/cleanup/define` | Upserts callback definition with `onDeleteAction`; maintains `callback-index:{resourceType}` set for enumeration; `serviceName` defaults to `sourceType` if not specified |
+| `POST /resource/cleanup/execute` | Full cleanup flow: RESTRICT check → pre-check → lock → re-validate → execute CASCADE/DETACH callbacks → clear state |
+
+**OnDeleteAction Behavior** (per-callback, configured via `/resource/cleanup/define`):
+
+| Action | Behavior |
+|--------|----------|
+| `CASCADE` (default) | Execute cleanup callback to delete dependent entities |
+| `RESTRICT` | Block resource deletion if references of this sourceType exist |
+| `DETACH` | Execute cleanup callback (consumer implements null-out/detach logic) |
 
 **Cleanup Execution Flow**:
-1. Pre-check refcount and grace period (without lock)
-2. If blocked, return early with reason
-3. Acquire distributed lock on `cleanup:{resourceType}:{resourceId}`
-4. Re-validate refcount under lock (race protection)
-5. Get all callbacks via index set
-6. Execute callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel with configured timeout (`CleanupCallbackTimeoutSeconds`)
-7. Per cleanup policy: abort or continue on failures
-8. Delete grace period record and reference set
-9. Release lock
+1. Get all callbacks and identify RESTRICT vs CASCADE/DETACH callbacks
+2. **RESTRICT check**: If any active references have RESTRICT callbacks, return failure immediately with `"Blocked by RESTRICT policy from: {sourceTypes}"`
+3. Pre-check refcount and grace period (without lock)
+4. If blocked by non-RESTRICT reasons (unhandled refs, grace period), return early with reason
+5. Acquire distributed lock on `cleanup:{resourceType}:{resourceId}`
+6. Re-validate refcount under lock (race protection)
+7. Execute only CASCADE and DETACH callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel with configured timeout (`CleanupCallbackTimeoutSeconds`)
+8. Per cleanup policy: abort or continue on failures
+9. Delete grace period record and reference set
+10. Release lock
 
 ---
 
@@ -187,9 +196,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ## Stubs & Unimplemented Features
 
-1. **`idempotencyKey` field in RegisterReferenceRequest**: Defined in schema but never used by service. Intended for deduplication of registration requests.
-
-2. **`OnDeleteAction` enum**: Defined in schema (`CASCADE`, `RESTRICT`, `DETACH`) but not used anywhere in the service. May be intended for future per-reference deletion behavior configuration.
+None currently.
 
 ---
 
@@ -235,9 +242,15 @@ Resource reference tracking and lifecycle management for foundational resources.
      "sourceType": "actor",
      "serviceName": "actor",
      "callbackEndpoint": "/actor/cleanup-by-character",
-     "payloadTemplate": "{\"characterId\": \"{{resourceId}}\"}"
+     "payloadTemplate": "{\"characterId\": \"{{resourceId}}\"}",
+     "onDeleteAction": "CASCADE"  // or "RESTRICT" / "DETACH"
    }
    ```
+
+   **OnDeleteAction Options**:
+   - `CASCADE` (default): Delete dependent entities when resource is deleted
+   - `RESTRICT`: Block resource deletion while references of this type exist
+   - `DETACH`: Nullify/detach references when resource is deleted (consumer implements)
 
 2. **On entity creation with reference**: Publish event
    ```csharp
@@ -288,9 +301,7 @@ None.
 
 ### Design Considerations (Requires Planning)
 
-1. **`OnDeleteAction` enum unused**: Schema defines CASCADE/RESTRICT/DETACH actions but they're not implemented. Needs design decision: should this be per-reference-type configuration, or per-reference, or removed from schema?
-
-2. **Callback index is never cleaned up**: When a cleanup callback is undefined/removed (no API for this exists), the source type remains in `callback-index:{resourceType}`. Not a bug since callbacks are typically permanent, but could accumulate stale entries.
+1. **Callback index is never cleaned up**: When a cleanup callback is undefined/removed (no API for this exists), the source type remains in `callback-index:{resourceType}`. Not a bug since callbacks are typically permanent, but could accumulate stale entries.
 
 ---
 
@@ -316,6 +327,10 @@ None.
 - [x] Phase 4: character-encounter integrated - x-references, cleanup endpoint `/character-encounter/delete-by-character`
 - [x] Phase 4: character-history integrated - x-references, cleanup via existing `/character-history/delete-all`
 - [x] Phase 4: character-personality integrated - x-references, cleanup endpoint `/character-personality/cleanup-by-character`
+
+- [x] OnDeleteAction enum wired up - per-callback deletion behavior (CASCADE/RESTRICT/DETACH)
+- [x] idempotencyKey stub removed from RegisterReferenceRequest schema
+- [x] Unit tests for OnDeleteAction functionality (30 total tests)
 
 ### Pending
 None - lib-resource integration complete for all L4 character consumers.
