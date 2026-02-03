@@ -202,7 +202,11 @@ Compare the deep dive document against source code findings.
 
 ### Phase 5: Quirks & Bugs Discovery
 
-Systematically review the code for issues. Check for:
+Systematically review the code for issues.
+
+**NOTE: This phase IDENTIFIES new issues. You will ADD them to the document in Phase 6 using the Edit tool.**
+
+Check for:
 
 **Code Quality Issues:**
 - [ ] `NotImplemented` returns or throws
