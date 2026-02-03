@@ -627,3 +627,9 @@ x-state-stores:
     backend: mysql
     service: Resource
     purpose: Compressed archive bundles (durable storage for long-term archival)
+
+  resource-snapshots:
+    backend: redis
+    prefix: "resource:snapshot"
+    service: Resource
+    purpose: Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)

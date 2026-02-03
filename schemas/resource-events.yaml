@@ -42,6 +42,10 @@ info:
     - topic: resource.decompressed
       event: ResourceDecompressedEvent
       description: Published when a resource is decompressed
+    # Snapshot events (for living entities)
+    - topic: resource.snapshot.created
+      event: ResourceSnapshotCreatedEvent
+      description: Published when an ephemeral snapshot of a living resource is created
 
 paths: {}  # Events don't have HTTP paths
 
@@ -314,3 +318,58 @@ components:
           type: string
           format: uuid
           description: ID of the archive that was restored
+
+    # =========================================================================
+    # Snapshot Events (Living Entity Snapshots)
+    # =========================================================================
+
+    ResourceSnapshotCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an ephemeral snapshot of a living resource is created.
+        Unlike ResourceCompressedEvent, this indicates a non-destructive capture
+        of data from a resource that continues to exist.
+
+        **Use Case**: Storyline Composer and Actor behaviors need compressed
+        data from living entities to seed emergent narratives without affecting
+        the source data.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - snapshotId
+      - snapshotType
+      - expiresAt
+      - entriesCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the snapshot was created
+        resourceType:
+          type: string
+          description: Type of resource snapshotted (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the created snapshot (for retrieval)
+        snapshotType:
+          type: string
+          description: Label for snapshot purpose (e.g., "storyline_seed")
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this snapshot will expire
+        entriesCount:
+          type: integer
+          description: Number of services that contributed data to the snapshot

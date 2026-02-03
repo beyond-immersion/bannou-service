@@ -313,6 +313,121 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
 
     #endregion
 
+    #region GetKeyCountAsync Tests
+
+    /// <summary>
+    /// Verifies that GetKeyCountAsync returns 0 for an empty InMemory store.
+    /// </summary>
+    [Fact]
+    public async Task GetKeyCountAsync_EmptyInMemoryStore_ReturnsZero()
+    {
+        // Act
+        var count = await _factory.GetKeyCountAsync(_uniqueStoreName);
+
+        // Assert
+        Assert.Equal(0, count);
+    }
+
+    /// <summary>
+    /// Verifies that GetKeyCountAsync returns correct count after adding items to InMemory store.
+    /// </summary>
+    [Fact]
+    public async Task GetKeyCountAsync_AfterAddingItems_ReturnsCorrectCount()
+    {
+        // Arrange
+        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName);
+        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" });
+        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" });
+        await store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Test3" });
+
+        // Act
+        var count = await _factory.GetKeyCountAsync(_uniqueStoreName);
+
+        // Assert
+        Assert.Equal(3, count);
+
+        // Cleanup
+        await store.DeleteAsync("key1");
+        await store.DeleteAsync("key2");
+        await store.DeleteAsync("key3");
+    }
+
+    /// <summary>
+    /// Verifies that GetKeyCountAsync updates after deleting items.
+    /// </summary>
+    [Fact]
+    public async Task GetKeyCountAsync_AfterDeletingItems_ReturnsUpdatedCount()
+    {
+        // Arrange
+        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName);
+        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" });
+        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" });
+
+        // Verify initial count
+        var initialCount = await _factory.GetKeyCountAsync(_uniqueStoreName);
+        Assert.Equal(2, initialCount);
+
+        // Act - delete one item
+        await store.DeleteAsync("key1");
+        var countAfterDelete = await _factory.GetKeyCountAsync(_uniqueStoreName);
+
+        // Assert
+        Assert.Equal(1, countAfterDelete);
+
+        // Cleanup
+        await store.DeleteAsync("key2");
+    }
+
+    /// <summary>
+    /// Verifies that GetKeyCountAsync throws for non-existent store.
+    /// </summary>
+    [Fact]
+    public async Task GetKeyCountAsync_NonExistentStore_ThrowsInvalidOperation()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _factory.GetKeyCountAsync("non-existent-store-12345"));
+    }
+
+    /// <summary>
+    /// Verifies that InMemoryStateStore.GetKeyCountForStore returns correct count.
+    /// </summary>
+    [Fact]
+    public async Task GetKeyCountForStore_StaticMethod_ReturnsCorrectCount()
+    {
+        // Arrange - use a unique store name for this test
+        var testStoreName = $"static-count-test-{Guid.NewGuid():N}";
+        var logger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
+        var store = new InMemoryStateStore<TestEntity>(testStoreName, logger.Object);
+
+        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" });
+        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" });
+
+        // Act
+        var count = InMemoryStateStore<TestEntity>.GetKeyCountForStore(testStoreName);
+
+        // Assert
+        Assert.Equal(2, count);
+
+        // Cleanup
+        store.Clear();
+    }
+
+    /// <summary>
+    /// Verifies that InMemoryStateStore.GetKeyCountForStore returns 0 for non-existent store.
+    /// </summary>
+    [Fact]
+    public void GetKeyCountForStore_NonExistentStore_ReturnsZero()
+    {
+        // Act
+        var count = InMemoryStateStore<TestEntity>.GetKeyCountForStore("non-existent-store-xyz");
+
+        // Assert
+        Assert.Equal(0, count);
+    }
+
+    #endregion
+
     #region Type Checking Pattern Tests
 
     /// <summary>

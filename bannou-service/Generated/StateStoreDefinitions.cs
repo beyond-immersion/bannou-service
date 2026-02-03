@@ -248,6 +248,8 @@ public static class StateStoreDefinitions
     public const string ResourceGrace = "resource-grace";
     /// <summary>Reference counts and source tracking per resource</summary>
     public const string ResourceRefcounts = "resource-refcounts";
+    /// <summary>Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)</summary>
+    public const string ResourceSnapshots = "resource-snapshots";
 
     // SaveLoad Service
     /// <summary>Recently accessed save data cache</summary>
@@ -372,6 +374,7 @@ public static class StateStoreDefinitions
             [ResourceCompress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:compress" },
             [ResourceGrace] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:grace" },
             [ResourceRefcounts] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:ref" },
+            [ResourceSnapshots] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:snapshot" },
             [SaveLoadCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:cache" },
             [SaveLoadPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:pending" },
             [SaveLoadSchemas] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_schemas" },
@@ -474,6 +477,7 @@ public static class StateStoreDefinitions
             [ResourceCompress] = new StoreMetadata("Resource", "Compression callback definitions and callback index sets", "redis"),
             [ResourceGrace] = new StoreMetadata("Resource", "Grace period timestamps for resources with zero references", "redis"),
             [ResourceRefcounts] = new StoreMetadata("Resource", "Reference counts and source tracking per resource", "redis"),
+            [ResourceSnapshots] = new StoreMetadata("Resource", "Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)", "redis"),
             [SaveLoadCache] = new StoreMetadata("SaveLoad", "Recently accessed save data cache", "redis"),
             [SaveLoadPending] = new StoreMetadata("SaveLoad", "Pending save operations", "redis"),
             [SaveLoadSchemas] = new StoreMetadata("SaveLoad", "Registered save data schemas", "mysql"),

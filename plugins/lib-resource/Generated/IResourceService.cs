@@ -94,4 +94,14 @@ public partial interface IResourceService : IBannouService
         /// </summary>
         Task<(StatusCodes, GetArchiveResponse?)> GetArchiveAsync(GetArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// ExecuteSnapshot operation
+        /// </summary>
+        Task<(StatusCodes, ExecuteSnapshotResponse?)> ExecuteSnapshotAsync(ExecuteSnapshotRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetSnapshot operation
+        /// </summary>
+        Task<(StatusCodes, GetSnapshotResponse?)> GetSnapshotAsync(GetSnapshotRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

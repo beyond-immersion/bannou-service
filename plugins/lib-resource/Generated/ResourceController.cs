@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Resource;
 
@@ -221,6 +236,51 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
     /// <returns>Archive data</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetArchiveResponse>> GetArchiveAsync(GetArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Create ephemeral snapshot of a living resource
+    /// </summary>
+
+    /// <remarks>
+    /// Creates a non-destructive snapshot of a resource using the same compression
+    /// <br/>callbacks, but stores the result in Redis with a configurable TTL instead
+    /// <br/>of permanent MySQL storage.
+    /// <br/>
+    /// <br/>**Use Case**: The Storyline Composer needs compressed data from living
+    /// <br/>entities (not just dead/archived ones) to seed emergent narratives.
+    /// <br/>This endpoint provides that capability without affecting the source data.
+    /// <br/>
+    /// <br/>**Key Differences from compress/execute**:
+    /// <br/>1. Stores in Redis (ephemeral) not MySQL (permanent)
+    /// <br/>2. Never deletes source data
+    /// <br/>3. Publishes `resource.snapshot.created` event (not `resource.compressed`)
+    /// <br/>4. Snapshot expires after TTL (default 1 hour, max 24 hours)
+    /// <br/>
+    /// <br/>**Intended Consumers**:
+    /// <br/>- Actor behaviors (via ABML service_call)
+    /// <br/>- Regional Watchers for storyline composition
+    /// <br/>- Analytics for living entity state capture
+    /// </remarks>
+
+    /// <returns>Snapshot result with snapshot ID and data</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteSnapshotResponse>> ExecuteSnapshotAsync(ExecuteSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Retrieve an ephemeral snapshot
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieves a previously created snapshot by its ID.
+    /// <br/>Returns 404 if the snapshot has expired or doesn't exist.
+    /// <br/>
+    /// <br/>Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
+    /// <br/>is automatically deleted by Redis.
+    /// </remarks>
+
+    /// <returns>Snapshot data</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSnapshotResponse>> GetSnapshotAsync(GetSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -511,6 +571,59 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     {
 
         var (statusCode, result) = await _implementation.GetArchiveAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Create ephemeral snapshot of a living resource
+    /// </summary>
+    /// <remarks>
+    /// Creates a non-destructive snapshot of a resource using the same compression
+    /// <br/>callbacks, but stores the result in Redis with a configurable TTL instead
+    /// <br/>of permanent MySQL storage.
+    /// <br/>
+    /// <br/>**Use Case**: The Storyline Composer needs compressed data from living
+    /// <br/>entities (not just dead/archived ones) to seed emergent narratives.
+    /// <br/>This endpoint provides that capability without affecting the source data.
+    /// <br/>
+    /// <br/>**Key Differences from compress/execute**:
+    /// <br/>1. Stores in Redis (ephemeral) not MySQL (permanent)
+    /// <br/>2. Never deletes source data
+    /// <br/>3. Publishes `resource.snapshot.created` event (not `resource.compressed`)
+    /// <br/>4. Snapshot expires after TTL (default 1 hour, max 24 hours)
+    /// <br/>
+    /// <br/>**Intended Consumers**:
+    /// <br/>- Actor behaviors (via ABML service_call)
+    /// <br/>- Regional Watchers for storyline composition
+    /// <br/>- Analytics for living entity state capture
+    /// </remarks>
+    /// <returns>Snapshot result with snapshot ID and data</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/snapshot/execute")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteSnapshotResponse>> ExecuteSnapshot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ExecuteSnapshotAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Retrieve an ephemeral snapshot
+    /// </summary>
+    /// <remarks>
+    /// Retrieves a previously created snapshot by its ID.
+    /// <br/>Returns 404 if the snapshot has expired or doesn't exist.
+    /// <br/>
+    /// <br/>Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
+    /// <br/>is automatically deleted by Redis.
+    /// </remarks>
+    /// <returns>Snapshot data</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/snapshot/get")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSnapshotResponse>> GetSnapshot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetSnapshotAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

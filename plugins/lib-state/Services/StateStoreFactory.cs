@@ -557,6 +557,57 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         return _redisOperations;
     }
 
+    /// <inheritdoc/>
+    public async Task<long?> GetKeyCountAsync(string storeName, CancellationToken cancellationToken = default)
+    {
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        var backend = GetBackendType(storeName);
+
+        switch (backend)
+        {
+            case StateBackend.Memory:
+                // InMemory: O(1) count from static dictionary
+                return InMemoryStateStore<object>.GetKeyCountForStore(storeName);
+
+            case StateBackend.MySql:
+                // MySQL: Efficient COUNT(*) with indexed StoreName column
+                if (!_initialized)
+                {
+                    await EnsureInitializedAsync();
+                }
+
+                if (_mysqlOptions == null)
+                {
+                    _logger.LogWarning("MySQL not configured, cannot get key count for store '{StoreName}'", storeName);
+                    return null;
+                }
+
+                await using (var context = new StateDbContext(_mysqlOptions))
+                {
+                    var count = await context.StateEntries
+                        .Where(e => e.StoreName == storeName)
+                        .LongCountAsync(cancellationToken);
+                    return count;
+                }
+
+            case StateBackend.Redis:
+                // Redis: SCAN is O(N) on total database keys - too slow for large databases
+                // Return null to indicate count is not efficiently available
+                _logger.LogDebug(
+                    "Key count not available for Redis store '{StoreName}' - SCAN is O(N) on total keys",
+                    storeName);
+                return null;
+
+            default:
+                _logger.LogWarning("Unknown backend type {Backend} for store '{StoreName}'", backend, storeName);
+                return null;
+        }
+    }
+
     /// <summary>
     /// Creates search indexes for all stores with EnableSearch=true.
     /// Uses a generic schema that indexes common JSON fields.

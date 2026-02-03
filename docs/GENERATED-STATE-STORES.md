@@ -89,6 +89,7 @@ This document lists all state store components used in Bannou.
 | `resource-compress` | Redis | Resource | Compression callback definitions and callback index sets |
 | `resource-grace` | Redis | Resource | Grace period timestamps for resources with zero references |
 | `resource-refcounts` | Redis | Resource | Reference counts and source tracking per resource |
+| `resource-snapshots` | Redis | Resource | Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption) |
 | `save-load-cache` | Redis | SaveLoad | Recently accessed save data cache |
 | `save-load-pending` | Redis | SaveLoad | Pending save operations |
 | `save-load-schemas` | MySQL | SaveLoad | Registered save data schemas |
@@ -100,7 +101,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 90 stores (57 Redis, 33 MySQL)
+**Total**: 91 stores (58 Redis, 33 MySQL)
 
 ## Naming Conventions
 

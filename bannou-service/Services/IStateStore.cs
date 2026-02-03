@@ -357,6 +357,21 @@ public interface IStateStoreFactory
     /// </remarks>
     /// <returns>Redis operations interface, or null if not using Redis backend.</returns>
     IRedisOperations? GetRedisOperations();
+
+    /// <summary>
+    /// Get the count of keys in a store.
+    /// </summary>
+    /// <remarks>
+    /// Performance characteristics by backend:
+    /// - MySQL: Efficient COUNT(*) query on indexed StoreName column
+    /// - InMemory: O(1) dictionary count
+    /// - Redis: Returns null (SCAN is O(N) on total database keys, too slow for large databases)
+    /// </remarks>
+    /// <param name="storeName">Name of the store to count.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Key count, or null if count is not efficiently available (Redis).</returns>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured.</exception>
+    Task<long?> GetKeyCountAsync(string storeName, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

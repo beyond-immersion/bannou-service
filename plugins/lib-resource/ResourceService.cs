@@ -45,6 +45,7 @@ public partial class ResourceService : IResourceService
     private readonly IStateStore<GracePeriodRecord> _graceStore;
     private readonly IStateStore<CompressCallbackDefinition> _compressStore;
     private readonly IStateStore<ResourceArchiveModel> _archiveStore;
+    private readonly IStateStore<ResourceSnapshotModel> _snapshotStore;
 
     /// <summary>
     /// Initializes a new instance of the ResourceService.
@@ -76,6 +77,8 @@ public partial class ResourceService : IResourceService
             StateStoreDefinitions.ResourceCompress);
         _archiveStore = stateStoreFactory.GetStore<ResourceArchiveModel>(
             StateStoreDefinitions.ResourceArchives);
+        _snapshotStore = stateStoreFactory.GetStore<ResourceSnapshotModel>(
+            StateStoreDefinitions.ResourceSnapshots);
 
         // Register event handlers via partial class (ResourceServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -1654,6 +1657,30 @@ public partial class ResourceService : IResourceService
         using var sha256 = System.Security.Cryptography.SHA256.Create();
         var hash = sha256.ComputeHash(data);
         return Convert.ToHexString(hash);
+    }
+
+    // =========================================================================
+    // Snapshot Operations (Stub - Not Yet Implemented)
+    // =========================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ExecuteSnapshotResponse?)> ExecuteSnapshotAsync(
+        ExecuteSnapshotRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        _logger.LogDebug("ExecuteSnapshot not yet implemented for resource type: {ResourceType}", body.ResourceType);
+        return (StatusCodes.NotImplemented, null);
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, GetSnapshotResponse?)> GetSnapshotAsync(
+        GetSnapshotRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        _logger.LogDebug("GetSnapshot not yet implemented for snapshot: {SnapshotId}", body.SnapshotId);
+        return (StatusCodes.NotImplemented, null);
     }
 }
 

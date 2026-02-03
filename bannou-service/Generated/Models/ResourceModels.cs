@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Resource;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Resource;
 
@@ -1592,6 +1607,241 @@ public partial class ArchiveBundleEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originalSizeBytes")]
     public int? OriginalSizeBytes { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to create an ephemeral snapshot of a living resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteSnapshotRequest
+{
+
+    /// <summary>
+    /// Type of resource to snapshot (opaque identifier).
+    /// <br/>Must match compression callback registrations.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource to snapshot
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional label for the snapshot purpose (e.g., "storyline_seed", "analytics").
+    /// <br/>Stored in metadata for filtering/debugging.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshotType")]
+    public string SnapshotType { get; set; } = default!;
+
+    /// <summary>
+    /// Time-to-live in seconds for the snapshot (default 1 hour, max 24 hours).
+    /// <br/>Snapshot is automatically deleted by Redis after TTL expires.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
+    [System.ComponentModel.DataAnnotations.Range(60, 86400)]
+    public int TtlSeconds { get; set; } = 3600;
+
+    /// <summary>
+    /// Policy for callback execution (defaults to ALL_REQUIRED)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressionPolicy")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CompressionPolicy CompressionPolicy { get; set; } = default!;
+
+    /// <summary>
+    /// If true, return what would be captured without storing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = false;
+
+}
+
+/// <summary>
+/// Result of snapshot execution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteSnapshotResponse
+{
+
+    /// <summary>
+    /// Type of resource snapshotted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource snapshotted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// True if snapshot completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// True if this was a dry run
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = default!;
+
+    /// <summary>
+    /// Unique ID for this snapshot (null on failure or dry run)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshotId")]
+    public System.Guid? SnapshotId { get; set; } = default!;
+
+    /// <summary>
+    /// When this snapshot will expire (null on failure or dry run)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Why snapshot was aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("abortReason")]
+    public string? AbortReason { get; set; } = default!;
+
+    /// <summary>
+    /// Results of each compression callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbackResults")]
+    public System.Collections.Generic.ICollection<CompressCallbackResult> CallbackResults { get; set; } = default!;
+
+    /// <summary>
+    /// Total snapshot execution time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshotDurationMs")]
+    public int SnapshotDurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to retrieve a snapshot
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetSnapshotRequest
+{
+
+    /// <summary>
+    /// ID of the snapshot to retrieve
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshotId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SnapshotId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing snapshot data
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetSnapshotResponse
+{
+
+    /// <summary>
+    /// ID of the snapshot
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshotId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SnapshotId { get; set; } = default!;
+
+    /// <summary>
+    /// True if snapshot exists (hasn't expired)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("found")]
+    public bool Found { get; set; } = default!;
+
+    /// <summary>
+    /// The snapshot data (null if not found/expired)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshot")]
+    public ResourceSnapshot? Snapshot { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Ephemeral snapshot of a living resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceSnapshot
+{
+
+    /// <summary>
+    /// Unique identifier for this snapshot
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshotId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SnapshotId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of resource snapshotted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource snapshotted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Label for snapshot purpose (e.g., "storyline_seed")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshotType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SnapshotType { get; set; } = default!;
+
+    /// <summary>
+    /// Data entries from each compression callback (same format as archives)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ArchiveBundleEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ArchiveBundleEntry>();
+
+    /// <summary>
+    /// When this snapshot was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When this snapshot will expire
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
 }
 

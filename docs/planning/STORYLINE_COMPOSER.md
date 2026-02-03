@@ -477,6 +477,9 @@ For living characters, the composer should accept **live snapshots** instead of 
 
 ### Live Snapshot Architecture
 
+**STATUS**: Schema added to `schemas/resource-api.yaml` and `schemas/resource-events.yaml`.
+Implementation pending in `lib-resource/ResourceService.cs`.
+
 A **LiveSnapshotRequest** triggers non-destructive data gathering using the same compression callbacks but without deletion:
 
 ```
@@ -485,11 +488,47 @@ POST /resource/snapshot/execute
   "resourceType": "character",
   "resourceId": "abc-123",
   "snapshotType": "storyline_seed",  // Distinguishes from archival
-  "ttl_seconds": 3600  // Snapshots are ephemeral
+  "ttlSeconds": 3600  // Snapshots are ephemeral (default 1 hour, max 24 hours)
 }
 ```
 
-This produces a `ResourceSnapshot` (like `ResourceArchive` but in Redis with TTL) that the storyline composer can consume without affecting the living entity.
+**Response**:
+```json
+{
+  "resourceType": "character",
+  "resourceId": "abc-123",
+  "success": true,
+  "snapshotId": "snap-xyz-456",
+  "expiresAt": "2026-02-03T15:00:00Z",
+  "callbackResults": [...],
+  "snapshotDurationMs": 127
+}
+```
+
+This produces a `ResourceSnapshot` (like `ResourceArchive` but in Redis with TTL via `resource-snapshots` store) that the storyline composer can consume without affecting the living entity.
+
+**Key Differences from compress/execute**:
+| Aspect | compress/execute | snapshot/execute |
+|--------|------------------|------------------|
+| Storage | MySQL (permanent) | Redis (ephemeral) |
+| Deletion | Optional (`deleteSourceData`) | Never |
+| TTL | None (permanent) | Configurable (1h default, 24h max) |
+| Event | `resource.compressed` | `resource.snapshot.created` |
+| Use Case | Death/archival | Living entity capture |
+
+**ABML Integration** (for actor behaviors):
+```yaml
+# Actor behavior can request a snapshot of another character
+- service_call:
+    service: resource
+    method: /resource/snapshot/execute
+    parameters:
+      resourceType: character
+      resourceId: "${target_character_id}"
+      snapshotType: storyline_seed
+      ttlSeconds: 1800
+    result_variable: snapshot_result
+```
 
 ## Compressed Archive Data Richness
 

@@ -559,20 +559,30 @@ public partial class StateService : IStateService
             }
 
             // Build store info list
-            var stores = storeNames.Select(name =>
+            var includeStats = body?.IncludeStats ?? false;
+            var stores = new List<StoreInfo>();
+
+            foreach (var name in storeNames)
             {
                 var backend = _stateStoreFactory.GetBackendType(name);
-                return new StoreInfo
+                long? keyCount = null;
+
+                if (includeStats)
+                {
+                    keyCount = await _stateStoreFactory.GetKeyCountAsync(name, cancellationToken);
+                }
+
+                stores.Add(new StoreInfo
                 {
                     Name = name,
                     Backend = backend == StateBackend.Redis
                         ? StoreInfoBackend.Redis
                         : StoreInfoBackend.Mysql,
-                    KeyCount = null // Key counts require backend-specific queries, skip for now
-                };
-            }).ToList();
+                    KeyCount = keyCount.HasValue ? (int)keyCount.Value : null
+                });
+            }
 
-            _logger.LogDebug("Listed {Count} state stores", stores.Count);
+            _logger.LogDebug("Listed {Count} state stores (includeStats={IncludeStats})", stores.Count, includeStats);
             return (StatusCodes.OK, new ListStoresResponse { Stores = stores });
         }
         catch (Exception ex)

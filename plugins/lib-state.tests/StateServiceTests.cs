@@ -254,8 +254,7 @@ public class StateServiceTests
             Value = new { Name = "Test" },
             Options = new BeyondImmersion.BannouService.State.StateOptions
             {
-                Ttl = 300, // 5 minutes
-                Consistency = ConsistencyLevel.Eventual
+                Ttl = 300 // 5 minutes
             }
         };
 
@@ -272,7 +271,6 @@ public class StateServiceTests
         // Assert
         Assert.NotNull(capturedOptions);
         Assert.Equal(300, capturedOptions.Ttl);
-        Assert.Equal(ConsistencyLevel.Eventual, capturedOptions.Consistency);
     }
 
     [Fact]

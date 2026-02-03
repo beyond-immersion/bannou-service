@@ -10,48 +10,28 @@ using System.Collections.Concurrent;
 namespace BeyondImmersion.BannouService.State.Services;
 
 /// <summary>
-/// In-memory state store for testing and minimal infrastructure scenarios.
-/// Data is NOT persisted across restarts.
-/// Thread-safe via ConcurrentDictionary.
-/// Implements ICacheableStateStore for Set and Sorted Set operations.
+/// Static holder for shared in-memory store data.
+/// This non-generic class ensures the dictionaries are truly shared across all generic instantiations
+/// of InMemoryStateStore&lt;T&gt;. In C#, static fields in generic classes are per closed generic type,
+/// so without this holder class, InMemoryStateStore&lt;Foo&gt;._allStores would be a different
+/// dictionary than InMemoryStateStore&lt;Bar&gt;._allStores.
 /// </summary>
-/// <typeparam name="TValue">Value type stored.</typeparam>
-public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
-    where TValue : class
+internal static class InMemoryStoreData
 {
-    private readonly string _storeName;
-    private readonly ILogger<InMemoryStateStore<TValue>> _logger;
-
     /// <summary>
     /// Entry in the in-memory store containing value and metadata.
     /// </summary>
-    private sealed class StoreEntry
+    internal sealed class StoreEntry
     {
         public string Json { get; set; } = string.Empty;
         public long Version { get; set; }
         public DateTimeOffset? ExpiresAt { get; set; }
     }
 
-    // Shared store across all instances with same store name
-    // This allows different typed stores to share the same underlying data
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, StoreEntry>> _allStores = new();
-
-    // Shared set store for set operations
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SetEntry>> _allSetStores = new();
-
-    // Shared sorted set store for sorted set operations
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SortedSetEntry>> _allSortedSetStores = new();
-
-    // Shared counter store for atomic counter operations
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, CounterEntry>> _allCounterStores = new();
-
-    // Shared hash store for hash operations
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, HashStoreEntry>> _allHashStores = new();
-
     /// <summary>
     /// Entry for a set in the in-memory store.
     /// </summary>
-    private sealed class SetEntry
+    internal sealed class SetEntry
     {
         public HashSet<string> Items { get; } = new();
         public DateTimeOffset? ExpiresAt { get; set; }
@@ -60,9 +40,9 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
 
     /// <summary>
     /// Entry for a sorted set in the in-memory store.
-    /// Uses a dictionary for member->score lookup and a sorted list for ordered access.
+    /// Uses a dictionary for member->score lookup.
     /// </summary>
-    private sealed class SortedSetEntry
+    internal sealed class SortedSetEntry
     {
         // Member -> Score mapping for O(1) lookup
         public Dictionary<string, double> MemberScores { get; } = new();
@@ -71,9 +51,9 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     }
 
     /// <summary>
-    /// Entry for an atomic counter in the in-memory store.
+    /// Entry for a counter in the in-memory store.
     /// </summary>
-    private sealed class CounterEntry
+    internal sealed class CounterEntry
     {
         private long _value;
         public long Value => Interlocked.Read(ref _value);
@@ -94,7 +74,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     /// <summary>
     /// Entry for a hash in the in-memory store.
     /// </summary>
-    private sealed class HashStoreEntry
+    internal sealed class HashStoreEntry
     {
         // Field -> JSON value mapping
         public Dictionary<string, string> Fields { get; } = new();
@@ -104,11 +84,57 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         public readonly object Lock = new();
     }
 
-    private readonly ConcurrentDictionary<string, StoreEntry> _store;
-    private readonly ConcurrentDictionary<string, SetEntry> _setStore;
-    private readonly ConcurrentDictionary<string, SortedSetEntry> _sortedSetStore;
-    private readonly ConcurrentDictionary<string, CounterEntry> _counterStore;
-    private readonly ConcurrentDictionary<string, HashStoreEntry> _hashStore;
+    // Shared store across all instances with same store name
+    // This allows different typed stores to share the same underlying data
+    internal static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, StoreEntry>> AllStores = new();
+
+    // Shared set store for set operations
+    internal static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SetEntry>> AllSetStores = new();
+
+    // Shared sorted set store for sorted set operations
+    internal static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SortedSetEntry>> AllSortedSetStores = new();
+
+    // Shared counter store for atomic counter operations
+    internal static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, CounterEntry>> AllCounterStores = new();
+
+    // Shared hash store for hash operations
+    internal static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, HashStoreEntry>> AllHashStores = new();
+
+    /// <summary>
+    /// Get the key count for a store by name.
+    /// Does not clean up expired entries - returns raw count for efficiency.
+    /// </summary>
+    /// <param name="storeName">Name of the store.</param>
+    /// <returns>Key count, or 0 if store doesn't exist.</returns>
+    public static long GetKeyCountForStore(string storeName)
+    {
+        if (AllStores.TryGetValue(storeName, out var store))
+        {
+            return store.Count;
+        }
+        return 0;
+    }
+}
+
+/// <summary>
+/// In-memory state store for testing and minimal infrastructure scenarios.
+/// Data is NOT persisted across restarts.
+/// Thread-safe via ConcurrentDictionary.
+/// Implements ICacheableStateStore for Set and Sorted Set operations.
+/// </summary>
+/// <typeparam name="TValue">Value type stored.</typeparam>
+public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
+    where TValue : class
+{
+    private readonly string _storeName;
+    private readonly ILogger<InMemoryStateStore<TValue>> _logger;
+
+    // Instance references to the shared static stores for this store name
+    private readonly ConcurrentDictionary<string, InMemoryStoreData.StoreEntry> _store;
+    private readonly ConcurrentDictionary<string, InMemoryStoreData.SetEntry> _setStore;
+    private readonly ConcurrentDictionary<string, InMemoryStoreData.SortedSetEntry> _sortedSetStore;
+    private readonly ConcurrentDictionary<string, InMemoryStoreData.CounterEntry> _counterStore;
+    private readonly ConcurrentDictionary<string, InMemoryStoreData.HashStoreEntry> _hashStore;
 
     /// <summary>
     /// Creates a new in-memory state store.
@@ -122,17 +148,17 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         _storeName = storeName;
         _logger = logger;
 
-        // Get or create the store for this name
-        _store = _allStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, StoreEntry>());
-        _setStore = _allSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SetEntry>());
-        _sortedSetStore = _allSortedSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SortedSetEntry>());
-        _counterStore = _allCounterStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, CounterEntry>());
-        _hashStore = _allHashStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, HashStoreEntry>());
+        // Get or create the store for this name from the shared static holder
+        _store = InMemoryStoreData.AllStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, InMemoryStoreData.StoreEntry>());
+        _setStore = InMemoryStoreData.AllSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, InMemoryStoreData.SetEntry>());
+        _sortedSetStore = InMemoryStoreData.AllSortedSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, InMemoryStoreData.SortedSetEntry>());
+        _counterStore = InMemoryStoreData.AllCounterStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, InMemoryStoreData.CounterEntry>());
+        _hashStore = InMemoryStoreData.AllHashStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, InMemoryStoreData.HashStoreEntry>());
 
         _logger.LogDebug("In-memory state store '{StoreName}' initialized", storeName);
     }
 
-    private bool IsExpired(StoreEntry entry)
+    private bool IsExpired(InMemoryStoreData.StoreEntry entry)
     {
         return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
     }
@@ -210,13 +236,13 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
 
         var entry = _store.AddOrUpdate(
             key,
-            _ => new StoreEntry
+            _ => new InMemoryStoreData.StoreEntry
             {
                 Json = json,
                 Version = 1,
                 ExpiresAt = expiresAt
             },
-            (_, existing) => new StoreEntry
+            (_, existing) => new InMemoryStoreData.StoreEntry
             {
                 Json = json,
                 Version = existing.Version + 1,
@@ -257,7 +283,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
                 return null;
             }
 
-            var newEntry = new StoreEntry
+            var newEntry = new InMemoryStoreData.StoreEntry
             {
                 Json = json,
                 Version = existing.Version + 1,
@@ -357,13 +383,13 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             var json = BannouJson.Serialize(value);
             var entry = _store.AddOrUpdate(
                 key,
-                _ => new StoreEntry
+                _ => new InMemoryStoreData.StoreEntry
                 {
                     Json = json,
                     Version = 1,
                     ExpiresAt = expiresAt
                 },
-                (_, existing) => new StoreEntry
+                (_, existing) => new InMemoryStoreData.StoreEntry
                 {
                     Json = json,
                     Version = existing.Version + 1,
@@ -464,9 +490,21 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         }
     }
 
+    /// <summary>
+    /// Get the key count for a store by name (static method for factory use).
+    /// Does not clean up expired entries - returns raw count for efficiency.
+    /// </summary>
+    /// <param name="storeName">Name of the store.</param>
+    /// <returns>Key count, or 0 if store doesn't exist.</returns>
+    public static long GetKeyCountForStore(string storeName)
+    {
+        // Delegate to the shared holder class
+        return InMemoryStoreData.GetKeyCountForStore(storeName);
+    }
+
     // ==================== Set Operations ====================
 
-    private bool IsSetExpired(SetEntry entry)
+    private bool IsSetExpired(InMemoryStoreData.SetEntry entry)
     {
         return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
     }
@@ -485,7 +523,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var entry = _setStore.GetOrAdd(key, _ => new SetEntry());
+        var entry = _setStore.GetOrAdd(key, _ => new InMemoryStoreData.SetEntry());
 
         lock (entry.Lock)
         {
@@ -526,7 +564,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var entry = _setStore.GetOrAdd(key, _ => new SetEntry());
+        var entry = _setStore.GetOrAdd(key, _ => new InMemoryStoreData.SetEntry());
 
         lock (entry.Lock)
         {
@@ -725,7 +763,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
 
     // ==================== Sorted Set Operations ====================
 
-    private bool IsSortedSetExpired(SortedSetEntry entry)
+    private bool IsSortedSetExpired(InMemoryStoreData.SortedSetEntry entry)
     {
         return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
     }
@@ -733,7 +771,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     /// <summary>
     /// Get members ordered by score for ranking operations.
     /// </summary>
-    private IReadOnlyList<(string member, double score)> GetOrderedMembers(SortedSetEntry entry, bool descending)
+    private IReadOnlyList<(string member, double score)> GetOrderedMembers(InMemoryStoreData.SortedSetEntry entry, bool descending)
     {
         var ordered = descending
             ? entry.MemberScores.OrderByDescending(kvp => kvp.Value).ThenBy(kvp => kvp.Key)
@@ -756,7 +794,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var entry = _sortedSetStore.GetOrAdd(key, _ => new SortedSetEntry());
+        var entry = _sortedSetStore.GetOrAdd(key, _ => new InMemoryStoreData.SortedSetEntry());
 
         lock (entry.Lock)
         {
@@ -799,7 +837,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var sortedSetEntry = _sortedSetStore.GetOrAdd(key, _ => new SortedSetEntry());
+        var sortedSetEntry = _sortedSetStore.GetOrAdd(key, _ => new InMemoryStoreData.SortedSetEntry());
 
         lock (sortedSetEntry.Lock)
         {
@@ -1048,7 +1086,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     {
         await Task.CompletedTask;
 
-        var entry = _sortedSetStore.GetOrAdd(key, _ => new SortedSetEntry());
+        var entry = _sortedSetStore.GetOrAdd(key, _ => new InMemoryStoreData.SortedSetEntry());
 
         lock (entry.Lock)
         {
@@ -1089,7 +1127,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
 
     // ==================== Atomic Counter Operations ====================
 
-    private bool IsCounterExpired(CounterEntry entry)
+    private bool IsCounterExpired(InMemoryStoreData.CounterEntry entry)
     {
         return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
     }
@@ -1107,7 +1145,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var entry = _counterStore.GetOrAdd(key, _ => new CounterEntry());
+        var entry = _counterStore.GetOrAdd(key, _ => new InMemoryStoreData.CounterEntry());
 
         lock (entry.Lock)
         {
@@ -1178,7 +1216,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var entry = _counterStore.GetOrAdd(key, _ => new CounterEntry());
+        var entry = _counterStore.GetOrAdd(key, _ => new InMemoryStoreData.CounterEntry());
 
         lock (entry.Lock)
         {
@@ -1211,7 +1249,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
 
     // ==================== Hash Operations ====================
 
-    private bool IsHashExpired(HashStoreEntry entry)
+    private bool IsHashExpired(InMemoryStoreData.HashStoreEntry entry)
     {
         return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
     }
@@ -1270,7 +1308,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var entry = _hashStore.GetOrAdd(key, _ => new HashStoreEntry());
+        var entry = _hashStore.GetOrAdd(key, _ => new InMemoryStoreData.HashStoreEntry());
 
         lock (entry.Lock)
         {
@@ -1317,7 +1355,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
             : null;
 
-        var entry = _hashStore.GetOrAdd(key, _ => new HashStoreEntry());
+        var entry = _hashStore.GetOrAdd(key, _ => new InMemoryStoreData.HashStoreEntry());
 
         lock (entry.Lock)
         {
@@ -1410,7 +1448,7 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     {
         await Task.CompletedTask;
 
-        var entry = _hashStore.GetOrAdd(key, _ => new HashStoreEntry());
+        var entry = _hashStore.GetOrAdd(key, _ => new InMemoryStoreData.HashStoreEntry());
 
         lock (entry.Lock)
         {

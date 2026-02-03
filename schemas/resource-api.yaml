@@ -389,6 +389,79 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetArchiveResponse'
 
+  # ===========================================================================
+  # Snapshot Management (Live Entity Snapshots) - 2 endpoints
+  # ===========================================================================
+
+  /resource/snapshot/execute:
+    post:
+      operationId: executeSnapshot
+      tags:
+      - Snapshot Management
+      summary: Create ephemeral snapshot of a living resource
+      description: |
+        Creates a non-destructive snapshot of a resource using the same compression
+        callbacks, but stores the result in Redis with a configurable TTL instead
+        of permanent MySQL storage.
+
+        **Use Case**: The Storyline Composer needs compressed data from living
+        entities (not just dead/archived ones) to seed emergent narratives.
+        This endpoint provides that capability without affecting the source data.
+
+        **Key Differences from compress/execute**:
+        1. Stores in Redis (ephemeral) not MySQL (permanent)
+        2. Never deletes source data
+        3. Publishes `resource.snapshot.created` event (not `resource.compressed`)
+        4. Snapshot expires after TTL (default 1 hour, max 24 hours)
+
+        **Intended Consumers**:
+        - Actor behaviors (via ABML service_call)
+        - Regional Watchers for storyline composition
+        - Analytics for living entity state capture
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot result with snapshot ID and data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteSnapshotResponse'
+
+  /resource/snapshot/get:
+    post:
+      operationId: getSnapshot
+      tags:
+      - Snapshot Management
+      summary: Retrieve an ephemeral snapshot
+      description: |
+        Retrieves a previously created snapshot by its ID.
+        Returns 404 if the snapshot has expired or doesn't exist.
+
+        Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
+        is automatically deleted by Redis.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSnapshotResponse'
+
 components:
   schemas:
     # =========================================================================
@@ -1391,3 +1464,165 @@ components:
           type: integer
           nullable: true
           description: Size before compression
+
+    # =========================================================================
+    # Snapshot Management Models (Live Entity Snapshots)
+    # =========================================================================
+
+    ExecuteSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create an ephemeral snapshot of a living resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: |
+            Type of resource to snapshot (opaque identifier).
+            Must match compression callback registrations.
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to snapshot
+        snapshotType:
+          type: string
+          description: |
+            Optional label for the snapshot purpose (e.g., "storyline_seed", "analytics").
+            Stored in metadata for filtering/debugging.
+        ttlSeconds:
+          type: integer
+          minimum: 60
+          maximum: 86400
+          default: 3600
+          description: |
+            Time-to-live in seconds for the snapshot (default 1 hour, max 24 hours).
+            Snapshot is automatically deleted by Redis after TTL expires.
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          description: Policy for callback execution (defaults to ALL_REQUIRED)
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be captured without storing
+
+    ExecuteSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Result of snapshot execution
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - snapshotDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        success:
+          type: boolean
+          description: True if snapshot completed successfully
+        dryRun:
+          type: boolean
+          description: True if this was a dry run
+        snapshotId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique ID for this snapshot (null on failure or dry run)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this snapshot will expire (null on failure or dry run)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why snapshot was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        snapshotDurationMs:
+          type: integer
+          description: Total snapshot execution time in milliseconds
+
+    GetSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a snapshot
+      required:
+      - snapshotId
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot to retrieve
+
+    GetSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing snapshot data
+      required:
+      - snapshotId
+      - found
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot
+        found:
+          type: boolean
+          description: True if snapshot exists (hasn't expired)
+        snapshot:
+          $ref: '#/components/schemas/ResourceSnapshot'
+          nullable: true
+          description: The snapshot data (null if not found/expired)
+
+    ResourceSnapshot:
+      type: object
+      additionalProperties: false
+      description: Ephemeral snapshot of a living resource
+      required:
+      - snapshotId
+      - resourceType
+      - resourceId
+      - snapshotType
+      - entries
+      - createdAt
+      - expiresAt
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: Unique identifier for this snapshot
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        snapshotType:
+          type: string
+          description: Label for snapshot purpose (e.g., "storyline_seed")
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback (same format as archives)
+        createdAt:
+          type: string
+          format: date-time
+          description: When this snapshot was created
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this snapshot will expire
