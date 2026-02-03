@@ -16,10 +16,10 @@ This document provides a compact reference of all Bannou services.
 | [Asset](#asset) | 1.0.0 | 20 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 14 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Character](#character) | 1.0.0 | 11 | Character management service for game worlds. |
-| [Character Encounter](#character-encounter) | 1.0.0 | 19 | Character encounter tracking service for memorable interacti... |
-| [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
-| [Character Personality](#character-personality) | 1.0.0 | 10 | Machine-readable personality traits for NPC behavior decisio... |
+| [Character](#character) | 1.0.0 | 12 | Character management service for game worlds. |
+| [Character Encounter](#character-encounter) | 1.0.0 | 21 | Character encounter tracking service for memorable interacti... |
+| [Character History](#character-history) | 1.0.0 | 12 | Historical event participation and backstory management for ... |
+| [Character Personality](#character-personality) | 1.0.0 | 12 | Machine-readable personality traits for NPC behavior decisio... |
 | [Common](#common) | 1.0.0 | 0 | Shared type definitions used across multiple Bannou services... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract](#contract) | 1.0.0 | 30 | Binding agreements between entities with milestone-based pro... |
@@ -32,7 +32,7 @@ Des... |
 | [Inventory](#inventory) | 1.0.0 | 16 | Container and inventory management service for games. |
 | [Item](#item) | 1.0.0 | 14 | Item template and instance management service. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Location](#location) | 1.0.0 | 17 | Location management service for game worlds. |
+| [Location](#location) | 1.0.0 | 18 | Location management service for game worlds. |
 | [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for game worlds. |
 | [Matchmaking](#matchmaking) | 1.0.0 | 11 | Matchmaking service for competitive and casual game matching... |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
@@ -44,7 +44,7 @@ Des... |
 | [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for game worlds. |
-| [Resource](#resource) | 1.0.0 | 6 | Resource reference tracking and lifecycle management. |
+| [Resource](#resource) | 1.0.0 | 13 | Resource reference tracking and lifecycle management. |
 | [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
 Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
@@ -338,11 +338,15 @@ Hierarchical relationship type definitions for entity-to-entity relationships in
 
 **Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md)
 
-Resource reference tracking and lifecycle management for foundational resources. Enables foundational services (L2) to safely delete resources by tracking references from higher-layer consumers (L3/L4) without violating the service hierarchy. Higher-layer services publish reference events when they create/delete references to foundational resources. This service maintains the reference counts using Redis sets and coordinates cleanup callbacks when resources are deleted.
+Resource reference tracking, lifecycle management, and hierarchical compression for foundational resources. Provides three core capabilities:
+
+1. **Reference Tracking**: Enables foundational services (L2) to safely delete resources by tracking references from higher-layer consumers (L3/L4) without violating the service hierarchy. Higher-layer services publish reference events when they create/delete references to foundational resources.
+
+2. **Cleanup Coordination**: Maintains reference counts using Redis sets and coordinates cleanup callbacks when resources are deleted. Supports CASCADE, RESTRICT, and DETACH deletion policies.
+
+3. **Hierarchical Compression**: Centralizes compression of resources and their dependents. Higher-layer services register compression callbacks that gather data for archival. The Resource service orchestrates callback execution, bundles data into unified archives stored in MySQL, and supports full decompression for data recovery.
 
 **Key Design Principle**: lib-resource (L1) uses opaque string identifiers for `resourceType` and `sourceType`. It does NOT enumerate or validate these against any service registry - that would create implicit coupling to higher layers. The strings are just identifiers that consumers self-report.
-
-**Why L1**: Any layer can depend on L1. Resources being tracked are at L2 or higher, and their consumers are at L3/L4. By placing this service at L1, all layers can use it without hierarchy violations.
 
 ---
 
@@ -375,32 +379,6 @@ Realm-scoped species management for the Arcadia game world. Manages playable and
 **Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md)
 
 The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
-
-### Interface Hierarchy (as of 2026-02-03)
-
-```
-IStateStore<T>                    - Core CRUD (all backends)
-├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
-│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
-├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
-│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
-
-IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
-```
-
-**Backend Support Matrix**:
-
-| Interface | Redis | MySQL | InMemory | RedisSearch |
-|-----------|:-----:|:-----:|:--------:|:-----------:|
-| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
-| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
-| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -441,7 +419,7 @@ Public-facing website service for browser-based access to news, account profile 
 ## Summary
 
 - **Total services**: 43
-- **Total endpoints**: 556
+- **Total endpoints**: 571
 
 ---
 

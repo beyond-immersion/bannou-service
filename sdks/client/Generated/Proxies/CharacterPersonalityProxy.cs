@@ -185,6 +185,42 @@ public sealed class CharacterPersonalityProxy
     }
 
     /// <summary>
+    /// Get personality data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing PersonalityCompressData on success.</returns>
+    public Task<ApiResponse<PersonalityCompressData>> GetCompressDataAsync(
+        GetCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetCompressDataRequest, PersonalityCompressData>(
+            "/character-personality/get-compress-data", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Restore personality data from archive
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RestoreFromArchiveResponse on success.</returns>
+    public Task<ApiResponse<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+            "/character-personality/restore-from-archive", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Cleanup all personality data for a deleted character
     /// </summary>
     /// <param name="request">The request payload.</param>

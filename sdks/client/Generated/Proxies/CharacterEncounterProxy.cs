@@ -365,4 +365,40 @@ public sealed class CharacterEncounterProxy
         return _client.InvokeAsync<DecayMemoriesRequest, DecayMemoriesResponse>(
             "/character-encounter/decay-memories", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Get encounter data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing EncounterCompressData on success.</returns>
+    public Task<ApiResponse<EncounterCompressData>> GetCompressDataAsync(
+        GetCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetCompressDataRequest, EncounterCompressData>(
+            "/character-encounter/get-compress-data", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Restore encounter data from archive
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RestoreFromArchiveResponse on success.</returns>
+    public Task<ApiResponse<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+            "/character-encounter/restore-from-archive", request, channel, timeout, cancellationToken);
+    }
 }

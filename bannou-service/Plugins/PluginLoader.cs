@@ -982,8 +982,8 @@ public class PluginLoader
         if (serviceLayer == ServiceLayer.AppFeatures)
         {
             return clientLayer == ServiceLayer.GameFoundation ||
-                   clientLayer == ServiceLayer.GameFeatures ||
-                   clientLayer == ServiceLayer.Extensions;
+                    clientLayer == ServiceLayer.GameFeatures ||
+                    clientLayer == ServiceLayer.Extensions;
         }
 
         // For other layers, simply check if client is in a higher layer

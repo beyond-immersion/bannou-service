@@ -1732,6 +1732,146 @@ public partial class LocationController
 
     #endregion
 
+    #region Meta Endpoints for ValidateTerritory
+
+    private static readonly string _ValidateTerritory_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateTerritoryRequest",
+    "$defs": {
+        "ValidateTerritoryRequest": {
+            "type": "object",
+            "description": "Request to validate a location against territory boundaries",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "territoryLocationIds"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The location to validate"
+                },
+                "territoryLocationIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Territory boundary location IDs"
+                },
+                "territoryMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TerritoryMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Validation mode (exclusive or inclusive). Defaults to exclusive."
+                }
+            }
+        },
+        "TerritoryMode": {
+            "type": "string",
+            "description": "Territory validation mode for constraint checking",
+            "enum": [
+                "exclusive",
+                "inclusive"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ValidateTerritory_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateTerritoryResponse",
+    "$defs": {
+        "ValidateTerritoryResponse": {
+            "type": "object",
+            "description": "Territory validation result",
+            "additionalProperties": false,
+            "required": [
+                "isValid"
+            ],
+            "properties": {
+                "isValid": {
+                    "type": "boolean",
+                    "description": "True if location passes territory validation"
+                },
+                "violationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable reason if validation failed"
+                },
+                "matchedTerritoryId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "The territory location that matched (for inclusive) or conflicted (for exclusive)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ValidateTerritory_Info = """
+{
+    "summary": "Validate location against territory boundaries",
+    "description": "Checks if a proposed location falls within or outside specified territory boundaries.\nUsed by Contract service's clause type handler system for territory validation.\n\nTerritory modes:\n- exclusive: Location must NOT be within any territory location (or descendants)\n- inclusive: Location MUST be within at least one territory location (or descendants)\n",
+    "tags": [
+        "Location"
+    ],
+    "deprecated": false,
+    "operationId": "validateTerritory"
+}
+""";
+
+    /// <summary>Returns endpoint information for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            _ValidateTerritory_Info));
+
+    /// <summary>Returns request schema for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            "request-schema",
+            _ValidateTerritory_RequestSchema));
+
+    /// <summary>Returns response schema for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            "response-schema",
+            _ValidateTerritory_ResponseSchema));
+
+    /// <summary>Returns full schema for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            _ValidateTerritory_Info,
+            _ValidateTerritory_RequestSchema,
+            _ValidateTerritory_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetLocationDescendants
 
     private static readonly string _GetLocationDescendants_RequestSchema = """

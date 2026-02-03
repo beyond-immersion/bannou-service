@@ -201,4 +201,40 @@ public sealed class CharacterHistoryProxy
         return _client.InvokeAsync<SummarizeHistoryRequest, HistorySummaryResponse>(
             "/character-history/summarize", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Get history data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing HistoryCompressData on success.</returns>
+    public Task<ApiResponse<HistoryCompressData>> GetCompressDataAsync(
+        GetCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetCompressDataRequest, HistoryCompressData>(
+            "/character-history/get-compress-data", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Restore history data from archive
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RestoreFromArchiveResponse on success.</returns>
+    public Task<ApiResponse<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+            "/character-history/restore-from-archive", request, channel, timeout, cancellationToken);
+    }
 }

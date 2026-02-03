@@ -2153,4 +2153,173 @@ public partial class CharacterController
             _TransferCharacterToRealm_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for GetCompressData
+
+    private static readonly string _GetCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCompressDataRequest",
+    "$defs": {
+        "GetCompressDataRequest": {
+            "description": "Request to get character data for compression",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to get compress data for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterCompressData",
+    "$defs": {
+        "CharacterCompressData": {
+            "description": "Core character data for archive storage",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "deathDate",
+                "status",
+                "compressedAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game death timestamp (required for compression)"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status (must be dead for compression)"
+                },
+                "familySummary": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Text summary of family relationships.\nExample: \"Father of 3, married to Elena, orphaned at young age\"\n"
+                },
+                "compressedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this data was compressed"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
+        },
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_Info = """
+{
+    "summary": "Get character base data for compression",
+    "description": "Called by Resource service during compression.\nReturns core character data (name, dates, family summary).\nReturns BadRequest if character is alive - only dead characters can be compressed.\n",
+    "tags": [
+        "Character Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            _GetCompressData_Info));
+
+    /// <summary>Returns request schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            "request-schema",
+            _GetCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            "response-schema",
+            _GetCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            _GetCompressData_Info,
+            _GetCompressData_RequestSchema,
+            _GetCompressData_ResponseSchema));
+
+    #endregion
 }

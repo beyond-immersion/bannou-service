@@ -16,10 +16,10 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 13 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Bannou Character Service API](#character) | `client.Character` | 11 | Character management service for game worlds. |
-| [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
-| [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
-| [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 10 | Machine-readable personality traits for NPC behavior decisio... |
+| [Bannou Character Service API](#character) | `client.Character` | 12 | Character management service for game worlds. |
+| [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
+| [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
+| [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
@@ -30,7 +30,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 14 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 18 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
@@ -42,7 +42,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 10 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
 | [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
-| [Resource Lifecycle API](#resource) | `client.Resource` | 6 | Resource reference tracking and lifecycle management. |
+| [Resource Lifecycle API](#resource) | `client.Resource` | 13 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
@@ -362,6 +362,7 @@ Character management service for game worlds.
 | `CompresscharacterAsync` | `CompressCharacterRequest` | `CharacterArchive` | Compress a dead character to archive format |
 | `GetCharacterarchiveAsync` | `GetCharacterArchiveRequest` | `CharacterArchive` | Get compressed archive data for a character |
 | `CheckcharacterreferencesAsync` | `CheckReferencesRequest` | `CharacterRefCount` | Check reference count for cleanup eligibility |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterCompressData` | Get character base data for compression |
 
 ### Character Lookup
 
@@ -396,6 +397,13 @@ Character encounter tracking service for memorable interactions between characte
 | `DeleteEncounterAsync` | `DeleteEncounterRequest` | `DeleteEncounterResponse` | Delete encounter and perspectives |
 | `DeleteBycharacterAsync` | `DeleteByCharacterRequest` | `DeleteByCharacterResponse` | Delete all encounters for a character |
 | `DecaymemoriesAsync` | `DecayMemoriesRequest` | `DecayMemoriesResponse` | Trigger memory decay (maintenance) |
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `EncounterCompressData` | Get encounter data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore encounter data from archive |
 
 ### Encounter Type Management
 
@@ -450,6 +458,13 @@ Historical event participation and backstory management for characters.
 | `AddbackstoryelementAsync` | `AddBackstoryElementRequest` | `BackstoryResponse` | Add a single backstory element |
 | `DeleteBackstoryEventAsync` | `DeleteBackstoryRequest` | *(fire-and-forget)* | Delete all backstory for a character |
 
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `HistoryCompressData` | Get history data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore history data from archive |
+
 ### Historical Events
 
 | Method | Request | Response | Summary |
@@ -482,6 +497,13 @@ Machine-readable personality traits for NPC behavior decisions.
 | `SetcombatpreferencesAsync` | `SetCombatPreferencesRequest` | `CombatPreferencesResponse` | Create or update combat preferences for a character |
 | `EvolvecombatpreferencesAsync` | `EvolveCombatRequest` | `CombatEvolutionResult` | Record combat experience that may evolve preferences |
 | `DeleteCombatpreferencesEventAsync` | `DeleteCombatPreferencesRequest` | *(fire-and-forget)* | Delete combat preferences for a character |
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `PersonalityCompressData` | Get personality data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore personality data from archive |
 
 ### Personality Evolution
 
@@ -1019,6 +1041,7 @@ Location management service for game worlds.
 | `ListLocationsbyparentAsync` | `ListLocationsByParentRequest` | `LocationListResponse` | Get child locations for a parent location |
 | `ListRootlocationsAsync` | `ListRootLocationsRequest` | `LocationListResponse` | Get root locations in a realm |
 | `GetLocationancestorsAsync` | `GetLocationAncestorsRequest` | `LocationListResponse` | Get all ancestors of a location |
+| `ValidateTerritoryAsync` | `ValidateTerritoryRequest` | `ValidateTerritoryResponse` | Validate location against territory boundaries |
 | `GetLocationdescendantsAsync` | `GetLocationDescendantsRequest` | `LocationListResponse` | Get all descendants of a location |
 | `LocationexistsAsync` | `LocationExistsRequest` | `LocationExistsResponse` | Check if location exists and is active |
 
@@ -1412,6 +1435,18 @@ Resource reference tracking and lifecycle management.
 |--------|---------|----------|---------|
 | `DefinecleanupcallbackAsync` | `DefineCleanupRequest` | `DefineCleanupResponse` | Define cleanup callbacks for a resource type |
 | `ExecutecleanupAsync` | `ExecuteCleanupRequest` | `ExecuteCleanupResponse` | Execute cleanup for a resource |
+| `ListCleanupcallbacksAsync` | `ListCleanupCallbacksRequest` | `ListCleanupCallbacksResponse` | List registered cleanup callbacks |
+| `RemovecleanupcallbackAsync` | `RemoveCleanupCallbackRequest` | `RemoveCleanupCallbackResponse` | Remove a cleanup callback registration |
+
+### Compression Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DefinecompresscallbackAsync` | `DefineCompressCallbackRequest` | `DefineCompressCallbackResponse` | Register compression callback for a resource type |
+| `ExecutecompressAsync` | `ExecuteCompressRequest` | `ExecuteCompressResponse` | Compress a resource and all dependents |
+| `ExecutedecompressAsync` | `ExecuteDecompressRequest` | `ExecuteDecompressResponse` | Restore data from archive |
+| `ListCompresscallbacksAsync` | `ListCompressCallbacksRequest` | `ListCompressCallbacksResponse` | List registered compression callbacks |
+| `GetArchiveAsync` | `GetArchiveRequest` | `GetArchiveResponse` | Retrieve compressed archive |
 
 ### Reference Management
 
@@ -1716,7 +1751,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 42
-- **Total methods**: 550
+- **Total methods**: 565
 
 ---
 

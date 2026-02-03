@@ -808,6 +808,198 @@ paths:
         : \"Generates text summaries of a character's backstory and historical\\nparticipation for inclusion in the CharacterArchive.
         Called during\\ncharacter compression before history data is deleted.\\n\",\n    \"tags\": [\n        \"History Management\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"summarizeHistory\"\n}"
+  /character-history/get-compress-data:
+    post:
+      summary: Get history data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns historical participations, backstory elements, and text summaries for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryCompressData'
+        '404':
+          description: No history data for character
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCompressDataRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCompressDataRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get history data for compression\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the character to get compress data for\"\n                }\n            }\n        }\n   \
+        \ }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HistoryCompressData\"\
+        ,\n    \"$defs\": {\n        \"HistoryCompressData\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Complete history data for archive storage\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\",\n                \"hasParticipations\",\n                \"hasBackstory\",\n\
+        \                \"compressedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Character this data belongs to\"\n                },\n                \"hasParticipations\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether historical participations
+        exist\"\n                },\n                \"participations\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/HistoricalParticipation\"\n          \
+        \          },\n                    \"description\": \"Historical event participations (empty if hasParticipations=false)\"\
+        \n                },\n                \"hasBackstory\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether backstory elements exist\"\n                },\n                \"backstory\"\
+        : {\n                    \"$ref\": \"#/$defs/BackstoryResponse\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Backstory data (null if hasBackstory=false)\"\n                },\n           \
+        \     \"summaries\": {\n                    \"$ref\": \"#/$defs/HistorySummaryResponse\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Text summaries for reference\"\n                },\n   \
+        \             \"compressedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When this data was compressed\"\n                }\n            }\n    \
+        \    },\n        \"HistoricalParticipation\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        Record of a character's participation in a historical event\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"participationId\",\n                \"characterId\",\n              \
+        \  \"eventId\",\n                \"eventName\",\n                \"eventCategory\",\n                \"role\",\n \
+        \               \"eventDate\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n   \
+        \             \"participationId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique ID for this participation record\"\n                },\n  \
+        \              \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the character who participated\"\n                },\n           \
+        \     \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"ID of the historical event\"\n                },\n                \"eventName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Name of the event (for display
+        and summarization)\"\n                },\n                \"eventCategory\": {\n                    \"$ref\": \"#/$defs/EventCategory\"\
+        ,\n                    \"description\": \"Category of the historical event\"\n                },\n               \
+        \ \"role\": {\n                    \"$ref\": \"#/$defs/ParticipationRole\",\n                    \"description\":
+        \"How the character participated\"\n                },\n                \"eventDate\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game date
+        when the event occurred\"\n                },\n                \"significance\": {\n                    \"type\":
+        \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                 \
+        \   \"maximum\": 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant
+        this event was for the character (0.0 to 1.0).\\nAffects behavior system weighting of this memory.\\n\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Event-specific details for
+        behavior decisions\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\
+        \n                }\n            }\n        },\n        \"EventCategory\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Categories of historical events that characters can participate in\",\n          \
+        \  \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n\
+        \                \"ECONOMIC\",\n                \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"\
+        PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
+        \       \"description\": \"How the character participated in the historical event\",\n            \"enum\": [\n  \
+        \              \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\",\n                \"WITNESS\"\
+        ,\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n                \"HERO\",\n               \
+        \ \"SURVIVOR\"\n            ]\n        },\n        \"BackstoryResponse\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"Complete backstory data for a character\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\",\n                \"elements\"\n            ],\n   \
+        \         \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"ID of the character this backstory belongs
+        to\"\n                },\n                \"elements\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/BackstoryElement\"\n                    },\n  \
+        \                  \"description\": \"All backstory elements for this character\"\n                },\n          \
+        \      \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this backstory was first created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        When this backstory was last modified\"\n                }\n            }\n        },\n        \"BackstoryElement\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A machine-readable backstory element for behavior
+        system consumption\",\n            \"additionalProperties\": false,\n            \"required\": [\n               \
+        \ \"elementType\",\n                \"key\",\n                \"value\"\n            ],\n            \"properties\"\
+        : {\n                \"elementType\": {\n                    \"$ref\": \"#/$defs/BackstoryElementType\",\n       \
+        \             \"description\": \"Category of this backstory element\"\n                },\n                \"key\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Machine-readable key (e.g., \\\"homeland\\\", \\\"trained_by\\\", \\\
+        \"past_job\\\").\\nUsed by behavior system to query specific aspects.\\n\"\n                },\n                \"\
+        value\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                   \
+        \ \"maxLength\": 500,\n                    \"description\": \"Machine-readable value (e.g., \\\"northlands\\\", \\\
+        \"knights_guild\\\", \\\"blacksmith\\\").\\nReferenced in behavior rules.\\n\"\n                },\n             \
+        \   \"strength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n     \
+        \               \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.5,\n\
+        \                    \"description\": \"How strongly this element affects behavior (0.0 to 1.0).\\nHigher strength
+        = greater influence on decisions.\\n\"\n                },\n                \"relatedEntityId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional related entity (location, organization, character)\"\n          \
+        \      },\n                \"relatedEntityType\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Type of the related entity (if any)\"\n          \
+        \      }\n            }\n        },\n        \"BackstoryElementType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Types of backstory elements. Each type represents a different aspect\\nof the character's
+        background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN\",\n               \
+        \ \"OCCUPATION\",\n                \"TRAINING\",\n                \"TRAUMA\",\n                \"ACHIEVEMENT\",\n\
+        \                \"SECRET\",\n                \"GOAL\",\n                \"FEAR\",\n                \"BELIEF\"\n \
+        \           ]\n        },\n        \"HistorySummaryResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Generated text summaries for character compression\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\",\n                \"keyBackstoryPoints\",\n        \
+        \        \"majorLifeEvents\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the character summarized\"\n                },\n                \"keyBackstoryPoints\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n  \
+        \                  },\n                    \"description\": \"Key backstory elements as text summaries.\\ne.g., [\\\
+        \"Trained by Knights Guild\\\", \\\"Born in the Northlands\\\"]\\n\"\n                },\n                \"majorLifeEvents\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Major historical events as text summaries.\\
+        ne.g., [\\\"Fought in the Battle of Stormgate (Hero)\\\", \\\"Survived the Great Flood\\\"]\\n\"\n               \
+        \ }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get history data for compression\",\n    \"description\": \"Called by Resource
+        service during character compression.\\nReturns historical participations, backstory elements, and text summaries
+        for archival.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"getCompressData\"\n}"
+  /character-history/restore-from-archive:
+    post:
+      summary: Restore history data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores historical participations and backstory elements from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveRequest\"\
+        ,\n    \"$defs\": {\n        \"RestoreFromArchiveRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to restore history data from archive\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"characterId\",\n                \"data\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the character to restore data for\"\n                },\n\
+        \                \"data\": {\n                    \"type\": \"string\",\n                    \"description\": \"Base64-encoded
+        gzipped HistoryCompressData JSON\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
+        ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"characterId\",\n                \"participationsRestored\",\n               \
+        \ \"backstoryRestored\",\n                \"success\"\n            ],\n            \"properties\": {\n           \
+        \     \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"Character data was restored for\"\n                },\n                \"participationsRestored\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of participation records
+        restored\"\n                },\n                \"backstoryRestored\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether backstory was restored\"\n                },\n                \"\
+        success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether restoration
+        completed successfully\"\n                },\n                \"errorMessage\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Error details if restoration
+        failed\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Restore history data from archive\",\n    \"description\": \"Called by
+        Resource service during character decompression.\\nRestores historical participations and backstory elements from
+        archive data.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"restoreFromArchive\"\n}"
 components:
   schemas:
     EventCategory:
@@ -1277,3 +1469,93 @@ components:
           description: |
             Major historical events as text summaries.
             e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+    GetCompressDataRequest:
+      type: object
+      description: Request to get history data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+    HistoryCompressData:
+      type: object
+      description: Complete history data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasParticipations
+      - hasBackstory
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasParticipations:
+          type: boolean
+          description: Whether historical participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalParticipation'
+          description: Historical event participations (empty if hasParticipations=false)
+        hasBackstory:
+          type: boolean
+          description: Whether backstory elements exist
+        backstory:
+          $ref: '#/components/schemas/BackstoryResponse'
+          nullable: true
+          description: Backstory data (null if hasBackstory=false)
+        summaries:
+          $ref: '#/components/schemas/HistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore history data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped HistoryCompressData JSON
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - participationsRestored
+      - backstoryRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        participationsRestored:
+          type: integer
+          description: Number of participation records restored
+        backstoryRestored:
+          type: boolean
+          description: Whether backstory was restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed

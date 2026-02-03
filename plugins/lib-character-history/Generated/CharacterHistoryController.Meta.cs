@@ -1935,4 +1935,493 @@ public partial class CharacterHistoryController
             _SummarizeHistory_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for GetCompressData
+
+    private static readonly string _GetCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCompressDataRequest",
+    "$defs": {
+        "GetCompressDataRequest": {
+            "type": "object",
+            "description": "Request to get history data for compression",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to get compress data for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/HistoryCompressData",
+    "$defs": {
+        "HistoryCompressData": {
+            "type": "object",
+            "description": "Complete history data for archive storage",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "hasParticipations",
+                "hasBackstory",
+                "compressedAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character this data belongs to"
+                },
+                "hasParticipations": {
+                    "type": "boolean",
+                    "description": "Whether historical participations exist"
+                },
+                "participations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/HistoricalParticipation"
+                    },
+                    "description": "Historical event participations (empty if hasParticipations=false)"
+                },
+                "hasBackstory": {
+                    "type": "boolean",
+                    "description": "Whether backstory elements exist"
+                },
+                "backstory": {
+                    "$ref": "#/$defs/BackstoryResponse",
+                    "nullable": true,
+                    "description": "Backstory data (null if hasBackstory=false)"
+                },
+                "summaries": {
+                    "$ref": "#/$defs/HistorySummaryResponse",
+                    "nullable": true,
+                    "description": "Text summaries for reference"
+                },
+                "compressedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this data was compressed"
+                }
+            }
+        },
+        "HistoricalParticipation": {
+            "type": "object",
+            "description": "Record of a character's participation in a historical event",
+            "additionalProperties": false,
+            "required": [
+                "participationId",
+                "characterId",
+                "eventId",
+                "eventName",
+                "eventCategory",
+                "role",
+                "eventDate",
+                "createdAt"
+            ],
+            "properties": {
+                "participationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique ID for this participation record"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character who participated"
+                },
+                "eventId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the historical event"
+                },
+                "eventName": {
+                    "type": "string",
+                    "description": "Name of the event (for display and summarization)"
+                },
+                "eventCategory": {
+                    "$ref": "#/$defs/EventCategory",
+                    "description": "Category of the historical event"
+                },
+                "role": {
+                    "$ref": "#/$defs/ParticipationRole",
+                    "description": "How the character participated"
+                },
+                "eventDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game date when the event occurred"
+                },
+                "significance": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "default": 0.5,
+                    "description": "How significant this event was for the character (0.0 to 1.0).\nAffects behavior system weighting of this memory.\n"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Event-specific details for behavior decisions"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this record was created"
+                }
+            }
+        },
+        "EventCategory": {
+            "type": "string",
+            "description": "Categories of historical events that characters can participate in",
+            "enum": [
+                "WAR",
+                "NATURAL_DISASTER",
+                "POLITICAL",
+                "ECONOMIC",
+                "RELIGIOUS",
+                "CULTURAL",
+                "PERSONAL"
+            ]
+        },
+        "ParticipationRole": {
+            "type": "string",
+            "description": "How the character participated in the historical event",
+            "enum": [
+                "LEADER",
+                "COMBATANT",
+                "VICTIM",
+                "WITNESS",
+                "BENEFICIARY",
+                "CONSPIRATOR",
+                "HERO",
+                "SURVIVOR"
+            ]
+        },
+        "BackstoryResponse": {
+            "type": "object",
+            "description": "Complete backstory data for a character",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "elements"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character this backstory belongs to"
+                },
+                "elements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BackstoryElement"
+                    },
+                    "description": "All backstory elements for this character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this backstory was first created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this backstory was last modified"
+                }
+            }
+        },
+        "BackstoryElement": {
+            "type": "object",
+            "description": "A machine-readable backstory element for behavior system consumption",
+            "additionalProperties": false,
+            "required": [
+                "elementType",
+                "key",
+                "value"
+            ],
+            "properties": {
+                "elementType": {
+                    "$ref": "#/$defs/BackstoryElementType",
+                    "description": "Category of this backstory element"
+                },
+                "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Machine-readable key (e.g., \"homeland\", \"trained_by\", \"past_job\").\nUsed by behavior system to query specific aspects.\n"
+                },
+                "value": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "description": "Machine-readable value (e.g., \"northlands\", \"knights_guild\", \"blacksmith\").\nReferenced in behavior rules.\n"
+                },
+                "strength": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "default": 0.5,
+                    "description": "How strongly this element affects behavior (0.0 to 1.0).\nHigher strength = greater influence on decisions.\n"
+                },
+                "relatedEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Optional related entity (location, organization, character)"
+                },
+                "relatedEntityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of the related entity (if any)"
+                }
+            }
+        },
+        "BackstoryElementType": {
+            "type": "string",
+            "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
+            "enum": [
+                "ORIGIN",
+                "OCCUPATION",
+                "TRAINING",
+                "TRAUMA",
+                "ACHIEVEMENT",
+                "SECRET",
+                "GOAL",
+                "FEAR",
+                "BELIEF"
+            ]
+        },
+        "HistorySummaryResponse": {
+            "type": "object",
+            "description": "Generated text summaries for character compression",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "keyBackstoryPoints",
+                "majorLifeEvents"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character summarized"
+                },
+                "keyBackstoryPoints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Key backstory elements as text summaries.\ne.g., [\"Trained by Knights Guild\", \"Born in the Northlands\"]\n"
+                },
+                "majorLifeEvents": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Major historical events as text summaries.\ ne.g., [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_Info = """
+{
+    "summary": "Get history data for compression",
+    "description": "Called by Resource service during character compression.\nReturns historical participations, backstory elements, and text summaries for archival.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/get-compress-data",
+            _GetCompressData_Info));
+
+    /// <summary>Returns request schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/get-compress-data",
+            "request-schema",
+            _GetCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/get-compress-data",
+            "response-schema",
+            _GetCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/get-compress-data",
+            _GetCompressData_Info,
+            _GetCompressData_RequestSchema,
+            _GetCompressData_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RestoreFromArchive
+
+    private static readonly string _RestoreFromArchive_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreFromArchiveRequest",
+    "$defs": {
+        "RestoreFromArchiveRequest": {
+            "type": "object",
+            "description": "Request to restore history data from archive",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "data"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to restore data for"
+                },
+                "data": {
+                    "type": "string",
+                    "description": "Base64-encoded gzipped HistoryCompressData JSON"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreFromArchive_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreFromArchiveResponse",
+    "$defs": {
+        "RestoreFromArchiveResponse": {
+            "type": "object",
+            "description": "Result of restoration from archive",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "participationsRestored",
+                "backstoryRestored",
+                "success"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character data was restored for"
+                },
+                "participationsRestored": {
+                    "type": "integer",
+                    "description": "Number of participation records restored"
+                },
+                "backstoryRestored": {
+                    "type": "boolean",
+                    "description": "Whether backstory was restored"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether restoration completed successfully"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error details if restoration failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreFromArchive_Info = """
+{
+    "summary": "Restore history data from archive",
+    "description": "Called by Resource service during character decompression.\nRestores historical participations and backstory elements from archive data.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "restoreFromArchive"
+}
+""";
+
+    /// <summary>Returns endpoint information for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/restore-from-archive/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/restore-from-archive",
+            _RestoreFromArchive_Info));
+
+    /// <summary>Returns request schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/restore-from-archive/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/restore-from-archive",
+            "request-schema",
+            _RestoreFromArchive_RequestSchema));
+
+    /// <summary>Returns response schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/restore-from-archive/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/restore-from-archive",
+            "response-schema",
+            _RestoreFromArchive_ResponseSchema));
+
+    /// <summary>Returns full schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-history/restore-from-archive/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterHistory",
+            "POST",
+            "/character-history/restore-from-archive",
+            _RestoreFromArchive_Info,
+            _RestoreFromArchive_RequestSchema,
+            _RestoreFromArchive_ResponseSchema));
+
+    #endregion
 }

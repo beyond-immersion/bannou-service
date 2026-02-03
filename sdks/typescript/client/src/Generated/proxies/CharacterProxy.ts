@@ -115,4 +115,22 @@ export class CharacterProxy {
       Schemas['CharacterListResponse']
     >('/character/by-realm', request, channel, timeout);
   }
+
+  /**
+   * Get character base data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(
+    request: Schemas['GetCompressDataRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CharacterCompressData']>> {
+    return this.client.invokeAsync<
+      Schemas['GetCompressDataRequest'],
+      Schemas['CharacterCompressData']
+    >('/character/get-compress-data', request, channel, timeout);
+  }
 }

@@ -1759,6 +1759,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CharacterListResponse'
+  /character/get-compress-data:
+    post:
+      summary: Get character base data for compression
+      operationId: getCompressData
+      tags:
+      - Character Compression
+      description: |
+        Called by Resource service during compression.
+        Returns core character data (name, dates, family summary).
+        Returns BadRequest if character is alive - only dead characters can be compressed.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Character base data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterCompressData'
+        '400':
+          description: Character is not dead (cannot compress alive characters)
+        '404':
+          description: Character not found
   /character-encounter/type/get:
     post:
       summary: Get encounter type by code
@@ -1960,6 +1989,32 @@ paths:
                 $ref: '#/components/schemas/PerspectiveResponse'
         '404':
           description: Perspective not found
+  /character-encounter/get-compress-data:
+    post:
+      summary: Get encounter data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns encounters and perspectives involving this character for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterCompressData'
+        '404':
+          description: No encounter data for character
   /character-history/get-participation:
     post:
       summary: Get all historical events a character participated in
@@ -2038,6 +2093,32 @@ paths:
                 $ref: '#/components/schemas/BackstoryResponse'
         '404':
           description: No backstory defined for this character
+  /character-history/get-compress-data:
+    post:
+      summary: Get history data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns historical participations, backstory elements, and text summaries for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryCompressData'
+        '404':
+          description: No history data for character
   /character-personality/get:
     post:
       summary: Get personality for a character
@@ -2093,6 +2174,32 @@ paths:
                 $ref: '#/components/schemas/CombatPreferencesResponse'
         '404':
           description: No combat preferences defined for this character
+  /character-personality/get-compress-data:
+    post:
+      summary: Get personality data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns personality traits and combat preferences for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalityCompressData'
+        '404':
+          description: No personality data for character
   /character-personality/cleanup-by-character:
     post:
       summary: Cleanup all personality data for a deleted character
@@ -5644,6 +5751,37 @@ paths:
                 $ref: '#/components/schemas/LocationListResponse'
         '404':
           description: Location not found
+  /location/validate-territory:
+    post:
+      operationId: validateTerritory
+      tags:
+      - Location
+      summary: Validate location against territory boundaries
+      description: |
+        Checks if a proposed location falls within or outside specified territory boundaries.
+        Used by Contract service's clause type handler system for territory validation.
+
+        Territory modes:
+        - exclusive: Location must NOT be within any territory location (or descendants)
+        - inclusive: Location MUST be within at least one territory location (or descendants)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTerritoryRequest'
+      responses:
+        '200':
+          description: Territory validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateTerritoryResponse'
+        '404':
+          description: Location not found
+      x-permissions:
+      - role: user
+        states: {}
   /location/get-descendants:
     post:
       summary: Get all descendants of a location
@@ -7000,6 +7138,113 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExecuteCleanupResponse'
+  /resource/cleanup/list:
+    post:
+      operationId: listCleanupCallbacks
+      tags:
+      - Cleanup Management
+      summary: List registered cleanup callbacks
+      description: |
+        Returns all cleanup callbacks registered for a resource type.
+        Useful for debugging and admin inspection of cleanup chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCleanupCallbacksRequest'
+      responses:
+        '200':
+          description: List of registered callbacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCleanupCallbacksResponse'
+  /resource/compress/execute:
+    post:
+      operationId: executeCompress
+      tags:
+      - Compression Management
+      summary: Compress a resource and all dependents
+      description: |
+        Gathers data from all registered compression callbacks, bundles into
+        a unified archive, and stores in MySQL. Optionally deletes source data
+        after successful archival via existing cleanup callbacks.
+
+        Flow:
+        1. Get all compression callbacks for resourceType, sorted by priority
+        2. If dryRun, return preview without executing
+        3. Acquire distributed lock
+        4. Execute each callback to gather data
+        5. Bundle responses into archive (gzipped JSON per entry)
+        6. Store archive in MySQL
+        7. If deleteSourceData, invoke cleanup callbacks
+        8. Publish resource.compressed event
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCompressRequest'
+      responses:
+        '200':
+          description: Compression result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteCompressResponse'
+  /resource/compress/list:
+    post:
+      operationId: listCompressCallbacks
+      tags:
+      - Compression Management
+      summary: List registered compression callbacks
+      description: |
+        Returns all compression callbacks registered for a resource type.
+        Useful for debugging and admin inspection of compression chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCompressCallbacksRequest'
+      responses:
+        '200':
+          description: Callback list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCompressCallbacksResponse'
+  /resource/archive/get:
+    post:
+      operationId: getArchive
+      tags:
+      - Compression Management
+      summary: Retrieve compressed archive
+      description: |
+        Retrieves a compressed archive by resource type and ID.
+        Returns the latest version unless a specific archiveId is provided.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetArchiveRequest'
+      responses:
+        '200':
+          description: Archive data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetArchiveResponse'
   /save-load/slot/create:
     post:
       tags:
@@ -9301,6 +9546,37 @@ components:
           items:
             type: string
           description: ICE candidates for NAT traversal (can be trickled later)
+    ArchiveBundleEntry:
+      type: object
+      additionalProperties: false
+      description: Single entry in the archive bundle
+      required:
+      - sourceType
+      - serviceName
+      - data
+      - compressedAt
+      properties:
+        sourceType:
+          type: string
+          description: Type of data (e.g., "character-personality")
+        serviceName:
+          type: string
+          description: Service that provided the data
+        data:
+          type: string
+          description: Base64-encoded gzipped JSON from the service callback
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this entry was compressed
+        dataChecksum:
+          type: string
+          nullable: true
+          description: SHA256 hash for integrity verification
+        originalSizeBytes:
+          type: integer
+          nullable: true
+          description: Size before compression
     ArchiveInfo:
       description: Archive metadata including size and document count
       type: object
@@ -11168,6 +11444,65 @@ components:
           description: |
             Text summary of family relationships.
             Example: "Father of 3, married to Elena, orphaned at young age"
+    CharacterCompressData:
+      description: Core character data for archive storage
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - deathDate
+      - status
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the character
+        name:
+          type: string
+          description: Display name of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          description: In-game death timestamp (required for compression)
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status (must be dead for compression)
+        familySummary:
+          type: string
+          nullable: true
+          description: |
+            Text summary of family relationships.
+            Example: "Father of 3, married to Elena, orphaned at young age"
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
     CharacterContext:
       type: object
       additionalProperties: false
@@ -11737,6 +12072,41 @@ components:
         durationMs:
           type: integer
           description: Callback execution time in milliseconds
+    CleanupCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - onDeleteAction
+      - serviceName
+      - callbackEndpoint
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of entity that will be cleaned up
+        onDeleteAction:
+          $ref: '#/components/schemas/OnDeleteAction'
+          description: Action taken when resource is deleted
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        callbackEndpoint:
+          type: string
+          description: Endpoint path called during cleanup
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
     CleanupPolicy:
       type: string
       enum:
@@ -12329,6 +12699,92 @@ components:
           type: integer
           nullable: true
           description: Random seed used
+    CompressCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of a single compression callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      - durationMs
+      properties:
+        sourceType:
+          type: string
+          description: Source type that provided data
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        dataSize:
+          type: integer
+          nullable: true
+          description: Size of compressed data in bytes
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+    CompressCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered compression callback
+      required:
+      - resourceType
+      - sourceType
+      - serviceName
+      - compressEndpoint
+      - priority
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of data being compressed
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        compressEndpoint:
+          type: string
+          description: Endpoint called during compression
+        decompressEndpoint:
+          type: string
+          nullable: true
+          description: Endpoint called during decompression
+        priority:
+          type: integer
+          description: Execution order (lower = earlier)
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+    CompressionPolicy:
+      type: string
+      enum:
+      - BEST_EFFORT
+      - ALL_REQUIRED
+      description: |
+        Policy for compression callback execution.
+        BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
+        ALL_REQUIRED: Abort compression if any callback fails
     CompressionType:
       type: string
       enum:
@@ -12533,7 +12989,6 @@ components:
       enum:
       - exclusivity
       - non_compete
-      - territory
       - time_commitment
     ContactRequest:
       description: User-submitted contact form data
@@ -15748,6 +16203,45 @@ components:
         valence:
           type: number
           description: Valence level (0-1)
+    EncounterCompressData:
+      type: object
+      description: Complete encounter data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasEncounters
+      - encounterCount
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasEncounters:
+          type: boolean
+          description: Whether encounters exist for this character
+        encounterCount:
+          type: integer
+          description: Number of encounters archived
+        encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterResponse'
+          description: Encounters with perspectives (empty if 
+            hasEncounters=false)
+        aggregateSentiment:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: |
+            Map of target characterId to aggregate sentiment.
+            Preserves sentiment relationships for historical reference.
+          nullable: true
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
     EncounterListResponse:
       type: object
       description: Paginated list of encounters
@@ -16942,6 +17436,13 @@ components:
           nullable: true
           description: Override cleanup policy (uses resource default if not 
             specified)
+        dryRun:
+          type: boolean
+          nullable: true
+          description: |
+            If true, returns what callbacks WOULD execute without actually
+            executing them. Useful for pre-deletion validation and debugging.
+            Defaults to false.
     ExecuteCleanupResponse:
       type: object
       additionalProperties: false
@@ -16950,6 +17451,7 @@ components:
       - resourceType
       - resourceId
       - success
+      - dryRun
       - callbackResults
       properties:
         resourceType:
@@ -16975,6 +17477,86 @@ components:
         cleanupDurationMs:
           type: integer
           description: Total cleanup execution time in milliseconds
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks were actually 
+            executed)
+    ExecuteCompressRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compress a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to compress
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to compress
+        deleteSourceData:
+          type: boolean
+          default: false
+          description: If true, invoke cleanup callbacks after successful 
+            archival
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          nullable: true
+          description: Override policy (uses default from config if not 
+            specified)
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be compressed without 
+            executing
+    ExecuteCompressResponse:
+      type: object
+      additionalProperties: false
+      description: Compression execution result
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - callbackResults
+      - compressionDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource compressed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource compressed
+        success:
+          type: boolean
+          description: True if compression completed successfully
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of created archive (null if failed or dryRun)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why compression was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        sourceDataDeleted:
+          type: boolean
+          description: Whether cleanup callbacks were executed after archival
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks actually 
+            executed)
+        compressionDurationMs:
+          type: integer
+          description: Total compression execution time in milliseconds
     ExecuteContractRequest:
       type: object
       description: Request to execute contract clauses
@@ -17879,6 +18461,49 @@ components:
           type: string
           format: uuid
           description: The relationship type to get ancestors for
+    GetArchiveRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a compressed archive
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific version (latest if not specified)
+    GetArchiveResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing archive data
+      required:
+      - resourceType
+      - resourceId
+      - found
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        found:
+          type: boolean
+          description: True if archive exists
+        archive:
+          $ref: '#/components/schemas/ResourceArchive'
+          nullable: true
+          description: The archive data (null if not found)
     GetAssetRequest:
       description: Request to retrieve asset metadata and download URL
       type: object
@@ -18112,6 +18737,17 @@ components:
           type: string
           format: uuid
           description: ID of the character to get combat preferences for
+    GetCompressDataRequest:
+      description: Request to get character data for compression
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
     GetConsentStatusRequest:
       type: object
       description: Request to get consent status for all parties
@@ -19945,6 +20581,44 @@ components:
           type: string
           format: date-time
           description: When this record was created
+    HistoryCompressData:
+      type: object
+      description: Complete history data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasParticipations
+      - hasBackstory
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasParticipations:
+          type: boolean
+          description: Whether historical participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalParticipation'
+          description: Historical event participations (empty if 
+            hasParticipations=false)
+        hasBackstory:
+          type: boolean
+          description: Whether backstory elements exist
+        backstory:
+          $ref: '#/components/schemas/BackstoryResponse'
+          nullable: true
+          description: Backstory data (null if hasBackstory=false)
+        summaries:
+          $ref: '#/components/schemas/HistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
     HistoryRequest:
       type: object
       description: Request for scene version history
@@ -19978,6 +20652,33 @@ components:
           items:
             $ref: '#/components/schemas/VersionInfo'
           description: Version history entries
+    HistorySummaryResponse:
+      type: object
+      description: Generated text summaries for character compression
+      additionalProperties: false
+      required:
+      - characterId
+      - keyBackstoryPoints
+      - majorLifeEvents
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character summarized
+        keyBackstoryPoints:
+          type: array
+          items:
+            type: string
+          description: |
+            Key backstory elements as text summaries.
+            e.g., ["Trained by Knights Guild", "Born in the Northlands"]
+        majorLifeEvents:
+          type: array
+          items:
+            type: string
+          description: |
+            Major historical events as text summaries.
+            e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
     HoldRecord:
       type: object
       description: Authorization hold record
@@ -20990,6 +21691,64 @@ components:
           items:
             $ref: '#/components/schemas/ClauseTypeSummary'
           description: List of registered clause types
+    ListCleanupCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered cleanup callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+    ListCleanupCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered cleanup callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleanupCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+    ListCompressCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered compression callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+    ListCompressCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered compression callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
     ListContainersRequest:
       type: object
       description: Request to list containers for an owner
@@ -23576,6 +24335,17 @@ components:
           $ref: '#/components/schemas/DeviceInfo'
           nullable: true
           description: Information about the client device (optional)
+    OnDeleteAction:
+      type: string
+      enum:
+      - CASCADE
+      - RESTRICT
+      - DETACH
+      description: |
+        Action to take when the referenced resource is deleted.
+        CASCADE: Delete dependent entities when resource is deleted
+        RESTRICT: Block resource deletion if references exist
+        DETACH: Set reference to null when resource is deleted
     OwnerType:
       type: string
       enum:
@@ -24001,6 +24771,38 @@ components:
       - message
       - service
       - system
+    PersonalityCompressData:
+      type: object
+      description: Complete personality data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasPersonality
+      - hasCombatPreferences
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasPersonality:
+          type: boolean
+          description: Whether personality traits exist
+        personality:
+          $ref: '#/components/schemas/PersonalityResponse'
+          nullable: true
+          description: Personality traits (null if hasPersonality=false)
+        hasCombatPreferences:
+          type: boolean
+          description: Whether combat preferences exist
+        combatPreferences:
+          $ref: '#/components/schemas/CombatPreferencesResponse'
+          nullable: true
+          description: Combat preferences (null if hasCombatPreferences=false)
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
     PersonalityResponse:
       type: object
       description: Complete personality profile for behavior system consumption
@@ -26808,6 +27610,45 @@ components:
         depth:
           type: integer
           description: Depth level of this reference
+    ResourceArchive:
+      type: object
+      additionalProperties: false
+      description: Bundled compressed archive
+      required:
+      - archiveId
+      - resourceType
+      - resourceId
+      - version
+      - entries
+      - createdAt
+      - sourceDataDeleted
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+          description: Unique identifier for this archive
+        resourceType:
+          type: string
+          description: Type of resource archived
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource archived
+        version:
+          type: integer
+          description: Archive version (increments on re-compression)
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback
+        createdAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        sourceDataDeleted:
+          type: boolean
+          description: Whether original source data was deleted after archival
     ResourceReference:
       type: object
       additionalProperties: false
@@ -28786,6 +29627,12 @@ components:
       - unilateral_with_notice
       - unilateral_immediate
       - non_terminable
+    TerritoryMode:
+      type: string
+      description: Territory validation mode for constraint checking
+      enum:
+      - exclusive
+      - inclusive
     ThemeConfig:
       description: Visual theme configuration including colors, fonts, and 
         navigation
@@ -30229,6 +31076,50 @@ components:
           default: true
           description: Whether to apply registered game-specific validation 
             rules
+    ValidateTerritoryRequest:
+      type: object
+      description: Request to validate a location against territory boundaries
+      additionalProperties: false
+      required:
+      - locationId
+      - territoryLocationIds
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: The location to validate
+        territoryLocationIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Territory boundary location IDs
+        territoryMode:
+          allOf:
+          - $ref: '#/components/schemas/TerritoryMode'
+          nullable: true
+          description: Validation mode (exclusive or inclusive). Defaults to 
+            exclusive.
+    ValidateTerritoryResponse:
+      type: object
+      description: Territory validation result
+      additionalProperties: false
+      required:
+      - isValid
+      properties:
+        isValid:
+          type: boolean
+          description: True if location passes territory validation
+        violationReason:
+          type: string
+          nullable: true
+          description: Human-readable reason if validation failed
+        matchedTerritoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The territory location that matched (for inclusive) or 
+            conflicted (for exclusive)
     ValidateTokenResponse:
       description: Response from token validation containing validity status and
         associated account details

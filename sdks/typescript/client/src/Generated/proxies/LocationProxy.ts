@@ -153,6 +153,24 @@ export class LocationProxy {
   }
 
   /**
+   * Validate location against territory boundaries
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async validateTerritoryAsync(
+    request: Schemas['ValidateTerritoryRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ValidateTerritoryResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ValidateTerritoryRequest'],
+      Schemas['ValidateTerritoryResponse']
+    >('/location/validate-territory', request, channel, timeout);
+  }
+
+  /**
    * Get all descendants of a location
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

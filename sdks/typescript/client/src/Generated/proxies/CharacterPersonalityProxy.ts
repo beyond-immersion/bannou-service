@@ -61,6 +61,24 @@ export class CharacterPersonalityProxy {
   }
 
   /**
+   * Get personality data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(
+    request: Schemas['GetCompressDataRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['PersonalityCompressData']>> {
+    return this.client.invokeAsync<
+      Schemas['GetCompressDataRequest'],
+      Schemas['PersonalityCompressData']
+    >('/character-personality/get-compress-data', request, channel, timeout);
+  }
+
+  /**
    * Cleanup all personality data for a deleted character
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

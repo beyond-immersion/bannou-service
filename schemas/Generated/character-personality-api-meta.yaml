@@ -781,6 +781,191 @@ paths:
         the combat preferences for a character. Typically called during\\ncharacter compression or deletion.\\n\",\n    \"\
         tags\": [\n        \"Combat Preferences\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteCombatPreferences\"\
         \n}"
+  /character-personality/get-compress-data:
+    post:
+      summary: Get personality data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns personality traits and combat preferences for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalityCompressData'
+        '404':
+          description: No personality data for character
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCompressDataRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCompressDataRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get personality data for compression\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n              \
+        \  \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"description\": \"ID of the character to get compress data for\"\n                }\n          \
+        \  }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PersonalityCompressData\"\
+        ,\n    \"$defs\": {\n        \"PersonalityCompressData\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Complete personality data for archive storage\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"characterId\",\n                \"hasPersonality\",\n                \"hasCombatPreferences\"\
+        ,\n                \"compressedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Character this data belongs to\"\n                },\n                \"hasPersonality\": {\n   \
+        \                 \"type\": \"boolean\",\n                    \"description\": \"Whether personality traits exist\"\
+        \n                },\n                \"personality\": {\n                    \"$ref\": \"#/$defs/PersonalityResponse\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Personality traits (null if hasPersonality=false)\"\
+        \n                },\n                \"hasCombatPreferences\": {\n                    \"type\": \"boolean\",\n  \
+        \                  \"description\": \"Whether combat preferences exist\"\n                },\n                \"combatPreferences\"\
+        : {\n                    \"$ref\": \"#/$defs/CombatPreferencesResponse\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Combat preferences (null if hasCombatPreferences=false)\"\n              \
+        \  },\n                \"compressedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When this data was compressed\"\n                }\n    \
+        \        }\n        },\n        \"PersonalityResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Complete personality profile for behavior system consumption\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\",\n                \"traits\",\n                \"version\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Character this personality belongs to\"\n                },\n                \"traits\": {\n                 \
+        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TraitValue\"\
+        \n                    },\n                    \"description\": \"All trait axis values for this character\"\n    \
+        \            },\n                \"version\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Personality version number (increments on each evolution)\"\n                },\n               \
+        \ \"archetypeHint\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Optional archetype code for behavior optimization (e.g., \\\"guardian\\\",\\n\\\
+        \"merchant\\\", \\\"scholar\\\", \\\"trickster\\\"). Allows behavior system to use\\npre-compiled behavior variants
+        for common personality patterns.\\n\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
+        personality was first created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When this personality was last modified\"\n                }\n            }\n     \
+        \   },\n        \"TraitValue\": {\n            \"type\": \"object\",\n            \"description\": \"A single personality
+        trait with its current value and evolution history\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"axis\",\n                \"value\"\n            ],\n            \"properties\": {\n\
+        \                \"axis\": {\n                    \"$ref\": \"#/$defs/TraitAxis\",\n                    \"description\"\
+        : \"The personality axis this value represents\"\n                },\n                \"value\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": -1.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"Current trait value on the spectrum
+        (-1.0 to +1.0)\"\n                },\n                \"lastChangedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When this trait last evolved (null if never changed since creation)\"\n                },\n     \
+        \           \"changeCount\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
+        \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
+        \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
+        trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
+        extensions).\\n\",\n            \"enum\": [\n                \"OPENNESS\",\n                \"CONSCIENTIOUSNESS\"\
+        ,\n                \"EXTRAVERSION\",\n                \"AGREEABLENESS\",\n                \"NEUROTICISM\",\n     \
+        \           \"HONESTY\",\n                \"AGGRESSION\",\n                \"LOYALTY\"\n            ]\n        },\n\
+        \        \"CombatPreferencesResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Combat
+        preferences profile for behavior system consumption\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"characterId\",\n                \"preferences\",\n                \"version\"\
+        ,\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Character these preferences belong to\"\n                },\n                \"preferences\": {\n            \
+        \        \"$ref\": \"#/$defs/CombatPreferences\",\n                    \"description\": \"The combat preferences values\"\
+        \n                },\n                \"version\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"Preferences version number (increments on each evolution)\"\n                },\n       \
+        \         \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When these preferences were first created\"\n                },\n      \
+        \          \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When these preferences were last
+        modified\"\n                }\n            }\n        },\n        \"CombatPreferences\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Combat behavior preferences that influence tactical decisions.\\nThese
+        values affect GOAP action selection, retreat conditions,\\nand group coordination behavior.\\n\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\"\
+        ,\n                \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n   \
+        \             \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n   \
+        \                 \"$ref\": \"#/$defs/CombatStyle\",\n                    \"description\": \"Overall combat approach\"\
+        \n                },\n                \"preferredRange\": {\n                    \"$ref\": \"#/$defs/PreferredRange\"\
+        ,\n                    \"description\": \"Preferred engagement distance\"\n                },\n                \"\
+        groupRole\": {\n                    \"$ref\": \"#/$defs/GroupRole\",\n                    \"description\": \"Role
+        when fighting in groups\"\n                },\n                \"riskTolerance\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"description\": \"Willingness to take dangerous actions (0.0 = very
+        cautious, 1.0 = reckless).\\nAffects ability selection and target prioritization.\\n\"\n                },\n     \
+        \           \"retreatThreshold\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
+        : \"Health percentage at which retreat is considered (0.0 = fight to death,\\n0.5 = retreat at half health, 1.0 =
+        retreat at any damage).\\n\"\n                },\n                \"protectAllies\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether to prioritize ally protection over self-preservation.\\
+        nAffects target selection and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"\
+        CombatStyle\": {\n            \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations.
+        Affects target selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n            \
+        \    \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\",\n                \"BERSERKER\"\
+        ,\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection
+        in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"CLOSE\",\n              \
+        \  \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget
+        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\",\n            \
+        \    \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\n         \
+        \   ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get personality data for compression\",\n    \"description\": \"Called
+        by Resource service during character compression.\\nReturns personality traits and combat preferences for archival.\\\
+        n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCompressData\"\
+        \n}"
+  /character-personality/restore-from-archive:
+    post:
+      summary: Restore personality data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores personality traits and combat preferences from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveRequest\"\
+        ,\n    \"$defs\": {\n        \"RestoreFromArchiveRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to restore personality data from archive\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"characterId\",\n                \"data\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the character to restore data for\"\n                },\n\
+        \                \"data\": {\n                    \"type\": \"string\",\n                    \"description\": \"Base64-encoded
+        gzipped PersonalityCompressData JSON\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
+        ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"characterId\",\n                \"personalityRestored\",\n                \"\
+        combatPreferencesRestored\",\n                \"success\"\n            ],\n            \"properties\": {\n       \
+        \         \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character data was restored for\"\n                },\n                \"\
+        personalityRestored\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        personality traits were restored\"\n                },\n                \"combatPreferencesRestored\": {\n       \
+        \             \"type\": \"boolean\",\n                    \"description\": \"Whether combat preferences were restored\"\
+        \n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"Whether restoration completed successfully\"\n                },\n                \"errorMessage\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Error details if restoration failed\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Restore personality data from archive\",\n    \"description\": \"Called
+        by Resource service during character decompression.\\nRestores personality traits and combat preferences from archive
+        data.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        restoreFromArchive\"\n}"
   /character-personality/cleanup-by-character:
     post:
       summary: Cleanup all personality data for a deleted character
@@ -1315,3 +1500,88 @@ components:
         success:
           type: boolean
           description: Whether cleanup completed successfully
+    GetCompressDataRequest:
+      type: object
+      description: Request to get personality data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+    PersonalityCompressData:
+      type: object
+      description: Complete personality data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasPersonality
+      - hasCombatPreferences
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasPersonality:
+          type: boolean
+          description: Whether personality traits exist
+        personality:
+          $ref: '#/components/schemas/PersonalityResponse'
+          nullable: true
+          description: Personality traits (null if hasPersonality=false)
+        hasCombatPreferences:
+          type: boolean
+          description: Whether combat preferences exist
+        combatPreferences:
+          $ref: '#/components/schemas/CombatPreferencesResponse'
+          nullable: true
+          description: Combat preferences (null if hasCombatPreferences=false)
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore personality data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped PersonalityCompressData JSON
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - personalityRestored
+      - combatPreferencesRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        personalityRestored:
+          type: boolean
+          description: Whether personality traits were restored
+        combatPreferencesRestored:
+          type: boolean
+          description: Whether combat preferences were restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed

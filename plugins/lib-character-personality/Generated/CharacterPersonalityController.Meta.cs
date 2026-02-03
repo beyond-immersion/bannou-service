@@ -1754,6 +1754,471 @@ public partial class CharacterPersonalityController
 
     #endregion
 
+    #region Meta Endpoints for GetCompressData
+
+    private static readonly string _GetCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCompressDataRequest",
+    "$defs": {
+        "GetCompressDataRequest": {
+            "type": "object",
+            "description": "Request to get personality data for compression",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to get compress data for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PersonalityCompressData",
+    "$defs": {
+        "PersonalityCompressData": {
+            "type": "object",
+            "description": "Complete personality data for archive storage",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "hasPersonality",
+                "hasCombatPreferences",
+                "compressedAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character this data belongs to"
+                },
+                "hasPersonality": {
+                    "type": "boolean",
+                    "description": "Whether personality traits exist"
+                },
+                "personality": {
+                    "$ref": "#/$defs/PersonalityResponse",
+                    "nullable": true,
+                    "description": "Personality traits (null if hasPersonality=false)"
+                },
+                "hasCombatPreferences": {
+                    "type": "boolean",
+                    "description": "Whether combat preferences exist"
+                },
+                "combatPreferences": {
+                    "$ref": "#/$defs/CombatPreferencesResponse",
+                    "nullable": true,
+                    "description": "Combat preferences (null if hasCombatPreferences=false)"
+                },
+                "compressedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this data was compressed"
+                }
+            }
+        },
+        "PersonalityResponse": {
+            "type": "object",
+            "description": "Complete personality profile for behavior system consumption",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "traits",
+                "version",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character this personality belongs to"
+                },
+                "traits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TraitValue"
+                    },
+                    "description": "All trait axis values for this character"
+                },
+                "version": {
+                    "type": "integer",
+                    "description": "Personality version number (increments on each evolution)"
+                },
+                "archetypeHint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional archetype code for behavior optimization (e.g., \"guardian\",\n\"merchant\", \"scholar\", \"trickster\"). Allows behavior system to use\npre-compiled behavior variants for common personality patterns.\n"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this personality was first created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this personality was last modified"
+                }
+            }
+        },
+        "TraitValue": {
+            "type": "object",
+            "description": "A single personality trait with its current value and evolution history",
+            "additionalProperties": false,
+            "required": [
+                "axis",
+                "value"
+            ],
+            "properties": {
+                "axis": {
+                    "$ref": "#/$defs/TraitAxis",
+                    "description": "The personality axis this value represents"
+                },
+                "value": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": -1.0,
+                    "maximum": 1.0,
+                    "description": "Current trait value on the spectrum (-1.0 to +1.0)"
+                },
+                "lastChangedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this trait last evolved (null if never changed since creation)"
+                },
+                "changeCount": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Number of times this trait has evolved"
+                }
+            }
+        },
+        "TraitAxis": {
+            "type": "string",
+            "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
+            "enum": [
+                "OPENNESS",
+                "CONSCIENTIOUSNESS",
+                "EXTRAVERSION",
+                "AGREEABLENESS",
+                "NEUROTICISM",
+                "HONESTY",
+                "AGGRESSION",
+                "LOYALTY"
+            ]
+        },
+        "CombatPreferencesResponse": {
+            "type": "object",
+            "description": "Combat preferences profile for behavior system consumption",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "preferences",
+                "version",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character these preferences belong to"
+                },
+                "preferences": {
+                    "$ref": "#/$defs/CombatPreferences",
+                    "description": "The combat preferences values"
+                },
+                "version": {
+                    "type": "integer",
+                    "description": "Preferences version number (increments on each evolution)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When these preferences were first created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When these preferences were last modified"
+                }
+            }
+        },
+        "CombatPreferences": {
+            "type": "object",
+            "description": "Combat behavior preferences that influence tactical decisions.\nThese values affect GOAP action selection, retreat conditions,\nand group coordination behavior.\n",
+            "additionalProperties": false,
+            "required": [
+                "style",
+                "preferredRange",
+                "groupRole",
+                "riskTolerance",
+                "retreatThreshold",
+                "protectAllies"
+            ],
+            "properties": {
+                "style": {
+                    "$ref": "#/$defs/CombatStyle",
+                    "description": "Overall combat approach"
+                },
+                "preferredRange": {
+                    "$ref": "#/$defs/PreferredRange",
+                    "description": "Preferred engagement distance"
+                },
+                "groupRole": {
+                    "$ref": "#/$defs/GroupRole",
+                    "description": "Role when fighting in groups"
+                },
+                "riskTolerance": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).\nAffects ability selection and target prioritization.\n"
+                },
+                "retreatThreshold": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Health percentage at which retreat is considered (0.0 = fight to death,\n0.5 = retreat at half health, 1.0 = retreat at any damage).\n"
+                },
+                "protectAllies": {
+                    "type": "boolean",
+                    "description": "Whether to prioritize ally protection over self-preservation.\ nAffects target selection and positioning decisions.\n"
+                }
+            }
+        },
+        "CombatStyle": {
+            "type": "string",
+            "description": "Overall approach to combat situations. Affects target selection,\nability usage, and engagement decisions.\n",
+            "enum": [
+                "DEFENSIVE",
+                "BALANCED",
+                "AGGRESSIVE",
+                "BERSERKER",
+                "TACTICAL"
+            ]
+        },
+        "PreferredRange": {
+            "type": "string",
+            "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
+            "enum": [
+                "MELEE",
+                "CLOSE",
+                "MEDIUM",
+                "RANGED"
+            ]
+        },
+        "GroupRole": {
+            "type": "string",
+            "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
+            "enum": [
+                "FRONTLINE",
+                "SUPPORT",
+                "FLANKER",
+                "LEADER",
+                "SOLO"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_Info = """
+{
+    "summary": "Get personality data for compression",
+    "description": "Called by Resource service during character compression.\nReturns personality traits and combat preferences for archival.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/get-compress-data",
+            _GetCompressData_Info));
+
+    /// <summary>Returns request schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/get-compress-data",
+            "request-schema",
+            _GetCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/get-compress-data",
+            "response-schema",
+            _GetCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/get-compress-data",
+            _GetCompressData_Info,
+            _GetCompressData_RequestSchema,
+            _GetCompressData_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RestoreFromArchive
+
+    private static readonly string _RestoreFromArchive_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreFromArchiveRequest",
+    "$defs": {
+        "RestoreFromArchiveRequest": {
+            "type": "object",
+            "description": "Request to restore personality data from archive",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "data"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to restore data for"
+                },
+                "data": {
+                    "type": "string",
+                    "description": "Base64-encoded gzipped PersonalityCompressData JSON"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreFromArchive_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreFromArchiveResponse",
+    "$defs": {
+        "RestoreFromArchiveResponse": {
+            "type": "object",
+            "description": "Result of restoration from archive",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "personalityRestored",
+                "combatPreferencesRestored",
+                "success"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character data was restored for"
+                },
+                "personalityRestored": {
+                    "type": "boolean",
+                    "description": "Whether personality traits were restored"
+                },
+                "combatPreferencesRestored": {
+                    "type": "boolean",
+                    "description": "Whether combat preferences were restored"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether restoration completed successfully"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error details if restoration failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreFromArchive_Info = """
+{
+    "summary": "Restore personality data from archive",
+    "description": "Called by Resource service during character decompression.\nRestores personality traits and combat preferences from archive data.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "restoreFromArchive"
+}
+""";
+
+    /// <summary>Returns endpoint information for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/restore-from-archive/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/restore-from-archive",
+            _RestoreFromArchive_Info));
+
+    /// <summary>Returns request schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/restore-from-archive/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/restore-from-archive",
+            "request-schema",
+            _RestoreFromArchive_RequestSchema));
+
+    /// <summary>Returns response schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/restore-from-archive/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/restore-from-archive",
+            "response-schema",
+            _RestoreFromArchive_ResponseSchema));
+
+    /// <summary>Returns full schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-personality/restore-from-archive/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterPersonality",
+            "POST",
+            "/character-personality/restore-from-archive",
+            _RestoreFromArchive_Info,
+            _RestoreFromArchive_RequestSchema,
+            _RestoreFromArchive_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for CleanupByCharacter
 
     private static readonly string _CleanupByCharacter_RequestSchema = """

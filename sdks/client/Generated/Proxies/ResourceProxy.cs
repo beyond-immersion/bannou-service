@@ -133,4 +133,130 @@ public sealed class ResourceProxy
         return _client.InvokeAsync<ExecuteCleanupRequest, ExecuteCleanupResponse>(
             "/resource/cleanup/execute", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// List registered cleanup callbacks
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ListCleanupCallbacksResponse on success.</returns>
+    public Task<ApiResponse<ListCleanupCallbacksResponse>> ListCleanupCallbacksAsync(
+        ListCleanupCallbacksRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListCleanupCallbacksRequest, ListCleanupCallbacksResponse>(
+            "/resource/cleanup/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Remove a cleanup callback registration
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RemoveCleanupCallbackResponse on success.</returns>
+    public Task<ApiResponse<RemoveCleanupCallbackResponse>> RemoveCleanupCallbackAsync(
+        RemoveCleanupCallbackRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RemoveCleanupCallbackRequest, RemoveCleanupCallbackResponse>(
+            "/resource/cleanup/remove", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Register compression callback for a resource type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing DefineCompressCallbackResponse on success.</returns>
+    public Task<ApiResponse<DefineCompressCallbackResponse>> DefineCompressCallbackAsync(
+        DefineCompressCallbackRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DefineCompressCallbackRequest, DefineCompressCallbackResponse>(
+            "/resource/compress/define", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Compress a resource and all dependents
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ExecuteCompressResponse on success.</returns>
+    public Task<ApiResponse<ExecuteCompressResponse>> ExecuteCompressAsync(
+        ExecuteCompressRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ExecuteCompressRequest, ExecuteCompressResponse>(
+            "/resource/compress/execute", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Restore data from archive
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ExecuteDecompressResponse on success.</returns>
+    public Task<ApiResponse<ExecuteDecompressResponse>> ExecuteDecompressAsync(
+        ExecuteDecompressRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ExecuteDecompressRequest, ExecuteDecompressResponse>(
+            "/resource/decompress/execute", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// List registered compression callbacks
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ListCompressCallbacksResponse on success.</returns>
+    public Task<ApiResponse<ListCompressCallbacksResponse>> ListCompressCallbacksAsync(
+        ListCompressCallbacksRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListCompressCallbacksRequest, ListCompressCallbacksResponse>(
+            "/resource/compress/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Retrieve compressed archive
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetArchiveResponse on success.</returns>
+    public Task<ApiResponse<GetArchiveResponse>> GetArchiveAsync(
+        GetArchiveRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetArchiveRequest, GetArchiveResponse>(
+            "/resource/archive/get", request, channel, timeout, cancellationToken);
+    }
 }

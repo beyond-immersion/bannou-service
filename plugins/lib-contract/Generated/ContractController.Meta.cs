@@ -7108,7 +7108,6 @@ public partial class ContractController
             "enum": [
                 "exclusivity",
                 "non_compete",
-                "territory",
                 "time_commitment"
             ]
         }

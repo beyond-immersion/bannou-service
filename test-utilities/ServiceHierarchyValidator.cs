@@ -1,7 +1,7 @@
+using BeyondImmersion.BannouService.Attributes;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using BeyondImmersion.BannouService.Attributes;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
@@ -172,8 +172,8 @@ public static partial class ServiceHierarchyValidator
         if (serviceLayer == ServiceLayer.AppFeatures)
         {
             return clientLayer == ServiceLayer.GameFoundation ||
-                   clientLayer == ServiceLayer.GameFeatures ||
-                   clientLayer == ServiceLayer.Extensions;
+                    clientLayer == ServiceLayer.GameFeatures ||
+                    clientLayer == ServiceLayer.Extensions;
         }
 
         // For other layers, simply check if client is in a higher layer

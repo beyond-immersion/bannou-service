@@ -113,4 +113,78 @@ export class ResourceProxy {
       Schemas['ExecuteCleanupResponse']
     >('/resource/cleanup/execute', request, channel, timeout);
   }
+
+  /**
+   * List registered cleanup callbacks
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listCleanupCallbacksAsync(
+    request: Schemas['ListCleanupCallbacksRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ListCleanupCallbacksResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ListCleanupCallbacksRequest'],
+      Schemas['ListCleanupCallbacksResponse']
+    >('/resource/cleanup/list', request, channel, timeout);
+  }
+
+  /**
+   * Compress a resource and all dependents
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async executeCompressAsync(
+    request: Schemas['ExecuteCompressRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ExecuteCompressResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ExecuteCompressRequest'],
+      Schemas['ExecuteCompressResponse']
+    >('/resource/compress/execute', request, channel, timeout);
+  }
+
+  /**
+   * List registered compression callbacks
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listCompressCallbacksAsync(
+    request: Schemas['ListCompressCallbacksRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ListCompressCallbacksResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ListCompressCallbacksRequest'],
+      Schemas['ListCompressCallbacksResponse']
+    >('/resource/compress/list', request, channel, timeout);
+  }
+
+  /**
+   * Retrieve compressed archive
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getArchiveAsync(
+    request: Schemas['GetArchiveRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['GetArchiveResponse']>> {
+    return this.client.invokeAsync<Schemas['GetArchiveRequest'], Schemas['GetArchiveResponse']>(
+      '/resource/archive/get',
+      request,
+      channel,
+      timeout
+    );
+  }
 }

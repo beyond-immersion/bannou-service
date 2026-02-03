@@ -221,4 +221,22 @@ public sealed class CharacterProxy
         return _client.InvokeAsync<TransferCharacterToRealmRequest, CharacterResponse>(
             "/character/transfer-realm", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Get character base data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CharacterCompressData on success.</returns>
+    public Task<ApiResponse<CharacterCompressData>> GetCompressDataAsync(
+        GetCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetCompressDataRequest, CharacterCompressData>(
+            "/character/get-compress-data", request, channel, timeout, cancellationToken);
+    }
 }

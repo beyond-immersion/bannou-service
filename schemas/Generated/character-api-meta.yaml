@@ -26,6 +26,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -863,6 +864,77 @@ paths:
         a character from their current realm to a new target realm.\\nUpdates all indexes, validates the target realm exists
         and is active,\\nand publishes realm transition events.\\n\",\n    \"tags\": [\n        \"Character Management\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"transferCharacterToRealm\"\n}"
+  /character/get-compress-data:
+    post:
+      summary: Get character base data for compression
+      operationId: getCompressData
+      tags:
+      - Character Compression
+      description: |
+        Called by Resource service during compression.
+        Returns core character data (name, dates, family summary).
+        Returns BadRequest if character is alive - only dead characters can be compressed.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Character base data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterCompressData'
+        '400':
+          description: Character is not dead (cannot compress alive characters)
+        '404':
+          description: Character not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCompressDataRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCompressDataRequest\": {\n            \"description\": \"Request to get character
+        data for compression\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n          \
+        \      \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"ID of the character to get compress data for\"\n                }\n      \
+        \      }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterCompressData\"\
+        ,\n    \"$defs\": {\n        \"CharacterCompressData\": {\n            \"description\": \"Core character data for
+        archive storage\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\",\n       \
+        \         \"speciesId\",\n                \"birthDate\",\n                \"deathDate\",\n                \"status\"\
+        ,\n                \"compressedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier for the character\"\n                },\n                \"name\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Display name of the character\"\n     \
+        \           },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Realm ID (partition key)\"\n                },\n     \
+        \           \"speciesId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Species ID (foreign key to Species service)\"\n                },\n    \
+        \            \"birthDate\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game death timestamp (required for compression)\"\n                },\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
+        lifecycle status (must be dead for compression)\"\n                },\n                \"familySummary\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Text summary of family relationships.\\nExample: \\\"Father of 3, married to Elena, orphaned at young age\\\"\\\
+        n\"\n                },\n                \"compressedAt\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"date-time\",\n                    \"description\": \"When this data was compressed\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n       \
+        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world
+        last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n          \
+        \  \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n\
+        \                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n        }\n  \
+        \  }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get character base data for compression\",\n    \"description\": \"Called
+        by Resource service during compression.\\nReturns core character data (name, dates, family summary).\\nReturns BadRequest
+        if character is alive - only dead characters can be compressed.\\n\",\n    \"tags\": [\n        \"Character Compression\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCompressData\"\n}"
 components:
   schemas:
     CharacterStatus:
@@ -1569,3 +1641,73 @@ components:
           format: date-time
           nullable: true
           description: When refCount first reached zero (null if refCount > 0)
+    GetCompressDataRequest:
+      description: Request to get character data for compression
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+    CharacterCompressData:
+      description: Core character data for archive storage
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - deathDate
+      - status
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the character
+        name:
+          type: string
+          description: Display name of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          description: In-game death timestamp (required for compression)
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status (must be dead for compression)
+        familySummary:
+          type: string
+          nullable: true
+          description: |
+            Text summary of family relationships.
+            Example: "Father of 3, married to Elena, orphaned at young age"
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp

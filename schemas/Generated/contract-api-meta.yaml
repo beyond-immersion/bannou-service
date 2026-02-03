@@ -25,6 +25,7 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: AppFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -2671,8 +2672,7 @@ paths:
         \        \"nullable\": true,\n                    \"description\": \"What the entity wants to do\"\n             \
         \   }\n            }\n        },\n        \"ConstraintType\": {\n            \"type\": \"string\",\n            \"\
         description\": \"Type of constraint to check\",\n            \"enum\": [\n                \"exclusivity\",\n     \
-        \           \"non_compete\",\n                \"territory\",\n                \"time_commitment\"\n            ]\n\
-        \        }\n    }\n}"
+        \           \"non_compete\",\n                \"time_commitment\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CheckConstraintResponse\"\
         ,\n    \"$defs\": {\n        \"CheckConstraintResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Constraint check result\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
@@ -3388,7 +3388,6 @@ components:
       enum:
       - exclusivity
       - non_compete
-      - territory
       - time_commitment
     MetadataType:
       type: string

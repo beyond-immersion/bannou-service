@@ -153,6 +153,24 @@ public sealed class LocationProxy
     }
 
     /// <summary>
+    /// Validate location against territory boundaries
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ValidateTerritoryResponse on success.</returns>
+    public Task<ApiResponse<ValidateTerritoryResponse>> ValidateTerritoryAsync(
+        ValidateTerritoryRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ValidateTerritoryRequest, ValidateTerritoryResponse>(
+            "/location/validate-territory", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get all descendants of a location
     /// </summary>
     /// <param name="request">The request payload.</param>

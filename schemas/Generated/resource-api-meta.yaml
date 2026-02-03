@@ -23,6 +23,7 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: AppFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -364,46 +365,557 @@ paths:
         Override grace period in seconds (uses default if not specified, 0 to skip)\"\n                },\n              \
         \  \"cleanupPolicy\": {\n                    \"$ref\": \"#/$defs/CleanupPolicy\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Override cleanup policy (uses resource default if not specified)\"\
-        \n                }\n            }\n        },\n        \"CleanupPolicy\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n   \
-        \         \"description\": \"Policy for cleanup callback execution.\\nBEST_EFFORT: Proceed with deletion even if some
-        callbacks fail\\nALL_REQUIRED: Abort deletion if any callback fails\\n\"\n        }\n    }\n}"
+        \n                },\n                \"dryRun\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"If true, returns what callbacks WOULD execute without
+        actually\\nexecuting them. Useful for pre-deletion validation and debugging.\\nDefaults to false.\\n\"\n         \
+        \       }\n            }\n        },\n        \"CleanupPolicy\": {\n            \"type\": \"string\",\n          \
+        \  \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n            \"\
+        description\": \"Policy for cleanup callback execution.\\nBEST_EFFORT: Proceed with deletion even if some callbacks
+        fail\\nALL_REQUIRED: Abort deletion if any callback fails\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteCleanupResponse\"\
         ,\n    \"$defs\": {\n        \"ExecuteCleanupResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after attempting to execute cleanup\",\n            \"required\"\
         : [\n                \"resourceType\",\n                \"resourceId\",\n                \"success\",\n          \
-        \      \"callbackResults\"\n            ],\n            \"properties\": {\n                \"resourceType\": {\n \
-        \                   \"type\": \"string\",\n                    \"description\": \"Type of resource cleaned up\"\n\
-        \                },\n                \"resourceId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"ID of the resource cleaned up\"\n           \
-        \     },\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"True if cleanup completed (per cleanup policy)\"\n                },\n                \"abortReason\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.)\"\n                },\n  \
-        \              \"callbackResults\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/CleanupCallbackResult\"\n                    },\n                   \
-        \ \"description\": \"Results of each cleanup callback\"\n                },\n                \"cleanupDurationMs\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total cleanup execution time
-        in milliseconds\"\n                }\n            }\n        },\n        \"CleanupCallbackResult\": {\n          \
-        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Result of executing
-        a single cleanup callback\",\n            \"required\": [\n                \"sourceType\",\n                \"serviceName\"\
-        ,\n                \"endpoint\",\n                \"success\"\n            ],\n            \"properties\": {\n   \
-        \             \"sourceType\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Source type that was cleaned up (opaque identifier)\"\n                },\n                \"serviceName\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Service that was called\"\n     \
-        \           },\n                \"endpoint\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Endpoint that was called\"\n                },\n                \"success\": {\n                \
-        \    \"type\": \"boolean\",\n                    \"description\": \"Whether callback succeeded\"\n               \
-        \ },\n                \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"HTTP status code from callback\"\n                },\n           \
-        \     \"errorMessage\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Error message if callback failed\"\n                },\n                \"durationMs\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Callback execution time in
-        milliseconds\"\n                }\n            }\n        }\n    }\n}"
+        \      \"dryRun\",\n                \"callbackResults\"\n            ],\n            \"properties\": {\n         \
+        \       \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type
+        of resource cleaned up\"\n                },\n                \"resourceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the resource cleaned
+        up\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"description\": \"True if cleanup completed (per cleanup policy)\"\n                },\n              \
+        \  \"abortReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.)\"\
+        \n                },\n                \"callbackResults\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/CleanupCallbackResult\"\n                  \
+        \  },\n                    \"description\": \"Results of each cleanup callback\"\n                },\n           \
+        \     \"cleanupDurationMs\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Total cleanup execution time in milliseconds\"\n                },\n                \"dryRun\": {\n              \
+        \      \"type\": \"boolean\",\n                    \"description\": \"True if this was a preview (no callbacks were
+        actually executed)\"\n                }\n            }\n        },\n        \"CleanupCallbackResult\": {\n       \
+        \     \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Result of
+        executing a single cleanup callback\",\n            \"required\": [\n                \"sourceType\",\n           \
+        \     \"serviceName\",\n                \"endpoint\",\n                \"success\"\n            ],\n            \"\
+        properties\": {\n                \"sourceType\": {\n                    \"type\": \"string\",\n                  \
+        \  \"description\": \"Source type that was cleaned up (opaque identifier)\"\n                },\n                \"\
+        serviceName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Service that was
+        called\"\n                },\n                \"endpoint\": {\n                    \"type\": \"string\",\n       \
+        \             \"description\": \"Endpoint that was called\"\n                },\n                \"success\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether callback succeeded\"\n\
+        \                },\n                \"statusCode\": {\n                    \"type\": \"integer\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"HTTP status code from callback\"\n           \
+        \     },\n                \"errorMessage\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Error message if callback failed\"\n                },\n         \
+        \       \"durationMs\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Callback
+        execution time in milliseconds\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Execute cleanup for a resource\",\n    \"description\": \"Validates refcount=0,
         grace period passed, acquires distributed lock,\\nre-validates under lock, then executes all cleanup callbacks.\\\
         nReturns Conflict if refcount changed during execution.\\n\",\n    \"tags\": [\n        \"Cleanup Management\"\n \
         \   ],\n    \"deprecated\": false,\n    \"operationId\": \"executeCleanup\"\n}"
+  /resource/cleanup/list:
+    post:
+      operationId: listCleanupCallbacks
+      tags:
+      - Cleanup Management
+      summary: List registered cleanup callbacks
+      description: |
+        Returns all cleanup callbacks registered for a resource type.
+        Useful for debugging and admin inspection of cleanup chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCleanupCallbacksRequest'
+      responses:
+        '200':
+          description: List of registered callbacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCleanupCallbacksResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCleanupCallbacksRequest\"\
+        ,\n    \"$defs\": {\n        \"ListCleanupCallbacksRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to list registered cleanup callbacks\",\n \
+        \           \"properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Filter by resource type (list all if
+        not specified)\"\n                },\n                \"sourceType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by source type (requires
+        resourceType)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCleanupCallbacksResponse\"\
+        ,\n    \"$defs\": {\n        \"ListCleanupCallbacksResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"List of registered cleanup callbacks\",\n         \
+        \   \"required\": [\n                \"callbacks\",\n                \"totalCount\"\n            ],\n            \"\
+        properties\": {\n                \"callbacks\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/CleanupCallbackSummary\"\n                    },\n       \
+        \             \"description\": \"Registered callbacks matching filter\"\n                },\n                \"totalCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of callbacks
+        returned\"\n                }\n            }\n        },\n        \"CleanupCallbackSummary\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Summary of a registered
+        cleanup callback\",\n            \"required\": [\n                \"resourceType\",\n                \"sourceType\"\
+        ,\n                \"onDeleteAction\",\n                \"serviceName\",\n                \"callbackEndpoint\",\n\
+        \                \"registeredAt\"\n            ],\n            \"properties\": {\n                \"resourceType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of resource this callback
+        handles\"\n                },\n                \"sourceType\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Type of entity that will be cleaned up\"\n                },\n               \
+        \ \"onDeleteAction\": {\n                    \"$ref\": \"#/$defs/OnDeleteAction\",\n                    \"description\"\
+        : \"Action taken when resource is deleted\"\n                },\n                \"serviceName\": {\n            \
+        \        \"type\": \"string\",\n                    \"description\": \"Target service for callback invocation\"\n\
+        \                },\n                \"callbackEndpoint\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Endpoint path called during cleanup\"\n                },\n                \"registeredAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this callback was registered\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description\"\n                }\n            }\n        },\n        \"OnDeleteAction\": {\n  \
+        \          \"type\": \"string\",\n            \"enum\": [\n                \"CASCADE\",\n                \"RESTRICT\"\
+        ,\n                \"DETACH\"\n            ],\n            \"description\": \"Action to take when the referenced resource
+        is deleted.\\nCASCADE: Delete dependent entities when resource is deleted\\nRESTRICT: Block resource deletion if references
+        exist\\nDETACH: Set reference to null when resource is deleted\\n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List registered cleanup callbacks\",\n    \"description\": \"Returns all
+        cleanup callbacks registered for a resource type.\\nUseful for debugging and admin inspection of cleanup chains.\\\
+        n\",\n    \"tags\": [\n        \"Cleanup Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        listCleanupCallbacks\"\n}"
+  /resource/cleanup/remove:
+    post:
+      operationId: removeCleanupCallback
+      tags:
+      - Cleanup Management
+      summary: Remove a cleanup callback registration
+      description: |
+        Removes a cleanup callback that was previously registered via
+        /resource/cleanup/define. Use when a consumer service is decommissioned
+        or a callback becomes orphaned. Idempotent - returns success even if
+        callback was not registered.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveCleanupCallbackRequest'
+      responses:
+        '200':
+          description: Callback removed or was not registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveCleanupCallbackResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveCleanupCallbackRequest\"\
+        ,\n    \"$defs\": {\n        \"RemoveCleanupCallbackRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to remove a cleanup callback\",\n         \
+        \   \"required\": [\n                \"resourceType\",\n                \"sourceType\"\n            ],\n         \
+        \   \"properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Type of resource the callback handles\"\n                },\n                \"sourceType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of entity the callback
+        cleans up\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveCleanupCallbackResponse\"\
+        ,\n    \"$defs\": {\n        \"RemoveCleanupCallbackResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"description\": \"Response after removing a cleanup callback\",\n\
+        \            \"required\": [\n                \"resourceType\",\n                \"sourceType\",\n               \
+        \ \"wasRegistered\"\n            ],\n            \"properties\": {\n                \"resourceType\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Resource type of removed callback\"\n \
+        \               },\n                \"sourceType\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Source type of removed callback\"\n                },\n                \"wasRegistered\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if callback existed before
+        removal\"\n                },\n                \"removedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When callback was removed (null if wasn't registered)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Remove a cleanup callback registration\",\n    \"description\": \"Removes
+        a cleanup callback that was previously registered via\\n/resource/cleanup/define. Use when a consumer service is decommissioned\\
+        nor a callback becomes orphaned. Idempotent - returns success even if\\ncallback was not registered.\\n\",\n    \"\
+        tags\": [\n        \"Cleanup Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"removeCleanupCallback\"\
+        \n}"
+  /resource/compress/define:
+    post:
+      operationId: defineCompressCallback
+      tags:
+      - Compression Management
+      summary: Register compression callback for a resource type
+      description: |
+        Services call this at startup (OnRunningAsync) to register compression endpoints.
+        When a resource is compressed, these callbacks gather data for the archive bundle.
+
+        Mirrors the cleanup callback pattern - services register their data export
+        endpoints, and compression orchestrates calling all registered callbacks to
+        build a complete archive.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineCompressCallbackRequest'
+      responses:
+        '200':
+          description: Callback registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefineCompressCallbackResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DefineCompressCallbackRequest\"\
+        ,\n    \"$defs\": {\n        \"DefineCompressCallbackRequest\": {\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"description\": \"Request to register a compression callback\",\n\
+        \            \"required\": [\n                \"resourceType\",\n                \"sourceType\",\n               \
+        \ \"compressEndpoint\",\n                \"compressPayloadTemplate\"\n            ],\n            \"properties\":
+        {\n                \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type of resource this compression handles (opaque identifier)\"\n                },\n                \"sourceType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of data being compressed
+        (opaque identifier, e.g., \\\"character-personality\\\")\"\n                },\n                \"serviceName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Target service name (defaults to sourceType if not specified)\"\n                },\n                \"compressEndpoint\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Endpoint returning compressed
+        data (e.g., /character-personality/get-compress-data)\"\n                },\n                \"compressPayloadTemplate\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"JSON template with {{resourceId}}
+        placeholder\"\n                },\n                \"decompressEndpoint\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Endpoint for restoring data (e.g.,
+        /character-personality/restore-from-archive)\"\n                },\n                \"decompressPayloadTemplate\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"JSON template with {{resourceId}} and {{data}} placeholders\"\n                },\n                \"priority\"\
+        : {\n                    \"type\": \"integer\",\n                    \"default\": 100,\n                    \"description\"\
+        : \"Execution order (lower = earlier). Use for dependency ordering.\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description of what data this compresses\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DefineCompressCallbackResponse\"\
+        ,\n    \"$defs\": {\n        \"DefineCompressCallbackResponse\": {\n            \"type\": \"object\",\n          \
+        \  \"additionalProperties\": false,\n            \"description\": \"Response after registering compression callback\"\
+        ,\n            \"required\": [\n                \"resourceType\",\n                \"sourceType\",\n             \
+        \   \"registered\"\n            ],\n            \"properties\": {\n                \"resourceType\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Resource type for callback\"\n         \
+        \       },\n                \"sourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Source type for callback\"\n                },\n                \"registered\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if callback was registered\"\n                },\n   \
+        \             \"previouslyDefined\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"True if callback was already defined (updated)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Register compression callback for a resource type\",\n    \"description\"\
+        : \"Services call this at startup (OnRunningAsync) to register compression endpoints.\\nWhen a resource is compressed,
+        these callbacks gather data for the archive bundle.\\n\\nMirrors the cleanup callback pattern - services register
+        their data export\\nendpoints, and compression orchestrates calling all registered callbacks to\\nbuild a complete
+        archive.\\n\",\n    \"tags\": [\n        \"Compression Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"defineCompressCallback\"\n}"
+  /resource/compress/execute:
+    post:
+      operationId: executeCompress
+      tags:
+      - Compression Management
+      summary: Compress a resource and all dependents
+      description: |
+        Gathers data from all registered compression callbacks, bundles into
+        a unified archive, and stores in MySQL. Optionally deletes source data
+        after successful archival via existing cleanup callbacks.
+
+        Flow:
+        1. Get all compression callbacks for resourceType, sorted by priority
+        2. If dryRun, return preview without executing
+        3. Acquire distributed lock
+        4. Execute each callback to gather data
+        5. Bundle responses into archive (gzipped JSON per entry)
+        6. Store archive in MySQL
+        7. If deleteSourceData, invoke cleanup callbacks
+        8. Publish resource.compressed event
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCompressRequest'
+      responses:
+        '200':
+          description: Compression result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteCompressResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteCompressRequest\"\
+        ,\n    \"$defs\": {\n        \"ExecuteCompressRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to compress a resource\",\n            \"required\": [\n        \
+        \        \"resourceType\",\n                \"resourceId\"\n            ],\n            \"properties\": {\n      \
+        \          \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Type of resource to compress\"\n                },\n                \"resourceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the resource
+        to compress\"\n                },\n                \"deleteSourceData\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"If true, invoke cleanup callbacks
+        after successful archival\"\n                },\n                \"compressionPolicy\": {\n                    \"\
+        $ref\": \"#/$defs/CompressionPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Override policy (uses default from config if not specified)\"\n                },\n                \"dryRun\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"If true, return what would be compressed without executing\"\n                }\n            }\n        },\n \
+        \       \"CompressionPolicy\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"BEST_EFFORT\"\
+        ,\n                \"ALL_REQUIRED\"\n            ],\n            \"description\": \"Policy for compression callback
+        execution.\\nBEST_EFFORT: Create archive even if some callbacks fail (partial archive)\\nALL_REQUIRED: Abort compression
+        if any callback fails\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteCompressResponse\"\
+        ,\n    \"$defs\": {\n        \"ExecuteCompressResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Compression execution result\",\n            \"required\": [\n          \
+        \      \"resourceType\",\n                \"resourceId\",\n                \"success\",\n                \"dryRun\"\
+        ,\n                \"callbackResults\",\n                \"compressionDurationMs\"\n            ],\n            \"\
+        properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Type of resource compressed\"\n                },\n                \"resourceId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the resource compressed\"\n                },\n                \"success\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if compression completed successfully\"\n            \
+        \    },\n                \"archiveId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"ID of created archive
+        (null if failed or dryRun)\"\n                },\n                \"abortReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why compression was
+        aborted\"\n                },\n                \"callbackResults\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/CompressCallbackResult\"\n        \
+        \            },\n                    \"description\": \"Results of each compression callback\"\n                },\n\
+        \                \"sourceDataDeleted\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether cleanup callbacks were executed after archival\"\n                },\n                \"dryRun\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"True if this was a preview (no
+        callbacks actually executed)\"\n                },\n                \"compressionDurationMs\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"Total compression execution time in milliseconds\"\
+        \n                }\n            }\n        },\n        \"CompressCallbackResult\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Result of a single compression callback\"\
+        ,\n            \"required\": [\n                \"sourceType\",\n                \"serviceName\",\n              \
+        \  \"endpoint\",\n                \"success\",\n                \"durationMs\"\n            ],\n            \"properties\"\
+        : {\n                \"sourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Source type that provided data\"\n                },\n                \"serviceName\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Service that was called\"\n                },\n  \
+        \              \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Endpoint that was called\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether callback succeeded\"\n                },\n                \"statusCode\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"HTTP status code from callback\"\n                },\n                \"errorMessage\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error message
+        if callback failed\"\n                },\n                \"dataSize\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Size of compressed data in bytes\"\
+        \n                },\n                \"durationMs\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Callback execution time in milliseconds\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Compress a resource and all dependents\",\n    \"description\": \"Gathers
+        data from all registered compression callbacks, bundles into\\na unified archive, and stores in MySQL. Optionally
+        deletes source data\\nafter successful archival via existing cleanup callbacks.\\n\\nFlow:\\n1. Get all compression
+        callbacks for resourceType, sorted by priority\\n2. If dryRun, return preview without executing\\n3. Acquire distributed
+        lock\\n4. Execute each callback to gather data\\n5. Bundle responses into archive (gzipped JSON per entry)\\n6. Store
+        archive in MySQL\\n7. If deleteSourceData, invoke cleanup callbacks\\n8. Publish resource.compressed event\\n\",\n\
+        \    \"tags\": [\n        \"Compression Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        executeCompress\"\n}"
+  /resource/decompress/execute:
+    post:
+      operationId: executeDecompress
+      tags:
+      - Compression Management
+      summary: Restore data from archive
+      description: |
+        Retrieves the archive bundle and invokes decompression callbacks
+        for each service to restore their data.
+
+        Callbacks are invoked in priority order (same as compression).
+        Each callback receives the resource ID and its archived data blob.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteDecompressRequest'
+      responses:
+        '200':
+          description: Decompression result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteDecompressResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteDecompressRequest\"\
+        ,\n    \"$defs\": {\n        \"ExecuteDecompressRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to decompress and restore a resource\",\n            \"required\"\
+        : [\n                \"resourceType\",\n                \"resourceId\"\n            ],\n            \"properties\"\
+        : {\n                \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type of resource to decompress\"\n                },\n                \"resourceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the resource
+        to decompress\"\n                },\n                \"archiveId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Specific archive version (latest if not specified)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteDecompressResponse\"\
+        ,\n    \"$defs\": {\n        \"ExecuteDecompressResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Decompression execution result\",\n            \"required\": [\n        \
+        \        \"resourceType\",\n                \"resourceId\",\n                \"success\",\n                \"callbackResults\"\
+        ,\n                \"decompressionDurationMs\"\n            ],\n            \"properties\": {\n                \"\
+        resourceType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type of resource
+        decompressed\"\n                },\n                \"resourceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the resource decompressed\"\
+        \n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"True if decompression completed successfully\"\n                },\n                \"archiveId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"ID of archive that was restored\"\n                },\n\
+        \                \"abortReason\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Why decompression was aborted\"\n                },\n              \
+        \  \"callbackResults\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
+        \              \"$ref\": \"#/$defs/DecompressCallbackResult\"\n                    },\n                    \"description\"\
+        : \"Results of each decompression callback\"\n                },\n                \"decompressionDurationMs\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Total decompression execution
+        time in milliseconds\"\n                }\n            }\n        },\n        \"DecompressCallbackResult\": {\n  \
+        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Result
+        of a single decompression callback\",\n            \"required\": [\n                \"sourceType\",\n            \
+        \    \"serviceName\",\n                \"endpoint\",\n                \"success\",\n                \"durationMs\"\
+        \n            ],\n            \"properties\": {\n                \"sourceType\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"Source type that was restored\"\n                },\n        \
+        \        \"serviceName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Service
+        that was called\"\n                },\n                \"endpoint\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Endpoint that was called\"\n                },\n                \"success\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether callback succeeded\"\
+        \n                },\n                \"statusCode\": {\n                    \"type\": \"integer\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"HTTP status code from callback\"\n          \
+        \      },\n                \"errorMessage\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Error message if callback failed\"\n                },\n\
+        \                \"durationMs\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Callback execution time in milliseconds\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Restore data from archive\",\n    \"description\": \"Retrieves the archive
+        bundle and invokes decompression callbacks\\nfor each service to restore their data.\\n\\nCallbacks are invoked in
+        priority order (same as compression).\\nEach callback receives the resource ID and its archived data blob.\\n\",\n\
+        \    \"tags\": [\n        \"Compression Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        executeDecompress\"\n}"
+  /resource/compress/list:
+    post:
+      operationId: listCompressCallbacks
+      tags:
+      - Compression Management
+      summary: List registered compression callbacks
+      description: |
+        Returns all compression callbacks registered for a resource type.
+        Useful for debugging and admin inspection of compression chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCompressCallbacksRequest'
+      responses:
+        '200':
+          description: Callback list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCompressCallbacksResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCompressCallbacksRequest\"\
+        ,\n    \"$defs\": {\n        \"ListCompressCallbacksRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to list registered compression callbacks\"\
+        ,\n            \"properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Filter by resource type (list all
+        if not specified)\"\n                },\n                \"sourceType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by source type (requires
+        resourceType)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCompressCallbacksResponse\"\
+        ,\n    \"$defs\": {\n        \"ListCompressCallbacksResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"description\": \"List of registered compression callbacks\",\n \
+        \           \"required\": [\n                \"callbacks\",\n                \"totalCount\"\n            ],\n    \
+        \        \"properties\": {\n                \"callbacks\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/CompressCallbackSummary\"\n                \
+        \    },\n                    \"description\": \"Registered callbacks matching filter\"\n                },\n     \
+        \           \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Total number of callbacks returned\"\n                }\n            }\n        },\n        \"CompressCallbackSummary\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Summary of a registered compression callback\",\n            \"required\": [\n                \"resourceType\"\
+        ,\n                \"sourceType\",\n                \"serviceName\",\n                \"compressEndpoint\",\n    \
+        \            \"priority\",\n                \"registeredAt\"\n            ],\n            \"properties\": {\n    \
+        \            \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Type of resource this callback handles\"\n                },\n                \"sourceType\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Type of data being compressed\"\n           \
+        \     },\n                \"serviceName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Target service for callback invocation\"\n                },\n                \"compressEndpoint\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Endpoint called during compression\"\n\
+        \                },\n                \"decompressEndpoint\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Endpoint called during decompression\"\n\
+        \                },\n                \"priority\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"Execution order (lower = earlier)\"\n                },\n                \"registeredAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this callback was registered\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List registered compression callbacks\",\n    \"description\": \"Returns
+        all compression callbacks registered for a resource type.\\nUseful for debugging and admin inspection of compression
+        chains.\\n\",\n    \"tags\": [\n        \"Compression Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"listCompressCallbacks\"\n}"
+  /resource/archive/get:
+    post:
+      operationId: getArchive
+      tags:
+      - Compression Management
+      summary: Retrieve compressed archive
+      description: |
+        Retrieves a compressed archive by resource type and ID.
+        Returns the latest version unless a specific archiveId is provided.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetArchiveRequest'
+      responses:
+        '200':
+          description: Archive data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetArchiveResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetArchiveRequest\"\
+        ,\n    \"$defs\": {\n        \"GetArchiveRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to retrieve a compressed archive\",\n            \"required\": [\n\
+        \                \"resourceType\",\n                \"resourceId\"\n            ],\n            \"properties\": {\n\
+        \                \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type of resource\"\n                },\n                \"resourceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the resource\"\n      \
+        \          },\n                \"archiveId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Specific version
+        (latest if not specified)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetArchiveResponse\"\
+        ,\n    \"$defs\": {\n        \"GetArchiveResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response containing archive data\",\n            \"required\": [\n      \
+        \          \"resourceType\",\n                \"resourceId\",\n                \"found\"\n            ],\n       \
+        \     \"properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Type of resource\"\n                },\n                \"resourceId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the resource\"\n                },\n                \"found\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"True if archive exists\"\n                },\n                \"archive\"\
+        : {\n                    \"$ref\": \"#/$defs/ResourceArchive\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"The archive data (null if not found)\"\n                }\n            }\n      \
+        \  },\n        \"ResourceArchive\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Bundled compressed archive\",\n            \"required\": [\n                \"archiveId\"\
+        ,\n                \"resourceType\",\n                \"resourceId\",\n                \"version\",\n            \
+        \    \"entries\",\n                \"createdAt\",\n                \"sourceDataDeleted\"\n            ],\n       \
+        \     \"properties\": {\n                \"archiveId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this archive\"\n   \
+        \             },\n                \"resourceType\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Type of resource archived\"\n                },\n                \"resourceId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the resource archived\"\n                },\n                \"version\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Archive version (increments on re-compression)\"\n        \
+        \        },\n                \"entries\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/ArchiveBundleEntry\"\n                    },\n                  \
+        \  \"description\": \"Data entries from each compression callback\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this archive was created\"\n                },\n                \"sourceDataDeleted\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether original source data
+        was deleted after archival\"\n                }\n            }\n        },\n        \"ArchiveBundleEntry\": {\n  \
+        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Single
+        entry in the archive bundle\",\n            \"required\": [\n                \"sourceType\",\n                \"serviceName\"\
+        ,\n                \"data\",\n                \"compressedAt\"\n            ],\n            \"properties\": {\n  \
+        \              \"sourceType\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Type of data (e.g., \\\"character-personality\\\")\"\n                },\n                \"serviceName\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Service that provided the data\"\
+        \n                },\n                \"data\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Base64-encoded gzipped JSON from the service callback\"\n                },\n               \
+        \ \"compressedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this entry was compressed\"\n                },\n                \"dataChecksum\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"SHA256 hash for integrity verification\"\n                },\n                \"originalSizeBytes\": {\n     \
+        \               \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Size before compression\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Retrieve compressed archive\",\n    \"description\": \"Retrieves a compressed
+        archive by resource type and ID.\\nReturns the latest version unless a specific archiveId is provided.\\n\",\n   \
+        \ \"tags\": [\n        \"Compression Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getArchive\"\
+        \n}"
 components:
   schemas:
     OnDeleteAction:
@@ -426,6 +938,15 @@ components:
         Policy for cleanup callback execution.
         BEST_EFFORT: Proceed with deletion even if some callbacks fail
         ALL_REQUIRED: Abort deletion if any callback fails
+    CompressionPolicy:
+      type: string
+      enum:
+      - BEST_EFFORT
+      - ALL_REQUIRED
+      description: |
+        Policy for compression callback execution.
+        BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
+        ALL_REQUIRED: Abort compression if any callback fails
     RegisterReferenceRequest:
       type: object
       additionalProperties: false
@@ -723,6 +1244,13 @@ components:
           $ref: '#/components/schemas/CleanupPolicy'
           nullable: true
           description: Override cleanup policy (uses resource default if not specified)
+        dryRun:
+          type: boolean
+          nullable: true
+          description: |
+            If true, returns what callbacks WOULD execute without actually
+            executing them. Useful for pre-deletion validation and debugging.
+            Defaults to false.
     ExecuteCleanupResponse:
       type: object
       additionalProperties: false
@@ -731,6 +1259,7 @@ components:
       - resourceType
       - resourceId
       - success
+      - dryRun
       - callbackResults
       properties:
         resourceType:
@@ -755,6 +1284,9 @@ components:
         cleanupDurationMs:
           type: integer
           description: Total cleanup execution time in milliseconds
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks were actually executed)
     CleanupCallbackResult:
       type: object
       additionalProperties: false
@@ -788,3 +1320,550 @@ components:
         durationMs:
           type: integer
           description: Callback execution time in milliseconds
+    ListCleanupCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered cleanup callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+    ListCleanupCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered cleanup callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleanupCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+    CleanupCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - onDeleteAction
+      - serviceName
+      - callbackEndpoint
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of entity that will be cleaned up
+        onDeleteAction:
+          $ref: '#/components/schemas/OnDeleteAction'
+          description: Action taken when resource is deleted
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        callbackEndpoint:
+          type: string
+          description: Endpoint path called during cleanup
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+    RemoveCleanupCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: Request to remove a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource the callback handles
+        sourceType:
+          type: string
+          description: Type of entity the callback cleans up
+    RemoveCleanupCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: Response after removing a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - wasRegistered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type of removed callback
+        sourceType:
+          type: string
+          description: Source type of removed callback
+        wasRegistered:
+          type: boolean
+          description: True if callback existed before removal
+        removedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When callback was removed (null if wasn't registered)
+    DefineCompressCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a compression callback
+      required:
+      - resourceType
+      - sourceType
+      - compressEndpoint
+      - compressPayloadTemplate
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this compression handles (opaque identifier)
+        sourceType:
+          type: string
+          description: Type of data being compressed (opaque identifier, e.g., "character-personality")
+        serviceName:
+          type: string
+          nullable: true
+          description: Target service name (defaults to sourceType if not specified)
+        compressEndpoint:
+          type: string
+          description: Endpoint returning compressed data (e.g., /character-personality/get-compress-data)
+        compressPayloadTemplate:
+          type: string
+          description: JSON template with {{resourceId}} placeholder
+        decompressEndpoint:
+          type: string
+          nullable: true
+          description: Endpoint for restoring data (e.g., /character-personality/restore-from-archive)
+        decompressPayloadTemplate:
+          type: string
+          nullable: true
+          description: JSON template with {{resourceId}} and {{data}} placeholders
+        priority:
+          type: integer
+          default: 100
+          description: Execution order (lower = earlier). Use for dependency ordering.
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what data this compresses
+    DefineCompressCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering compression callback
+      required:
+      - resourceType
+      - sourceType
+      - registered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type for callback
+        sourceType:
+          type: string
+          description: Source type for callback
+        registered:
+          type: boolean
+          description: True if callback was registered
+        previouslyDefined:
+          type: boolean
+          description: True if callback was already defined (updated)
+    ExecuteCompressRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compress a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to compress
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to compress
+        deleteSourceData:
+          type: boolean
+          default: false
+          description: If true, invoke cleanup callbacks after successful archival
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          nullable: true
+          description: Override policy (uses default from config if not specified)
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be compressed without executing
+    ExecuteCompressResponse:
+      type: object
+      additionalProperties: false
+      description: Compression execution result
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - callbackResults
+      - compressionDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource compressed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource compressed
+        success:
+          type: boolean
+          description: True if compression completed successfully
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of created archive (null if failed or dryRun)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why compression was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        sourceDataDeleted:
+          type: boolean
+          description: Whether cleanup callbacks were executed after archival
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks actually executed)
+        compressionDurationMs:
+          type: integer
+          description: Total compression execution time in milliseconds
+    CompressCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of a single compression callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      - durationMs
+      properties:
+        sourceType:
+          type: string
+          description: Source type that provided data
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        dataSize:
+          type: integer
+          nullable: true
+          description: Size of compressed data in bytes
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+    ExecuteDecompressRequest:
+      type: object
+      additionalProperties: false
+      description: Request to decompress and restore a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to decompress
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to decompress
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific archive version (latest if not specified)
+    ExecuteDecompressResponse:
+      type: object
+      additionalProperties: false
+      description: Decompression execution result
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - callbackResults
+      - decompressionDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource decompressed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource decompressed
+        success:
+          type: boolean
+          description: True if decompression completed successfully
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of archive that was restored
+        abortReason:
+          type: string
+          nullable: true
+          description: Why decompression was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecompressCallbackResult'
+          description: Results of each decompression callback
+        decompressionDurationMs:
+          type: integer
+          description: Total decompression execution time in milliseconds
+    DecompressCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of a single decompression callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      - durationMs
+      properties:
+        sourceType:
+          type: string
+          description: Source type that was restored
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+    ListCompressCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered compression callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+    ListCompressCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered compression callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+    CompressCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered compression callback
+      required:
+      - resourceType
+      - sourceType
+      - serviceName
+      - compressEndpoint
+      - priority
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of data being compressed
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        compressEndpoint:
+          type: string
+          description: Endpoint called during compression
+        decompressEndpoint:
+          type: string
+          nullable: true
+          description: Endpoint called during decompression
+        priority:
+          type: integer
+          description: Execution order (lower = earlier)
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+    GetArchiveRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a compressed archive
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific version (latest if not specified)
+    GetArchiveResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing archive data
+      required:
+      - resourceType
+      - resourceId
+      - found
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        found:
+          type: boolean
+          description: True if archive exists
+        archive:
+          $ref: '#/components/schemas/ResourceArchive'
+          nullable: true
+          description: The archive data (null if not found)
+    ResourceArchive:
+      type: object
+      additionalProperties: false
+      description: Bundled compressed archive
+      required:
+      - archiveId
+      - resourceType
+      - resourceId
+      - version
+      - entries
+      - createdAt
+      - sourceDataDeleted
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+          description: Unique identifier for this archive
+        resourceType:
+          type: string
+          description: Type of resource archived
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource archived
+        version:
+          type: integer
+          description: Archive version (increments on re-compression)
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback
+        createdAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        sourceDataDeleted:
+          type: boolean
+          description: Whether original source data was deleted after archival
+    ArchiveBundleEntry:
+      type: object
+      additionalProperties: false
+      description: Single entry in the archive bundle
+      required:
+      - sourceType
+      - serviceName
+      - data
+      - compressedAt
+      properties:
+        sourceType:
+          type: string
+          description: Type of data (e.g., "character-personality")
+        serviceName:
+          type: string
+          description: Service that provided the data
+        data:
+          type: string
+          description: Base64-encoded gzipped JSON from the service callback
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this entry was compressed
+        dataChecksum:
+          type: string
+          nullable: true
+          description: SHA256 hash for integrity verification
+        originalSizeBytes:
+          type: integer
+          nullable: true
+          description: Size before compression

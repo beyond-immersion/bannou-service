@@ -365,6 +365,9 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `ResourceCleanupCallbackFailedEvent` | Custom | `resource-cleanup-callback-failed` | Published when a cleanup callback fails during res... |
+| `ResourceCompressCallbackFailedEvent` | Custom | `resource-compress-callback-failed` | Published when a compression callback fails. |
+| `ResourceCompressedEvent` | Custom | `resource-compressed` | Published when compression completes successfully. |
+| `ResourceDecompressedEvent` | Custom | `resource-decompressed` | Published when decompression completes successfull... |
 | `ResourceGracePeriodStartedEvent` | Custom | `resource-grace-period-started` | Published when a resource's reference count reache... |
 | `ResourceReferenceRegisteredEvent` | Registration | `resource-reference.registered` | Published by higher-layer services when they creat... |
 | `ResourceReferenceUnregisteredEvent` | Registration | `resource-reference-unregistered` | Published by higher-layer services when they delet... |

@@ -809,6 +809,11 @@ public partial class ResourceController
                     "$ref": "#/$defs/CleanupPolicy",
                     "nullable": true,
                     "description": "Override cleanup policy (uses resource default if not specified)"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "If true, returns what callbacks WOULD execute without actually\nexecuting them. Useful for pre-deletion validation and debugging.\nDefaults to false.\n"
                 }
             }
         },
@@ -837,6 +842,7 @@ public partial class ResourceController
                 "resourceType",
                 "resourceId",
                 "success",
+                "dryRun",
                 "callbackResults"
             ],
             "properties": {
@@ -868,6 +874,10 @@ public partial class ResourceController
                 "cleanupDurationMs": {
                     "type": "integer",
                     "description": "Total cleanup execution time in milliseconds"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "description": "True if this was a preview (no callbacks were actually executed)"
                 }
             }
         },
@@ -969,6 +979,1252 @@ public partial class ResourceController
             _ExecuteCleanup_Info,
             _ExecuteCleanup_RequestSchema,
             _ExecuteCleanup_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListCleanupCallbacks
+
+    private static readonly string _ListCleanupCallbacks_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListCleanupCallbacksRequest",
+    "$defs": {
+        "ListCleanupCallbacksRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list registered cleanup callbacks",
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by resource type (list all if not specified)"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by source type (requires resourceType)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListCleanupCallbacks_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListCleanupCallbacksResponse",
+    "$defs": {
+        "ListCleanupCallbacksResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "List of registered cleanup callbacks",
+            "required": [
+                "callbacks",
+                "totalCount"
+            ],
+            "properties": {
+                "callbacks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CleanupCallbackSummary"
+                    },
+                    "description": "Registered callbacks matching filter"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of callbacks returned"
+                }
+            }
+        },
+        "CleanupCallbackSummary": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Summary of a registered cleanup callback",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "onDeleteAction",
+                "serviceName",
+                "callbackEndpoint",
+                "registeredAt"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource this callback handles"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of entity that will be cleaned up"
+                },
+                "onDeleteAction": {
+                    "$ref": "#/$defs/OnDeleteAction",
+                    "description": "Action taken when resource is deleted"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Target service for callback invocation"
+                },
+                "callbackEndpoint": {
+                    "type": "string",
+                    "description": "Endpoint path called during cleanup"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this callback was registered"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                }
+            }
+        },
+        "OnDeleteAction": {
+            "type": "string",
+            "enum": [
+                "CASCADE",
+                "RESTRICT",
+                "DETACH"
+            ],
+            "description": "Action to take when the referenced resource is deleted.\nCASCADE: Delete dependent entities when resource is deleted\nRESTRICT: Block resource deletion if references exist\nDETACH: Set reference to null when resource is deleted\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _ListCleanupCallbacks_Info = """
+{
+    "summary": "List registered cleanup callbacks",
+    "description": "Returns all cleanup callbacks registered for a resource type.\nUseful for debugging and admin inspection of cleanup chains.\n",
+    "tags": [
+        "Cleanup Management"
+    ],
+    "deprecated": false,
+    "operationId": "listCleanupCallbacks"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListCleanupCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCleanupCallbacks_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/list",
+            _ListCleanupCallbacks_Info));
+
+    /// <summary>Returns request schema for ListCleanupCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCleanupCallbacks_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/list",
+            "request-schema",
+            _ListCleanupCallbacks_RequestSchema));
+
+    /// <summary>Returns response schema for ListCleanupCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCleanupCallbacks_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/list",
+            "response-schema",
+            _ListCleanupCallbacks_ResponseSchema));
+
+    /// <summary>Returns full schema for ListCleanupCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCleanupCallbacks_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/list",
+            _ListCleanupCallbacks_Info,
+            _ListCleanupCallbacks_RequestSchema,
+            _ListCleanupCallbacks_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RemoveCleanupCallback
+
+    private static readonly string _RemoveCleanupCallback_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RemoveCleanupCallbackRequest",
+    "$defs": {
+        "RemoveCleanupCallbackRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to remove a cleanup callback",
+            "required": [
+                "resourceType",
+                "sourceType"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource the callback handles"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of entity the callback cleans up"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RemoveCleanupCallback_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RemoveCleanupCallbackResponse",
+    "$defs": {
+        "RemoveCleanupCallbackResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after removing a cleanup callback",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "wasRegistered"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Resource type of removed callback"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Source type of removed callback"
+                },
+                "wasRegistered": {
+                    "type": "boolean",
+                    "description": "True if callback existed before removal"
+                },
+                "removedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When callback was removed (null if wasn't registered)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RemoveCleanupCallback_Info = """
+{
+    "summary": "Remove a cleanup callback registration",
+    "description": "Removes a cleanup callback that was previously registered via\n/resource/cleanup/define. Use when a consumer service is decommissioned\ nor a callback becomes orphaned. Idempotent - returns success even if\ncallback was not registered.\n",
+    "tags": [
+        "Cleanup Management"
+    ],
+    "deprecated": false,
+    "operationId": "removeCleanupCallback"
+}
+""";
+
+    /// <summary>Returns endpoint information for RemoveCleanupCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/remove/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveCleanupCallback_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/remove",
+            _RemoveCleanupCallback_Info));
+
+    /// <summary>Returns request schema for RemoveCleanupCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/remove/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveCleanupCallback_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/remove",
+            "request-schema",
+            _RemoveCleanupCallback_RequestSchema));
+
+    /// <summary>Returns response schema for RemoveCleanupCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/remove/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveCleanupCallback_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/remove",
+            "response-schema",
+            _RemoveCleanupCallback_ResponseSchema));
+
+    /// <summary>Returns full schema for RemoveCleanupCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/cleanup/remove/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveCleanupCallback_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/cleanup/remove",
+            _RemoveCleanupCallback_Info,
+            _RemoveCleanupCallback_RequestSchema,
+            _RemoveCleanupCallback_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DefineCompressCallback
+
+    private static readonly string _DefineCompressCallback_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DefineCompressCallbackRequest",
+    "$defs": {
+        "DefineCompressCallbackRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to register a compression callback",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "compressEndpoint",
+                "compressPayloadTemplate"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource this compression handles (opaque identifier)"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of data being compressed (opaque identifier, e.g., \"character-personality\")"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Target service name (defaults to sourceType if not specified)"
+                },
+                "compressEndpoint": {
+                    "type": "string",
+                    "description": "Endpoint returning compressed data (e.g., /character-personality/get-compress-data)"
+                },
+                "compressPayloadTemplate": {
+                    "type": "string",
+                    "description": "JSON template with {{resourceId}} placeholder"
+                },
+                "decompressEndpoint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Endpoint for restoring data (e.g., /character-personality/restore-from-archive)"
+                },
+                "decompressPayloadTemplate": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON template with {{resourceId}} and {{data}} placeholders"
+                },
+                "priority": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Execution order (lower = earlier). Use for dependency ordering."
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what data this compresses"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DefineCompressCallback_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DefineCompressCallbackResponse",
+    "$defs": {
+        "DefineCompressCallbackResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after registering compression callback",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "registered"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Resource type for callback"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Source type for callback"
+                },
+                "registered": {
+                    "type": "boolean",
+                    "description": "True if callback was registered"
+                },
+                "previouslyDefined": {
+                    "type": "boolean",
+                    "description": "True if callback was already defined (updated)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DefineCompressCallback_Info = """
+{
+    "summary": "Register compression callback for a resource type",
+    "description": "Services call this at startup (OnRunningAsync) to register compression endpoints.\nWhen a resource is compressed, these callbacks gather data for the archive bundle.\n\nMirrors the cleanup callback pattern - services register their data export\nendpoints, and compression orchestrates calling all registered callbacks to\nbuild a complete archive.\n",
+    "tags": [
+        "Compression Management"
+    ],
+    "deprecated": false,
+    "operationId": "defineCompressCallback"
+}
+""";
+
+    /// <summary>Returns endpoint information for DefineCompressCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/define/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineCompressCallback_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/define",
+            _DefineCompressCallback_Info));
+
+    /// <summary>Returns request schema for DefineCompressCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/define/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineCompressCallback_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/define",
+            "request-schema",
+            _DefineCompressCallback_RequestSchema));
+
+    /// <summary>Returns response schema for DefineCompressCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/define/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineCompressCallback_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/define",
+            "response-schema",
+            _DefineCompressCallback_ResponseSchema));
+
+    /// <summary>Returns full schema for DefineCompressCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/define/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineCompressCallback_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/define",
+            _DefineCompressCallback_Info,
+            _DefineCompressCallback_RequestSchema,
+            _DefineCompressCallback_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ExecuteCompress
+
+    private static readonly string _ExecuteCompress_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteCompressRequest",
+    "$defs": {
+        "ExecuteCompressRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to compress a resource",
+            "required": [
+                "resourceType",
+                "resourceId"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource to compress"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource to compress"
+                },
+                "deleteSourceData": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, invoke cleanup callbacks after successful archival"
+                },
+                "compressionPolicy": {
+                    "$ref": "#/$defs/CompressionPolicy",
+                    "nullable": true,
+                    "description": "Override policy (uses default from config if not specified)"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, return what would be compressed without executing"
+                }
+            }
+        },
+        "CompressionPolicy": {
+            "type": "string",
+            "enum": [
+                "BEST_EFFORT",
+                "ALL_REQUIRED"
+            ],
+            "description": "Policy for compression callback execution.\nBEST_EFFORT: Create archive even if some callbacks fail (partial archive)\nALL_REQUIRED: Abort compression if any callback fails\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteCompress_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteCompressResponse",
+    "$defs": {
+        "ExecuteCompressResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Compression execution result",
+            "required": [
+                "resourceType",
+                "resourceId",
+                "success",
+                "dryRun",
+                "callbackResults",
+                "compressionDurationMs"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource compressed"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource compressed"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "True if compression completed successfully"
+                },
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of created archive (null if failed or dryRun)"
+                },
+                "abortReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why compression was aborted"
+                },
+                "callbackResults": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CompressCallbackResult"
+                    },
+                    "description": "Results of each compression callback"
+                },
+                "sourceDataDeleted": {
+                    "type": "boolean",
+                    "description": "Whether cleanup callbacks were executed after archival"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "description": "True if this was a preview (no callbacks actually executed)"
+                },
+                "compressionDurationMs": {
+                    "type": "integer",
+                    "description": "Total compression execution time in milliseconds"
+                }
+            }
+        },
+        "CompressCallbackResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of a single compression callback",
+            "required": [
+                "sourceType",
+                "serviceName",
+                "endpoint",
+                "success",
+                "durationMs"
+            ],
+            "properties": {
+                "sourceType": {
+                    "type": "string",
+                    "description": "Source type that provided data"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Service that was called"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Endpoint that was called"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether callback succeeded"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "HTTP status code from callback"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if callback failed"
+                },
+                "dataSize": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Size of compressed data in bytes"
+                },
+                "durationMs": {
+                    "type": "integer",
+                    "description": "Callback execution time in milliseconds"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteCompress_Info = """
+{
+    "summary": "Compress a resource and all dependents",
+    "description": "Gathers data from all registered compression callbacks, bundles into\na unified archive, and stores in MySQL. Optionally deletes source data\nafter successful archival via existing cleanup callbacks.\n\nFlow:\n1. Get all compression callbacks for resourceType, sorted by priority\n2. If dryRun, return preview without executing\n3. Acquire distributed lock\n4. Execute each callback to gather data\n5. Bundle responses into archive (gzipped JSON per entry)\n6. Store archive in MySQL\n7. If deleteSourceData, invoke cleanup callbacks\n8. Publish resource.compressed event\n",
+    "tags": [
+        "Compression Management"
+    ],
+    "deprecated": false,
+    "operationId": "executeCompress"
+}
+""";
+
+    /// <summary>Returns endpoint information for ExecuteCompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/execute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteCompress_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/execute",
+            _ExecuteCompress_Info));
+
+    /// <summary>Returns request schema for ExecuteCompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/execute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteCompress_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/execute",
+            "request-schema",
+            _ExecuteCompress_RequestSchema));
+
+    /// <summary>Returns response schema for ExecuteCompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/execute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteCompress_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/execute",
+            "response-schema",
+            _ExecuteCompress_ResponseSchema));
+
+    /// <summary>Returns full schema for ExecuteCompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/execute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteCompress_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/execute",
+            _ExecuteCompress_Info,
+            _ExecuteCompress_RequestSchema,
+            _ExecuteCompress_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ExecuteDecompress
+
+    private static readonly string _ExecuteDecompress_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteDecompressRequest",
+    "$defs": {
+        "ExecuteDecompressRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to decompress and restore a resource",
+            "required": [
+                "resourceType",
+                "resourceId"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource to decompress"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource to decompress"
+                },
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Specific archive version (latest if not specified)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteDecompress_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteDecompressResponse",
+    "$defs": {
+        "ExecuteDecompressResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Decompression execution result",
+            "required": [
+                "resourceType",
+                "resourceId",
+                "success",
+                "callbackResults",
+                "decompressionDurationMs"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource decompressed"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource decompressed"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "True if decompression completed successfully"
+                },
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of archive that was restored"
+                },
+                "abortReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why decompression was aborted"
+                },
+                "callbackResults": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DecompressCallbackResult"
+                    },
+                    "description": "Results of each decompression callback"
+                },
+                "decompressionDurationMs": {
+                    "type": "integer",
+                    "description": "Total decompression execution time in milliseconds"
+                }
+            }
+        },
+        "DecompressCallbackResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of a single decompression callback",
+            "required": [
+                "sourceType",
+                "serviceName",
+                "endpoint",
+                "success",
+                "durationMs"
+            ],
+            "properties": {
+                "sourceType": {
+                    "type": "string",
+                    "description": "Source type that was restored"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Service that was called"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Endpoint that was called"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether callback succeeded"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "HTTP status code from callback"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if callback failed"
+                },
+                "durationMs": {
+                    "type": "integer",
+                    "description": "Callback execution time in milliseconds"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteDecompress_Info = """
+{
+    "summary": "Restore data from archive",
+    "description": "Retrieves the archive bundle and invokes decompression callbacks\nfor each service to restore their data.\n\nCallbacks are invoked in priority order (same as compression).\nEach callback receives the resource ID and its archived data blob.\n",
+    "tags": [
+        "Compression Management"
+    ],
+    "deprecated": false,
+    "operationId": "executeDecompress"
+}
+""";
+
+    /// <summary>Returns endpoint information for ExecuteDecompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/decompress/execute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteDecompress_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/decompress/execute",
+            _ExecuteDecompress_Info));
+
+    /// <summary>Returns request schema for ExecuteDecompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/decompress/execute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteDecompress_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/decompress/execute",
+            "request-schema",
+            _ExecuteDecompress_RequestSchema));
+
+    /// <summary>Returns response schema for ExecuteDecompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/decompress/execute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteDecompress_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/decompress/execute",
+            "response-schema",
+            _ExecuteDecompress_ResponseSchema));
+
+    /// <summary>Returns full schema for ExecuteDecompress</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/decompress/execute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteDecompress_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/decompress/execute",
+            _ExecuteDecompress_Info,
+            _ExecuteDecompress_RequestSchema,
+            _ExecuteDecompress_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListCompressCallbacks
+
+    private static readonly string _ListCompressCallbacks_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListCompressCallbacksRequest",
+    "$defs": {
+        "ListCompressCallbacksRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list registered compression callbacks",
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by resource type (list all if not specified)"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by source type (requires resourceType)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListCompressCallbacks_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListCompressCallbacksResponse",
+    "$defs": {
+        "ListCompressCallbacksResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "List of registered compression callbacks",
+            "required": [
+                "callbacks",
+                "totalCount"
+            ],
+            "properties": {
+                "callbacks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CompressCallbackSummary"
+                    },
+                    "description": "Registered callbacks matching filter"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of callbacks returned"
+                }
+            }
+        },
+        "CompressCallbackSummary": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Summary of a registered compression callback",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "serviceName",
+                "compressEndpoint",
+                "priority",
+                "registeredAt"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource this callback handles"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of data being compressed"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Target service for callback invocation"
+                },
+                "compressEndpoint": {
+                    "type": "string",
+                    "description": "Endpoint called during compression"
+                },
+                "decompressEndpoint": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Endpoint called during decompression"
+                },
+                "priority": {
+                    "type": "integer",
+                    "description": "Execution order (lower = earlier)"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this callback was registered"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListCompressCallbacks_Info = """
+{
+    "summary": "List registered compression callbacks",
+    "description": "Returns all compression callbacks registered for a resource type.\nUseful for debugging and admin inspection of compression chains.\n",
+    "tags": [
+        "Compression Management"
+    ],
+    "deprecated": false,
+    "operationId": "listCompressCallbacks"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListCompressCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCompressCallbacks_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/list",
+            _ListCompressCallbacks_Info));
+
+    /// <summary>Returns request schema for ListCompressCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCompressCallbacks_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/list",
+            "request-schema",
+            _ListCompressCallbacks_RequestSchema));
+
+    /// <summary>Returns response schema for ListCompressCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCompressCallbacks_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/list",
+            "response-schema",
+            _ListCompressCallbacks_ResponseSchema));
+
+    /// <summary>Returns full schema for ListCompressCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/compress/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCompressCallbacks_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/compress/list",
+            _ListCompressCallbacks_Info,
+            _ListCompressCallbacks_RequestSchema,
+            _ListCompressCallbacks_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetArchive
+
+    private static readonly string _GetArchive_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetArchiveRequest",
+    "$defs": {
+        "GetArchiveRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to retrieve a compressed archive",
+            "required": [
+                "resourceType",
+                "resourceId"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource"
+                },
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Specific version (latest if not specified)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetArchive_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetArchiveResponse",
+    "$defs": {
+        "GetArchiveResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing archive data",
+            "required": [
+                "resourceType",
+                "resourceId",
+                "found"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource"
+                },
+                "found": {
+                    "type": "boolean",
+                    "description": "True if archive exists"
+                },
+                "archive": {
+                    "$ref": "#/$defs/ResourceArchive",
+                    "nullable": true,
+                    "description": "The archive data (null if not found)"
+                }
+            }
+        },
+        "ResourceArchive": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Bundled compressed archive",
+            "required": [
+                "archiveId",
+                "resourceType",
+                "resourceId",
+                "version",
+                "entries",
+                "createdAt",
+                "sourceDataDeleted"
+            ],
+            "properties": {
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this archive"
+                },
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource archived"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource archived"
+                },
+                "version": {
+                    "type": "integer",
+                    "description": "Archive version (increments on re-compression)"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ArchiveBundleEntry"
+                    },
+                    "description": "Data entries from each compression callback"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this archive was created"
+                },
+                "sourceDataDeleted": {
+                    "type": "boolean",
+                    "description": "Whether original source data was deleted after archival"
+                }
+            }
+        },
+        "ArchiveBundleEntry": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Single entry in the archive bundle",
+            "required": [
+                "sourceType",
+                "serviceName",
+                "data",
+                "compressedAt"
+            ],
+            "properties": {
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of data (e.g., \"character-personality\")"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Service that provided the data"
+                },
+                "data": {
+                    "type": "string",
+                    "description": "Base64-encoded gzipped JSON from the service callback"
+                },
+                "compressedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this entry was compressed"
+                },
+                "dataChecksum": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "SHA256 hash for integrity verification"
+                },
+                "originalSizeBytes": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Size before compression"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetArchive_Info = """
+{
+    "summary": "Retrieve compressed archive",
+    "description": "Retrieves a compressed archive by resource type and ID.\nReturns the latest version unless a specific archiveId is provided.\n",
+    "tags": [
+        "Compression Management"
+    ],
+    "deprecated": false,
+    "operationId": "getArchive"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/archive/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetArchive_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/archive/get",
+            _GetArchive_Info));
+
+    /// <summary>Returns request schema for GetArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/archive/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetArchive_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/archive/get",
+            "request-schema",
+            _GetArchive_RequestSchema));
+
+    /// <summary>Returns response schema for GetArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/archive/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetArchive_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/archive/get",
+            "response-schema",
+            _GetArchive_ResponseSchema));
+
+    /// <summary>Returns full schema for GetArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/archive/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetArchive_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/archive/get",
+            _GetArchive_Info,
+            _GetArchive_RequestSchema,
+            _GetArchive_ResponseSchema));
 
     #endregion
 }

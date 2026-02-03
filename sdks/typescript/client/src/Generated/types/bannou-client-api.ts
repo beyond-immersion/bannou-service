@@ -1279,6 +1279,28 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/character/get-compress-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get character base data for compression
+     * @description Called by Resource service during compression.
+     *     Returns core character data (name, dates, family summary).
+     *     Returns BadRequest if character is alive - only dead characters can be compressed.
+     */
+    post: operations['getCompressData'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character-encounter/type/get': {
     parameters: {
       query?: never;
@@ -1445,6 +1467,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/character-encounter/get-compress-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get encounter data for compression
+     * @description Called by Resource service during character compression.
+     *     Returns encounters and perspectives involving this character for archival.
+     */
+    post: operations['getCompressData'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character-history/get-participation': {
     parameters: {
       query?: never;
@@ -1509,6 +1552,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/character-history/get-compress-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get history data for compression
+     * @description Called by Resource service during character compression.
+     *     Returns historical participations, backstory elements, and text summaries for archival.
+     */
+    post: operations['getCompressData'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character-personality/get': {
     parameters: {
       query?: never;
@@ -1546,6 +1610,27 @@ export interface paths {
      *     style, positioning, and retreat conditions.
      */
     post: operations['getCombatPreferences'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-personality/get-compress-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get personality data for compression
+     * @description Called by Resource service during character compression.
+     *     Returns personality traits and combat preferences for archival.
+     */
+    post: operations['getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4249,6 +4334,31 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/location/validate-territory': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Validate location against territory boundaries
+     * @description Checks if a proposed location falls within or outside specified territory boundaries.
+     *     Used by Contract service's clause type handler system for territory validation.
+     *
+     *     Territory modes:
+     *     - exclusive: Location must NOT be within any territory location (or descendants)
+     *     - inclusive: Location MUST be within at least one territory location (or descendants)
+     */
+    post: operations['validateTerritory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/location/get-descendants': {
     parameters: {
       query?: never;
@@ -5338,6 +5448,101 @@ export interface paths {
      *     Returns Conflict if refcount changed during execution.
      */
     post: operations['executeCleanup'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/cleanup/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List registered cleanup callbacks
+     * @description Returns all cleanup callbacks registered for a resource type.
+     *     Useful for debugging and admin inspection of cleanup chains.
+     */
+    post: operations['listCleanupCallbacks'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/compress/execute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Compress a resource and all dependents
+     * @description Gathers data from all registered compression callbacks, bundles into
+     *     a unified archive, and stores in MySQL. Optionally deletes source data
+     *     after successful archival via existing cleanup callbacks.
+     *
+     *     Flow:
+     *     1. Get all compression callbacks for resourceType, sorted by priority
+     *     2. If dryRun, return preview without executing
+     *     3. Acquire distributed lock
+     *     4. Execute each callback to gather data
+     *     5. Bundle responses into archive (gzipped JSON per entry)
+     *     6. Store archive in MySQL
+     *     7. If deleteSourceData, invoke cleanup callbacks
+     *     8. Publish resource.compressed event
+     */
+    post: operations['executeCompress'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/compress/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List registered compression callbacks
+     * @description Returns all compression callbacks registered for a resource type.
+     *     Useful for debugging and admin inspection of compression chains.
+     */
+    post: operations['listCompressCallbacks'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/resource/archive/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Retrieve compressed archive
+     * @description Retrieves a compressed archive by resource type and ID.
+     *     Returns the latest version unless a specific archiveId is provided.
+     */
+    post: operations['getArchive'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6997,6 +7202,24 @@ export interface components {
       /** @description ICE candidates for NAT traversal (can be trickled later) */
       iceCandidates?: string[];
     };
+    /** @description Single entry in the archive bundle */
+    ArchiveBundleEntry: {
+      /** @description Type of data (e.g., "character-personality") */
+      sourceType: string;
+      /** @description Service that provided the data */
+      serviceName: string;
+      /** @description Base64-encoded gzipped JSON from the service callback */
+      data: string;
+      /**
+       * Format: date-time
+       * @description When this entry was compressed
+       */
+      compressedAt: string;
+      /** @description SHA256 hash for integrity verification */
+      dataChecksum?: string | null;
+      /** @description Size before compression */
+      originalSizeBytes?: number | null;
+    };
     /** @description Archive metadata including size and document count */
     ArchiveInfo: {
       /**
@@ -8248,6 +8471,58 @@ export interface components {
        */
       familySummary?: string | null;
     };
+    /** @description Core character data for archive storage */
+    CharacterCompressData: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for the character
+       */
+      characterId: string;
+      /** @description Display name of the character */
+      name: string;
+      /**
+       * Format: uuid
+       * @description Realm ID (partition key)
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Species ID (foreign key to Species service)
+       */
+      speciesId: string;
+      /**
+       * Format: date-time
+       * @description In-game birth timestamp
+       */
+      birthDate: string;
+      /**
+       * Format: date-time
+       * @description In-game death timestamp (required for compression)
+       */
+      deathDate: string;
+      /** @description Current lifecycle status (must be dead for compression) */
+      status: components['schemas']['CharacterStatus'];
+      /**
+       * @description Text summary of family relationships.
+       *     Example: "Father of 3, married to Elena, orphaned at young age"
+       */
+      familySummary?: string | null;
+      /**
+       * Format: date-time
+       * @description When this data was compressed
+       */
+      compressedAt: string;
+      /**
+       * Format: date-time
+       * @description Real-world creation timestamp
+       */
+      createdAt?: string;
+      /**
+       * Format: date-time
+       * @description Real-world last update timestamp
+       */
+      updatedAt?: string | null;
+    };
     /** @description Context information about a character for behavior resolution */
     CharacterContext: {
       /**
@@ -8618,6 +8893,26 @@ export interface components {
       errorMessage?: string | null;
       /** @description Callback execution time in milliseconds */
       durationMs?: number;
+    };
+    /** @description Summary of a registered cleanup callback */
+    CleanupCallbackSummary: {
+      /** @description Type of resource this callback handles */
+      resourceType: string;
+      /** @description Type of entity that will be cleaned up */
+      sourceType: string;
+      /** @description Action taken when resource is deleted */
+      onDeleteAction: components['schemas']['OnDeleteAction'];
+      /** @description Target service for callback invocation */
+      serviceName: string;
+      /** @description Endpoint path called during cleanup */
+      callbackEndpoint: string;
+      /**
+       * Format: date-time
+       * @description When this callback was registered
+       */
+      registeredAt: string;
+      /** @description Human-readable description */
+      description?: string | null;
     };
     /**
      * @description Policy for cleanup callback execution.
@@ -9001,6 +9296,54 @@ export interface components {
       /** @description Random seed used */
       seed?: number | null;
     };
+    /** @description Result of a single compression callback */
+    CompressCallbackResult: {
+      /** @description Source type that provided data */
+      sourceType: string;
+      /** @description Service that was called */
+      serviceName: string;
+      /** @description Endpoint that was called */
+      endpoint: string;
+      /** @description Whether callback succeeded */
+      success: boolean;
+      /** @description HTTP status code from callback */
+      statusCode?: number | null;
+      /** @description Error message if callback failed */
+      errorMessage?: string | null;
+      /** @description Size of compressed data in bytes */
+      dataSize?: number | null;
+      /** @description Callback execution time in milliseconds */
+      durationMs: number;
+    };
+    /** @description Summary of a registered compression callback */
+    CompressCallbackSummary: {
+      /** @description Type of resource this callback handles */
+      resourceType: string;
+      /** @description Type of data being compressed */
+      sourceType: string;
+      /** @description Target service for callback invocation */
+      serviceName: string;
+      /** @description Endpoint called during compression */
+      compressEndpoint: string;
+      /** @description Endpoint called during decompression */
+      decompressEndpoint?: string | null;
+      /** @description Execution order (lower = earlier) */
+      priority: number;
+      /**
+       * Format: date-time
+       * @description When this callback was registered
+       */
+      registeredAt: string;
+      /** @description Human-readable description */
+      description?: string | null;
+    };
+    /**
+     * @description Policy for compression callback execution.
+     *     BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
+     *     ALL_REQUIRED: Abort compression if any callback fails
+     * @enum {string}
+     */
+    CompressionPolicy: 'BEST_EFFORT' | 'ALL_REQUIRED';
     /**
      * @description Compression algorithm for bundles
      * @enum {string}
@@ -9131,7 +9474,7 @@ export interface components {
      * @description Type of constraint to check
      * @enum {string}
      */
-    ConstraintType: 'exclusivity' | 'non_compete' | 'territory' | 'time_commitment';
+    ConstraintType: 'exclusivity' | 'non_compete' | 'time_commitment';
     /** @description User-submitted contact form data */
     ContactRequest: {
       /**
@@ -11264,6 +11607,32 @@ export interface components {
       /** @description Valence level (0-1) */
       valence?: number;
     };
+    /** @description Complete encounter data for archive storage */
+    EncounterCompressData: {
+      /**
+       * Format: uuid
+       * @description Character this data belongs to
+       */
+      characterId: string;
+      /** @description Whether encounters exist for this character */
+      hasEncounters: boolean;
+      /** @description Number of encounters archived */
+      encounterCount: number;
+      /** @description Encounters with perspectives (empty if hasEncounters=false) */
+      encounters?: components['schemas']['EncounterResponse'][];
+      /**
+       * @description Map of target characterId to aggregate sentiment.
+       *     Preserves sentiment relationships for historical reference.
+       */
+      aggregateSentiment?: {
+        [key: string]: number;
+      } | null;
+      /**
+       * Format: date-time
+       * @description When this data was compressed
+       */
+      compressedAt: string;
+    };
     /** @description Paginated list of encounters */
     EncounterListResponse: {
       /** @description List of encounters with perspectives */
@@ -12104,6 +12473,12 @@ export interface components {
       gracePeriodSeconds?: number | null;
       /** @description Override cleanup policy (uses resource default if not specified) */
       cleanupPolicy?: components['schemas']['CleanupPolicy'];
+      /**
+       * @description If true, returns what callbacks WOULD execute without actually
+       *     executing them. Useful for pre-deletion validation and debugging.
+       *     Defaults to false.
+       */
+      dryRun?: boolean | null;
     };
     /** @description Response after attempting to execute cleanup */
     ExecuteCleanupResponse: {
@@ -12122,6 +12497,57 @@ export interface components {
       callbackResults: components['schemas']['CleanupCallbackResult'][];
       /** @description Total cleanup execution time in milliseconds */
       cleanupDurationMs?: number;
+      /** @description True if this was a preview (no callbacks were actually executed) */
+      dryRun: boolean;
+    };
+    /** @description Request to compress a resource */
+    ExecuteCompressRequest: {
+      /** @description Type of resource to compress */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource to compress
+       */
+      resourceId: string;
+      /**
+       * @description If true, invoke cleanup callbacks after successful archival
+       * @default false
+       */
+      deleteSourceData: boolean;
+      /** @description Override policy (uses default from config if not specified) */
+      compressionPolicy?: components['schemas']['CompressionPolicy'];
+      /**
+       * @description If true, return what would be compressed without executing
+       * @default false
+       */
+      dryRun: boolean;
+    };
+    /** @description Compression execution result */
+    ExecuteCompressResponse: {
+      /** @description Type of resource compressed */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource compressed
+       */
+      resourceId: string;
+      /** @description True if compression completed successfully */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description ID of created archive (null if failed or dryRun)
+       */
+      archiveId?: string | null;
+      /** @description Why compression was aborted */
+      abortReason?: string | null;
+      /** @description Results of each compression callback */
+      callbackResults: components['schemas']['CompressCallbackResult'][];
+      /** @description Whether cleanup callbacks were executed after archival */
+      sourceDataDeleted?: boolean;
+      /** @description True if this was a preview (no callbacks actually executed) */
+      dryRun: boolean;
+      /** @description Total compression execution time in milliseconds */
+      compressionDurationMs: number;
     };
     /** @description Request to execute contract clauses */
     ExecuteContractRequest: {
@@ -12704,6 +13130,35 @@ export interface components {
        */
       typeId: string;
     };
+    /** @description Request to retrieve a compressed archive */
+    GetArchiveRequest: {
+      /** @description Type of resource */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource
+       */
+      resourceId: string;
+      /**
+       * Format: uuid
+       * @description Specific version (latest if not specified)
+       */
+      archiveId?: string | null;
+    };
+    /** @description Response containing archive data */
+    GetArchiveResponse: {
+      /** @description Type of resource */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource
+       */
+      resourceId: string;
+      /** @description True if archive exists */
+      found: boolean;
+      /** @description The archive data (null if not found) */
+      archive?: components['schemas']['ResourceArchive'];
+    };
     /** @description Request to retrieve asset metadata and download URL */
     GetAssetRequest: {
       /** @description Asset identifier */
@@ -12870,6 +13325,14 @@ export interface components {
       /**
        * Format: uuid
        * @description ID of the character to get combat preferences for
+       */
+      characterId: string;
+    };
+    /** @description Request to get character data for compression */
+    GetCompressDataRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the character to get compress data for
        */
       characterId: string;
     };
@@ -14147,6 +14610,29 @@ export interface components {
        */
       createdAt: string;
     };
+    /** @description Complete history data for archive storage */
+    HistoryCompressData: {
+      /**
+       * Format: uuid
+       * @description Character this data belongs to
+       */
+      characterId: string;
+      /** @description Whether historical participations exist */
+      hasParticipations: boolean;
+      /** @description Historical event participations (empty if hasParticipations=false) */
+      participations?: components['schemas']['HistoricalParticipation'][];
+      /** @description Whether backstory elements exist */
+      hasBackstory: boolean;
+      /** @description Backstory data (null if hasBackstory=false) */
+      backstory?: components['schemas']['BackstoryResponse'];
+      /** @description Text summaries for reference */
+      summaries?: components['schemas']['HistorySummaryResponse'];
+      /**
+       * Format: date-time
+       * @description When this data was compressed
+       */
+      compressedAt: string;
+    };
     /** @description Request for scene version history */
     HistoryRequest: {
       /**
@@ -14171,6 +14657,24 @@ export interface components {
       currentVersion?: string;
       /** @description Version history entries */
       versions: components['schemas']['VersionInfo'][];
+    };
+    /** @description Generated text summaries for character compression */
+    HistorySummaryResponse: {
+      /**
+       * Format: uuid
+       * @description ID of the character summarized
+       */
+      characterId: string;
+      /**
+       * @description Key backstory elements as text summaries.
+       *     e.g., ["Trained by Knights Guild", "Born in the Northlands"]
+       */
+      keyBackstoryPoints: string[];
+      /**
+       * @description Major historical events as text summaries.
+       *     e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+       */
+      majorLifeEvents: string[];
     };
     /** @description Authorization hold record */
     HoldRecord: {
@@ -14855,6 +15359,34 @@ export interface components {
     ListClauseTypesResponse: {
       /** @description List of registered clause types */
       clauseTypes: components['schemas']['ClauseTypeSummary'][];
+    };
+    /** @description Request to list registered cleanup callbacks */
+    ListCleanupCallbacksRequest: {
+      /** @description Filter by resource type (list all if not specified) */
+      resourceType?: string | null;
+      /** @description Filter by source type (requires resourceType) */
+      sourceType?: string | null;
+    };
+    /** @description List of registered cleanup callbacks */
+    ListCleanupCallbacksResponse: {
+      /** @description Registered callbacks matching filter */
+      callbacks: components['schemas']['CleanupCallbackSummary'][];
+      /** @description Total number of callbacks returned */
+      totalCount: number;
+    };
+    /** @description Request to list registered compression callbacks */
+    ListCompressCallbacksRequest: {
+      /** @description Filter by resource type (list all if not specified) */
+      resourceType?: string | null;
+      /** @description Filter by source type (requires resourceType) */
+      sourceType?: string | null;
+    };
+    /** @description List of registered compression callbacks */
+    ListCompressCallbacksResponse: {
+      /** @description Registered callbacks matching filter */
+      callbacks: components['schemas']['CompressCallbackSummary'][];
+      /** @description Total number of callbacks returned */
+      totalCount: number;
     };
     /** @description Request to list containers for an owner */
     ListContainersRequest: {
@@ -16587,6 +17119,14 @@ export interface components {
       deviceInfo?: components['schemas']['DeviceInfo'];
     };
     /**
+     * @description Action to take when the referenced resource is deleted.
+     *     CASCADE: Delete dependent entities when resource is deleted
+     *     RESTRICT: Block resource deletion if references exist
+     *     DETACH: Set reference to null when resource is deleted
+     * @enum {string}
+     */
+    OnDeleteAction: 'CASCADE' | 'RESTRICT' | 'DETACH';
+    /**
      * @description Type of entity that owns this save slot
      * @enum {string}
      */
@@ -16873,6 +17413,27 @@ export interface components {
       | 'message'
       | 'service'
       | 'system';
+    /** @description Complete personality data for archive storage */
+    PersonalityCompressData: {
+      /**
+       * Format: uuid
+       * @description Character this data belongs to
+       */
+      characterId: string;
+      /** @description Whether personality traits exist */
+      hasPersonality: boolean;
+      /** @description Personality traits (null if hasPersonality=false) */
+      personality?: components['schemas']['PersonalityResponse'];
+      /** @description Whether combat preferences exist */
+      hasCombatPreferences: boolean;
+      /** @description Combat preferences (null if hasCombatPreferences=false) */
+      combatPreferences?: components['schemas']['CombatPreferencesResponse'];
+      /**
+       * Format: date-time
+       * @description When this data was compressed
+       */
+      compressedAt: string;
+    };
     /** @description Complete personality profile for behavior system consumption */
     PersonalityResponse: {
       /**
@@ -18676,6 +19237,32 @@ export interface components {
       /** @description Depth level of this reference */
       depth?: number;
     };
+    /** @description Bundled compressed archive */
+    ResourceArchive: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this archive
+       */
+      archiveId: string;
+      /** @description Type of resource archived */
+      resourceType: string;
+      /**
+       * Format: uuid
+       * @description ID of the resource archived
+       */
+      resourceId: string;
+      /** @description Archive version (increments on re-compression) */
+      version: number;
+      /** @description Data entries from each compression callback */
+      entries: components['schemas']['ArchiveBundleEntry'][];
+      /**
+       * Format: date-time
+       * @description When this archive was created
+       */
+      createdAt: string;
+      /** @description Whether original source data was deleted after archival */
+      sourceDataDeleted: boolean;
+    };
     /** @description A reference from a source entity to a resource */
     ResourceReference: {
       /** @description Type of entity holding the reference (opaque identifier) */
@@ -19999,6 +20586,11 @@ export interface components {
       | 'unilateral_with_notice'
       | 'unilateral_immediate'
       | 'non_terminable';
+    /**
+     * @description Territory validation mode for constraint checking
+     * @enum {string}
+     */
+    TerritoryMode: 'exclusive' | 'inclusive';
     /** @description Visual theme configuration including colors, fonts, and navigation */
     ThemeConfig: {
       /** @description Name of the active theme */
@@ -20898,6 +21490,30 @@ export interface components {
        * @default true
        */
       applyGameRules: boolean;
+    };
+    /** @description Request to validate a location against territory boundaries */
+    ValidateTerritoryRequest: {
+      /**
+       * Format: uuid
+       * @description The location to validate
+       */
+      locationId: string;
+      /** @description Territory boundary location IDs */
+      territoryLocationIds: string[];
+      /** @description Validation mode (exclusive or inclusive). Defaults to exclusive. */
+      territoryMode?: components['schemas']['TerritoryMode'] | null;
+    };
+    /** @description Territory validation result */
+    ValidateTerritoryResponse: {
+      /** @description True if location passes territory validation */
+      isValid: boolean;
+      /** @description Human-readable reason if validation failed */
+      violationReason?: string | null;
+      /**
+       * Format: uuid
+       * @description The territory location that matched (for inclusive) or conflicted (for exclusive)
+       */
+      matchedTerritoryId?: string | null;
     };
     /** @description Response from token validation containing validity status and associated account details */
     ValidateTokenResponse: {
@@ -23261,6 +23877,44 @@ export interface operations {
       };
     };
   };
+  getCompressData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCompressDataRequest'];
+      };
+    };
+    responses: {
+      /** @description Character base data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CharacterCompressData'];
+        };
+      };
+      /** @description Character is not dead (cannot compress alive characters) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Character not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getEncounterType: {
     parameters: {
       query?: never;
@@ -23467,6 +24121,37 @@ export interface operations {
       };
     };
   };
+  getCompressData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCompressDataRequest'];
+      };
+    };
+    responses: {
+      /** @description Compressed data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EncounterCompressData'];
+        };
+      };
+      /** @description No encounter data for character */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getParticipation: {
     parameters: {
       query?: never;
@@ -23546,6 +24231,37 @@ export interface operations {
       };
     };
   };
+  getCompressData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCompressDataRequest'];
+      };
+    };
+    responses: {
+      /** @description Compressed data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HistoryCompressData'];
+        };
+      };
+      /** @description No history data for character */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getPersonality: {
     parameters: {
       query?: never;
@@ -23600,6 +24316,37 @@ export interface operations {
         };
       };
       /** @description No combat preferences defined for this character */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getCompressData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCompressDataRequest'];
+      };
+    };
+    responses: {
+      /** @description Compressed data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PersonalityCompressData'];
+        };
+      };
+      /** @description No personality data for character */
       404: {
         headers: {
           [name: string]: unknown;
@@ -27776,6 +28523,37 @@ export interface operations {
       };
     };
   };
+  validateTerritory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ValidateTerritoryRequest'];
+      };
+    };
+    responses: {
+      /** @description Territory validation result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ValidateTerritoryResponse'];
+        };
+      };
+      /** @description Location not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getLocationDescendants: {
     parameters: {
       query?: never;
@@ -29219,6 +29997,102 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ExecuteCleanupResponse'];
+        };
+      };
+    };
+  };
+  listCleanupCallbacks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListCleanupCallbacksRequest'];
+      };
+    };
+    responses: {
+      /** @description List of registered callbacks */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListCleanupCallbacksResponse'];
+        };
+      };
+    };
+  };
+  executeCompress: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExecuteCompressRequest'];
+      };
+    };
+    responses: {
+      /** @description Compression result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecuteCompressResponse'];
+        };
+      };
+    };
+  };
+  listCompressCallbacks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListCompressCallbacksRequest'];
+      };
+    };
+    responses: {
+      /** @description Callback list */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListCompressCallbacksResponse'];
+        };
+      };
+    };
+  };
+  getArchive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetArchiveRequest'];
+      };
+    };
+    responses: {
+      /** @description Archive data */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetArchiveResponse'];
         };
       };
     };
