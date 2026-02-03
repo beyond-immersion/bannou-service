@@ -924,7 +924,8 @@ public class CharacterHistoryServiceTests
         var service = CreateService();
         var characterId = Guid.NewGuid();
 
-        _mockIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((HistoryIndexData?)null);
         _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((BackstoryData?)null);
@@ -946,7 +947,8 @@ public class CharacterHistoryServiceTests
         var service = CreateService();
         var characterId = Guid.NewGuid();
 
-        _mockIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Connection failed"));
 
         var request = new GetCompressDataRequest { CharacterId = characterId };

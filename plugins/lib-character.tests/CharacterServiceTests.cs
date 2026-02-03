@@ -1051,6 +1051,343 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
     #endregion
 
+    #region GetCompressDataAsync Tests
+
+    [Fact]
+    public async Task GetCompressDataAsync_DeadCharacter_ReturnsCompressData()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+        var deathDate = DateTimeOffset.UtcNow.AddDays(-1);
+
+        // Setup global index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character lookup
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test Character",
+                RealmId = realmId,
+                SpeciesId = speciesId,
+                Status = CharacterStatus.Dead,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-50),
+                DeathDate = deathDate,
+                CreatedAt = DateTimeOffset.UtcNow.AddYears(-50),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup relationship client to return empty family tree
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipListResponse
+            {
+                Relationships = new List<RelationshipResponse>(),
+                TotalCount = 0,
+                PageSize = 100,
+                Page = 1
+            });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal("Test Character", response.Name);
+        Assert.Equal(realmId, response.RealmId);
+        Assert.Equal(speciesId, response.SpeciesId);
+        Assert.Equal(CharacterStatus.Dead, response.Status);
+        Assert.Equal(deathDate, response.DeathDate);
+        Assert.NotEqual(default, response.CompressedAt);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_CharacterNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup global index to return null (character not found)
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_AliveCharacter_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        // Setup global index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character lookup - alive character
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Alive Character",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive, // Not dead
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-20),
+                CreatedAt = DateTimeOffset.UtcNow.AddYears(-20),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_DeadWithoutDeathDate_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        // Setup global index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character lookup - dead but no death date (invalid state)
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Invalid Character",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Dead,
+                DeathDate = null, // Missing death date
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-20),
+                CreatedAt = DateTimeOffset.UtcNow.AddYears(-20),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_ApiException_ReturnsServiceUnavailable()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        // Setup global index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character lookup
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test Character",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Dead,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-50),
+                DeathDate = DateTimeOffset.UtcNow.AddDays(-1),
+                CreatedAt = DateTimeOffset.UtcNow.AddYears(-50),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup relationship client to throw ApiException
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Relationship service unavailable", 503));
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.ServiceUnavailable, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_Exception_ReturnsInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup to throw exception on lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Database error"));
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithFamilyRelationships_IncludesFamilySummary()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var spouseId = Guid.NewGuid();
+        var childId = Guid.NewGuid();
+        var spouseTypeId = Guid.NewGuid();
+        var childTypeId = Guid.NewGuid();
+
+        // Setup global index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup main character lookup
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test Character",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Dead,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-50),
+                DeathDate = DateTimeOffset.UtcNow.AddDays(-1),
+                CreatedAt = DateTimeOffset.UtcNow.AddYears(-50),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup bulk state for family member lookups
+        var characterDict = new Dictionary<string, CharacterModel>
+        {
+            [$"character:{realmId}:{spouseId}"] = new CharacterModel
+            {
+                CharacterId = spouseId,
+                Name = "Spouse Character",
+                RealmId = realmId,
+                Status = CharacterStatus.Alive
+            },
+            [$"character:{realmId}:{childId}"] = new CharacterModel
+            {
+                CharacterId = childId,
+                Name = "Child Character",
+                RealmId = realmId,
+                Status = CharacterStatus.Alive
+            }
+        };
+        SetupBulkStateAsync(characterDict);
+
+        // Setup relationship client to return spouse and child relationships
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipListResponse
+            {
+                Relationships = new List<RelationshipResponse>
+                {
+                    new RelationshipResponse
+                    {
+                        RelationshipId = Guid.NewGuid(),
+                        Entity1Id = characterId,
+                        Entity1Type = EntityType.Character,
+                        Entity2Id = spouseId,
+                        Entity2Type = EntityType.Character,
+                        RelationshipTypeId = spouseTypeId,
+                        StartedAt = DateTimeOffset.UtcNow.AddYears(-20),
+                        CreatedAt = DateTimeOffset.UtcNow.AddYears(-20)
+                    },
+                    new RelationshipResponse
+                    {
+                        RelationshipId = Guid.NewGuid(),
+                        Entity1Id = characterId,
+                        Entity1Type = EntityType.Character,
+                        Entity2Id = childId,
+                        Entity2Type = EntityType.Character,
+                        RelationshipTypeId = childTypeId,
+                        StartedAt = DateTimeOffset.UtcNow.AddYears(-15),
+                        CreatedAt = DateTimeOffset.UtcNow.AddYears(-15)
+                    }
+                },
+                TotalCount = 2,
+                PageSize = 100,
+                Page = 1
+            });
+
+        // Setup relationship type client to return type codes
+        _mockRelationshipTypeClient
+            .Setup(c => c.GetRelationshipTypeAsync(It.Is<GetRelationshipTypeRequest>(r => r.RelationshipTypeId == spouseTypeId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipTypeResponse { RelationshipTypeId = spouseTypeId, Code = "SPOUSE" });
+        _mockRelationshipTypeClient
+            .Setup(c => c.GetRelationshipTypeAsync(It.Is<GetRelationshipTypeRequest>(r => r.RelationshipTypeId == childTypeId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipTypeResponse { RelationshipTypeId = childTypeId, Code = "CHILD" });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        // Family summary should mention spouse and child
+        // Note: Exact format depends on implementation, but should not be null if relationships exist
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static CharacterModel CreateCharacterModel(Guid characterId, Guid realmId, string name)

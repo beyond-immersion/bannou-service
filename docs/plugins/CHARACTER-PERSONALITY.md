@@ -163,6 +163,33 @@ Same probability formula as personality evolution. Combat experience types trigg
 | AMBUSH_SUCCESS | 30% ->FLANKER, DEFENSIVE->TACTICAL |
 | AMBUSH_SURVIVED | RiskTolerance- |
 
+### Compression Support
+
+- **GetCompressData** (`/character-personality/get-compress-data`): Called by Resource service during hierarchical character compression. Returns `PersonalityCompressData` containing:
+  - `hasPersonality`: Whether personality traits exist
+  - `personality`: Full `PersonalityResponse` if exists
+  - `hasCombatPreferences`: Whether combat preferences exist
+  - `combatPreferences`: Full `CombatPreferencesResponse` if exists
+
+  Returns NotFound only if BOTH personality and combat preferences are absent.
+
+- **RestoreFromArchive** (`/character-personality/restore-from-archive`): Called by Resource service during decompression. Accepts Base64-encoded GZip JSON of `PersonalityCompressData`. Restores personality and combat preferences to state store if they don't already exist (idempotent).
+
+**Compression Callback Registration** (in OnRunningAsync):
+```csharp
+await resourceClient.DefineCompressCallbackAsync(
+    new DefineCompressCallbackRequest
+    {
+        ResourceType = "character",
+        SourceType = "character-personality",
+        CompressEndpoint = "/character-personality/get-compress-data",
+        CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+        DecompressEndpoint = "/character-personality/restore-from-archive",
+        DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+        Priority = 10  // After character base data (priority 0)
+    }, ct);
+```
+
 ---
 
 ## Visual Aid
@@ -275,6 +302,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **2026-02-03**: Added compression support for centralized Resource service compression. Implemented `/character-personality/get-compress-data` and `/character-personality/restore-from-archive` endpoints. Compression callback registered at startup (priority 10) for inclusion in hierarchical character archival. Unit tests added (12 tests covering compression scenarios).
 - **2026-02-02**: Fixed evolution concurrency exhaustion false positive - both evolution methods now track save success and set `evolved=false` if all retries exhausted.
 - **2026-02-02**: Corrected Design Consideration #3 about actor cache - documentation was inaccurate. lib-actor DOES invalidate cache on evolution events. Moved accurate description to Intentional Quirks #7.
 

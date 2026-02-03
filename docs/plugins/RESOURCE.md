@@ -4,13 +4,19 @@
 > **Layer**: L1 (App Foundation)
 > **Schema**: schemas/resource-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis)
+> **State Stores**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL)
 
 ---
 
 ## Overview
 
-Resource reference tracking and lifecycle management for foundational resources. Enables foundational services (L2) to safely delete resources by tracking references from higher-layer consumers (L3/L4) without violating the service hierarchy. Higher-layer services publish reference events when they create/delete references to foundational resources. This service maintains the reference counts using Redis sets and coordinates cleanup callbacks when resources are deleted.
+Resource reference tracking, lifecycle management, and hierarchical compression for foundational resources. Provides three core capabilities:
+
+1. **Reference Tracking**: Enables foundational services (L2) to safely delete resources by tracking references from higher-layer consumers (L3/L4) without violating the service hierarchy. Higher-layer services publish reference events when they create/delete references to foundational resources.
+
+2. **Cleanup Coordination**: Maintains reference counts using Redis sets and coordinates cleanup callbacks when resources are deleted. Supports CASCADE, RESTRICT, and DETACH deletion policies.
+
+3. **Hierarchical Compression**: Centralizes compression of resources and their dependents. Higher-layer services register compression callbacks that gather data for archival. The Resource service orchestrates callback execution, bundles data into unified archives stored in MySQL, and supports full decompression for data recovery.
 
 **Key Design Principle**: lib-resource (L1) uses opaque string identifiers for `resourceType` and `sourceType`. It does NOT enumerate or validate these against any service registry - that would create implicit coupling to higher layers. The strings are just identifiers that consumers self-report.
 
@@ -45,15 +51,19 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ## State Storage
 
-**Stores**: 3 state stores (all Redis-backed)
+**Stores**: 5 state stores (3 Redis-backed, 1 MySQL-backed)
 
 | Store | Backend | Schema Prefix | Purpose |
 |-------|---------|---------------|---------|
 | `resource-refcounts` | Redis | `resource:ref` | Reference tracking via sets |
 | `resource-cleanup` | Redis | `resource:cleanup` | Cleanup callback definitions |
 | `resource-grace` | Redis | `resource:grace` | Grace period timestamps |
+| `resource-compress` | Redis | `resource:compress` | Compression callback definitions and indexes |
+| `resource-archives` | MySQL | N/A | Compressed archive bundles (durable storage) |
 
 **Note**: The "Schema Prefix" column shows the prefix defined in `state-stores.yaml`. The actual Redis key is `{prefix}:{key}` where key patterns are shown below.
+
+**Reference & Cleanup Key Patterns** (resource-refcounts, resource-cleanup, resource-grace stores):
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -62,6 +72,16 @@ Resource reference tracking and lifecycle management for foundational resources.
 | `callback:{resourceType}:{sourceType}` | `CleanupCallbackDefinition` | Cleanup endpoint for a source type |
 | `callback-index:{resourceType}` | Set of `string` | Source types with registered callbacks (for enumeration without KEYS/SCAN) |
 | `callback-resource-types` | Set of `string` | Master index of all resource types with callbacks (for listing all without KEYS scan) |
+
+**Compression Key Patterns** (resource-compress, resource-archives stores):
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `compress-callback:{resourceType}:{sourceType}` | `CompressCallbackDefinition` | Compression endpoint for a source type |
+| `compress-callback-index:{resourceType}` | Set of `string` | Source types with registered compression callbacks |
+| `compress-callback-resource-types` | Set of `string` | Master index of resource types with compression callbacks |
+| `archive-version:{resourceType}:{resourceId}` | `int` (counter) | Current archive version (atomic increment) |
+| `archive:{resourceType}:{resourceId}:{version}` | `ResourceArchiveModel` (MySQL) | Bundled compressed archive data |
 
 ---
 
@@ -73,6 +93,9 @@ Resource reference tracking and lifecycle management for foundational resources.
 |-------|-----------|---------|
 | `resource.grace-period.started` | `ResourceGracePeriodStartedEvent` | Resource refcount reaches zero via `UnregisterReferenceAsync` |
 | `resource.cleanup.callback-failed` | `ResourceCleanupCallbackFailedEvent` | Cleanup callback returns non-2xx during `ExecuteCleanupAsync` |
+| `resource.compressed` | `ResourceCompressedEvent` | Compression completes successfully via `ExecuteCompressAsync` |
+| `resource.compress.callback-failed` | `ResourceCompressCallbackFailedEvent` | Compression callback fails during `ExecuteCompressAsync` |
+| `resource.decompressed` | `ResourceDecompressedEvent` | Decompression completes successfully via `ExecuteDecompressAsync` |
 
 ### Consumed Events
 
@@ -85,12 +108,22 @@ Resource reference tracking and lifecycle management for foundational resources.
 
 ## Configuration
 
+### Cleanup Configuration
+
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `DefaultGracePeriodSeconds` | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | 604800 (7 days) | Grace period before cleanup eligible |
 | `CleanupLockExpirySeconds` | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | 300 | Distributed lock timeout during cleanup |
 | `DefaultCleanupPolicy` | `RESOURCE_DEFAULT_CLEANUP_POLICY` | BEST_EFFORT | Policy when not specified per-request |
 | `CleanupCallbackTimeoutSeconds` | `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | 30 | Timeout for cleanup callback execution |
+
+### Compression Configuration
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `DefaultCompressionPolicy` | `RESOURCE_DEFAULT_COMPRESSION_POLICY` | ALL_REQUIRED | Default compression policy when not specified per-request |
+| `CompressionCallbackTimeoutSeconds` | `RESOURCE_COMPRESSION_CALLBACK_TIMEOUT_SECONDS` | 60 | Timeout for each compression callback execution |
+| `CompressionLockExpirySeconds` | `RESOURCE_COMPRESSION_LOCK_EXPIRY_SECONDS` | 600 | Distributed lock timeout during compression |
 
 All configuration properties are verified as used in `ResourceService.cs`.
 
@@ -158,6 +191,47 @@ All configuration properties are verified as used in `ResourceService.cs`.
 10. Delete grace period record and reference set
 11. Release lock
 
+### Compression Management
+
+| Endpoint | Notes |
+|----------|-------|
+| `POST /resource/compress/define` | Registers compression callback for a resource type; maintains indexes for enumeration |
+| `POST /resource/compress/execute` | Orchestrates compression: gather data from callbacks → bundle into archive → store in MySQL → optionally delete source data |
+| `POST /resource/decompress/execute` | Restores data from archive by invoking decompression callbacks |
+| `POST /resource/compress/list` | Lists registered compression callbacks with filtering |
+| `POST /resource/archive/get` | Retrieves compressed archive by resourceId or specific version |
+
+**CompressionPolicy** (per-request or default from config):
+
+| Policy | Behavior |
+|--------|----------|
+| `ALL_REQUIRED` (default) | Abort compression if any callback fails |
+| `BEST_EFFORT` | Create archive even if some callbacks fail |
+
+**Compression Execution Flow**:
+1. Get all compression callbacks for resourceType, sorted by priority (lower = earlier)
+2. If no callbacks registered, return `Success = false` with reason "No callbacks registered"
+3. **DryRun check**: If `dryRun: true`, return preview of what would execute without acquiring lock
+4. Acquire distributed lock on `compress:{resourceType}:{resourceId}`
+5. For each callback (in priority order):
+   a. Build PreboundApiDefinition from callback registration
+   b. Execute via `IServiceNavigator.ExecutePreboundApiAsync` with configured timeout
+   c. On success: GZip compress response, add to archive entries
+   d. On failure: if `ALL_REQUIRED`, abort immediately; else continue and log
+   e. Publish `resource.compress.callback-failed` event on failure
+6. Create `ResourceArchiveModel` with all collected entries
+7. Atomically increment archive version via `ICacheableStateStore.IncrementAsync`
+8. Save archive to MySQL store with key `archive:{resourceType}:{resourceId}:{version}`
+9. If `deleteSourceData: true`, execute cleanup callbacks via `ExecuteCleanupAsync`
+10. Publish `resource.compressed` event
+11. Release lock, return result
+
+**Decompression Execution Flow**:
+1. Retrieve archive from MySQL (by version or latest)
+2. If archive not found, return `Success = false`
+3. For each archive entry, invoke the registered decompression callback
+4. Publish `resource.decompressed` event on success
+
 ---
 
 ## Visual Aid
@@ -200,6 +274,84 @@ All configuration properties are verified as used in `ResourceService.cs`.
 │  │ Type: Redis Set (master index of all resource types with callbacks) │   │
 │  │ Members: [ "character", "realm", "location" ]                       │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  resource-compress (Redis)                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Key: compress-callback:{resourceType}:{sourceType}                  │   │
+│  │ Type: JSON object                                                   │   │
+│  │ Value: { ServiceName, CompressEndpoint, DecompressEndpoint, ... }   │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Key: compress-callback-index:{resourceType}                         │   │
+│  │ Type: Redis Set                                                     │   │
+│  │ Members: [ "character-personality", "character-history", ... ]      │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Key: archive-version:{resourceType}:{resourceId}                    │   │
+│  │ Type: Counter (atomic increment for versioning)                     │   │
+│  │ Value: 1, 2, 3... (increments on each re-compression)               │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  resource-archives (MySQL)                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Key: archive:{resourceType}:{resourceId}:{version}                  │   │
+│  │ Type: JSON object (ResourceArchiveModel)                            │   │
+│  │ Value: {                                                            │   │
+│  │   ArchiveId, ResourceType, ResourceId, Version,                     │   │
+│  │   Entries: [                                                        │   │
+│  │     { SourceType, ServiceName, Data (base64 gzip), ... }            │   │
+│  │   ],                                                                │   │
+│  │   CreatedAt, SourceDataDeleted                                      │   │
+│  │ }                                                                   │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Compression Flow Diagram**:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Hierarchical Compression Flow                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. Caller invokes POST /resource/compress/execute                          │
+│     { resourceType: "character", resourceId: "abc-123" }                    │
+│                                                                             │
+│  2. Resource Service retrieves registered compression callbacks             │
+│     ┌──────────────────────────────────────────────────────────────────┐   │
+│     │ compress-callback:character:character-base (priority: 0)         │   │
+│     │ compress-callback:character:character-personality (priority: 10) │   │
+│     │ compress-callback:character:character-history (priority: 20)     │   │
+│     │ compress-callback:character:character-encounter (priority: 30)   │   │
+│     └──────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  3. Execute callbacks in priority order (lower = earlier)                   │
+│     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐   │
+│     │ Character (L2)  │ --> │ Personality(L4) │ --> │ History (L4)    │   │
+│     │ /get-compress-  │     │ /get-compress-  │     │ /get-compress-  │   │
+│     │   data          │     │   data          │     │   data          │   │
+│     └─────────────────┘     └─────────────────┘     └─────────────────┘   │
+│                                                                             │
+│  4. Bundle responses into archive                                           │
+│     ┌──────────────────────────────────────────────────────────────────┐   │
+│     │ ResourceArchive {                                                │   │
+│     │   archiveId: "new-guid",                                         │   │
+│     │   resourceType: "character",                                     │   │
+│     │   resourceId: "abc-123",                                         │   │
+│     │   version: 1,                                                    │   │
+│     │   entries: [                                                     │   │
+│     │     { sourceType: "character-base", data: "H4sI..." },           │   │
+│     │     { sourceType: "character-personality", data: "H4sI..." },    │   │
+│     │     { sourceType: "character-history", data: "H4sI..." },        │   │
+│     │     { sourceType: "character-encounter", data: "H4sI..." }       │   │
+│     │   ]                                                              │   │
+│     │ }                                                                │   │
+│     └──────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  5. Store archive in MySQL (durable)                                        │
+│                                                                             │
+│  6. If deleteSourceData=true, invoke cleanup callbacks                      │
+│                                                                             │
+│  7. Publish resource.compressed event                                       │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -291,6 +443,78 @@ None currently.
 2. **Execute cleanup**: Call `/resource/cleanup/execute`
 3. **Proceed with deletion**: After cleanup succeeds
 
+### Compression Callbacks (For Higher-Layer Services)
+
+1. **At startup (OnRunningAsync)**: Register compression callbacks via `/resource/compress/define`
+
+   ```csharp
+   // In YourServicePlugin.OnRunningAsync():
+   var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+   await resourceClient.DefineCompressCallbackAsync(
+       new DefineCompressCallbackRequest
+       {
+           ResourceType = "character",
+           SourceType = "character-personality",
+           ServiceName = "character-personality",
+           CompressEndpoint = "/character-personality/get-compress-data",
+           CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+           DecompressEndpoint = "/character-personality/restore-from-archive",
+           DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+           Priority = 10,
+           Description = "Personality traits and combat preferences"
+       },
+       ct);
+   ```
+
+   **Priority**: Lower values execute earlier. Use for dependency ordering:
+   - Priority 0: Base entity data (e.g., character core fields)
+   - Priority 10-30: Extension data (personality, history, encounters)
+
+2. **Implement compression endpoint**: Return data for archival
+
+   ```csharp
+   public async Task<(StatusCodes, YourCompressData?)> GetCompressDataAsync(
+       GetCompressDataRequest body,
+       CancellationToken cancellationToken)
+   {
+       // Gather all data for this character that should be archived
+       // Return structured response; Resource service will GZip and Base64 encode
+       return (StatusCodes.OK, new YourCompressData { ... });
+   }
+   ```
+
+3. **Implement decompression endpoint**: Restore data from archive
+
+   ```csharp
+   public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
+       RestoreFromArchiveRequest body,
+       CancellationToken cancellationToken)
+   {
+       // body.Data contains Base64-encoded GZip JSON
+       // Decompress, deserialize, restore to state stores
+       return (StatusCodes.OK, new RestoreFromArchiveResponse { Success = true });
+   }
+   ```
+
+### Compression (For Foundational Services)
+
+1. **Invoke compression**: Call `/resource/compress/execute`
+
+   ```csharp
+   var result = await _resourceClient.ExecuteCompressAsync(
+       new ExecuteCompressRequest
+       {
+           ResourceType = "character",
+           ResourceId = characterId,
+           DeleteSourceData = true,  // Clean up after archival
+           CompressionPolicy = CompressionPolicy.ALL_REQUIRED
+       }, ct);
+   ```
+
+2. **Retrieve archive**: Call `/resource/archive/get` to inspect or export
+
+3. **Restore from archive**: Call `/resource/decompress/execute` to restore deleted data
+
 ---
 
 ## Known Quirks & Caveats
@@ -327,6 +551,16 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed (Historical)
 
+- **2026-02-03**: Added centralized compression system:
+  - 5 new compression endpoints (`/compress/define`, `/compress/execute`, `/decompress/execute`, `/compress/list`, `/archive/get`)
+  - 2 new state stores (`resource-compress` for callbacks, `resource-archives` for MySQL durable storage)
+  - 3 new events (`resource.compressed`, `resource.compress.callback-failed`, `resource.decompressed`)
+  - 3 configuration properties (`DefaultCompressionPolicy`, `CompressionCallbackTimeoutSeconds`, `CompressionLockExpirySeconds`)
+  - Unit tests for compression functionality (48 total tests in lib-resource.tests)
+  - Compression callbacks registered by L4 services: character-personality, character-history, character-encounter, character (base data)
+  - Supports hierarchical archival with priority ordering and decompression for data recovery
+  - Archives stored in MySQL for durability with version tracking via atomic increment
+
 - **2026-02-03**: Added cleanup management enhancements:
   - `dryRun` flag on `/resource/cleanup/execute` for previewing what would happen without executing
   - `/resource/cleanup/list` endpoint to view all registered callbacks with filtering
@@ -335,24 +569,31 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 The lib-resource service is feature-complete for the current integration requirements:
 - Schema files (api, events, configuration)
-- State store definitions (resource-refcounts, resource-cleanup, resource-grace)
+- State store definitions (resource-refcounts, resource-cleanup, resource-grace, resource-compress, resource-archives)
 - Service implementation with ICacheableStateStore for atomic set operations
 - Event handlers for reference tracking wired up via IEventConsumer
-- Unit tests (30 tests covering reference counting, grace periods, cleanup policies)
+- Unit tests (48 tests covering reference counting, grace periods, cleanup policies, compression)
 - OnDeleteAction enum (CASCADE/RESTRICT/DETACH) for per-callback deletion behavior
+- CompressionPolicy enum (ALL_REQUIRED/BEST_EFFORT) for compression callback failure handling
 
-**Integrated Consumers**:
+**Integrated Consumers** (Reference Tracking & Cleanup):
 - lib-actor: `x-references` schema, `/actor/cleanup-by-character` endpoint
 - lib-character-encounter: `x-references` schema, `/character-encounter/delete-by-character` endpoint
 - lib-character-history: `x-references` schema, `/character-history/delete-all` cleanup
 - lib-character-personality: `x-references` schema, `/character-personality/cleanup-by-character` endpoint
 
+**Integrated Consumers** (Compression):
+- lib-character: `/character/get-compress-data` (priority 0)
+- lib-character-personality: `/character-personality/get-compress-data`, `/character-personality/restore-from-archive` (priority 10)
+- lib-character-history: `/character-history/get-compress-data`, `/character-history/restore-from-archive` (priority 20)
+- lib-character-encounter: `/character-encounter/get-compress-data`, `/character-encounter/restore-from-archive` (priority 30)
+
 **Foundation Consumer**:
-- lib-character: Queries `/resource/check` in `CheckCharacterReferencesAsync`
+- lib-character: Queries `/resource/check` in `CheckCharacterReferencesAsync`, invokes `/resource/compress/execute` for character archival
 
 ### Pending Integrations
 
-1. **lib-scene**: Not yet integrated with lib-resource. When scene references to characters are added, will need `x-references` schema extension and cleanup endpoint.
+1. **lib-scene**: Not yet integrated with lib-resource. When scene references to characters are added, will need `x-references` schema extension, cleanup endpoint, and optionally compression callbacks.
 
 ---
 

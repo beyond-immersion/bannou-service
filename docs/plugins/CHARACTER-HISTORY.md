@@ -118,6 +118,34 @@ Service lifetime is **Scoped** (per-request).
 - **DeleteAll** (`/character-history/delete-all`): Unregisters all character references first, then uses `RemoveAllByPrimaryKeyAsync` with lambda to extract secondary keys for cleanup. Also deletes backstory. Returns participation count and backstory boolean. Called via lib-resource cleanup callback during character deletion.
 - **Summarize** (`/character-history/summarize`): Template-based text generation. Selects top N backstory elements by strength (default 5, max 20) and top N participations by significance (default 10, max 20). Uses switch-case text patterns.
 
+### Compression Support
+
+- **GetCompressData** (`/character-history/get-compress-data`): Called by Resource service during hierarchical character compression. Returns `HistoryCompressData` containing:
+  - `hasParticipations`: Whether any historical participations exist
+  - `participations`: List of `ParticipationResponse` records
+  - `hasBackstory`: Whether backstory document exists
+  - `backstory`: `BackstoryResponse` if exists
+  - `participationCount`: Total participation count
+
+  Returns NotFound only if BOTH participations and backstory are absent.
+
+- **RestoreFromArchive** (`/character-history/restore-from-archive`): Called by Resource service during decompression. Accepts Base64-encoded GZip JSON of `HistoryCompressData`. Restores participations and backstory to state store if they don't already exist (idempotent). Returns counts of restored items.
+
+**Compression Callback Registration** (in OnRunningAsync):
+```csharp
+await resourceClient.DefineCompressCallbackAsync(
+    new DefineCompressCallbackRequest
+    {
+        ResourceType = "character",
+        SourceType = "character-history",
+        CompressEndpoint = "/character-history/get-compress-data",
+        CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+        DecompressEndpoint = "/character-history/restore-from-archive",
+        DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+        Priority = 20  // After personality (priority 10)
+    }, ct);
+```
+
 ---
 
 ## Visual Aid
@@ -247,6 +275,7 @@ None currently identified.
 - **2026-02-01**: [#231](https://github.com/beyond-immersion/bannou-service/issues/231) - Cross-character event correlation query (API design decisions needed)
 
 ### Completed
+- **2026-02-03**: Added compression support for centralized Resource service compression. Implemented `/character-history/get-compress-data` and `/character-history/restore-from-archive` endpoints. Compression callback registered at startup (priority 20) for inclusion in hierarchical character archival. Unit tests added (11 tests covering compression scenarios).
 - **2026-02-02**: [#261](https://github.com/beyond-immersion/bannou-service/issues/261) - Optimized `RemoveAllByPrimaryKeyAsync` in `DualIndexHelper` to use bulk operations, reducing database round-trips from ~4N to ~7 regardless of record count. Both lib-character-history and lib-realm-history benefit.
 - **2026-02-02**: Verified and removed "Schema promises 409 Conflict but implementation allows duplicates" bug - fix is clean with no non-obvious behavior (simple input validation before creation).
 - **2026-02-02**: Corrected lib-character dependent documentation - lib-character (L2) cannot call this service per SERVICE_HIERARCHY.

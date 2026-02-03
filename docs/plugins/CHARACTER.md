@@ -147,17 +147,45 @@ If L4 enrichment flags are set, the service logs a debug message explaining the 
 - Spouse: SPOUSE, HUSBAND, WIFE
 - Reincarnation: INCARNATION (tracks past lives)
 
-### Compression (`/character/compress`)
+### Compression (Centralized via Resource Service)
 
-Preconditions: Must be `Status=Dead` with `DeathDate` set.
+**IMPORTANT**: Character compression is now centralized through the Resource service (L1). Character (L2) provides a compression callback endpoint; actual compression orchestration happens via `/resource/compress/execute`.
 
-Per SERVICE_HIERARCHY, Character (L2) cannot call CharacterPersonality or CharacterHistory (L4) during compression. The archive includes only L2 data:
+#### Compression Callback (`/character/get-compress-data`)
 
-1. **Family summary**: Text like "married to Elena, parent of 3, reincarnated from 2 past life(s)" (from Relationship service, L2)
-2. **Archive creation**: Stores character data and family summary in MySQL under `archive:{characterId}`
-3. **Event publication**: Publishes `character.compressed` event so L4 services can clean up their own data
+Preconditions: Must be `Status=Dead` with `DeathDate` set. Returns `BadRequest` for alive characters.
 
-**Note**: `DeleteSourceData` flag works via event-driven cleanup. Character publishes `character.compressed` event; L4 services (CharacterPersonality, CharacterHistory) subscribe and clean up their data when `DeletedSourceData=true`.
+Called by Resource service during `ExecuteCompressAsync`. Returns character base data for archival:
+- Core character fields (name, realm, species, birth/death dates, status)
+- Family summary text: "married to Elena, parent of 3, orphaned" (from Relationship service, L2)
+
+Returns `NotFound` if character doesn't exist, `BadRequest` if character is alive.
+
+#### Triggering Compression
+
+To compress a character with all its L4 data:
+
+```csharp
+// Caller invokes Resource service, NOT Character service directly
+var result = await _resourceClient.ExecuteCompressAsync(
+    new ExecuteCompressRequest
+    {
+        ResourceType = "character",
+        ResourceId = characterId,
+        DeleteSourceData = true,  // Clean up after archival
+        CompressionPolicy = CompressionPolicy.ALL_REQUIRED
+    }, ct);
+```
+
+Resource service will:
+1. Call `/character/get-compress-data` (priority 0)
+2. Call `/character-personality/get-compress-data` (priority 10)
+3. Call `/character-history/get-compress-data` (priority 20)
+4. Call `/character-encounter/get-compress-data` (priority 30)
+5. Bundle all responses into a unified archive stored in MySQL
+6. If `deleteSourceData=true`, invoke cleanup callbacks to delete source data
+
+**Legacy**: The old `/character/compress` endpoint still exists but only archives L2 data (family summary). Use Resource service for full hierarchical compression including L4 data.
 
 ### Archive Retrieval (`/character/get-archive`)
 
@@ -222,7 +250,7 @@ Character Key Architecture (Realm-Partitioned)
 
 ## Potential Extensions
 
-1. **Batch compression**: Compress multiple dead characters in one operation.
+1. **Batch compression**: Compress multiple dead characters in one operation. Would need to be implemented in Resource service as a batch variant of `/resource/compress/execute`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 2. **Character purge background service**: Use `CharacterRetentionDays` config to implement automatic purge of characters eligible for cleanup.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/263 -->
@@ -239,7 +267,7 @@ None currently tracked.
 
 1. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
 
-2. **DeleteSourceData flag triggers event-driven cleanup**: When `DeleteSourceData=true` on compression, Character (L2) publishes `character.compressed` event with the flag. L4 services (CharacterPersonality, CharacterHistory) subscribe and delete their data. Character cannot delete L4 data directly per SERVICE_HIERARCHY - the event pattern maintains proper layer separation.
+2. **Compression delegated to Resource service**: Full character compression (including L4 data) is now handled by the centralized Resource service (L1). Character provides a `/character/get-compress-data` callback endpoint that Resource invokes during compression orchestration. The legacy `/character/compress` endpoint still exists but only archives L2 data. For hierarchical compression that includes CharacterPersonality, CharacterHistory, and CharacterEncounter data, use `/resource/compress/execute` with `resourceType="character"`.
 
 3. **Fail-closed validation**: If realm or species validation services are unavailable, character creation throws `InvalidOperationException` rather than proceeding. This is intentional to prevent data integrity issues.
 
@@ -277,6 +305,7 @@ No active work items.
 
 ### Historical
 
+- **2026-02-03**: Added centralized compression support via Resource service (L1). Character now provides `/character/get-compress-data` callback endpoint (returns base character data + family summary) invoked by Resource service during hierarchical compression. Full character compression (including L4 data from CharacterPersonality, CharacterHistory, CharacterEncounter) is now orchestrated by `/resource/compress/execute`. The legacy `/character/compress` endpoint remains but only archives L2 data.
 - **2026-02-03**: Fixed Character's delete flow to call `ExecuteCleanupAsync` via lib-resource, properly triggering CASCADE cleanup in L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor) via their registered cleanup callbacks. This follows the x-references contract pattern (see `docs/reference/RESOURCE_CLEANUP_CONTRACT.md`).
 - **2026-02-03**: ~~Implemented L4 cleanup event handlers in CharacterPersonality and CharacterHistory.~~ **SUPERSEDED**: These event handlers were a workaround that bypassed the x-references cleanup contract. The correct fix is `ExecuteCleanupAsync` (above). Event handlers should be removed.
 - **2026-02-02**: Removed FIXED item from Potential Extensions (parallel family tree lookups) - verified implemented via `Task.WhenAll` and `GetBulkAsync`, no quirks remain.

@@ -154,6 +154,34 @@ Service lifetime is **Scoped** (per-request). One background service: `MemoryDec
 - **DeleteByCharacter** (`/character-encounter/delete-by-character`): Loads all perspective IDs for the character. Deletes each perspective. For each unique encounter: deletes remaining perspectives, deletes encounter, cleans up pair and location indexes. Publishes `encounter.deleted` per encounter with `deletedByCharacterCleanup = true`. Reports total encounters and perspectives deleted.
 - **DecayMemories** (`/character-encounter/decay-memories`): Respects `MemoryDecayEnabled` flag. Targets specific character or all characters (via global index). Loads each perspective with ETag. Calculates decay amount based on elapsed intervals. Supports `dryRun` mode. Uses ETag concurrency (skips on conflict). Publishes `encounter.memory.faded` for perspectives crossing the fade threshold.
 
+### Compression Support (2 endpoints)
+
+Centralized compression via the Resource service (L1). CharacterEncounter registers compression callbacks at startup, enabling the Resource service to gather encounter and perspective data during character archival.
+
+- **GetCompressData** (`/character-encounter/get-compress-data`): Returns all encounters and perspectives for a character, bundled for archival. Uses `DualIndexHelper` to load perspectives via the character index (`char-idx-{characterId}`), then loads corresponding encounter records. Returns `EncounterCompressData` containing the character ID, counts, encounters list, and perspectives list. Returns 404 if no data exists (empty index). GZip-compressed with Base64 encoding during archival by the Resource service.
+
+- **RestoreFromArchive** (`/character-encounter/restore-from-archive`): Accepts Base64-encoded GZip-compressed JSON (`EncounterCompressData`). Decompresses and deserializes using `BannouJson`. Restores encounters by saving to `enc-{encounterId}` keys. Restores perspectives to `pers-{perspectiveId}` keys and rebuilds character index (`char-idx-{characterId}`). Returns success status with counts of restored encounters and perspectives.
+
+**Callback Registration** (in plugin startup):
+```csharp
+// In CharacterEncounterServicePlugin.OnRunningAsync (priority 30 - after personality and history):
+var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+await resourceClient.DefineCompressCallbackAsync(
+    new DefineCompressCallbackRequest
+    {
+        ResourceType = "character",
+        SourceType = "character-encounter",
+        ServiceName = "character-encounter",
+        CompressEndpoint = "/character-encounter/get-compress-data",
+        CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+        DecompressEndpoint = "/character-encounter/restore-from-archive",
+        DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+        Priority = 30,
+        Description = "Encounters and perspectives between characters"
+    },
+    ct);
+```
+
 ---
 
 ## Visual Aid
@@ -381,3 +409,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-02-01**: Implemented scheduled decay mode. Added `MemoryDecaySchedulerService` background service with configurable check interval and startup delay. Configuration schema updated with `ScheduledDecayCheckIntervalMinutes` and `ScheduledDecayStartupDelaySeconds` properties.
 - **2026-02-01**: Verified duplicate encounter detection, type-in-use validation, and character existence validation are all implemented. Updated stubs section to reflect FIXED status. Closed #216.
+- **2026-02-03**: Implemented compression support endpoints (`GetCompressDataAsync`, `RestoreFromArchiveAsync`) for centralized Resource-based character archival. Added compression callback registration with priority 30.

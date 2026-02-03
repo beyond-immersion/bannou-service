@@ -1933,6 +1933,600 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .ReturnsAsync("etag-1");
     }
 
+    private static string CompressArchiveData(EncounterCompressData data)
+    {
+        var json = BannouJson.Serialize(data);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+        using var output = new System.IO.MemoryStream();
+        using (var gzip = new System.IO.Compression.GZipStream(
+            output, System.IO.Compression.CompressionLevel.Optimal, leaveOpen: true))
+        {
+            gzip.Write(bytes, 0, bytes.Length);
+        }
+        return Convert.ToBase64String(output.ToArray());
+    }
+
+    #endregion
+
+    #region GetCompressDataAsync Tests
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithEncounters_ReturnsCompressData()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var encounterId = Guid.NewGuid();
+        var perspectiveId = Guid.NewGuid();
+        var otherCharacterId = Guid.NewGuid();
+
+        // Setup character index with perspective IDs
+        _mockCharIndexStore
+            .Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid> { perspectiveId } });
+
+        // Setup perspective
+        _mockPerspectiveStore
+            .Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PerspectiveData
+            {
+                PerspectiveId = perspectiveId,
+                EncounterId = encounterId,
+                CharacterId = characterId,
+                EmotionalImpact = EmotionalImpact.GRATITUDE,
+                SentimentShift = 0.3f,
+                MemoryStrength = 0.8f,
+                RememberedAs = "A friendly meeting",
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+            });
+
+        // Setup encounter
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EncounterData
+            {
+                EncounterId = encounterId,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+                RealmId = Guid.NewGuid(),
+                EncounterTypeCode = "DIALOGUE",
+                ParticipantIds = new List<Guid> { characterId, otherCharacterId },
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+            });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.True(response.HasEncounters);
+        Assert.Equal(1, response.EncounterCount);
+        Assert.Single(response.Encounters);
+        Assert.NotNull(response.AggregateSentiment);
+        Assert.Contains(otherCharacterId.ToString(), response.AggregateSentiment.Keys);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_NoEncounters_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup empty character index
+        _mockCharIndexStore
+            .Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterIndexData?)null);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_EmptyPerspectiveList_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup character index with empty perspective list
+        _mockCharIndexStore
+            .Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid>() });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_MultipleEncounters_AggregatesSentiment()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var otherCharacterId = Guid.NewGuid();
+        var encounterId1 = Guid.NewGuid();
+        var encounterId2 = Guid.NewGuid();
+        var perspectiveId1 = Guid.NewGuid();
+        var perspectiveId2 = Guid.NewGuid();
+
+        // Setup character index with multiple perspectives
+        _mockCharIndexStore
+            .Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterIndexData
+            {
+                CharacterId = characterId,
+                PerspectiveIds = new List<Guid> { perspectiveId1, perspectiveId2 }
+            });
+
+        // Setup perspectives with sentiment shifts
+        _mockPerspectiveStore
+            .Setup(s => s.GetAsync($"pers-{perspectiveId1}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PerspectiveData
+            {
+                PerspectiveId = perspectiveId1,
+                EncounterId = encounterId1,
+                CharacterId = characterId,
+                SentimentShift = 0.5f,
+                MemoryStrength = 0.8f,
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-2).ToUnixTimeSeconds()
+            });
+
+        _mockPerspectiveStore
+            .Setup(s => s.GetAsync($"pers-{perspectiveId2}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PerspectiveData
+            {
+                PerspectiveId = perspectiveId2,
+                EncounterId = encounterId2,
+                CharacterId = characterId,
+                SentimentShift = 0.3f,
+                MemoryStrength = 0.7f,
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+            });
+
+        // Setup encounters
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{encounterId1}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EncounterData
+            {
+                EncounterId = encounterId1,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-2).ToUnixTimeSeconds(),
+                EncounterTypeCode = "DIALOGUE",
+                ParticipantIds = new List<Guid> { characterId, otherCharacterId },
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-2).ToUnixTimeSeconds()
+            });
+
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{encounterId2}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EncounterData
+            {
+                EncounterId = encounterId2,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+                EncounterTypeCode = "TRADE",
+                ParticipantIds = new List<Guid> { characterId, otherCharacterId },
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
+            });
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.EncounterCount);
+        Assert.NotNull(response.AggregateSentiment);
+        // Aggregate sentiment should be 0.5 + 0.3 = 0.8
+        Assert.Equal(0.8f, response.AggregateSentiment[otherCharacterId.ToString()], 0.001);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_ExceptionThrown_ReturnsInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Setup to throw exception
+        _mockCharIndexStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Database error"));
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region RestoreFromArchiveAsync Tests
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_ValidData_RestoresEncountersAndPerspectives()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var otherCharacterId = Guid.NewGuid();
+        var encounterId = Guid.NewGuid();
+        var perspectiveId = Guid.NewGuid();
+
+        var archiveData = new EncounterCompressData
+        {
+            CharacterId = characterId,
+            HasEncounters = true,
+            EncounterCount = 1,
+            Encounters = new List<EncounterResponse>
+            {
+                new EncounterResponse
+                {
+                    Encounter = new EncounterModel
+                    {
+                        EncounterId = encounterId,
+                        Timestamp = DateTimeOffset.UtcNow.AddDays(-1),
+                        RealmId = Guid.NewGuid(),
+                        EncounterTypeCode = "DIALOGUE",
+                        ParticipantIds = new List<Guid> { characterId, otherCharacterId },
+                        CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                    },
+                    Perspectives = new List<EncounterPerspectiveModel>
+                    {
+                        new EncounterPerspectiveModel
+                        {
+                            PerspectiveId = perspectiveId,
+                            EncounterId = encounterId,
+                            CharacterId = characterId,
+                            EmotionalImpact = EmotionalImpact.GRATITUDE,
+                            SentimentShift = 0.3f,
+                            MemoryStrength = 0.8f,
+                            RememberedAs = "A friendly meeting",
+                            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                        }
+                    }
+                }
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        // Setup stores to return null (no existing data)
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EncounterData?)null);
+        _mockPerspectiveStore
+            .Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PerspectiveData?)null);
+
+        SetupDefaultSaves();
+        SetupEmptyIndexes();
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = CompressArchiveData(archiveData)
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal(1, response.EncountersRestored);
+        Assert.Equal(1, response.PerspectivesRestored);
+        Assert.Null(response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_ExistingEncounter_SkipsEncounterButRestoresPerspective()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var otherCharacterId = Guid.NewGuid();
+        var encounterId = Guid.NewGuid();
+        var perspectiveId = Guid.NewGuid();
+
+        var archiveData = new EncounterCompressData
+        {
+            CharacterId = characterId,
+            HasEncounters = true,
+            EncounterCount = 1,
+            Encounters = new List<EncounterResponse>
+            {
+                new EncounterResponse
+                {
+                    Encounter = new EncounterModel
+                    {
+                        EncounterId = encounterId,
+                        Timestamp = DateTimeOffset.UtcNow.AddDays(-1),
+                        EncounterTypeCode = "DIALOGUE",
+                        ParticipantIds = new List<Guid> { characterId, otherCharacterId },
+                        CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                    },
+                    Perspectives = new List<EncounterPerspectiveModel>
+                    {
+                        new EncounterPerspectiveModel
+                        {
+                            PerspectiveId = perspectiveId,
+                            EncounterId = encounterId,
+                            CharacterId = characterId,
+                            MemoryStrength = 0.8f,
+                            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                        }
+                    }
+                }
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        // Setup encounter to already exist
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EncounterData { EncounterId = encounterId });
+
+        // Setup perspective to not exist
+        _mockPerspectiveStore
+            .Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PerspectiveData?)null);
+
+        SetupDefaultSaves();
+        SetupEmptyIndexes();
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = CompressArchiveData(archiveData)
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(0, response.EncountersRestored); // Skipped existing
+        Assert.Equal(1, response.PerspectivesRestored); // Still restored
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_InvalidBase64_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = "not-valid-base64!!!"
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Equal(0, response.EncountersRestored);
+        Assert.Equal(0, response.PerspectivesRestored);
+        Assert.NotNull(response.ErrorMessage);
+        Assert.Contains("Invalid archive data", response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_CorruptGzipData_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        // Valid base64 but not gzipped data
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("not gzipped"))
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.NotNull(response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_NoEncounters_ReturnsSuccessWithZeroCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var archiveData = new EncounterCompressData
+        {
+            CharacterId = characterId,
+            HasEncounters = false,
+            EncounterCount = 0,
+            Encounters = new List<EncounterResponse>(),
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = CompressArchiveData(archiveData)
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(0, response.EncountersRestored);
+        Assert.Equal(0, response.PerspectivesRestored);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_OtherCharacterPerspective_SkipsIt()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var otherCharacterId = Guid.NewGuid();
+        var encounterId = Guid.NewGuid();
+        var myPerspectiveId = Guid.NewGuid();
+        var otherPerspectiveId = Guid.NewGuid();
+
+        var archiveData = new EncounterCompressData
+        {
+            CharacterId = characterId,
+            HasEncounters = true,
+            EncounterCount = 1,
+            Encounters = new List<EncounterResponse>
+            {
+                new EncounterResponse
+                {
+                    Encounter = new EncounterModel
+                    {
+                        EncounterId = encounterId,
+                        Timestamp = DateTimeOffset.UtcNow.AddDays(-1),
+                        EncounterTypeCode = "DIALOGUE",
+                        ParticipantIds = new List<Guid> { characterId, otherCharacterId },
+                        CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                    },
+                    Perspectives = new List<EncounterPerspectiveModel>
+                    {
+                        new EncounterPerspectiveModel
+                        {
+                            PerspectiveId = myPerspectiveId,
+                            EncounterId = encounterId,
+                            CharacterId = characterId, // This one should be restored
+                            MemoryStrength = 0.8f,
+                            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                        },
+                        new EncounterPerspectiveModel
+                        {
+                            PerspectiveId = otherPerspectiveId,
+                            EncounterId = encounterId,
+                            CharacterId = otherCharacterId, // This one should be skipped
+                            MemoryStrength = 0.7f,
+                            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                        }
+                    }
+                }
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockEncounterStore
+            .Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EncounterData?)null);
+        _mockPerspectiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PerspectiveData?)null);
+
+        SetupDefaultSaves();
+        SetupEmptyIndexes();
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = CompressArchiveData(archiveData)
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(1, response.EncountersRestored);
+        Assert.Equal(1, response.PerspectivesRestored); // Only own perspective restored
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_ExceptionDuringRestore_ReturnsInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var encounterId = Guid.NewGuid();
+
+        var archiveData = new EncounterCompressData
+        {
+            CharacterId = characterId,
+            HasEncounters = true,
+            EncounterCount = 1,
+            Encounters = new List<EncounterResponse>
+            {
+                new EncounterResponse
+                {
+                    Encounter = new EncounterModel
+                    {
+                        EncounterId = encounterId,
+                        Timestamp = DateTimeOffset.UtcNow.AddDays(-1),
+                        EncounterTypeCode = "DIALOGUE",
+                        ParticipantIds = new List<Guid> { characterId },
+                        CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+                    },
+                    Perspectives = new List<EncounterPerspectiveModel>()
+                }
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        // Setup to throw on save
+        _mockEncounterStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EncounterData?)null);
+        _mockEncounterStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<EncounterData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Database error"));
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = CompressArchiveData(archiveData)
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+    }
+
     #endregion
 }
 
