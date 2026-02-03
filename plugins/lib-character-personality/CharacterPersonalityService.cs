@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -993,6 +994,201 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             RetreatThreshold = data.RetreatThreshold,
             ProtectAllies = data.ProtectAllies
         };
+    }
+
+    // ============================================================================
+    // Compression Methods
+    // ============================================================================
+
+    /// <summary>
+    /// Gets personality data for compression during character archival.
+    /// Called by Resource service during character compression via compression callback.
+    /// </summary>
+    public async Task<(StatusCodes, PersonalityCompressData?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
+            var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
+
+            var personalityData = await personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var combatData = await combatStore.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+
+            // Return 404 only if BOTH are missing
+            if (personalityData == null && combatData == null)
+            {
+                _logger.LogDebug("No personality data found for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var response = new PersonalityCompressData
+            {
+                CharacterId = body.CharacterId,
+                HasPersonality = personalityData != null,
+                Personality = personalityData != null ? MapToPersonalityResponse(personalityData) : null,
+                HasCombatPreferences = combatData != null,
+                CombatPreferences = combatData != null ? MapToCombatPreferencesResponse(combatData) : null,
+                CompressedAt = DateTimeOffset.UtcNow
+            };
+
+            _logger.LogInformation(
+                "Compress data retrieved for character {CharacterId}: personality={HasPersonality}, combat={HasCombat}",
+                body.CharacterId, response.HasPersonality, response.HasCombatPreferences);
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/get-compress-data",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Restores personality data from a compressed archive.
+    /// Called by Resource service during character decompression via decompression callback.
+    /// </summary>
+    public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Restoring personality data from archive for character {CharacterId}", body.CharacterId);
+
+        var personalityRestored = false;
+        var combatPreferencesRestored = false;
+
+        try
+        {
+            // Decompress the archive data
+            PersonalityCompressData archiveData;
+            try
+            {
+                var compressedBytes = Convert.FromBase64String(body.Data);
+                var jsonData = DecompressJsonData(compressedBytes);
+                archiveData = BannouJson.Deserialize<PersonalityCompressData>(jsonData)
+                    ?? throw new InvalidOperationException("Deserialized archive data is null");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
+                {
+                    CharacterId = body.CharacterId,
+                    PersonalityRestored = false,
+                    CombatPreferencesRestored = false,
+                    Success = false,
+                    ErrorMessage = $"Invalid archive data: {ex.Message}"
+                });
+            }
+
+            // Restore personality traits if present in archive
+            if (archiveData.HasPersonality && archiveData.Personality != null)
+            {
+                var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
+                var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+
+                var data = new PersonalityData
+                {
+                    CharacterId = body.CharacterId,
+                    Traits = archiveData.Personality.Traits.ToDictionary(t => t.Axis, t => t.Value),
+                    ArchetypeHint = archiveData.Personality.ArchetypeHint,
+                    Version = archiveData.Personality.Version + 1, // Increment version for restored data
+                    CreatedAtUnix = archiveData.Personality.CreatedAt.ToUnixTimeSeconds(),
+                    UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+
+                await personalityStore.SaveAsync(personalityKey, data, cancellationToken: cancellationToken);
+                personalityRestored = true;
+
+                // Register character reference for restored personality
+                await RegisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
+
+                _logger.LogInformation("Personality traits restored for character {CharacterId}", body.CharacterId);
+            }
+
+            // Restore combat preferences if present in archive
+            if (archiveData.HasCombatPreferences && archiveData.CombatPreferences != null)
+            {
+                var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
+                var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+
+                var data = new CombatPreferencesData
+                {
+                    CharacterId = body.CharacterId,
+                    Style = archiveData.CombatPreferences.Preferences.Style,
+                    PreferredRange = archiveData.CombatPreferences.Preferences.PreferredRange,
+                    GroupRole = archiveData.CombatPreferences.Preferences.GroupRole,
+                    RiskTolerance = archiveData.CombatPreferences.Preferences.RiskTolerance,
+                    RetreatThreshold = archiveData.CombatPreferences.Preferences.RetreatThreshold,
+                    ProtectAllies = archiveData.CombatPreferences.Preferences.ProtectAllies,
+                    Version = archiveData.CombatPreferences.Version + 1, // Increment version for restored data
+                    CreatedAtUnix = archiveData.CombatPreferences.CreatedAt.ToUnixTimeSeconds(),
+                    UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+
+                await combatStore.SaveAsync(combatKey, data, cancellationToken: cancellationToken);
+                combatPreferencesRestored = true;
+
+                // Register character reference for restored combat preferences
+                await RegisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
+
+                _logger.LogInformation("Combat preferences restored for character {CharacterId}", body.CharacterId);
+            }
+
+            _logger.LogInformation(
+                "Archive restoration completed for character {CharacterId}: personality={PersonalityRestored}, combat={CombatRestored}",
+                body.CharacterId, personalityRestored, combatPreferencesRestored);
+
+            return (StatusCodes.OK, new RestoreFromArchiveResponse
+            {
+                CharacterId = body.CharacterId,
+                PersonalityRestored = personalityRestored,
+                CombatPreferencesRestored = combatPreferencesRestored,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring archive for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "RestoreFromArchive",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/restore-from-archive",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Decompresses gzipped JSON data.
+    /// </summary>
+    private static string DecompressJsonData(byte[] compressedData)
+    {
+        using var input = new System.IO.MemoryStream(compressedData);
+        using var gzip = new System.IO.Compression.GZipStream(
+            input, System.IO.Compression.CompressionMode.Decompress);
+        using var output = new System.IO.MemoryStream();
+        gzip.CopyTo(output);
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     // ============================================================================

@@ -901,6 +901,79 @@ public partial class CharacterService : ICharacterService
     }
 
     /// <summary>
+    /// Gets character base data for centralized compression via lib-resource.
+    /// Called by Resource service during compression to gather L2 character data.
+    /// Returns BadRequest if character is alive - only dead characters can be compressed.
+    /// NOTE: Per SERVICE_HIERARCHY, this only returns L2 data (base character info + family summary).
+    /// L4 data (personality, history, encounters) is gathered by Resource from L4 services.
+    /// </summary>
+    public async Task<(StatusCodes, CharacterCompressData?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Getting compress data for character: {CharacterId}", body.CharacterId);
+
+            // Find character
+            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+            if (character == null)
+            {
+                _logger.LogWarning("Character not found for compression: {CharacterId}", body.CharacterId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Only dead characters can be compressed
+            if (character.Status != CharacterStatus.Dead || !character.DeathDate.HasValue)
+            {
+                _logger.LogWarning("Cannot get compress data for alive character: {CharacterId}", body.CharacterId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Generate family summary (uses Relationship service - L2, allowed)
+            var familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
+
+            var compressData = new CharacterCompressData
+            {
+                CharacterId = character.CharacterId,
+                Name = character.Name,
+                RealmId = character.RealmId,
+                SpeciesId = character.SpeciesId,
+                BirthDate = character.BirthDate,
+                DeathDate = character.DeathDate.Value,
+                Status = character.Status,
+                FamilySummary = familySummary,
+                CompressedAt = DateTimeOffset.UtcNow,
+                CreatedAt = character.CreatedAt,
+                UpdatedAt = character.UpdatedAt
+            };
+
+            _logger.LogDebug("Generated compress data for character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.OK, compressData);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting compress data for character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for character: {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/character/get-compress-data",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
     /// Checks reference count for cleanup eligibility.
     /// Queries both same-layer/lower services (Relationships at L2, Contracts at L1) and
     /// lib-resource (L1) for L4 references registered via the event-driven pattern.

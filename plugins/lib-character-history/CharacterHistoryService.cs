@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -880,6 +881,236 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         // Convert snake_case to readable text
         return value.Replace("_", " ").ToLowerInvariant();
+    }
+
+    // ============================================================================
+    // Compression Methods
+    // ============================================================================
+
+    /// <summary>
+    /// Gets history data for compression during character archival.
+    /// Called by Resource service during character compression via compression callback.
+    /// </summary>
+    public async Task<(StatusCodes, HistoryCompressData?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            // Get all participations for this character
+            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                cancellationToken);
+
+            var participations = participationRecords
+                .Select(MapToHistoricalParticipation)
+                .OrderByDescending(p => p.EventDate)
+                .ToList();
+
+            // Get backstory data
+            var backstoryData = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+
+            // Return 404 only if BOTH are missing
+            if (participations.Count == 0 && backstoryData == null)
+            {
+                _logger.LogDebug("No history data found for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            BackstoryResponse? backstoryResponse = null;
+            if (backstoryData != null)
+            {
+                backstoryResponse = new BackstoryResponse
+                {
+                    CharacterId = body.CharacterId,
+                    Elements = backstoryData.Elements.Select(MapToBackstoryElement).ToList(),
+                    CreatedAt = TimestampHelper.FromUnixSeconds(backstoryData.CreatedAtUnix),
+                    UpdatedAt = backstoryData.UpdatedAtUnix != backstoryData.CreatedAtUnix
+                        ? TimestampHelper.FromUnixSeconds(backstoryData.UpdatedAtUnix)
+                        : null
+                };
+            }
+
+            // Generate summaries for reference
+            var (_, summaries) = await SummarizeHistoryAsync(
+                new SummarizeHistoryRequest
+                {
+                    CharacterId = body.CharacterId,
+                    MaxBackstoryPoints = 10,
+                    MaxLifeEvents = 10
+                },
+                cancellationToken);
+
+            var response = new HistoryCompressData
+            {
+                CharacterId = body.CharacterId,
+                HasParticipations = participations.Count > 0,
+                Participations = participations,
+                HasBackstory = backstoryData != null,
+                Backstory = backstoryResponse,
+                Summaries = summaries,
+                CompressedAt = DateTimeOffset.UtcNow
+            };
+
+            _logger.LogInformation(
+                "Compress data retrieved for character {CharacterId}: participations={ParticipationCount}, hasBackstory={HasBackstory}",
+                body.CharacterId, participations.Count, response.HasBackstory);
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-history",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-history/get-compress-data",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Restores history data from a compressed archive.
+    /// Called by Resource service during character decompression via decompression callback.
+    /// </summary>
+    public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Restoring history data from archive for character {CharacterId}", body.CharacterId);
+
+        var participationsRestored = 0;
+        var backstoryRestored = false;
+
+        try
+        {
+            // Decompress the archive data
+            HistoryCompressData archiveData;
+            try
+            {
+                var compressedBytes = Convert.FromBase64String(body.Data);
+                var jsonData = DecompressJsonData(compressedBytes);
+                archiveData = BannouJson.Deserialize<HistoryCompressData>(jsonData)
+                    ?? throw new InvalidOperationException("Deserialized archive data is null");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
+                {
+                    CharacterId = body.CharacterId,
+                    ParticipationsRestored = 0,
+                    BackstoryRestored = false,
+                    Success = false,
+                    ErrorMessage = $"Invalid archive data: {ex.Message}"
+                });
+            }
+
+            // Restore participations if present in archive
+            if (archiveData.HasParticipations && archiveData.Participations.Count > 0)
+            {
+                foreach (var participation in archiveData.Participations)
+                {
+                    var participationData = new ParticipationData
+                    {
+                        ParticipationId = participation.ParticipationId,
+                        CharacterId = body.CharacterId,
+                        EventId = participation.EventId,
+                        EventName = participation.EventName,
+                        EventCategory = participation.EventCategory,
+                        Role = participation.Role,
+                        EventDateUnix = participation.EventDate.ToUnixTimeSeconds(),
+                        Significance = participation.Significance,
+                        Metadata = participation.Metadata,
+                        CreatedAtUnix = participation.CreatedAt.ToUnixTimeSeconds()
+                    };
+
+                    await _participationHelper.AddRecordAsync(
+                        participationData,
+                        participationData.ParticipationId.ToString(),
+                        body.CharacterId.ToString(),
+                        participationData.EventId.ToString(),
+                        cancellationToken);
+
+                    // Register character reference for restored participation
+                    await RegisterCharacterReferenceAsync(participationData.ParticipationId.ToString(), body.CharacterId, cancellationToken);
+
+                    participationsRestored++;
+                }
+
+                _logger.LogInformation("{Count} participations restored for character {CharacterId}",
+                    participationsRestored, body.CharacterId);
+            }
+
+            // Restore backstory if present in archive
+            if (archiveData.HasBackstory && archiveData.Backstory != null)
+            {
+                var elementDataList = archiveData.Backstory.Elements
+                    .Select(MapToBackstoryElementData)
+                    .ToList();
+
+                await _backstoryHelper.SetAsync(
+                    body.CharacterId.ToString(),
+                    elementDataList,
+                    replaceExisting: true,
+                    cancellationToken);
+
+                // Register character reference for restored backstory
+                await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
+
+                backstoryRestored = true;
+                _logger.LogInformation("Backstory restored for character {CharacterId} with {Count} elements",
+                    body.CharacterId, elementDataList.Count);
+            }
+
+            _logger.LogInformation(
+                "Archive restoration completed for character {CharacterId}: participations={ParticipationsRestored}, backstory={BackstoryRestored}",
+                body.CharacterId, participationsRestored, backstoryRestored);
+
+            return (StatusCodes.OK, new RestoreFromArchiveResponse
+            {
+                CharacterId = body.CharacterId,
+                ParticipationsRestored = participationsRestored,
+                BackstoryRestored = backstoryRestored,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring archive for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-history",
+                "RestoreFromArchive",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-history/restore-from-archive",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Decompresses gzipped JSON data.
+    /// </summary>
+    private static string DecompressJsonData(byte[] compressedData)
+    {
+        using var input = new System.IO.MemoryStream(compressedData);
+        using var gzip = new System.IO.Compression.GZipStream(
+            input, System.IO.Compression.CompressionMode.Decompress);
+        using var output = new System.IO.MemoryStream();
+        gzip.CopyTo(output);
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     // ============================================================================

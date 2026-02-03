@@ -1536,6 +1536,277 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     }
 
     // ============================================================================
+    // Compression Methods
+    // ============================================================================
+
+    /// <summary>
+    /// Gets encounter data for compression during character archival.
+    /// Called by Resource service during character compression via compression callback.
+    /// </summary>
+    public async Task<(StatusCodes, EncounterCompressData?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            // Get all perspective IDs for this character
+            var perspectiveIds = await GetCharacterPerspectiveIdsAsync(body.CharacterId, cancellationToken);
+
+            if (perspectiveIds.Count == 0)
+            {
+                _logger.LogDebug("No encounter data found for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+            var encounters = new List<EncounterResponse>();
+            var processedEncounterIds = new HashSet<Guid>();
+
+            // Collect unique encounters this character participated in
+            foreach (var perspectiveId in perspectiveIds)
+            {
+                var perspective = await perspectiveStore.GetAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", cancellationToken);
+                if (perspective == null) continue;
+
+                // Skip if we already processed this encounter
+                if (!processedEncounterIds.Add(perspective.EncounterId)) continue;
+
+                var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{perspective.EncounterId}", cancellationToken);
+                if (encounter == null) continue;
+
+                // Get all perspectives for this encounter (all participants)
+                var allPerspectives = await GetEncounterPerspectivesAsync(encounter.EncounterId, cancellationToken);
+
+                encounters.Add(new EncounterResponse
+                {
+                    Encounter = MapToEncounterModel(encounter),
+                    Perspectives = allPerspectives
+                });
+            }
+
+            // Sort by timestamp descending
+            encounters = encounters.OrderByDescending(e => e.Encounter.Timestamp).ToList();
+
+            // Compute aggregate sentiment towards other characters
+            var aggregateSentiment = new Dictionary<string, float>();
+            foreach (var perspectiveId in perspectiveIds)
+            {
+                var perspective = await perspectiveStore.GetAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", cancellationToken);
+                if (perspective?.SentimentShift == null) continue;
+
+                var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{perspective.EncounterId}", cancellationToken);
+                if (encounter == null) continue;
+
+                // Aggregate sentiment towards other participants
+                foreach (var participantId in encounter.ParticipantIds)
+                {
+                    if (participantId == body.CharacterId) continue;
+
+                    var key = participantId.ToString();
+                    if (!aggregateSentiment.TryGetValue(key, out var current))
+                    {
+                        current = 0f;
+                    }
+                    aggregateSentiment[key] = current + perspective.SentimentShift.Value;
+                }
+            }
+
+            var response = new EncounterCompressData
+            {
+                CharacterId = body.CharacterId,
+                HasEncounters = encounters.Count > 0,
+                EncounterCount = encounters.Count,
+                Encounters = encounters,
+                AggregateSentiment = aggregateSentiment.Count > 0 ? aggregateSentiment : null,
+                CompressedAt = DateTimeOffset.UtcNow
+            };
+
+            _logger.LogInformation(
+                "Compress data retrieved for character {CharacterId}: encounters={EncounterCount}",
+                body.CharacterId, encounters.Count);
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-encounter",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-encounter/get-compress-data",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Restores encounter data from a compressed archive.
+    /// Called by Resource service during character decompression via decompression callback.
+    /// </summary>
+    public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Restoring encounter data from archive for character {CharacterId}", body.CharacterId);
+
+        var encountersRestored = 0;
+        var perspectivesRestored = 0;
+
+        try
+        {
+            // Decompress the archive data
+            EncounterCompressData archiveData;
+            try
+            {
+                var compressedBytes = Convert.FromBase64String(body.Data);
+                var jsonData = DecompressJsonData(compressedBytes);
+                archiveData = BannouJson.Deserialize<EncounterCompressData>(jsonData)
+                    ?? throw new InvalidOperationException("Deserialized archive data is null");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
+                {
+                    CharacterId = body.CharacterId,
+                    EncountersRestored = 0,
+                    PerspectivesRestored = 0,
+                    Success = false,
+                    ErrorMessage = $"Invalid archive data: {ex.Message}"
+                });
+            }
+
+            // Restore encounters and perspectives
+            if (archiveData.HasEncounters && archiveData.Encounters.Count > 0)
+            {
+                var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+                var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+
+                foreach (var encounterResponse in archiveData.Encounters)
+                {
+                    var encounterModel = encounterResponse.Encounter;
+
+                    // Check if encounter already exists
+                    var existingEncounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterModel.EncounterId}", cancellationToken);
+                    if (existingEncounter == null)
+                    {
+                        // Create the encounter
+                        var encounterData = new EncounterData
+                        {
+                            EncounterId = encounterModel.EncounterId,
+                            Timestamp = encounterModel.Timestamp.ToUnixTimeSeconds(),
+                            RealmId = encounterModel.RealmId,
+                            LocationId = encounterModel.LocationId,
+                            EncounterTypeCode = encounterModel.EncounterTypeCode,
+                            Context = encounterModel.Context,
+                            Outcome = encounterModel.Outcome,
+                            ParticipantIds = encounterModel.ParticipantIds.ToList(),
+                            Metadata = encounterModel.Metadata,
+                            CreatedAtUnix = encounterModel.CreatedAt.ToUnixTimeSeconds()
+                        };
+
+                        await encounterStore.SaveAsync($"{ENCOUNTER_KEY_PREFIX}{encounterModel.EncounterId}", encounterData, cancellationToken: cancellationToken);
+
+                        // Update pair indexes for new encounter
+                        await UpdatePairIndexesAsync(encounterData.ParticipantIds, encounterModel.EncounterId, cancellationToken);
+
+                        // Update location index if location provided
+                        if (encounterModel.LocationId.HasValue)
+                        {
+                            await AddToLocationIndexAsync(encounterModel.LocationId.Value, encounterModel.EncounterId, cancellationToken);
+                        }
+
+                        // Update type-encounter index
+                        await AddToTypeEncounterIndexAsync(encounterModel.EncounterTypeCode, encounterModel.EncounterId, cancellationToken);
+
+                        encountersRestored++;
+                    }
+
+                    // Restore perspectives for this encounter (only for the archived character)
+                    foreach (var perspectiveModel in encounterResponse.Perspectives)
+                    {
+                        // Only restore perspectives for the character being restored
+                        if (perspectiveModel.CharacterId != body.CharacterId) continue;
+
+                        // Check if perspective already exists
+                        var existingPerspective = await perspectiveStore.GetAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveModel.PerspectiveId}", cancellationToken);
+                        if (existingPerspective != null) continue;
+
+                        var perspectiveData = new PerspectiveData
+                        {
+                            PerspectiveId = perspectiveModel.PerspectiveId,
+                            EncounterId = perspectiveModel.EncounterId,
+                            CharacterId = perspectiveModel.CharacterId,
+                            EmotionalImpact = perspectiveModel.EmotionalImpact,
+                            SentimentShift = perspectiveModel.SentimentShift,
+                            MemoryStrength = perspectiveModel.MemoryStrength,
+                            RememberedAs = perspectiveModel.RememberedAs,
+                            LastDecayedAtUnix = perspectiveModel.LastDecayedAt?.ToUnixTimeSeconds(),
+                            CreatedAtUnix = perspectiveModel.CreatedAt.ToUnixTimeSeconds(),
+                            UpdatedAtUnix = perspectiveModel.UpdatedAt?.ToUnixTimeSeconds()
+                        };
+
+                        await perspectiveStore.SaveAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveModel.PerspectiveId}", perspectiveData, cancellationToken: cancellationToken);
+
+                        // Update character index
+                        await AddToCharacterIndexAsync(body.CharacterId, perspectiveModel.PerspectiveId, cancellationToken);
+
+                        perspectivesRestored++;
+                    }
+                }
+
+                _logger.LogInformation(
+                    "Restored {EncounterCount} encounters and {PerspectiveCount} perspectives for character {CharacterId}",
+                    encountersRestored, perspectivesRestored, body.CharacterId);
+            }
+
+            return (StatusCodes.OK, new RestoreFromArchiveResponse
+            {
+                CharacterId = body.CharacterId,
+                EncountersRestored = encountersRestored,
+                PerspectivesRestored = perspectivesRestored,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring archive for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-encounter",
+                "RestoreFromArchive",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-encounter/restore-from-archive",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Decompresses gzipped JSON data.
+    /// </summary>
+    private static string DecompressJsonData(byte[] compressedData)
+    {
+        using var input = new System.IO.MemoryStream(compressedData);
+        using var gzip = new System.IO.Compression.GZipStream(
+            input, System.IO.Compression.CompressionMode.Decompress);
+        using var output = new System.IO.MemoryStream();
+        gzip.CopyTo(output);
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
+    }
+
+    // ============================================================================
     // Permission Registration
     // ============================================================================
 
