@@ -42,6 +42,12 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     // Shared sorted set store for sorted set operations
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SortedSetEntry>> _allSortedSetStores = new();
 
+    // Shared counter store for atomic counter operations
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, CounterEntry>> _allCounterStores = new();
+
+    // Shared hash store for hash operations
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, HashStoreEntry>> _allHashStores = new();
+
     /// <summary>
     /// Entry for a set in the in-memory store.
     /// </summary>
@@ -64,9 +70,45 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         public readonly object Lock = new();
     }
 
+    /// <summary>
+    /// Entry for an atomic counter in the in-memory store.
+    /// </summary>
+    private sealed class CounterEntry
+    {
+        private long _value;
+        public long Value => Interlocked.Read(ref _value);
+        public DateTimeOffset? ExpiresAt { get; set; }
+        public readonly object Lock = new();
+
+        public long Increment(long amount)
+        {
+            return Interlocked.Add(ref _value, amount);
+        }
+
+        public void SetValue(long value)
+        {
+            Interlocked.Exchange(ref _value, value);
+        }
+    }
+
+    /// <summary>
+    /// Entry for a hash in the in-memory store.
+    /// </summary>
+    private sealed class HashStoreEntry
+    {
+        // Field -> JSON value mapping
+        public Dictionary<string, string> Fields { get; } = new();
+        // Field -> numeric value for increment operations
+        public Dictionary<string, long> NumericFields { get; } = new();
+        public DateTimeOffset? ExpiresAt { get; set; }
+        public readonly object Lock = new();
+    }
+
     private readonly ConcurrentDictionary<string, StoreEntry> _store;
     private readonly ConcurrentDictionary<string, SetEntry> _setStore;
     private readonly ConcurrentDictionary<string, SortedSetEntry> _sortedSetStore;
+    private readonly ConcurrentDictionary<string, CounterEntry> _counterStore;
+    private readonly ConcurrentDictionary<string, HashStoreEntry> _hashStore;
 
     /// <summary>
     /// Creates a new in-memory state store.
@@ -84,6 +126,8 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         _store = _allStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, StoreEntry>());
         _setStore = _allSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SetEntry>());
         _sortedSetStore = _allSortedSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SortedSetEntry>());
+        _counterStore = _allCounterStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, CounterEntry>());
+        _hashStore = _allHashStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, HashStoreEntry>());
 
         _logger.LogDebug("In-memory state store '{StoreName}' initialized", storeName);
     }
@@ -403,6 +447,8 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
         _store.Clear();
         _setStore.Clear();
         _sortedSetStore.Clear();
+        _counterStore.Clear();
+        _hashStore.Clear();
         _logger.LogDebug("Cleared all entries from store '{Store}'", _storeName);
     }
 
@@ -1039,5 +1085,482 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
             key, _storeName, deleted);
 
         return deleted;
+    }
+
+    // ==================== Atomic Counter Operations ====================
+
+    private bool IsCounterExpired(CounterEntry entry)
+    {
+        return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> IncrementAsync(
+        string key,
+        long increment = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _counterStore.GetOrAdd(key, _ => new CounterEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsCounterExpired(entry))
+            {
+                entry.SetValue(0);
+            }
+
+            var newValue = entry.Increment(increment);
+
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Incremented counter '{Key}' in store '{Store}' by {Increment} to {Value}",
+                key, _storeName, increment, newValue);
+
+            return newValue;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> DecrementAsync(
+        string key,
+        long decrement = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Decrement is just increment with negative value
+        return await IncrementAsync(key, -decrement, options, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<long?> GetCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        if (!_counterStore.TryGetValue(key, out var entry))
+        {
+            return null;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsCounterExpired(entry))
+            {
+                _counterStore.TryRemove(key, out _);
+                return null;
+            }
+
+            return entry.Value;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task SetCounterAsync(
+        string key,
+        long value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _counterStore.GetOrAdd(key, _ => new CounterEntry());
+
+        lock (entry.Lock)
+        {
+            entry.SetValue(value);
+
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Set counter '{Key}' in store '{Store}' to {Value}",
+                key, _storeName, value);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        var deleted = _counterStore.TryRemove(key, out _);
+
+        _logger.LogDebug("Deleted counter '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _storeName, deleted);
+
+        return deleted;
+    }
+
+    // ==================== Hash Operations ====================
+
+    private bool IsHashExpired(HashStoreEntry entry)
+    {
+        return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
+    }
+
+    /// <inheritdoc/>
+    public async Task<TField?> HashGetAsync<TField>(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        if (!_hashStore.TryGetValue(key, out var entry))
+        {
+            return default;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                _hashStore.TryRemove(key, out _);
+                return default;
+            }
+
+            if (entry.Fields.TryGetValue(field, out var json))
+            {
+                return BannouJson.Deserialize<TField>(json);
+            }
+
+            return default;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashSetAsync<TField>(
+        string key,
+        string field,
+        TField value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        var json = BannouJson.Serialize(value);
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _hashStore.GetOrAdd(key, _ => new HashStoreEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                entry.Fields.Clear();
+                entry.NumericFields.Clear();
+            }
+
+            var isNew = !entry.Fields.ContainsKey(field);
+            entry.Fields[field] = json;
+
+            // Remove from numeric fields if it was there (value changed to non-numeric)
+            entry.NumericFields.Remove(field);
+
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Set hash field '{Field}' in hash '{Key}' in store '{Store}' (new: {IsNew})",
+                field, key, _storeName, isNew);
+
+            return isNew;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task HashSetManyAsync<TField>(
+        string key,
+        IEnumerable<KeyValuePair<string, TField>> fields,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        var fieldList = fields.ToList();
+        if (fieldList.Count == 0)
+        {
+            return;
+        }
+
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _hashStore.GetOrAdd(key, _ => new HashStoreEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                entry.Fields.Clear();
+                entry.NumericFields.Clear();
+            }
+
+            foreach (var (fieldName, value) in fieldList)
+            {
+                var json = BannouJson.Serialize(value);
+                entry.Fields[fieldName] = json;
+                // Remove from numeric fields if it was there
+                entry.NumericFields.Remove(fieldName);
+            }
+
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Set {Count} hash fields in hash '{Key}' in store '{Store}'",
+                fieldList.Count, key, _storeName);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashDeleteAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        if (!_hashStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                _hashStore.TryRemove(key, out _);
+                return false;
+            }
+
+            var deleted = entry.Fields.Remove(field);
+            entry.NumericFields.Remove(field);
+
+            _logger.LogDebug("Deleted hash field '{Field}' from hash '{Key}' in store '{Store}' (existed: {Existed})",
+                field, key, _storeName, deleted);
+
+            return deleted;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashExistsAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        if (!_hashStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                _hashStore.TryRemove(key, out _);
+                return false;
+            }
+
+            return entry.Fields.ContainsKey(field) || entry.NumericFields.ContainsKey(field);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashIncrementAsync(
+        string key,
+        string field,
+        long increment = 1,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        var entry = _hashStore.GetOrAdd(key, _ => new HashStoreEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                entry.Fields.Clear();
+                entry.NumericFields.Clear();
+            }
+
+            if (!entry.NumericFields.TryGetValue(field, out var currentValue))
+            {
+                // Try to parse from string field if exists
+                if (entry.Fields.TryGetValue(field, out var json))
+                {
+                    var parsed = BannouJson.Deserialize<long?>(json);
+                    currentValue = parsed ?? 0;
+                }
+                else
+                {
+                    currentValue = 0;
+                }
+            }
+
+            var newValue = currentValue + increment;
+            entry.NumericFields[field] = newValue;
+
+            // Remove from string fields - numeric field takes precedence
+            entry.Fields.Remove(field);
+
+            _logger.LogDebug("Incremented hash field '{Field}' in hash '{Key}' in store '{Store}' by {Increment} to {Value}",
+                field, key, _storeName, increment, newValue);
+
+            return newValue;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, TField>> HashGetAllAsync<TField>(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        if (!_hashStore.TryGetValue(key, out var entry))
+        {
+            return new Dictionary<string, TField>();
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                _hashStore.TryRemove(key, out _);
+                return new Dictionary<string, TField>();
+            }
+
+            var result = new Dictionary<string, TField>();
+
+            // Get string fields
+            foreach (var (fieldName, json) in entry.Fields)
+            {
+                var value = BannouJson.Deserialize<TField>(json);
+                if (value != null)
+                {
+                    result[fieldName] = value;
+                }
+            }
+
+            // Get numeric fields (convert to TField if possible)
+            foreach (var (fieldName, numValue) in entry.NumericFields)
+            {
+                var json = BannouJson.Serialize(numValue);
+                var value = BannouJson.Deserialize<TField>(json);
+                if (value != null)
+                {
+                    result[fieldName] = value;
+                }
+            }
+
+            _logger.LogDebug("Retrieved {Count} fields from hash '{Key}' in store '{Store}'",
+                result.Count, key, _storeName);
+
+            return result;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        if (!_hashStore.TryGetValue(key, out var entry))
+        {
+            return 0;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                _hashStore.TryRemove(key, out _);
+                return 0;
+            }
+
+            // Count unique field names across both stores
+            var allFields = new HashSet<string>(entry.Fields.Keys);
+            foreach (var field in entry.NumericFields.Keys)
+            {
+                allFields.Add(field);
+            }
+
+            return allFields.Count;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteHashAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        var deleted = _hashStore.TryRemove(key, out _);
+
+        _logger.LogDebug("Deleted hash '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _storeName, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RefreshHashTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+
+        if (!_hashStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsHashExpired(entry))
+            {
+                _hashStore.TryRemove(key, out _);
+                return false;
+            }
+
+            entry.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(ttlSeconds);
+
+            _logger.LogDebug("Refreshed TTL on hash '{Key}' in store '{Store}' to {Ttl}s",
+                key, _storeName, ttlSeconds);
+
+            return true;
+        }
     }
 }

@@ -266,4 +266,206 @@ public interface ICacheableStateStore<TValue> : IStateStore<TValue>
     Task<bool> SortedSetDeleteAsync(
         string key,
         CancellationToken cancellationToken = default);
+
+    // ==================== Atomic Counter Operations ====================
+    // Counters are simple long values with atomic increment/decrement.
+    // Supported by Redis (native INCR/DECR) and InMemory backends.
+    // Use these instead of IRedisOperations for common counter patterns.
+
+    /// <summary>
+    /// Atomically increment a counter by the specified value.
+    /// If the key doesn't exist, it's created with value 0 before incrementing.
+    /// </summary>
+    /// <param name="key">The counter key.</param>
+    /// <param name="increment">Amount to increment by (default 1). Can be negative.</param>
+    /// <param name="options">Optional state options (TTL applies to the counter).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The new value after incrementing.</returns>
+    Task<long> IncrementAsync(
+        string key,
+        long increment = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Atomically decrement a counter by the specified value.
+    /// If the key doesn't exist, it's created with value 0 before decrementing.
+    /// </summary>
+    /// <param name="key">The counter key.</param>
+    /// <param name="decrement">Amount to decrement by (default 1).</param>
+    /// <param name="options">Optional state options (TTL applies to the counter).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The new value after decrementing.</returns>
+    Task<long> DecrementAsync(
+        string key,
+        long decrement = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the current value of a counter.
+    /// </summary>
+    /// <param name="key">The counter key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The counter value, or null if the counter doesn't exist.</returns>
+    Task<long?> GetCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set a counter to an absolute value.
+    /// Creates the counter if it doesn't exist.
+    /// </summary>
+    /// <param name="key">The counter key.</param>
+    /// <param name="value">The value to set.</param>
+    /// <param name="options">Optional state options (TTL applies to the counter).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task SetCounterAsync(
+        string key,
+        long value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete a counter.
+    /// </summary>
+    /// <param name="key">The counter key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the counter existed and was deleted.</returns>
+    Task<bool> DeleteCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    // ==================== Hash Operations ====================
+    // Hashes store multiple field-value pairs under a single key.
+    // Supported by Redis (native HGET/HSET) and InMemory backends.
+    // Use these instead of IRedisOperations for common hash patterns.
+
+    /// <summary>
+    /// Get a field value from a hash.
+    /// </summary>
+    /// <typeparam name="TField">Type of the field value.</typeparam>
+    /// <param name="key">The hash key.</param>
+    /// <param name="field">The field within the hash.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The field value, or default if not found.</returns>
+    Task<TField?> HashGetAsync<TField>(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set a field value in a hash.
+    /// Creates the hash if it doesn't exist.
+    /// </summary>
+    /// <typeparam name="TField">Type of the field value.</typeparam>
+    /// <param name="key">The hash key.</param>
+    /// <param name="field">The field within the hash.</param>
+    /// <param name="value">The value to set.</param>
+    /// <param name="options">Optional state options (TTL applies to entire hash).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the field was newly created, false if it was updated.</returns>
+    Task<bool> HashSetAsync<TField>(
+        string key,
+        string field,
+        TField value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set multiple field values in a hash.
+    /// Creates the hash if it doesn't exist.
+    /// </summary>
+    /// <typeparam name="TField">Type of the field values.</typeparam>
+    /// <param name="key">The hash key.</param>
+    /// <param name="fields">Field-value pairs to set.</param>
+    /// <param name="options">Optional state options (TTL applies to entire hash).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task HashSetManyAsync<TField>(
+        string key,
+        IEnumerable<KeyValuePair<string, TField>> fields,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete a field from a hash.
+    /// </summary>
+    /// <param name="key">The hash key.</param>
+    /// <param name="field">The field to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the field was deleted, false if it didn't exist.</returns>
+    Task<bool> HashDeleteAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Check if a field exists in a hash.
+    /// </summary>
+    /// <param name="key">The hash key.</param>
+    /// <param name="field">The field to check.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the field exists.</returns>
+    Task<bool> HashExistsAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Atomically increment a numeric field in a hash.
+    /// If the field doesn't exist, it's created with value 0 before incrementing.
+    /// </summary>
+    /// <param name="key">The hash key.</param>
+    /// <param name="field">The field to increment.</param>
+    /// <param name="increment">Amount to increment by (default 1). Can be negative.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The new value after incrementing.</returns>
+    Task<long> HashIncrementAsync(
+        string key,
+        string field,
+        long increment = 1,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get all field-value pairs from a hash.
+    /// </summary>
+    /// <typeparam name="TField">Type of the field values.</typeparam>
+    /// <param name="key">The hash key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>All field-value pairs, or empty dictionary if hash doesn't exist.</returns>
+    Task<IReadOnlyDictionary<string, TField>> HashGetAllAsync<TField>(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the number of fields in a hash.
+    /// </summary>
+    /// <param name="key">The hash key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of fields, or 0 if hash doesn't exist.</returns>
+    Task<long> HashCountAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete an entire hash.
+    /// </summary>
+    /// <param name="key">The hash key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the hash existed and was deleted.</returns>
+    Task<bool> DeleteHashAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Refresh/extend the TTL on a hash without modifying its contents.
+    /// </summary>
+    /// <param name="key">The hash key.</param>
+    /// <param name="ttlSeconds">New TTL in seconds.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if hash exists and TTL was updated.</returns>
+    Task<bool> RefreshHashTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default);
 }

@@ -11,16 +11,16 @@
 
 The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
 
-### Interface Hierarchy (as of 2026-02-01)
+### Interface Hierarchy (as of 2026-02-03)
 
 ```
 IStateStore<T>                    - Core CRUD (all backends)
-├── ICacheableStateStore<T>       - Sets + Sorted Sets (Redis + InMemory)
+├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
 ├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
 │   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
 └── ISearchableStateStore<T>      - Full-text search (Redis+Search only)
 
-IRedisOperations                  - Low-level Redis access (Lua scripts, hashes, atomic counters)
+IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
 ```
 
 **Backend Support Matrix**:
@@ -29,13 +29,13 @@ IRedisOperations                  - Low-level Redis access (Lua scripts, hashes,
 |-----------|:-----:|:-----:|:--------:|:-----------:|
 | `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
 | `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ❌* |
+| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
 | `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
 | `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
-
-\* RedisSearchStateStore implements `ICacheableStateStore<T>` but throws `NotSupportedException` for all sorted set operations. This is because JSON storage mode required for RedisSearch indexing is incompatible with sorted set operations. Use `RedisStateStore` for stores requiring both sorted sets and caching.
 
 ---
 
@@ -88,6 +88,8 @@ All services depend on state infrastructure. The HTTP API (`IStateClient`) is us
 | `{prefix}:{key}:meta` | Hash with `version` and `updated` timestamp |
 | `{prefix}:set:{key}` | Set members (SET type) |
 | `{prefix}:zset:{key}` | Sorted set for rankings (ZSET type) |
+| `{prefix}:counter:{key}` | Atomic counter (STRING with INCR/DECR) |
+| `{prefix}:hash:{key}` | Hash for field-value pairs (HASH type) |
 | `{storeName}-idx` | FT search index (auto-created for EnableSearch stores) |
 
 ### Key Structure (MySQL)
@@ -149,7 +151,7 @@ This plugin does not consume external events.
 |--------|---------|-------------|
 | `GetStore<T>(name)` | `IStateStore<T>` | Basic CRUD operations (all backends) |
 | `GetStoreAsync<T>(name)` | `IStateStore<T>` | Async version, avoids sync-over-async |
-| `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set + Sorted Set ops (throws for MySQL) |
+| `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set, Sorted Set, Counter, Hash ops (throws for MySQL) |
 | `GetCacheableStoreAsync<T>(name)` | `ICacheableStateStore<T>` | Async version |
 | `GetSearchableStore<T>(name)` | `ISearchableStateStore<T>` | Full-text search (RedisSearch only) |
 | `GetRedisOperations()` | `IRedisOperations?` | Low-level Redis; null when `UseInMemory=true` |
@@ -158,10 +160,10 @@ This plugin does not consume external events.
 
 | Class | Backend | Implements | Features |
 |-------|---------|------------|----------|
-| `RedisStateStore<T>` | Redis | `ICacheableStateStore<T>` | String ops, sets, sorted sets, TTL, transactions |
-| `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets only (sorted sets throw NotSupportedException) |
-| `MySqlStateStore<T>` | MySQL | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core, JSON path queries (no sets/sorted sets) |
-| `InMemoryStateStore<T>` | Memory | `ICacheableStateStore<T>` | Static shared stores, sets, sorted sets, TTL via lazy cleanup |
+| `RedisStateStore<T>` | Redis | `ICacheableStateStore<T>` | String ops, sets, sorted sets, counters, hashes, TTL |
+| `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets, sorted sets, counters, hashes |
+| `MySqlStateStore<T>` | MySQL | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core, JSON path queries (no sets/sorted sets/counters/hashes) |
+| `InMemoryStateStore<T>` | Memory | `ICacheableStateStore<T>` | Static shared stores, sets, sorted sets, counters, hashes, TTL via lazy cleanup |
 
 ---
 
@@ -212,10 +214,10 @@ State Store Architecture (Interface Hierarchy)
 
     IStateStore<T>  ◄────────────── Core CRUD (all backends)
          │
-         ├── ICacheableStateStore<T>  ◄── Sets + Sorted Sets
-         │        │                        (Redis, InMemory; RedisSearch: Sets only)
+         ├── ICacheableStateStore<T>  ◄── Sets, Sorted Sets, Counters, Hashes
+         │        │                        (Redis, InMemory, RedisSearch)
          │        ├── RedisStateStore<T>     (full support)
-         │        ├── RedisSearchStateStore<T> (Sets only - Sorted Sets throw)
+         │        ├── RedisSearchStateStore<T> (full support)
          │        └── InMemoryStateStore<T>  (full support)
          │
          ├── IQueryableStateStore<T>  ◄── LINQ queries
@@ -226,7 +228,7 @@ State Store Architecture (Interface Hierarchy)
          └── ISearchableStateStore<T> ◄── Full-text search
                   └── RedisSearchStateStore<T>  (Redis+FT only)
 
-    IRedisOperations  ◄────────────── Lua scripts, hashes, counters
+    IRedisOperations  ◄────────────── Lua scripts, transactions
          └── RedisOperations            (Redis only, null if InMemory)
 
   Backend Layout:
@@ -234,10 +236,10 @@ State Store Architecture (Interface Hierarchy)
 
     ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
     │ RedisStateStore │    │RedisSearchStore │    │  MySqlStateStore│
-    │ + ICacheable    │    │ + ICacheable*   │    │ + IQueryable    │
-    │ (Sets+ZSets)    │    │ + ISearchable   │    │ + IJsonQueryable│
+    │ + ICacheable    │    │ + ICacheable    │    │ + IQueryable    │
+    │ (Sets+ZSets+    │    │ + ISearchable   │    │ + IJsonQueryable│
+    │  Counters+Hash) │    │ (full support)  │    │                 │
     └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
-                           * Sets only; ZSets throw NotSupportedException
              │                      │                      │
     ┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐
     │     Redis       │    │   Redis + FT    │    │      MySQL      │

@@ -240,11 +240,25 @@ await _cacheStore.SortedSetAddAsync("leaderboard:daily", memberId, score, ct);
 var rank = await _cacheStore.SortedSetRankAsync("leaderboard:daily", memberId, descending: true, ct);
 var topTen = await _cacheStore.SortedSetRangeByRankAsync("leaderboard:daily", 0, 9, descending: true, ct);
 await _cacheStore.SortedSetIncrementAsync("leaderboard:daily", memberId, pointsEarned, ct);
+
+// Atomic counter operations - reference counts, rate limiting, page views
+var visits = await _cacheStore.IncrementAsync("page-visits", 1, ct);
+await _cacheStore.DecrementAsync("available-slots", 1, ct);
+var currentCount = await _cacheStore.GetCounterAsync("page-visits", ct);
+await _cacheStore.SetCounterAsync("reset-counter", 0, ct);
+
+// Hash operations - multiple fields under one key
+await _cacheStore.HashSetAsync<string>("user:123", "lastLogin", DateTime.UtcNow.ToString("O"), ct);
+var lastLogin = await _cacheStore.HashGetAsync<string>("user:123", "lastLogin", ct);
+await _cacheStore.HashIncrementAsync("user:123", "loginCount", 1, ct);
+var allFields = await _cacheStore.HashGetAllAsync<string>("user:123", ct);
+var exists = await _cacheStore.HashExistsAsync("user:123", "lastLogin", ct);
+await _cacheStore.HashDeleteAsync("user:123", "temporaryField", ct);
 ```
 
-#### Low-Level Redis Operations (Lua Scripts, Counters, Hashes)
+#### Low-Level Redis Operations (Lua Scripts, Transactions)
 
-Use `IRedisOperations` for atomic operations not covered by higher-level interfaces:
+Use `IRedisOperations` only for truly low-level operations not covered by `ICacheableStateStore`:
 
 ```csharp
 public MyService(IStateStoreFactory stateStoreFactory)
@@ -253,7 +267,7 @@ public MyService(IStateStoreFactory stateStoreFactory)
     _redisOps = stateStoreFactory.GetRedisOperations();
 }
 
-// Lua scripts for complex atomic operations
+// Lua scripts for complex atomic operations spanning multiple keys
 if (_redisOps != null)
 {
     var result = await _redisOps.ScriptEvaluateAsync(
@@ -262,31 +276,29 @@ if (_redisOps != null)
         new RedisValue[] { "arg1", "arg2" },
         ct);
 
-    // Atomic counters
-    var visits = await _redisOps.IncrementAsync("counter:page-visits", 1, ct);
-
-    // Hash operations for structured data within a key
-    await _redisOps.HashSetAsync("user:123", "lastLogin", DateTime.UtcNow.ToString("O"), ct);
-    var lastLogin = await _redisOps.HashGetAsync("user:123", "lastLogin", ct);
-    await _redisOps.HashIncrementAsync("user:123", "loginCount", 1, ct);
-
-    // TTL manipulation
-    await _redisOps.ExpireAsync("session:abc", TimeSpan.FromMinutes(30), ct);
-    var ttl = await _redisOps.TimeToLiveAsync("session:abc", ct);
+    // Direct database access for transactions
+    var db = _redisOps.GetDatabase();
+    var tran = db.CreateTransaction();
+    // ... transaction operations
 }
 ```
 
 **Important**: Keys passed to `IRedisOperations` are NOT prefixed - they are raw Redis keys. This enables cross-store atomic operations in Lua scripts but requires manual key management.
+
+**Prefer ICacheableStateStore**: For counters, hashes, sets, and sorted sets, use `ICacheableStateStore<T>` instead of `IRedisOperations`. The cacheable interface:
+- Works with InMemory mode (useful for testing)
+- Automatically prefixes keys
+- Provides type-safe generic methods
 
 #### Interface Summary
 
 | Interface | Factory Method | Backends | Use Case |
 |-----------|---------------|----------|----------|
 | `IStateStore<T>` | `GetStore<T>()` | All | Core CRUD, bulk ops, ETags |
-| `ICacheableStateStore<T>` | `GetCacheableStore<T>()` | Redis, InMemory | Sets, sorted sets |
+| `ICacheableStateStore<T>` | `GetCacheableStore<T>()` | Redis, InMemory | Sets, sorted sets, counters, hashes |
 | `IQueryableStateStore<T>` | `GetQueryableStore<T>()` | MySQL | LINQ queries |
 | `ISearchableStateStore<T>` | `GetSearchableStore<T>()` | Redis+Search | Full-text search |
-| `IRedisOperations` | `GetRedisOperations()` | Redis | Lua scripts, counters, hashes |
+| `IRedisOperations` | `GetRedisOperations()` | Redis | Lua scripts, transactions
 
 State store backend is configured via `IStateStoreFactory` service configuration.
 

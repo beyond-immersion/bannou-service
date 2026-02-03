@@ -756,4 +756,311 @@ public class InstrumentedCacheableStateStore<TValue> : InstrumentedStateStore<TV
             throw;
         }
     }
+
+    // ==================== Atomic Counter Operations ====================
+
+    /// <inheritdoc/>
+    public async Task<long> IncrementAsync(string key, long increment = 1, StateOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("counter_increment");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.IncrementAsync(key, increment, options, cancellationToken);
+            RecordCacheableSuccess(activity, "counter_increment", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "counter_increment", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> DecrementAsync(string key, long decrement = 1, StateOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("counter_decrement");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.DecrementAsync(key, decrement, options, cancellationToken);
+            RecordCacheableSuccess(activity, "counter_decrement", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "counter_decrement", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long?> GetCounterAsync(string key, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("counter_get");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.GetCounterAsync(key, cancellationToken);
+            RecordCacheableSuccess(activity, "counter_get", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "counter_get", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task SetCounterAsync(string key, long value, StateOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("counter_set");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            await _cacheableInner.SetCounterAsync(key, value, options, cancellationToken);
+            RecordCacheableSuccess(activity, "counter_set", sw);
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "counter_set", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteCounterAsync(string key, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("counter_delete");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.DeleteCounterAsync(key, cancellationToken);
+            RecordCacheableSuccess(activity, "counter_delete", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "counter_delete", sw, ex);
+            throw;
+        }
+    }
+
+    // ==================== Hash Operations ====================
+
+    /// <inheritdoc/>
+    public async Task<TField?> HashGetAsync<TField>(string key, string field, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_get");
+        activity?.SetTag("bannou.state.key", key);
+        activity?.SetTag("bannou.state.field", field);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.HashGetAsync<TField>(key, field, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_get", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_get", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashSetAsync<TField>(string key, string field, TField value, StateOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_set");
+        activity?.SetTag("bannou.state.key", key);
+        activity?.SetTag("bannou.state.field", field);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.HashSetAsync(key, field, value, options, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_set", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_set", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task HashSetManyAsync<TField>(string key, IEnumerable<KeyValuePair<string, TField>> fields, StateOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_set_many");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            await _cacheableInner.HashSetManyAsync(key, fields, options, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_set_many", sw);
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_set_many", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashDeleteAsync(string key, string field, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_delete");
+        activity?.SetTag("bannou.state.key", key);
+        activity?.SetTag("bannou.state.field", field);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.HashDeleteAsync(key, field, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_delete", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_delete", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashExistsAsync(string key, string field, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_exists");
+        activity?.SetTag("bannou.state.key", key);
+        activity?.SetTag("bannou.state.field", field);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.HashExistsAsync(key, field, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_exists", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_exists", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashIncrementAsync(string key, string field, long increment = 1, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_increment");
+        activity?.SetTag("bannou.state.key", key);
+        activity?.SetTag("bannou.state.field", field);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.HashIncrementAsync(key, field, increment, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_increment", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_increment", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, TField>> HashGetAllAsync<TField>(string key, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_get_all");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.HashGetAllAsync<TField>(key, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_get_all", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_get_all", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashCountAsync(string key, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_count");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.HashCountAsync(key, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_count", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_count", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteHashAsync(string key, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_delete_all");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.DeleteHashAsync(key, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_delete_all", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_delete_all", sw, ex);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RefreshHashTtlAsync(string key, int ttlSeconds, CancellationToken cancellationToken = default)
+    {
+        using var activity = StartCacheableOperation("hash_refresh_ttl");
+        activity?.SetTag("bannou.state.key", key);
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var result = await _cacheableInner.RefreshHashTtlAsync(key, ttlSeconds, cancellationToken);
+            RecordCacheableSuccess(activity, "hash_refresh_ttl", sw);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            RecordCacheableFailure(activity, "hash_refresh_ttl", sw, ex);
+            throw;
+        }
+    }
 }

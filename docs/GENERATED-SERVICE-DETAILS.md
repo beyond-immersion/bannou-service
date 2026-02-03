@@ -385,7 +385,7 @@ IStateStore<T>                    - Core CRUD (all backends)
 │   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
 └── ISearchableStateStore<T>      - Full-text search (Redis+Search only)
 
-IRedisOperations                  - Low-level Redis access (Lua scripts, hashes, atomic counters)
+IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
 ```
 
 **Backend Support Matrix**:
@@ -394,13 +394,13 @@ IRedisOperations                  - Low-level Redis access (Lua scripts, hashes,
 |-----------|:-----:|:-----:|:--------:|:-----------:|
 | `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
 | `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ❌* |
+| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
 | `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
 | `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
-
-\* RedisSearchStateStore implements `ICacheableStateStore<T>` but throws `NotSupportedException` for all sorted set operations. This is because JSON storage mode required for RedisSearch indexing is incompatible with sorted set operations. Use `RedisStateStore` for stores requiring both sorted sets and caching.
 
 ---
 

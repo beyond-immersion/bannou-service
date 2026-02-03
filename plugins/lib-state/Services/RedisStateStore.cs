@@ -788,4 +788,306 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
 
         return deleted;
     }
+
+    // ==================== Atomic Counter Operations ====================
+
+    private string GetCounterKey(string key) => $"{_keyPrefix}:counter:{key}";
+
+    /// <inheritdoc/>
+    public async Task<long> IncrementAsync(
+        string key,
+        long increment = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        // INCRBY is atomic - no transaction needed
+        var newValue = await _database.StringIncrementAsync(counterKey, increment);
+
+        // Set TTL if specified (separate operation)
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(counterKey, ttl);
+        }
+
+        _logger.LogDebug("Incremented counter '{Key}' in store '{Store}' by {Increment} to {Value}",
+            key, _keyPrefix, increment, newValue);
+
+        return newValue;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> DecrementAsync(
+        string key,
+        long decrement = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        // DECRBY is atomic - no transaction needed
+        var newValue = await _database.StringDecrementAsync(counterKey, decrement);
+
+        // Set TTL if specified (separate operation)
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(counterKey, ttl);
+        }
+
+        _logger.LogDebug("Decremented counter '{Key}' in store '{Store}' by {Decrement} to {Value}",
+            key, _keyPrefix, decrement, newValue);
+
+        return newValue;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long?> GetCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var value = await _database.StringGetAsync(counterKey);
+
+        if (value.IsNullOrEmpty)
+        {
+            _logger.LogDebug("Counter '{Key}' not found in store '{Store}'", key, _keyPrefix);
+            return null;
+        }
+
+        if (long.TryParse(value, out var result))
+        {
+            return result;
+        }
+
+        _logger.LogWarning("Counter '{Key}' in store '{Store}' has non-numeric value: {Value}",
+            key, _keyPrefix, value);
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task SetCounterAsync(
+        string key,
+        long value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        if (ttl.HasValue)
+        {
+            await _database.StringSetAsync(counterKey, value, ttl.Value);
+        }
+        else
+        {
+            await _database.StringSetAsync(counterKey, value);
+        }
+
+        _logger.LogDebug("Set counter '{Key}' in store '{Store}' to {Value}",
+            key, _keyPrefix, value);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var deleted = await _database.KeyDeleteAsync(counterKey);
+
+        _logger.LogDebug("Deleted counter '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    // ==================== Hash Operations ====================
+
+    private string GetHashKey(string key) => $"{_keyPrefix}:hash:{key}";
+
+    /// <inheritdoc/>
+    public async Task<TField?> HashGetAsync<TField>(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var value = await _database.HashGetAsync(hashKey, field);
+
+        if (value.IsNullOrEmpty)
+        {
+            _logger.LogDebug("Hash field '{Field}' not found in hash '{Key}' in store '{Store}'",
+                field, key, _keyPrefix);
+            return default;
+        }
+
+        return BannouJson.Deserialize<TField>(value!);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashSetAsync<TField>(
+        string key,
+        string field,
+        TField value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var json = BannouJson.Serialize(value);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        // HashSet returns true if field was created (new), false if updated
+        var isNew = await _database.HashSetAsync(hashKey, field, json);
+
+        // Set TTL on the hash if specified
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(hashKey, ttl);
+        }
+
+        _logger.LogDebug("Set hash field '{Field}' in hash '{Key}' in store '{Store}' (new: {IsNew})",
+            field, key, _keyPrefix, isNew);
+
+        return isNew;
+    }
+
+    /// <inheritdoc/>
+    public async Task HashSetManyAsync<TField>(
+        string key,
+        IEnumerable<KeyValuePair<string, TField>> fields,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var fieldList = fields.ToList();
+        if (fieldList.Count == 0)
+        {
+            return;
+        }
+
+        var hashKey = GetHashKey(key);
+        var entries = fieldList
+            .Select(f => new HashEntry(f.Key, BannouJson.Serialize(f.Value)))
+            .ToArray();
+
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        await _database.HashSetAsync(hashKey, entries);
+
+        // Set TTL on the hash if specified
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(hashKey, ttl);
+        }
+
+        _logger.LogDebug("Set {Count} hash fields in hash '{Key}' in store '{Store}'",
+            fieldList.Count, key, _keyPrefix);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashDeleteAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var deleted = await _database.HashDeleteAsync(hashKey, field);
+
+        _logger.LogDebug("Deleted hash field '{Field}' from hash '{Key}' in store '{Store}' (existed: {Existed})",
+            field, key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashExistsAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        return await _database.HashExistsAsync(hashKey, field);
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashIncrementAsync(
+        string key,
+        string field,
+        long increment = 1,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+
+        // HINCRBY is atomic
+        var newValue = await _database.HashIncrementAsync(hashKey, field, increment);
+
+        _logger.LogDebug("Incremented hash field '{Field}' in hash '{Key}' in store '{Store}' by {Increment} to {Value}",
+            field, key, _keyPrefix, increment, newValue);
+
+        return newValue;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, TField>> HashGetAllAsync<TField>(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var entries = await _database.HashGetAllAsync(hashKey);
+
+        var result = new Dictionary<string, TField>();
+        foreach (var entry in entries)
+        {
+            var fieldValue = BannouJson.Deserialize<TField>(entry.Value!);
+            if (fieldValue != null)
+            {
+                result[entry.Name!] = fieldValue;
+            }
+        }
+
+        _logger.LogDebug("Retrieved {Count} fields from hash '{Key}' in store '{Store}'",
+            result.Count, key, _keyPrefix);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        return await _database.HashLengthAsync(hashKey);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteHashAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var deleted = await _database.KeyDeleteAsync(hashKey);
+
+        _logger.LogDebug("Deleted hash '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RefreshHashTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var updated = await _database.KeyExpireAsync(hashKey, TimeSpan.FromSeconds(ttlSeconds));
+
+        _logger.LogDebug("Refreshed TTL on hash '{Key}' in store '{Store}' to {Ttl}s (existed: {Existed})",
+            key, _keyPrefix, ttlSeconds, updated);
+
+        return updated;
+    }
 }

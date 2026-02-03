@@ -884,115 +884,505 @@ public sealed class RedisSearchStateStore<TValue> : ICacheableStateStore<TValue>
     }
 
     // ==================== Sorted Set Operations ====================
-    // RedisSearchStateStore is focused on full-text search capabilities.
-    // Use RedisStateStore directly for sorted set operations.
+    // Sorted sets use standard Redis sorted sets with separate key prefixes,
+    // independent of the JSON document storage used for TValue.
+
+    private string GetSortedSetKey(string key) => $"{_keyPrefix}:zset:{key}";
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<bool> SortedSetAddAsync(
+    public async Task<bool> SortedSetAddAsync(
         string key,
         string member,
         double score,
         StateOptions? options = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        var added = await _database.SortedSetAddAsync(sortedSetKey, member, score);
+
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(sortedSetKey, ttl);
+        }
+
+        _logger.LogDebug("Added member '{Member}' to sorted set '{Key}' with score {Score} (new: {IsNew})",
+            member, key, score, added);
+
+        return added;
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<long> SortedSetAddBatchAsync(
+    public async Task<long> SortedSetAddBatchAsync(
         string key,
         IEnumerable<(string member, double score)> entries,
         StateOptions? options = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var entryList = entries.ToList();
+        if (entryList.Count == 0)
+        {
+            return 0;
+        }
+
+        var sortedSetKey = GetSortedSetKey(key);
+        var redisEntries = entryList
+            .Select(e => new SortedSetEntry(e.member, e.score))
+            .ToArray();
+
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        var added = await _database.SortedSetAddAsync(sortedSetKey, redisEntries);
+
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(sortedSetKey, ttl);
+        }
+
+        _logger.LogDebug("Batch added {Count} entries to sorted set '{Key}', {NewCount} new",
+            entryList.Count, key, added);
+
+        return added;
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<bool> SortedSetRemoveAsync(
+    public async Task<bool> SortedSetRemoveAsync(
         string key,
         string member,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+        var removed = await _database.SortedSetRemoveAsync(sortedSetKey, member);
+
+        _logger.LogDebug("Removed member '{Member}' from sorted set '{Key}' (existed: {Existed})",
+            member, key, removed);
+
+        return removed;
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<double?> SortedSetScoreAsync(
+    public async Task<double?> SortedSetScoreAsync(
         string key,
         string member,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+        return await _database.SortedSetScoreAsync(sortedSetKey, member);
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<long?> SortedSetRankAsync(
+    public async Task<long?> SortedSetRankAsync(
         string key,
         string member,
         bool descending = true,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+        return descending
+            ? await _database.SortedSetRankAsync(sortedSetKey, member, Order.Descending)
+            : await _database.SortedSetRankAsync(sortedSetKey, member, Order.Ascending);
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
+    public async Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
         string key,
         long start,
         long stop,
         bool descending = true,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+
+        var entries = await _database.SortedSetRangeByRankWithScoresAsync(
+            sortedSetKey,
+            start,
+            stop,
+            descending ? Order.Descending : Order.Ascending);
+
+        var result = entries
+            .Select(e => (member: e.Element.ToString(), score: e.Score))
+            .ToList();
+
+        _logger.LogDebug("Retrieved {Count} entries from sorted set '{Key}' (range: {Start}-{Stop}, descending: {Descending})",
+            result.Count, key, start, stop, descending);
+
+        return result;
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
+    public async Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(
         string key,
         double minScore,
         double maxScore,
         int offset = 0,
         int count = -1,
         bool descending = false,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+
+        var entries = descending
+            ? await _database.SortedSetRangeByScoreWithScoresAsync(
+                sortedSetKey,
+                minScore,
+                maxScore,
+                Exclude.None,
+                Order.Descending,
+                offset,
+                count)
+            : await _database.SortedSetRangeByScoreWithScoresAsync(
+                sortedSetKey,
+                minScore,
+                maxScore,
+                Exclude.None,
+                Order.Ascending,
+                offset,
+                count);
+
+        var result = entries
+            .Select(e => (member: e.Element.ToString(), score: e.Score))
+            .ToList();
+
+        _logger.LogDebug(
+            "Retrieved {Count} entries from sorted set '{Key}' by score (min: {Min}, max: {Max}, offset: {Offset}, count: {RequestedCount}, descending: {Descending})",
+            result.Count, key, minScore, maxScore, offset, count, descending);
+
+        return result;
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<long> SortedSetCountAsync(
+    public async Task<long> SortedSetCountAsync(
         string key,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+        return await _database.SortedSetLengthAsync(sortedSetKey);
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<double> SortedSetIncrementAsync(
+    public async Task<double> SortedSetIncrementAsync(
         string key,
         string member,
         double increment,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+        var newScore = await _database.SortedSetIncrementAsync(sortedSetKey, member, increment);
+
+        _logger.LogDebug("Incremented member '{Member}' in sorted set '{Key}' by {Increment} (new score: {NewScore})",
+            member, key, increment, newScore);
+
+        return newScore;
     }
 
     /// <inheritdoc/>
-    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
-    public Task<bool> SortedSetDeleteAsync(
+    public async Task<bool> SortedSetDeleteAsync(
         string key,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+        var sortedSetKey = GetSortedSetKey(key);
+        var deleted = await _database.KeyDeleteAsync(sortedSetKey);
+
+        _logger.LogDebug("Deleted sorted set '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    // ==================== Atomic Counter Operations ====================
+    // Counter operations use standard Redis strings (not JSON), so they work with RedisSearch stores.
+
+    private string GetCounterKey(string key) => $"{_keyPrefix}:counter:{key}";
+
+    /// <inheritdoc/>
+    public async Task<long> IncrementAsync(
+        string key,
+        long increment = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        var newValue = await _database.StringIncrementAsync(counterKey, increment);
+
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(counterKey, ttl);
+        }
+
+        _logger.LogDebug("Incremented counter '{Key}' in store '{Store}' by {Increment} to {Value}",
+            key, _keyPrefix, increment, newValue);
+
+        return newValue;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> DecrementAsync(
+        string key,
+        long decrement = 1,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        var newValue = await _database.StringDecrementAsync(counterKey, decrement);
+
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(counterKey, ttl);
+        }
+
+        _logger.LogDebug("Decremented counter '{Key}' in store '{Store}' by {Decrement} to {Value}",
+            key, _keyPrefix, decrement, newValue);
+
+        return newValue;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long?> GetCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var value = await _database.StringGetAsync(counterKey);
+
+        if (value.IsNullOrEmpty)
+        {
+            _logger.LogDebug("Counter '{Key}' not found in store '{Store}'", key, _keyPrefix);
+            return null;
+        }
+
+        if (long.TryParse(value, out var result))
+        {
+            return result;
+        }
+
+        _logger.LogWarning("Counter '{Key}' in store '{Store}' has non-numeric value: {Value}",
+            key, _keyPrefix, value);
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task SetCounterAsync(
+        string key,
+        long value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        if (ttl.HasValue)
+        {
+            await _database.StringSetAsync(counterKey, value, ttl.Value);
+        }
+        else
+        {
+            await _database.StringSetAsync(counterKey, value);
+        }
+
+        _logger.LogDebug("Set counter '{Key}' in store '{Store}' to {Value}",
+            key, _keyPrefix, value);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteCounterAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var counterKey = GetCounterKey(key);
+        var deleted = await _database.KeyDeleteAsync(counterKey);
+
+        _logger.LogDebug("Deleted counter '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    // ==================== Hash Operations ====================
+    // Hash operations use standard Redis hashes (not JSON), so they work with RedisSearch stores.
+
+    private string GetHashKey(string key) => $"{_keyPrefix}:hash:{key}";
+
+    /// <inheritdoc/>
+    public async Task<TField?> HashGetAsync<TField>(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var value = await _database.HashGetAsync(hashKey, field);
+
+        if (value.IsNullOrEmpty)
+        {
+            _logger.LogDebug("Hash field '{Field}' not found in hash '{Key}' in store '{Store}'",
+                field, key, _keyPrefix);
+            return default;
+        }
+
+        return BannouJson.Deserialize<TField>(value!);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashSetAsync<TField>(
+        string key,
+        string field,
+        TField value,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var json = BannouJson.Serialize(value);
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        var isNew = await _database.HashSetAsync(hashKey, field, json);
+
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(hashKey, ttl);
+        }
+
+        _logger.LogDebug("Set hash field '{Field}' in hash '{Key}' in store '{Store}' (new: {IsNew})",
+            field, key, _keyPrefix, isNew);
+
+        return isNew;
+    }
+
+    /// <inheritdoc/>
+    public async Task HashSetManyAsync<TField>(
+        string key,
+        IEnumerable<KeyValuePair<string, TField>> fields,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var fieldList = fields.ToList();
+        if (fieldList.Count == 0)
+        {
+            return;
+        }
+
+        var hashKey = GetHashKey(key);
+        var entries = fieldList
+            .Select(f => new HashEntry(f.Key, BannouJson.Serialize(f.Value)))
+            .ToArray();
+
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+
+        await _database.HashSetAsync(hashKey, entries);
+
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(hashKey, ttl);
+        }
+
+        _logger.LogDebug("Set {Count} hash fields in hash '{Key}' in store '{Store}'",
+            fieldList.Count, key, _keyPrefix);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashDeleteAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var deleted = await _database.HashDeleteAsync(hashKey, field);
+
+        _logger.LogDebug("Deleted hash field '{Field}' from hash '{Key}' in store '{Store}' (existed: {Existed})",
+            field, key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HashExistsAsync(
+        string key,
+        string field,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        return await _database.HashExistsAsync(hashKey, field);
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashIncrementAsync(
+        string key,
+        string field,
+        long increment = 1,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+
+        var newValue = await _database.HashIncrementAsync(hashKey, field, increment);
+
+        _logger.LogDebug("Incremented hash field '{Field}' in hash '{Key}' in store '{Store}' by {Increment} to {Value}",
+            field, key, _keyPrefix, increment, newValue);
+
+        return newValue;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, TField>> HashGetAllAsync<TField>(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var entries = await _database.HashGetAllAsync(hashKey);
+
+        var result = new Dictionary<string, TField>();
+        foreach (var entry in entries)
+        {
+            var fieldValue = BannouJson.Deserialize<TField>(entry.Value!);
+            if (fieldValue != null)
+            {
+                result[entry.Name!] = fieldValue;
+            }
+        }
+
+        _logger.LogDebug("Retrieved {Count} fields from hash '{Key}' in store '{Store}'",
+            result.Count, key, _keyPrefix);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> HashCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        return await _database.HashLengthAsync(hashKey);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteHashAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var deleted = await _database.KeyDeleteAsync(hashKey);
+
+        _logger.LogDebug("Deleted hash '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RefreshHashTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default)
+    {
+        var hashKey = GetHashKey(key);
+        var updated = await _database.KeyExpireAsync(hashKey, TimeSpan.FromSeconds(ttlSeconds));
+
+        _logger.LogDebug("Refreshed TTL on hash '{Key}' in store '{Store}' to {Ttl}s (existed: {Existed})",
+            key, _keyPrefix, ttlSeconds, updated);
+
+        return updated;
     }
 }
