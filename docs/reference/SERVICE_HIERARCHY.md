@@ -1,6 +1,6 @@
 # Bannou Service Hierarchy
 
-> **Version**: 2.2
+> **Version**: 2.4
 > **Last Updated**: 2026-02-03
 > **Scope**: All Bannou service plugins and their inter-dependencies
 
@@ -41,10 +41,13 @@ The hierarchy ensures that:
 
 ---
 
-## The Five Layers
+## The Six Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
+│ L5: EXTENSIONS (Third-party plugins, meta-services)         │
+│ Depends on: L0, L1, L2*, L3*, L4*   (* = graceful degrade)  │
+├─────────────────────────────────────────────────────────────┤
 │ L4: GAME FEATURES (Optional game-specific capabilities)     │
 │ Depends on: L0, L1, L2, L3*, L4*    (* = graceful degrade)  │
 ├─────────────────────────────────────────────────────────────┤
@@ -52,10 +55,10 @@ The hierarchy ensures that:
 │ Depends on: L0, L1, L3*             (* = graceful degrade)  │
 ├─────────────────────────────────────────────────────────────┤
 │ L2: GAME FOUNDATION (Required for game deployments)         │
-│ Depends on: L0, L1                                          │
+│ Depends on: L0, L1, L2                                      │
 ├─────────────────────────────────────────────────────────────┤
 │ L1: APP FOUNDATION (Required for ANY deployment)            │
-│ Depends on: L0                                              │
+│ Depends on: L0, L1                                          │
 ├─────────────────────────────────────────────────────────────┤
 │ L0: INFRASTRUCTURE (Plugins loaded first)                   │
 │ Depends on: Nothing                                         │
@@ -220,6 +223,28 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 - L4 requires ALL of L1 and L2 to be running
 
 **Use Case**: "I want NPCs, matchmaking, voice chat, and achievements for my game."
+
+---
+
+## Layer 5: Extensions (Third-Party & Meta-Services)
+
+This layer is reserved for third-party plugins and internal meta-services that need maximum flexibility. Extensions load last and can depend on any layer.
+
+| Service | Role |
+|---------|------|
+| *(reserved)* | Third-party game plugins |
+| *(reserved)* | Custom integrations |
+| *(reserved)* | Meta-services spanning multiple domains |
+
+**Rules**:
+- May depend on any layer (L0, L1, L2, L3, L4)
+- Loads after all core plugins
+- Must handle absence of L3/L4 dependencies gracefully
+- Should not be depended upon by L0-L4 services (they can't know about extensions)
+
+**Use Case**: "I'm building a third-party plugin that extends Bannou with custom game mechanics."
+
+**Why L5 Exists**: Third-party developers shouldn't need to understand the full hierarchy to build plugins. By placing all extensions at L5, they can safely depend on any core service without accidentally creating hierarchy violations. The validator will catch any issues.
 
 ---
 
@@ -445,14 +470,15 @@ The hierarchy dictates not just WHAT services can depend on, but HOW those depen
 
 Dependencies on L0, L1, and L2 services are **guaranteed available** by the hierarchy. When your service runs, these MUST be running. The goal is **constructor injection** - the DI container fails at startup if not registered, catching configuration errors immediately.
 
-> **Current Limitation**: Plugin load order is only enforced for L0 infrastructure plugins. L1-L4 plugins load without guaranteed ordering, so cross-plugin initialization currently happens in `OnRunningAsync()` rather than constructors. Even so, **graceful degradation is still wrong** - if a guaranteed dependency is null in `OnRunningAsync`, throw an exception rather than silently skipping. A future infrastructure improvement will add layer-based plugin loading priority, enabling true constructor injection for cross-layer dependencies.
+> **Layer-Based Loading**: PluginLoader sorts all plugins by their `ServiceLayer` attribute before loading. This ensures that when a service's constructor runs, all services in lower layers are already registered in DI. L0 plugins have additional internal ordering (telemetry → state → messaging → mesh). Within each layer, plugins load alphabetically.
 
 ```csharp
-// IDEAL (future): Constructor injection for guaranteed dependencies
+// Constructor injection for guaranteed dependencies
 // DI container fails at startup if IContractClient isn't registered
+// Layer-based loading ensures L1 services are registered before L2 constructors run
 public class LocationService : ILocationService
 {
-    private readonly IContractClient _contractClient;  // L1 - guaranteed
+    private readonly IContractClient _contractClient;  // L1 - guaranteed available
 
     public LocationService(
         IContractClient contractClient,  // Hard dependency - will throw if missing
@@ -462,14 +488,11 @@ public class LocationService : ILocationService
     }
 }
 
-// CURRENT WORKAROUND: OnRunningAsync with explicit throw
-// Until layer-based plugin loading is implemented, cross-plugin init happens in OnRunningAsync
+// For startup-time API calls (not just storing references), use OnRunningAsync
 protected override async Task OnRunningAsync(CancellationToken ct)
 {
-    var contractClient = scope.ServiceProvider.GetService<IContractClient>()
-        ?? throw new InvalidOperationException(
-            "IContractClient not available - Contract (L1) must be loaded before Location (L2)");
-    await contractClient.RegisterClauseTypeAsync(...);
+    // Contract client is guaranteed available (L1 loaded before L2)
+    await _contractClient.RegisterClauseTypeAsync(...);
 }
 ```
 
@@ -520,7 +543,7 @@ public async Task DoSomethingAsync(...)
 | L3 App Features | `GetService<T>()` + null check | Graceful degradation | `IAssetClient`, `IOrchestratorClient` |
 | L4 Game Features | `GetService<T>()` + null check | Graceful degradation | `IAnalyticsClient`, `IActorClient` |
 
-\* For cross-plugin dependencies (e.g., L2 service depending on L1 client), constructor injection requires layer-based plugin loading (not yet implemented). Until then, use `GetService<T>()` in `OnRunningAsync()` **with throw on null** - never silent degradation.
+\* Layer-based plugin loading ensures lower-layer services are registered before higher-layer constructors run. Constructor injection is now the standard pattern for L0/L1/L2 dependencies.
 
 ### Why This Distinction Matters
 
@@ -557,6 +580,39 @@ Check `using` statements and constructor parameters for service clients. Flag an
 ### In Deep Dive Documents
 
 Each plugin's deep dive document must list its dependencies. Cross-reference with this hierarchy to catch violations.
+
+### Automated Validation (ServiceHierarchyValidator)
+
+The `ServiceHierarchyValidator` in `test-utilities/` provides automated hierarchy enforcement:
+
+**How It Works**:
+1. **Reflection-based discovery**: Scans all loaded assemblies for `[BannouService]` attributes
+2. **Builds layer cache**: Maps service names to their declared `ServiceLayer`
+3. **Analyzes constructors**: Finds all `I*Client` parameters (service client dependencies)
+4. **Checks violations**: Verifies each dependency is in an allowed layer
+
+**Validation Rules**:
+```
+L0 Infrastructure  → Cannot depend on any service clients
+L1 AppFoundation   → Can depend on L0, L1
+L2 GameFoundation  → Can depend on L0, L1, L2
+L3 AppFeatures     → Can depend on L0, L1, L3 (NOT L2 - separate branch!)
+L4 GameFeatures    → Can depend on L0, L1, L2, L3, L4
+L5 Extensions      → Can depend on everything
+```
+
+**Usage in Unit Tests**:
+```csharp
+[Fact]
+public void CharacterService_RespectsDependencyHierarchy()
+{
+    ServiceHierarchyValidator.ValidateServiceHierarchy<CharacterService>();
+}
+```
+
+**Runtime Validation**: PluginLoader calls `GetHierarchyViolations()` during startup and logs violations as errors. This catches third-party plugins that violate the hierarchy.
+
+**Key Insight**: The validator uses reflection to read `[BannouService]` attributes directly - no hardcoded registry. This ensures the validator always matches what's actually in the code.
 
 ---
 
@@ -604,6 +660,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | 2026-02-03 | 2.1 | Moved telemetry from L3 to L0 as optional infrastructure; removed mesh/messaging/state from L3 (they're L0); removed testing from L3 (it's shared test infra, not a service); clarified L0 plugins load first |
 | 2026-02-03 | 2.2 | Added "Dependency Handling Patterns" section: L0/L1/L2 dependencies must be hard (constructor injection, fail at startup); L3/L4 may be soft (graceful degradation). This prevents silent degradation that hides deployment configuration errors. |
 | 2026-02-03 | 2.3 | Added schema-first layer declaration via `x-service-layer` in API schemas. Added `ServiceLayer` enum to `BannouServiceAttribute`. PluginLoader now sorts by layer for deterministic cross-layer dependency resolution. Added L5 (Extensions) layer for third-party plugins. |
+| 2026-02-03 | 2.4 | Added ServiceHierarchyValidator documentation. Updated to reflect layer-based loading is now implemented (not future). Updated diagram to show 6 layers including L5 Extensions. Removed outdated "Current Limitation" notes. |
 
 ---
 
