@@ -376,11 +376,11 @@ Realm-scoped species management for the Arcadia game world. Manages playable and
 
 The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
 
-### Interface Hierarchy (as of 2026-02-01)
+### Interface Hierarchy (as of 2026-02-03)
 
 ```
 IStateStore<T>                    - Core CRUD (all backends)
-├── ICacheableStateStore<T>       - Sets + Sorted Sets (Redis + InMemory)
+├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
 ├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
 │   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
 └── ISearchableStateStore<T>      - Full-text search (Redis+Search only)

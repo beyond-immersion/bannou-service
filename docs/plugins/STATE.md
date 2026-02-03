@@ -140,7 +140,7 @@ This plugin does not consume external events.
 | `StateStoreFactory` | Singleton | Implementation with Redis/MySQL initialization and store caching |
 | `IDistributedLockProvider` | Singleton | Distributed mutex using Redis (SET NX EX) with InMemory fallback |
 | `RedisDistributedLockProvider` | Singleton | Uses `IRedisOperations` for Lua-based safe unlock, falls back to in-memory locks |
-| `IRedisOperations` | - | Low-level Redis ops (Lua scripts, hashes, counters); obtained via `GetRedisOperations()` |
+| `IRedisOperations` | - | Low-level Redis ops (Lua scripts, transactions only); obtained via `GetRedisOperations()` |
 | `RedisOperations` | Internal | Shares `ConnectionMultiplexer` with state stores |
 | `RedisLuaScripts` | Static | Loads and caches Lua scripts from embedded resources (`Scripts/*.lua`) |
 | `StateService` | Scoped | HTTP API implementation |
@@ -154,7 +154,7 @@ This plugin does not consume external events.
 | `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set, Sorted Set, Counter, Hash ops (throws for MySQL) |
 | `GetCacheableStoreAsync<T>(name)` | `ICacheableStateStore<T>` | Async version |
 | `GetSearchableStore<T>(name)` | `ISearchableStateStore<T>` | Full-text search (RedisSearch only) |
-| `GetRedisOperations()` | `IRedisOperations?` | Low-level Redis; null when `UseInMemory=true` |
+| `GetRedisOperations()` | `IRedisOperations?` | Lua scripts, transactions only; null when `UseInMemory=true` |
 
 ### Store Implementation Classes
 
@@ -300,8 +300,6 @@ None currently identified.
    - This is internal infrastructure, not an external API requiring authorization
 
 9. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
-
-10. **RedisSearchStateStore sorted set operations throw NotSupportedException**: Although `RedisSearchStateStore` implements `ICacheableStateStore<T>`, all 10 sorted set methods (`SortedSetAddAsync`, `SortedSetRemoveAsync`, etc.) throw `NotSupportedException`. This is because RedisSearch requires JSON storage mode (`JSON.SET`), which is incompatible with Redis sorted set commands (`ZADD`, etc.). Set operations (non-sorted) work correctly because they can operate on JSON-serialized string members. Services requiring both full-text search and sorted sets must use separate stores.
 
 ### Design Considerations (Requires Planning)
 
