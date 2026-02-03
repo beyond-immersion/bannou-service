@@ -468,6 +468,111 @@ public partial class LocationService : ILocationService
         }
     }
 
+    /// <summary>
+    /// Validates a location against territory boundaries.
+    /// Used by Contract service's clause type handler system for territory validation.
+    /// </summary>
+    /// <param name="body">Territory validation request with location and boundaries.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Validation result indicating if location passes territory check.</returns>
+    public async Task<(StatusCodes, ValidateTerritoryResponse?)> ValidateTerritoryAsync(
+        ValidateTerritoryRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Validating territory for location {LocationId} against {TerritoryCount} territories, mode: {Mode}",
+                body.LocationId, body.TerritoryLocationIds?.Count ?? 0, body.TerritoryMode);
+
+            // Get location to verify it exists
+            var locationKey = BuildLocationKey(body.LocationId);
+            var location = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+                .GetAsync(locationKey, cancellationToken);
+
+            if (location == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Build hierarchy set (location + all ancestors)
+            var locationHierarchy = new HashSet<Guid> { body.LocationId };
+
+            var currentParentId = location.ParentLocationId;
+            var maxDepth = _configuration.MaxAncestorDepth;
+            var depth = 0;
+
+            while (currentParentId.HasValue && depth < maxDepth)
+            {
+                locationHierarchy.Add(currentParentId.Value);
+
+                var parentKey = BuildLocationKey(currentParentId.Value);
+                var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+                    .GetAsync(parentKey, cancellationToken);
+
+                if (parentModel == null)
+                {
+                    break;
+                }
+
+                currentParentId = parentModel.ParentLocationId;
+                depth++;
+            }
+
+            // Check for overlap with territory
+            var territorySet = body.TerritoryLocationIds?.ToHashSet() ?? new HashSet<Guid>();
+            Guid? matchedTerritory = null;
+
+            foreach (var territoryId in territorySet)
+            {
+                if (locationHierarchy.Contains(territoryId))
+                {
+                    matchedTerritory = territoryId;
+                    break;
+                }
+            }
+
+            var hasOverlap = matchedTerritory.HasValue;
+            var mode = body.TerritoryMode ?? TerritoryMode.Exclusive;
+
+            // Evaluate based on mode
+            if (mode == TerritoryMode.Exclusive && hasOverlap)
+            {
+                return (StatusCodes.OK, new ValidateTerritoryResponse
+                {
+                    IsValid = false,
+                    ViolationReason = "Location overlaps with exclusive territory",
+                    MatchedTerritoryId = matchedTerritory
+                });
+            }
+
+            if (mode == TerritoryMode.Inclusive && !hasOverlap)
+            {
+                return (StatusCodes.OK, new ValidateTerritoryResponse
+                {
+                    IsValid = false,
+                    ViolationReason = "Location is outside inclusive territory",
+                    MatchedTerritoryId = null
+                });
+            }
+
+            return (StatusCodes.OK, new ValidateTerritoryResponse
+            {
+                IsValid = true,
+                ViolationReason = null,
+                MatchedTerritoryId = hasOverlap ? matchedTerritory : null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating territory for location {LocationId}", body.LocationId);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "ValidateTerritory", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "post:/location/validate-territory",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> GetLocationDescendantsAsync(GetLocationDescendantsRequest body, CancellationToken cancellationToken = default)
     {

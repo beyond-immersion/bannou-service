@@ -65,6 +65,11 @@ public partial interface ILocationService : IBannouService
         Task<(StatusCodes, LocationListResponse?)> GetLocationAncestorsAsync(GetLocationAncestorsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// ValidateTerritory operation
+        /// </summary>
+        Task<(StatusCodes, ValidateTerritoryResponse?)> ValidateTerritoryAsync(ValidateTerritoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetLocationDescendants operation
         /// </summary>
         Task<(StatusCodes, LocationListResponse?)> GetLocationDescendantsAsync(GetLocationDescendantsRequest body, CancellationToken cancellationToken = default(CancellationToken));

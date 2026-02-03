@@ -229,6 +229,38 @@ paths:
         '404':
           description: Location not found
 
+  /location/validate-territory:
+    post:
+      operationId: validateTerritory
+      tags:
+      - Location
+      summary: Validate location against territory boundaries
+      description: |
+        Checks if a proposed location falls within or outside specified territory boundaries.
+        Used by Contract service's clause type handler system for territory validation.
+
+        Territory modes:
+        - exclusive: Location must NOT be within any territory location (or descendants)
+        - inclusive: Location MUST be within at least one territory location (or descendants)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTerritoryRequest'
+      responses:
+        '200':
+          description: Territory validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateTerritoryResponse'
+        '404':
+          description: Location not found
+      x-permissions:
+      - role: user
+        states: {}
+
   /location/get-descendants:
     post:
       summary: Get all descendants of a location
@@ -537,6 +569,57 @@ components:
       - WILDERNESS
       - DUNGEON
       - OTHER
+
+    TerritoryMode:
+      type: string
+      description: Territory validation mode for constraint checking
+      enum:
+      - exclusive
+      - inclusive
+
+    ValidateTerritoryRequest:
+      type: object
+      description: Request to validate a location against territory boundaries
+      additionalProperties: false
+      required:
+      - locationId
+      - territoryLocationIds
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: The location to validate
+        territoryLocationIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Territory boundary location IDs
+        territoryMode:
+          allOf:
+          - $ref: '#/components/schemas/TerritoryMode'
+          nullable: true
+          description: Validation mode (exclusive or inclusive). Defaults to exclusive.
+
+    ValidateTerritoryResponse:
+      type: object
+      description: Territory validation result
+      additionalProperties: false
+      required:
+      - isValid
+      properties:
+        isValid:
+          type: boolean
+          description: True if location passes territory validation
+        violationReason:
+          type: string
+          nullable: true
+          description: Human-readable reason if validation failed
+        matchedTerritoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The territory location that matched (for inclusive) or conflicted (for exclusive)
 
     GetLocationRequest:
       description: Request to retrieve a location by its unique identifier

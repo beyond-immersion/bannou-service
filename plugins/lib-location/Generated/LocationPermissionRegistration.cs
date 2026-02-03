@@ -172,6 +172,21 @@ public static class LocationPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/location/validate-territory",
+            Method = ServiceEndpointMethod.POST,
+            Description = "validateTerritory",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/location/get-descendants",
             Method = ServiceEndpointMethod.POST,
             Description = "getLocationDescendants",

@@ -2,7 +2,6 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -37,7 +36,6 @@ public partial class ContractService : IContractService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ContractService> _logger;
     private readonly ContractServiceConfiguration _configuration;
-    private readonly ILocationClient _locationClient;
 
     // State store key prefixes
     private const string TEMPLATE_PREFIX = "template:";
@@ -197,8 +195,7 @@ public partial class ContractService : IContractService
         IDistributedLockProvider lockProvider,
         ILogger<ContractService> logger,
         ContractServiceConfiguration configuration,
-        IEventConsumer eventConsumer,
-        ILocationClient locationClient)
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _navigator = navigator;
@@ -206,7 +203,6 @@ public partial class ContractService : IContractService
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
-        _locationClient = locationClient;
 
         // Register event handlers via partial class if needed
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -1866,50 +1862,6 @@ public partial class ContractService : IContractService
                             {
                                 hasViolation = true;
                                 reason = "Entity has a non-compete clause in an active contract";
-                            }
-                            break;
-
-                        case ConstraintType.Territory:
-                            if (GetCustomTermBool(customTerms, "territory"))
-                            {
-                                var territoryLocationIds = GetCustomTermGuidList(customTerms, "territoryLocationIds");
-                                var territoryMode = GetCustomTermString(customTerms, "territoryMode") ?? "exclusive";
-                                var proposedLocationId = GetProposedActionGuid(body.ProposedAction, "locationId");
-
-                                if (territoryLocationIds.Count == 0 || !proposedLocationId.HasValue)
-                                {
-                                    // Missing constraint data - cannot evaluate
-                                    _logger.LogWarning(
-                                        "Territory constraint check missing data: territoryLocationIds={Count}, proposedLocationId={HasValue}",
-                                        territoryLocationIds.Count, proposedLocationId.HasValue);
-                                    return (StatusCodes.BadRequest, null);
-                                }
-
-                                // Get location ancestry - let ApiException propagate on failure (T7)
-                                var ancestryResponse = await _locationClient.GetLocationAncestorsAsync(
-                                    new GetLocationAncestorsRequest { LocationId = proposedLocationId.Value },
-                                    cancellationToken);
-
-                                // Build set of all relevant location IDs (proposed + ancestors)
-                                var locationHierarchy = new HashSet<Guid> { proposedLocationId.Value };
-                                foreach (var ancestor in ancestryResponse.Locations)
-                                {
-                                    locationHierarchy.Add(ancestor.LocationId);
-                                }
-
-                                // Check for overlap
-                                var hasOverlap = territoryLocationIds.Any(tid => locationHierarchy.Contains(tid));
-
-                                if (territoryMode == "exclusive" && hasOverlap)
-                                {
-                                    hasViolation = true;
-                                    reason = "Proposed location overlaps with exclusive territory in active contract";
-                                }
-                                else if (territoryMode == "inclusive" && !hasOverlap)
-                                {
-                                    hasViolation = true;
-                                    reason = "Proposed location is outside inclusive territory in active contract";
-                                }
                             }
                             break;
 

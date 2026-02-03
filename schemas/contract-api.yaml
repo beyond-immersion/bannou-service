@@ -1041,7 +1041,6 @@ components:
       enum:
       - exclusivity
       - non_compete
-      - territory
       - time_commitment
 
     MetadataType:
