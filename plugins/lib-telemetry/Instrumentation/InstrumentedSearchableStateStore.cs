@@ -8,10 +8,11 @@ namespace BeyondImmersion.BannouService.Telemetry.Instrumentation;
 
 /// <summary>
 /// Decorator that wraps an ISearchableStateStore to add telemetry instrumentation.
-/// Records traces and metrics for all searchable state store operations.
+/// Extends InstrumentedCacheableStateStore to inherit instrumentation for all cacheable operations
+/// (sets, sorted sets, counters, hashes) and adds instrumentation for search-specific operations.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
-public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<TValue>, ISearchableStateStore<TValue>
+public class InstrumentedSearchableStateStore<TValue> : InstrumentedCacheableStateStore<TValue>, ISearchableStateStore<TValue>
     where TValue : class
 {
     private readonly ISearchableStateStore<TValue> _innerSearchable;
@@ -39,7 +40,7 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         _backend = backend;
     }
 
-    private Activity? StartOperation(string operation)
+    private Activity? StartSearchOperation(string operation)
     {
         var activity = _telemetry.StartActivity(
             TelemetryComponents.State,
@@ -56,7 +57,7 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         return activity;
     }
 
-    private void RecordSuccess(Activity? activity, string operation, Stopwatch sw)
+    private void RecordSearchSuccess(Activity? activity, string operation, Stopwatch sw)
     {
         sw.Stop();
         var durationSeconds = sw.Elapsed.TotalSeconds;
@@ -75,7 +76,7 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         activity?.SetStatus(ActivityStatusCode.Ok);
     }
 
-    private void RecordFailure(Activity? activity, string operation, Stopwatch sw, Exception ex)
+    private void RecordSearchFailure(Activity? activity, string operation, Stopwatch sw, Exception ex)
     {
         sw.Stop();
         var durationSeconds = sw.Elapsed.TotalSeconds;
@@ -102,19 +103,19 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         SearchIndexOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        using var activity = StartOperation("create_index");
+        using var activity = StartSearchOperation("create_index");
         activity?.SetTag("bannou.state.index", indexName);
         var sw = Stopwatch.StartNew();
 
         try
         {
             var result = await _innerSearchable.CreateIndexAsync(indexName, schema, options, cancellationToken);
-            RecordSuccess(activity, "create_index", sw);
+            RecordSearchSuccess(activity, "create_index", sw);
             return result;
         }
         catch (Exception ex)
         {
-            RecordFailure(activity, "create_index", sw, ex);
+            RecordSearchFailure(activity, "create_index", sw, ex);
             throw;
         }
     }
@@ -125,19 +126,19 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         bool deleteDocuments = false,
         CancellationToken cancellationToken = default)
     {
-        using var activity = StartOperation("drop_index");
+        using var activity = StartSearchOperation("drop_index");
         activity?.SetTag("bannou.state.index", indexName);
         var sw = Stopwatch.StartNew();
 
         try
         {
             var result = await _innerSearchable.DropIndexAsync(indexName, deleteDocuments, cancellationToken);
-            RecordSuccess(activity, "drop_index", sw);
+            RecordSearchSuccess(activity, "drop_index", sw);
             return result;
         }
         catch (Exception ex)
         {
-            RecordFailure(activity, "drop_index", sw, ex);
+            RecordSearchFailure(activity, "drop_index", sw, ex);
             throw;
         }
     }
@@ -149,7 +150,7 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         SearchQueryOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        using var activity = StartOperation("search");
+        using var activity = StartSearchOperation("search");
         activity?.SetTag("bannou.state.index", indexName);
         activity?.SetTag("bannou.state.query", query);
         var sw = Stopwatch.StartNew();
@@ -157,12 +158,12 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         try
         {
             var result = await _innerSearchable.SearchAsync(indexName, query, options, cancellationToken);
-            RecordSuccess(activity, "search", sw);
+            RecordSearchSuccess(activity, "search", sw);
             return result;
         }
         catch (Exception ex)
         {
-            RecordFailure(activity, "search", sw, ex);
+            RecordSearchFailure(activity, "search", sw, ex);
             throw;
         }
     }
@@ -175,7 +176,7 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         bool fuzzy = false,
         CancellationToken cancellationToken = default)
     {
-        using var activity = StartOperation("suggest");
+        using var activity = StartSearchOperation("suggest");
         activity?.SetTag("bannou.state.index", indexName);
         activity?.SetTag("bannou.state.prefix", prefix);
         var sw = Stopwatch.StartNew();
@@ -183,12 +184,12 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         try
         {
             var result = await _innerSearchable.SuggestAsync(indexName, prefix, maxResults, fuzzy, cancellationToken);
-            RecordSuccess(activity, "suggest", sw);
+            RecordSearchSuccess(activity, "suggest", sw);
             return result;
         }
         catch (Exception ex)
         {
-            RecordFailure(activity, "suggest", sw, ex);
+            RecordSearchFailure(activity, "suggest", sw, ex);
             throw;
         }
     }
@@ -198,19 +199,19 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
         string indexName,
         CancellationToken cancellationToken = default)
     {
-        using var activity = StartOperation("get_index_info");
+        using var activity = StartSearchOperation("get_index_info");
         activity?.SetTag("bannou.state.index", indexName);
         var sw = Stopwatch.StartNew();
 
         try
         {
             var result = await _innerSearchable.GetIndexInfoAsync(indexName, cancellationToken);
-            RecordSuccess(activity, "get_index_info", sw);
+            RecordSearchSuccess(activity, "get_index_info", sw);
             return result;
         }
         catch (Exception ex)
         {
-            RecordFailure(activity, "get_index_info", sw, ex);
+            RecordSearchFailure(activity, "get_index_info", sw, ex);
             throw;
         }
     }
@@ -219,18 +220,18 @@ public class InstrumentedSearchableStateStore<TValue> : InstrumentedStateStore<T
     public async Task<IReadOnlyList<string>> ListIndexesAsync(
         CancellationToken cancellationToken = default)
     {
-        using var activity = StartOperation("list_indexes");
+        using var activity = StartSearchOperation("list_indexes");
         var sw = Stopwatch.StartNew();
 
         try
         {
             var result = await _innerSearchable.ListIndexesAsync(cancellationToken);
-            RecordSuccess(activity, "list_indexes", sw);
+            RecordSearchSuccess(activity, "list_indexes", sw);
             return result;
         }
         catch (Exception ex)
         {
-            RecordFailure(activity, "list_indexes", sw, ex);
+            RecordSearchFailure(activity, "list_indexes", sw, ex);
             throw;
         }
     }

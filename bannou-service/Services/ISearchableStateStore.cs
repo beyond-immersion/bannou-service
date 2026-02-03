@@ -207,11 +207,13 @@ public record SearchIndexInfo
 }
 
 /// <summary>
-/// Searchable state store - extends IStateStore with full-text search capabilities.
+/// Searchable state store - extends ICacheableStateStore with full-text search capabilities.
 /// Implemented by Redis stores using RedisSearch (FT.* commands).
+/// All searchable stores are Redis-based and therefore support all cacheable operations
+/// (sets, sorted sets, counters, hashes) in addition to full-text search.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
-public interface ISearchableStateStore<TValue> : IStateStore<TValue>
+public interface ISearchableStateStore<TValue> : ICacheableStateStore<TValue>
     where TValue : class
 {
     /// <summary>

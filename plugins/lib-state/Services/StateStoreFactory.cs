@@ -321,16 +321,22 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             }
 
             // Wrap with telemetry instrumentation if available
+            // Order matters: check most specific interface first (searchable > cacheable > base)
             if (_telemetryProvider != null)
             {
-                // Use cacheable wrapper for stores that implement ICacheableStateStore
-                // so that the wrapped store also implements ICacheableStateStore
-                if (store is ICacheableStateStore<TValue> cacheableStore)
+                if (store is ISearchableStateStore<TValue> searchableStore)
                 {
+                    // Searchable stores get the searchable wrapper which extends cacheable wrapper
+                    store = _telemetryProvider.WrapSearchableStateStore(searchableStore, storeName, backend);
+                }
+                else if (store is ICacheableStateStore<TValue> cacheableStore)
+                {
+                    // Cacheable stores (Redis, InMemory) get the cacheable wrapper
                     store = _telemetryProvider.WrapCacheableStateStore(cacheableStore, storeName, backend);
                 }
                 else
                 {
+                    // MySQL and other base stores get the base wrapper
                     store = _telemetryProvider.WrapStateStore(store, storeName, backend);
                 }
             }

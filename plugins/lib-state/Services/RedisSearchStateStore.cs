@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// Implements ICacheableStateStore for Set and Sorted Set operations.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
-public sealed class RedisSearchStateStore<TValue> : ICacheableStateStore<TValue>, ISearchableStateStore<TValue>
+public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue>
     where TValue : class
 {
     private readonly IDatabase _database;
