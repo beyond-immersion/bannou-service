@@ -118,14 +118,14 @@ paths:
         broker restarts\"\n                },\n                \"exclusive\": {\n                    \"type\": \"boolean\"\
         ,\n                    \"default\": false,\n                    \"description\": \"Whether only this connection can
         consume from the queue\"\n                },\n                \"autoAck\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether messages should be auto-acknowledged\"\
-        \n                },\n                \"prefetchCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"default\": 10,\n                    \"description\": \"Number of messages to prefetch\"\n          \
-        \      },\n                \"useDeadLetter\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": true,\n                    \"description\": \"Whether to use dead letter exchange for failed messages\"\
-        \n                },\n                \"consumerGroup\": {\n                    \"type\": \"string\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Name of the consumer group for load balancing\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether messages should be auto-acknowledged
+        (null uses DefaultAutoAck config)\"\n                },\n                \"prefetchCount\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 10,\n                    \"description\": \"Number of
+        messages to prefetch\"\n                },\n                \"useDeadLetter\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether to use dead letter
+        exchange for failed messages\"\n                },\n                \"consumerGroup\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name of the consumer
+        group for load balancing\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateSubscriptionResponse\"\
         ,\n    \"$defs\": {\n        \"CreateSubscriptionResponse\": {\n            \"description\": \"Response containing
         the created subscription details\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -321,8 +321,8 @@ components:
           description: Whether only this connection can consume from the queue
         autoAck:
           type: boolean
-          default: false
-          description: Whether messages should be auto-acknowledged
+          nullable: true
+          description: Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)
         prefetchCount:
           type: integer
           default: 10

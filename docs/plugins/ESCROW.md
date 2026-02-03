@@ -113,7 +113,7 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | ✓ | Default limit for listing escrows when not specified - used in `ListEscrowsAsync` |
 | `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `service_only` | ✓ | Default release confirmation mode - used when request param is null |
 | `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `immediate` | ✓ | Default refund confirmation mode - used when request param is null |
-| `ConfirmationTimeoutSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | `300` | ✗ | Timeout for party confirmations - defined but NOT used to set deadlines |
+| `ConfirmationTimeoutSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | `300` | ✓ | Timeout for party confirmations - used in `ReleaseAsync` and `RecordConsentAsync` to set `ConfirmationDeadline` |
 | `ConfirmationTimeoutBehavior` | `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | `auto_confirm` | ✓ | What happens when confirmation timeout expires |
 | `ConfirmationTimeoutCheckIntervalSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | `30` | ✓ | How often the background service checks for expired confirmations |
 | `ConfirmationTimeoutBatchSize` | `ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE` | `100` | ✓ | Maximum escrows to process per timeout check cycle |
@@ -427,9 +427,8 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
-5. **Configuration properties not wired up**: Some configuration properties remain unused:
+5. **Configuration properties not wired up**: One configuration property remains unused:
    - `ValidationCheckInterval` - defined but no background validation processor exists
-   - `ConfirmationTimeoutSeconds` - defined but NOT used to set confirmation deadlines when transitioning to Releasing/Refunding states
 
 6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
@@ -448,8 +447,6 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 3. **Distributed lock for concurrent modifications**: Add lock acquisition around agreement modifications to prevent race conditions when multiple parties deposit/consent simultaneously.
 
-4. **ConfirmationTimeoutSeconds wiring**: When transitioning to `Releasing` or `Refunding` states, set `ConfirmationDeadline = now + ConfirmationTimeoutSeconds` for non-immediate release/refund modes.
-
 ---
 
 ## Known Quirks & Caveats
@@ -458,7 +455,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 1. **Status index key pattern uses individual keys**: Status index stores entries at `status:{status}:{escrowId}` as individual key-value pairs using `IStateStore.SaveAsync`/`DeleteAsync`. This is not a Redis Set - it's keyed storage. Scanning all escrows by status requires `QueryAsync` against the agreement store, not the status index.
 
-2. **Party pending count race on failure**: Escrow creation increments party pending counts AFTER saving the agreement. If the save succeeds but subsequent operations (token save, status index save, event publish) fail, the pending counts remain incremented with no rollback. The catch block does NOT decrement counts.
+2. ~~**Party pending count race on failure**~~: Fixed. Party pending counts are now tracked during increment and rolled back in a nested catch block if any subsequent operation (event publish, mid-loop increment) fails.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -474,7 +471,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ### Design Considerations
 
-1. **POCO string defaults (`= string.Empty`)**: Internal POCO properties use `= string.Empty` as default to satisfy NRT. Consider making these nullable (`string?`) or adding validation at assignment time for fields that should always have values (e.g., `PartyType`, `CreatedByType`).
+1. ~~**POCO string defaults (`= string.Empty`)**~~: Fixed. Internal POCO string properties that must always have values now use `required` modifier instead of `= string.Empty`. Properties that can legitimately be absent remain nullable (`string?`).
 
 
 2. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.

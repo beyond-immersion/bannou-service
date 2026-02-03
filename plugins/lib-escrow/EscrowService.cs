@@ -789,7 +789,7 @@ internal class EscrowDepositModel
     public EscrowAssetBundleModel Assets { get; set; } = new();
     public DateTimeOffset DepositedAt { get; set; }
     public string? DepositTokenUsed { get; set; }
-    public string IdempotencyKey { get; set; } = string.Empty;
+    public required string IdempotencyKey { get; set; }
 }
 
 /// <summary>
@@ -863,7 +863,7 @@ internal class ValidationFailureModel
 {
     public DateTimeOffset DetectedAt { get; set; }
     public AssetType AssetType { get; set; }
-    public string AssetDescription { get; set; } = string.Empty;
+    public required string AssetDescription { get; set; }
     public ValidationFailureType FailureType { get; set; }
     public Guid AffectedPartyId { get; set; }
     public EntityType AffectedPartyType { get; set; }
@@ -875,7 +875,7 @@ internal class ValidationFailureModel
 /// </summary>
 internal class TokenHashModel
 {
-    public string TokenHash { get; set; } = string.Empty;
+    public required string TokenHash { get; set; }
     public Guid EscrowId { get; set; }
     public Guid PartyId { get; set; }
     public TokenType TokenType { get; set; }
@@ -890,10 +890,10 @@ internal class TokenHashModel
 /// </summary>
 internal class IdempotencyRecord
 {
-    public string Key { get; set; } = string.Empty;
+    public required string Key { get; set; }
     public Guid EscrowId { get; set; }
     public Guid PartyId { get; set; }
-    public string Operation { get; set; } = string.Empty;
+    public required string Operation { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public object? Result { get; set; }
@@ -904,13 +904,13 @@ internal class IdempotencyRecord
 /// </summary>
 internal class AssetHandlerModel
 {
-    public string AssetType { get; set; } = string.Empty;
-    public string PluginId { get; set; } = string.Empty;
+    public required string AssetType { get; set; }
+    public required string PluginId { get; set; }
     public bool BuiltIn { get; set; }
-    public string DepositEndpoint { get; set; } = string.Empty;
-    public string ReleaseEndpoint { get; set; } = string.Empty;
-    public string RefundEndpoint { get; set; } = string.Empty;
-    public string ValidateEndpoint { get; set; } = string.Empty;
+    public required string DepositEndpoint { get; set; }
+    public required string ReleaseEndpoint { get; set; }
+    public required string RefundEndpoint { get; set; }
+    public required string ValidateEndpoint { get; set; }
     public DateTimeOffset RegisteredAt { get; set; }
 }
 

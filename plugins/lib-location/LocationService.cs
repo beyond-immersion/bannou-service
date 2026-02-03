@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,7 @@ public partial class LocationService : ILocationService
     private readonly LocationServiceConfiguration _configuration;
     private readonly IRealmClient _realmClient;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IResourceClient _resourceClient;
 
     private const string LOCATION_KEY_PREFIX = "location:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -38,7 +40,8 @@ public partial class LocationService : ILocationService
         LocationServiceConfiguration configuration,
         IRealmClient realmClient,
         IEventConsumer eventConsumer,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        IResourceClient resourceClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -46,6 +49,7 @@ public partial class LocationService : ILocationService
         _configuration = configuration;
         _realmClient = realmClient;
         _lockProvider = lockProvider;
+        _resourceClient = resourceClient;
 
         // Register event handlers via partial class (LocationServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -941,6 +945,63 @@ public partial class LocationService : ILocationService
             {
                 _logger.LogWarning("Cannot delete location {LocationId} - has {ChildCount} children", body.LocationId, childIds.Count);
                 return StatusCodes.Conflict;
+            }
+
+            // Check for external references via lib-resource (L1 - allowed per SERVICE_HIERARCHY)
+            // L3/L4 services like CharacterEncounter register their location references with lib-resource
+            try
+            {
+                var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                    new CheckReferencesRequest
+                    {
+                        ResourceType = "location",
+                        ResourceId = body.LocationId
+                    }, cancellationToken);
+
+                if (resourceCheck != null && resourceCheck.RefCount > 0)
+                {
+                    var sourceTypes = resourceCheck.Sources != null
+                        ? string.Join(", ", resourceCheck.Sources.Select(s => s.SourceType))
+                        : "unknown";
+                    _logger.LogWarning(
+                        "Cannot delete location {LocationId} - has {RefCount} external references from: {SourceTypes}",
+                        body.LocationId, resourceCheck.RefCount, sourceTypes);
+
+                    // Execute cleanup callbacks (CASCADE/DETACH) before proceeding
+                    var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
+                        new ExecuteCleanupRequest
+                        {
+                            ResourceType = "location",
+                            ResourceId = body.LocationId,
+                            CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+                        }, cancellationToken);
+
+                    if (!cleanupResult.Success)
+                    {
+                        _logger.LogWarning(
+                            "Cleanup blocked for location {LocationId}: {Reason}",
+                            body.LocationId, cleanupResult.BlockedReason ?? "cleanup failed");
+                        return StatusCodes.Conflict;
+                    }
+                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // No references registered - this is normal
+                _logger.LogDebug("No lib-resource references found for location {LocationId}", body.LocationId);
+            }
+            catch (ApiException ex)
+            {
+                // lib-resource unavailable - fail closed to protect referential integrity
+                _logger.LogError(ex,
+                    "lib-resource unavailable when checking references for location {LocationId}, blocking deletion for safety",
+                    body.LocationId);
+                await _messageBus.TryPublishErrorAsync(
+                    "location", "DeleteLocation", "resource_service_unavailable",
+                    $"lib-resource unavailable when checking references for location {body.LocationId}",
+                    dependency: "resource", endpoint: "post:/location/delete",
+                    details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+                return StatusCodes.ServiceUnavailable;
             }
 
             // Delete the location

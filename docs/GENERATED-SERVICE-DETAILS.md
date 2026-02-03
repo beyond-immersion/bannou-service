@@ -418,8 +418,7 @@ The Subscription service manages user subscriptions to game services, controllin
 
 **Version**: 1.0.0 | **Schema**: `schemas/telemetry-api.yaml` | **Deep Dive**: [docs/plugins/TELEMETRY.md](plugins/TELEMETRY.md)
 
-Unified observability plugin providing distributed tracing, metrics, and log correlation
-for Bannou services using OpenTelemetry standards.
+The Telemetry service provides unified observability infrastructure for Bannou services using OpenTelemetry standards. It operates in a dual role: (1) as the `ITelemetryProvider` infrastructure interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and (2) as an HTTP API providing health and status endpoints for observability configuration. The service is internal-only (empty x-permissions) and unique in that it does not use state stores or publish events - it purely configures and exposes OpenTelemetry SDK settings.
 
 ---
 

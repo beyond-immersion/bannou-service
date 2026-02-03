@@ -208,42 +208,59 @@ public partial class EscrowService
             };
             await StatusIndexStore.SaveAsync(statusIndexKey, statusEntry, cancellationToken: cancellationToken);
 
-            foreach (var party in partyModels)
+            // Track incremented parties for rollback on failure
+            var incrementedParties = new List<(Guid PartyId, EntityType PartyType)>();
+            try
             {
-                await IncrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
-            }
-
-            var createdEvent = new EscrowCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                EscrowId = escrowId,
-                EscrowType = agreementModel.EscrowType,
-                TrustMode = agreementModel.TrustMode,
-                Parties = partyModels.Select(p => new EscrowPartyInfo
+                foreach (var party in partyModels)
                 {
-                    PartyId = p.PartyId,
-                    PartyType = p.PartyType,
-                    Role = p.Role
-                }).ToList(),
-                ExpectedDepositCount = expectedDepositModels.Count,
-                ExpiresAt = expiresAt,
-                BoundContractId = body.BoundContractId,
-                ReferenceType = body.ReferenceType,
-                ReferenceId = body.ReferenceId,
-                CreatedAt = now
-            };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowCreated, createdEvent, cancellationToken);
+                    await IncrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
+                    incrementedParties.Add((party.PartyId, party.PartyType));
+                }
 
-            _logger.LogInformation(
-                "Created escrow {EscrowId} with {PartyCount} parties, type {EscrowType}, trust mode {TrustMode}",
-                escrowId, partyModels.Count, body.EscrowType, body.TrustMode);
+                var createdEvent = new EscrowCreatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    EscrowId = escrowId,
+                    EscrowType = agreementModel.EscrowType,
+                    TrustMode = agreementModel.TrustMode,
+                    Parties = partyModels.Select(p => new EscrowPartyInfo
+                    {
+                        PartyId = p.PartyId,
+                        PartyType = p.PartyType,
+                        Role = p.Role
+                    }).ToList(),
+                    ExpectedDepositCount = expectedDepositModels.Count,
+                    ExpiresAt = expiresAt,
+                    BoundContractId = body.BoundContractId,
+                    ReferenceType = body.ReferenceType,
+                    ReferenceId = body.ReferenceId,
+                    CreatedAt = now
+                };
+                await _messageBus.TryPublishAsync(EscrowTopics.EscrowCreated, createdEvent, cancellationToken);
 
-            return (StatusCodes.OK, new CreateEscrowResponse
+                _logger.LogInformation(
+                    "Created escrow {EscrowId} with {PartyCount} parties, type {EscrowType}, trust mode {TrustMode}",
+                    escrowId, partyModels.Count, body.EscrowType, body.TrustMode);
+
+                return (StatusCodes.OK, new CreateEscrowResponse
+                {
+                    Escrow = MapToApiModel(agreementModel),
+                    DepositTokens = depositTokens
+                });
+            }
+            catch (Exception postSaveEx)
             {
-                Escrow = MapToApiModel(agreementModel),
-                DepositTokens = depositTokens
-            });
+                // Rollback party pending counts on failure after increment
+                _logger.LogWarning(postSaveEx, "Failed after incrementing pending counts for escrow {EscrowId}, rolling back {Count} parties",
+                    escrowId, incrementedParties.Count);
+                foreach (var (partyId, partyType) in incrementedParties)
+                {
+                    await DecrementPartyPendingCountAsync(partyId, partyType, cancellationToken);
+                }
+                throw; // Re-throw to be caught by outer catch
+            }
         }
         catch (Exception ex)
         {

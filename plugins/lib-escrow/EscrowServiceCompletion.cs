@@ -12,6 +12,9 @@ public partial class EscrowService
     /// <summary>
     /// Releases escrowed assets to recipients.
     /// Uses optimistic concurrency (ETag) to prevent concurrent state transitions.
+    /// Release behavior depends on ReleaseMode:
+    /// - Immediate/ServiceOnly: Transitions directly to Released
+    /// - PartyRequired/ServiceAndParty: Transitions to Releasing with confirmation deadline
     /// </summary>
     public async Task<(StatusCodes, ReleaseResponse?)> ReleaseAsync(
         ReleaseRequest body,
@@ -44,6 +47,82 @@ public partial class EscrowService
                 var now = DateTimeOffset.UtcNow;
                 var previousStatus = agreementModel.Status;
 
+                // Check if release mode requires party confirmations
+                var requiresPartyConfirmation = agreementModel.ReleaseMode == ReleaseMode.PartyRequired ||
+                                                agreementModel.ReleaseMode == ReleaseMode.ServiceAndParty;
+
+                // If coming from Finalizing and party confirmation required, transition to Releasing
+                if (previousStatus == EscrowStatus.Finalizing && requiresPartyConfirmation)
+                {
+                    agreementModel.Status = EscrowStatus.Releasing;
+                    agreementModel.ConfirmationDeadline = now.AddSeconds(_configuration.ConfirmationTimeoutSeconds);
+
+                    // Initialize release confirmations for all recipient parties
+                    agreementModel.ReleaseConfirmations = agreementModel.ReleaseAllocations?
+                        .Select(a => new ReleaseConfirmationModel
+                        {
+                            PartyId = a.RecipientPartyId,
+                            PartyType = a.RecipientPartyType,
+                            ServiceConfirmed = agreementModel.ReleaseMode == ReleaseMode.PartyRequired, // Auto-confirm service for PartyRequired
+                            PartyConfirmed = false,
+                            ServiceConfirmedAt = agreementModel.ReleaseMode == ReleaseMode.PartyRequired ? now : null
+                        }).ToList() ?? new List<ReleaseConfirmationModel>();
+
+                    var initiationSaveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
+                    if (initiationSaveResult == null)
+                    {
+                        _logger.LogDebug("Concurrent modification during release initiation for escrow {EscrowId}, retrying (attempt {Attempt})",
+                            body.EscrowId, attempt + 1);
+                        continue;
+                    }
+
+                    // Update status index
+                    var initiationOldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                    await StatusIndexStore.DeleteAsync(initiationOldStatusKey, cancellationToken);
+
+                    var initiationNewStatusKey = $"{GetStatusIndexKey(EscrowStatus.Releasing)}:{body.EscrowId}";
+                    var initiationStatusEntry = new StatusIndexEntry
+                    {
+                        EscrowId = body.EscrowId,
+                        Status = EscrowStatus.Releasing,
+                        ExpiresAt = agreementModel.ExpiresAt,
+                        AddedAt = now
+                    };
+                    await StatusIndexStore.SaveAsync(initiationNewStatusKey, initiationStatusEntry, cancellationToken: cancellationToken);
+
+                    // Publish releasing event with allocation details
+                    var releasingEvent = new EscrowReleasingEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        EscrowId = body.EscrowId,
+                        ReleaseMode = agreementModel.ReleaseMode,
+                        ConfirmationDeadline = agreementModel.ConfirmationDeadline,
+                        BoundContractId = agreementModel.BoundContractId,
+                        Allocations = (agreementModel.ReleaseAllocations ?? new List<ReleaseAllocationModel>())
+                            .Select(a => new ReleaseAllocationWithConfirmation
+                            {
+                                RecipientPartyId = a.RecipientPartyId,
+                                RecipientPartyType = a.RecipientPartyType,
+                                Assets = (a.Assets ?? new List<EscrowAssetModel>()).Select(MapAssetToApiModel).ToList(),
+                                DestinationWalletId = a.DestinationWalletId,
+                                DestinationContainerId = a.DestinationContainerId
+                            }).ToList()
+                    };
+                    await _messageBus.TryPublishAsync(EscrowTopics.EscrowReleasing, releasingEvent, cancellationToken);
+
+                    _logger.LogInformation("Escrow {EscrowId} transitioning to Releasing, awaiting {Count} party confirmations, deadline: {Deadline}",
+                        body.EscrowId, agreementModel.ReleaseConfirmations.Count, agreementModel.ConfirmationDeadline);
+
+                    return (StatusCodes.OK, new ReleaseResponse
+                    {
+                        Escrow = MapToApiModel(agreementModel),
+                        FinalizerResults = new List<FinalizerResult>(),
+                        Releases = new List<ReleaseResult>() // No releases yet - awaiting confirmations
+                    });
+                }
+
+                // Direct release (Immediate/ServiceOnly mode, or already in Releasing with all confirmations)
                 // Process release allocations
                 var releases = new List<ReleaseResult>();
                 if (agreementModel.ReleaseAllocations != null)

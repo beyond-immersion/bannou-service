@@ -235,8 +235,8 @@ public partial class MessagingController
                 },
                 "autoAck": {
                     "type": "boolean",
-                    "default": false,
-                    "description": "Whether messages should be auto-acknowledged"
+                    "nullable": true,
+                    "description": "Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)"
                 },
                 "prefetchCount": {
                     "type": "integer",

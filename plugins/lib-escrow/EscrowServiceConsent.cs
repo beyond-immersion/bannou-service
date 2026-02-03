@@ -153,6 +153,12 @@ public partial class EscrowService
                         {
                             newStatus = EscrowStatus.Refunding;
                             triggered = true;
+
+                            // Set confirmation deadline for non-immediate refund modes
+                            if (agreementModel.RefundMode != RefundMode.Immediate)
+                            {
+                                agreementModel.ConfirmationDeadline = now.AddSeconds(_configuration.ConfirmationTimeoutSeconds);
+                            }
                         }
                         break;
 
@@ -246,6 +252,20 @@ public partial class EscrowService
                         DisputedAt = now
                     };
                     await _messageBus.TryPublishAsync(EscrowTopics.EscrowDisputed, disputeEvent, cancellationToken);
+                }
+                else if (newStatus == EscrowStatus.Refunding && previousStatus != EscrowStatus.Refunding)
+                {
+                    var refundingEvent = new EscrowRefundingEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        EscrowId = body.EscrowId,
+                        RefundMode = agreementModel.RefundMode,
+                        Deposits = (agreementModel.Deposits ?? new List<EscrowDepositModel>())
+                            .Select(MapDepositToApiModel).ToList(),
+                        Reason = body.Notes ?? "Party initiated refund"
+                    };
+                    await _messageBus.TryPublishAsync(EscrowTopics.EscrowRefunding, refundingEvent, cancellationToken);
                 }
 
                 _logger.LogInformation(

@@ -423,8 +423,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | int | `30` | How often the background service checks for expired confirma... |
 | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | int | `300` | Timeout for party confirmations in seconds (default 5 minute... |
 | `ESCROW_DEFAULT_LIST_LIMIT` | int | `50` | Default limit for listing escrows when not specified |
-| `ESCROW_DEFAULT_REFUND_MODE` | string | `immediate` | Default refund confirmation mode (immediate/service_only/par... |
-| `ESCROW_DEFAULT_RELEASE_MODE` | string | `service_only` | Default release confirmation mode (immediate/service_only/pa... |
+| `ESCROW_DEFAULT_REFUND_MODE` | string | `immediate` | Default refund confirmation mode when not specified in reque... |
+| `ESCROW_DEFAULT_RELEASE_MODE` | string | `service_only` | Default release confirmation mode when not specified in requ... |
 | `ESCROW_DEFAULT_TIMEOUT` | string | `P7D` | Default escrow expiration if not specified (ISO 8601 duratio... |
 | `ESCROW_EXPIRATION_BATCH_SIZE` | int | `100` | Batch size for expiration processing |
 | `ESCROW_EXPIRATION_CHECK_INTERVAL` | string | `PT1M` | How often to check for expired escrows (ISO 8601 duration) |
@@ -585,6 +585,8 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `MESSAGING_CALLBACK_RETRY_DELAY_MS` | int | `1000` | Delay between HTTP callback retry attempts in milliseconds |
 | `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for HTTP callback delivery (network f... |
+| `MESSAGING_CHANNEL_POOL_SIZE` | int | `10` | Maximum number of channels in the publisher channel pool |
+| `MESSAGING_CONNECTION_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay for connection retries in milliseconds |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
@@ -603,12 +605,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | int | `5` | Interval between retry attempts for buffered messages |
 | `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `300` | Maximum age of buffered messages before node crash (prevents... |
 | `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `10000` | Maximum number of messages in retry buffer before node crash |
-| `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds |
-| `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering |
+| `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds (NOT YET IMPLEM... |
+| `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering (NOT YET IMPLEM... |
 | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | int | `2` | Delay in seconds before starting subscription recovery servi... |
 | `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | int | `6` | Interval in hours between subscription TTL refresh operation... |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
-| `MESSAGING_USE_MASSTRANSIT` | bool | `true` | Use MassTransit wrapper (true) or direct RabbitMQ.Client (fa... |
 
 ### Music
 
@@ -779,8 +780,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `TELEMETRY_DEPLOYMENT_ENVIRONMENT` | string | `development` | Deployment environment (development, staging, production) |
-| `TELEMETRY_METRICS_ENABLED` | bool | `true` | Enable metrics export |
-| `TELEMETRY_METRICS_EXPORT_INTERVAL_SECONDS` | int | `15` | Metrics export interval in seconds |
+| `TELEMETRY_METRICS_ENABLED` | bool | `true` | Enable metrics export via Prometheus scraping endpoint (/met... |
 | `TELEMETRY_OTLP_ENDPOINT` | string | `http://localhost:4317` | OTLP exporter endpoint (gRPC or HTTP) |
 | `TELEMETRY_OTLP_PROTOCOL` | string | `grpc` | OTLP transport protocol |
 | `TELEMETRY_SERVICE_NAME` | string | **REQUIRED** | Service name for telemetry (defaults to effective app-id if ... |

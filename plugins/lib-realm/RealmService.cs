@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,7 @@ public partial class RealmService : IRealmService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RealmService> _logger;
     private readonly RealmServiceConfiguration _configuration;
+    private readonly IResourceClient _resourceClient;
 
     private const string REALM_KEY_PREFIX = "realm:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -31,12 +33,14 @@ public partial class RealmService : IRealmService
         IMessageBus messageBus,
         ILogger<RealmService> logger,
         RealmServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IResourceClient resourceClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
+        _resourceClient = resourceClient;
 
         // Register event handlers via partial class (RealmServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -505,6 +509,63 @@ public partial class RealmService : IRealmService
             {
                 _logger.LogDebug("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
                 return StatusCodes.Conflict;
+            }
+
+            // Check for external references via lib-resource (L1 - allowed per SERVICE_HIERARCHY)
+            // L3/L4 services like RealmHistory register their realm references with lib-resource
+            try
+            {
+                var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                    new CheckReferencesRequest
+                    {
+                        ResourceType = "realm",
+                        ResourceId = body.RealmId
+                    }, cancellationToken);
+
+                if (resourceCheck != null && resourceCheck.RefCount > 0)
+                {
+                    var sourceTypes = resourceCheck.Sources != null
+                        ? string.Join(", ", resourceCheck.Sources.Select(s => s.SourceType))
+                        : "unknown";
+                    _logger.LogWarning(
+                        "Cannot delete realm {RealmId} - has {RefCount} external references from: {SourceTypes}",
+                        body.RealmId, resourceCheck.RefCount, sourceTypes);
+
+                    // Execute cleanup callbacks (CASCADE/DETACH) before proceeding
+                    var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
+                        new ExecuteCleanupRequest
+                        {
+                            ResourceType = "realm",
+                            ResourceId = body.RealmId,
+                            CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+                        }, cancellationToken);
+
+                    if (!cleanupResult.Success)
+                    {
+                        _logger.LogWarning(
+                            "Cleanup blocked for realm {RealmId}: {Reason}",
+                            body.RealmId, cleanupResult.BlockedReason ?? "cleanup failed");
+                        return StatusCodes.Conflict;
+                    }
+                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // No references registered - this is normal
+                _logger.LogDebug("No lib-resource references found for realm {RealmId}", body.RealmId);
+            }
+            catch (ApiException ex)
+            {
+                // lib-resource unavailable - fail closed to protect referential integrity
+                _logger.LogError(ex,
+                    "lib-resource unavailable when checking references for realm {RealmId}, blocking deletion for safety",
+                    body.RealmId);
+                await _messageBus.TryPublishErrorAsync(
+                    "realm", "DeleteRealm", "resource_service_unavailable",
+                    $"lib-resource unavailable when checking references for realm {body.RealmId}",
+                    dependency: "resource", endpoint: "post:/realm/delete",
+                    details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+                return StatusCodes.ServiceUnavailable;
             }
 
             // Delete the model
