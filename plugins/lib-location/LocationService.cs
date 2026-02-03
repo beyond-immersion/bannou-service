@@ -1085,7 +1085,7 @@ public partial class LocationService : ILocationService
                     {
                         _logger.LogWarning(
                             "Cleanup blocked for location {LocationId}: {Reason}",
-                            body.LocationId, cleanupResult.BlockedReason ?? "cleanup failed");
+                            body.LocationId, cleanupResult.AbortReason ?? "cleanup failed");
                         return StatusCodes.Conflict;
                     }
                 }

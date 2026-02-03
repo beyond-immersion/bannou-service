@@ -246,8 +246,7 @@ No bugs identified.
 
 5. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
 
-6. **Event sentinel values for nullable fields**: Events use `Guid.Empty` for null parent, `default` for null deprecation date, and `new object()` for null metadata. Schema should define these as optional instead of using sentinel values.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/192 -->
+6. ~~**Event sentinel values for nullable fields**~~: **FIXED** (2026-02-03) - Schema now specifies `nullable: true` for optional fields, generating `Guid?`, `DateTimeOffset?`, and `object?` types. Service code assigns nullable values directly instead of using sentinel values like `Guid.Empty`.
 
 ### Design Considerations
 

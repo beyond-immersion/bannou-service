@@ -232,7 +232,7 @@ State Store Layout
 
 2. **Depth auto-calculated but not updated**: Depth is `parent.Depth + 1` at creation time (lines 395-408). If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated. Depth recalculation would require traversing all descendants.
 
-2. **Guid.Empty as null marker in events**: Event payloads use `Guid.Empty` for nullable fields like `ParentTypeId` and `InverseTypeId` when no value is set (lines 1198, 1227-1228). This is per the x-lifecycle schema pattern.
+2. ~~**Guid.Empty as null marker in events**~~: **FIXED** (2026-02-03) - Schema now specifies `nullable: true` for `parentTypeId`, `inverseTypeId`, `deprecatedAt`, and `metadata`. Generated C# uses `Guid?` and `DateTimeOffset?`, eliminating sentinel values.
 
 3. **Partial merge failure leaves inconsistent state**: If merge fails midway (lines 957-996), some relationships are migrated and others are not. No rollback mechanism exists. The response reports counts (`RelationshipsMigrated`, `RelationshipsFailed`, `MigrationErrors`) for manual resolution.
 

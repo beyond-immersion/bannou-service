@@ -544,7 +544,7 @@ public partial class RealmService : IRealmService
                     {
                         _logger.LogWarning(
                             "Cleanup blocked for realm {RealmId}: {Reason}",
-                            body.RealmId, cleanupResult.BlockedReason ?? "cleanup failed");
+                            body.RealmId, cleanupResult.AbortReason ?? "cleanup failed");
                         return StatusCodes.Conflict;
                     }
                 }
