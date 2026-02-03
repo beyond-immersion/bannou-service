@@ -99,20 +99,20 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | Property | Env Var | Default | Used | Purpose |
 |----------|---------|---------|------|---------|
 | `DefaultTimeout` | `ESCROW_DEFAULT_TIMEOUT` | `P7D` | ✓ | Default escrow expiration if not specified (ISO 8601 duration) - used in `CreateEscrowAsync` |
-| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✗ | Maximum allowed escrow duration - NOT validated against requested timeout |
+| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✓ | Maximum allowed escrow duration - validated in `CreateEscrowAsync` |
 | `ExpirationGracePeriod` | `ESCROW_EXPIRATION_GRACE_PERIOD` | `PT1H` | ✓ | Grace period after expiration before auto-refund - used in `EscrowExpirationService` |
 | `TokenLength` | `ESCROW_TOKEN_LENGTH` | `32` | ✓ | Token length in bytes - used in `GenerateToken` |
 | `ExpirationCheckInterval` | `ESCROW_EXPIRATION_CHECK_INTERVAL` | `PT1M` | ✓ | How often to check for expired escrows - used in `EscrowExpirationService` |
 | `ExpirationBatchSize` | `ESCROW_EXPIRATION_BATCH_SIZE` | `100` | ✓ | Batch size for expiration processing - used in `EscrowExpirationService` |
 | `ValidationCheckInterval` | `ESCROW_VALIDATION_CHECK_INTERVAL` | `PT5M` | ✗ | How often to validate held assets (no background processor) |
 | `MaxParties` | `ESCROW_MAX_PARTIES` | `10` | ✓ | Maximum parties per escrow - validated in `CreateEscrowAsync` |
-| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✗ | Maximum asset lines per deposit - NOT validated in `DepositAsync` |
-| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | ✗ | Maximum concurrent pending escrows per party - NOT enforced in `CreateEscrowAsync` |
+| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✓ | Maximum asset lines per deposit - validated in `DepositAsync` |
+| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | ✓ | Maximum concurrent pending escrows per party - validated in `CreateEscrowAsync` |
 | `IdempotencyTtlHours` | `ESCROW_IDEMPOTENCY_TTL_HOURS` | `24` | ✓ | TTL in hours for idempotency key storage - used in `DepositAsync` |
 | `MaxConcurrencyRetries` | `ESCROW_MAX_CONCURRENCY_RETRIES` | `3` | ✓ | Max retry attempts for optimistic concurrency operations - used throughout |
 | `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | ✓ | Default limit for listing escrows when not specified - used in `ListEscrowsAsync` |
-| `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `service_only` | ✗ | Default release confirmation mode - defined but NOT used (escrows use request param) |
-| `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `immediate` | ✗ | Default refund confirmation mode - defined but NOT used (escrows use request param) |
+| `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `service_only` | ✓ | Default release confirmation mode - used when request param is null |
+| `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `immediate` | ✓ | Default refund confirmation mode - used when request param is null |
 | `ConfirmationTimeoutSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | `300` | ✗ | Timeout for party confirmations - defined but NOT used to set deadlines |
 | `ConfirmationTimeoutBehavior` | `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | `auto_confirm` | ✓ | What happens when confirmation timeout expires |
 | `ConfirmationTimeoutCheckIntervalSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | `30` | ✓ | How often the background service checks for expired confirmations |
@@ -427,14 +427,9 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
-5. **Configuration properties not wired up**: Several configuration properties remain unused:
-   - `MaxTimeout` - defined but NOT validated against requested timeout
-   - `MaxAssetsPerDeposit` - defined but NOT validated in `DepositAsync`
-   - `MaxPendingPerParty` - defined but NOT enforced in `CreateEscrowAsync`
+5. **Configuration properties not wired up**: Some configuration properties remain unused:
    - `ValidationCheckInterval` - defined but no background validation processor exists
-   - `DefaultReleaseMode` - defined but escrows use request parameter instead
-   - `DefaultRefundMode` - defined but escrows use request parameter instead
-   - `ConfirmationTimeoutSeconds` - defined but NOT used to set confirmation deadlines
+   - `ConfirmationTimeoutSeconds` - defined but NOT used to set confirmation deadlines when transitioning to Releasing/Refunding states
 
 6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
@@ -451,13 +446,9 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 2. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support.
 
-3. **Rate limiting via MaxPendingPerParty**: Enforce the configured limit during `CreateEscrow` by checking the party pending store before allowing new escrows.
+3. **Distributed lock for concurrent modifications**: Add lock acquisition around agreement modifications to prevent race conditions when multiple parties deposit/consent simultaneously.
 
-4. **MaxTimeout validation**: Validate requested timeout against `MaxTimeout` configuration in `CreateEscrowAsync` to prevent excessively long escrow periods.
-
-5. **MaxAssetsPerDeposit validation**: Validate asset count against `MaxAssetsPerDeposit` in `DepositAsync` to prevent oversized deposits.
-
-6. **Distributed lock for concurrent modifications**: Add lock acquisition around agreement modifications to prevent race conditions when multiple parties deposit/consent simultaneously.
+4. **ConfirmationTimeoutSeconds wiring**: When transitioning to `Releasing` or `Refunding` states, set `ConfirmationDeadline = now + ConfirmationTimeoutSeconds` for non-immediate release/refund modes.
 
 ---
 

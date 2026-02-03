@@ -23,7 +23,7 @@ The Telemetry service provides unified observability infrastructure for Bannou s
 | OpenTelemetry.Exporter.OpenTelemetryProtocol | OTLP trace export (gRPC or HTTP) |
 | OpenTelemetry.Exporter.Prometheus.AspNetCore | Prometheus metrics scraping endpoint |
 
-**Note**: This plugin has **no dependencies on other Bannou plugins** - it is foundational infrastructure (Layer 3: App Features per SERVICE_HIERARCHY).
+**Note**: This plugin has **no dependencies on other Bannou plugins** - it is **optional Layer 0 infrastructure** per SERVICE_HIERARCHY. Unlike required L0 components (state, messaging, mesh) which cannot be disabled, telemetry can be freely disabled. When enabled, it loads FIRST so that required infrastructure libs can use `ITelemetryProvider` for instrumentation.
 
 ---
 
@@ -189,7 +189,7 @@ None currently identified.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Plugin load priority**: TelemetryServicePlugin has no explicit priority setting, but the comment in the plugin class states it "MUST load BEFORE lib-state, lib-messaging, and lib-mesh" so ITelemetryProvider is available. Currently relies on implicit load order.
+1. **Plugin load priority**: Telemetry loads FIRST among infrastructure plugins (priority -1 in `InfrastructureLoadOrder`). This is enforced by PluginLoader to ensure `ITelemetryProvider` is available before lib-state, lib-messaging, and lib-mesh initialize. See `bannou-service/Plugins/PluginLoader.cs:39-45`.
 
 2. **NullTelemetryProvider fallback**: If telemetry plugin fails to load or is disabled, infrastructure libs receive NullTelemetryProvider (all methods are no-ops). This is intentional graceful degradation, not a bug.
 

@@ -1,7 +1,7 @@
 # Bannou Service Hierarchy
 
-> **Version**: 2.0
-> **Last Updated**: 2026-02-02
+> **Version**: 2.1
+> **Last Updated**: 2026-02-03
 > **Scope**: All Bannou service plugins and their inter-dependencies
 
 This document defines the authoritative service dependency hierarchy for Bannou. Services are organized into five layers based on their **domain** (application vs game) and **optionality** (foundation vs feature). Dependencies may only flow downward.
@@ -57,7 +57,7 @@ The hierarchy ensures that:
 │ L1: APP FOUNDATION (Required for ANY deployment)            │
 │ Depends on: L0                                              │
 ├─────────────────────────────────────────────────────────────┤
-│ L0: INFRASTRUCTURE (Always on - not plugins)                │
+│ L0: INFRASTRUCTURE (Plugins loaded first)                   │
 │ Depends on: Nothing                                         │
 └─────────────────────────────────────────────────────────────┘
 
@@ -68,22 +68,32 @@ The hierarchy ensures that:
 
 ---
 
-## Layer 0: Infrastructure (Always On)
+## Layer 0: Infrastructure (Loaded First)
 
-These are not services - they are infrastructure libraries that all plugins depend on implicitly. They cannot be disabled and have no service-layer dependencies.
+These are infrastructure plugins that load before all other plugins and provide core primitives. The **required** components cannot be disabled and have no service-layer dependencies. The **optional** component (telemetry) can be disabled but when enabled, it loads FIRST so that required components can use its instrumentation.
 
-| Component | Role |
-|-----------|------|
-| **lib-state** | State persistence (Redis, MySQL) via `IStateStoreFactory` |
-| **lib-messaging** | Pub/sub messaging (RabbitMQ) via `IMessageBus` |
-| **lib-mesh** | Service-to-service invocation via generated clients |
+| Plugin | Role | Required |
+|--------|------|----------|
+| **telemetry** | Distributed tracing, metrics via `ITelemetryProvider` | **Optional** |
+| **state** | State persistence (Redis, MySQL) via `IStateStoreFactory` | **Required** |
+| **messaging** | Pub/sub messaging (RabbitMQ) via `IMessageBus` | **Required** |
+| **mesh** | Service-to-service invocation via generated clients | **Required** |
+
+**Load Order** (enforced by PluginLoader):
+1. **telemetry** (-1) - First when enabled, so `ITelemetryProvider` is available
+2. **state** (0) - State management foundation
+3. **messaging** (1) - Depends on state being available
+4. **mesh** (2) - May depend on messaging for events
+
+**Why Telemetry is Optional but L0**: Telemetry provides the `ITelemetryProvider` interface that state, messaging, and mesh use for instrumentation. When disabled, these infrastructure plugins receive a `NullTelemetryProvider` (all methods are no-ops). This graceful degradation allows telemetry to be optional while still being foundational when enabled.
 
 **Rules**:
 - Every plugin implicitly depends on Layer 0
 - Layer 0 components have no dependencies on any service layer
-- These are always available - no need to check for availability
+- **Required** components (state, messaging, mesh) are always available - startup fails if missing
+- **Optional** component (telemetry) can be disabled via `TELEMETRY_SERVICE_DISABLED=true`
 
-**Use Case**: "I want to build cloud services with Dapr-like communication primitives."
+**Use Case**: "I want to build HTTP API-based cloud services with Dapr-like communication primitives."
 
 ---
 
@@ -97,7 +107,7 @@ These services provide the core application infrastructure that ANY Bannou deplo
 | **auth** | Authentication, JWT tokens, session management |
 | **connect** | WebSocket gateway, binary protocol routing |
 | **permission** | RBAC permission management, capability manifests |
-| **contract** | Binding agreements, lifecycle management, template execution |
+| **contract** | Binding agreements, term validation, prebound template execution |
 | **resource** | Reference tracking, cleanup coordination for foundational resources |
 
 **Rules**:
@@ -106,7 +116,7 @@ These services provide the core application infrastructure that ANY Bannou deplo
 - Must always be enabled - other layers assume these exist
 - Missing L1 service = crash (not graceful degradation)
 
-**Use Case**: "I need a real-time authenticated cloud service with authorization and agreement management."
+**Use Case**: "I need a real-time authenticated cloud service with authorization and automated resource management."
 
 **Why Resource is L1**: Resource provides the machinery for reference tracking and cleanup coordination. Higher-layer services (L3/L4) publish reference events when they create/delete references to foundational resources (L2). This service maintains reference counts and coordinates cleanup callbacks, enabling safe deletion of foundational resources without hierarchy violations.
 
@@ -116,7 +126,7 @@ These services provide the core application infrastructure that ANY Bannou deplo
 
 ## Layer 2: Game Foundation (Required for Game Deployments)
 
-These services provide the core game infrastructure - worlds, characters, species, economies, items. They are **game-specific** but foundational - every game deployment needs them, and Game Features (L4) depend on them heavily.
+These services provide the core game infrastructure - worlds, characters, species, items, inventories. They are **game-specific** but foundational - every game deployment needs them, and Game Features (L4) depend on them heavily.
 
 | Service | Role |
 |---------|------|
@@ -149,19 +159,14 @@ These services provide the core game infrastructure - worlds, characters, specie
 
 ## Layer 3: App Features (Optional Non-Game Capabilities)
 
-These services provide optional capabilities that enhance ANY Bannou deployment - observability, asset storage, deployment orchestration. They are **not game-specific** and useful for both game and non-game deployments.
+These services provide optional capabilities that enhance ANY Bannou deployment - asset storage, deployment orchestration, documentation. They are **not game-specific** and useful for both game and non-game deployments.
 
 | Service | Role |
 |---------|------|
 | **asset** | Binary asset storage (MinIO/S3), pre-signed URLs |
-| **telemetry** | Distributed tracing, metrics, log correlation |
 | **orchestrator** | Environment management, deployment orchestration |
-| **documentation** | Knowledge base for AI agents |
+| **documentation** | Knowledge base for users, developers, and AI agents |
 | **website** | Public web interface (registration, news, status) |
-| **testing** | Test harness for service validation |
-| **mesh** | HTTP API for service discovery (wrapper around lib-mesh) |
-| **messaging** | HTTP API for pub/sub (wrapper around lib-messaging) |
-| **state** | HTTP API for state stores (wrapper around lib-state) |
 
 **Rules**:
 - May depend on Layer 0 and Layer 1
@@ -222,7 +227,8 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 
 | Layer | Can Depend On | Cannot Depend On | If Missing |
 |-------|---------------|------------------|------------|
-| L0 Infrastructure | - | Everything | N/A (always on) |
+| L0 Infrastructure (required) | - | Everything | Crash |
+| L0 Infrastructure (telemetry) | - | Everything | Graceful degradation (NullTelemetryProvider) |
 | L1 App Foundation | L0, L1 | L2, L3, L4 | Crash |
 | L2 Game Foundation | L0, L1, L2 | L3, L4 | Crash (when L4 enabled) |
 | L3 App Features | L0, L1, L3* | L2, L4 | Graceful degradation |
@@ -240,7 +246,7 @@ The layer system enables meaningful deployment presets:
 # Minimal cloud service (non-game)
 BANNOU_ENABLE_APP_FOUNDATION=true   # L1
 BANNOU_ENABLE_APP_FEATURES=true     # L3
-# Result: account, auth, connect, permission, contract, asset, analytics, etc.
+# Result: L0 infra + account, auth, connect, permission, contract + asset, orchestrator, etc.
 # No game concepts - useful for any real-time cloud service
 
 # Minimal game backend (foundations only)
@@ -431,17 +437,20 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 
 | Layer | Services |
 |-------|----------|
-| **L0** | lib-state, lib-messaging, lib-mesh |
+| **L0** | state, messaging, mesh (required); telemetry (optional)† |
 | **L1** | account, auth, connect, permission, contract, resource |
 | **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session |
-| **L3** | asset, telemetry, orchestrator, documentation, website, testing, mesh, messaging, state |
+| **L3** | asset, orchestrator, documentation, website |
 | **L4** | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
+
+† Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.
 
 \* Analytics is L4 for event consumption reasons only - it observes but doesn't invoke game services. See L4 section for details.
 
 **Not in hierarchy** (shared libraries, not runtime services):
-- **lib-common**: Shared type definitions only
-- **lib-*.tests**: Test projects, not runtime services
+- **common**: Shared type definitions only (lib-common)
+- **testing**: Test infrastructure (lib-testing)
+- **\*.tests**: Test projects, not runtime services
 
 ---
 
@@ -451,6 +460,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 |------|---------|---------|
 | 2026-02-01 | 1.0 | Initial version with 7 sub-layers |
 | 2026-02-02 | 2.0 | Simplified to 5-layer model with domain separation (app/game) and optionality (foundation/feature) |
+| 2026-02-03 | 2.1 | Moved telemetry from L3 to L0 as optional infrastructure; removed mesh/messaging/state from L3 (they're L0); removed testing from L3 (it's shared test infra, not a service); clarified L0 plugins load first |
 
 ---
 

@@ -140,8 +140,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         Assert.Equal(10, config.MaxParties);
         Assert.Equal(50, config.MaxAssetsPerDeposit);
         Assert.Equal(100, config.MaxPendingPerParty);
-        Assert.Equal("service_only", config.DefaultReleaseMode);
-        Assert.Equal("immediate", config.DefaultRefundMode);
+        Assert.Equal(ReleaseMode.ServiceOnly, config.DefaultReleaseMode);
+        Assert.Equal(RefundMode.Immediate, config.DefaultRefundMode);
         Assert.Equal(300, config.ConfirmationTimeoutSeconds);
         Assert.Equal("auto_confirm", config.ConfirmationTimeoutBehavior);
         Assert.Equal(30, config.ConfirmationTimeoutCheckIntervalSeconds);
