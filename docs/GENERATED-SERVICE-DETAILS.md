@@ -118,7 +118,7 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md)
 
-The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with optional cross-service data (personality, backstory, family tree), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility.
+The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from Relationship service, L2), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility. Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like CharacterPersonality or CharacterHistory - callers needing that data should aggregate from L4 services directly.
 
 ---
 
@@ -393,11 +393,14 @@ IRedisOperations                  - Low-level Redis access (Lua scripts, hashes,
 | Interface | Redis | MySQL | InMemory | RedisSearch |
 |-----------|:-----:|:-----:|:--------:|:-----------:|
 | `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
-| `ICacheableStateStore<T>` | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ❌* |
 | `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
 | `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
 | `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
+
+\* RedisSearchStateStore implements `ICacheableStateStore<T>` but throws `NotSupportedException` for all sorted set operations. This is because JSON storage mode required for RedisSearch indexing is incompatible with sorted set operations. Use `RedisStateStore` for stores requiring both sorted sets and caching.
 
 ---
 

@@ -35,6 +35,14 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-references:
+  - target: realm
+    sourceType: realm-history
+    field: realmId
+    onDelete: cascade
+    cleanup:
+      endpoint: /realm-history/delete-all
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)

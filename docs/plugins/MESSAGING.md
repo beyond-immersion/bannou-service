@@ -95,7 +95,7 @@ This plugin does not consume external events (it IS the event infrastructure).
 | `ConnectionRetryCount` | `MESSAGING_CONNECTION_RETRY_COUNT` | `5` | Max connection attempts |
 | `ConnectionRetryDelayMs` | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | `1000` | Delay between retries |
 | `DefaultPrefetchCount` | `MESSAGING_DEFAULT_PREFETCH_COUNT` | `10` | Consumer channel QoS |
-| `DefaultAutoAck` | `MESSAGING_DEFAULT_AUTO_ACK` | `false` | Auto-acknowledge messages |
+| `DefaultAutoAck` | `MESSAGING_DEFAULT_AUTO_ACK` | `false` | Fallback when SubscriptionOptions.AutoAck is null |
 | `RetryBufferEnabled` | `MESSAGING_RETRY_BUFFER_ENABLED` | `true` | Enable publish failure buffering |
 | `RetryBufferMaxSize` | `MESSAGING_RETRY_BUFFER_MAX_SIZE` | `10000` | Max buffered messages before crash |
 | `RetryBufferMaxAgeSeconds` | `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | `300` | Max message age before crash |
@@ -112,11 +112,8 @@ This plugin does not consume external events (it IS the event infrastructure).
 
 | Property | Env Var | Default | Notes |
 |----------|---------|---------|-------|
-| `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `3` | Defined but not used in service code |
-| `RetryDelayMs` | `MESSAGING_RETRY_DELAY_MS` | `5000` | Defined but not used in service code |
-| `UseMassTransit` | `MESSAGING_USE_MASSTRANSIT` | `true` | Legacy feature flag, never checked |
-| `EnableMetrics` | `MESSAGING_ENABLE_METRICS` | `true` | Feature flag, never implemented |
-| `EnableTracing` | `MESSAGING_ENABLE_TRACING` | `true` | Feature flag, never implemented |
+| `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `3` | Reserved for tracked retry feature (see Potential Extensions) |
+| `RetryDelayMs` | `MESSAGING_RETRY_DELAY_MS` | `5000` | Reserved for tracked retry feature (see Potential Extensions) |
 
 ---
 
@@ -213,12 +210,8 @@ Messaging Architecture
 
 ## Stubs & Unimplemented Features
 
-1. ~~**Publisher confirms**~~: **FIXED** (2026-01-31) - `RabbitMQConnectionManager.GetChannelAsync()` now passes `CreateChannelOptions(publisherConfirmationsEnabled: config.EnablePublisherConfirms)` when creating channels. When enabled (default: true), `BasicPublishAsync` awaits broker confirmation before returning, providing at-least-once delivery guarantees.
-2. **Metrics collection**: `EnableMetrics` flag exists but no instrumentation code.
-3. **Distributed tracing**: `EnableTracing` flag exists but no Activity/DiagnosticSource usage.
-4. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
-5. **ListTopics MessageCount**: Always returns 0 (would require RabbitMQ Management HTTP API).
-6. **MassTransit toggle**: `UseMassTransit` flag exists but MassTransit was fully removed; always uses direct RabbitMQ.
+1. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
+2. **ListTopics MessageCount**: Always returns 0 (would require RabbitMQ Management HTTP API).
 
 ---
 
@@ -228,6 +221,7 @@ Messaging Architecture
 2. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
 3. **Dead-letter processing**: Consumer for DLX queue to handle poison messages.
 4. **Configurable channel pool size**: Currently hardcoded at 10 in `RabbitMQConnectionManager.MAX_POOL_SIZE`.
+5. **Tracked retry with delay before dead-lettering**: Use `RetryMaxAttempts` and `RetryDelayMs` config properties (already defined) to implement retry tracking via `x-death` headers and delayed requeue mechanism. Currently, static subscriptions requeue once (if not redelivered) then dead-letter; this extension would allow N retries with configurable delays.
 
 ---
 
@@ -265,7 +259,7 @@ No bugs identified.
 
 3. **ServiceId from global static**: `RabbitMQMessageBus.TryPublishErrorAsync()` accesses `Program.ServiceGUID` directly (global variable) rather than injecting it via configuration.
 
-4. **Five unused config properties**: `RetryMaxAttempts`, `RetryDelayMs`, `UseMassTransit`, `EnableMetrics`, `EnableTracing` are all defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS (no dead config).
+4. **Two reserved config properties**: `RetryMaxAttempts` and `RetryDelayMs` are defined but not yet used. They are reserved for the "tracked retry with delay" potential extension. These are intentionally kept in schema to signal future intent and allow pre-configuration.
 
 5. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
 
@@ -279,6 +273,4 @@ No bugs identified.
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-### Completed
-
-- **2026-01-31**: Publisher confirms implemented - `RabbitMQConnectionManager` now uses `CreateChannelOptions` with `EnablePublisherConfirms` config.
+No active work items.

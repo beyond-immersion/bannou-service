@@ -215,8 +215,8 @@ components:
           description: Whether only this connection can consume from the queue
         autoAck:
           type: boolean
-          default: false
-          description: Whether messages should be auto-acknowledged
+          nullable: true
+          description: Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)
         prefetchCount:
           type: integer
           default: 10

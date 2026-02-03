@@ -183,10 +183,10 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 }
             };
 
-            // Start consuming
+            // Start consuming - use config fallback when AutoAck not explicitly specified
             var consumerTag = await channel.BasicConsumeAsync(
                 queue: queueName,
-                autoAck: effectiveOptions.AutoAck,
+                autoAck: effectiveOptions.AutoAck ?? _configuration.DefaultAutoAck,
                 consumer: consumer,
                 cancellationToken: cancellationToken);
 

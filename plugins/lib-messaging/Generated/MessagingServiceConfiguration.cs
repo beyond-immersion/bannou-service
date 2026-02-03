@@ -93,7 +93,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Default exchange name for publishing
     /// Environment variable: MESSAGING_DEFAULT_EXCHANGE
     /// </summary>
-    public string DefaultExchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DefaultExchange { get; set; } = "bannou";
 
     /// <summary>
     /// Enable RabbitMQ publisher confirms for reliability
@@ -132,13 +132,13 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public string DeadLetterExchange { get; set; } = "bannou-dlx";
 
     /// <summary>
-    /// Maximum retry attempts before dead-lettering
+    /// Maximum retry attempts before dead-lettering (NOT YET IMPLEMENTED: intended for tracked retry with x-death headers)
     /// Environment variable: MESSAGING_RETRY_MAX_ATTEMPTS
     /// </summary>
     public int RetryMaxAttempts { get; set; } = 3;
 
     /// <summary>
-    /// Delay between retry attempts in milliseconds
+    /// Delay between retry attempts in milliseconds (NOT YET IMPLEMENTED: intended for delayed requeue mechanism)
     /// Environment variable: MESSAGING_RETRY_DELAY_MS
     /// </summary>
     public int RetryDelayMs { get; set; } = 5000;
@@ -178,12 +178,6 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Environment variable: MESSAGING_CALLBACK_RETRY_DELAY_MS
     /// </summary>
     public int CallbackRetryDelayMs { get; set; } = 1000;
-
-    /// <summary>
-    /// Use MassTransit wrapper (true) or direct RabbitMQ.Client (false)
-    /// Environment variable: MESSAGING_USE_MASSTRANSIT
-    /// </summary>
-    public bool UseMassTransit { get; set; } = true;
 
     /// <summary>
     /// Interval in hours between subscription TTL refresh operations

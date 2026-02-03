@@ -264,12 +264,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | int | `30` | Grace period in days before cleanup of dead character refere... |
-| `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | int | `5` | Maximum number of backstory points to include in character c... |
-| `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | int | `10` | Maximum number of major life events to include in character ... |
 | `CHARACTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size when not specified |
 | `CHARACTER_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for acquiring distributed locks during ch... |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
-| `CHARACTER_PERSONALITY_TRAIT_THRESHOLD` | double | `0.3` | Threshold for personality trait classification (values above... |
 | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating realm character index (... |
 | `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
 
@@ -762,7 +759,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `STATE_CONNECTION_RETRY_COUNT` | int | `10` | Maximum number of connection retry attempts for MySQL initia... |
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
+| `STATE_MIN_RETRY_DELAY_MS` | int | `1000` | Minimum delay in milliseconds between MySQL connection retry... |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
@@ -811,9 +810,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 622
+- **Total properties**: 621
 - **Required (no default)**: 41
-- **Optional (has default)**: 581
+- **Optional (has default)**: 580
 
 ## Environment Variable Naming Convention
 

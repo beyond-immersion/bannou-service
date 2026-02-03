@@ -86,12 +86,12 @@ x-service-configuration:
       default: "bannou-dlx"
     RetryMaxAttempts:
       type: integer
-      description: Maximum retry attempts before dead-lettering
+      description: "Maximum retry attempts before dead-lettering (NOT YET IMPLEMENTED: intended for tracked retry with x-death headers)"
       env: MESSAGING_RETRY_MAX_ATTEMPTS
       default: 3
     RetryDelayMs:
       type: integer
-      description: Delay between retry attempts in milliseconds
+      description: "Delay between retry attempts in milliseconds (NOT YET IMPLEMENTED: intended for delayed requeue mechanism)"
       env: MESSAGING_RETRY_DELAY_MS
       default: 5000
 
@@ -129,12 +129,6 @@ x-service-configuration:
       env: MESSAGING_CALLBACK_RETRY_DELAY_MS
       default: 1000
 
-    # Feature Flags
-    UseMassTransit:
-      type: boolean
-      description: Use MassTransit wrapper (true) or direct RabbitMQ.Client (false)
-      env: MESSAGING_USE_MASSTRANSIT
-      default: true
     # Note: Telemetry (metrics/tracing) is controlled centrally via lib-telemetry configuration.
     # When lib-telemetry is enabled, it automatically instruments messaging operations via ITelemetryProvider.
     # When disabled or not loaded, instrumentation is skipped entirely (zero overhead).
