@@ -17,6 +17,7 @@ namespace BeyondImmersion.BannouService.State.Tests;
 public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
 {
     private readonly StateStoreFactory _factory;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly string _uniqueStoreName;
 
     public StateStoreInterfaceHierarchyTests()
@@ -36,15 +37,16 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
             }
         };
 
-        var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Warning));
+        _loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Warning));
         var telemetryProvider = new NullTelemetryProvider();
 
-        _factory = new StateStoreFactory(configuration, loggerFactory, telemetryProvider);
+        _factory = new StateStoreFactory(configuration, _loggerFactory, telemetryProvider);
     }
 
     public async ValueTask DisposeAsync()
     {
         await _factory.DisposeAsync();
+        _loggerFactory.Dispose();
     }
 
     #region Interface Hierarchy Tests
