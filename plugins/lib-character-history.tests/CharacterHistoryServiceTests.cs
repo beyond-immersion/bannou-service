@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
@@ -743,6 +744,504 @@ public class CharacterHistoryServiceTests
     {
         _mockParticipationStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ParticipationData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
+    }
+
+    #endregion
+
+    #region GetCompressData Tests
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithBothParticipationsAndBackstory_ReturnsComplete()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var participationId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        var participation = new ParticipationData
+        {
+            ParticipationId = participationId,
+            CharacterId = characterId,
+            EventId = eventId,
+            EventName = "The Great Battle",
+            EventCategory = EventCategory.WAR,
+            Role = ParticipationRole.COMBATANT,
+            EventDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
+            Significance = 0.8f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds()
+        };
+
+        var backstory = new BackstoryData
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElementData>
+            {
+                new BackstoryElementData
+                {
+                    ElementType = BackstoryElementType.ORIGIN,
+                    Key = "homeland",
+                    Value = "Northern mountains",
+                    Strength = 0.9f
+                }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        var indexData = new HistoryIndexData
+        {
+            EntityId = characterId.ToString(),
+            RecordIds = new List<string> { participationId.ToString() }
+        };
+
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ParticipationData>
+            {
+                { $"participation-{participationId}", participation }
+            });
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(backstory);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.True(response.HasParticipations);
+        Assert.Single(response.Participations);
+        Assert.True(response.HasBackstory);
+        Assert.NotNull(response.Backstory);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithParticipationsOnly_ReturnsPartial()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var participationId = Guid.NewGuid();
+
+        var participation = new ParticipationData
+        {
+            ParticipationId = participationId,
+            CharacterId = characterId,
+            EventId = Guid.NewGuid(),
+            EventName = "Event",
+            EventCategory = EventCategory.CULTURAL,
+            Role = ParticipationRole.WITNESS,
+            EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Significance = 0.5f,
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        var indexData = new HistoryIndexData
+        {
+            EntityId = characterId.ToString(),
+            RecordIds = new List<string> { participationId.ToString() }
+        };
+
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(indexData);
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ParticipationData>
+            {
+                { $"participation-{participationId}", participation }
+            });
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BackstoryData?)null);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.HasParticipations);
+        Assert.Single(response.Participations);
+        Assert.False(response.HasBackstory);
+        Assert.Null(response.Backstory);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithBackstoryOnly_ReturnsPartial()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var backstory = new BackstoryData
+        {
+            CharacterId = characterId,
+            Elements = new List<BackstoryElementData>
+            {
+                new BackstoryElementData
+                {
+                    ElementType = BackstoryElementType.TRAUMA,
+                    Key = "childhood",
+                    Value = "Lost family early",
+                    Strength = 0.7f
+                }
+            },
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        // DualIndexHelper uses "participation-index-{key}" for primary index lookups
+        _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(backstory);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.HasParticipations);
+        Assert.Empty(response.Participations);
+        Assert.True(response.HasBackstory);
+        Assert.NotNull(response.Backstory);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithNeither_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        _mockIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HistoryIndexData?)null);
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BackstoryData?)null);
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WhenStateStoreThrows_ReturnsInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        _mockIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Connection failed"));
+
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "character-history",
+            "GetCompressData",
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region RestoreFromArchive Tests
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithValidData_RestoresBoth()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var participationId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        var archiveData = new HistoryCompressData
+        {
+            CharacterId = characterId,
+            HasParticipations = true,
+            Participations = new List<HistoricalParticipation>
+            {
+                new HistoricalParticipation
+                {
+                    ParticipationId = participationId,
+                    EventId = eventId,
+                    EventName = "Battle of Test",
+                    EventCategory = EventCategory.WAR,
+                    Role = ParticipationRole.COMBATANT,
+                    EventDate = DateTimeOffset.UtcNow.AddDays(-30),
+                    Significance = 0.8f,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
+                }
+            },
+            HasBackstory = true,
+            Backstory = new BackstoryResponse
+            {
+                CharacterId = characterId,
+                Elements = new List<BackstoryElement>
+                {
+                    new BackstoryElement
+                    {
+                        ElementType = BackstoryElementType.ORIGIN,
+                        Key = "homeland",
+                        Value = "Test Land",
+                        Strength = 0.9f
+                    }
+                },
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var compressedData = CompressArchiveData(archiveData);
+
+        SetupDefaultMessageBus();
+        SetupEmptyCharacterIndex(characterId);
+        SetupEmptyEventIndex(eventId);
+        SetupParticipationSave();
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BackstoryData?)null);
+        _mockBackstoryStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BackstoryData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal(1, response.ParticipationsRestored);
+        Assert.True(response.BackstoryRestored);
+        Assert.True(response.Success);
+        Assert.Null(response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithParticipationsOnly_RestoresOnlyParticipations()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var participationId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        var archiveData = new HistoryCompressData
+        {
+            CharacterId = characterId,
+            HasParticipations = true,
+            Participations = new List<HistoricalParticipation>
+            {
+                new HistoricalParticipation
+                {
+                    ParticipationId = participationId,
+                    EventId = eventId,
+                    EventName = "Test Event",
+                    EventCategory = EventCategory.CULTURAL,
+                    Role = ParticipationRole.WITNESS,
+                    EventDate = DateTimeOffset.UtcNow,
+                    Significance = 0.5f,
+                    CreatedAt = DateTimeOffset.UtcNow
+                }
+            },
+            HasBackstory = false,
+            Backstory = null,
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var compressedData = CompressArchiveData(archiveData);
+
+        SetupDefaultMessageBus();
+        SetupEmptyCharacterIndex(characterId);
+        SetupEmptyEventIndex(eventId);
+        SetupParticipationSave();
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.ParticipationsRestored);
+        Assert.False(response.BackstoryRestored);
+        Assert.True(response.Success);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithInvalidBase64_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = "not-valid-base64!!!"
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Equal(0, response.ParticipationsRestored);
+        Assert.False(response.BackstoryRestored);
+        Assert.NotNull(response.ErrorMessage);
+        Assert.Contains("Invalid archive data", response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithInvalidGzip_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        // Valid base64 but not valid gzip
+        var invalidData = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("not gzip data"));
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = invalidData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.NotNull(response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WhenSaveFails_ReturnsInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var archiveData = new HistoryCompressData
+        {
+            CharacterId = characterId,
+            HasParticipations = false,
+            Participations = new List<HistoricalParticipation>(),
+            HasBackstory = true,
+            Backstory = new BackstoryResponse
+            {
+                CharacterId = characterId,
+                Elements = new List<BackstoryElement>
+                {
+                    new BackstoryElement
+                    {
+                        ElementType = BackstoryElementType.ORIGIN,
+                        Key = "homeland",
+                        Value = "Test",
+                        Strength = 0.5f
+                    }
+                },
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var compressedData = CompressArchiveData(archiveData);
+
+        _mockBackstoryStore.Setup(s => s.GetAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BackstoryData?)null);
+        _mockBackstoryStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BackstoryData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Save failed"));
+
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "character-history",
+            "RestoreFromArchive",
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Helper method to compress archive data for testing RestoreFromArchive.
+    /// </summary>
+    private static string CompressArchiveData(HistoryCompressData data)
+    {
+        var json = BannouJson.Serialize(data);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+        using var output = new System.IO.MemoryStream();
+        using (var gzip = new System.IO.Compression.GZipStream(
+            output, System.IO.Compression.CompressionLevel.Optimal, leaveOpen: true))
+        {
+            gzip.Write(bytes, 0, bytes.Length);
+        }
+        return Convert.ToBase64String(output.ToArray());
     }
 
     #endregion

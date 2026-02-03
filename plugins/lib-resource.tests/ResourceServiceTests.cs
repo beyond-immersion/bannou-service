@@ -13,8 +13,9 @@ using System.Collections.ObjectModel;
 namespace BeyondImmersion.BannouService.Resource.Tests;
 
 /// <summary>
-/// Unit tests for ResourceService reference counting and cleanup logic.
-/// Tests verify atomic reference tracking, grace period management, and cleanup policies.
+/// Unit tests for ResourceService reference counting, cleanup, and compression logic.
+/// Tests verify atomic reference tracking, grace period management, cleanup policies,
+/// and centralized compression/decompression operations.
 /// </summary>
 public class ResourceServiceTests
 {
@@ -30,6 +31,11 @@ public class ResourceServiceTests
     private readonly Mock<IStateStore<CleanupCallbackDefinition>> _mockCleanupStore;
     private readonly Mock<ICacheableStateStore<string>> _mockCallbackIndexStore;
 
+    // Compression-specific mocks
+    private readonly Mock<IStateStore<CompressCallbackDefinition>> _mockCompressStore;
+    private readonly Mock<IStateStore<ResourceArchiveModel>> _mockArchiveStore;
+    private readonly Mock<ICacheableStateStore<string>> _mockCompressIndexStore;
+
     // Capture containers for verifying side effects
     private readonly List<(string Key, ResourceReferenceEntry Entry)> _capturedSetAdds = new();
     private readonly List<string> _capturedSetDeletes = new();
@@ -37,8 +43,15 @@ public class ResourceServiceTests
     private readonly List<string> _capturedGraceDeletes = new();
     private readonly List<(string Topic, object Event)> _capturedPublishedEvents = new();
 
+    // Compression-specific captures
+    private readonly List<(string Key, CompressCallbackDefinition Callback)> _capturedCompressCallbackSaves = new();
+    private readonly List<(string Key, ResourceArchiveModel Archive)> _capturedArchiveSaves = new();
+
     // Simulated set state for testing
     private readonly Dictionary<string, HashSet<ResourceReferenceEntry>> _simulatedSets = new();
+
+    // Simulated compression callback index state
+    private readonly Dictionary<string, HashSet<string>> _simulatedCompressIndex = new();
 
     public ResourceServiceTests()
     {
@@ -54,12 +67,20 @@ public class ResourceServiceTests
         _mockCleanupStore = new Mock<IStateStore<CleanupCallbackDefinition>>();
         _mockCallbackIndexStore = new Mock<ICacheableStateStore<string>>();
 
+        // Compression-specific mocks
+        _mockCompressStore = new Mock<IStateStore<CompressCallbackDefinition>>();
+        _mockArchiveStore = new Mock<IStateStore<ResourceArchiveModel>>();
+        _mockCompressIndexStore = new Mock<ICacheableStateStore<string>>();
+
         _configuration = new ResourceServiceConfiguration
         {
             DefaultGracePeriodSeconds = 3600, // 1 hour for faster tests
             CleanupCallbackTimeoutSeconds = 30,
             CleanupLockExpirySeconds = 300,
-            DefaultCleanupPolicy = CleanupPolicy.BEST_EFFORT
+            DefaultCleanupPolicy = CleanupPolicy.BEST_EFFORT,
+            DefaultCompressionPolicy = CompressionPolicy.ALL_REQUIRED,
+            CompressionCallbackTimeoutSeconds = 60,
+            CompressionLockExpirySeconds = 600
         };
 
         SetupMocks();
@@ -172,6 +193,58 @@ public class ResourceServiceTests
         _mockCleanupStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CleanupCallbackDefinition>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("mock-etag");
+
+        // Setup compression stores
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<CompressCallbackDefinition>(StateStoreDefinitions.ResourceCompress))
+            .Returns(_mockCompressStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<ResourceArchiveModel>(StateStoreDefinitions.ResourceArchives))
+            .Returns(_mockArchiveStore.Object);
+
+        // Setup compress store (defaults to not found for new callbacks)
+        _mockCompressStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CompressCallbackDefinition?)null);
+
+        _mockCompressStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CompressCallbackDefinition>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CompressCallbackDefinition, StateOptions?, CancellationToken>((key, callback, _, _) =>
+                _capturedCompressCallbackSaves.Add((key, callback)))
+            .ReturnsAsync("mock-etag");
+
+        // Setup archive store (defaults to not found)
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ResourceArchiveModel?)null);
+
+        _mockArchiveStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ResourceArchiveModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceArchiveModel, StateOptions?, CancellationToken>((key, archive, _, _) =>
+                _capturedArchiveSaves.Add((key, archive)))
+            .ReturnsAsync("mock-etag");
+
+        // Setup compress index store (used for callback indexes)
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress))
+            .Returns(_mockCompressIndexStore.Object);
+
+        _mockCompressIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, CancellationToken _) =>
+                _simulatedCompressIndex.ContainsKey(key)
+                    ? _simulatedCompressIndex[key].ToList()
+                    : new List<string>());
+
+        _mockCompressIndexStore
+            .Setup(s => s.AddToSetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, StateOptions?, CancellationToken>((key, value, _, _) =>
+            {
+                if (!_simulatedCompressIndex.ContainsKey(key))
+                    _simulatedCompressIndex[key] = new HashSet<string>();
+                _simulatedCompressIndex[key].Add(value);
+            })
+            .ReturnsAsync(true);
     }
 
     private ResourceService CreateService()
@@ -194,6 +267,9 @@ public class ResourceServiceTests
         _capturedGraceDeletes.Clear();
         _capturedPublishedEvents.Clear();
         _simulatedSets.Clear();
+        _capturedCompressCallbackSaves.Clear();
+        _capturedArchiveSaves.Clear();
+        _simulatedCompressIndex.Clear();
     }
 
     #region Constructor Validation
@@ -1253,6 +1329,825 @@ public class ResourceServiceTests
             It.IsAny<Dictionary<string, object?>>(),
             It.IsAny<BatchExecutionMode>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Compression Callback Definition Tests
+
+    [Fact]
+    public async Task DefineCompressCallbackAsync_NewCallback_RegistersSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var request = new DefineCompressCallbackRequest
+        {
+            ResourceType = "character",
+            SourceType = "character-personality",
+            ServiceName = "character-personality",
+            CompressEndpoint = "/character-personality/get-compress-data",
+            CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+            DecompressEndpoint = "/character-personality/restore-from-archive",
+            DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+            Priority = 10,
+            Description = "Personality traits and combat preferences"
+        };
+
+        // Act
+        var (status, response) = await service.DefineCompressCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Registered);
+        Assert.False(response.PreviouslyDefined);
+
+        // Verify callback was saved
+        Assert.Single(_capturedCompressCallbackSaves);
+        var (key, callback) = _capturedCompressCallbackSaves[0];
+        Assert.Equal("compress-callback:character:character-personality", key);
+        Assert.Equal("character", callback.ResourceType);
+        Assert.Equal("character-personality", callback.SourceType);
+        Assert.Equal(10, callback.Priority);
+    }
+
+    [Fact]
+    public async Task DefineCompressCallbackAsync_ExistingCallback_UpdatesAndReportsPreviouslyDefined()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup existing callback
+        _mockCompressStore
+            .Setup(s => s.GetAsync("compress-callback:character:character-personality", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CompressCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "character-personality",
+                ServiceName = "character-personality",
+                CompressEndpoint = "/old-endpoint",
+                CompressPayloadTemplate = "{}"
+            });
+
+        var request = new DefineCompressCallbackRequest
+        {
+            ResourceType = "character",
+            SourceType = "character-personality",
+            ServiceName = "character-personality",
+            CompressEndpoint = "/character-personality/get-compress-data",
+            CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}"
+        };
+
+        // Act
+        var (status, response) = await service.DefineCompressCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Registered);
+        Assert.True(response.PreviouslyDefined);
+    }
+
+    [Fact]
+    public async Task DefineCompressCallbackAsync_DefaultServiceName_UsesSourceType()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var request = new DefineCompressCallbackRequest
+        {
+            ResourceType = "character",
+            SourceType = "character-personality",
+            // ServiceName intentionally not set
+            CompressEndpoint = "/character-personality/get-compress-data",
+            CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}"
+        };
+
+        // Act
+        var (status, response) = await service.DefineCompressCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Single(_capturedCompressCallbackSaves);
+        var (_, callback) = _capturedCompressCallbackSaves[0];
+        Assert.Equal("character-personality", callback.ServiceName);
+    }
+
+    #endregion
+
+    #region Execute Compression Tests
+
+    [Fact]
+    public async Task ExecuteCompressAsync_NoCallbacks_ReturnsFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("No compression callbacks registered", response.AbortReason);
+        Assert.Empty(response.CallbackResults);
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_DryRun_DoesNotExecuteCallbacks()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DryRun = true
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.True(response.DryRun);
+        Assert.Null(response.ArchiveId);
+        Assert.Equal(2, response.CallbackResults.Count);
+
+        // Verify no actual API calls were made
+        _mockNavigator.Verify(n => n.ExecutePreboundApiAsync(
+            It.IsAny<PreboundApiDefinition>(),
+            It.IsAny<IReadOnlyDictionary<string, object?>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_LockContention_ReturnsFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup lock to fail
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("lock", response.AbortReason?.ToLower());
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_AllCallbacksSucceed_CreatesArchive()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup successful API calls
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult
+                {
+                    StatusCode = 200,
+                    ResponseBody = "{\"characterId\": \"" + resourceId + "\", \"data\": \"test\"}",
+                    Duration = TimeSpan.FromMilliseconds(50)
+                }
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DeleteSourceData = false
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.False(response.DryRun);
+        Assert.NotNull(response.ArchiveId);
+        Assert.Equal(2, response.CallbackResults.Count);
+        Assert.All(response.CallbackResults, r => Assert.True(r.Success));
+        Assert.False(response.SourceDataDeleted);
+
+        // Verify archive was saved
+        Assert.Single(_capturedArchiveSaves);
+        var (archiveKey, archive) = _capturedArchiveSaves[0];
+        Assert.Contains(resourceId.ToString(), archiveKey);
+        Assert.Equal(resourceId, archive.ResourceId);
+        Assert.Equal(1, archive.Version);
+        Assert.Equal(2, archive.Entries.Count);
+
+        // Verify compressed event was published
+        Assert.Contains(_capturedPublishedEvents, e => e.Topic == "resource.compressed");
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_CallbackFails_AllRequired_Aborts()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup first callback to succeed, second to fail
+        var callCount = 0;
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                {
+                    return new PreboundApiResult
+                    {
+                        SubstitutionSucceeded = true,
+                        Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+                    };
+                }
+                return new PreboundApiResult
+                {
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult { StatusCode = 500, ErrorMessage = "Service unavailable", Duration = TimeSpan.FromMilliseconds(50) }
+                };
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            CompressionPolicy = CompressionPolicy.ALL_REQUIRED
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("ALL_REQUIRED", response.AbortReason);
+        Assert.Null(response.ArchiveId);
+
+        // Verify failure event was published
+        Assert.Contains(_capturedPublishedEvents, e => e.Topic == "resource.compress.callback-failed");
+
+        // Verify no archive was saved
+        Assert.Empty(_capturedArchiveSaves);
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_CallbackFails_BestEffort_Continues()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup first callback to succeed, second to fail
+        var callCount = 0;
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                {
+                    return new PreboundApiResult
+                    {
+                        SubstitutionSucceeded = true,
+                        Result = new RawApiResult { StatusCode = 200, ResponseBody = "{\"data\": \"test\"}", Duration = TimeSpan.FromMilliseconds(50) }
+                    };
+                }
+                return new PreboundApiResult
+                {
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult { StatusCode = 404, ErrorMessage = "Not found", Duration = TimeSpan.FromMilliseconds(50) }
+                };
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            CompressionPolicy = CompressionPolicy.BEST_EFFORT
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.NotNull(response.ArchiveId);
+
+        // Verify partial results
+        Assert.Equal(2, response.CallbackResults.Count);
+        Assert.Single(response.CallbackResults, r => r.Success);
+        Assert.Single(response.CallbackResults, r => !r.Success);
+
+        // Verify archive was saved with partial data
+        Assert.Single(_capturedArchiveSaves);
+        var (_, archive) = _capturedArchiveSaves[0];
+        Assert.Single(archive.Entries);
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_MultipleCallbacks_ExecutesInPriorityOrder()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var executionOrder = new List<string>();
+
+        // Setup callbacks with different priorities
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-history", priority: 50),
+            CreateCompressCallback("character-personality", priority: 10),
+            CreateCompressCallback("character-encounter", priority: 100)
+        });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Mock navigator to capture execution order
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<PreboundApiDefinition, IReadOnlyDictionary<string, object?>, CancellationToken>((api, _, _) =>
+            {
+                executionOrder.Add(api.ServiceName);
+            })
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert - verify priority order: 10 -> 50 -> 100
+        Assert.Equal(3, executionOrder.Count);
+        Assert.Equal("character-personality", executionOrder[0]);  // priority 10
+        Assert.Equal("character-history", executionOrder[1]);      // priority 50
+        Assert.Equal("character-encounter", executionOrder[2]);    // priority 100
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_ExistingArchive_IncrementsVersion()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup existing archive with version 2
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResourceArchiveModel
+            {
+                ArchiveId = Guid.NewGuid(),
+                ResourceType = "character",
+                ResourceId = resourceId,
+                Version = 2,
+                Entries = new List<ArchiveEntryModel>(),
+                CreatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+            });
+
+        // Setup successful API call
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify archive was saved with incremented version
+        Assert.Single(_capturedArchiveSaves);
+        var (_, archive) = _capturedArchiveSaves[0];
+        Assert.Equal(3, archive.Version); // 2 + 1 = 3
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_PublishesCompressedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup successful API call
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DeleteSourceData = false
+        };
+
+        // Act
+        await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert - verify compressed event was published
+        var compressedEvent = _capturedPublishedEvents.FirstOrDefault(e => e.Topic == "resource.compressed");
+        Assert.NotNull(compressedEvent.Event);
+        var typedEvent = Assert.IsType<ResourceCompressedEvent>(compressedEvent.Event);
+        Assert.Equal("character", typedEvent.ResourceType);
+        Assert.Equal(resourceId, typedEvent.ResourceId);
+        Assert.False(typedEvent.SourceDataDeleted);
+    }
+
+    #endregion
+
+    #region Decompression Tests
+
+    [Fact]
+    public async Task ExecuteDecompressAsync_NoArchive_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        var request = new ExecuteDecompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("No archive found", response.AbortReason);
+    }
+
+    [Fact]
+    public async Task ExecuteDecompressAsync_ArchiveIdMismatch_ReturnsFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var existingArchiveId = Guid.NewGuid();
+        var requestedArchiveId = Guid.NewGuid();
+
+        // Setup existing archive
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResourceArchiveModel
+            {
+                ArchiveId = existingArchiveId,
+                ResourceType = "character",
+                ResourceId = resourceId,
+                Version = 1,
+                Entries = new List<ArchiveEntryModel>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new ExecuteDecompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            ArchiveId = requestedArchiveId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains(requestedArchiveId.ToString(), response.AbortReason);
+    }
+
+    #endregion
+
+    #region Get Archive Tests
+
+    [Fact]
+    public async Task GetArchiveAsync_Exists_ReturnsArchive()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var archiveId = Guid.NewGuid();
+
+        // Setup existing archive
+        _mockArchiveStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResourceArchiveModel
+            {
+                ArchiveId = archiveId,
+                ResourceType = "character",
+                ResourceId = resourceId,
+                Version = 1,
+                Entries = new List<ArchiveEntryModel>
+                {
+                    new()
+                    {
+                        SourceType = "character-base",
+                        ServiceName = "character",
+                        Data = "SGVsbG8=", // Base64 encoded
+                        CompressedAt = DateTimeOffset.UtcNow
+                    }
+                },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new GetArchiveRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Found);
+        Assert.NotNull(response.Archive);
+        Assert.Equal(archiveId, response.Archive.ArchiveId);
+        Assert.Single(response.Archive.Entries);
+    }
+
+    [Fact]
+    public async Task GetArchiveAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        var request = new GetArchiveRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Found);
+        Assert.Null(response.Archive);
+    }
+
+    #endregion
+
+    #region List Compress Callbacks Tests
+
+    [Fact]
+    public async Task ListCompressCallbacksAsync_FilterByType_ReturnsFiltered()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup callbacks for multiple resource types
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        SetupCompressCallbacksForResourceType("realm", new[]
+        {
+            CreateCompressCallback("realm-history", priority: 0)
+        });
+
+        var request = new ListCompressCallbacksRequest
+        {
+            ResourceType = "character"
+        };
+
+        // Act
+        var (status, response) = await service.ListCompressCallbacksAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.TotalCount);
+        Assert.All(response.Callbacks, c => Assert.Equal("character", c.ResourceType));
+    }
+
+    [Fact]
+    public async Task ListCompressCallbacksAsync_NoFilter_ReturnsAll()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup callbacks for multiple resource types
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        SetupCompressCallbacksForResourceType("realm", new[]
+        {
+            CreateCompressCallback("realm-history", priority: 0)
+        });
+
+        // Add master index
+        _simulatedCompressIndex["compress-callback-resource-types"] = new HashSet<string> { "character", "realm" };
+
+        var request = new ListCompressCallbacksRequest();
+
+        // Act
+        var (status, response) = await service.ListCompressCallbacksAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.TotalCount);
+    }
+
+    #endregion
+
+    #region Compression Helper Methods
+
+    private void SetupCompressCallbacksForResourceType(string resourceType, CompressCallbackDefinition[] callbacks)
+    {
+        var indexKey = $"compress-callback-index:{resourceType}";
+        _simulatedCompressIndex[indexKey] = new HashSet<string>(callbacks.Select(c => c.SourceType));
+
+        foreach (var callback in callbacks)
+        {
+            var callbackKey = $"compress-callback:{resourceType}:{callback.SourceType}";
+            _mockCompressStore
+                .Setup(s => s.GetAsync(callbackKey, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(callback);
+        }
+    }
+
+    private static CompressCallbackDefinition CreateCompressCallback(string sourceType, int priority)
+    {
+        return new CompressCallbackDefinition
+        {
+            ResourceType = "character",
+            SourceType = sourceType,
+            ServiceName = sourceType,
+            CompressEndpoint = $"/{sourceType}/get-compress-data",
+            CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
+            DecompressEndpoint = $"/{sourceType}/restore-from-archive",
+            DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+            Priority = priority,
+            RegisteredAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    private void SetupSuccessfulLock()
+    {
+        var successLockResponse = new Mock<ILockResponse>();
+        successLockResponse.Setup(l => l.Success).Returns(true);
+        successLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLockResponse.Object);
     }
 
     #endregion

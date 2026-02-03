@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Events;
@@ -1050,10 +1051,11 @@ public class CharacterPersonalityServiceTests
         // Act
         var endpoints = CharacterPersonalityPermissionRegistration.GetEndpoints();
 
-        // Assert - Only endpoints with x-permissions are registered (6 out of 9)
+        // Assert - Only endpoints with x-permissions are registered (9 out of 11)
         // The evolve and batch-get endpoints have no x-permissions defined
+        // Includes 2 compression endpoints: get-compress-data and restore-from-archive
         Assert.NotNull(endpoints);
-        Assert.Equal(7, endpoints.Count);
+        Assert.Equal(9, endpoints.Count);
     }
 
     [Fact]
@@ -1100,7 +1102,7 @@ public class CharacterPersonalityServiceTests
         Assert.NotNull(evt);
         Assert.Equal("character-personality", evt.ServiceName);
         Assert.Equal(instanceId, evt.ServiceId);
-        Assert.Equal(7, evt.Endpoints.Count); // Only endpoints with x-permissions
+        Assert.Equal(9, evt.Endpoints.Count); // Only endpoints with x-permissions (includes compression endpoints)
         Assert.NotEmpty(evt.Version);
     }
 
@@ -1553,6 +1555,498 @@ public class CharacterPersonalityServiceTests
         Assert.Equal("character-personality", capturedEvent.SourceType);
         Assert.Equal(characterId, capturedEvent.ResourceId);
         Assert.Equal($"combat-{characterId}", capturedEvent.SourceId);
+    }
+
+    #endregion
+
+    #region GetCompressData Tests
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithBothPersonalityAndCombat_ReturnsComplete()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var personalityData = CreateTestPersonalityData(characterId);
+        var combatData = CreateTestCombatData(characterId);
+
+        _mockPersonalityStore
+            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(personalityData);
+        _mockCombatStore
+            .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(combatData);
+
+        var service = CreateService();
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.True(response.HasPersonality);
+        Assert.NotNull(response.Personality);
+        Assert.True(response.HasCombatPreferences);
+        Assert.NotNull(response.CombatPreferences);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithPersonalityOnly_ReturnsPartial()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var personalityData = CreateTestPersonalityData(characterId);
+
+        _mockPersonalityStore
+            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(personalityData);
+        _mockCombatStore
+            .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CombatPreferencesData?)null);
+
+        var service = CreateService();
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.HasPersonality);
+        Assert.NotNull(response.Personality);
+        Assert.False(response.HasCombatPreferences);
+        Assert.Null(response.CombatPreferences);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithCombatOnly_ReturnsPartial()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var combatData = CreateTestCombatData(characterId);
+
+        _mockPersonalityStore
+            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PersonalityData?)null);
+        _mockCombatStore
+            .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(combatData);
+
+        var service = CreateService();
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.HasPersonality);
+        Assert.Null(response.Personality);
+        Assert.True(response.HasCombatPreferences);
+        Assert.NotNull(response.CombatPreferences);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WithNeither_ReturnsNotFound()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+
+        _mockPersonalityStore
+            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PersonalityData?)null);
+        _mockCombatStore
+            .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CombatPreferencesData?)null);
+
+        var service = CreateService();
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCompressDataAsync_WhenStateStoreThrows_ReturnsInternalServerError()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+
+        _mockPersonalityStore
+            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Connection failed"));
+
+        var service = CreateService();
+        var request = new GetCompressDataRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "character-personality",
+            "GetCompressData",
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region RestoreFromArchive Tests
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithValidData_RestoresBoth()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var archiveData = new PersonalityCompressData
+        {
+            CharacterId = characterId,
+            HasPersonality = true,
+            Personality = new PersonalityResponse
+            {
+                CharacterId = characterId,
+                Traits = new List<TraitValue>
+                {
+                    new() { Axis = TraitAxis.OPENNESS, Value = 0.7f },
+                    new() { Axis = TraitAxis.HONESTY, Value = 0.5f }
+                },
+                Version = 1,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            },
+            HasCombatPreferences = true,
+            CombatPreferences = new CombatPreferencesResponse
+            {
+                CharacterId = characterId,
+                Preferences = new CombatPreferences
+                {
+                    Style = CombatStyle.BALANCED,
+                    PreferredRange = PreferredRange.MEDIUM,
+                    GroupRole = GroupRole.FRONTLINE,
+                    RiskTolerance = 0.5f,
+                    RetreatThreshold = 0.3f,
+                    ProtectAllies = true
+                },
+                Version = 1,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var compressedData = CompressArchiveData(archiveData);
+
+        var service = CreateService();
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.True(response.PersonalityRestored);
+        Assert.True(response.CombatPreferencesRestored);
+        Assert.True(response.Success);
+        Assert.Null(response.ErrorMessage);
+
+        // Verify saves were called
+        _mockPersonalityStore.Verify(s => s.SaveAsync(
+            $"personality-{characterId}",
+            It.IsAny<PersonalityData>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+        _mockCombatStore.Verify(s => s.SaveAsync(
+            $"combat-{characterId}",
+            It.IsAny<CombatPreferencesData>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithPersonalityOnly_RestoresOnlyPersonality()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var archiveData = new PersonalityCompressData
+        {
+            CharacterId = characterId,
+            HasPersonality = true,
+            Personality = new PersonalityResponse
+            {
+                CharacterId = characterId,
+                Traits = new List<TraitValue>
+                {
+                    new() { Axis = TraitAxis.LOYALTY, Value = 0.9f }
+                },
+                Version = 2,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            },
+            HasCombatPreferences = false,
+            CombatPreferences = null,
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var compressedData = CompressArchiveData(archiveData);
+
+        var service = CreateService();
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.PersonalityRestored);
+        Assert.False(response.CombatPreferencesRestored);
+        Assert.True(response.Success);
+
+        // Verify only personality save was called
+        _mockPersonalityStore.Verify(s => s.SaveAsync(
+            $"personality-{characterId}",
+            It.IsAny<PersonalityData>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+        _mockCombatStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<CombatPreferencesData>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithInvalidBase64_ReturnsBadRequest()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+
+        var service = CreateService();
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = "not-valid-base64!!!"
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.False(response.PersonalityRestored);
+        Assert.False(response.CombatPreferencesRestored);
+        Assert.NotNull(response.ErrorMessage);
+        Assert.Contains("Invalid archive data", response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WithInvalidGzip_ReturnsBadRequest()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        // Valid base64 but not valid gzip
+        var invalidData = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("not gzip data"));
+
+        var service = CreateService();
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = invalidData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.NotNull(response.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_WhenSaveFails_ReturnsInternalServerError()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var archiveData = new PersonalityCompressData
+        {
+            CharacterId = characterId,
+            HasPersonality = true,
+            Personality = new PersonalityResponse
+            {
+                CharacterId = characterId,
+                Traits = new List<TraitValue>
+                {
+                    new() { Axis = TraitAxis.OPENNESS, Value = 0.5f }
+                },
+                Version = 1,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            },
+            HasCombatPreferences = false,
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var compressedData = CompressArchiveData(archiveData);
+
+        _mockPersonalityStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PersonalityData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Save failed"));
+
+        var service = CreateService();
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "character-personality",
+            "RestoreFromArchive",
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_PublishesReferenceRegisteredEvents()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var archiveData = new PersonalityCompressData
+        {
+            CharacterId = characterId,
+            HasPersonality = true,
+            Personality = new PersonalityResponse
+            {
+                CharacterId = characterId,
+                Traits = new List<TraitValue>
+                {
+                    new() { Axis = TraitAxis.OPENNESS, Value = 0.5f }
+                },
+                Version = 1,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            },
+            HasCombatPreferences = true,
+            CombatPreferences = new CombatPreferencesResponse
+            {
+                CharacterId = characterId,
+                Preferences = new CombatPreferences
+                {
+                    Style = CombatStyle.BALANCED,
+                    PreferredRange = PreferredRange.MEDIUM,
+                    GroupRole = GroupRole.FRONTLINE,
+                    RiskTolerance = 0.5f,
+                    RetreatThreshold = 0.3f,
+                    ProtectAllies = true
+                },
+                Version = 1,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            },
+            CompressedAt = DateTimeOffset.UtcNow
+        };
+
+        var compressedData = CompressArchiveData(archiveData);
+
+        var capturedReferenceEvents = new List<ResourceReferenceRegisteredEvent>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "resource.reference.registered"),
+                It.IsAny<ResourceReferenceRegisteredEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            {
+                capturedReferenceEvents.Add(evt);
+            })
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+        var request = new RestoreFromArchiveRequest
+        {
+            CharacterId = characterId,
+            Data = compressedData
+        };
+
+        // Act
+        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.True(response?.Success);
+
+        // Verify two reference events were published (one for personality, one for combat)
+        Assert.Equal(2, capturedReferenceEvents.Count);
+        Assert.All(capturedReferenceEvents, evt =>
+        {
+            Assert.Equal("character", evt.ResourceType);
+            Assert.Equal("character-personality", evt.SourceType);
+            Assert.Equal(characterId, evt.ResourceId);
+        });
+    }
+
+    /// <summary>
+    /// Helper method to compress archive data for testing RestoreFromArchive.
+    /// </summary>
+    private static string CompressArchiveData(PersonalityCompressData data)
+    {
+        var json = BannouJson.Serialize(data);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+        using var output = new System.IO.MemoryStream();
+        using (var gzip = new System.IO.Compression.GZipStream(
+            output, System.IO.Compression.CompressionLevel.Optimal, leaveOpen: true))
+        {
+            gzip.Write(bytes, 0, bytes.Length);
+        }
+        return Convert.ToBase64String(output.ToArray());
     }
 
     #endregion
