@@ -56,6 +56,7 @@ components:
         deprecatedAt: &id008
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the species was deprecated"
         deprecationReason: &id009
           type: string
@@ -78,6 +79,7 @@ components:
         metadata: &id014
           type: object
           additionalProperties: true
+          nullable: true
           description: "Additional custom metadata for the species"
         createdAt: &id015
           type: string

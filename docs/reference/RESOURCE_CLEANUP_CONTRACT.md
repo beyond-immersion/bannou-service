@@ -161,7 +161,7 @@ This is a violation. One mechanism should be removed.
 | Producer | Has x-references Consumers? | Calls ExecuteCleanupAsync? | Has Duplicate Event Handlers? | Status |
 |----------|----------------------------|---------------------------|------------------------------|--------|
 | Realm | Yes (realm-history) | ✅ Yes | No | CORRECT |
-| Character | Yes (personality, history, encounter, actor) | ❌ No | Yes (just added) | VIOLATION - needs fix |
+| Character | Yes (personality, history, encounter, actor) | ✅ Yes | Yes (need removal) | PARTIAL - remove duplicate event handlers |
 
 ---
 
@@ -202,13 +202,13 @@ grep -l "ExecuteCleanupAsync" plugins/lib-{target}/
 
 ## Action Items
 
-1. [ ] Fix Character's delete flow to call ExecuteCleanupAsync
+1. [x] Fix Character's delete flow to call ExecuteCleanupAsync - **DONE 2026-02-03**
 2. [ ] Remove CharacterPersonalityServiceEvents.cs (the file just added)
 3. [ ] Remove CharacterHistoryServiceEvents.cs (the file just added)
 4. [ ] Revert schema changes to character-personality-events.yaml
 5. [ ] Revert schema changes to character-history-events.yaml
 6. [ ] Investigate if CharacterEncounter's event handler is also a workaround
-7. [ ] Add tenet/rule about x-references cleanup contract
+7. [x] Add tenet/rule about x-references cleanup contract - **DONE 2026-02-03** (added to SCHEMA-RULES.md)
 8. [ ] Add automated validation to CI (check that x-references targets call ExecuteCleanupAsync)
 
 ---

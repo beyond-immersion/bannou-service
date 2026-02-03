@@ -37,9 +37,9 @@ x-lifecycle:
       category: { type: string, nullable: true, description: "Category classification for organizing realms" }
       isActive: { type: boolean, required: true, description: "Whether the realm is currently active and accessible" }
       isDeprecated: { type: boolean, required: true, description: "Whether the realm has been marked as deprecated" }
-      deprecatedAt: { type: string, format: date-time, description: "Timestamp when the realm was deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the realm was deprecated" }
       deprecationReason: { type: string, nullable: true, description: "Explanation for why the realm was deprecated" }
-      metadata: { type: object, additionalProperties: true, description: "Additional custom key-value data associated with the realm" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom key-value data associated with the realm" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the realm was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the realm was last updated" }
 

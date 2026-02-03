@@ -36,8 +36,8 @@ x-lifecycle:
       entity2Type: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Type classification of the second entity" }
       relationshipTypeId: { type: string, format: uuid, required: true, description: "Reference to the relationship type definition" }
       startedAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship began" }
-      endedAt: { type: string, format: date-time, description: "Timestamp when the relationship ended, if applicable" }
-      metadata: { type: object, additionalProperties: true, description: "Additional custom key-value data associated with the relationship" }
+      endedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the relationship ended, if applicable" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom key-value data associated with the relationship" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship record was created" }
       updatedAt: { type: string, format: date-time, description: "Timestamp when the relationship record was last updated" }
 

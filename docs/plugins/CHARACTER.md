@@ -37,9 +37,10 @@ The Character service manages game world characters for Arcadia. Characters are 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-analytics | Subscribes to `character.updated` for cache invalidation; calls `ICharacterClient` for realm resolution |
-| lib-character-encounter | Subscribes to `character.deleted` to clean up encounter data; calls `ICharacterClient` for character name enrichment |
-| lib-character-history | Subscribes to `character.deleted` and `character.compressed` to clean up history data |
-| lib-character-personality | Subscribes to `character.deleted` and `character.compressed` to clean up personality data |
+| lib-character-encounter | Registers `x-references` cleanup callback (`/character-encounter/delete-by-character`); calls `ICharacterClient` for character name enrichment |
+| lib-character-history | Registers `x-references` cleanup callback (`/character-history/delete-all`); cleanup invoked via lib-resource when character deleted |
+| lib-character-personality | Registers `x-references` cleanup callback (`/character-personality/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
+| lib-actor | Registers `x-references` cleanup callback (`/actor/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
 | lib-species | Calls `ICharacterClient` to check character references during species deprecation |
 
 ---
@@ -122,7 +123,7 @@ Service lifetime is **Scoped** (per-request).
 - **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability (throws `InvalidOperationException`). Generates new GUID. Stores with realm-partitioned key. Maintains both realm index and global index with optimistic concurrency retries.
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
 - **Update**: Smart field tracking with `ChangedFields` list. Setting `DeathDate` automatically sets `Status` to `Dead`. `SpeciesId` is mutable (supports species merge migrations).
-- **Delete**: Removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates.
+- **Delete**: Checks for L4 references via lib-resource, executes cleanup callbacks (CASCADE) to delete dependent data in CharacterPersonality/CharacterHistory/etc., then removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates. Returns Conflict if cleanup is blocked by RESTRICT policy.
 - **List/ByRealm**: Gets realm index, bulk-fetches all characters, filters in-memory (status, species), then paginates. Clamps page size to `MaxPageSize`.
 - **TransferRealm**: Moves a character to a different realm. Validates target realm is active, acquires distributed lock, deletes from old realm-partitioned key, saves to new realm-partitioned key, updates indexes, and publishes `character.realm.left` (reason: "transfer"), `character.realm.joined` (with previousRealmId), and `character.updated` events.
 
@@ -276,7 +277,8 @@ No active work items.
 
 ### Historical
 
-- **2026-02-03**: Implemented L4 cleanup event handlers in CharacterPersonality and CharacterHistory. Both services now subscribe to `character.deleted` and `character.compressed` events to clean up their data. The `DeleteSourceData` flag on compression now actually works. Closes [GitHub Issue #273](https://github.com/beyond-immersion/bannou-service/issues/273).
+- **2026-02-03**: Fixed Character's delete flow to call `ExecuteCleanupAsync` via lib-resource, properly triggering CASCADE cleanup in L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor) via their registered cleanup callbacks. This follows the x-references contract pattern (see `docs/reference/RESOURCE_CLEANUP_CONTRACT.md`).
+- **2026-02-03**: ~~Implemented L4 cleanup event handlers in CharacterPersonality and CharacterHistory.~~ **SUPERSEDED**: These event handlers were a workaround that bypassed the x-references cleanup contract. The correct fix is `ExecuteCleanupAsync` (above). Event handlers should be removed.
 - **2026-02-02**: Removed FIXED item from Potential Extensions (parallel family tree lookups) - verified implemented via `Task.WhenAll` and `GetBulkAsync`, no quirks remain.
 - **2026-02-02**: Moved "orphaned" and "single parent household" labels from Design Considerations to Intentional Quirks (#9, #10) - current behavior is semantically correct (orphaned = no parent relationships, single parent = one relationship exists).
 - **2026-02-02**: Moved "INCARNATION tracking is directional" from Design Considerations to Intentional Quirks - this is correct semantic behavior (past lives, not future incarnations).

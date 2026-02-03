@@ -61,6 +61,7 @@ components:
         deprecatedAt: &id009
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the realm was deprecated"
         deprecationReason: &id010
           type: string
@@ -69,6 +70,7 @@ components:
         metadata: &id011
           type: object
           additionalProperties: true
+          nullable: true
           description: "Additional custom key-value data associated with the realm"
         createdAt: &id012
           type: string

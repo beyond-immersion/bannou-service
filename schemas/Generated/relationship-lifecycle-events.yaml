@@ -59,10 +59,12 @@ components:
         endedAt: &id008
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the relationship ended, if applicable"
         metadata: &id009
           type: object
           additionalProperties: true
+          nullable: true
           description: "Additional custom key-value data associated with the relationship"
         createdAt: &id010
           type: string

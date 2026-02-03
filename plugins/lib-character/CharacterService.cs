@@ -352,6 +352,67 @@ public partial class CharacterService : ICharacterService
             var realmId = character.RealmId;
             var characterKey = BuildCharacterKey(realmId.ToString(), character.CharacterId.ToString());
 
+            // Check for L4 references and execute cleanup callbacks (per x-references contract)
+            // This triggers cascade deletion in CharacterPersonality, CharacterHistory, etc.
+            try
+            {
+                var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                    new Resource.CheckReferencesRequest
+                    {
+                        ResourceType = "character",
+                        ResourceId = body.CharacterId
+                    }, cancellationToken);
+
+                if (resourceCheck != null && resourceCheck.RefCount > 0)
+                {
+                    var sourceTypes = resourceCheck.Sources != null
+                        ? string.Join(", ", resourceCheck.Sources.Select(s => s.SourceType))
+                        : "unknown";
+                    _logger.LogDebug(
+                        "Character {CharacterId} has {RefCount} external references from: {SourceTypes}, executing cleanup",
+                        body.CharacterId, resourceCheck.RefCount, sourceTypes);
+
+                    // Execute cleanup callbacks (CASCADE/DETACH) before proceeding
+                    var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
+                        new Resource.ExecuteCleanupRequest
+                        {
+                            ResourceType = "character",
+                            ResourceId = body.CharacterId,
+                            CleanupPolicy = Resource.CleanupPolicy.ALL_REQUIRED
+                        }, cancellationToken);
+
+                    if (!cleanupResult.Success)
+                    {
+                        _logger.LogWarning(
+                            "Cleanup blocked for character {CharacterId}: {Reason}",
+                            body.CharacterId, cleanupResult.AbortReason ?? "cleanup failed");
+                        return StatusCodes.Conflict;
+                    }
+
+                    _logger.LogDebug(
+                        "Cleanup completed for character {CharacterId}: {CallbackCount} callback(s) executed",
+                        body.CharacterId, cleanupResult.CallbackResults.Count);
+                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // No references registered - this is normal for characters without L4 data
+                _logger.LogDebug("No lib-resource references found for character {CharacterId}", body.CharacterId);
+            }
+            catch (ApiException ex)
+            {
+                // lib-resource unavailable - fail closed to protect referential integrity
+                _logger.LogError(ex,
+                    "lib-resource unavailable when checking references for character {CharacterId}, blocking deletion for safety",
+                    body.CharacterId);
+                await _messageBus.TryPublishErrorAsync(
+                    "character", "DeleteCharacter", "resource_service_unavailable",
+                    $"lib-resource unavailable when checking references for character {body.CharacterId}",
+                    dependency: "resource", endpoint: "post:/character/delete",
+                    details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+                return StatusCodes.ServiceUnavailable;
+            }
+
             // Delete character from state store
             await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .DeleteAsync(characterKey, cancellationToken);
