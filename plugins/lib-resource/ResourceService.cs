@@ -43,6 +43,8 @@ public partial class ResourceService : IResourceService
     private readonly ICacheableStateStore<ResourceReferenceEntry> _refStore;
     private readonly IStateStore<CleanupCallbackDefinition> _cleanupStore;
     private readonly IStateStore<GracePeriodRecord> _graceStore;
+    private readonly IStateStore<CompressCallbackDefinition> _compressStore;
+    private readonly IStateStore<ResourceArchiveModel> _archiveStore;
 
     /// <summary>
     /// Initializes a new instance of the ResourceService.
@@ -70,6 +72,10 @@ public partial class ResourceService : IResourceService
             StateStoreDefinitions.ResourceCleanup);
         _graceStore = stateStoreFactory.GetStore<GracePeriodRecord>(
             StateStoreDefinitions.ResourceGrace);
+        _compressStore = stateStoreFactory.GetStore<CompressCallbackDefinition>(
+            StateStoreDefinitions.ResourceCompress);
+        _archiveStore = stateStoreFactory.GetStore<ResourceArchiveModel>(
+            StateStoreDefinitions.ResourceArchives);
 
         // Register event handlers via partial class (ResourceServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -744,6 +750,715 @@ public partial class ResourceService : IResourceService
         });
     }
 
+    // =========================================================================
+    // Compression Management
+    // =========================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DefineCompressCallbackResponse?)> DefineCompressCallbackAsync(
+        DefineCompressCallbackRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var callbackKey = BuildCompressKey(body.ResourceType, body.SourceType);
+
+        // Check if already defined
+        var existing = await _compressStore.GetAsync(callbackKey, cancellationToken);
+        var previouslyDefined = existing != null;
+
+        // ServiceName defaults to SourceType when not specified
+        var serviceName = body.ServiceName ?? body.SourceType;
+
+        var callback = new CompressCallbackDefinition
+        {
+            ResourceType = body.ResourceType,
+            SourceType = body.SourceType,
+            ServiceName = serviceName,
+            CompressEndpoint = body.CompressEndpoint,
+            CompressPayloadTemplate = body.CompressPayloadTemplate,
+            DecompressEndpoint = body.DecompressEndpoint,
+            DecompressPayloadTemplate = body.DecompressPayloadTemplate,
+            Priority = body.Priority,
+            Description = body.Description,
+            RegisteredAt = DateTimeOffset.UtcNow
+        };
+
+        await _compressStore.SaveAsync(callbackKey, callback, cancellationToken: cancellationToken);
+
+        // Maintain the callback index for this resource type
+        await MaintainCompressCallbackIndexAsync(body.ResourceType, body.SourceType, cancellationToken);
+
+        _logger.LogInformation(
+            "Compression callback {Action} for {ResourceType}/{SourceType}: {ServiceName}{Endpoint} (priority={Priority})",
+            previouslyDefined ? "updated" : "registered",
+            body.ResourceType, body.SourceType, serviceName, body.CompressEndpoint, body.Priority);
+
+        return (StatusCodes.OK, new DefineCompressCallbackResponse
+        {
+            ResourceType = body.ResourceType,
+            SourceType = body.SourceType,
+            Registered = true,
+            PreviouslyDefined = previouslyDefined
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ExecuteCompressResponse?)> ExecuteCompressAsync(
+        ExecuteCompressRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        // Get all compression callbacks for this resource type, sorted by priority
+        var callbacks = await GetCompressCallbacksAsync(body.ResourceType, cancellationToken);
+
+        if (callbacks.Count == 0)
+        {
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "No compression callbacks registered for resource type {ResourceType}",
+                body.ResourceType);
+
+            return (StatusCodes.OK, new ExecuteCompressResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = false,
+                DryRun = body.DryRun,
+                AbortReason = "No compression callbacks registered for this resource type",
+                CallbackResults = new List<CompressCallbackResult>(),
+                SourceDataDeleted = false,
+                CompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Handle dry run - return preview without executing
+        if (body.DryRun)
+        {
+            stopwatch.Stop();
+            return (StatusCodes.OK, new ExecuteCompressResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = true,
+                DryRun = true,
+                ArchiveId = null,
+                CallbackResults = callbacks.Select(c => new CompressCallbackResult
+                {
+                    SourceType = c.SourceType,
+                    ServiceName = c.ServiceName,
+                    Endpoint = c.CompressEndpoint,
+                    Success = true, // Hypothetical - not actually executed
+                    DurationMs = 0
+                }).ToList(),
+                SourceDataDeleted = false,
+                CompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Acquire distributed lock
+        var lockOwner = Guid.NewGuid().ToString();
+        await using var lockResponse = await _lockProvider.LockAsync(
+            storeName: StateStoreDefinitions.ResourceCompress,
+            resourceId: $"compress:{body.ResourceType}:{body.ResourceId}",
+            lockOwner: lockOwner,
+            expiryInSeconds: _configuration.CompressionLockExpirySeconds,
+            cancellationToken: cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "Failed to acquire compression lock for {ResourceType}:{ResourceId}",
+                body.ResourceType, body.ResourceId);
+
+            return (StatusCodes.OK, new ExecuteCompressResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = false,
+                DryRun = false,
+                AbortReason = "Failed to acquire compression lock (another compression in progress?)",
+                CallbackResults = new List<CompressCallbackResult>(),
+                SourceDataDeleted = false,
+                CompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        var compressionPolicy = body.CompressionPolicy ?? _configuration.DefaultCompressionPolicy;
+        var callbackResults = new List<CompressCallbackResult>();
+        var archiveEntries = new List<ArchiveEntryModel>();
+        var context = new Dictionary<string, object?>
+        {
+            ["resourceId"] = body.ResourceId.ToString()
+        };
+
+        // Execute each callback in priority order
+        foreach (var callback in callbacks)
+        {
+            var callbackStopwatch = Stopwatch.StartNew();
+
+            try
+            {
+                var apiDefinition = new PreboundApiDefinition
+                {
+                    ServiceName = callback.ServiceName,
+                    Endpoint = callback.CompressEndpoint,
+                    PayloadTemplate = callback.CompressPayloadTemplate,
+                    Description = callback.Description
+                };
+
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.CompressionCallbackTimeoutSeconds));
+
+                var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, timeoutCts.Token);
+
+                callbackStopwatch.Stop();
+
+                if (result.IsSuccess && result.Result.StatusCode >= 200 && result.Result.StatusCode < 300)
+                {
+                    // Get the response body and compress it
+                    var responseJson = result.Result.Body;
+                    var originalBytes = System.Text.Encoding.UTF8.GetBytes(responseJson);
+                    var compressedData = CompressJsonData(responseJson);
+                    var checksum = ComputeChecksum(originalBytes);
+
+                    archiveEntries.Add(new ArchiveEntryModel
+                    {
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Data = compressedData,
+                        CompressedAt = DateTimeOffset.UtcNow,
+                        DataChecksum = checksum,
+                        OriginalSizeBytes = originalBytes.Length
+                    });
+
+                    callbackResults.Add(new CompressCallbackResult
+                    {
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.CompressEndpoint,
+                        Success = true,
+                        StatusCode = result.Result.StatusCode,
+                        DataSize = compressedData.Length,
+                        DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                    });
+
+                    _logger.LogDebug(
+                        "Compression callback succeeded: {ServiceName}{Endpoint} for {ResourceType}:{ResourceId}, {OriginalBytes} bytes -> {CompressedBytes} bytes",
+                        callback.ServiceName, callback.CompressEndpoint, body.ResourceType, body.ResourceId,
+                        originalBytes.Length, compressedData.Length);
+                }
+                else
+                {
+                    // Callback failed
+                    callbackResults.Add(new CompressCallbackResult
+                    {
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.CompressEndpoint,
+                        Success = false,
+                        StatusCode = result.Result.StatusCode,
+                        ErrorMessage = result.SubstitutionError ?? result.Result.ErrorMessage,
+                        DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                    });
+
+                    _logger.LogWarning(
+                        "Compression callback failed: {ServiceName}{Endpoint} returned {StatusCode} for {ResourceType}:{ResourceId}",
+                        callback.ServiceName, callback.CompressEndpoint, result.Result.StatusCode,
+                        body.ResourceType, body.ResourceId);
+
+                    // Publish failure event
+                    await _messageBus.TryPublishAsync(
+                        "resource.compress.callback-failed",
+                        new ResourceCompressCallbackFailedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            ResourceType = body.ResourceType,
+                            ResourceId = body.ResourceId,
+                            SourceType = callback.SourceType,
+                            ServiceName = callback.ServiceName,
+                            Endpoint = callback.CompressEndpoint,
+                            StatusCode = result.Result.StatusCode,
+                            ErrorMessage = result.SubstitutionError ?? result.Result.ErrorMessage
+                        },
+                        cancellationToken);
+
+                    // Abort if policy requires all callbacks
+                    if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                    {
+                        stopwatch.Stop();
+                        return (StatusCodes.OK, new ExecuteCompressResponse
+                        {
+                            ResourceType = body.ResourceType,
+                            ResourceId = body.ResourceId,
+                            Success = false,
+                            DryRun = false,
+                            AbortReason = $"Compression callback failed for {callback.SourceType} with ALL_REQUIRED policy",
+                            CallbackResults = callbackResults,
+                            SourceDataDeleted = false,
+                            CompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                callbackStopwatch.Stop();
+
+                _logger.LogError(ex,
+                    "Exception in compression callback: {ServiceName}{Endpoint} for {ResourceType}:{ResourceId}",
+                    callback.ServiceName, callback.CompressEndpoint, body.ResourceType, body.ResourceId);
+
+                callbackResults.Add(new CompressCallbackResult
+                {
+                    SourceType = callback.SourceType,
+                    ServiceName = callback.ServiceName,
+                    Endpoint = callback.CompressEndpoint,
+                    Success = false,
+                    StatusCode = 0,
+                    ErrorMessage = ex.Message,
+                    DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                });
+
+                // Publish failure event
+                await _messageBus.TryPublishAsync(
+                    "resource.compress.callback-failed",
+                    new ResourceCompressCallbackFailedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ResourceType = body.ResourceType,
+                        ResourceId = body.ResourceId,
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.CompressEndpoint,
+                        StatusCode = 0,
+                        ErrorMessage = ex.Message
+                    },
+                    cancellationToken);
+
+                if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                {
+                    stopwatch.Stop();
+                    return (StatusCodes.OK, new ExecuteCompressResponse
+                    {
+                        ResourceType = body.ResourceType,
+                        ResourceId = body.ResourceId,
+                        Success = false,
+                        DryRun = false,
+                        AbortReason = $"Compression callback exception for {callback.SourceType} with ALL_REQUIRED policy: {ex.Message}",
+                        CallbackResults = callbackResults,
+                        SourceDataDeleted = false,
+                        CompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+                    });
+                }
+            }
+        }
+
+        // Check if we have any entries (with BEST_EFFORT, we may have partial results)
+        if (archiveEntries.Count == 0)
+        {
+            stopwatch.Stop();
+            return (StatusCodes.OK, new ExecuteCompressResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = false,
+                DryRun = false,
+                AbortReason = "No successful compression callbacks - cannot create archive",
+                CallbackResults = callbackResults,
+                SourceDataDeleted = false,
+                CompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Check for existing archive to determine version
+        var archiveKey = BuildArchiveKey(body.ResourceType, body.ResourceId);
+        var existingArchive = await _archiveStore.GetAsync(archiveKey, cancellationToken);
+        var newVersion = (existingArchive?.Version ?? 0) + 1;
+
+        // Create archive
+        var archiveId = Guid.NewGuid();
+        var archive = new ResourceArchiveModel
+        {
+            ArchiveId = archiveId,
+            ResourceType = body.ResourceType,
+            ResourceId = body.ResourceId,
+            Version = newVersion,
+            Entries = archiveEntries,
+            CreatedAt = DateTimeOffset.UtcNow,
+            SourceDataDeleted = false
+        };
+
+        await _archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Created archive {ArchiveId} v{Version} for {ResourceType}:{ResourceId} with {EntryCount} entries",
+            archiveId, newVersion, body.ResourceType, body.ResourceId, archiveEntries.Count);
+
+        // Optionally delete source data via cleanup callbacks
+        var sourceDataDeleted = false;
+        if (body.DeleteSourceData)
+        {
+            var (cleanupStatus, cleanupResult) = await ExecuteCleanupAsync(
+                new ExecuteCleanupRequest
+                {
+                    ResourceType = body.ResourceType,
+                    ResourceId = body.ResourceId,
+                    GracePeriodSeconds = 0, // Skip grace period since we're archiving
+                    CleanupPolicy = CleanupPolicy.BEST_EFFORT
+                },
+                cancellationToken);
+
+            if (cleanupResult?.Success == true)
+            {
+                sourceDataDeleted = true;
+                archive.SourceDataDeleted = true;
+                await _archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
+
+                _logger.LogInformation(
+                    "Source data deleted for {ResourceType}:{ResourceId} after archival",
+                    body.ResourceType, body.ResourceId);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Failed to delete source data for {ResourceType}:{ResourceId} after archival: {Reason}",
+                    body.ResourceType, body.ResourceId, cleanupResult?.AbortReason ?? "Unknown");
+            }
+        }
+
+        // Publish compressed event
+        await _messageBus.TryPublishAsync(
+            "resource.compressed",
+            new ResourceCompressedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                ArchiveId = archiveId,
+                SourceDataDeleted = sourceDataDeleted,
+                EntriesCount = archiveEntries.Count
+            },
+            cancellationToken);
+
+        stopwatch.Stop();
+        return (StatusCodes.OK, new ExecuteCompressResponse
+        {
+            ResourceType = body.ResourceType,
+            ResourceId = body.ResourceId,
+            Success = true,
+            DryRun = false,
+            ArchiveId = archiveId,
+            CallbackResults = callbackResults,
+            SourceDataDeleted = sourceDataDeleted,
+            CompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ExecuteDecompressResponse?)> ExecuteDecompressAsync(
+        ExecuteDecompressRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        // Get the archive
+        var archiveKey = BuildArchiveKey(body.ResourceType, body.ResourceId);
+        var archive = await _archiveStore.GetAsync(archiveKey, cancellationToken);
+
+        if (archive == null)
+        {
+            stopwatch.Stop();
+            return (StatusCodes.OK, new ExecuteDecompressResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = false,
+                AbortReason = "No archive found for this resource",
+                CallbackResults = new List<DecompressCallbackResult>(),
+                DecompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // If specific archiveId requested, verify it matches
+        if (body.ArchiveId.HasValue && archive.ArchiveId != body.ArchiveId.Value)
+        {
+            stopwatch.Stop();
+            return (StatusCodes.OK, new ExecuteDecompressResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = false,
+                AbortReason = $"Archive {body.ArchiveId} not found; current archive is {archive.ArchiveId}",
+                CallbackResults = new List<DecompressCallbackResult>(),
+                DecompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Get compression callbacks to find decompression endpoints
+        var callbacks = await GetCompressCallbacksAsync(body.ResourceType, cancellationToken);
+        var callbacksBySourceType = callbacks.ToDictionary(c => c.SourceType);
+
+        var callbackResults = new List<DecompressCallbackResult>();
+        var context = new Dictionary<string, object?>
+        {
+            ["resourceId"] = body.ResourceId.ToString()
+        };
+
+        // Execute decompression for each archive entry
+        foreach (var entry in archive.Entries)
+        {
+            var callbackStopwatch = Stopwatch.StartNew();
+
+            if (!callbacksBySourceType.TryGetValue(entry.SourceType, out var callback))
+            {
+                callbackStopwatch.Stop();
+                _logger.LogWarning(
+                    "No decompression callback registered for {SourceType} in archive {ArchiveId}",
+                    entry.SourceType, archive.ArchiveId);
+
+                callbackResults.Add(new DecompressCallbackResult
+                {
+                    SourceType = entry.SourceType,
+                    ServiceName = entry.ServiceName,
+                    Endpoint = "(not registered)",
+                    Success = false,
+                    ErrorMessage = "No decompression callback registered for this source type",
+                    DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                });
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(callback.DecompressEndpoint))
+            {
+                callbackStopwatch.Stop();
+                _logger.LogWarning(
+                    "No decompression endpoint defined for {SourceType} in archive {ArchiveId}",
+                    entry.SourceType, archive.ArchiveId);
+
+                callbackResults.Add(new DecompressCallbackResult
+                {
+                    SourceType = entry.SourceType,
+                    ServiceName = callback.ServiceName,
+                    Endpoint = "(not defined)",
+                    Success = false,
+                    ErrorMessage = "Decompression endpoint not defined for this callback",
+                    DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                });
+                continue;
+            }
+
+            try
+            {
+                // Add the compressed data to the context for template substitution
+                context["data"] = entry.Data;
+
+                var apiDefinition = new PreboundApiDefinition
+                {
+                    ServiceName = callback.ServiceName,
+                    Endpoint = callback.DecompressEndpoint,
+                    PayloadTemplate = callback.DecompressPayloadTemplate ?? "{}",
+                    Description = $"Restore {callback.SourceType} data"
+                };
+
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.CompressionCallbackTimeoutSeconds));
+
+                var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, timeoutCts.Token);
+
+                callbackStopwatch.Stop();
+
+                if (result.IsSuccess && result.Result.StatusCode >= 200 && result.Result.StatusCode < 300)
+                {
+                    callbackResults.Add(new DecompressCallbackResult
+                    {
+                        SourceType = entry.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.DecompressEndpoint,
+                        Success = true,
+                        StatusCode = result.Result.StatusCode,
+                        DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                    });
+
+                    _logger.LogDebug(
+                        "Decompression callback succeeded: {ServiceName}{Endpoint} for {ResourceType}:{ResourceId}",
+                        callback.ServiceName, callback.DecompressEndpoint, body.ResourceType, body.ResourceId);
+                }
+                else
+                {
+                    callbackResults.Add(new DecompressCallbackResult
+                    {
+                        SourceType = entry.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.DecompressEndpoint,
+                        Success = false,
+                        StatusCode = result.Result.StatusCode,
+                        ErrorMessage = result.SubstitutionError ?? result.Result.ErrorMessage,
+                        DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                    });
+
+                    _logger.LogWarning(
+                        "Decompression callback failed: {ServiceName}{Endpoint} returned {StatusCode} for {ResourceType}:{ResourceId}",
+                        callback.ServiceName, callback.DecompressEndpoint, result.Result.StatusCode,
+                        body.ResourceType, body.ResourceId);
+                }
+            }
+            catch (Exception ex)
+            {
+                callbackStopwatch.Stop();
+
+                _logger.LogError(ex,
+                    "Exception in decompression callback: {ServiceName}{Endpoint} for {ResourceType}:{ResourceId}",
+                    callback.ServiceName, callback.DecompressEndpoint, body.ResourceType, body.ResourceId);
+
+                callbackResults.Add(new DecompressCallbackResult
+                {
+                    SourceType = entry.SourceType,
+                    ServiceName = callback.ServiceName,
+                    Endpoint = callback.DecompressEndpoint ?? "(exception)",
+                    Success = false,
+                    StatusCode = 0,
+                    ErrorMessage = ex.Message,
+                    DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                });
+            }
+        }
+
+        // Publish decompressed event if any callbacks succeeded
+        var anySuccess = callbackResults.Any(r => r.Success);
+        if (anySuccess)
+        {
+            await _messageBus.TryPublishAsync(
+                "resource.decompressed",
+                new ResourceDecompressedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ResourceType = body.ResourceType,
+                    ResourceId = body.ResourceId,
+                    ArchiveId = archive.ArchiveId
+                },
+                cancellationToken);
+        }
+
+        stopwatch.Stop();
+        return (StatusCodes.OK, new ExecuteDecompressResponse
+        {
+            ResourceType = body.ResourceType,
+            ResourceId = body.ResourceId,
+            Success = callbackResults.All(r => r.Success),
+            ArchiveId = archive.ArchiveId,
+            CallbackResults = callbackResults,
+            DecompressionDurationMs = (int)stopwatch.ElapsedMilliseconds
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListCompressCallbacksResponse?)> ListCompressCallbacksAsync(
+        ListCompressCallbacksRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var callbacks = new List<CompressCallbackSummary>();
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
+
+        if (!string.IsNullOrEmpty(body.ResourceType))
+        {
+            // Get callbacks for specific resource type
+            var resourceCallbacks = await GetCompressCallbacksAsync(body.ResourceType, cancellationToken);
+
+            // Optional filter by source type
+            if (!string.IsNullOrEmpty(body.SourceType))
+            {
+                resourceCallbacks = resourceCallbacks
+                    .Where(c => c.SourceType == body.SourceType)
+                    .ToList();
+            }
+
+            callbacks.AddRange(resourceCallbacks.Select(MapToCompressSummary));
+        }
+        else
+        {
+            // List all callbacks - use master resource type index
+            var resourceTypes = await cacheStore.GetSetAsync<string>(
+                MasterCompressResourceTypeIndexKey, cancellationToken);
+
+            foreach (var resourceType in resourceTypes)
+            {
+                var resourceCallbacks = await GetCompressCallbacksAsync(resourceType, cancellationToken);
+                callbacks.AddRange(resourceCallbacks.Select(MapToCompressSummary));
+            }
+        }
+
+        _logger.LogDebug("Listed {Count} compression callbacks", callbacks.Count);
+
+        return (StatusCodes.OK, new ListCompressCallbacksResponse
+        {
+            Callbacks = callbacks,
+            TotalCount = callbacks.Count
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, GetArchiveResponse?)> GetArchiveAsync(
+        GetArchiveRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var archiveKey = BuildArchiveKey(body.ResourceType, body.ResourceId);
+        var archive = await _archiveStore.GetAsync(archiveKey, cancellationToken);
+
+        if (archive == null)
+        {
+            return (StatusCodes.OK, new GetArchiveResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Found = false,
+                Archive = null
+            });
+        }
+
+        // If specific archiveId requested, verify it matches
+        if (body.ArchiveId.HasValue && archive.ArchiveId != body.ArchiveId.Value)
+        {
+            return (StatusCodes.OK, new GetArchiveResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Found = false,
+                Archive = null
+            });
+        }
+
+        // Map internal model to API model
+        return (StatusCodes.OK, new GetArchiveResponse
+        {
+            ResourceType = body.ResourceType,
+            ResourceId = body.ResourceId,
+            Found = true,
+            Archive = new ResourceArchive
+            {
+                ArchiveId = archive.ArchiveId,
+                ResourceType = archive.ResourceType,
+                ResourceId = archive.ResourceId,
+                Version = archive.Version,
+                Entries = archive.Entries.Select(e => new ArchiveBundleEntry
+                {
+                    SourceType = e.SourceType,
+                    ServiceName = e.ServiceName,
+                    Data = e.Data,
+                    CompressedAt = e.CompressedAt,
+                    DataChecksum = e.DataChecksum,
+                    OriginalSizeBytes = e.OriginalSizeBytes
+                }).ToList(),
+                CreatedAt = archive.CreatedAt,
+                SourceDataDeleted = archive.SourceDataDeleted
+            }
+        });
+    }
+
     /// <summary>
     /// Maps a CleanupCallbackDefinition to a CleanupCallbackSummary for API responses.
     /// </summary>
@@ -814,6 +1529,131 @@ public partial class ResourceService : IResourceService
         }
 
         return callbacks;
+    }
+
+    // =========================================================================
+    // Compression Management Helpers
+    // =========================================================================
+
+    /// <summary>
+    /// Key for the master index of all resource types that have compression callbacks.
+    /// </summary>
+    private const string MasterCompressResourceTypeIndexKey = "compress-callback-resource-types";
+
+    /// <summary>
+    /// Builds the Redis key for a compression callback definition.
+    /// </summary>
+    private static string BuildCompressKey(string resourceType, string sourceType)
+        => $"compress-callback:{resourceType}:{sourceType}";
+
+    /// <summary>
+    /// Builds the Redis key for the compression callback index.
+    /// </summary>
+    private static string BuildCompressIndexKey(string resourceType)
+        => $"compress-callback-index:{resourceType}";
+
+    /// <summary>
+    /// Builds the MySQL key for an archive.
+    /// </summary>
+    private static string BuildArchiveKey(string resourceType, Guid resourceId)
+        => $"archive:{resourceType}:{resourceId}";
+
+    /// <summary>
+    /// Gets all compression callbacks for a resource type, sorted by priority.
+    /// </summary>
+    private async Task<List<CompressCallbackDefinition>> GetCompressCallbacksAsync(
+        string resourceType,
+        CancellationToken cancellationToken)
+    {
+        var indexKey = BuildCompressIndexKey(resourceType);
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
+        var sourceTypes = await cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+        var callbacks = new List<CompressCallbackDefinition>();
+        foreach (var sourceType in sourceTypes)
+        {
+            var callback = await _compressStore.GetAsync(BuildCompressKey(resourceType, sourceType), cancellationToken);
+            if (callback != null)
+            {
+                callbacks.Add(callback);
+            }
+        }
+
+        // Sort by priority (lower = earlier)
+        return callbacks.OrderBy(c => c.Priority).ToList();
+    }
+
+    /// <summary>
+    /// Maintains the compression callback index when defining callbacks.
+    /// </summary>
+    private async Task MaintainCompressCallbackIndexAsync(
+        string resourceType,
+        string sourceType,
+        CancellationToken cancellationToken)
+    {
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
+
+        // Add to per-resource-type index
+        var indexKey = BuildCompressIndexKey(resourceType);
+        await cacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
+
+        // Add to master resource type index
+        await cacheStore.AddToSetAsync(MasterCompressResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Maps a CompressCallbackDefinition to a CompressCallbackSummary for API responses.
+    /// </summary>
+    private static CompressCallbackSummary MapToCompressSummary(CompressCallbackDefinition callback)
+        => new()
+        {
+            ResourceType = callback.ResourceType,
+            SourceType = callback.SourceType,
+            ServiceName = callback.ServiceName,
+            CompressEndpoint = callback.CompressEndpoint,
+            DecompressEndpoint = callback.DecompressEndpoint,
+            Priority = callback.Priority,
+            RegisteredAt = callback.RegisteredAt,
+            Description = callback.Description
+        };
+
+    /// <summary>
+    /// Compresses JSON data using GZip and returns base64-encoded string.
+    /// </summary>
+    private static string CompressJsonData(string jsonData)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(jsonData);
+        using var output = new MemoryStream();
+        using (var gzip = new System.IO.Compression.GZipStream(
+            output, System.IO.Compression.CompressionLevel.Optimal, leaveOpen: true))
+        {
+            gzip.Write(bytes, 0, bytes.Length);
+        }
+        return Convert.ToBase64String(output.ToArray());
+    }
+
+    /// <summary>
+    /// Decompresses base64-encoded GZip data to JSON string.
+    /// </summary>
+    private static string DecompressJsonData(string base64CompressedData)
+    {
+        var compressedBytes = Convert.FromBase64String(base64CompressedData);
+        using var input = new MemoryStream(compressedBytes);
+        using var gzip = new System.IO.Compression.GZipStream(
+            input, System.IO.Compression.CompressionMode.Decompress);
+        using var output = new MemoryStream();
+        gzip.CopyTo(output);
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
+    }
+
+    /// <summary>
+    /// Computes SHA256 checksum for data integrity verification.
+    /// </summary>
+    private static string ComputeChecksum(byte[] data)
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        var hash = sha256.ComputeHash(data);
+        return Convert.ToHexString(hash);
     }
 }
 
@@ -926,4 +1766,137 @@ internal class CleanupCallbackDefinition
     /// When this callback was registered.
     /// </summary>
     public DateTimeOffset RegisteredAt { get; set; }
+}
+
+/// <summary>
+/// Definition of a compression callback for a resource type.
+/// </summary>
+internal class CompressCallbackDefinition
+{
+    /// <summary>
+    /// Type of resource this compression handles (opaque identifier).
+    /// </summary>
+    public string ResourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Type of data being compressed (opaque identifier, e.g., "character-personality").
+    /// </summary>
+    public string SourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Target service name for callback invocation.
+    /// </summary>
+    public string ServiceName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Endpoint path for compression callback invocation.
+    /// </summary>
+    public string CompressEndpoint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// JSON template with {{resourceId}} placeholder for compression.
+    /// </summary>
+    public string CompressPayloadTemplate { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Endpoint path for decompression callback invocation (nullable).
+    /// </summary>
+    public string? DecompressEndpoint { get; set; }
+
+    /// <summary>
+    /// JSON template with {{resourceId}} and {{data}} placeholders for decompression.
+    /// </summary>
+    public string? DecompressPayloadTemplate { get; set; }
+
+    /// <summary>
+    /// Execution order (lower = earlier).
+    /// </summary>
+    public int Priority { get; set; } = 100;
+
+    /// <summary>
+    /// Human-readable description.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// When this callback was registered.
+    /// </summary>
+    public DateTimeOffset RegisteredAt { get; set; }
+}
+
+/// <summary>
+/// Internal model for archive storage in MySQL.
+/// </summary>
+internal class ResourceArchiveModel
+{
+    /// <summary>
+    /// Unique identifier for this archive.
+    /// </summary>
+    public Guid ArchiveId { get; set; }
+
+    /// <summary>
+    /// Type of resource archived.
+    /// </summary>
+    public string ResourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID of the resource archived.
+    /// </summary>
+    public Guid ResourceId { get; set; }
+
+    /// <summary>
+    /// Archive version (increments on re-compression).
+    /// </summary>
+    public int Version { get; set; }
+
+    /// <summary>
+    /// Data entries from each compression callback.
+    /// </summary>
+    public List<ArchiveEntryModel> Entries { get; set; } = new();
+
+    /// <summary>
+    /// When this archive was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// Whether original source data was deleted after archival.
+    /// </summary>
+    public bool SourceDataDeleted { get; set; }
+}
+
+/// <summary>
+/// Single entry in the archive bundle.
+/// </summary>
+internal class ArchiveEntryModel
+{
+    /// <summary>
+    /// Type of data (e.g., "character-personality").
+    /// </summary>
+    public string SourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Service that provided the data.
+    /// </summary>
+    public string ServiceName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Base64-encoded gzipped JSON from the service callback.
+    /// </summary>
+    public string Data { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When this entry was compressed.
+    /// </summary>
+    public DateTimeOffset CompressedAt { get; set; }
+
+    /// <summary>
+    /// SHA256 hash for integrity verification.
+    /// </summary>
+    public string? DataChecksum { get; set; }
+
+    /// <summary>
+    /// Size before compression.
+    /// </summary>
+    public int? OriginalSizeBytes { get; set; }
 }
