@@ -576,6 +576,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/DecayMemoriesResponse'
 
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /character-encounter/get-compress-data:
+    post:
+      summary: Get encounter data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns encounters and perspectives involving this character for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterCompressData'
+        '404':
+          description: No encounter data for character
+
+  /character-encounter/restore-from-archive:
+    post:
+      summary: Restore encounter data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores encounters and perspectives from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
 components:
   schemas:
     # ==========================================================================
@@ -1558,3 +1617,102 @@ components:
         dryRun:
           type: boolean
           description: Whether this was a preview run
+
+    # ==========================================================================
+    # Compression Models (Resource Service Integration)
+    # ==========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get encounter data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    EncounterCompressData:
+      type: object
+      description: Complete encounter data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasEncounters
+      - encounterCount
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasEncounters:
+          type: boolean
+          description: Whether encounters exist for this character
+        encounterCount:
+          type: integer
+          description: Number of encounters archived
+        encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterResponse'
+          description: Encounters with perspectives (empty if hasEncounters=false)
+        aggregateSentiment:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: |
+            Map of target characterId to aggregate sentiment.
+            Preserves sentiment relationships for historical reference.
+          nullable: true
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore encounter data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped EncounterCompressData JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - encountersRestored
+      - perspectivesRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        encountersRestored:
+          type: integer
+          description: Number of encounters restored
+        perspectivesRestored:
+          type: integer
+          description: Number of perspectives restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed

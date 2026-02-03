@@ -157,6 +157,36 @@ public static class CharacterPersonalityPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/character-personality/get-compress-data",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getCompressData",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-personality/restore-from-archive",
+            Method = ServiceEndpointMethod.POST,
+            Description = "restoreFromArchive",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/character-personality/cleanup-by-character",
             Method = ServiceEndpointMethod.POST,
             Description = "cleanupByCharacter",

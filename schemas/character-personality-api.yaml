@@ -317,6 +317,65 @@ paths:
         '404':
           description: No combat preferences found for this character
 
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /character-personality/get-compress-data:
+    post:
+      summary: Get personality data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns personality traits and combat preferences for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalityCompressData'
+        '404':
+          description: No personality data for character
+
+  /character-personality/restore-from-archive:
+    post:
+      summary: Restore personality data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores personality traits and combat preferences from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
   # Resource Cleanup Endpoint
   /character-personality/cleanup-by-character:
     post:
@@ -862,3 +921,96 @@ components:
         success:
           type: boolean
           description: Whether cleanup completed successfully
+
+    # ===========================================================================
+    # Compression Models (Resource Service Integration)
+    # ===========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get personality data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    PersonalityCompressData:
+      type: object
+      description: Complete personality data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasPersonality
+      - hasCombatPreferences
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasPersonality:
+          type: boolean
+          description: Whether personality traits exist
+        personality:
+          $ref: '#/components/schemas/PersonalityResponse'
+          nullable: true
+          description: Personality traits (null if hasPersonality=false)
+        hasCombatPreferences:
+          type: boolean
+          description: Whether combat preferences exist
+        combatPreferences:
+          $ref: '#/components/schemas/CombatPreferencesResponse'
+          nullable: true
+          description: Combat preferences (null if hasCombatPreferences=false)
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore personality data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped PersonalityCompressData JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - personalityRestored
+      - combatPreferencesRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        personalityRestored:
+          type: boolean
+          description: Whether personality traits were restored
+        combatPreferencesRestored:
+          type: boolean
+          description: Whether combat preferences were restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed

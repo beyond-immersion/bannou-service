@@ -318,6 +318,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/HistorySummaryResponse'
 
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /character-history/get-compress-data:
+    post:
+      summary: Get history data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns historical participations, backstory elements, and text summaries for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryCompressData'
+        '404':
+          description: No history data for character
+
+  /character-history/restore-from-archive:
+    post:
+      summary: Restore history data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores historical participations and backstory elements from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
 components:
   schemas:
     # Enums
@@ -809,3 +868,101 @@ components:
           description: |
             Major historical events as text summaries.
             e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+
+    # ===========================================================================
+    # Compression Models (Resource Service Integration)
+    # ===========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get history data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    HistoryCompressData:
+      type: object
+      description: Complete history data for archive storage
+      additionalProperties: false
+      required:
+      - characterId
+      - hasParticipations
+      - hasBackstory
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        hasParticipations:
+          type: boolean
+          description: Whether historical participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalParticipation'
+          description: Historical event participations (empty if hasParticipations=false)
+        hasBackstory:
+          type: boolean
+          description: Whether backstory elements exist
+        backstory:
+          $ref: '#/components/schemas/BackstoryResponse'
+          nullable: true
+          description: Backstory data (null if hasBackstory=false)
+        summaries:
+          $ref: '#/components/schemas/HistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore history data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped HistoryCompressData JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - participationsRestored
+      - backstoryRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        participationsRestored:
+          type: integer
+          description: Number of participation records restored
+        backstoryRestored:
+          type: boolean
+          description: Whether backstory was restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed

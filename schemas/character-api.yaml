@@ -328,6 +328,40 @@ paths:
         '409':
           description: Could not acquire lock on character
 
+  # ===========================================================================
+  # Compression Endpoint (Resource Service Integration)
+  # ===========================================================================
+
+  /character/get-compress-data:
+    post:
+      summary: Get character base data for compression
+      operationId: getCompressData
+      tags:
+      - Character Compression
+      description: |
+        Called by Resource service during compression.
+        Returns core character data (name, dates, family summary).
+        Returns BadRequest if character is alive - only dead characters can be compressed.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Character base data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterCompressData'
+        '400':
+          description: Character is not dead (cannot compress alive characters)
+        '404':
+          description: Character not found
+
 components:
   schemas:
     # Shared Enum Definitions
@@ -1070,3 +1104,79 @@ components:
           format: date-time
           nullable: true
           description: When refCount first reached zero (null if refCount > 0)
+
+    # =========================================================================
+    # Compression Models (Resource Service Integration)
+    # =========================================================================
+
+    GetCompressDataRequest:
+      description: Request to get character data for compression
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    CharacterCompressData:
+      description: Core character data for archive storage
+      type: object
+      additionalProperties: false
+      required:
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - deathDate
+      - status
+      - compressedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the character
+        name:
+          type: string
+          description: Display name of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          description: In-game death timestamp (required for compression)
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status (must be dead for compression)
+        familySummary:
+          type: string
+          nullable: true
+          description: |
+            Text summary of family relationships.
+            Example: "Father of 3, married to Elena, orphaned at young age"
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this data was compressed
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp

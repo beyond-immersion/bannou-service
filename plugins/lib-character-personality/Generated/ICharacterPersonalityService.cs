@@ -75,6 +75,16 @@ public partial interface ICharacterPersonalityService : IBannouService
         Task<StatusCodes> DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// GetCompressData operation
+        /// </summary>
+        Task<(StatusCodes, PersonalityCompressData?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RestoreFromArchive operation
+        /// </summary>
+        Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// CleanupByCharacter operation
         /// </summary>
         Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));

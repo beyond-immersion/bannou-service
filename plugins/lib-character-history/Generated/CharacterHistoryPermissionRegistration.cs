@@ -185,6 +185,36 @@ public static class CharacterHistoryPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-history/get-compress-data",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getCompressData",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-history/restore-from-archive",
+            Method = ServiceEndpointMethod.POST,
+            Description = "restoreFromArchive",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 
