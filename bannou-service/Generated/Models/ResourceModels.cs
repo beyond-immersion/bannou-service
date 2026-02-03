@@ -1644,20 +1644,23 @@ public partial class ExecuteSnapshotRequest
     public string SnapshotType { get; set; } = default!;
 
     /// <summary>
-    /// Time-to-live in seconds for the snapshot (default 1 hour, max 24 hours).
+    /// Time-to-live in seconds for the snapshot.
+    /// <br/>If not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).
+    /// <br/>Value is clamped to configured min/max range.
     /// <br/>Snapshot is automatically deleted by Redis after TTL expires.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
-    [System.ComponentModel.DataAnnotations.Range(60, 86400)]
-    public int TtlSeconds { get; set; } = 3600;
+    public int? TtlSeconds { get; set; } = default!;
 
     /// <summary>
-    /// Policy for callback execution (defaults to ALL_REQUIRED)
+    /// Policy for callback execution.
+    /// <br/>If not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compressionPolicy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CompressionPolicy CompressionPolicy { get; set; } = default!;
+    public CompressionPolicy? CompressionPolicy { get; set; } = default!;
 
     /// <summary>
     /// If true, return what would be captured without storing

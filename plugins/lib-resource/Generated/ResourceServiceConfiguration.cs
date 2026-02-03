@@ -100,4 +100,25 @@ public class ResourceServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 120, Maximum = 3600)]
     public int CompressionLockExpirySeconds { get; set; } = 600;
 
+    /// <summary>
+    /// Default TTL for snapshots when not specified in request (1 hour default)
+    /// Environment variable: RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 86400)]
+    public int SnapshotDefaultTtlSeconds { get; set; } = 3600;
+
+    /// <summary>
+    /// Minimum allowed TTL for snapshots (1 minute default)
+    /// Environment variable: RESOURCE_SNAPSHOT_MIN_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int SnapshotMinTtlSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Maximum allowed TTL for snapshots (24 hours default, max 7 days)
+    /// Environment variable: RESOURCE_SNAPSHOT_MAX_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 3600, Maximum = 604800)]
+    public int SnapshotMaxTtlSeconds { get; set; } = 86400;
+
 }

@@ -72,3 +72,28 @@ x-service-configuration:
       minimum: 120
       maximum: 3600
       description: Distributed lock timeout during compression execution
+
+    # === Snapshot Configuration ===
+    SnapshotDefaultTtlSeconds:
+      type: integer
+      env: RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS
+      default: 3600
+      minimum: 60
+      maximum: 86400
+      description: Default TTL for snapshots when not specified in request (1 hour default)
+
+    SnapshotMinTtlSeconds:
+      type: integer
+      env: RESOURCE_SNAPSHOT_MIN_TTL_SECONDS
+      default: 60
+      minimum: 1
+      maximum: 3600
+      description: Minimum allowed TTL for snapshots (1 minute default)
+
+    SnapshotMaxTtlSeconds:
+      type: integer
+      env: RESOURCE_SNAPSHOT_MAX_TTL_SECONDS
+      default: 86400
+      minimum: 3600
+      maximum: 604800
+      description: Maximum allowed TTL for snapshots (24 hours default, max 7 days)

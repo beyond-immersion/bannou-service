@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -1660,7 +1661,7 @@ public partial class ResourceService : IResourceService
     }
 
     // =========================================================================
-    // Snapshot Operations (Stub - Not Yet Implemented)
+    // Snapshot Management (Living Entity Snapshots)
     // =========================================================================
 
     /// <inheritdoc />
@@ -1668,9 +1669,260 @@ public partial class ResourceService : IResourceService
         ExecuteSnapshotRequest body,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
-        _logger.LogDebug("ExecuteSnapshot not yet implemented for resource type: {ResourceType}", body.ResourceType);
-        return (StatusCodes.NotImplemented, null);
+        var stopwatch = Stopwatch.StartNew();
+
+        // Get all compression callbacks for this resource type, sorted by priority
+        var callbacks = await GetCompressCallbacksAsync(body.ResourceType, cancellationToken);
+
+        if (callbacks.Count == 0)
+        {
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "No compression callbacks registered for resource type {ResourceType} (snapshot)",
+                body.ResourceType);
+
+            return (StatusCodes.OK, new ExecuteSnapshotResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = false,
+                DryRun = body.DryRun,
+                AbortReason = "No compression callbacks registered for this resource type",
+                CallbackResults = new List<CompressCallbackResult>(),
+                SnapshotDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Handle dry run - return preview without executing
+        if (body.DryRun)
+        {
+            stopwatch.Stop();
+            return (StatusCodes.OK, new ExecuteSnapshotResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = true,
+                DryRun = true,
+                SnapshotId = null,
+                ExpiresAt = null,
+                CallbackResults = callbacks.Select(c => new CompressCallbackResult
+                {
+                    SourceType = c.SourceType,
+                    ServiceName = c.ServiceName,
+                    Endpoint = c.CompressEndpoint,
+                    Success = true, // Hypothetical - not actually executed
+                    DurationMs = 0
+                }).ToList(),
+                SnapshotDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Use configuration defaults when not specified in request
+        var compressionPolicy = body.CompressionPolicy ?? _configuration.DefaultCompressionPolicy;
+        var ttlSeconds = body.TtlSeconds ?? _configuration.SnapshotDefaultTtlSeconds;
+        ttlSeconds = Math.Clamp(ttlSeconds, _configuration.SnapshotMinTtlSeconds, _configuration.SnapshotMaxTtlSeconds);
+
+        var callbackResults = new List<CompressCallbackResult>();
+        var snapshotEntries = new List<ArchiveEntryModel>();
+        var context = new Dictionary<string, object?>
+        {
+            ["resourceId"] = body.ResourceId.ToString()
+        };
+
+        // Execute each callback in priority order (same logic as compression)
+        foreach (var callback in callbacks)
+        {
+            var callbackStopwatch = Stopwatch.StartNew();
+
+            try
+            {
+                var apiDefinition = new PreboundApiDefinition
+                {
+                    ServiceName = callback.ServiceName,
+                    Endpoint = callback.CompressEndpoint,
+                    PayloadTemplate = callback.CompressPayloadTemplate,
+                    Description = callback.Description
+                };
+
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.CompressionCallbackTimeoutSeconds));
+
+                var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, timeoutCts.Token);
+
+                callbackStopwatch.Stop();
+
+                if (result.IsSuccess && result.Result.StatusCode >= 200 && result.Result.StatusCode < 300)
+                {
+                    // Get the response body and compress it
+                    var responseJson = result.Result.ResponseBody ?? "{}";
+                    var originalBytes = System.Text.Encoding.UTF8.GetBytes(responseJson);
+                    var compressedData = CompressJsonData(responseJson);
+                    var checksum = ComputeChecksum(originalBytes);
+
+                    snapshotEntries.Add(new ArchiveEntryModel
+                    {
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Data = compressedData,
+                        CompressedAt = DateTimeOffset.UtcNow,
+                        DataChecksum = checksum,
+                        OriginalSizeBytes = originalBytes.Length
+                    });
+
+                    callbackResults.Add(new CompressCallbackResult
+                    {
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.CompressEndpoint,
+                        Success = true,
+                        StatusCode = result.Result.StatusCode,
+                        DataSize = compressedData.Length,
+                        DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                    });
+
+                    _logger.LogDebug(
+                        "Snapshot callback succeeded: {ServiceName}{Endpoint} for {ResourceType}:{ResourceId}",
+                        callback.ServiceName, callback.CompressEndpoint, body.ResourceType, body.ResourceId);
+                }
+                else
+                {
+                    // Callback failed
+                    callbackResults.Add(new CompressCallbackResult
+                    {
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.CompressEndpoint,
+                        Success = false,
+                        StatusCode = result.Result.StatusCode,
+                        ErrorMessage = result.SubstitutionError ?? result.Result.ErrorMessage,
+                        DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                    });
+
+                    _logger.LogWarning(
+                        "Snapshot callback failed: {ServiceName}{Endpoint} returned {StatusCode} for {ResourceType}:{ResourceId}",
+                        callback.ServiceName, callback.CompressEndpoint, result.Result.StatusCode,
+                        body.ResourceType, body.ResourceId);
+
+                    // Abort if policy requires all callbacks
+                    if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                    {
+                        stopwatch.Stop();
+                        return (StatusCodes.OK, new ExecuteSnapshotResponse
+                        {
+                            ResourceType = body.ResourceType,
+                            ResourceId = body.ResourceId,
+                            Success = false,
+                            DryRun = false,
+                            AbortReason = $"Snapshot callback failed for {callback.SourceType} with ALL_REQUIRED policy",
+                            CallbackResults = callbackResults,
+                            SnapshotDurationMs = (int)stopwatch.ElapsedMilliseconds
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                callbackStopwatch.Stop();
+
+                _logger.LogError(ex,
+                    "Exception in snapshot callback: {ServiceName}{Endpoint} for {ResourceType}:{ResourceId}",
+                    callback.ServiceName, callback.CompressEndpoint, body.ResourceType, body.ResourceId);
+
+                callbackResults.Add(new CompressCallbackResult
+                {
+                    SourceType = callback.SourceType,
+                    ServiceName = callback.ServiceName,
+                    Endpoint = callback.CompressEndpoint,
+                    Success = false,
+                    StatusCode = 0,
+                    ErrorMessage = ex.Message,
+                    DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
+                });
+
+                if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                {
+                    stopwatch.Stop();
+                    return (StatusCodes.OK, new ExecuteSnapshotResponse
+                    {
+                        ResourceType = body.ResourceType,
+                        ResourceId = body.ResourceId,
+                        Success = false,
+                        DryRun = false,
+                        AbortReason = $"Snapshot callback exception for {callback.SourceType} with ALL_REQUIRED policy: {ex.Message}",
+                        CallbackResults = callbackResults,
+                        SnapshotDurationMs = (int)stopwatch.ElapsedMilliseconds
+                    });
+                }
+            }
+        }
+
+        // Check if we have any entries
+        if (snapshotEntries.Count == 0)
+        {
+            stopwatch.Stop();
+            return (StatusCodes.OK, new ExecuteSnapshotResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = false,
+                DryRun = false,
+                AbortReason = "No successful snapshot callbacks - cannot create snapshot",
+                CallbackResults = callbackResults,
+                SnapshotDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Create snapshot with TTL
+        var snapshotId = Guid.NewGuid();
+        var expiresAt = DateTimeOffset.UtcNow.AddSeconds(ttlSeconds);
+        var snapshotKey = $"snap:{snapshotId}";
+
+        var snapshot = new ResourceSnapshotModel
+        {
+            SnapshotId = snapshotId,
+            ResourceType = body.ResourceType,
+            ResourceId = body.ResourceId,
+            SnapshotType = body.SnapshotType ?? "default",
+            Entries = snapshotEntries,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = expiresAt
+        };
+
+        // Save with TTL (Redis auto-expires)
+        await _snapshotStore.SaveAsync(snapshotKey, snapshot, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+
+        _logger.LogInformation(
+            "Created snapshot {SnapshotId} for {ResourceType}:{ResourceId} with {EntryCount} entries, expires at {ExpiresAt}",
+            snapshotId, body.ResourceType, body.ResourceId, snapshotEntries.Count, expiresAt);
+
+        // Publish snapshot created event
+        await _messageBus.TryPublishAsync(
+            "resource.snapshot.created",
+            new ResourceSnapshotCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                SnapshotId = snapshotId,
+                SnapshotType = body.SnapshotType ?? "default",
+                ExpiresAt = expiresAt,
+                EntriesCount = snapshotEntries.Count
+            },
+            cancellationToken);
+
+        stopwatch.Stop();
+        return (StatusCodes.OK, new ExecuteSnapshotResponse
+        {
+            ResourceType = body.ResourceType,
+            ResourceId = body.ResourceId,
+            Success = true,
+            DryRun = false,
+            SnapshotId = snapshotId,
+            ExpiresAt = expiresAt,
+            CallbackResults = callbackResults,
+            SnapshotDurationMs = (int)stopwatch.ElapsedMilliseconds
+        });
     }
 
     /// <inheritdoc />
@@ -1678,9 +1930,49 @@ public partial class ResourceService : IResourceService
         GetSnapshotRequest body,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
-        _logger.LogDebug("GetSnapshot not yet implemented for snapshot: {SnapshotId}", body.SnapshotId);
-        return (StatusCodes.NotImplemented, null);
+        var snapshotKey = $"snap:{body.SnapshotId}";
+        var snapshot = await _snapshotStore.GetAsync(snapshotKey, cancellationToken);
+
+        if (snapshot == null)
+        {
+            _logger.LogDebug(
+                "Snapshot {SnapshotId} not found (may have expired)",
+                body.SnapshotId);
+
+            return (StatusCodes.OK, new GetSnapshotResponse
+            {
+                SnapshotId = body.SnapshotId,
+                Found = false,
+                Snapshot = null
+            });
+        }
+
+        // Convert internal model to API model
+        var apiSnapshot = new ResourceSnapshot
+        {
+            SnapshotId = snapshot.SnapshotId,
+            ResourceType = snapshot.ResourceType,
+            ResourceId = snapshot.ResourceId,
+            SnapshotType = snapshot.SnapshotType,
+            Entries = snapshot.Entries.Select(e => new ArchiveBundleEntry
+            {
+                SourceType = e.SourceType,
+                ServiceName = e.ServiceName,
+                Data = e.Data,
+                CompressedAt = e.CompressedAt,
+                DataChecksum = e.DataChecksum,
+                OriginalSizeBytes = e.OriginalSizeBytes
+            }).ToList(),
+            CreatedAt = snapshot.CreatedAt,
+            ExpiresAt = snapshot.ExpiresAt
+        };
+
+        return (StatusCodes.OK, new GetSnapshotResponse
+        {
+            SnapshotId = body.SnapshotId,
+            Found = true,
+            Snapshot = apiSnapshot
+        });
     }
 }
 
@@ -1926,4 +2218,45 @@ internal class ArchiveEntryModel
     /// Size before compression.
     /// </summary>
     public int? OriginalSizeBytes { get; set; }
+}
+
+/// <summary>
+/// Ephemeral snapshot of a living resource (stored in Redis with TTL).
+/// </summary>
+internal class ResourceSnapshotModel
+{
+    /// <summary>
+    /// Unique identifier for this snapshot.
+    /// </summary>
+    public Guid SnapshotId { get; set; }
+
+    /// <summary>
+    /// Type of resource snapshotted (opaque identifier).
+    /// </summary>
+    public string ResourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID of the resource snapshotted.
+    /// </summary>
+    public Guid ResourceId { get; set; }
+
+    /// <summary>
+    /// Label for snapshot purpose (e.g., "storyline_seed").
+    /// </summary>
+    public string SnapshotType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Data entries from each compression callback.
+    /// </summary>
+    public List<ArchiveEntryModel> Entries { get; set; } = new();
+
+    /// <summary>
+    /// When this snapshot was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// When this snapshot will expire (Redis TTL handles actual deletion).
+    /// </summary>
+    public DateTimeOffset ExpiresAt { get; set; }
 }

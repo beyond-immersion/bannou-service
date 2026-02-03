@@ -1493,15 +1493,18 @@ components:
             Stored in metadata for filtering/debugging.
         ttlSeconds:
           type: integer
-          minimum: 60
-          maximum: 86400
-          default: 3600
+          nullable: true
           description: |
-            Time-to-live in seconds for the snapshot (default 1 hour, max 24 hours).
+            Time-to-live in seconds for the snapshot.
+            If not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).
+            Value is clamped to configured min/max range.
             Snapshot is automatically deleted by Redis after TTL expires.
         compressionPolicy:
           $ref: '#/components/schemas/CompressionPolicy'
-          description: Policy for callback execution (defaults to ALL_REQUIRED)
+          nullable: true
+          description: |
+            Policy for callback execution.
+            If not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).
         dryRun:
           type: boolean
           default: false
