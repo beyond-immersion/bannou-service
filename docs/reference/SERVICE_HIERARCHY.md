@@ -131,6 +131,7 @@ These services provide the core game infrastructure - worlds, characters, specie
 | **currency** | Multi-currency economy management |
 | **item** | Item templates and instances |
 | **inventory** | Container and slot management |
+| **game-session** | Active game session management |
 
 **Rules**:
 - May depend on Layer 0, Layer 1, and other L2 services
@@ -194,14 +195,13 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 | **voice** | WebRTC voice communication |
 | **save-load** | Game state persistence |
 | **music** | Procedural music generation |
-| **game-session** | Active game session management |
 | **escrow** | Multi-party asset exchanges |
 | **character-personality** | Personality traits, combat preferences |
 | **character-history** | Historical events, backstory |
 | **character-encounter** | Memorable interactions tracking |
 | **realm-history** | Realm historical events, lore |
 
-**Analytics Note**: Analytics is classified as L4 not because it *depends* on game services, but because it *observes* them via event subscriptions. It subscribes to events from L2/L4 services (game-session, character-history, realm-history) for aggregation. Unlike typical L4 services:
+**Analytics Note**: Analytics is classified as L4 not because it *depends* on game services, but because it *observes* them via event subscriptions. It subscribes to events from L2 services (game-session) and L4 services (character-history, realm-history) for aggregation. Unlike typical L4 services:
 - Analytics does NOT invoke L2/L4 service APIs (it only consumes events)
 - Analytics should NOT be called by L1/L2/L3 services (it's the most optional plugin)
 - If Analytics is disabled, no other service should break
@@ -433,9 +433,9 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 |-------|----------|
 | **L0** | lib-state, lib-messaging, lib-mesh |
 | **L1** | account, auth, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory |
+| **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session |
 | **L3** | asset, telemetry, orchestrator, documentation, website, testing, mesh, messaging, state |
-| **L4** | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, game-session, escrow, character-personality, character-history, character-encounter, realm-history |
+| **L4** | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
 
 \* Analytics is L4 for event consumption reasons only - it observes but doesn't invoke game services. See L4 section for details.
 

@@ -24,6 +24,8 @@ Binding agreement management between entities with milestone-based progression, 
 | lib-mesh (`IEventConsumer`) | Event consumer registration (reserved for future event subscriptions) |
 | lib-location (`ILocationClient`) | Territory constraint checking via location hierarchy ancestry queries |
 
+> **⚠️ SERVICE HIERARCHY VIOLATION**: Contract (L1 App Foundation) depends on Location (L2 Game Foundation). This violates the service hierarchy - L1 services cannot depend on L2. The dependency exists for territory constraint checking (`CheckContractConstraint` with `Territory` constraint type). **Remediation options**: (A) Remove location validation entirely, (B) Make location validation optional with graceful degradation when Location service unavailable, or (C) Move territory clause logic to an L4 "ContractExtensions" service that subscribes to contract events.
+
 ---
 
 ## Dependents (What Relies On This Plugin)

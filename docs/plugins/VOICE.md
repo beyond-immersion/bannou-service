@@ -30,7 +30,9 @@ The Voice service provides WebRTC-based voice communication for game sessions, s
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-game-session | Creates/joins/leaves/deletes voice rooms during session lifecycle via `IVoiceClient` |
+| lib-game-session | Creates/joins/leaves/deletes voice rooms during session lifecycle via `IVoiceClient` (**VIOLATION**) |
+
+> **⚠️ SERVICE HIERARCHY VIOLATION**: GameSession (L2 Game Foundation) currently depends on Voice (L4 Game Features) via `IVoiceClient`. This is a **critical violation** - L2 services cannot depend on L4. **Remediation**: Invert the dependency. Voice (L4) should subscribe to `game-session.created` and `game-session.ended` events from GameSession (L2), automatically creating rooms when `VoiceEnabled=true` and publishing `voice.room.created`. This is the correct direction (L4 → L2). See "Service-to-service events stub" (#238) for related work on adding service events to Voice.
 
 ---
 

@@ -13,10 +13,9 @@ The Auth plugin is the internet-facing authentication and session management ser
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (IStateStoreFactory) | All session data, refresh tokens, OAuth links, and password reset tokens in Redis |
+| lib-state (IStateStoreFactory) | All session data, refresh tokens, OAuth links, password reset tokens, and edge revocation entries in Redis |
 | lib-messaging (IMessageBus) | Publishing session lifecycle events and audit events |
-| lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password |
-| lib-subscription (ISubscriptionClient) | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions; see Bugs section |
+| lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password, add auth methods |
 | AppConfiguration (DI singleton) | JWT secret, issuer, audience, and ServiceDomain via constructor-injected config |
 
 **External NuGet dependencies:**
@@ -39,13 +38,25 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 
 | Key Pattern | Data Type | TTL | Purpose |
 |-------------|-----------|-----|---------|
-| `session:{sessionKey}` | `SessionDataModel` | JwtExpirationMinutes * 60 | Active session data (accountId, email, roles, authorizations, expiry) |
+| `session:{sessionKey}` | `SessionDataModel` | JwtExpirationMinutes * 60 | Active session data (accountId, email, roles, authorizations, expiry, jti) |
 | `account-sessions:{accountId}` | `List<string>` | JwtExpirationMinutes * 60 + 300 | Index of session keys for an account (lazy-cleaned on read) |
 | `session-id-index:{sessionId}` | `string` (sessionKey) | JwtExpirationMinutes * 60 | Reverse lookup: human-facing session ID to internal session key |
 | `refresh_token:{token}` | `string` (accountId) | SessionTokenTtlDays in seconds | Maps refresh token to account ID |
 | `oauth-link:{provider}:{providerId}` | `string` (accountId) | **None** | Maps OAuth provider identity to account (cleaned up on account deletion) |
 | `account-oauth-links:{accountId}` | `List<string>` | **None** | Reverse index of OAuth link keys for account (for cleanup on deletion) |
 | `password-reset:{token}` | `PasswordResetData` | PasswordResetTokenTtlMinutes * 60 | Pending password reset (accountId, email, expiry) |
+
+**Store**: `edge-revocation` (Backend: Redis) - Used when EdgeRevocationEnabled=true
+
+| Key Pattern | Data Type | TTL | Purpose |
+|-------------|-----------|-----|---------|
+| `token:{jti}` | `TokenRevocationEntry` | Remaining token TTL | Revoked token entry with accountId, reason, expiry |
+| `token-index` | `List<string>` | **None** | Index of all revoked token JTIs |
+| `account:{accountId}` | `AccountRevocationEntry` | **None** | Account-level revocation (all tokens issued before a timestamp) |
+| `account-index` | `List<string>` | **None** | Index of all revoked account IDs |
+| `failed:{providerId}:token:{jti}` | `FailedEdgePushEntry` | **None** | Failed edge push awaiting retry |
+| `failed:{providerId}:account:{accountId}` | `FailedEdgePushEntry` | **None** | Failed account revocation push awaiting retry |
+| `failed-push-index` | `List<string>` | **None** | Index of all failed push keys |
 
 ## Events
 
@@ -54,7 +65,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `session.invalidated` | `SessionInvalidatedEvent` | Logout, account deletion, admin action, security revocation |
-| `session.updated` | `SessionUpdatedEvent` | Role changes propagated to sessions, subscription changes propagated |
+| `session.updated` | `SessionUpdatedEvent` | Role changes propagated to sessions |
 | `auth.login.successful` | `AuthLoginSuccessfulEvent` | Successful email/password login |
 | `auth.login.failed` | `AuthLoginFailedEvent` | Failed login attempt (brute force detection) |
 | `auth.registration.successful` | `AuthRegistrationSuccessfulEvent` | New account registered |
@@ -66,9 +77,8 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, and publishes `session.invalidated` |
+| `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, pushes edge revocations if enabled, and publishes `session.invalidated` |
 | `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session |
-| `subscription.updated` | `HandleSubscriptionUpdatedAsync` | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions; see Bugs section |
 
 ## Configuration
 
@@ -96,6 +106,14 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `SteamApiKey` | `AUTH_STEAM_API_KEY` | null | Steam Web API key for ticket validation |
 | `SteamAppId` | `AUTH_STEAM_APP_ID` | null | Steam App ID for ticket validation |
 | `BcryptWorkFactor` | `AUTH_BCRYPT_WORK_FACTOR` | 12 | BCrypt work factor for password hashing (existing hashes at other factors still validate) |
+| `EdgeRevocationEnabled` | `AUTH_EDGE_REVOCATION_ENABLED` | false | Master switch for edge-layer token revocation (CloudFlare, OpenResty) |
+| `EdgeRevocationTimeoutSeconds` | `AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS` | 5 | Timeout for edge provider push operations (1-30 seconds) |
+| `EdgeRevocationMaxRetryAttempts` | `AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS` | 3 | Max retry attempts before giving up on failed pushes (1-10) |
+| `CloudflareEdgeEnabled` | `AUTH_CLOUDFLARE_EDGE_ENABLED` | false | Enable CloudFlare Workers KV edge revocation |
+| `CloudflareAccountId` | `AUTH_CLOUDFLARE_ACCOUNT_ID` | null | CloudFlare account ID (required when CloudflareEdgeEnabled=true) |
+| `CloudflareKvNamespaceId` | `AUTH_CLOUDFLARE_KV_NAMESPACE_ID` | null | CloudFlare KV namespace ID for storing revoked tokens |
+| `CloudflareApiToken` | `AUTH_CLOUDFLARE_API_TOKEN` | null | CloudFlare API token with Workers KV write permissions |
+| `OpenrestyEdgeEnabled` | `AUTH_OPENRESTY_EDGE_ENABLED` | false | Enable OpenResty/NGINX edge revocation (reads from Redis directly) |
 
 **Note:** JWT core settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) are NOT in AuthServiceConfiguration. They live in the app-wide `AppConfiguration` singleton, which is constructor-injected into `TokenService`, `AuthService`, and `OAuthProviderService`. This is because JWT is cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config - nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints.
 
@@ -107,13 +125,13 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `AuthServiceConfiguration` | Typed access to auth-specific config (OAuth, mock, TTLs) |
 | `AppConfiguration` | App-wide config: JWT secret/issuer/audience, ServiceDomain, EffectiveAppId |
 | `IAccountClient` | Service mesh client for account CRUD operations |
-| `ISubscriptionClient` | ⚠️ **ARCHITECTURAL ERROR - DELETE** - Auth has no business with subscriptions |
-| `IStateStoreFactory` | Redis state store access (sessions, password resets, account-session indexes) |
+| `IStateStoreFactory` | Redis state store access (sessions, password resets, account-session indexes, edge revocations) |
 | `IMessageBus` | Audit event publishing |
 | `ITokenService` | JWT generation, refresh token management, token validation |
-| `ISessionService` | Session CRUD, account-session indexing, invalidation, session lifecycle event publishing |
+| `ISessionService` | Session CRUD, account-session indexing, invalidation, session lifecycle event publishing, edge revocation coordination |
 | `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
-| `IEventConsumer` | Registers handlers for account.deleted, account.updated, subscription.updated |
+| `IEdgeRevocationService` | Coordinates token revocation across edge providers (CloudFlare, OpenResty) |
+| `IEventConsumer` | Registers handlers for account.deleted, account.updated |
 
 ## API Endpoints (Implementation Notes)
 
@@ -145,34 +163,46 @@ Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOA
 
 `LogoutAsync` validates the JWT via `ValidateTokenAsync` and uses the session key from the response directly. Supports single-session logout (deletes the current session) or all-sessions logout (fetches the account-sessions index and deletes all). Publishes `session.invalidated` via `ISessionService` after cleanup.
 
+### Revocation List (Edge Synchronization)
+
+`GetRevocationListAsync` returns the current token revocation list for edge provider synchronization or admin monitoring. Delegates to `IEdgeRevocationService.GetRevocationListAsync`. Returns token-level revocations (by JTI) and account-level revocations (all tokens issued before a timestamp). Used by edge providers (CloudFlare Workers, OpenResty Lua scripts) to maintain their local blocklists.
+
 ## Visual Aid
 
 ```
 Login/Register/OAuth ──► TokenService.GenerateAccessTokenAsync()
                               │
-                              ├─ ⚠️ SubscriptionClient.QueryCurrent() ──► WRONG (DELETE THIS)
-                              │
-                              ├─ session:{key} ◄── SessionDataModel (roles only, not "auths")
+                              ├─ session:{key} ◄── SessionDataModel (accountId, roles, jti, expiry)
                               │
                               ├─ account-sessions:{accountId} ◄── [key1, key2, ...]
                               │
                               ├─ session-id-index:{sessionId} ──► sessionKey
                               │
-                              └─ JWT (contains only session_key claim - opaque Redis key)
+                              └─ JWT (contains session_key + jti claims)
                                      │
                                      ▼
                               TokenService.ValidateTokenAsync (called by Connect on WS upgrade)
                                      │
-                                     ├─ Verify JWT signature
-                                     ├─ Extract session_key (opaque Redis lookup key)
+                                     ├─ Verify JWT signature (issuer, audience, expiry)
+                                     ├─ Extract session_key claim
                                      ├─ Load session from Redis via SessionService
                                      ├─ Validate data integrity (null roles = corruption)
-                                     └─ Return roles + remaining time (NOT authorizations)
+                                     ├─ Update LastActiveAt timestamp
+                                     └─ Return roles + authorizations + remaining time
 
-account.deleted event ──► SessionService.InvalidateAllSessions ──► session.invalidated event
-                                                                          │
-                                                                          ▼
-                                                                    Connect: disconnect WS
+account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAsync
+                              │
+                              ├─ Collect JTIs from sessions
+                              ├─ Delete session:{key} entries
+                              ├─ Delete account-sessions:{accountId} index
+                              ├─ Push to EdgeRevocationService (if enabled)
+                              │       ├─ Store in edge-revocation Redis
+                              │       └─ Push to CloudFlare/OpenResty providers
+                              │
+                              └─ Publish session.invalidated event
+                                     │
+                                     ▼
+                               Connect: disconnect WS clients
 ```
 
 ## Stubs & Unimplemented Features
@@ -191,8 +221,6 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 - **Rate limiting for login attempts**: Covered by [#142](https://github.com/beyond-immersion/bannou-service/issues/142) (Audit Event Consumers).
 - **Email delivery integration**: Covered by [#141](https://github.com/beyond-immersion/bannou-service/issues/141) (Email Sending).
-- **Token revocation list**: Currently, invalidating a session deletes it from Redis. A revocation list would allow checking validity even if Redis data is lost/expired.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/143 -->
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/149 -->
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
@@ -202,16 +230,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ### Bugs (Fix Immediately)
 
-1. **Subscription integration is architecturally wrong (SERVICE_HIERARCHY violation - DELETE)**: Auth has NO business with subscriptions. The entire subscription integration must be deleted:
-   - Remove `ISubscriptionClient` from `AuthService.cs` constructor
-   - Remove `ISubscriptionClient` from `Services/TokenService.cs` constructor
-   - Delete `PropagateSubscriptionChangesAsync` method from `AuthService.cs`
-   - Delete `HandleSubscriptionUpdatedAsync` event handler from `AuthServiceEvents.cs`
-   - Remove subscription query logic from `TokenService.GenerateAccessTokenAsync`
-   - Remove `subscription.updated` from `schemas/auth-events.yaml` subscriptions
-   - Remove "authorizations" field from session state model if it exists solely for this
-
-   **Why this is wrong**: Auth's responsibility is JWTs and roles ONLY. Roles change only via Auth's own APIs. Subscription-based access is handled by services checking subscriptions directly and calling Permission to grant states. The pattern `stubName:authorized` should not exist. See `docs/reference/SERVICE_HIERARCHY_VIOLATIONS.md` entry #3 for full analysis.
+No bugs currently identified.
 
 ### Intentional Quirks
 
@@ -225,6 +244,10 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 5. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` exist for future implementation (SessionService.cs:21-23).
 
+6. **Edge revocation is best-effort**: When `EdgeRevocationEnabled=true`, token revocations are pushed to configured edge providers (CloudFlare, OpenResty) but failures don't block session invalidation. Failed pushes are stored in a retry set and retried on subsequent revocation operations. If max retries are exceeded, the failure is logged but the session is still invalidated. This design prioritizes session invalidation reliability over edge propagation completeness.
+
+7. **Account revocations never expire**: Token-level revocations in the edge-revocation store expire when the original JWT would have expired. Account-level revocations (all tokens before timestamp) have no TTL and persist indefinitely until explicitly cleaned up.
+
 ### Design Considerations (Requires Planning)
 
 No design considerations pending.
@@ -234,6 +257,10 @@ No design considerations pending.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
 ### Completed
+
+- **2026-02-03**: Token revocation list implemented as Edge Revocation system. The "Token revocation list" potential extension from [#143](https://github.com/beyond-immersion/bannou-service/issues/143) is now fully implemented via `IEdgeRevocationService` with CloudFlare and OpenResty provider support. Removed from Potential Extensions.
+
+- **2026-02-03**: Subscription integration architectural issue resolved. The subscription integration (`ISubscriptionClient`, `HandleSubscriptionUpdatedAsync`) was removed entirely. Auth no longer has any subscription-related code - downstream services handle subscription state directly and call Permission to grant states.
 
 - **2026-01-30**: Removed "SendPasswordResetEmailAsync unused cancellation token" from Design Considerations. This is not a design issue - it's a natural consequence of the synchronous mock implementation and will be addressed when email integration is implemented (tracked by [#141](https://github.com/beyond-immersion/bannou-service/issues/141)).
 

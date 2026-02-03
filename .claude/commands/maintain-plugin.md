@@ -168,6 +168,32 @@ Compare the deep dive document against source code findings.
 
 **NOTE: This phase IDENTIFIES inaccuracies. You will FIX them in Phase 6 using the Edit tool.**
 
+**⛔ CRITICAL: Verifying Absence Requires Exhaustive Search**
+
+Before claiming ANY constraint, property, or feature is MISSING or ABSENT from schema/code:
+
+1. **Read the FULL schema definition** for the type in question using the `Read` tool - do NOT rely on grep with context limits
+2. **For schema types**: Search for `TypeName:` in the YAML, then read the complete property block that follows
+3. **Never conclude "X doesn't exist" based on grep results alone** - grep can miss things due to:
+   - Context window limits (`-C 10` may not show properties 15 lines away)
+   - Regex pattern mismatches
+   - Properties defined in a different order than expected
+
+**Example of what went wrong:**
+```
+❌ WRONG: Grep for "maxItems" returned no results for BatchGetAccountsRequest
+   → Concluded maxItems constraint was missing
+   → Edited doc to remove accurate "Max 100 IDs" claim
+   → BUT: The constraint WAS there, grep just didn't show it due to context limits
+
+✓ RIGHT: Read the full schema file, search for "BatchGetAccountsRequest:"
+   → Read the complete type definition
+   → See all properties including maxItems: 100
+   → Confirm the document was already correct
+```
+
+**The Rule: To claim something is ABSENT, you must have READ the full definition, not just grepped for it.**
+
 **For each section, verify:**
 
 | Section | Verification |
@@ -465,6 +491,8 @@ If any of these conditions are true, DO NOT report success. Go back and fix.
 - ❌ "All content accurate" → but left 5 strikethrough items in place
 - ❌ "No changes needed" → when document has FIXED/IMPLEMENTED markers
 - ❌ Generating a report without making any Edit tool calls
+- ❌ **"Schema doesn't have X constraint"** → based on grep results that didn't show it due to context limits. MUST read the full type definition before claiming absence.
+- ❌ **Removing accurate information** → because grep didn't find confirming evidence. If the doc claims something, verify by reading the full source, not by failing to find it via grep.
 
 ### When Uncertain:
 - If behavior is unclear, note it as a quirk with "Needs investigation"
@@ -483,3 +511,4 @@ If you encounter issues:
 6. **Made zero edits but found strikethrough items:** GO BACK. You failed Phase 5b. Strikethrough items MUST be deleted or moved using the Edit tool. "Verifying" them is not enough.
 7. **Reported "no changes needed" but document has FIXED/IMPLEMENTED markers:** GO BACK. These markers are instructions to delete/move the lines, not to verify and leave in place.
 8. **Work Tracking has long "Completed" section:** DELETE entries corresponding to strikethrough items you processed. Don't preserve clutter.
+9. **Concluded a constraint/property is missing based on grep:** GO BACK. Read the FULL schema/code definition using the Read tool. Grep with context limits is unreliable for proving absence. If the document claims something exists, assume it's correct until you've read the complete source definition.

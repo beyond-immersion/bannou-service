@@ -22,7 +22,9 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and player events; error event publishing |
 | lib-messaging (`IEventConsumer`) | 4 event subscriptions (session lifecycle, subscription changes) |
 | lib-messaging (`IClientEventPublisher`) | Push shortcuts, chat messages, and cancellation notices to WebSocket sessions |
-| lib-voice (`IVoiceClient`) | Voice room create/join/leave/delete for sessions |
+| lib-voice (`IVoiceClient`) | Voice room create/join/leave/delete for sessions (**VIOLATION** - see below) |
+
+> **⚠️ SERVICE HIERARCHY VIOLATION**: GameSession (L2 Game Foundation) depends on Voice (L4 Game Features). This is a **critical violation** - L2 services cannot depend on L4. GameSession currently creates/destroys voice rooms directly via `IVoiceClient`. **Remediation**: Voice should subscribe to `game-session.created` and `game-session.ended` events, creating rooms when `VoiceEnabled=true` and publishing `voice.room.created` for GameSession to optionally capture the room ID. This inverts the dependency to the correct direction (L4 → L2).
 | lib-permission (`IPermissionClient`) | Set/clear `game-session:in_game` state on join/leave |
 | lib-subscription (`ISubscriptionClient`) | Query account subscriptions for shortcut eligibility and startup cache warmup |
 | lib-connect (`IConnectClient`) | Query connected sessions for an account on `subscription.updated` events |
