@@ -3,7 +3,7 @@
 > **Plugin**: lib-mesh
 > **Schema**: schemas/mesh-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index, mesh-circuit-breaker (all Redis)
+> **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index (all Redis), + raw Redis for circuit breaker (`mesh:cb:{appId}`)
 
 ---
 
@@ -37,20 +37,20 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 ## State Storage
 
-**Stores**: 4 Redis stores (via lib-state `IStateStoreFactory`)
+**Stores**: 3 Redis stores (via lib-state `IStateStoreFactory`) + 1 raw Redis pattern (via `IRedisOperations`)
 
 | Store | Key Pattern | Data Type | Purpose |
 |-------|-------------|-----------|---------|
 | `mesh-endpoints` | `{instanceId}` (GUID string) | `MeshEndpoint` | Individual endpoint registration with health/load metadata |
 | `mesh-appid-index` | `{appId}` (set of instance IDs) | `Set<string>` | App-ID to instance-ID mapping for routing queries |
 | `mesh-global-index` | `_index` (set of instance IDs) | `Set<string>` | Global endpoint index for discovery (avoids KEYS/SCAN) |
-| `mesh-circuit-breaker` | `{appId}` (hash) | Hash: failures, state, openedAt | Distributed circuit breaker state for cross-instance failure tracking |
+| *(raw Redis)* | `mesh:cb:{appId}` (hash) | Hash: failures, state, openedAt | Distributed circuit breaker state (via `IRedisOperations`, not state store factory) |
 
 **Key Patterns**:
 - Endpoint data keyed by instance ID (GUID)
 - App-ID index lists all instance IDs for a given app-id (with TTL refresh on heartbeat)
 - Global index (`_index` key) tracks all known instance IDs (no TTL - cleaned lazily on access)
-- Circuit breaker hash per app-id with atomic Lua script updates (no TTL - cleared on success)
+- Circuit breaker uses raw Redis via `IRedisOperations` with Lua scripts for atomic state transitions (no TTL - cleared on success)
 
 ---
 
@@ -113,8 +113,9 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `ILogger<MeshService>` | Scoped | Structured logging |
 | `MeshServiceConfiguration` | Singleton | All 24 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Heartbeat and mapping event subscription |
-| `IMeshStateManager` | Singleton | Redis state via lib-state (4 stores) |
+| `IMessageSubscriber` | Scoped | Circuit state change subscription in MeshInvocationClient |
+| `IEventConsumer` | Scoped | Heartbeat and mapping event subscription (via generated code) |
+| `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores + raw Redis) |
 | `IServiceAppMappingResolver` | Singleton | Shared service→app-id routing (used by all generated clients) |
 | `MeshInvocationClient` | Singleton | HTTP invocation with distributed circuit breaker, retries, caching |
 | `DistributedCircuitBreaker` | Internal (via MeshInvocationClient) | Redis-backed circuit breaker with local cache + event sync |
@@ -267,6 +268,8 @@ Event-Driven Auto-Registration
 7. **Empty service mappings reset to default routing**: When `HandleServiceMappingsAsync` receives a `FullServiceMappingsEvent` with empty mappings, it resets all routing to the default app-id ("bannou"). This is intentional for container teardown scenarios.
 
 8. **Health check deregistration uses configurable threshold**: After `HealthCheckFailureThreshold` (default 3) consecutive probe failures, endpoints are automatically deregistered with `HealthCheckFailed` reason. Set threshold to 0 to disable deregistration and rely solely on TTL expiry.
+
+9. **Circuit breaker bypasses state store factory**: Although `mesh-circuit-breaker` is defined in `state-stores.yaml` with prefix `mesh:cb`, the `DistributedCircuitBreaker` class uses raw `IRedisOperations` directly with a hardcoded `_keyPrefix = "mesh:cb:"`. This is because it requires Lua script execution for atomic state transitions, which isn't available through the standard `IStateStore<T>` interface. The schema definition serves as documentation only.
 
 ### Design Considerations (Requires Planning)
 
