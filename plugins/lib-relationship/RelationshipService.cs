@@ -749,7 +749,7 @@ public partial class RelationshipService : IRelationshipService
             Entity2Type = model.Entity2Type,
             RelationshipTypeId = model.RelationshipTypeId,
             StartedAt = model.StartedAt,
-            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            Metadata = model.Metadata,
             CreatedAt = model.CreatedAt
         };
 
@@ -776,8 +776,8 @@ public partial class RelationshipService : IRelationshipService
             Entity2Type = model.Entity2Type,
             RelationshipTypeId = model.RelationshipTypeId,
             StartedAt = model.StartedAt,
-            EndedAt = model.EndedAt ?? default,
-            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            EndedAt = model.EndedAt,
+            Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
             ChangedFields = changedFields.ToList()
@@ -804,7 +804,7 @@ public partial class RelationshipService : IRelationshipService
             RelationshipTypeId = model.RelationshipTypeId,
             StartedAt = model.StartedAt,
             EndedAt = model.EndedAt ?? DateTimeOffset.UtcNow,
-            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
             DeletedReason = deletedReason

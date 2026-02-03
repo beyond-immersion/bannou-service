@@ -937,8 +937,15 @@ public partial class RealmService : IRealmService
                 Code = model.Code,
                 Name = model.Name,
                 GameServiceId = model.GameServiceId,
+                Description = model.Description,
                 Category = model.Category,
-                IsActive = model.IsActive
+                IsActive = model.IsActive,
+                IsDeprecated = model.IsDeprecated,
+                DeprecatedAt = model.DeprecatedAt,
+                DeprecationReason = model.DeprecationReason,
+                Metadata = model.Metadata,
+                CreatedAt = model.CreatedAt,
+                UpdatedAt = model.UpdatedAt
             };
 
             await _messageBus.TryPublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
@@ -969,8 +976,9 @@ public partial class RealmService : IRealmService
                 Category = model.Category,
                 IsActive = model.IsActive,
                 IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt ?? default,
+                DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
+                Metadata = model.Metadata,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 ChangedFields = changedFields.ToList()
@@ -1005,8 +1013,9 @@ public partial class RealmService : IRealmService
                 Category = model.Category,
                 IsActive = model.IsActive,
                 IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt ?? default,
+                DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
+                Metadata = model.Metadata,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 DeletedReason = deletedReason
