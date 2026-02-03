@@ -51,6 +51,7 @@ components:
         parentTypeId: &id006
           type: string
           format: uuid
+          nullable: true
           description: "ID of the parent relationship type for hierarchical relationships"
         parentTypeCode: &id007
           type: string
@@ -59,6 +60,7 @@ components:
         inverseTypeId: &id008
           type: string
           format: uuid
+          nullable: true
           description: "ID of the inverse relationship type for asymmetric relationships"
         inverseTypeCode: &id009
           type: string
@@ -73,6 +75,7 @@ components:
         deprecatedAt: &id012
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the relationship type was deprecated"
         deprecationReason: &id013
           type: string
@@ -84,6 +87,7 @@ components:
         metadata: &id015
           type: object
           additionalProperties: true
+          nullable: true
           description: "Additional custom metadata for the relationship type"
         createdAt: &id016
           type: string

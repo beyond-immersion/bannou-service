@@ -1732,12 +1732,12 @@ public partial class LocationService : ILocationService
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
+            ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt ?? default,
+            DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
-            Metadata = model.Metadata ?? new object(),
+            Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -1757,12 +1757,12 @@ public partial class LocationService : ILocationService
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
+            ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt ?? default,
+            DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
-            Metadata = model.Metadata ?? new object(),
+            Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
             ChangedFields = changedFields.ToList()
@@ -1783,12 +1783,12 @@ public partial class LocationService : ILocationService
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
+            ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt ?? default,
+            DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
-            Metadata = model.Metadata ?? new object()
+            Metadata = model.Metadata
         };
 
         await _messageBus.TryPublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);

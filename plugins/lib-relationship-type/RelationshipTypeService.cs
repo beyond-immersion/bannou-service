@@ -1278,7 +1278,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 Code = model.Code,
                 Name = model.Name,
                 Category = model.Category,
-                ParentTypeId = model.ParentTypeId ?? Guid.Empty
+                ParentTypeId = model.ParentTypeId
             };
 
             await _messageBus.TryPublishAsync("relationship-type.created", eventModel);
@@ -1307,12 +1307,12 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 Name = model.Name,
                 Description = model.Description,
                 Category = model.Category,
-                ParentTypeId = model.ParentTypeId ?? Guid.Empty,
-                InverseTypeId = model.InverseTypeId ?? Guid.Empty,
+                ParentTypeId = model.ParentTypeId,
+                InverseTypeId = model.InverseTypeId,
                 IsBidirectional = model.IsBidirectional,
                 Depth = model.Depth,
                 IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt ?? default,
+                DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
