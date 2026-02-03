@@ -49,3 +49,26 @@ x-service-configuration:
       env: RESOURCE_DEFAULT_CLEANUP_POLICY
       default: BEST_EFFORT
       description: Default cleanup policy when not specified per-resource-type
+
+    # === Compression Configuration ===
+    DefaultCompressionPolicy:
+      $ref: 'resource-api.yaml#/components/schemas/CompressionPolicy'
+      env: RESOURCE_DEFAULT_COMPRESSION_POLICY
+      default: ALL_REQUIRED
+      description: Default compression policy when not specified per-request
+
+    CompressionCallbackTimeoutSeconds:
+      type: integer
+      env: RESOURCE_COMPRESSION_CALLBACK_TIMEOUT_SECONDS
+      default: 60
+      minimum: 10
+      maximum: 600
+      description: Timeout for each compression callback execution
+
+    CompressionLockExpirySeconds:
+      type: integer
+      env: RESOURCE_COMPRESSION_LOCK_EXPIRY_SECONDS
+      default: 600
+      minimum: 120
+      maximum: 3600
+      description: Distributed lock timeout during compression execution

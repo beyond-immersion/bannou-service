@@ -84,7 +84,9 @@ This document lists all state store components used in Bannou.
 | `realm-statestore` | MySQL | Realm | Realm definitions and configuration |
 | `relationship-statestore` | MySQL | Relationship | Entity relationships |
 | `relationship-type-statestore` | MySQL | RelationshipType | Relationship type definitions |
+| `resource-archives` | MySQL | Resource | Compressed archive bundles (durable storage for long-term archival) |
 | `resource-cleanup` | Redis | Resource | Cleanup callback definitions per resource type |
+| `resource-compress` | Redis | Resource | Compression callback definitions and callback index sets |
 | `resource-grace` | Redis | Resource | Grace period timestamps for resources with zero references |
 | `resource-refcounts` | Redis | Resource | Reference counts and source tracking per resource |
 | `save-load-cache` | Redis | SaveLoad | Recently accessed save data cache |
@@ -98,7 +100,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 88 stores (56 Redis, 32 MySQL)
+**Total**: 90 stores (57 Redis, 33 MySQL)
 
 ## Naming Conventions
 

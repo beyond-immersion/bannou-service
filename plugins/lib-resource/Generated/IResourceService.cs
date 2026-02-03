@@ -69,4 +69,29 @@ public partial interface IResourceService : IBannouService
         /// </summary>
         Task<(StatusCodes, RemoveCleanupCallbackResponse?)> RemoveCleanupCallbackAsync(RemoveCleanupCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// DefineCompressCallback operation
+        /// </summary>
+        Task<(StatusCodes, DefineCompressCallbackResponse?)> DefineCompressCallbackAsync(DefineCompressCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ExecuteCompress operation
+        /// </summary>
+        Task<(StatusCodes, ExecuteCompressResponse?)> ExecuteCompressAsync(ExecuteCompressRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ExecuteDecompress operation
+        /// </summary>
+        Task<(StatusCodes, ExecuteDecompressResponse?)> ExecuteDecompressAsync(ExecuteDecompressRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListCompressCallbacks operation
+        /// </summary>
+        Task<(StatusCodes, ListCompressCallbacksResponse?)> ListCompressCallbacksAsync(ListCompressCallbacksRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetArchive operation
+        /// </summary>
+        Task<(StatusCodes, GetArchiveResponse?)> GetArchiveAsync(GetArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

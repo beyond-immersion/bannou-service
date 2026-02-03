@@ -242,6 +242,153 @@ paths:
               schema:
                 $ref: '#/components/schemas/RemoveCleanupCallbackResponse'
 
+  # ===========================================================================
+  # Compression Management (5 endpoints)
+  # ===========================================================================
+
+  /resource/compress/define:
+    post:
+      operationId: defineCompressCallback
+      tags:
+      - Compression Management
+      summary: Register compression callback for a resource type
+      description: |
+        Services call this at startup (OnRunningAsync) to register compression endpoints.
+        When a resource is compressed, these callbacks gather data for the archive bundle.
+
+        Mirrors the cleanup callback pattern - services register their data export
+        endpoints, and compression orchestrates calling all registered callbacks to
+        build a complete archive.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineCompressCallbackRequest'
+      responses:
+        '200':
+          description: Callback registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefineCompressCallbackResponse'
+
+  /resource/compress/execute:
+    post:
+      operationId: executeCompress
+      tags:
+      - Compression Management
+      summary: Compress a resource and all dependents
+      description: |
+        Gathers data from all registered compression callbacks, bundles into
+        a unified archive, and stores in MySQL. Optionally deletes source data
+        after successful archival via existing cleanup callbacks.
+
+        Flow:
+        1. Get all compression callbacks for resourceType, sorted by priority
+        2. If dryRun, return preview without executing
+        3. Acquire distributed lock
+        4. Execute each callback to gather data
+        5. Bundle responses into archive (gzipped JSON per entry)
+        6. Store archive in MySQL
+        7. If deleteSourceData, invoke cleanup callbacks
+        8. Publish resource.compressed event
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCompressRequest'
+      responses:
+        '200':
+          description: Compression result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteCompressResponse'
+
+  /resource/decompress/execute:
+    post:
+      operationId: executeDecompress
+      tags:
+      - Compression Management
+      summary: Restore data from archive
+      description: |
+        Retrieves the archive bundle and invokes decompression callbacks
+        for each service to restore their data.
+
+        Callbacks are invoked in priority order (same as compression).
+        Each callback receives the resource ID and its archived data blob.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteDecompressRequest'
+      responses:
+        '200':
+          description: Decompression result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteDecompressResponse'
+
+  /resource/compress/list:
+    post:
+      operationId: listCompressCallbacks
+      tags:
+      - Compression Management
+      summary: List registered compression callbacks
+      description: |
+        Returns all compression callbacks registered for a resource type.
+        Useful for debugging and admin inspection of compression chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCompressCallbacksRequest'
+      responses:
+        '200':
+          description: Callback list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCompressCallbacksResponse'
+
+  /resource/archive/get:
+    post:
+      operationId: getArchive
+      tags:
+      - Compression Management
+      summary: Retrieve compressed archive
+      description: |
+        Retrieves a compressed archive by resource type and ID.
+        Returns the latest version unless a specific archiveId is provided.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetArchiveRequest'
+      responses:
+        '200':
+          description: Archive data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetArchiveResponse'
+
 components:
   schemas:
     # =========================================================================
@@ -267,6 +414,14 @@ components:
         Policy for cleanup callback execution.
         BEST_EFFORT: Proceed with deletion even if some callbacks fail
         ALL_REQUIRED: Abort deletion if any callback fails
+
+    CompressionPolicy:
+      type: string
+      enum: [BEST_EFFORT, ALL_REQUIRED]
+      description: |
+        Policy for compression callback execution.
+        BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
+        ALL_REQUIRED: Abort compression if any callback fails
 
     # =========================================================================
     # Reference Management Models
@@ -771,3 +926,468 @@ components:
           format: date-time
           nullable: true
           description: When callback was removed (null if wasn't registered)
+
+    # =========================================================================
+    # Compression Management Models
+    # =========================================================================
+
+    DefineCompressCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a compression callback
+      required:
+      - resourceType
+      - sourceType
+      - compressEndpoint
+      - compressPayloadTemplate
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this compression handles (opaque identifier)
+        sourceType:
+          type: string
+          description: Type of data being compressed (opaque identifier, e.g., "character-personality")
+        serviceName:
+          type: string
+          nullable: true
+          description: Target service name (defaults to sourceType if not specified)
+        compressEndpoint:
+          type: string
+          description: Endpoint returning compressed data (e.g., /character-personality/get-compress-data)
+        compressPayloadTemplate:
+          type: string
+          description: JSON template with {{resourceId}} placeholder
+        decompressEndpoint:
+          type: string
+          nullable: true
+          description: Endpoint for restoring data (e.g., /character-personality/restore-from-archive)
+        decompressPayloadTemplate:
+          type: string
+          nullable: true
+          description: JSON template with {{resourceId}} and {{data}} placeholders
+        priority:
+          type: integer
+          default: 100
+          description: Execution order (lower = earlier). Use for dependency ordering.
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what data this compresses
+
+    DefineCompressCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering compression callback
+      required:
+      - resourceType
+      - sourceType
+      - registered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type for callback
+        sourceType:
+          type: string
+          description: Source type for callback
+        registered:
+          type: boolean
+          description: True if callback was registered
+        previouslyDefined:
+          type: boolean
+          description: True if callback was already defined (updated)
+
+    ExecuteCompressRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compress a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to compress
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to compress
+        deleteSourceData:
+          type: boolean
+          default: false
+          description: If true, invoke cleanup callbacks after successful archival
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          nullable: true
+          description: Override policy (uses default from config if not specified)
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be compressed without executing
+
+    ExecuteCompressResponse:
+      type: object
+      additionalProperties: false
+      description: Compression execution result
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - callbackResults
+      - compressionDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource compressed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource compressed
+        success:
+          type: boolean
+          description: True if compression completed successfully
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of created archive (null if failed or dryRun)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why compression was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        sourceDataDeleted:
+          type: boolean
+          description: Whether cleanup callbacks were executed after archival
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks actually executed)
+        compressionDurationMs:
+          type: integer
+          description: Total compression execution time in milliseconds
+
+    CompressCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of a single compression callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      - durationMs
+      properties:
+        sourceType:
+          type: string
+          description: Source type that provided data
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        dataSize:
+          type: integer
+          nullable: true
+          description: Size of compressed data in bytes
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+
+    ExecuteDecompressRequest:
+      type: object
+      additionalProperties: false
+      description: Request to decompress and restore a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to decompress
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to decompress
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific archive version (latest if not specified)
+
+    ExecuteDecompressResponse:
+      type: object
+      additionalProperties: false
+      description: Decompression execution result
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - callbackResults
+      - decompressionDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource decompressed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource decompressed
+        success:
+          type: boolean
+          description: True if decompression completed successfully
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of archive that was restored
+        abortReason:
+          type: string
+          nullable: true
+          description: Why decompression was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecompressCallbackResult'
+          description: Results of each decompression callback
+        decompressionDurationMs:
+          type: integer
+          description: Total decompression execution time in milliseconds
+
+    DecompressCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of a single decompression callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      - durationMs
+      properties:
+        sourceType:
+          type: string
+          description: Source type that was restored
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+
+    ListCompressCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered compression callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+
+    ListCompressCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered compression callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+
+    CompressCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered compression callback
+      required:
+      - resourceType
+      - sourceType
+      - serviceName
+      - compressEndpoint
+      - priority
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of data being compressed
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        compressEndpoint:
+          type: string
+          description: Endpoint called during compression
+        decompressEndpoint:
+          type: string
+          nullable: true
+          description: Endpoint called during decompression
+        priority:
+          type: integer
+          description: Execution order (lower = earlier)
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+
+    GetArchiveRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a compressed archive
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific version (latest if not specified)
+
+    GetArchiveResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing archive data
+      required:
+      - resourceType
+      - resourceId
+      - found
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        found:
+          type: boolean
+          description: True if archive exists
+        archive:
+          $ref: '#/components/schemas/ResourceArchive'
+          nullable: true
+          description: The archive data (null if not found)
+
+    ResourceArchive:
+      type: object
+      additionalProperties: false
+      description: Bundled compressed archive
+      required:
+      - archiveId
+      - resourceType
+      - resourceId
+      - version
+      - entries
+      - createdAt
+      - sourceDataDeleted
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+          description: Unique identifier for this archive
+        resourceType:
+          type: string
+          description: Type of resource archived
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource archived
+        version:
+          type: integer
+          description: Archive version (increments on re-compression)
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback
+        createdAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        sourceDataDeleted:
+          type: boolean
+          description: Whether original source data was deleted after archival
+
+    ArchiveBundleEntry:
+      type: object
+      additionalProperties: false
+      description: Single entry in the archive bundle
+      required:
+      - sourceType
+      - serviceName
+      - data
+      - compressedAt
+      properties:
+        sourceType:
+          type: string
+          description: Type of data (e.g., "character-personality")
+        serviceName:
+          type: string
+          description: Service that provided the data
+        data:
+          type: string
+          description: Base64-encoded gzipped JSON from the service callback
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this entry was compressed
+        dataChecksum:
+          type: string
+          nullable: true
+          description: SHA256 hash for integrity verification
+        originalSizeBytes:
+          type: integer
+          nullable: true
+          description: Size before compression

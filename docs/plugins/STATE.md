@@ -16,12 +16,14 @@ The State service is the infrastructure abstraction layer that provides all Bann
 ```
 IStateStore<T>                    - Core CRUD (all backends)
 ├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
+│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
 ├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
 │   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
-└── ISearchableStateStore<T>      - Full-text search (Redis+Search only)
 
 IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
 ```
+
+**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores.
 
 **Backend Support Matrix**:
 
@@ -215,18 +217,17 @@ State Store Architecture (Interface Hierarchy)
     IStateStore<T>  ◄────────────── Core CRUD (all backends)
          │
          ├── ICacheableStateStore<T>  ◄── Sets, Sorted Sets, Counters, Hashes
-         │        │                        (Redis, InMemory, RedisSearch)
+         │        │                        (Redis, InMemory)
          │        ├── RedisStateStore<T>     (full support)
-         │        ├── RedisSearchStateStore<T> (full support)
-         │        └── InMemoryStateStore<T>  (full support)
+         │        ├── InMemoryStateStore<T>  (full support)
+         │        │
+         │        └── ISearchableStateStore<T> ◄── Full-text search (extends Cacheable)
+         │                 └── RedisSearchStateStore<T>  (Cacheable + FT search)
          │
-         ├── IQueryableStateStore<T>  ◄── LINQ queries
-         │        │                        (MySQL only)
-         │        └── IJsonQueryableStateStore<T>
-         │                 └── MySqlStateStore<T>
-         │
-         └── ISearchableStateStore<T> ◄── Full-text search
-                  └── RedisSearchStateStore<T>  (Redis+FT only)
+         └── IQueryableStateStore<T>  ◄── LINQ queries
+                  │                        (MySQL only)
+                  └── IJsonQueryableStateStore<T>
+                           └── MySqlStateStore<T>
 
     IRedisOperations  ◄────────────── Lua scripts, transactions
          └── RedisOperations            (Redis only, null if InMemory)

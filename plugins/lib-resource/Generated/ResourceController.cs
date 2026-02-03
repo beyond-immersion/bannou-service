@@ -154,6 +154,89 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveCleanupCallbackResponse>> RemoveCleanupCallbackAsync(RemoveCleanupCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Register compression callback for a resource type
+    /// </summary>
+
+    /// <remarks>
+    /// Services call this at startup (OnRunningAsync) to register compression endpoints.
+    /// <br/>When a resource is compressed, these callbacks gather data for the archive bundle.
+    /// <br/>
+    /// <br/>Mirrors the cleanup callback pattern - services register their data export
+    /// <br/>endpoints, and compression orchestrates calling all registered callbacks to
+    /// <br/>build a complete archive.
+    /// </remarks>
+
+    /// <returns>Callback registered</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCompressCallbackResponse>> DefineCompressCallbackAsync(DefineCompressCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Compress a resource and all dependents
+    /// </summary>
+
+    /// <remarks>
+    /// Gathers data from all registered compression callbacks, bundles into
+    /// <br/>a unified archive, and stores in MySQL. Optionally deletes source data
+    /// <br/>after successful archival via existing cleanup callbacks.
+    /// <br/>
+    /// <br/>Flow:
+    /// <br/>1. Get all compression callbacks for resourceType, sorted by priority
+    /// <br/>2. If dryRun, return preview without executing
+    /// <br/>3. Acquire distributed lock
+    /// <br/>4. Execute each callback to gather data
+    /// <br/>5. Bundle responses into archive (gzipped JSON per entry)
+    /// <br/>6. Store archive in MySQL
+    /// <br/>7. If deleteSourceData, invoke cleanup callbacks
+    /// <br/>8. Publish resource.compressed event
+    /// </remarks>
+
+    /// <returns>Compression result</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCompressResponse>> ExecuteCompressAsync(ExecuteCompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Restore data from archive
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieves the archive bundle and invokes decompression callbacks
+    /// <br/>for each service to restore their data.
+    /// <br/>
+    /// <br/>Callbacks are invoked in priority order (same as compression).
+    /// <br/>Each callback receives the resource ID and its archived data blob.
+    /// </remarks>
+
+    /// <returns>Decompression result</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteDecompressResponse>> ExecuteDecompressAsync(ExecuteDecompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List registered compression callbacks
+    /// </summary>
+
+    /// <remarks>
+    /// Returns all compression callbacks registered for a resource type.
+    /// <br/>Useful for debugging and admin inspection of compression chains.
+    /// </remarks>
+
+    /// <returns>Callback list</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCompressCallbacksResponse>> ListCompressCallbacksAsync(ListCompressCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Retrieve compressed archive
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieves a compressed archive by resource type and ID.
+    /// <br/>Returns the latest version unless a specific archiveId is provided.
+    /// </remarks>
+
+    /// <returns>Archive data</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetArchiveResponse>> GetArchiveAsync(GetArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -340,6 +423,109 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     {
 
         var (statusCode, result) = await _implementation.RemoveCleanupCallbackAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Register compression callback for a resource type
+    /// </summary>
+    /// <remarks>
+    /// Services call this at startup (OnRunningAsync) to register compression endpoints.
+    /// <br/>When a resource is compressed, these callbacks gather data for the archive bundle.
+    /// <br/>
+    /// <br/>Mirrors the cleanup callback pattern - services register their data export
+    /// <br/>endpoints, and compression orchestrates calling all registered callbacks to
+    /// <br/>build a complete archive.
+    /// </remarks>
+    /// <returns>Callback registered</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/compress/define")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCompressCallbackResponse>> DefineCompressCallback([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DefineCompressCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DefineCompressCallbackAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Compress a resource and all dependents
+    /// </summary>
+    /// <remarks>
+    /// Gathers data from all registered compression callbacks, bundles into
+    /// <br/>a unified archive, and stores in MySQL. Optionally deletes source data
+    /// <br/>after successful archival via existing cleanup callbacks.
+    /// <br/>
+    /// <br/>Flow:
+    /// <br/>1. Get all compression callbacks for resourceType, sorted by priority
+    /// <br/>2. If dryRun, return preview without executing
+    /// <br/>3. Acquire distributed lock
+    /// <br/>4. Execute each callback to gather data
+    /// <br/>5. Bundle responses into archive (gzipped JSON per entry)
+    /// <br/>6. Store archive in MySQL
+    /// <br/>7. If deleteSourceData, invoke cleanup callbacks
+    /// <br/>8. Publish resource.compressed event
+    /// </remarks>
+    /// <returns>Compression result</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/compress/execute")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCompressResponse>> ExecuteCompress([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteCompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ExecuteCompressAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Restore data from archive
+    /// </summary>
+    /// <remarks>
+    /// Retrieves the archive bundle and invokes decompression callbacks
+    /// <br/>for each service to restore their data.
+    /// <br/>
+    /// <br/>Callbacks are invoked in priority order (same as compression).
+    /// <br/>Each callback receives the resource ID and its archived data blob.
+    /// </remarks>
+    /// <returns>Decompression result</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/decompress/execute")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteDecompressResponse>> ExecuteDecompress([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteDecompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ExecuteDecompressAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List registered compression callbacks
+    /// </summary>
+    /// <remarks>
+    /// Returns all compression callbacks registered for a resource type.
+    /// <br/>Useful for debugging and admin inspection of compression chains.
+    /// </remarks>
+    /// <returns>Callback list</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/compress/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCompressCallbacksResponse>> ListCompressCallbacks([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListCompressCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListCompressCallbacksAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Retrieve compressed archive
+    /// </summary>
+    /// <remarks>
+    /// Retrieves a compressed archive by resource type and ID.
+    /// <br/>Returns the latest version unless a specific archiveId is provided.
+    /// </remarks>
+    /// <returns>Archive data</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/archive/get")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetArchiveResponse>> GetArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetArchiveAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

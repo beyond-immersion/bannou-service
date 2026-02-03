@@ -381,9 +381,9 @@ The State service is the infrastructure abstraction layer that provides all Bann
 ```
 IStateStore<T>                    - Core CRUD (all backends)
 ├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
+│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
 ├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
 │   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
-└── ISearchableStateStore<T>      - Full-text search (Redis+Search only)
 
 IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
 ```

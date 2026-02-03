@@ -90,6 +90,26 @@ public enum CleanupPolicy
 #pragma warning restore CS1591
 
 /// <summary>
+/// Policy for compression callback execution.
+/// <br/>BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
+/// <br/>ALL_REQUIRED: Abort compression if any callback fails
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CompressionPolicy
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"BEST_EFFORT")]
+    BEST_EFFORT = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ALL_REQUIRED")]
+    ALL_REQUIRED = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to register a reference to a resource
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -865,6 +885,728 @@ public partial class RemoveCleanupCallbackResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedAt")]
     public System.DateTimeOffset? RemovedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to register a compression callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DefineCompressCallbackRequest
+{
+
+    /// <summary>
+    /// Type of resource this compression handles (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of data being compressed (opaque identifier, e.g., "character-personality")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Target service name (defaults to sourceType if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    public string? ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint returning compressed data (e.g., /character-personality/get-compress-data)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressEndpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CompressEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// JSON template with {{resourceId}} placeholder
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressPayloadTemplate")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CompressPayloadTemplate { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint for restoring data (e.g., /character-personality/restore-from-archive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("decompressEndpoint")]
+    public string? DecompressEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// JSON template with {{resourceId}} and {{data}} placeholders
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("decompressPayloadTemplate")]
+    public string? DecompressPayloadTemplate { get; set; } = default!;
+
+    /// <summary>
+    /// Execution order (lower = earlier). Use for dependency ordering.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("priority")]
+    public int Priority { get; set; } = 100;
+
+    /// <summary>
+    /// Human-readable description of what data this compresses
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after registering compression callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DefineCompressCallbackResponse
+{
+
+    /// <summary>
+    /// Resource type for callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Source type for callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// True if callback was registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registered")]
+    public bool Registered { get; set; } = default!;
+
+    /// <summary>
+    /// True if callback was already defined (updated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previouslyDefined")]
+    public bool PreviouslyDefined { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to compress a resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteCompressRequest
+{
+
+    /// <summary>
+    /// Type of resource to compress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource to compress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, invoke cleanup callbacks after successful archival
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deleteSourceData")]
+    public bool DeleteSourceData { get; set; } = false;
+
+    /// <summary>
+    /// Override policy (uses default from config if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressionPolicy")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CompressionPolicy? CompressionPolicy { get; set; } = default!;
+
+    /// <summary>
+    /// If true, return what would be compressed without executing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = false;
+
+}
+
+/// <summary>
+/// Compression execution result
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteCompressResponse
+{
+
+    /// <summary>
+    /// Type of resource compressed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource compressed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// True if compression completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// ID of created archive (null if failed or dryRun)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
+    public System.Guid? ArchiveId { get; set; } = default!;
+
+    /// <summary>
+    /// Why compression was aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("abortReason")]
+    public string? AbortReason { get; set; } = default!;
+
+    /// <summary>
+    /// Results of each compression callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbackResults")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<CompressCallbackResult> CallbackResults { get; set; } = new System.Collections.ObjectModel.Collection<CompressCallbackResult>();
+
+    /// <summary>
+    /// Whether cleanup callbacks were executed after archival
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceDataDeleted")]
+    public bool SourceDataDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// True if this was a preview (no callbacks actually executed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = default!;
+
+    /// <summary>
+    /// Total compression execution time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressionDurationMs")]
+    public int CompressionDurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of a single compression callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CompressCallbackResult
+{
+
+    /// <summary>
+    /// Source type that provided data
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service that was called
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint that was called
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Whether callback succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP status code from callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
+    public int? StatusCode { get; set; } = default!;
+
+    /// <summary>
+    /// Error message if callback failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+    /// <summary>
+    /// Size of compressed data in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dataSize")]
+    public int? DataSize { get; set; } = default!;
+
+    /// <summary>
+    /// Callback execution time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    public int DurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to decompress and restore a resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteDecompressRequest
+{
+
+    /// <summary>
+    /// Type of resource to decompress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource to decompress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific archive version (latest if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
+    public System.Guid? ArchiveId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Decompression execution result
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteDecompressResponse
+{
+
+    /// <summary>
+    /// Type of resource decompressed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource decompressed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// True if decompression completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// ID of archive that was restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
+    public System.Guid? ArchiveId { get; set; } = default!;
+
+    /// <summary>
+    /// Why decompression was aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("abortReason")]
+    public string? AbortReason { get; set; } = default!;
+
+    /// <summary>
+    /// Results of each decompression callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbackResults")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<DecompressCallbackResult> CallbackResults { get; set; } = new System.Collections.ObjectModel.Collection<DecompressCallbackResult>();
+
+    /// <summary>
+    /// Total decompression execution time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("decompressionDurationMs")]
+    public int DecompressionDurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of a single decompression callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DecompressCallbackResult
+{
+
+    /// <summary>
+    /// Source type that was restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service that was called
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint that was called
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Whether callback succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP status code from callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
+    public int? StatusCode { get; set; } = default!;
+
+    /// <summary>
+    /// Error message if callback failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+    /// <summary>
+    /// Callback execution time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    public int DurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list registered compression callbacks
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListCompressCallbacksRequest
+{
+
+    /// <summary>
+    /// Filter by resource type (list all if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    public string? ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by source type (requires resourceType)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    public string? SourceType { get; set; } = default!;
+
+}
+
+/// <summary>
+/// List of registered compression callbacks
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListCompressCallbacksResponse
+{
+
+    /// <summary>
+    /// Registered callbacks matching filter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbacks")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<CompressCallbackSummary> Callbacks { get; set; } = new System.Collections.ObjectModel.Collection<CompressCallbackSummary>();
+
+    /// <summary>
+    /// Total number of callbacks returned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Summary of a registered compression callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CompressCallbackSummary
+{
+
+    /// <summary>
+    /// Type of resource this callback handles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of data being compressed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Target service for callback invocation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint called during compression
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressEndpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CompressEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint called during decompression
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("decompressEndpoint")]
+    public string? DecompressEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Execution order (lower = earlier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("priority")]
+    public int Priority { get; set; } = default!;
+
+    /// <summary>
+    /// When this callback was registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to retrieve a compressed archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetArchiveRequest
+{
+
+    /// <summary>
+    /// Type of resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific version (latest if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
+    public System.Guid? ArchiveId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing archive data
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetArchiveResponse
+{
+
+    /// <summary>
+    /// Type of resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// True if archive exists
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("found")]
+    public bool Found { get; set; } = default!;
+
+    /// <summary>
+    /// The archive data (null if not found)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archive")]
+    public ResourceArchive? Archive { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Bundled compressed archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceArchive
+{
+
+    /// <summary>
+    /// Unique identifier for this archive
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ArchiveId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of resource archived
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the resource archived
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Archive version (increments on re-compression)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// Data entries from each compression callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ArchiveBundleEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ArchiveBundleEntry>();
+
+    /// <summary>
+    /// When this archive was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether original source data was deleted after archival
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceDataDeleted")]
+    public bool SourceDataDeleted { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Single entry in the archive bundle
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ArchiveBundleEntry
+{
+
+    /// <summary>
+    /// Type of data (e.g., "character-personality")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service that provided the data
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Base64-encoded gzipped JSON from the service callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Data { get; set; } = default!;
+
+    /// <summary>
+    /// When this entry was compressed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CompressedAt { get; set; } = default!;
+
+    /// <summary>
+    /// SHA256 hash for integrity verification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dataChecksum")]
+    public string? DataChecksum { get; set; } = default!;
+
+    /// <summary>
+    /// Size before compression
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("originalSizeBytes")]
+    public int? OriginalSizeBytes { get; set; } = default!;
 
 }
 

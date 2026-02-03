@@ -32,6 +32,16 @@ info:
     - topic: resource.grace-period.started
       event: ResourceGracePeriodStartedEvent
       description: Published when a resource's refcount reaches zero and grace period begins
+    # Compression events
+    - topic: resource.compressed
+      event: ResourceCompressedEvent
+      description: Published when a resource is successfully compressed
+    - topic: resource.compress.callback-failed
+      event: ResourceCompressCallbackFailedEvent
+      description: Published when a compression callback fails
+    - topic: resource.decompressed
+      event: ResourceDecompressedEvent
+      description: Published when a resource is decompressed
 
 paths: {}  # Events don't have HTTP paths
 
@@ -179,3 +189,128 @@ components:
           type: string
           format: date-time
           description: When the grace period started
+
+    # =========================================================================
+    # Compression Events
+    # =========================================================================
+
+    ResourceCompressedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when compression completes successfully.
+        Services can subscribe to perform post-compression actions.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - archiveId
+      - sourceDataDeleted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the compression completed
+        resourceType:
+          type: string
+          description: Type of resource compressed (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource compressed
+        archiveId:
+          type: string
+          format: uuid
+          description: ID of the created archive
+        sourceDataDeleted:
+          type: boolean
+          description: Whether source data was deleted after archival
+        entriesCount:
+          type: integer
+          description: Number of services that contributed data to the archive
+
+    ResourceCompressCallbackFailedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a compression callback fails.
+        Used for monitoring and alerting on compression failures.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - sourceType
+      - serviceName
+      - endpoint
+      - statusCode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the failure occurred
+        resourceType:
+          type: string
+          description: Type of resource being compressed (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being compressed
+        sourceType:
+          type: string
+          description: Type of data whose compression failed (opaque identifier)
+        serviceName:
+          type: string
+          description: Service whose callback failed
+        endpoint:
+          type: string
+          description: Endpoint that failed
+        statusCode:
+          type: integer
+          description: HTTP status code returned (0 if connection failed)
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details
+
+    ResourceDecompressedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when decompression completes successfully.
+        Services can subscribe to perform post-decompression actions.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - archiveId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the decompression completed
+        resourceType:
+          type: string
+          description: Type of resource decompressed (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource decompressed
+        archiveId:
+          type: string
+          format: uuid
+          description: ID of the archive that was restored

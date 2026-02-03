@@ -238,8 +238,12 @@ public static class StateStoreDefinitions
     public const string RelationshipType = "relationship-type-statestore";
 
     // Resource Service
+    /// <summary>Compressed archive bundles (durable storage for long-term archival)</summary>
+    public const string ResourceArchives = "resource-archives";
     /// <summary>Cleanup callback definitions per resource type</summary>
     public const string ResourceCleanup = "resource-cleanup";
+    /// <summary>Compression callback definitions and callback index sets</summary>
+    public const string ResourceCompress = "resource-compress";
     /// <summary>Grace period timestamps for resources with zero references</summary>
     public const string ResourceGrace = "resource-grace";
     /// <summary>Reference counts and source tracking per resource</summary>
@@ -363,7 +367,9 @@ public static class StateStoreDefinitions
             [Realm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_statestore" },
             [Relationship] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_statestore" },
             [RelationshipType] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_type_statestore" },
+            [ResourceArchives] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "resource_archives" },
             [ResourceCleanup] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:cleanup" },
+            [ResourceCompress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:compress" },
             [ResourceGrace] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:grace" },
             [ResourceRefcounts] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:ref" },
             [SaveLoadCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:cache" },
@@ -463,7 +469,9 @@ public static class StateStoreDefinitions
             [Realm] = new StoreMetadata("Realm", "Realm definitions and configuration", "mysql"),
             [Relationship] = new StoreMetadata("Relationship", "Entity relationships", "mysql"),
             [RelationshipType] = new StoreMetadata("RelationshipType", "Relationship type definitions", "mysql"),
+            [ResourceArchives] = new StoreMetadata("Resource", "Compressed archive bundles (durable storage for long-term archival)", "mysql"),
             [ResourceCleanup] = new StoreMetadata("Resource", "Cleanup callback definitions per resource type", "redis"),
+            [ResourceCompress] = new StoreMetadata("Resource", "Compression callback definitions and callback index sets", "redis"),
             [ResourceGrace] = new StoreMetadata("Resource", "Grace period timestamps for resources with zero references", "redis"),
             [ResourceRefcounts] = new StoreMetadata("Resource", "Reference counts and source tracking per resource", "redis"),
             [SaveLoadCache] = new StoreMetadata("SaveLoad", "Recently accessed save data cache", "redis"),

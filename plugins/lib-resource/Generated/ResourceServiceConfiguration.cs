@@ -80,4 +80,24 @@ public class ResourceServiceConfiguration : IServiceConfiguration
     /// </summary>
     public CleanupPolicy DefaultCleanupPolicy { get; set; } = CleanupPolicy.BEST_EFFORT;
 
+    /// <summary>
+    /// Default compression policy when not specified per-request
+    /// Environment variable: RESOURCE_DEFAULT_COMPRESSION_POLICY
+    /// </summary>
+    public CompressionPolicy DefaultCompressionPolicy { get; set; } = CompressionPolicy.ALL_REQUIRED;
+
+    /// <summary>
+    /// Timeout for each compression callback execution
+    /// Environment variable: RESOURCE_COMPRESSION_CALLBACK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int CompressionCallbackTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Distributed lock timeout during compression execution
+    /// Environment variable: RESOURCE_COMPRESSION_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 120, Maximum = 3600)]
+    public int CompressionLockExpirySeconds { get; set; } = 600;
+
 }

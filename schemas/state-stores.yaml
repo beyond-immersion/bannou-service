@@ -616,3 +616,14 @@ x-state-stores:
     prefix: "resource:grace"
     service: Resource
     purpose: Grace period timestamps for resources with zero references
+
+  resource-compress:
+    backend: redis
+    prefix: "resource:compress"
+    service: Resource
+    purpose: Compression callback definitions and callback index sets
+
+  resource-archives:
+    backend: mysql
+    service: Resource
+    purpose: Compressed archive bundles (durable storage for long-term archival)

@@ -296,9 +296,11 @@ if (_redisOps != null)
 |-----------|---------------|----------|----------|
 | `IStateStore<T>` | `GetStore<T>()` | All | Core CRUD, bulk ops, ETags |
 | `ICacheableStateStore<T>` | `GetCacheableStore<T>()` | Redis, InMemory | Sets, sorted sets, counters, hashes |
+| `ISearchableStateStore<T>` | `GetSearchableStore<T>()` | Redis+Search | Full-text search (extends Cacheable) |
 | `IQueryableStateStore<T>` | `GetQueryableStore<T>()` | MySQL | LINQ queries |
-| `ISearchableStateStore<T>` | `GetSearchableStore<T>()` | Redis+Search | Full-text search |
 | `IRedisOperations` | `GetRedisOperations()` | Redis | Lua scripts, transactions
+
+**Note**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>`, so searchable stores have access to all cacheable operations (sets, sorted sets, counters, hashes) in addition to full-text search.
 
 State store backend is configured via `IStateStoreFactory` service configuration.
 
