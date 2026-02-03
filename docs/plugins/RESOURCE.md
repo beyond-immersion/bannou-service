@@ -61,6 +61,7 @@ Resource reference tracking and lifecycle management for foundational resources.
 | `{resourceType}:{resourceId}:grace` | `GracePeriodRecord` | When refcount became zero |
 | `callback:{resourceType}:{sourceType}` | `CleanupCallbackDefinition` | Cleanup endpoint for a source type |
 | `callback-index:{resourceType}` | Set of `string` | Source types with registered callbacks (for enumeration without KEYS/SCAN) |
+| `callback-resource-types` | Set of `string` | Master index of all resource types with callbacks (for listing all without KEYS scan) |
 
 ---
 
@@ -131,8 +132,10 @@ All configuration properties are verified as used in `ResourceService.cs`.
 
 | Endpoint | Notes |
 |----------|-------|
-| `POST /resource/cleanup/define` | Upserts callback definition with `onDeleteAction`; maintains `callback-index:{resourceType}` set for enumeration; `serviceName` defaults to `sourceType` if not specified |
-| `POST /resource/cleanup/execute` | Full cleanup flow: RESTRICT check → pre-check → lock → re-validate → execute CASCADE/DETACH callbacks → clear state |
+| `POST /resource/cleanup/define` | Upserts callback definition with `onDeleteAction`; maintains `callback-index:{resourceType}` set and `callback-resource-types` master index; `serviceName` defaults to `sourceType` if not specified |
+| `POST /resource/cleanup/execute` | Full cleanup flow: RESTRICT check → pre-check → lock → re-validate → execute CASCADE/DETACH callbacks → clear state. Supports `dryRun` flag to preview without executing. |
+| `POST /resource/cleanup/list` | Lists registered cleanup callbacks; filter by `resourceType` and/or `sourceType`; uses master index to avoid KEYS scan |
+| `POST /resource/cleanup/remove` | Removes a cleanup callback registration; idempotent (returns `wasRegistered: false` if not found); cleans up indexes |
 
 **OnDeleteAction Behavior** (per-callback, configured via `/resource/cleanup/define`):
 
@@ -144,15 +147,16 @@ All configuration properties are verified as used in `ResourceService.cs`.
 
 **Cleanup Execution Flow**:
 1. Get all callbacks and identify RESTRICT vs CASCADE/DETACH callbacks
-2. **RESTRICT check**: If any active references have RESTRICT callbacks, return failure immediately with `"Blocked by RESTRICT policy from: {sourceTypes}"`
-3. Pre-check refcount and grace period (without lock)
-4. If blocked by non-RESTRICT reasons (unhandled refs, grace period), return early with reason
-5. Acquire distributed lock on `cleanup:{resourceType}:{resourceId}`
-6. Re-validate refcount under lock (race protection)
-7. Execute only CASCADE and DETACH callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel with configured timeout (`CleanupCallbackTimeoutSeconds`)
-8. Per cleanup policy: abort or continue on failures
-9. Delete grace period record and reference set
-10. Release lock
+2. **DryRun check**: If `dryRun: true`, return preview of what callbacks would execute without acquiring lock or executing. Returns `Success = false` if any RESTRICT callbacks exist.
+3. **RESTRICT check**: If any active references have RESTRICT callbacks, return failure immediately with `"Blocked by RESTRICT policy from: {sourceTypes}"`
+4. Pre-check refcount and grace period (without lock)
+5. If blocked by non-RESTRICT reasons (unhandled refs, grace period), return early with reason
+6. Acquire distributed lock on `cleanup:{resourceType}:{resourceId}`
+7. Re-validate refcount under lock (race protection)
+8. Execute only CASCADE and DETACH callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel with configured timeout (`CleanupCallbackTimeoutSeconds`)
+9. Per cleanup policy: abort or continue on failures
+10. Delete grace period record and reference set
+11. Release lock
 
 ---
 
@@ -191,6 +195,10 @@ All configuration properties are verified as used in `ResourceService.cs`.
 │  │ Key: callback-index:{resourceType}                                  │   │
 │  │ Type: Redis Set (for enumeration without KEYS/SCAN)                 │   │
 │  │ Members: [ "actor", "scene", "encounter" ]                          │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Key: callback-resource-types                                        │   │
+│  │ Type: Redis Set (master index of all resource types with callbacks) │   │
+│  │ Members: [ "character", "realm", "location" ]                       │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -305,9 +313,7 @@ None.
 
 ### Design Considerations (Requires Planning)
 
-1. **Callback index is never cleaned up**: When a cleanup callback is undefined/removed (no API for this exists), the source type remains in `callback-index:{resourceType}`. Not a bug since callbacks are typically permanent, but could accumulate stale entries.
-
-2. **No API to undefine cleanup callbacks**: There is no endpoint to remove a previously registered cleanup callback. Currently, callbacks are intended to be permanent (registered at service startup). If callback removal is needed, consider adding `/resource/cleanup/undefine` endpoint that also cleans up the callback index.
+None currently. Previous design gaps (callback listing/removal, dry-run preview) have been addressed.
 
 ---
 
@@ -320,6 +326,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 *No active work items.*
 
 ### Completed (Historical)
+
+- **2026-02-03**: Added cleanup management enhancements:
+  - `dryRun` flag on `/resource/cleanup/execute` for previewing what would happen without executing
+  - `/resource/cleanup/list` endpoint to view all registered callbacks with filtering
+  - `/resource/cleanup/remove` endpoint to delete orphaned callbacks (idempotent)
+  - Added `callback-resource-types` master index for efficient listing without KEYS scan
 
 The lib-resource service is feature-complete for the current integration requirements:
 - Schema files (api, events, configuration)

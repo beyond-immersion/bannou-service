@@ -300,6 +300,9 @@ Tenets are organized into categories based on when they're needed:
 | Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
 | Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
 | CS1591 warning on schema property/class | T1, T22 | Add `description` to schema (enums auto-suppressed) |
+| Service is `x-references` target but doesn't call `ExecuteCleanupAsync` | T1 | Add Resource cleanup to delete flow (see SCHEMA-RULES.md) |
+| Event handlers duplicate `x-references` cleanup callbacks | T1 | Remove event handlers; use Resource pattern only |
+| Adding event cleanup when `x-references` callbacks exist | T1 | Fix producer to call `ExecuteCleanupAsync` instead |
 
 ---
 

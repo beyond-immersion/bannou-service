@@ -155,6 +155,36 @@ public static class ResourcePermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/cleanup/list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "listCleanupCallbacks",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/resource/cleanup/remove",
+            Method = ServiceEndpointMethod.POST,
+            Description = "removeCleanupCallback",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

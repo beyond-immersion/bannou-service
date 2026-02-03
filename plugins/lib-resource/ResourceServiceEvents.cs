@@ -95,8 +95,13 @@ public partial class ResourceService
         string sourceType,
         CancellationToken cancellationToken)
     {
-        var indexKey = $"callback-index:{resourceType}";
         var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
+
+        // Add to per-resource-type index
+        var indexKey = $"callback-index:{resourceType}";
         await cacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
+
+        // Add to master resource type index (for listing all callbacks)
+        await cacheStore.AddToSetAsync(MasterResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
     }
 }

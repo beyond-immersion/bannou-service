@@ -59,4 +59,14 @@ public partial interface IResourceService : IBannouService
         /// </summary>
         Task<(StatusCodes, ExecuteCleanupResponse?)> ExecuteCleanupAsync(ExecuteCleanupRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// ListCleanupCallbacks operation
+        /// </summary>
+        Task<(StatusCodes, ListCleanupCallbacksResponse?)> ListCleanupCallbacksAsync(ListCleanupCallbacksRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RemoveCleanupCallback operation
+        /// </summary>
+        Task<(StatusCodes, RemoveCleanupCallbackResponse?)> RemoveCleanupCallbackAsync(RemoveCleanupCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

@@ -135,7 +135,7 @@ paths:
                 $ref: '#/components/schemas/ListReferencesResponse'
 
   # ===========================================================================
-  # Cleanup Management (2 endpoints)
+  # Cleanup Management (4 endpoints)
   # ===========================================================================
 
   /resource/cleanup/define:
@@ -189,6 +189,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExecuteCleanupResponse'
+
+  /resource/cleanup/list:
+    post:
+      operationId: listCleanupCallbacks
+      tags:
+      - Cleanup Management
+      summary: List registered cleanup callbacks
+      description: |
+        Returns all cleanup callbacks registered for a resource type.
+        Useful for debugging and admin inspection of cleanup chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCleanupCallbacksRequest'
+      responses:
+        '200':
+          description: List of registered callbacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCleanupCallbacksResponse'
+
+  /resource/cleanup/remove:
+    post:
+      operationId: removeCleanupCallback
+      tags:
+      - Cleanup Management
+      summary: Remove a cleanup callback registration
+      description: |
+        Removes a cleanup callback that was previously registered via
+        /resource/cleanup/define. Use when a consumer service is decommissioned
+        or a callback becomes orphaned. Idempotent - returns success even if
+        callback was not registered.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveCleanupCallbackRequest'
+      responses:
+        '200':
+          description: Callback removed or was not registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveCleanupCallbackResponse'
 
 components:
   schemas:
@@ -531,6 +583,13 @@ components:
           $ref: '#/components/schemas/CleanupPolicy'
           nullable: true
           description: Override cleanup policy (uses resource default if not specified)
+        dryRun:
+          type: boolean
+          nullable: true
+          description: |
+            If true, returns what callbacks WOULD execute without actually
+            executing them. Useful for pre-deletion validation and debugging.
+            Defaults to false.
 
     ExecuteCleanupResponse:
       type: object
@@ -540,6 +599,7 @@ components:
       - resourceType
       - resourceId
       - success
+      - dryRun
       - callbackResults
       properties:
         resourceType:
@@ -564,6 +624,9 @@ components:
         cleanupDurationMs:
           type: integer
           description: Total cleanup execution time in milliseconds
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks were actually executed)
 
     CleanupCallbackResult:
       type: object
@@ -598,3 +661,113 @@ components:
         durationMs:
           type: integer
           description: Callback execution time in milliseconds
+
+    # =========================================================================
+    # Cleanup List/Remove Models
+    # =========================================================================
+
+    ListCleanupCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered cleanup callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+
+    ListCleanupCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered cleanup callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleanupCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+
+    CleanupCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - onDeleteAction
+      - serviceName
+      - callbackEndpoint
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of entity that will be cleaned up
+        onDeleteAction:
+          $ref: '#/components/schemas/OnDeleteAction'
+          description: Action taken when resource is deleted
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        callbackEndpoint:
+          type: string
+          description: Endpoint path called during cleanup
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+
+    RemoveCleanupCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: Request to remove a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource the callback handles
+        sourceType:
+          type: string
+          description: Type of entity the callback cleans up
+
+    RemoveCleanupCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: Response after removing a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - wasRegistered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type of removed callback
+        sourceType:
+          type: string
+          description: Source type of removed callback
+        wasRegistered:
+          type: boolean
+          description: True if callback existed before removal
+        removedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When callback was removed (null if wasn't registered)

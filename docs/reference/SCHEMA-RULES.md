@@ -1253,6 +1253,29 @@ Before submitting schema changes, verify:
 - [ ] `gracePeriodSeconds` is a positive integer (use 0 only for immediate cleanup)
 - [ ] `cleanupPolicy` is either `BEST_EFFORT` or `ALL_REQUIRED`
 
+### Resource Cleanup Contract (CRITICAL - Producer Side)
+
+**When your service is the `target` of `x-references` declarations**, your delete flow MUST:
+
+- [ ] Inject `IResourceClient` in service constructor
+- [ ] Call `/resource/check` before deletion to detect references
+- [ ] Call `/resource/cleanup/execute` if references exist to invoke registered callbacks
+- [ ] Handle cleanup failure (typically return `Conflict` status)
+- [ ] Only proceed with deletion after cleanup succeeds
+
+**FORBIDDEN** (violates schema-first cleanup contract):
+- [ ] Adding event handlers that duplicate cleanup callback logic when `x-references` callbacks exist
+- [ ] Deleting without calling `ExecuteCleanupAsync` when consumers have registered `x-references`
+- [ ] Assuming event-based cleanup is "equivalent" to Resource cleanup pattern
+
+**Why this matters**: `x-references` is a schema-first declaration. Cleanup chains can be validated by inspecting schemas. Event handlers bypass this validation and create hidden, undocumented dependencies.
+
+**Validation**: To find services that should call `ExecuteCleanupAsync`:
+```bash
+# Find all x-references targets (these services MUST call ExecuteCleanupAsync)
+grep -h "target:" schemas/*-api.yaml | grep -v "^#" | sort -u
+```
+
 ### Final Steps
 - [ ] Run `scripts/generate-all-services.sh` and verify build passes
 - [ ] Check generated C# files for expected attributes and nullability

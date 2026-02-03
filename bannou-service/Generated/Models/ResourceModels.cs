@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Resource;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Resource;
 
@@ -558,6 +573,15 @@ public partial class ExecuteCleanupRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CleanupPolicy? CleanupPolicy { get; set; } = default!;
 
+    /// <summary>
+    /// If true, returns what callbacks WOULD execute without actually
+    /// <br/>executing them. Useful for pre-deletion validation and debugging.
+    /// <br/>Defaults to false.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool? DryRun { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -608,6 +632,12 @@ public partial class ExecuteCleanupResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cleanupDurationMs")]
     public int CleanupDurationMs { get; set; } = default!;
+
+    /// <summary>
+    /// True if this was a preview (no callbacks were actually executed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = default!;
 
 }
 
@@ -665,6 +695,176 @@ public partial class CleanupCallbackResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
     public int DurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list registered cleanup callbacks
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListCleanupCallbacksRequest
+{
+
+    /// <summary>
+    /// Filter by resource type (list all if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    public string? ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by source type (requires resourceType)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    public string? SourceType { get; set; } = default!;
+
+}
+
+/// <summary>
+/// List of registered cleanup callbacks
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListCleanupCallbacksResponse
+{
+
+    /// <summary>
+    /// Registered callbacks matching filter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbacks")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<CleanupCallbackSummary> Callbacks { get; set; } = new System.Collections.ObjectModel.Collection<CleanupCallbackSummary>();
+
+    /// <summary>
+    /// Total number of callbacks returned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Summary of a registered cleanup callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupCallbackSummary
+{
+
+    /// <summary>
+    /// Type of resource this callback handles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity that will be cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Action taken when resource is deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("onDeleteAction")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OnDeleteAction OnDeleteAction { get; set; } = default!;
+
+    /// <summary>
+    /// Target service for callback invocation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint path called during cleanup
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbackEndpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CallbackEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// When this callback was registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to remove a cleanup callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RemoveCleanupCallbackRequest
+{
+
+    /// <summary>
+    /// Type of resource the callback handles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity the callback cleans up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after removing a cleanup callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RemoveCleanupCallbackResponse
+{
+
+    /// <summary>
+    /// Resource type of removed callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Source type of removed callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// True if callback existed before removal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("wasRegistered")]
+    public bool WasRegistered { get; set; } = default!;
+
+    /// <summary>
+    /// When callback was removed (null if wasn't registered)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("removedAt")]
+    public System.DateTimeOffset? RemovedAt { get; set; } = default!;
 
 }
 

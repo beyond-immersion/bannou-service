@@ -38,9 +38,9 @@ The Character service manages game world characters for Arcadia. Characters are 
 |-----------|-------------|
 | lib-analytics | Subscribes to `character.updated` for cache invalidation; calls `ICharacterClient` for realm resolution |
 | lib-character-encounter | Subscribes to `character.deleted` to clean up encounter data; calls `ICharacterClient` for character name enrichment |
+| lib-character-history | Subscribes to `character.deleted` and `character.compressed` to clean up history data |
+| lib-character-personality | Subscribes to `character.deleted` and `character.compressed` to clean up personality data |
 | lib-species | Calls `ICharacterClient` to check character references during species deprecation |
-
-> **Note**: CharacterPersonality and CharacterHistory (L4) do NOT currently subscribe to `character.compressed` or `character.deleted`. The documentation previously claimed they did. If L4 cleanup is needed, those services should add event subscriptions.
 
 ---
 
@@ -156,7 +156,7 @@ Per SERVICE_HIERARCHY, Character (L2) cannot call CharacterPersonality or Charac
 2. **Archive creation**: Stores character data and family summary in MySQL under `archive:{characterId}`
 3. **Event publication**: Publishes `character.compressed` event so L4 services can clean up their own data
 
-**Note**: `DeleteSourceData` flag is advisory only - Character cannot delete L4 data directly. L4 services (CharacterPersonality, CharacterHistory) should subscribe to `character.compressed` to handle cleanup, but currently DO NOT (see Design Considerations #10).
+**Note**: `DeleteSourceData` flag works via event-driven cleanup. Character publishes `character.compressed` event; L4 services (CharacterPersonality, CharacterHistory) subscribe and clean up their data when `DeletedSourceData=true`.
 
 ### Archive Retrieval (`/character/get-archive`)
 
@@ -238,7 +238,7 @@ None currently tracked.
 
 1. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
 
-2. **DeleteSourceData flag is advisory**: When `DeleteSourceData=true` on compression, Character (L2) logs a debug message but cannot delete L4 service data (personality, history) per SERVICE_HIERARCHY. L4 services should subscribe to `character.compressed` event to clean up their own data.
+2. **DeleteSourceData flag triggers event-driven cleanup**: When `DeleteSourceData=true` on compression, Character (L2) publishes `character.compressed` event with the flag. L4 services (CharacterPersonality, CharacterHistory) subscribe and delete their data. Character cannot delete L4 data directly per SERVICE_HIERARCHY - the event pattern maintains proper layer separation.
 
 3. **Fail-closed validation**: If realm or species validation services are unavailable, character creation throws `InvalidOperationException` rather than proceeding. This is intentional to prevent data integrity issues.
 
@@ -261,25 +261,8 @@ None currently tracked.
 1. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/267 -->
 
-2. ~~**Global index double-write**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks; this is an intentional performance/resilience pattern, not a design consideration requiring planning.
-
-3. ~~**Family tree type lookups are sequential**~~: **FIXED** (2026-02-02) - `BuildTypeCodeLookupAsync` now uses `Task.WhenAll` to parallelize all relationship type API calls.
-
-4. ~~**Family tree silently skips unknown relationship types**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks; this is intentional graceful degradation, not a design gap.
-
-5. ~~**INCARNATION tracking is directional**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks; this is correct semantic behavior, not a design gap.
-
-6. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
+2. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/271 -->
-
-7. ~~**"orphaned" label ignores parent death status**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks #9; the current behavior is semantically correct ("orphaned" = no parent relationships, not "parents died"). Dead parents are included in the Parents list with `IsAlive = false`.
-
-8. ~~**"single parent household" is literal**~~: **FIXED** (2026-02-02) - Moved to Intentional Quirks #10; the behavior is intentionally literal - it counts relationships, not inferred expectations.
-
-9. ~~**Family tree character lookups are sequential**~~: **FIXED** (2026-02-02) - `BulkLoadCharactersAsync` now bulk-fetches all related characters via `GetBulkAsync` (2 bulk operations total: global index lookup, then character data).
-
-10. **L4 cleanup not implemented**: CharacterPersonality and CharacterHistory do NOT subscribe to `character.compressed` or `character.deleted`. When characters are compressed or deleted, L4 data (personality traits, combat preferences, backstory, life events) is orphaned. The `DeleteSourceData` flag on compression is currently advisory-only with no effect.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/273 -->
 
 ---
 
@@ -293,6 +276,7 @@ No active work items.
 
 ### Historical
 
+- **2026-02-03**: Implemented L4 cleanup event handlers in CharacterPersonality and CharacterHistory. Both services now subscribe to `character.deleted` and `character.compressed` events to clean up their data. The `DeleteSourceData` flag on compression now actually works. Closes [GitHub Issue #273](https://github.com/beyond-immersion/bannou-service/issues/273).
 - **2026-02-02**: Removed FIXED item from Potential Extensions (parallel family tree lookups) - verified implemented via `Task.WhenAll` and `GetBulkAsync`, no quirks remain.
 - **2026-02-02**: Moved "orphaned" and "single parent household" labels from Design Considerations to Intentional Quirks (#9, #10) - current behavior is semantically correct (orphaned = no parent relationships, single parent = one relationship exists).
 - **2026-02-02**: Moved "INCARNATION tracking is directional" from Design Considerations to Intentional Quirks - this is correct semantic behavior (past lives, not future incarnations).

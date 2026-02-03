@@ -343,6 +343,31 @@ public partial class ResourceService : IResourceService
             .Select(c => c.SourceType)
             .ToHashSet();
 
+        // Handle dry run - return preview without executing
+        if (body.DryRun == true)
+        {
+            stopwatch.Stop();
+            var hasRestrict = callbacks.Any(c => c.OnDeleteAction == OnDeleteAction.RESTRICT);
+
+            return (StatusCodes.OK, new ExecuteCleanupResponse
+            {
+                ResourceType = body.ResourceType,
+                ResourceId = body.ResourceId,
+                Success = !hasRestrict,
+                DryRun = true,
+                AbortReason = hasRestrict ? "Would be blocked by RESTRICT policy" : null,
+                CallbackResults = callbacks.Select(c => new CleanupCallbackResult
+                {
+                    SourceType = c.SourceType,
+                    ServiceName = c.ServiceName,
+                    Endpoint = c.CallbackEndpoint,
+                    Success = true, // Hypothetical - not actually executed
+                    DurationMs = 0
+                }).ToList(),
+                CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
         // First check without lock
         var (preCheckStatus, preCheckResult) = await CheckReferencesAsync(
             new CheckReferencesRequest
@@ -380,6 +405,7 @@ public partial class ResourceService : IResourceService
                 ResourceType = body.ResourceType,
                 ResourceId = body.ResourceId,
                 Success = false,
+                DryRun = false,
                 AbortReason = $"Blocked by RESTRICT policy from: {blockers}",
                 CallbackResults = new List<CleanupCallbackResult>(),
                 CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
@@ -412,6 +438,7 @@ public partial class ResourceService : IResourceService
                     ResourceType = body.ResourceType,
                     ResourceId = body.ResourceId,
                     Success = false,
+                    DryRun = false,
                     AbortReason = $"Resource has {unhandledRefs.Count} active reference(s) without registered cleanup callbacks",
                     CallbackResults = new List<CleanupCallbackResult>(),
                     CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
@@ -430,6 +457,7 @@ public partial class ResourceService : IResourceService
                 ResourceType = body.ResourceType,
                 ResourceId = body.ResourceId,
                 Success = false,
+                DryRun = false,
                 AbortReason = $"Grace period not yet passed (ends at {preCheckResult.GracePeriodEndsAt})",
                 CallbackResults = new List<CleanupCallbackResult>(),
                 CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
@@ -457,6 +485,7 @@ public partial class ResourceService : IResourceService
                 ResourceType = body.ResourceType,
                 ResourceId = body.ResourceId,
                 Success = false,
+                DryRun = false,
                 AbortReason = "Failed to acquire cleanup lock (another cleanup in progress?)",
                 CallbackResults = new List<CleanupCallbackResult>(),
                 CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
@@ -489,6 +518,7 @@ public partial class ResourceService : IResourceService
                     ResourceType = body.ResourceType,
                     ResourceId = body.ResourceId,
                     Success = false,
+                    DryRun = false,
                     AbortReason = $"Blocked by RESTRICT policy from: {blockers}",
                     CallbackResults = new List<CleanupCallbackResult>(),
                     CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
@@ -585,6 +615,7 @@ public partial class ResourceService : IResourceService
                 ResourceType = body.ResourceType,
                 ResourceId = body.ResourceId,
                 Success = false,
+                DryRun = false,
                 AbortReason = $"{failedCallbacks.Count} cleanup callback(s) failed with ALL_REQUIRED policy",
                 CallbackResults = callbackResults,
                 CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
@@ -609,10 +640,129 @@ public partial class ResourceService : IResourceService
             ResourceType = body.ResourceType,
             ResourceId = body.ResourceId,
             Success = true,
+            DryRun = false,
             CallbackResults = callbackResults,
             CleanupDurationMs = (int)stopwatch.ElapsedMilliseconds
         });
     }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListCleanupCallbacksResponse?)> ListCleanupCallbacksAsync(
+        ListCleanupCallbacksRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var callbacks = new List<CleanupCallbackSummary>();
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
+
+        if (!string.IsNullOrEmpty(body.ResourceType))
+        {
+            // Get callbacks for specific resource type
+            var resourceCallbacks = await GetCleanupCallbacksAsync(body.ResourceType, cancellationToken);
+
+            // Optional filter by source type
+            if (!string.IsNullOrEmpty(body.SourceType))
+            {
+                resourceCallbacks = resourceCallbacks
+                    .Where(c => c.SourceType == body.SourceType)
+                    .ToList();
+            }
+
+            callbacks.AddRange(resourceCallbacks.Select(MapToSummary));
+        }
+        else
+        {
+            // List all callbacks - use master resource type index
+            var resourceTypes = await cacheStore.GetSetAsync<string>(
+                MasterResourceTypeIndexKey, cancellationToken);
+
+            foreach (var resourceType in resourceTypes)
+            {
+                var resourceCallbacks = await GetCleanupCallbacksAsync(resourceType, cancellationToken);
+                callbacks.AddRange(resourceCallbacks.Select(MapToSummary));
+            }
+        }
+
+        _logger.LogDebug("Listed {Count} cleanup callbacks", callbacks.Count);
+
+        return (StatusCodes.OK, new ListCleanupCallbacksResponse
+        {
+            Callbacks = callbacks,
+            TotalCount = callbacks.Count
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RemoveCleanupCallbackResponse?)> RemoveCleanupCallbackAsync(
+        RemoveCleanupCallbackRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var callbackKey = BuildCleanupKey(body.ResourceType, body.SourceType);
+        var existing = await _cleanupStore.GetAsync(callbackKey, cancellationToken);
+
+        if (existing == null)
+        {
+            _logger.LogDebug(
+                "Cleanup callback not found for removal: {ResourceType}/{SourceType}",
+                body.ResourceType, body.SourceType);
+
+            return (StatusCodes.OK, new RemoveCleanupCallbackResponse
+            {
+                ResourceType = body.ResourceType,
+                SourceType = body.SourceType,
+                WasRegistered = false,
+                RemovedAt = null
+            });
+        }
+
+        // Delete callback
+        await _cleanupStore.DeleteAsync(callbackKey, cancellationToken);
+
+        // Remove from source type index
+        var indexKey = $"callback-index:{body.ResourceType}";
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
+        await cacheStore.RemoveFromSetAsync(indexKey, body.SourceType, cancellationToken);
+
+        // Check if resource type has any remaining callbacks
+        var remainingSourceTypes = await cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
+        if (remainingSourceTypes.Count == 0)
+        {
+            // Remove from master resource type index
+            await cacheStore.RemoveFromSetAsync(
+                MasterResourceTypeIndexKey, body.ResourceType, cancellationToken);
+        }
+
+        _logger.LogInformation(
+            "Removed cleanup callback: {ResourceType}/{SourceType}",
+            body.ResourceType, body.SourceType);
+
+        return (StatusCodes.OK, new RemoveCleanupCallbackResponse
+        {
+            ResourceType = body.ResourceType,
+            SourceType = body.SourceType,
+            WasRegistered = true,
+            RemovedAt = DateTimeOffset.UtcNow
+        });
+    }
+
+    /// <summary>
+    /// Maps a CleanupCallbackDefinition to a CleanupCallbackSummary for API responses.
+    /// </summary>
+    private static CleanupCallbackSummary MapToSummary(CleanupCallbackDefinition callback)
+        => new()
+        {
+            ResourceType = callback.ResourceType,
+            SourceType = callback.SourceType,
+            OnDeleteAction = callback.OnDeleteAction,
+            ServiceName = callback.ServiceName,
+            CallbackEndpoint = callback.CallbackEndpoint,
+            RegisteredAt = callback.RegisteredAt,
+            Description = callback.Description
+        };
+
+    /// <summary>
+    /// Key for the master index of all resource types that have callbacks registered.
+    /// </summary>
+    private const string MasterResourceTypeIndexKey = "callback-resource-types";
 
     // =========================================================================
     // Internal Helpers
