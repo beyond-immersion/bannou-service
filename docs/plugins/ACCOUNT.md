@@ -106,7 +106,7 @@ Add/remove OAuth provider links. Adding a method validates: (1) non-empty Extern
 
 ### Bulk Operations
 
-- `batch-get`: Retrieves multiple accounts by ID in parallel using `Task.WhenAll` over direct key lookups (not JSON queries). Returns a `BatchGetAccountsResponse` with separate `accounts` (found), `notFound` (missing or soft-deleted), and `failed` (fetch errors) lists. Auth methods are loaded in a second parallel pass for found accounts. No schema-enforced limit on IDs per call (unlike `roles/bulk-update` which has maxItems: 100).
+- `batch-get`: Retrieves multiple accounts by ID in parallel using `Task.WhenAll` over direct key lookups (not JSON queries). Returns a `BatchGetAccountsResponse` with separate `accounts` (found), `notFound` (missing or soft-deleted), and `failed` (fetch errors) lists. Auth methods are loaded in a second parallel pass for found accounts. Max 100 IDs per call (schema-enforced via `maxItems: 100`).
 - `count`: Uses `IJsonQueryableStateStore.JsonCountAsync()` for a pure SQL `SELECT COUNT(*)` with the same filter conditions as `list` (email, displayName, verified), plus a `role` filter that uses `JSON_CONTAINS` on the `$.Roles` array. The `BuildAccountQueryConditions` helper automatically includes the type discriminator and soft-delete exclusion conditions.
 - `roles/bulk-update`: Adds and/or removes roles from up to 100 accounts. Processes sequentially with per-account ETag-based optimistic concurrency. Returns partial success: `succeeded` and `failed` lists with error reasons. Publishes `account.updated` events individually for each changed account. No-op (roles already match) counts as success without publishing an event.
 
