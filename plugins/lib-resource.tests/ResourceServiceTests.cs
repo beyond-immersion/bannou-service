@@ -36,6 +36,9 @@ public class ResourceServiceTests
     private readonly Mock<IStateStore<ResourceArchiveModel>> _mockArchiveStore;
     private readonly Mock<ICacheableStateStore<string>> _mockCompressIndexStore;
 
+    // Snapshot-specific mocks
+    private readonly Mock<IStateStore<ResourceSnapshotModel>> _mockSnapshotStore;
+
     // Capture containers for verifying side effects
     private readonly List<(string Key, ResourceReferenceEntry Entry)> _capturedSetAdds = new();
     private readonly List<string> _capturedSetDeletes = new();
@@ -46,6 +49,10 @@ public class ResourceServiceTests
     // Compression-specific captures
     private readonly List<(string Key, CompressCallbackDefinition Callback)> _capturedCompressCallbackSaves = new();
     private readonly List<(string Key, ResourceArchiveModel Archive)> _capturedArchiveSaves = new();
+
+    // Snapshot-specific captures
+    private readonly List<(string Key, ResourceSnapshotModel Snapshot, StateOptions? Options)> _capturedSnapshotSaves = new();
+    private readonly Dictionary<string, ResourceSnapshotModel> _simulatedSnapshots = new();
 
     // Simulated set state for testing
     private readonly Dictionary<string, HashSet<ResourceReferenceEntry>> _simulatedSets = new();
@@ -72,6 +79,9 @@ public class ResourceServiceTests
         _mockArchiveStore = new Mock<IStateStore<ResourceArchiveModel>>();
         _mockCompressIndexStore = new Mock<ICacheableStateStore<string>>();
 
+        // Snapshot-specific mocks
+        _mockSnapshotStore = new Mock<IStateStore<ResourceSnapshotModel>>();
+
         _configuration = new ResourceServiceConfiguration
         {
             DefaultGracePeriodSeconds = 3600, // 1 hour for faster tests
@@ -80,7 +90,11 @@ public class ResourceServiceTests
             DefaultCleanupPolicy = CleanupPolicy.BEST_EFFORT,
             DefaultCompressionPolicy = CompressionPolicy.ALL_REQUIRED,
             CompressionCallbackTimeoutSeconds = 60,
-            CompressionLockExpirySeconds = 600
+            CompressionLockExpirySeconds = 600,
+            // Snapshot configuration for tests
+            SnapshotDefaultTtlSeconds = 3600, // 1 hour default
+            SnapshotMinTtlSeconds = 60,       // 1 minute min
+            SnapshotMaxTtlSeconds = 86400     // 24 hours max
         };
 
         SetupMocks();
@@ -245,6 +259,25 @@ public class ResourceServiceTests
                 _simulatedCompressIndex[key].Add(value);
             })
             .ReturnsAsync(true);
+
+        // Setup snapshot store
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<ResourceSnapshotModel>(StateStoreDefinitions.ResourceSnapshots))
+            .Returns(_mockSnapshotStore.Object);
+
+        _mockSnapshotStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, CancellationToken _) =>
+                _simulatedSnapshots.TryGetValue(key, out var snapshot) ? snapshot : null);
+
+        _mockSnapshotStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ResourceSnapshotModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ResourceSnapshotModel, StateOptions?, CancellationToken>((key, snapshot, options, _) =>
+            {
+                _capturedSnapshotSaves.Add((key, snapshot, options));
+                _simulatedSnapshots[key] = snapshot;
+            })
+            .ReturnsAsync("mock-etag");
     }
 
     private ResourceService CreateService()
@@ -270,6 +303,8 @@ public class ResourceServiceTests
         _capturedCompressCallbackSaves.Clear();
         _capturedArchiveSaves.Clear();
         _simulatedCompressIndex.Clear();
+        _capturedSnapshotSaves.Clear();
+        _simulatedSnapshots.Clear();
     }
 
     #region Constructor Validation
@@ -294,10 +329,21 @@ public class ResourceServiceTests
     {
         var config = new ResourceServiceConfiguration();
 
+        // Grace period and cleanup defaults
         Assert.Equal(604800, config.DefaultGracePeriodSeconds); // 7 days
         Assert.Equal(30, config.CleanupCallbackTimeoutSeconds);
         Assert.Equal(300, config.CleanupLockExpirySeconds);
         Assert.Equal(CleanupPolicy.BEST_EFFORT, config.DefaultCleanupPolicy);
+
+        // Compression defaults
+        Assert.Equal(CompressionPolicy.ALL_REQUIRED, config.DefaultCompressionPolicy);
+        Assert.Equal(60, config.CompressionCallbackTimeoutSeconds);
+        Assert.Equal(600, config.CompressionLockExpirySeconds);
+
+        // Snapshot defaults
+        Assert.Equal(3600, config.SnapshotDefaultTtlSeconds);  // 1 hour
+        Assert.Equal(60, config.SnapshotMinTtlSeconds);        // 1 minute
+        Assert.Equal(86400, config.SnapshotMaxTtlSeconds);     // 24 hours
     }
 
     #endregion
@@ -2148,6 +2194,638 @@ public class ResourceServiceTests
         _mockLockProvider
             .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(successLockResponse.Object);
+    }
+
+    #endregion
+
+    #region Snapshot Tests
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_NoCallbacks_ReturnsFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No callbacks registered for this resource type
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "unknown-type",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("No compression callbacks", response.AbortReason);
+        Assert.Null(response.SnapshotId);
+        Assert.Empty(_capturedSnapshotSaves);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_DryRun_DoesNotStoreSnapshot()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DryRun = true
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.True(response.DryRun);
+        Assert.Null(response.SnapshotId);
+        Assert.Null(response.ExpiresAt);
+
+        // Verify no snapshot was saved (dry run)
+        Assert.Empty(_capturedSnapshotSaves);
+
+        // Verify navigator was NOT called (dry run doesn't execute callbacks)
+        _mockNavigator.Verify(
+            n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_UsesConfigurationDefaults_WhenNotSpecified()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful API call
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{\"data\": \"test\"}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+            // No TtlSeconds or CompressionPolicy specified - should use config defaults
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.NotNull(response.SnapshotId);
+
+        // Verify snapshot was saved with configured default TTL (3600 seconds = 1 hour)
+        Assert.Single(_capturedSnapshotSaves);
+        var (_, snapshot, options) = _capturedSnapshotSaves[0];
+        Assert.NotNull(options);
+        Assert.Equal(_configuration.SnapshotDefaultTtlSeconds, options.Ttl);
+
+        // Verify expiration is approximately 1 hour from now
+        Assert.NotNull(response.ExpiresAt);
+        var expectedExpiry = DateTimeOffset.UtcNow.AddSeconds(_configuration.SnapshotDefaultTtlSeconds);
+        var timeDiff = (expectedExpiry - response.ExpiresAt.Value).Duration();
+        Assert.True(timeDiff < TimeSpan.FromSeconds(5), "ExpiresAt should be ~1 hour from now");
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_ClampsTtlToConfiguredMinimum()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful API call
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            TtlSeconds = 10 // Below minimum (60)
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify TTL was clamped to minimum (60)
+        Assert.Single(_capturedSnapshotSaves);
+        var (_, _, options) = _capturedSnapshotSaves[0];
+        Assert.NotNull(options);
+        Assert.Equal(_configuration.SnapshotMinTtlSeconds, options.Ttl);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_ClampsTtlToConfiguredMaximum()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful API call
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            TtlSeconds = 1000000 // Above maximum (86400)
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify TTL was clamped to maximum (86400)
+        Assert.Single(_capturedSnapshotSaves);
+        var (_, _, options) = _capturedSnapshotSaves[0];
+        Assert.NotNull(options);
+        Assert.Equal(_configuration.SnapshotMaxTtlSeconds, options.Ttl);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_AllCallbacksSucceed_CreatesSnapshot()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        // Setup successful API calls
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult
+                {
+                    StatusCode = 200,
+                    ResponseBody = "{\"characterId\": \"" + resourceId + "\", \"data\": \"test\"}",
+                    Duration = TimeSpan.FromMilliseconds(50)
+                }
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            SnapshotType = "storyline-preview",
+            TtlSeconds = 1800 // 30 minutes
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.False(response.DryRun);
+        Assert.NotNull(response.SnapshotId);
+        Assert.NotNull(response.ExpiresAt);
+        Assert.Equal(2, response.CallbackResults.Count);
+        Assert.All(response.CallbackResults, r => Assert.True(r.Success));
+
+        // Verify snapshot was saved
+        Assert.Single(_capturedSnapshotSaves);
+        var (snapshotKey, snapshot, options) = _capturedSnapshotSaves[0];
+        Assert.Contains(response.SnapshotId.ToString()!, snapshotKey);
+        Assert.Equal(resourceId, snapshot.ResourceId);
+        Assert.Equal("character", snapshot.ResourceType);
+        Assert.Equal("storyline-preview", snapshot.SnapshotType);
+        Assert.Equal(2, snapshot.Entries.Count);
+        Assert.NotNull(options);
+        Assert.Equal(1800, options.Ttl);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_PublishesSnapshotCreatedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful API call
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            SnapshotType = "actor-state"
+        };
+
+        // Act
+        await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert - verify snapshot created event was published
+        var snapshotEvent = _capturedPublishedEvents.FirstOrDefault(e => e.Topic == "resource.snapshot.created");
+        Assert.NotNull(snapshotEvent.Event);
+        var typedEvent = Assert.IsType<ResourceSnapshotCreatedEvent>(snapshotEvent.Event);
+        Assert.Equal("character", typedEvent.ResourceType);
+        Assert.Equal(resourceId, typedEvent.ResourceId);
+        Assert.Equal("actor-state", typedEvent.SnapshotType);
+        Assert.NotEqual(Guid.Empty, typedEvent.SnapshotId);
+        Assert.True(typedEvent.ExpiresAt > DateTimeOffset.UtcNow, "ExpiresAt should be in the future");
+        Assert.Equal(1, typedEvent.EntriesCount);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_CallbackFails_AllRequired_Aborts()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        // Setup first callback to succeed, second to fail
+        var callCount = 0;
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                {
+                    return new PreboundApiResult
+                    {
+                        SubstitutionSucceeded = true,
+                        Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+                    };
+                }
+                return new PreboundApiResult
+                {
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult { StatusCode = 500, ErrorMessage = "Service unavailable", Duration = TimeSpan.FromMilliseconds(50) }
+                };
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            CompressionPolicy = CompressionPolicy.ALL_REQUIRED
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("ALL_REQUIRED", response.AbortReason);
+        Assert.Null(response.SnapshotId);
+
+        // Verify no snapshot was saved
+        Assert.Empty(_capturedSnapshotSaves);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_CallbackFails_BestEffort_Continues()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10)
+        });
+
+        // Setup first callback to succeed, second to fail
+        var callCount = 0;
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                {
+                    return new PreboundApiResult
+                    {
+                        SubstitutionSucceeded = true,
+                        Result = new RawApiResult { StatusCode = 200, ResponseBody = "{\"data\": \"test\"}", Duration = TimeSpan.FromMilliseconds(50) }
+                    };
+                }
+                return new PreboundApiResult
+                {
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult { StatusCode = 404, ErrorMessage = "Not found", Duration = TimeSpan.FromMilliseconds(50) }
+                };
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            CompressionPolicy = CompressionPolicy.BEST_EFFORT
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.NotNull(response.SnapshotId);
+
+        // Verify partial results
+        Assert.Equal(2, response.CallbackResults.Count);
+        Assert.Single(response.CallbackResults, r => r.Success);
+        Assert.Single(response.CallbackResults, r => !r.Success);
+
+        // Verify snapshot was saved with partial data
+        Assert.Single(_capturedSnapshotSaves);
+        var (_, snapshot, _) = _capturedSnapshotSaves[0];
+        Assert.Single(snapshot.Entries);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_AllCallbacksFail_BestEffort_ReturnsFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup all callbacks to fail
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 500, ErrorMessage = "Server error", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            CompressionPolicy = CompressionPolicy.BEST_EFFORT
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("No successful snapshot callbacks", response.AbortReason);
+        Assert.Null(response.SnapshotId);
+
+        // Verify no snapshot was saved
+        Assert.Empty(_capturedSnapshotSaves);
+    }
+
+    [Fact]
+    public async Task GetSnapshotAsync_Exists_ReturnsSnapshot()
+    {
+        // Arrange
+        var service = CreateService();
+        var snapshotId = Guid.NewGuid();
+        var resourceId = Guid.NewGuid();
+
+        // Pre-populate simulated snapshot
+        var snapshotKey = $"snap:{snapshotId}";
+        _simulatedSnapshots[snapshotKey] = new ResourceSnapshotModel
+        {
+            SnapshotId = snapshotId,
+            ResourceType = "character",
+            ResourceId = resourceId,
+            SnapshotType = "actor-state",
+            Entries = new List<ArchiveEntryModel>
+            {
+                new()
+                {
+                    SourceType = "character-base",
+                    ServiceName = "character",
+                    Data = "H4sIAAAAAAAAA6tWKkktLlGyUlAqS8wpTgUA3+5RLRAAAAA=", // Base64-encoded gzipped JSON
+                    CompressedAt = DateTimeOffset.UtcNow,
+                    DataChecksum = "abc123",
+                    OriginalSizeBytes = 100
+                }
+            },
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(55)
+        };
+
+        var request = new GetSnapshotRequest
+        {
+            SnapshotId = snapshotId
+        };
+
+        // Act
+        var (status, response) = await service.GetSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Found);
+        Assert.Equal(snapshotId, response.SnapshotId);
+        Assert.NotNull(response.Snapshot);
+        Assert.Equal(snapshotId, response.Snapshot.SnapshotId);
+        Assert.Equal("character", response.Snapshot.ResourceType);
+        Assert.Equal(resourceId, response.Snapshot.ResourceId);
+        Assert.Equal("actor-state", response.Snapshot.SnapshotType);
+        Assert.Single(response.Snapshot.Entries);
+        Assert.Equal("character-base", response.Snapshot.Entries.First().SourceType);
+    }
+
+    [Fact]
+    public async Task GetSnapshotAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var snapshotId = Guid.NewGuid();
+
+        // Snapshot not in simulated store (simulating expired or non-existent)
+
+        var request = new GetSnapshotRequest
+        {
+            SnapshotId = snapshotId
+        };
+
+        // Act
+        var (status, response) = await service.GetSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Found);
+        Assert.Equal(snapshotId, response.SnapshotId);
+        Assert.Null(response.Snapshot);
+    }
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_CustomTtlWithinRange_UsesRequestedTtl()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful API call
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var customTtl = 7200; // 2 hours - within range (60-86400)
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            TtlSeconds = customTtl
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify TTL used requested value (within range, not clamped)
+        Assert.Single(_capturedSnapshotSaves);
+        var (_, _, options) = _capturedSnapshotSaves[0];
+        Assert.NotNull(options);
+        Assert.Equal(customTtl, options.Ttl);
     }
 
     #endregion
