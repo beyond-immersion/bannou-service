@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -35,7 +36,7 @@ public sealed class NativeEventConsumerBackend : IHostedService
     private readonly IEventConsumer _eventConsumer;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<NativeEventConsumerBackend> _logger;
-    private readonly List<IAsyncDisposable> _subscriptions = new();
+    private readonly ConcurrentBag<IAsyncDisposable> _subscriptions = new();
 
     /// <summary>
     /// Creates a new NativeEventConsumerBackend instance.
@@ -191,7 +192,8 @@ public sealed class NativeEventConsumerBackend : IHostedService
             }
         }
 
-        _subscriptions.Clear();
+        // Drain the bag (ConcurrentBag has no Clear method)
+        while (_subscriptions.TryTake(out _)) { }
         _logger.LogInformation("NativeEventConsumerBackend stopped");
     }
 }

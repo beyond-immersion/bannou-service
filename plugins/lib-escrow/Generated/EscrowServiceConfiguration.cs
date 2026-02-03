@@ -132,16 +132,16 @@ public class EscrowServiceConfiguration : IServiceConfiguration
     public int DefaultListLimit { get; set; } = 50;
 
     /// <summary>
-    /// Default release confirmation mode (immediate/service_only/party_required/service_and_party)
+    /// Default release confirmation mode when not specified in request
     /// Environment variable: ESCROW_DEFAULT_RELEASE_MODE
     /// </summary>
-    public string DefaultReleaseMode { get; set; } = "service_only";
+    public ReleaseMode DefaultReleaseMode { get; set; } = ReleaseMode.ServiceOnly;
 
     /// <summary>
-    /// Default refund confirmation mode (immediate/service_only/party_required)
+    /// Default refund confirmation mode when not specified in request
     /// Environment variable: ESCROW_DEFAULT_REFUND_MODE
     /// </summary>
-    public string DefaultRefundMode { get; set; } = "immediate";
+    public RefundMode DefaultRefundMode { get; set; } = RefundMode.Immediate;
 
     /// <summary>
     /// Timeout for party confirmations in seconds (default 5 minutes)

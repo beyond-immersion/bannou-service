@@ -78,7 +78,7 @@ Full-custody orchestration layer for multi-party asset exchanges. Manages the co
 | `escrow.refunded` | `EscrowRefundedEvent` | Assets refunded to depositors |
 | `escrow.disputed` | `EscrowDisputedEvent` | Party raises a dispute |
 | `escrow.resolved` | `EscrowResolvedEvent` | Arbiter resolves a dispute |
-| `escrow.expired` | `EscrowExpiredEvent` | Escrow times out (topic defined, not yet emitted in code) |
+| `escrow.expired` | `EscrowExpiredEvent` | Escrow times out (emitted by `EscrowExpirationService`) |
 | `escrow.cancelled` | `EscrowCancelledEvent` | Escrow cancelled before full funding |
 | `escrow.validation.failed` | `EscrowValidationFailedEvent` | Periodic validation detects asset discrepancy |
 | `escrow.validation.reaffirmed` | `EscrowValidationReaffirmedEvent` | All affected parties reaffirm after validation failure |
@@ -99,21 +99,21 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | Property | Env Var | Default | Used | Purpose |
 |----------|---------|---------|------|---------|
 | `DefaultTimeout` | `ESCROW_DEFAULT_TIMEOUT` | `P7D` | ✓ | Default escrow expiration if not specified (ISO 8601 duration) - used in `CreateEscrowAsync` |
-| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✓ | Maximum allowed escrow duration - validated in `CreateEscrowAsync` |
+| `MaxTimeout` | `ESCROW_MAX_TIMEOUT` | `P30D` | ✗ | Maximum allowed escrow duration - NOT validated against requested timeout |
 | `ExpirationGracePeriod` | `ESCROW_EXPIRATION_GRACE_PERIOD` | `PT1H` | ✓ | Grace period after expiration before auto-refund - used in `EscrowExpirationService` |
 | `TokenLength` | `ESCROW_TOKEN_LENGTH` | `32` | ✓ | Token length in bytes - used in `GenerateToken` |
 | `ExpirationCheckInterval` | `ESCROW_EXPIRATION_CHECK_INTERVAL` | `PT1M` | ✓ | How often to check for expired escrows - used in `EscrowExpirationService` |
 | `ExpirationBatchSize` | `ESCROW_EXPIRATION_BATCH_SIZE` | `100` | ✓ | Batch size for expiration processing - used in `EscrowExpirationService` |
 | `ValidationCheckInterval` | `ESCROW_VALIDATION_CHECK_INTERVAL` | `PT5M` | ✗ | How often to validate held assets (no background processor) |
 | `MaxParties` | `ESCROW_MAX_PARTIES` | `10` | ✓ | Maximum parties per escrow - validated in `CreateEscrowAsync` |
-| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✓ | Maximum asset lines per deposit - validated in `DepositAsync` |
-| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | ✓ | Maximum concurrent pending escrows per party - validated in `CreateEscrowAsync` |
+| `MaxAssetsPerDeposit` | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | `50` | ✗ | Maximum asset lines per deposit - NOT validated in `DepositAsync` |
+| `MaxPendingPerParty` | `ESCROW_MAX_PENDING_PER_PARTY` | `100` | ✗ | Maximum concurrent pending escrows per party - NOT enforced in `CreateEscrowAsync` |
 | `IdempotencyTtlHours` | `ESCROW_IDEMPOTENCY_TTL_HOURS` | `24` | ✓ | TTL in hours for idempotency key storage - used in `DepositAsync` |
 | `MaxConcurrencyRetries` | `ESCROW_MAX_CONCURRENCY_RETRIES` | `3` | ✓ | Max retry attempts for optimistic concurrency operations - used throughout |
 | `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | ✓ | Default limit for listing escrows when not specified - used in `ListEscrowsAsync` |
-| `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `service_only` | ✓ | Default release confirmation mode for new escrows |
-| `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `immediate` | ✓ | Default refund confirmation mode for new escrows |
-| `ConfirmationTimeoutSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | `300` | ✓ | Timeout for party confirmations in seconds (5 minutes default) |
+| `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `service_only` | ✗ | Default release confirmation mode - defined but NOT used (escrows use request param) |
+| `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `immediate` | ✗ | Default refund confirmation mode - defined but NOT used (escrows use request param) |
+| `ConfirmationTimeoutSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | `300` | ✗ | Timeout for party confirmations - defined but NOT used to set deadlines |
 | `ConfirmationTimeoutBehavior` | `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | `auto_confirm` | ✓ | What happens when confirmation timeout expires |
 | `ConfirmationTimeoutCheckIntervalSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | `30` | ✓ | How often the background service checks for expired confirmations |
 | `ConfirmationTimeoutBatchSize` | `ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE` | `100` | ✓ | Maximum escrows to process per timeout check cycle |
@@ -125,12 +125,13 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<EscrowService>` | Scoped | Structured logging |
-| `EscrowServiceConfiguration` | Singleton | All 15 config properties |
+| `EscrowServiceConfiguration` | Singleton | All 19 config properties |
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access (7 stores) |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event subscription registration for contract events |
 
-Service lifetime is **Scoped** (per-request). One background service implemented:
+Service lifetime is **Scoped** (per-request). Two background services implemented:
+- **`EscrowExpirationService`** - Checks for escrows past their `ExpiresAt + GracePeriod` in expirable states (PendingDeposits, PartiallyFunded, PendingConsent, PendingCondition) and transitions them to `Expired` status.
 - **`EscrowConfirmationTimeoutService`** - Checks for escrows in `Releasing`/`Refunding` states with expired confirmation deadlines, applies configured timeout behavior (auto_confirm, dispute, or refund).
 
 **Internal State Store Accessors** (lazy-initialized):
@@ -416,45 +417,47 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ## Stubs & Unimplemented Features
 
-1. **~~Event consumer registration empty~~** (FIXED): `RegisterEventConsumers()` now registers handlers for `contract.fulfilled` (transitions bound escrows to Finalizing) and `contract.terminated` (transitions bound escrows to Refunded). Uses QueryAsync to find escrows by BoundContractId and ETag-based concurrency for state transitions. The `/escrow/verify-condition` endpoint remains available for manual verification.
+1. **Event consumer registration**: `RegisterEventConsumers()` registers handlers for `contract.fulfilled` (transitions bound escrows to Finalizing) and `contract.terminated` (transitions bound escrows to Refunded). Uses QueryAsync to find escrows by BoundContractId and ETag-based concurrency for state transitions. The `/escrow/verify-condition` endpoint remains available for manual verification.
 
 2. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment "Validate deposits (placeholder - real impl would check with currency/inventory services)". No actual cross-service validation is performed. The validation always passes (empty failure list).
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/213 -->
 
-3. ~~**Expiration background processing**~~: **FIXED** (2026-02-01) - Implemented `EscrowExpirationService` background worker that periodically scans for escrows past their `ExpiresAt + GracePeriod`, transitions them to `Expired` status, publishes `EscrowExpiredEvent`, and if deposits exist also publishes `EscrowRefundedEvent` for downstream services. Configuration properties `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` are now fully wired up.
+3. **Expiration background processing**: Implemented in `EscrowExpirationService` background worker that periodically scans for escrows past their `ExpiresAt + GracePeriod`, transitions them to `Expired` status, publishes `EscrowExpiredEvent`, and if deposits exist also publishes `EscrowRefundedEvent` for downstream services. Configuration properties `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` are wired up.
 
 4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
-5. **~~Configuration properties not wired up~~** (PARTIALLY FIXED): Most configuration properties are now enforced:
-   - ~~`MaxTimeout`~~ - now validated against requested timeout in `CreateEscrowAsync`
-   - ~~`MaxAssetsPerDeposit`~~ - now validated in `DepositAsync`
-   - ~~`MaxPendingPerParty`~~ - now enforced in `CreateEscrowAsync`
-   - Removed dead config: `TokenAlgorithm`, `TokenSecret` (code always uses SHA-256 with random bytes)
+5. **Configuration properties not wired up**: Several configuration properties remain unused:
+   - `MaxTimeout` - defined but NOT validated against requested timeout
+   - `MaxAssetsPerDeposit` - defined but NOT validated in `DepositAsync`
+   - `MaxPendingPerParty` - defined but NOT enforced in `CreateEscrowAsync`
+   - `ValidationCheckInterval` - defined but no background validation processor exists
+   - `DefaultReleaseMode` - defined but escrows use request parameter instead
+   - `DefaultRefundMode` - defined but escrows use request parameter instead
+   - `ConfirmationTimeoutSeconds` - defined but NOT used to set confirmation deadlines
 
 6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
 7. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements.
 
-8. **~~Releasing state unused in transitions~~** (FIXED): The `Releasing` state is now used for event-driven confirmation flow. When `ReleaseMode` is not `immediate`, escrows transition to `Releasing` and wait for service/party confirmations before completing to `Released`. The `EscrowConfirmationTimeoutService` background service handles expired confirmation deadlines.
+8. **Releasing state**: Now used for event-driven confirmation flow. When `ReleaseMode` is not `immediate`, escrows transition to `Releasing` and wait for service/party confirmations before completing to `Released`. The `EscrowConfirmationTimeoutService` background service handles expired confirmation deadlines.
 
 ---
 
 ## Potential Extensions
 
-1. ~~**Background expiration processor**~~: **DONE** (2026-02-01) - Implemented as `EscrowExpirationService`. The service scans escrows from expirable statuses (PendingDeposits, PartiallyFunded, PendingConsent, PendingCondition) using QueryAsync, applies the grace period, transitions to Expired, and publishes both `EscrowExpiredEvent` and `EscrowRefundedEvent` (if deposits existed).
 
-2. **~~Contract event consumers~~** (DONE): Handlers for `contract.fulfilled` and `contract.terminated` are now implemented in `EscrowServiceEvents.cs`.
+1. **Cross-service asset validation**: Implement actual calls to currency/inventory services in `ValidateEscrowAsync` to verify deposited assets are still held and unchanged.
 
-3. **Cross-service asset validation**: Implement actual calls to currency/inventory services in `ValidateEscrowAsync` to verify deposited assets are still held and unchanged.
+2. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support.
 
-4. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support.
+3. **Rate limiting via MaxPendingPerParty**: Enforce the configured limit during `CreateEscrow` by checking the party pending store before allowing new escrows.
 
-5. **Rate limiting via MaxPendingPerParty**: Enforce the configured limit during `CreateEscrow` by checking the party pending store before allowing new escrows.
+4. **MaxTimeout validation**: Validate requested timeout against `MaxTimeout` configuration in `CreateEscrowAsync` to prevent excessively long escrow periods.
 
-6. **Token secret HMAC integration**: Use the configured `TokenSecret` in token generation for deterministic, verifiable tokens rather than purely random tokens.
+5. **MaxAssetsPerDeposit validation**: Validate asset count against `MaxAssetsPerDeposit` in `DepositAsync` to prevent oversized deposits.
 
-7. **Distributed lock for concurrent modifications**: Add lock acquisition around agreement modifications to prevent race conditions when multiple parties deposit/consent simultaneously.
+6. **Distributed lock for concurrent modifications**: Add lock acquisition around agreement modifications to prevent race conditions when multiple parties deposit/consent simultaneously.
 
 ---
 
@@ -462,14 +465,9 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ### Bugs (Fix Immediately)
 
-1. **~~Releasing state is unreachable~~** (FIXED): The `Releasing` state is now used for event-driven confirmation flow via `ReleaseMode`. When mode is not `immediate`, the flow is `Finalizing` → `Releasing` → (await confirmations) → `Released`. See the [Release Modes](#release-modes) section for details.
-<!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
+1. **Status index key pattern uses individual keys**: Status index stores entries at `status:{status}:{escrowId}` as individual key-value pairs using `IStateStore.SaveAsync`/`DeleteAsync`. This is not a Redis Set - it's keyed storage. Scanning all escrows by status requires `QueryAsync` against the agreement store, not the status index.
 
-2. **~~Status index key pattern mismatch~~** (FIXED): Status index now uses Redis Sets via `ICacheableStateStore<T>` (`AddToSetAsync`/`RemoveFromSetAsync`/`GetSetAsync`) for consistent key construction. The `UpdateStatusIndexAsync` helper ensures atomic updates when transitioning states.
-<!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
-
-3. **~~Party pending count race on failure~~** (FIXED): Escrow creation now uses try/finally pattern with rollback. If creation fails after incrementing pending counts, the counts are decremented in the exception handler to maintain consistency.
-<!-- AUDIT:FIXED:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/214 -->
+2. **Party pending count race on failure**: Escrow creation increments party pending counts AFTER saving the agreement. If the save succeeds but subsequent operations (token save, status index save, event publish) fail, the pending counts remain incremented with no rollback. The catch block does NOT decrement counts.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -487,23 +485,20 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 1. **POCO string defaults (`= string.Empty`)**: Internal POCO properties use `= string.Empty` as default to satisfy NRT. Consider making these nullable (`string?`) or adding validation at assignment time for fields that should always have values (e.g., `PartyType`, `CreatedByType`).
 
-2. ~~**EscrowExpiredEvent never published**~~: **FIXED** (2026-02-01) - The `EscrowExpirationService` now transitions escrows to `Expired` and publishes `EscrowExpiredEvent`.
 
-3. ~~**Status index not cleaned on expiration**~~: **FIXED** (2026-02-01) - The `EscrowExpirationService` now properly updates the status index when transitioning escrows to `Expired`, removing the old status entry and creating the new one.
+2. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
 
-4. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
+3. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation - only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
 
-5. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation - only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
+4. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
 
-6. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
+5. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
 
-7. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
+6. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
 
-8. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
+7. **Contract termination refund doesn't verify contract binding**: `RefundForContractTerminationAsync` validates the escrow is bound to the contract via query, but doesn't re-verify the `BoundContractId` matches after loading. The query result is trusted.
 
-9. **Contract termination refund doesn't verify contract binding**: `RefundForContractTerminationAsync` validates the escrow is bound to the contract via query, but doesn't re-verify the `BoundContractId` matches after loading. The query result is trusted.
-
-10. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
+8. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
 
 ---
 
@@ -511,24 +506,17 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ### Recently Completed
 
-1. **Escrow State Machine Bug Fixes** - [Issue #214](https://github.com/beyond-immersion/bannou-service/issues/214) (2026-02-01)
-   - Implemented event-driven confirmation flow with `ReleaseMode` and `RefundMode` enums
-   - Fixed bug #1: `Releasing` state now used for confirmation waiting
-   - Fixed bug #2: Status index now uses Redis Sets for consistent key handling
-   - Fixed bug #3: Party pending count race fixed with try/finally rollback
-   - Fixed bug #4: Removed dead config (`TokenAlgorithm`, `TokenSecret`), wired up `MaxTimeout`, `MaxAssetsPerDeposit`, `MaxPendingPerParty`
+1. **Event-driven confirmation flow** - [Issue #214](https://github.com/beyond-immersion/bannou-service/issues/214) (2026-02-01)
+   - Implemented `ReleaseMode` and `RefundMode` enums for configurable confirmation flows
+   - `Releasing` state now used for confirmation waiting when mode is not `immediate`
    - Added `/escrow/confirm-release` and `/escrow/confirm-refund` endpoints
    - Added `EscrowConfirmationTimeoutService` background worker
    - Added `EscrowReleasingEvent` and `EscrowRefundingEvent`
 
-2. **~~Releasing state is unreachable~~** - [Issue #210](https://github.com/beyond-immersion/bannou-service/issues/210) (CLOSED - Superseded by #214)
-   - Resolved via the event-driven confirmation flow implementation
-
-3. **Escrow Expiration Background Service** (2026-02-01)
+2. **Escrow Expiration Background Service** (2026-02-01)
    - Implemented `EscrowExpirationService` that scans for expired escrows and transitions them
    - Wired up `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` config
    - Publishes `EscrowExpiredEvent` and `EscrowRefundedEvent` (for auto-refund)
-   - Fixed related Design Considerations: "EscrowExpiredEvent never published" and "Status index not cleaned on expiration"
 
 ### Pending Design Review
 

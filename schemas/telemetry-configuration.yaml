@@ -44,14 +44,9 @@ x-service-configuration:
       default: 1.0
     MetricsEnabled:
       type: boolean
-      description: Enable metrics export
+      description: Enable metrics export via Prometheus scraping endpoint (/metrics)
       env: TELEMETRY_METRICS_ENABLED
       default: true
-    MetricsExportIntervalSeconds:
-      type: integer
-      description: Metrics export interval in seconds
-      env: TELEMETRY_METRICS_EXPORT_INTERVAL_SECONDS
-      default: 15
     ServiceName:
       type: string
       nullable: true

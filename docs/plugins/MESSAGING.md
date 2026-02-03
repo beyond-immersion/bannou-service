@@ -94,6 +94,8 @@ This plugin does not consume external events (it IS the event infrastructure).
 | `DeadLetterExchange` | `MESSAGING_DEAD_LETTER_EXCHANGE` | `"bannou-dlx"` | Dead-letter routing exchange |
 | `ConnectionRetryCount` | `MESSAGING_CONNECTION_RETRY_COUNT` | `5` | Max connection attempts |
 | `ConnectionRetryDelayMs` | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | `1000` | Delay between retries |
+| `ConnectionMaxBackoffMs` | `MESSAGING_CONNECTION_MAX_BACKOFF_MS` | `60000` | Maximum backoff delay for connection retries |
+| `ChannelPoolSize` | `MESSAGING_CHANNEL_POOL_SIZE` | `10` | Maximum channels in publisher pool |
 | `DefaultPrefetchCount` | `MESSAGING_DEFAULT_PREFETCH_COUNT` | `10` | Consumer channel QoS |
 | `DefaultAutoAck` | `MESSAGING_DEFAULT_AUTO_ACK` | `false` | Fallback when SubscriptionOptions.AutoAck is null |
 | `RetryBufferEnabled` | `MESSAGING_RETRY_BUFFER_ENABLED` | `true` | Enable publish failure buffering |
@@ -124,7 +126,7 @@ This plugin does not consume external events (it IS the event infrastructure).
 | `IMessageBus` | Singleton | Event publishing (RabbitMQ or InMemory) |
 | `IMessageSubscriber` | Singleton | Topic subscriptions (static and dynamic) |
 | `IMessageTap` | Singleton | Event tapping/forwarding between exchanges |
-| `RabbitMQConnectionManager` | Singleton | Connection pooling (up to 10 channels) |
+| `RabbitMQConnectionManager` | Singleton | Connection pooling (configurable via `ChannelPoolSize`) |
 | `MessageRetryBuffer` | Singleton | Transient publish failure recovery |
 | `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
 | `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
@@ -220,8 +222,7 @@ Messaging Architecture
 1. **RabbitMQ Management API integration**: Enable accurate message counts and queue depth monitoring.
 2. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
 3. **Dead-letter processing**: Consumer for DLX queue to handle poison messages.
-4. **Configurable channel pool size**: Currently hardcoded at 10 in `RabbitMQConnectionManager.MAX_POOL_SIZE`.
-5. **Tracked retry with delay before dead-lettering**: Use `RetryMaxAttempts` and `RetryDelayMs` config properties (already defined) to implement retry tracking via `x-death` headers and delayed requeue mechanism. Currently, static subscriptions requeue once (if not redelivered) then dead-letter; this extension would allow N retries with configurable delays.
+4. **Tracked retry with delay before dead-lettering**: Use `RetryMaxAttempts` and `RetryDelayMs` config properties (already defined) to implement retry tracking via `x-death` headers and delayed requeue mechanism. Currently, static subscriptions requeue once (if not redelivered) then dead-letter; this extension would allow N retries with configurable delays.
 
 ---
 
@@ -241,7 +242,7 @@ No bugs identified.
 
 2. **HTTP callbacks don't retry on HTTP errors**: Only retries on network failures (`HttpRequestException`, `TaskCanceledException` for timeout). HTTP 4xx/5xx is treated as successful delivery. Philosophy: callback endpoint is responsible for its own error handling.
 
-3. **Channel pool size fixed at 10**: `RabbitMQConnectionManager` uses `MAX_POOL_SIZE = 10` hardcoded constant. Not configurable. Consumer channels are separate (not pooled).
+3. **Channel pool for publishers only**: `RabbitMQConnectionManager` maintains a channel pool (default 10, configurable via `ChannelPoolSize`) for publish operations. Consumer channels are separate (not pooled) - each subscription gets a dedicated channel.
 
 4. **Two queue naming schemes**: HTTP API subscriptions use `bannou-dynamic-{id:N}` while internal dynamic subscriptions use `{topic}.dynamic.{id:N}`. Different schemes for different subscription paths.
 
@@ -261,11 +262,7 @@ No bugs identified.
 
 4. **Two reserved config properties**: `RetryMaxAttempts` and `RetryDelayMs` are defined but not yet used. They are reserved for the "tracked retry with delay" potential extension. These are intentionally kept in schema to signal future intent and allow pre-configuration.
 
-5. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
-
-6. **Non-thread-safe List in NativeEventConsumerBackend**: `List<IAsyncDisposable> _subscriptions` is only written in StartAsync and read in StopAsync. Race between late startup and early shutdown is possible but unlikely in practice.
-
-7. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is powerful but could mask configuration errors where a typo in exchange name silently creates a new exchange instead of failing.
+5. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is powerful but could mask configuration errors where a typo in exchange name silently creates a new exchange instead of failing.
 
 ---
 

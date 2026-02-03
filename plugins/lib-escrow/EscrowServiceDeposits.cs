@@ -107,6 +107,14 @@ public partial class EscrowService
                 var assetModels = body.Assets?.Assets?.Select(MapAssetInputToModel).ToList()
                     ?? new List<EscrowAssetModel>();
 
+                // Validate MaxAssetsPerDeposit
+                if (assetModels.Count > _configuration.MaxAssetsPerDeposit)
+                {
+                    _logger.LogWarning("Deposit rejected: asset count {Count} exceeds max {Max} for escrow {EscrowId}",
+                        assetModels.Count, _configuration.MaxAssetsPerDeposit, body.EscrowId);
+                    return (StatusCodes.BadRequest, null);
+                }
+
                 var depositModel = new EscrowDepositModel
                 {
                     DepositId = depositId,

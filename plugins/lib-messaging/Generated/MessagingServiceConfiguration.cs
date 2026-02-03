@@ -114,6 +114,18 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public int ConnectionRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
+    /// Maximum backoff delay for connection retries in milliseconds
+    /// Environment variable: MESSAGING_CONNECTION_MAX_BACKOFF_MS
+    /// </summary>
+    public int ConnectionMaxBackoffMs { get; set; } = 60000;
+
+    /// <summary>
+    /// Maximum number of channels in the publisher channel pool
+    /// Environment variable: MESSAGING_CHANNEL_POOL_SIZE
+    /// </summary>
+    public int ChannelPoolSize { get; set; } = 10;
+
+    /// <summary>
     /// Default prefetch count for subscriptions
     /// Environment variable: MESSAGING_DEFAULT_PREFETCH_COUNT
     /// </summary>

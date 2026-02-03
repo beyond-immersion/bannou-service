@@ -307,7 +307,7 @@ Generated Model Hierarchy
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Unreachable catch blocks**~~: **RECLASSIFIED** (2026-01-31) - Moved to Intentional Quirks. The try-catch scaffolding is correct for when real business logic is added; the catch blocks are unreachable now but will become reachable once the try blocks contain actual work.
+None currently identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -339,13 +339,11 @@ Generated Model Hierarchy
 
 10. **`Size` field is `int` limiting downloads to ~2GB**: The `DownloadInfo.Size` property is `int`, not `long`. This limits represented file sizes to ~2GB, which may be insufficient for large game clients.
 
-11. **Multiple overlapping status enums with "maintenance"**: Two different enums define "maintenance" with different ordinal values. Code comparing these across contexts could have subtle bugs.
+11. **Metadata stored as untyped `object`**: Both `PageContent.Metadata` and `Analytics.OtherTrackers` are typed as `object`, meaning they accept any JSON but provide no type safety.
 
-12. **Metadata stored as untyped `object`**: Both `PageContent.Metadata` and `Analytics.OtherTrackers` are typed as `object`, meaning they accept any JSON but provide no type safety.
+12. **Dead configuration reference**: The `_configuration` field is assigned but never used. Acceptable for a stub service, but should be wired up when implementing.
 
-13. **Dead configuration reference**: The `_configuration` field is assigned but never used. Acceptable for a stub service, but should be wired up when implementing.
-
-14. **Missing XML documentation**: Several public methods lack `<param>` and `<returns>` tags. Acceptable for a stub service, but should be completed when implementing.
+13. **Missing XML documentation**: Several public methods lack `<param>` and `<returns>` tags. Acceptable for a stub service, but should be completed when implementing.
 
 ---
 
@@ -353,7 +351,4 @@ Generated Model Hierarchy
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-### Completed
-
-- **2026-01-31**: Reclassified "Unreachable catch blocks" from Bug to Intentional Quirk - the scaffolded try-catch structure is correct for future implementation.
-- **2026-02-02**: Removed game-related endpoints (server-status, account/characters, account/subscription) and schemas to enforce L3 service hierarchy - Website is now pure CMS without L2 dependencies.
+*No active work items.*

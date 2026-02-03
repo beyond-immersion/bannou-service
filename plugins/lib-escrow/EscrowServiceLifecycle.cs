@@ -37,9 +37,32 @@ public partial class EscrowService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Parse ISO 8601 duration from configuration for default timeout
+            // Parse ISO 8601 duration from configuration for default and max timeout
             var defaultTimeout = XmlConvert.ToTimeSpan(_configuration.DefaultTimeout);
+            var maxTimeout = XmlConvert.ToTimeSpan(_configuration.MaxTimeout);
             var expiresAt = body.ExpiresAt ?? now.Add(defaultTimeout);
+
+            // Validate that the requested timeout doesn't exceed the maximum allowed duration
+            var requestedDuration = expiresAt - now;
+            if (requestedDuration > maxTimeout)
+            {
+                _logger.LogWarning("Escrow creation rejected: requested duration {Duration} exceeds max {MaxTimeout}",
+                    requestedDuration, maxTimeout);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate MaxPendingPerParty limits for all parties
+            foreach (var partyInput in body.Parties)
+            {
+                var partyKey = GetPartyPendingKey(partyInput.PartyId, partyInput.PartyType);
+                var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
+                if (existingCount != null && existingCount.PendingCount >= _configuration.MaxPendingPerParty)
+                {
+                    _logger.LogWarning("Escrow creation rejected: party {PartyType}:{PartyId} has {Count} pending escrows, max is {Max}",
+                        partyInput.PartyType, partyInput.PartyId, existingCount.PendingCount, _configuration.MaxPendingPerParty);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
 
             var partyModels = new List<EscrowPartyModel>();
             var tokenRecordsToSave = new List<TokenHashModel>();
@@ -161,7 +184,9 @@ public partial class EscrowService
                 ReferenceType = body.ReferenceType,
                 ReferenceId = body.ReferenceId,
                 Description = body.Description,
-                Metadata = body.Metadata
+                Metadata = body.Metadata,
+                ReleaseMode = body.ReleaseMode ?? _configuration.DefaultReleaseMode,
+                RefundMode = body.RefundMode ?? _configuration.DefaultRefundMode
             };
 
             var agreementKey = GetAgreementKey(escrowId);

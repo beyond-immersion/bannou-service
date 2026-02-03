@@ -84,16 +84,16 @@ x-service-configuration:
       description: Default limit for listing escrows when not specified
 
     defaultReleaseMode:
-      type: string
+      $ref: 'escrow-api.yaml#/components/schemas/ReleaseMode'
       env: ESCROW_DEFAULT_RELEASE_MODE
       default: service_only
-      description: Default release confirmation mode (immediate/service_only/party_required/service_and_party)
+      description: Default release confirmation mode when not specified in request
 
     defaultRefundMode:
-      type: string
+      $ref: 'escrow-api.yaml#/components/schemas/RefundMode'
       env: ESCROW_DEFAULT_REFUND_MODE
       default: immediate
-      description: Default refund confirmation mode (immediate/service_only/party_required)
+      description: Default refund confirmation mode when not specified in request
 
     confirmationTimeoutSeconds:
       type: integer

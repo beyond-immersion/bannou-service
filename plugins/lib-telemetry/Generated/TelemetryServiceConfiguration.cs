@@ -90,16 +90,10 @@ public class TelemetryServiceConfiguration : IServiceConfiguration
     public double TracingSamplingRatio { get; set; } = 1.0;
 
     /// <summary>
-    /// Enable metrics export
+    /// Enable metrics export via Prometheus scraping endpoint (/metrics)
     /// Environment variable: TELEMETRY_METRICS_ENABLED
     /// </summary>
     public bool MetricsEnabled { get; set; } = true;
-
-    /// <summary>
-    /// Metrics export interval in seconds
-    /// Environment variable: TELEMETRY_METRICS_EXPORT_INTERVAL_SECONDS
-    /// </summary>
-    public int MetricsExportIntervalSeconds { get; set; } = 15;
 
     /// <summary>
     /// Service name for telemetry (defaults to effective app-id if not set)

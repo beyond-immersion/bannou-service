@@ -68,6 +68,16 @@ x-service-configuration:
       description: Delay between connection retry attempts in milliseconds
       env: MESSAGING_CONNECTION_RETRY_DELAY_MS
       default: 1000
+    ConnectionMaxBackoffMs:
+      type: integer
+      description: Maximum backoff delay for connection retries in milliseconds
+      env: MESSAGING_CONNECTION_MAX_BACKOFF_MS
+      default: 60000
+    ChannelPoolSize:
+      type: integer
+      description: Maximum number of channels in the publisher channel pool
+      env: MESSAGING_CHANNEL_POOL_SIZE
+      default: 10
     # Subscription Settings
     DefaultPrefetchCount:
       type: integer

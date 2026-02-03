@@ -102,6 +102,11 @@ public class TelemetryServicePlugin : BaseBannouPlugin
             otelBuilder.WithTracing(tracing =>
             {
                 tracing
+                    // Configure trace sampling ratio (0.0-1.0)
+                    // Use parent-based sampler to respect upstream sampling decisions,
+                    // with ratio-based sampling for root spans
+                    .SetSampler(new ParentBasedSampler(
+                        new TraceIdRatioBasedSampler(config.TracingSamplingRatio)))
                     // Add auto-instrumentation for ASP.NET Core
                     .AddAspNetCoreInstrumentation(options =>
                     {
@@ -132,8 +137,8 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                     });
 
                 Logger?.LogInformation(
-                    "Tracing enabled: endpoint={Endpoint}, protocol={Protocol}",
-                    config.OtlpEndpoint, config.OtlpProtocol);
+                    "Tracing enabled: endpoint={Endpoint}, protocol={Protocol}, samplingRatio={SamplingRatio}",
+                    config.OtlpEndpoint, config.OtlpProtocol, config.TracingSamplingRatio);
             });
         }
         else

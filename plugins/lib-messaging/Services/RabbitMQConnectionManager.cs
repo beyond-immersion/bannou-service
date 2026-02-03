@@ -31,8 +31,6 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private bool _disposed;
 
-    private const int MAX_POOL_SIZE = 10;
-
     /// <summary>
     /// Creates a new RabbitMQConnectionManager.
     /// </summary>
@@ -112,7 +110,7 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
                     if (attempt < maxRetryAttempts)
                     {
                         await Task.Delay(retryDelay, cancellationToken);
-                        retryDelay = Math.Min(retryDelay * 2, 60000); // Exponential backoff, max 60s
+                        retryDelay = Math.Min(retryDelay * 2, _configuration.ConnectionMaxBackoffMs);
                     }
                 }
             }
@@ -176,7 +174,7 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
     /// </summary>
     public void ReturnChannel(IChannel channel)
     {
-        if (channel.IsOpen && _channelPool.Count < MAX_POOL_SIZE)
+        if (channel.IsOpen && _channelPool.Count < _configuration.ChannelPoolSize)
         {
             _channelPool.Add(channel);
         }
