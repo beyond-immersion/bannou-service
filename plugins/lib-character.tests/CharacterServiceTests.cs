@@ -1330,6 +1330,16 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
         SetupBulkStateAsync(characterDict);
 
+        // Setup global index bulk lookup for BulkLoadCharactersAsync
+        var globalIndexDict = new Dictionary<string, string>
+        {
+            [$"character-global-index:{spouseId}"] = realmId.ToString(),
+            [$"character-global-index:{childId}"] = realmId.ToString()
+        };
+        _mockStringStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, string>)globalIndexDict);
+
         // Setup relationship client to return spouse and child relationships
         _mockRelationshipClient
             .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
