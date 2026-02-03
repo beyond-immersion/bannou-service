@@ -423,12 +423,16 @@ None currently.
 ## Potential Extensions
 
 1. **Per-resource-type cleanup policies**: Currently `DefaultCleanupPolicy` applies globally; could add per-resource-type configuration via `DefineCleanupRequest`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/275 -->
 
 2. **Automatic cleanup scheduler**: Background service that periodically scans for resources past grace period and triggers cleanup (opt-in per resource type).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/276 -->
 
 3. **Reference type metadata**: Allow consumers to attach metadata to references (e.g., reference strength, priority for cleanup ordering).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/277 -->
 
 4. **Cleanup callback ordering**: Currently all callbacks execute in parallel; could add priority/ordering for sequential cleanup dependencies.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/278 -->
 
 5. **Reference lifecycle hooks**: Pre-register/post-unregister hooks for validation or side effects.
 

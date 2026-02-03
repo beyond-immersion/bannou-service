@@ -1,0 +1,817 @@
+# Story Grid Genre System (Shawn Coyne)
+# Structured data for genre conventions and obligatory scenes
+#
+# Sources:
+#   - ~/repos/story-analysis/research/THE-FOUR-CORE-FRAMEWORK.md
+#   - ~/repos/story-analysis/research/Action Genre
+#   - ~/repos/story-analysis/research/Horror Genre
+#   - ~/repos/story-analysis/research/Thriller Genre
+#   - ~/repos/story-analysis/research/Crime Genre
+#   - ~/repos/story-analysis/research/Love Genre
+#   - ~/repos/story-analysis/research/War Genre
+#   - ~/repos/story-analysis/research/Society Genre
+#   - ~/repos/story-analysis/research/Performance Genre
+#   - ~/repos/story-analysis/research/Western/Eastern Genre
+#   - ~/repos/story-analysis/research/Worldview Genre
+#   - ~/repos/story-analysis/research/Morality Genre
+#   - ~/repos/story-analysis/research/Status Genre
+#   - storygrid.com (official documentation)
+
+version: "1.0"
+source: "Shawn Coyne, Story Grid Publishing"
+
+# =============================================================================
+# THE FIVE COMMANDMENTS
+# =============================================================================
+# Every scene/beat/act/story must contain all five
+
+five_commandments:
+  inciting_incident:
+    id: 1
+    name: "Inciting Incident"
+    description: "A disruptive event that upsets the protagonist's equilibrium"
+    types:
+      causal:
+        description: "Caused by another character's choice"
+        examples: ["Villain attacks", "Someone proposes marriage", "Boss fires hero"]
+      coincidental:
+        description: "Random occurrence beyond anyone's control"
+        examples: ["Natural disaster", "Car accident", "Chance meeting"]
+    requirement: "Must compel action - protagonist cannot ignore it"
+
+  progressive_complications:
+    id: 2
+    name: "Progressive Complications"
+    description: "Escalating micro-irritants that build tension"
+    rules:
+      - "Each complication more intense than previous"
+      - "Creates momentum toward crisis"
+      - "Often includes turning point"
+    turning_point:
+      description: "The complication that forces the crisis"
+      types:
+        - "action": "A character does something"
+        - "revelation": "Information comes to light"
+
+  crisis:
+    id: 3
+    name: "Crisis"
+    description: "A forced choice between two options"
+    types:
+      best_bad_choice:
+        description: "Two undesirable options"
+        example: "Save yourself or save your friend"
+      irreconcilable_goods:
+        description: "Two positive options that cannot both be chosen"
+        example: "Stay loyal to family or follow your dream"
+    anti_patterns:
+      - "False choice (obvious answer)"
+      - "Meaningless choice (no stakes)"
+      - "No choice (forced outcome)"
+
+  climax:
+    id: 4
+    name: "Climax"
+    description: "The action taken in response to the crisis"
+    requirement: "Must be a choice enacted through action"
+    reveals: "Character's true nature under pressure"
+
+  resolution:
+    id: 5
+    name: "Resolution"
+    description: "The follow-up state after the climax"
+    purpose: "Establishes new circumstances for next unit"
+    rules:
+      - "Shows effects, not restatement"
+      - "Sets up next inciting incident"
+      - "Gives audience catharsis"
+
+# =============================================================================
+# THE FOUR CORE FRAMEWORK
+# =============================================================================
+# Every genre defined by four elements
+
+four_core_framework:
+  core_need:
+    description: "The universal human need the genre addresses"
+    hierarchy: "Based on Maslow's hierarchy of needs"
+    levels:
+      - "Survival"
+      - "Safety"
+      - "Individual Sovereignty"
+      - "Connection"
+      - "Esteem"
+      - "Recognition"
+      - "Self-Actualization"
+      - "Self-Transcendence"
+
+  core_value:
+    description: "The spectrum of values at stake"
+    structure: "Negative <-> Positive"
+    examples:
+      - "Death <-> Life"
+      - "Injustice <-> Justice"
+      - "Hate <-> Love"
+
+  core_emotion:
+    description: "The emotional experience delivered to the audience"
+    examples:
+      - "Excitement"
+      - "Fear"
+      - "Romance"
+      - "Triumph"
+
+  core_event:
+    description: "The climactic scene where protagonist actuates learning"
+    requirement: "Core need must be in peril"
+
+# =============================================================================
+# EXTERNAL GENRES (9)
+# =============================================================================
+# Plot-driven; focus on external conflict
+
+external_genres:
+
+  action:
+    name: "Action"
+    type: "external"
+    core_framework:
+      need: "Survival"
+      value_spectrum:
+        negative: "Death"
+        positive: "Life"
+        negation_of_negation: "Damnation (fate worse than death)"
+      emotion: "Excitement"
+      event: "Hero at the Mercy of the Villain"
+
+    conventions:
+      - name: "Intense Setting"
+        description: "Disturbed, unbalanced environment"
+      - name: "Dueling Hierarchies"
+        description: "Growth hierarchy vs power/dominance hierarchy"
+      - name: "Hero Seeks to Stop"
+        description: "Hero actively works to stop antagonism and save victims"
+      - name: "Villain More Powerful"
+        description: "Antagonist uses resources to harm innocents"
+      - name: "Victim Less Powerful"
+        description: "Someone requiring rescue who cannot save themselves"
+      - name: "Speech Praising Villain"
+        description: "Moment highlighting villain's apparent invincibility"
+      - name: "Deadline/Clock"
+        description: "Limited time element adding urgency"
+      - name: "Fast-Paced Set Pieces"
+        description: "Action sequences delivering genre promise"
+      - name: "Extreme Situations"
+        description: "High stakes and dangerous risks"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "Villain attacks or threatens victim(s)"
+        five_commandments_beat: "inciting_incident"
+      - name: "Hero Sidesteps"
+        description: "Hero initially avoids responsibility"
+      - name: "Forced to Leave"
+        description: "Hero lashes out when forced from ordinary world"
+      - name: "Discovers MacGuffin"
+        description: "Protagonist learns what antagonist wants"
+      - name: "Initial Strategy Fails"
+        description: "Hero's first approach doesn't work"
+      - name: "All Is Lost"
+        description: "Hero at lowest point"
+        five_commandments_beat: "crisis"
+      - name: "Hero at Mercy of Villain"
+        description: "Core event - villain has upper hand"
+        is_core_event: true
+      - name: "Sacrifice Rewarded"
+        description: "Hero's sacrifice leads to success"
+        five_commandments_beat: "resolution"
+
+    subgenres:
+      adventure:
+        plots: ["Labyrinth", "Monster", "Environment", "Doomsday"]
+      duel:
+        plots: ["Revenge", "Hunted", "Machiavellian", "Collision"]
+      epic:
+        plots: ["Rebellion", "Conspiracy", "Vigilante", "Savior"]
+      clock:
+        plots: ["Ransom", "Countdown", "Holdout", "Fate"]
+
+  horror:
+    name: "Horror"
+    type: "external"
+    core_framework:
+      need: "Safety"
+      value_spectrum:
+        negative: "Damnation"
+        positive: "Life"
+        negation_of_negation: "Fate worse than death"
+      emotion: "Fear"
+      event: "Victim at Mercy of Monster"
+
+    conventions:
+      - name: "Conventional Setting with Fantastical"
+        description: "Normal world invaded by supernatural/unexplained"
+      - name: "Labyrinths"
+        description: "Claustrophobic, danger-concealing spaces"
+      - name: "Unreasonable Monster"
+        description: "Cannot be reasoned with; possessed by pure evil"
+      - name: "Perpetual Discomfort"
+        description: "Random attacks keep audience off-balance"
+      - name: "Progressive Revelation"
+        description: "Monster's full power revealed gradually"
+      - name: "Sadomasochistic Flip-Flop"
+        description: "Power dynamics alternate between victim and monster"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "Monster attacks or makes presence known"
+      - name: "Non-Heroic Protagonist"
+        description: "Ordinary person forced to face extraordinary evil"
+      - name: "Speech Praising Monster"
+        description: "Moment establishing monster's terrifying nature"
+      - name: "Final Victim"
+        description: "Protagonist becomes target after others die"
+      - name: "Victim at Mercy of Monster"
+        description: "Core event - protagonist faces monster directly"
+        is_core_event: true
+      - name: "False Ending"
+        description: "TWO endings required - monster appears defeated but isn't"
+
+    subgenres:
+      - name: "Uncanny"
+        description: "Rational evil (psychopaths, aliens)"
+      - name: "Supernatural"
+        description: "Spirit-world evil (possession, undead)"
+      - name: "Ambiguous"
+        description: "Unexplained evil"
+
+  thriller:
+    name: "Thriller"
+    type: "external"
+    core_framework:
+      need: "Safety"
+      value_spectrum:
+        negative: "Damnation"
+        positive: "Life"
+      emotion: "Dread"
+      event: "Hero at Mercy of Villain"
+
+    conventions:
+      - name: "MacGuffin"
+        description: "Object villain desires; drives plot"
+      - name: "Red Herrings"
+        description: "False leads and misdirection"
+      - name: "Making It Personal"
+        description: "Antagonist specifically targets protagonist"
+      - name: "Clock/Deadline"
+        description: "Limited time to act"
+
+    obligatory_scenes:
+      - name: "Inciting Crime"
+        description: "Crime indicative of master villain (multiple victims)"
+      - name: "Speech Praising Villain"
+        description: "Establishes villain's intelligence and danger"
+      - name: "Protagonist Becomes Victim"
+        description: "Stakes become personal to hero"
+      - name: "Hero at Mercy of Villain"
+        description: "Core event - villain has protagonist cornered"
+        is_core_event: true
+      - name: "False Ending"
+        description: "Two endings required"
+
+  crime:
+    name: "Crime"
+    type: "external"
+    core_framework:
+      need: "Individual Sovereignty"
+      value_spectrum:
+        negative: "Injustice"
+        positive: "Justice"
+        negation_of_negation: "Tyranny"
+      emotion: "Intrigue"
+      event: "Exposure of Criminal"
+
+    conventions:
+      - name: "MacGuffin"
+        description: "Object of the crime"
+      - name: "Red Herrings"
+        description: "Misleading evidence and suspects"
+      - name: "Making It Personal"
+        description: "Detective develops personal stake"
+      - name: "Clock/Deadline"
+        description: "Time pressure on investigation"
+      - name: "Clever Criminal"
+        description: "Antagonist capable of concealment"
+      - name: "Clever Detective"
+        description: "Protagonist capable of solving"
+      - name: "Clues Available"
+        description: "Fair play - evidence available to audience"
+
+    obligatory_scenes:
+      - name: "Inciting Crime"
+        description: "The crime that launches investigation"
+      - name: "Speech Praising Villain"
+        description: "Establishes criminal's capability"
+      - name: "Discovery of MacGuffin"
+        description: "Learning what was stolen/at stake"
+      - name: "Progressive Clue Following"
+        description: "Investigation unfolds"
+      - name: "Exposure of Criminal"
+        description: "Core event - perpetrator revealed"
+        is_core_event: true
+      - name: "Brought to Justice"
+        description: "Criminal faces consequences (or escapes)"
+
+    subgenres:
+      murder_mystery:
+        types: ["Master Detective", "Cozy", "Historical", "Noir/Hardboiled", "Paranormal", "Police Procedural"]
+      other:
+        types: ["Organized Crime", "Caper", "Courtroom", "Newsroom", "Espionage", "Prison"]
+
+  love:
+    name: "Love"
+    type: "external"
+    core_framework:
+      need: "Connection"
+      value_spectrum:
+        negative: "Hate"
+        positive: "Love"
+        negation_of_negation: "Hate masquerading as love"
+      emotion: "Romance"
+      event: "Proof of Love"
+
+    conventions:
+      - name: "Triangle"
+        description: "Includes rival for affection"
+      - name: "Helpers and Harmers"
+        description: "Supporting characters who help or hinder"
+      - name: "Ordered and Chaotic"
+        description: "Contrasting approaches to life"
+      - name: "External Need"
+        description: "Something beyond love drives initial action"
+      - name: "Opposing Forces"
+        description: "Society's rules creating obstacles"
+      - name: "Secrets"
+        description: "Four types: societal, couple-to-society, couple-to-each-other, internal"
+      - name: "Rituals of Intimacy"
+        description: "Moments of connection and vulnerability"
+      - name: "Moral Weight"
+        description: "Consequences of choices"
+
+    obligatory_scenes:
+      - name: "Lovers Meet"
+        description: "First encounter (cute meet)"
+      - name: "First Kiss/Connection"
+        description: "Initial intimate moment"
+      - name: "Confession of Love"
+        description: "Feelings declared"
+      - name: "Lovers Break Up"
+        description: "Separation seems final"
+      - name: "Proof of Love"
+        description: "Core event - love demonstrated through action"
+        is_core_event: true
+      - name: "Lovers Reunite"
+        description: "Final coming together"
+
+    subgenres:
+      - name: "Obsession (Desire)"
+        description: "Cautionary, often tragic"
+      - name: "Courtship (Commitment)"
+        description: "Prescriptive, happily ever after"
+      - name: "Marriage (Intimacy)"
+        description: "Realistic, maintaining love"
+
+  war:
+    name: "War"
+    type: "external"
+    core_framework:
+      need: "Self-Actualization"
+      value_spectrum:
+        negative: "Dishonor"
+        positive: "Honor"
+        negation_of_negation: "Dishonorable defeat presented as honorable"
+      emotion: "Pride"
+      event: "Big Battle Scene"
+
+    conventions:
+      - name: "Central Avatar"
+        description: "Main character with offshoots embodying traits"
+      - name: "Big Canvas"
+        description: "Wide scope showing war's reach"
+      - name: "Overwhelming Odds"
+        description: "Protagonists outnumbered"
+      - name: "Point of No Return"
+        description: "Accepting death's inevitability"
+      - name: "Sacrifice for Kinship"
+        description: "Moments of selfless action for comrades"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "War begins or unit deployed"
+      - name: "Denial of Responsibility"
+        description: "Characters resist involvement"
+      - name: "Forced Response"
+        description: "Must act per military hierarchy"
+      - name: "Discover Antagonist's Goal"
+        description: "Learn what enemy wants"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Darkest moment before battle"
+      - name: "Big Battle Scene"
+        description: "Core event - major combat"
+        is_core_event: true
+      - name: "Satisfaction Rewarded"
+        description: "Survivors receive recognition"
+
+    subgenres:
+      - "Pro War"
+      - "Anti-War"
+      - "Kinship of War"
+
+  society:
+    name: "Society"
+    type: "external"
+    core_framework:
+      need: "Recognition"
+      value_spectrum:
+        negative: "Impotence"
+        positive: "Power"
+        negation_of_negation: "Power used for tyranny"
+      emotion: "Catharsis"
+      event: "Revolution Scene"
+
+    conventions:
+      - name: "Central Character with Facets"
+        description: "Supporting characters embody aspects of protagonist"
+      - name: "Expansive Setting"
+        description: "External (world) or internal (organization)"
+      - name: "Revolutionary Point of No Return"
+        description: "Character commits fully"
+      - name: "Vanquished Face Exile"
+        description: "Losers expelled from society"
+      - name: "Power Disparity"
+        description: "Substantial difference in resources"
+      - name: "Bittersweet Endings"
+        description: "Victory with cost"
+
+    obligatory_scenes:
+      - name: "External Threat/Opportunity"
+        description: "Incites protagonist to action"
+      - name: "Refuses to Act"
+        description: "Initial reluctance"
+      - name: "Forced Engagement"
+        description: "Must act due to position"
+      - name: "Discover Antagonist's Objective"
+        description: "Learn what oppressor wants"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost Crisis"
+        description: "Darkest moment"
+      - name: "Revolution Scene"
+        description: "Core event - uprising/confrontation"
+        is_core_event: true
+      - name: "Recognition Awarded"
+        description: "Protagonist's sacrifice acknowledged"
+
+  western_eastern:
+    name: "Western/Eastern"
+    type: "external"
+    core_framework:
+      need: "Individual Sovereignty"
+      value_spectrum:
+        negative: "Subjugation"
+        positive: "Freedom"
+      emotion: "Intrigue"
+      event: "Showdown"
+
+    conventions:
+      - name: "Harsh Landscape"
+        description: "Hostile, wide-open environment"
+      - name: "Hero, Victim, Villain"
+        description: "Clear role distinctions"
+      - name: "MacGuffin"
+        description: "Object villain desires"
+      - name: "Hero Outside Law"
+        description: "Operates beyond conventional justice"
+      - name: "Power Disparity"
+        description: "Significant difference in resources"
+      - name: "Speech Praising Villain"
+        description: "Establishes villain's danger"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "Villain or environment attacks"
+      - name: "Hero Sidesteps"
+        description: "Initial reluctance to engage"
+      - name: "Forced from Ordinary World"
+        description: "Must leave normal life"
+      - name: "Discovers MacGuffin"
+        description: "Learns what's at stake"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Darkest moment"
+      - name: "Showdown"
+        description: "Core event - direct confrontation"
+        is_core_event: true
+      - name: "Sacrifice Rewarded"
+        description: "Hero's actions validated"
+
+    subgenres:
+      - "Vengeance"
+      - "Transition"
+      - "Professional"
+
+  performance:
+    name: "Performance"
+    type: "external"
+    core_framework:
+      need: "Esteem"
+      value_spectrum:
+        negative: "Shame"
+        positive: "Respect"
+      emotion: "Triumph"
+      event: "Big Performance Scene"
+
+    conventions:
+      - name: "Strong Mentor"
+        description: "Guide figure who trains protagonist"
+      - name: "Training Sequences"
+        description: "Preparation montages"
+      - name: "Explicit All Is Lost"
+        description: "Clear failure moment"
+      - name: "Mentor Arc"
+        description: "Mentor recovers moral compass or betrays"
+      - name: "Wide Power Divide"
+        description: "Protagonist starts inferior"
+      - name: "Win-But-Lose or Lose-But-Win"
+        description: "Bittersweet outcome"
+
+    obligatory_scenes:
+      - name: "Inciting Opportunity"
+        description: "Chance to perform/compete"
+      - name: "Sidesteps Responsibility"
+        description: "Initial reluctance"
+      - name: "Lashes Out"
+        description: "Anger when forced to commit"
+      - name: "Discovers Antagonist's Goal"
+        description: "Learns what opponent wants"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Training/preparation fails"
+      - name: "Big Performance Scene"
+        description: "Core event - the competition/show"
+        is_core_event: true
+      - name: "Rewarded"
+        description: "Recognition (external, interpersonal, or internal)"
+
+    subgenres:
+      - "Sports"
+      - "Business/Profession"
+      - "Art"
+      - "Performing Arts"
+
+# =============================================================================
+# INTERNAL GENRES (3)
+# =============================================================================
+# Character-driven; focus on internal transformation
+
+internal_genres:
+
+  worldview:
+    name: "Worldview"
+    type: "internal"
+    core_framework:
+      need: "Self-Actualization"
+      value_spectrum:
+        negative: "Ignorance"
+        positive: "Wisdom"
+        negative_variant: "Naivete"
+        positive_variant: "Sophistication"
+      emotion: "Relief or Pity"
+      event: "Acceptance"
+
+    conventions:
+      - name: "Mentor Figure"
+        description: "Guide who helps protagonist see truth"
+      - name: "Social Problem as Subtext"
+        description: "Larger issue beneath personal story"
+      - name: "Shapeshifters as Hypocrites"
+        description: "Characters who pretend to be other than they are"
+      - name: "Clear Point of No Return"
+        description: "Moment of full commitment"
+      - name: "Bittersweet Ending"
+        description: "Wisdom gained at cost"
+
+    obligatory_scenes:
+      - name: "Inciting Challenge"
+        description: "Worldview confronted"
+      - name: "Denies Responsibility"
+        description: "Clings to old beliefs"
+      - name: "Lashes Out"
+        description: "Anger when forced to change"
+      - name: "Learns Antagonist's Goal"
+        description: "Understands opposing worldview"
+      - name: "Initial Strategy Fails"
+        description: "Old worldview doesn't work"
+      - name: "All Is Lost"
+        description: "Must abandon black-and-white thinking"
+      - name: "Gifts Expressed"
+        description: "Core event - accepts new worldview"
+        is_core_event: true
+      - name: "Deeper Understanding"
+        description: "Ignorance replaced with wisdom"
+
+    subgenres:
+      - name: "Maturation"
+        spectrum: "Naivete → Sophistication"
+      - name: "Disillusionment"
+        spectrum: "Belief → Disillusionment"
+      - name: "Education"
+        spectrum: "Meaninglessness → Meaning"
+      - name: "Revelation"
+        spectrum: "Ignorance → Wisdom"
+
+  morality:
+    name: "Morality"
+    type: "internal"
+    core_framework:
+      need: "Self-Transcendence"
+      value_spectrum:
+        negative: "Selfishness"
+        positive: "Altruism"
+        negation_of_negation: "Selfishness disguised as altruism"
+      emotion: "Satisfaction or Contempt"
+      event: "Sacrifice"
+
+    conventions:
+      - name: "Despicable Protagonist"
+        description: "Starts at moral worst"
+      - name: "Spiritual Mentor/Sidekick"
+        description: "Guide toward moral path"
+      - name: "Impossible External Conflict"
+        description: "Situation forcing moral choice"
+      - name: "Ghosts from Past"
+        description: "Past actions haunting protagonist"
+      - name: "Aid from Unexpected Sources"
+        description: "Help from unlikely places"
+
+    obligatory_scenes:
+      - name: "Shock"
+        description: "Event awakens dormant conscience"
+      - name: "Expresses Inner Darkness"
+        description: "Shows selfish nature, refuses call"
+      - name: "All Is Lost"
+        description: "Must recover moral code or choose immoral path"
+      - name: "Sacrifice"
+        description: "Core event - protagonist sacrifices self (prescriptive) or remains selfish (cautionary)"
+        is_core_event: true
+      - name: "Faces Death"
+        description: "Literal or metaphorical death with consequences"
+
+    subgenres:
+      - name: "Punitive"
+        description: "Protagonist suffers deserved misfortune"
+      - name: "Redemption"
+        description: "Begins wrong, ends better"
+      - name: "Testing - Triumph"
+        description: "Remains morally steadfast"
+      - name: "Testing - Surrender"
+        description: "Cannot maintain moral code"
+
+  status:
+    name: "Status"
+    type: "internal"
+    core_framework:
+      need: "Esteem"
+      value_spectrum:
+        negative: "Failure"
+        positive: "Success"
+      emotion: "Admiration or Pity"
+      event: "Big Choice"
+
+    conventions:
+      - name: "Strong Mentor Figure"
+        description: "Guide in new world"
+      - name: "Big Social Problem"
+        description: "Larger issue as subtext"
+      - name: "Shapeshifters as Hypocrites"
+        description: "Pretenders in status hierarchy"
+      - name: "Herald/Threshold Guardian"
+        description: "Sellout who shows wrong path"
+      - name: "Clear Point of No Return"
+        description: "Full commitment moment"
+      - name: "Paradoxical Ending"
+        description: "Win-but-lose or lose-but-win"
+
+    obligatory_scenes:
+      - name: "Inciting Challenge"
+        description: "Status opportunity appears"
+      - name: "Leaves Home"
+        description: "Enters new status world"
+      - name: "Forced Adaptation"
+        description: "Humiliation in new environment"
+      - name: "Learns and Pursues"
+        description: "Understands and chases status goal"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Must redefine success or risk values"
+      - name: "Big Choice"
+        description: "Core event - pursue status or reject that world"
+        is_core_event: true
+      - name: "Salvation or Loss"
+        description: "Outcome based on choice made"
+
+    subgenres:
+      - name: "Pathetic"
+        description: "Attempts rising, fails"
+      - name: "Tragic"
+        description: "Mistake causes downfall"
+      - name: "Sentimental"
+        description: "Weak protagonist succeeds"
+      - name: "Admiration"
+        description: "Principled rise without compromise"
+
+# =============================================================================
+# META-GENRE CATEGORIES
+# =============================================================================
+# The "Five-Leaf Clover" - every story classified across five dimensions
+
+meta_genres:
+  content:
+    description: "What the story is about (the 12 genres above)"
+    note: "Stories often combine external + internal genres"
+
+  time:
+    description: "Consumption duration"
+    types:
+      - "Short Form (under 7,500 words / under 30 minutes)"
+      - "Medium Form (7,500-25,000 words / 30-120 minutes)"
+      - "Long Form (25,000+ words / over 120 minutes)"
+
+  structure:
+    description: "Narrative architecture"
+    types:
+      arch_plot:
+        description: "Single protagonist, active struggle, causally connected"
+        characteristics: ["Single protagonist", "External conflict", "Closed ending", "Linear time", "Consistent reality"]
+      mini_plot:
+        description: "Multiple protagonists, internal conflict, open ending"
+        characteristics: ["Multiple protagonists", "Internal conflict", "Open ending"]
+      anti_plot:
+        description: "Subverts conventional structure"
+        characteristics: ["Coincidence", "Nonlinear time", "Inconsistent realities"]
+
+  style:
+    description: "Tone and presentation"
+    types:
+      tone:
+        - "Drama"
+        - "Comedy"
+      medium:
+        - "Documentary"
+        - "Musical"
+        - "Literary"
+        - "Theatrical"
+        - "Cinematic"
+        - "Epistolary"
+        - "Animation"
+
+  reality:
+    description: "Relationship to real world"
+    types:
+      factualism:
+        description: "Based on true events"
+      realism:
+        description: "Could happen in real world"
+      fantasy:
+        description: "Includes impossible elements"
+        subtypes: ["Magic Realism", "Science Fiction", "High Fantasy"]
+      absurdism:
+        description: "Deliberately illogical or irrational"
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  primary:
+    - title: "The Story Grid: What Good Editors Know"
+      author: "Shawn Coyne"
+      year: 2015
+      publisher: "Story Grid Publishing"
+
+    - title: "Story Grid 101: The Five First Principles of the Story Grid Methodology"
+      author: "Shawn Coyne"
+      year: 2020
+
+    - title: "The Four Core Framework"
+      author: "Shawn Coyne"
+      notes: "Defines Core Need, Value, Emotion, Event"
+
+  website: "https://storygrid.com"
+
+  research_location: "~/repos/story-analysis/research/"

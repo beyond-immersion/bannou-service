@@ -1,0 +1,528 @@
+# Six Emotional Arcs of Stories
+# Based on Reagan et al. (2016) computational analysis
+#
+# Sources:
+#   - ~/repos/core-stories (primary implementation)
+#   - Reagan, A.J., et al. (2016). "The emotional arcs of stories are dominated
+#     by six basic shapes." EPJ Data Science, 5(31).
+#   - arXiv: https://arxiv.org/abs/1606.07772
+#   - DOI: https://doi.org/10.1140/epjds/s13688-016-0093-1
+
+version: "1.0"
+source: "Reagan et al., EPJ Data Science (2016)"
+
+# =============================================================================
+# METHODOLOGY
+# =============================================================================
+
+methodology:
+  corpus:
+    source: "Project Gutenberg"
+    initial_count: 1748
+    filtered_count: 1327  # After quality filtering
+    filters:
+      word_count_min: 20000
+      word_count_max: 100000
+      downloads_min: 150
+      unique_words_min: 1000
+      language: "English"
+
+  sentiment_analysis:
+    tool: "labMT (Language Assessment by Mechanical Turk)"
+    description: "Crowdsourced word-level happiness scores"
+    word_count: 10000  # Approximately
+    scale:
+      min: 1  # Most negative
+      max: 9  # Most positive
+      neutral: 5
+
+    calculation:
+      method: "Sliding window weighted average"
+      window_size: 10000  # Words
+      sampling_points: 200  # Equidistant points per story
+      formula: |
+        sentiment_score = sum(word_score * word_frequency) / sum(word_frequency)
+      normalization: "Mean-centered per book"
+
+  decomposition:
+    method: "Singular Value Decomposition (SVD)"
+    matrix_dimensions:
+      rows: 1748  # Books
+      columns: 200  # Time points
+
+    formula: |
+      M = U × Σ × V^T
+      where:
+        U = left singular vectors (book coefficients) [n_books × n_components]
+        Σ = singular values (importance weights) [n_components]
+        V = right singular vectors (arc shapes) [n_components × n_timepoints]
+
+    variance_explained:
+      mode_1: 0.756
+      mode_1_2: 0.828
+      mode_1_3: 0.872
+      mode_1_6: 0.941
+      mode_1_12: 0.981
+
+# =============================================================================
+# THE SIX EMOTIONAL ARC SHAPES
+# =============================================================================
+
+arcs:
+  rags_to_riches:
+    id: 1
+    code: "RAGS_TO_RICHES"
+    name: "Rags to Riches"
+    aliases: ["Rise"]
+    pattern: "↗"
+    description: "Steady emotional ascent throughout the narrative"
+
+    emotional_trajectory:
+      start: "negative"
+      middle: "neutral to positive"
+      end: "positive"
+
+    shape_definition:
+      type: "monotonic_increase"
+      mathematical_form: "f(t) ≈ mt + c where m > 0"
+      inflection_points: 0
+
+    narrative_characteristics:
+      - "Progressive improvement in protagonist's situation"
+      - "Accumulating victories and gains"
+      - "Growing hope and optimism"
+      - "Character growth and learning"
+
+    genre_associations:
+      - "Coming of age"
+      - "Success stories"
+      - "Romance (happy path)"
+
+    examples:
+      - "Cinderella (first half)"
+      - "Rocky"
+      - "The Pursuit of Happyness"
+
+    svd_mode: 1
+    sign: "positive"
+
+  tragedy:
+    id: 2
+    code: "TRAGEDY"
+    name: "Tragedy"
+    aliases: ["Riches to Rags", "Fall"]
+    pattern: "↘"
+    description: "Steady emotional decline throughout the narrative"
+
+    emotional_trajectory:
+      start: "positive"
+      middle: "neutral to negative"
+      end: "negative"
+
+    shape_definition:
+      type: "monotonic_decrease"
+      mathematical_form: "f(t) ≈ -mt + c where m > 0"
+      inflection_points: 0
+
+    narrative_characteristics:
+      - "Progressive deterioration"
+      - "Loss and decay"
+      - "Hubris leading to downfall"
+      - "Inevitable doom"
+
+    genre_associations:
+      - "Classical tragedy"
+      - "Horror"
+      - "Cautionary tales"
+
+    examples:
+      - "Hamlet"
+      - "Romeo and Juliet (overall)"
+      - "Flowers for Algernon"
+      - "Of Mice and Men"
+
+    svd_mode: 1
+    sign: "negative"  # Inverted mode 1
+
+  man_in_hole:
+    id: 3
+    code: "MAN_IN_HOLE"
+    name: "Man in a Hole"
+    aliases: ["Fall-Rise", "U-Shape"]
+    pattern: "↘↗"
+    description: "Fall into trouble then recovery"
+
+    emotional_trajectory:
+      start: "neutral to positive"
+      middle: "negative (the 'hole')"
+      end: "positive"
+
+    shape_definition:
+      type: "U_shaped"
+      mathematical_form: "f(t) ≈ a(t - 0.5)² + c where a > 0"
+      inflection_points: 1
+      nadir_position: 0.40-0.60  # Position of lowest point (40-60%)
+
+    narrative_characteristics:
+      - "Initial stability or success"
+      - "Fall into difficulty (the 'hole')"
+      - "Struggle at the bottom"
+      - "Discovery of solution"
+      - "Climb back to success"
+
+    genre_associations:
+      - "Adventure"
+      - "Action"
+      - "Most Hollywood films"
+      - "Sports stories"
+
+    examples:
+      - "Most adventure stories"
+      - "A Christmas Carol"
+      - "Finding Nemo"
+
+    svd_mode: 2
+    sign: "positive"
+    note: "Named by Kurt Vonnegut; most common in popular fiction"
+
+  icarus:
+    id: 4
+    code: "ICARUS"
+    name: "Icarus"
+    aliases: ["Rise-Fall", "Inverted U"]
+    pattern: "↗↘"
+    description: "Rise then fall - hubris narrative"
+
+    emotional_trajectory:
+      start: "neutral to negative"
+      middle: "positive (the peak)"
+      end: "negative"
+
+    shape_definition:
+      type: "inverted_U"
+      mathematical_form: "f(t) ≈ -a(t - 0.5)² + c where a > 0"
+      inflection_points: 1
+      apex_position: 0.40-0.60  # Position of highest point
+
+    narrative_characteristics:
+      - "Initial struggles or ordinary state"
+      - "Rise to success/power"
+      - "Moment of triumph"
+      - "Pride before the fall"
+      - "Collapse and consequences"
+
+    genre_associations:
+      - "Greek tragedy"
+      - "Crime stories (rise and fall)"
+      - "Cautionary tales"
+      - "Thriller (villain's arc)"
+
+    examples:
+      - "Icarus myth"
+      - "The Great Gatsby"
+      - "Breaking Bad"
+      - "Scarface"
+
+    svd_mode: 2
+    sign: "negative"  # Inverted mode 2
+
+  cinderella:
+    id: 5
+    code: "CINDERELLA"
+    name: "Cinderella"
+    aliases: ["Rise-Fall-Rise", "Double Man in Hole"]
+    pattern: "↗↘↗"
+    description: "Rise, setback, then ultimate triumph"
+
+    emotional_trajectory:
+      start: "negative"
+      middle_1: "positive (false victory)"
+      middle_2: "negative (setback)"
+      end: "positive (true victory)"
+
+    shape_definition:
+      type: "W_inverted"
+      mathematical_form: "Complex - combination of modes"
+      inflection_points: 2
+      peak_1_position: 0.30-0.40
+      valley_position: 0.60-0.70
+      final_rise: 0.70-1.00
+
+    narrative_characteristics:
+      - "Initial hardship"
+      - "First rise to happiness"
+      - "Complication/setback"
+      - "Dark moment"
+      - "Ultimate triumph"
+
+    genre_associations:
+      - "Fairy tales"
+      - "Romance (full arc)"
+      - "Sports underdog stories"
+      - "Redemption narratives"
+
+    examples:
+      - "Cinderella (full story)"
+      - "Jane Eyre"
+      - "Pride and Prejudice"
+      - "Rocky"
+
+    svd_mode_combination: [1, 2]
+    note: "Most satisfying for audiences according to download data"
+
+  oedipus:
+    id: 6
+    code: "OEDIPUS"
+    name: "Oedipus"
+    aliases: ["Fall-Rise-Fall", "M-Shape"]
+    pattern: "↘↗↘"
+    description: "Fall, hope, then ultimate tragedy"
+
+    emotional_trajectory:
+      start: "positive or neutral"
+      middle_1: "negative (initial fall)"
+      middle_2: "positive (false hope)"
+      end: "negative (final fall)"
+
+    shape_definition:
+      type: "M_shape"
+      mathematical_form: "Complex - combination of modes"
+      inflection_points: 2
+      valley_1_position: 0.30-0.40
+      peak_position: 0.50-0.60
+      final_fall: 0.60-1.00
+
+    narrative_characteristics:
+      - "Initial state (may be good or neutral)"
+      - "Fall into trouble"
+      - "Moment of hope/recovery"
+      - "False dawn"
+      - "Final catastrophe"
+
+    genre_associations:
+      - "Greek tragedy"
+      - "Literary fiction"
+      - "Film noir"
+      - "Horror"
+
+    examples:
+      - "Oedipus Rex"
+      - "The Metamorphosis (Kafka)"
+      - "1984"
+
+    svd_mode_combination: [1, 2]
+    sign: "inverted_cinderella"
+
+# =============================================================================
+# COMPOUND AND VARIANT ARCS
+# =============================================================================
+
+compound_arcs:
+  double_man_in_hole:
+    pattern: "↘↗↘↗"
+    description: "Two sequential fall-rise patterns"
+    note: "Common in longer narratives with multiple acts"
+
+  double_icarus:
+    pattern: "↗↘↗↘"
+    description: "Two sequential rise-fall patterns"
+    note: "Rare; used for complex multi-villain stories"
+
+  oscillating:
+    pattern: "Various"
+    description: "Multiple reversals without dominant direction"
+    note: "Often found in episodic narratives"
+
+# =============================================================================
+# COMPUTATIONAL PROPERTIES
+# =============================================================================
+
+computational:
+  arc_detection:
+    method: "SVD mode coefficient analysis"
+    steps:
+      - "Extract sentiment time series (200 points)"
+      - "Mean-center the time series"
+      - "Decompose using SVD"
+      - "Examine mode coefficients"
+      - "Classify by dominant mode(s)"
+
+  classification:
+    dominant_mode_threshold: 0.5  # Must explain >50% of variance
+    secondary_mode_threshold: 0.25  # For compound arcs
+
+  similarity_metric:
+    method: "Euclidean distance in mode space"
+    formula: "d(a,b) = sqrt(sum((a_i - b_i)²))"
+
+# =============================================================================
+# MODE VECTORS (PENDING PROPER METHODOLOGY)
+# =============================================================================
+#
+# STATUS: APPROXIMATE - requires verification against Reagan's exact methodology
+#
+# An initial extraction was performed on core-stories/output/sample-timeseries.csv.gz
+# Results differ from Reagan et al. due to:
+#   - Different corpus size (3,078 vs 1,327 books after filtering)
+#   - Different sampling (100 vs 200 points)
+#   - Unknown filtering differences
+#
+# The vectors below are QUALITATIVELY consistent (shapes match) but
+# QUANTITATIVELY approximate. For production use, either:
+#   (a) Re-run Reagan's exact methodology with identical filtering
+#   (b) Obtain Reagan's published vectors if available
+#   (c) Accept these as approximate templates with documented deviation
+
+mode_vectors_preliminary:
+  extraction_source: "core-stories/output/sample-timeseries.csv.gz"
+  corpus_size: 3078
+  sampling_points: 100
+  variance_explained_modes_1_3: 0.8378  # Reagan reports 0.872 for modes 1-3
+
+  # Sampled at 0%, 10%, 20%, ..., 100% of story
+  # Full 100-point vectors available in extraction script output
+
+  mode_1:
+    name: "Linear rise/fall"
+    singular_value: 85.43
+    variance_explained: 0.4408
+    sampled_shape: [-0.11, -0.12, -0.11, -0.10, -0.05, 0.00, +0.06, +0.10, +0.13, +0.13, +0.10]
+    positive_arc: "rags_to_riches"
+    negative_arc: "tragedy"
+
+  mode_2:
+    name: "Parabolic with midpoint extremum"
+    singular_value: 66.02
+    variance_explained: 0.2633
+    sampled_shape: [-0.12, -0.11, -0.05, +0.03, +0.12, +0.15, +0.12, +0.04, -0.06, -0.12, -0.12]
+    positive_arc: "icarus"
+    negative_arc: "man_in_hole"
+
+  mode_3:
+    name: "W/M shape with two inflections"
+    singular_value: 47.04
+    variance_explained: 0.1337
+    sampled_shape: [-0.15, -0.10, +0.02, +0.12, +0.11, 0.00, -0.11, -0.12, -0.02, +0.11, +0.15]
+    positive_arc: "cinderella"
+    negative_arc: "oedipus"
+
+  classification_algorithm:
+    method: "Project sentiment timeseries onto mode vectors"
+    formula: |
+      # Mean-center the input timeseries
+      centered = timeseries - mean(timeseries)
+
+      # Project onto each mode vector
+      coefficient[i] = dot_product(centered, mode_vector[i])
+
+      # Find dominant mode
+      dominant_mode = argmax(abs(coefficient))
+      sign = sign(coefficient[dominant_mode])
+
+      # Map to arc
+      arc = arc_mapping[dominant_mode][sign]
+
+    note: "For compound arcs (Cinderella, Oedipus), check if modes 1 and 2 both have significant coefficients"
+
+# =============================================================================
+# APPLICATION TO NARRATIVE GENERATION
+# =============================================================================
+
+generation_guidance:
+  arc_selection:
+    considerations:
+      - "Genre expectations"
+      - "Target emotional experience"
+      - "Narrative length"
+      - "Audience preferences"
+
+    recommendations_by_genre:
+      action: ["man_in_hole", "cinderella"]
+      horror: ["icarus", "oedipus", "tragedy"]
+      romance: ["cinderella", "man_in_hole"]
+      thriller: ["icarus", "man_in_hole"]
+      tragedy: ["tragedy", "oedipus", "icarus"]
+      comedy: ["man_in_hole", "rags_to_riches"]
+
+  beat_mapping:
+    description: "Map emotional arc to Save the Cat beats"
+
+    man_in_hole_mapping:
+      opening_image: 0.0
+      catalyst_fall_begins: 0.10
+      break_into_two: 0.20
+      midpoint_lowest_point: 0.50
+      break_into_three_rise_begins: 0.75
+      final_image: 1.0
+
+    cinderella_mapping:
+      opening_image_low: 0.0
+      catalyst_first_rise: 0.10
+      midpoint_false_victory: 0.50
+      all_is_lost_setback: 0.75
+      finale_true_victory: 0.95
+      final_image_high: 1.0
+
+# =============================================================================
+# NARRATIVE STATE INTEGRATION
+# =============================================================================
+
+narrative_state_mapping:
+  description: "Map emotional arcs to NarrativeState dimensions"
+
+  dimension_correlations:
+    tension:
+      high_during: ["falling sections", "conflict escalation"]
+      low_during: ["resolution", "peaceful opening"]
+
+    stakes:
+      increases_with: "narrative progression"
+      peaks_at: "climax"
+
+    mystery:
+      typically_decreases: "As revelations occur"
+      arc_independent: true
+
+    urgency:
+      correlates_with: "tension"
+      peaks_near: "climax"
+
+    intimacy:
+      increases_in: ["man_in_hole recovery", "cinderella rise"]
+      may_decrease_in: ["tragedy", "betrayal moments"]
+
+    hope:
+      directly_maps_to: "emotional valence"
+      high_during: ["rising sections"]
+      low_during: ["falling sections", "all is lost"]
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  primary:
+    - title: "The emotional arcs of stories are dominated by six basic shapes"
+      authors: ["Reagan, A.J.", "Mitchell, L.", "Kiley, D.", "Danforth, C.M.", "Dodds, P.S."]
+      year: 2016
+      journal: "EPJ Data Science"
+      volume: 5
+      issue: 31
+      doi: "10.1140/epjds/s13688-016-0093-1"
+      arxiv: "1606.07772"
+
+  code:
+    - name: "core-stories"
+      repository: "~/repos/core-stories"
+      url: "https://github.com/andyreagan/core-stories"
+      language: "Python (Jupyter Notebooks)"
+
+  sentiment_tool:
+    - name: "labMTsimple"
+      description: "Language Assessment by Mechanical Turk"
+      url: "https://github.com/andyreagan/labMTsimple"
+
+  related:
+    - title: "Kurt Vonnegut on the Shapes of Stories"
+      description: "Vonnegut's original conceptualization (Man in Hole, Boy Gets Girl, etc.)"
+      note: "Validated by Reagan et al. computational analysis"
