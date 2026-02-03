@@ -21,7 +21,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 /// State-store implementation for Documentation service following schema-first architecture.
 /// Uses IStateStoreFactory for persistence.
 /// </summary>
-[BannouService("documentation", typeof(IDocumentationService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("documentation", typeof(IDocumentationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class DocumentationService : IDocumentationService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Manages realm definitions - top-level persistent worlds (e.g., REALM_1, REALM_2).
 /// Each realm operates as an independent peer with distinct characteristics.
 /// </summary>
-[BannouService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class RealmService : IRealmService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

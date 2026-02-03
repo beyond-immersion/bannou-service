@@ -25,7 +25,7 @@ namespace BeyondImmersion.BannouService.Asset;
 /// Implementation of the Asset service.
 /// This class contains the business logic for all Asset operations.
 /// </summary>
-[BannouServiceAttribute("asset", typeof(IAssetService), lifetime: ServiceLifetime.Scoped)]
+[BannouServiceAttribute("asset", typeof(IAssetService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class AssetService : IAssetService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

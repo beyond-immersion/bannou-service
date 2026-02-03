@@ -26,7 +26,7 @@ namespace BeyondImmersion.BannouService.Telemetry;
 /// into other infrastructure libs (lib-state, lib-messaging, lib-mesh).
 /// </para>
 /// </remarks>
-[BannouService("telemetry", typeof(ITelemetryService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("telemetry", typeof(ITelemetryService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.Infrastructure)]
 public partial class TelemetryService : ITelemetryService
 {
     private readonly IMessageBus _messageBus;

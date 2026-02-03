@@ -21,7 +21,7 @@ namespace BeyondImmersion.BannouService.Character;
 /// Uses realm-based partitioning for scalability.
 /// Note: Character relationships are managed by the separate Relationship service.
 /// </summary>
-[BannouService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class CharacterService : ICharacterService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

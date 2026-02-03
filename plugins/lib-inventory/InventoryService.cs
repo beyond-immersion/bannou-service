@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Inventory;
 /// Implementation of the Inventory service.
 /// Provides container management and item placement operations for games.
 /// </summary>
-[BannouService("inventory", typeof(IInventoryService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("inventory", typeof(IInventoryService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class InventoryService : IInventoryService
 {
     private readonly IMessageBus _messageBus;

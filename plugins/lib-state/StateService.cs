@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.State;
 /// Implementation of the State service.
 /// Provides HTTP API layer over native Redis/MySQL state management infrastructure.
 /// </summary>
-[BannouService("state", typeof(IStateService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("state", typeof(IStateService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.Infrastructure)]
 public partial class StateService : IStateService
 {
     private readonly ILogger<StateService> _logger;

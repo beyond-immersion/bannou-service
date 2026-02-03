@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 /// Implementation of the RelationshipType service.
 /// Manages hierarchical relationship types for character relationships.
 /// </summary>
-[BannouService("relationship-type", typeof(IRelationshipTypeService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("relationship-type", typeof(IRelationshipTypeService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class RelationshipTypeService : IRelationshipTypeService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

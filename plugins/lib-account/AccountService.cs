@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Account;
 /// State-backed implementation for Account service following schema-first architecture.
 /// Uses IStateStoreFactory for persistence.
 /// </summary>
-[BannouService("account", typeof(IAccountService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("account", typeof(IAccountService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
 public partial class AccountService : IAccountService
 {
     private readonly ILogger<AccountService> _logger;

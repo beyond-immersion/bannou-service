@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Uses lib-state via IMeshStateManager (NOT via mesh) to avoid circular dependencies.
 /// Service mappings are managed via IServiceAppMappingResolver (shared across all services).
 /// </summary>
-[BannouService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.Infrastructure)]
 public partial class MeshService : IMeshService
 {
     private readonly IMessageBus _messageBus;

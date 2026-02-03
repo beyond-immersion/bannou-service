@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using BeyondImmersion.BannouService.Attributes;
@@ -28,67 +29,29 @@ namespace BeyondImmersion.BannouService.TestUtilities;
 ///   <item>L5 (Extensions) → Can depend on all layers</item>
 /// </list>
 /// </para>
+/// <para>
+/// <b>REFLECTION-BASED DISCOVERY:</b> Service layers are discovered at runtime by scanning
+/// all loaded assemblies for types with [BannouService] attributes. This ensures the validator
+/// always uses the actual layer declared in the attribute, not a hardcoded registry.
+/// </para>
 /// </remarks>
 public static partial class ServiceHierarchyValidator
 {
     /// <summary>
-    /// Static registry mapping service names to their layers.
-    /// This is the authoritative source per SERVICE_HIERARCHY.md.
+    /// Lazily-built cache mapping service names to their layers, discovered via reflection.
+    /// Thread-safe for concurrent access during validation.
     /// </summary>
-    private static readonly Dictionary<string, ServiceLayer> ServiceLayerRegistry = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // L0: Infrastructure
-        { "telemetry", ServiceLayer.Infrastructure },
-        { "state", ServiceLayer.Infrastructure },
-        { "messaging", ServiceLayer.Infrastructure },
-        { "mesh", ServiceLayer.Infrastructure },
+    private static readonly ConcurrentDictionary<string, ServiceLayer> ServiceLayerCache = new(StringComparer.OrdinalIgnoreCase);
 
-        // L1: App Foundation
-        { "account", ServiceLayer.AppFoundation },
-        { "auth", ServiceLayer.AppFoundation },
-        { "connect", ServiceLayer.AppFoundation },
-        { "permission", ServiceLayer.AppFoundation },
-        { "contract", ServiceLayer.AppFoundation },
-        { "resource", ServiceLayer.AppFoundation },
+    /// <summary>
+    /// Flag indicating whether the initial discovery scan has been performed.
+    /// </summary>
+    private static bool _discoveryPerformed;
 
-        // L2: Game Foundation
-        { "game-service", ServiceLayer.GameFoundation },
-        { "realm", ServiceLayer.GameFoundation },
-        { "character", ServiceLayer.GameFoundation },
-        { "species", ServiceLayer.GameFoundation },
-        { "location", ServiceLayer.GameFoundation },
-        { "relationship-type", ServiceLayer.GameFoundation },
-        { "relationship", ServiceLayer.GameFoundation },
-        { "subscription", ServiceLayer.GameFoundation },
-        { "currency", ServiceLayer.GameFoundation },
-        { "item", ServiceLayer.GameFoundation },
-        { "inventory", ServiceLayer.GameFoundation },
-        { "game-session", ServiceLayer.GameFoundation },
-
-        // L3: App Features
-        { "asset", ServiceLayer.AppFeatures },
-        { "orchestrator", ServiceLayer.AppFeatures },
-        { "documentation", ServiceLayer.AppFeatures },
-        { "website", ServiceLayer.AppFeatures },
-
-        // L4: Game Features (default for unknown services)
-        { "actor", ServiceLayer.GameFeatures },
-        { "analytics", ServiceLayer.GameFeatures },
-        { "behavior", ServiceLayer.GameFeatures },
-        { "mapping", ServiceLayer.GameFeatures },
-        { "scene", ServiceLayer.GameFeatures },
-        { "matchmaking", ServiceLayer.GameFeatures },
-        { "leaderboard", ServiceLayer.GameFeatures },
-        { "achievement", ServiceLayer.GameFeatures },
-        { "voice", ServiceLayer.GameFeatures },
-        { "save-load", ServiceLayer.GameFeatures },
-        { "music", ServiceLayer.GameFeatures },
-        { "escrow", ServiceLayer.GameFeatures },
-        { "character-personality", ServiceLayer.GameFeatures },
-        { "character-history", ServiceLayer.GameFeatures },
-        { "character-encounter", ServiceLayer.GameFeatures },
-        { "realm-history", ServiceLayer.GameFeatures },
-    };
+    /// <summary>
+    /// Lock for discovery initialization.
+    /// </summary>
+    private static readonly object DiscoveryLock = new();
 
     /// <summary>
     /// Validates that a service type's dependencies follow the service hierarchy.
@@ -267,16 +230,105 @@ public static partial class ServiceHierarchyValidator
     private static partial Regex PascalToKebabRegex();
 
     /// <summary>
-    /// Gets the service layer for a service name.
-    /// Returns the registered layer, or GameFeatures as default for unknown services.
+    /// Gets the service layer for a service name by discovering it via reflection.
+    /// Returns the layer from the [BannouService] attribute, or GameFeatures as default.
     /// </summary>
+    /// <param name="serviceName">The service name (e.g., "account", "game-session").</param>
+    /// <returns>The service layer, or GameFeatures if not found.</returns>
     public static ServiceLayer GetServiceLayer(string serviceName)
     {
-        if (ServiceLayerRegistry.TryGetValue(serviceName, out var layer))
+        EnsureDiscoveryPerformed();
+
+        if (ServiceLayerCache.TryGetValue(serviceName, out var layer))
             return layer;
 
         // Unknown services default to GameFeatures (most permissive for new services)
         return ServiceLayer.GameFeatures;
+    }
+
+    /// <summary>
+    /// Ensures the initial service discovery has been performed.
+    /// Scans all loaded assemblies for types with [BannouService] attributes.
+    /// </summary>
+    private static void EnsureDiscoveryPerformed()
+    {
+        if (_discoveryPerformed)
+            return;
+
+        lock (DiscoveryLock)
+        {
+            if (_discoveryPerformed)
+                return;
+
+            DiscoverServicesFromLoadedAssemblies();
+            _discoveryPerformed = true;
+        }
+    }
+
+    /// <summary>
+    /// Scans all loaded assemblies for types with [BannouService] attributes
+    /// and populates the service layer cache.
+    /// </summary>
+    private static void DiscoverServicesFromLoadedAssemblies()
+    {
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        foreach (var assembly in assemblies)
+        {
+            // Skip system assemblies for performance
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == null ||
+                assemblyName.StartsWith("System", StringComparison.Ordinal) ||
+                assemblyName.StartsWith("Microsoft", StringComparison.Ordinal) ||
+                assemblyName.StartsWith("netstandard", StringComparison.Ordinal) ||
+                assemblyName.StartsWith("mscorlib", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            try
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    var attr = type.GetCustomAttribute<BannouServiceAttribute>();
+                    if (attr == null)
+                        continue;
+
+                    // Register the service name → layer mapping
+                    // Use TryAdd to handle potential duplicates (first wins)
+                    ServiceLayerCache.TryAdd(attr.Name, attr.Layer);
+                }
+            }
+            catch (ReflectionTypeLoadException)
+            {
+                // Assembly has types that can't be loaded - skip it
+                // This can happen with optional dependencies
+            }
+        }
+    }
+
+    /// <summary>
+    /// Registers a service's layer explicitly. Used by PluginLoader during runtime
+    /// validation when assemblies are loaded dynamically.
+    /// </summary>
+    /// <param name="serviceName">The service name.</param>
+    /// <param name="layer">The service layer.</param>
+    public static void RegisterServiceLayer(string serviceName, ServiceLayer layer)
+    {
+        ServiceLayerCache[serviceName] = layer;
+    }
+
+    /// <summary>
+    /// Clears the service layer cache. Used for testing scenarios where
+    /// discovery needs to be re-run.
+    /// </summary>
+    public static void ResetCache()
+    {
+        lock (DiscoveryLock)
+        {
+            ServiceLayerCache.Clear();
+            _discoveryPerformed = false;
+        }
     }
 
     /// <summary>

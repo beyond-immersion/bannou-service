@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// Manages entity-to-entity relationships with composite uniqueness validation,
 /// bidirectional support, and soft-delete capability.
 /// </summary>
-[BannouService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class RelationshipService : IRelationshipService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

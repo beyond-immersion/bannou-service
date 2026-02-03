@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.Item;
 /// Implementation of the Item service.
 /// Provides item template and instance management for games.
 /// </summary>
-[BannouService("item", typeof(IItemService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("item", typeof(IItemService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class ItemService : IItemService
 {
     private readonly IMessageBus _messageBus;

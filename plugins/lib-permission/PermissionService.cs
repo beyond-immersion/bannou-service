@@ -24,7 +24,7 @@ namespace BeyondImmersion.BannouService.Permission;
 /// Permission service - authoritative source for all permission mappings and session capabilities.
 /// Uses lib-state for atomic operations and Redis-backed data structures.
 /// </summary>
-[BannouService("permission", typeof(IPermissionService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("permission", typeof(IPermissionService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.AppFoundation)]
 public partial class PermissionService : IPermissionService
 {
     private readonly ILogger<PermissionService> _logger;

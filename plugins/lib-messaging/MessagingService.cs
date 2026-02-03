@@ -60,7 +60,7 @@ public sealed record ExternalSubscriptionData(
 /// serialized. The <see cref="_subscriptionStore"/> persists metadata for recovery.
 /// </para>
 /// </remarks>
-[BannouService("messaging", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("messaging", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.Infrastructure)]
 public partial class MessagingService : IMessagingService, IAsyncDisposable
 {
     /// <summary>

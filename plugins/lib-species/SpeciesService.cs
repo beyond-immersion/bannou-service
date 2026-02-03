@@ -17,7 +17,7 @@ namespace BeyondImmersion.BannouService.Species;
 /// Manages species definitions for characters in game worlds.
 /// Species are realm-specific, allowing different realms to have distinct populations.
 /// </summary>
-[BannouService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class SpeciesService : ISpeciesService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

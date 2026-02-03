@@ -18,7 +18,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Auth service implementation focused on authentication, token management, and OAuth provider integration.
 /// Follows schema-first architecture - implements generated IAuthService interface.
 /// </summary>
-[BannouService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
 public partial class AuthService : IAuthService
 {
     private readonly IAccountClient _accountClient;

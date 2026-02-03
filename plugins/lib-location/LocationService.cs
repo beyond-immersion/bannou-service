@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// Manages location definitions - places within realms with hierarchical organization.
 /// Locations are partitioned by realm for scalability.
 /// </summary>
-[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class LocationService : ILocationService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

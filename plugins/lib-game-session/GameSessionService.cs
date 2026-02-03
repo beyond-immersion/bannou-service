@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Manages game sessions for multiplayer games.
 /// Handles session shortcuts for subscribed accounts via mesh pubsub events.
 /// </summary>
-[BannouService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class GameSessionService : IGameSessionService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

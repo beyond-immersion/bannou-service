@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// Note: This service is not yet implemented - planned for future release.
 /// Methods return placeholder responses until implementation is complete.
 /// </summary>
-[BannouService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class WebsiteService : IWebsiteService
 {
     private readonly ILogger<WebsiteService> _logger;

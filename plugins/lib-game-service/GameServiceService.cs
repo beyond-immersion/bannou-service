@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.GameService;
 /// Implementation of the Game Service service.
 /// Provides a minimal registry of game services (games/applications) that users can subscribe to.
 /// </summary>
-[BannouService("game-service", typeof(IGameServiceService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("game-service", typeof(IGameServiceService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.GameFoundation)]
 public partial class GameServiceService : IGameServiceService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

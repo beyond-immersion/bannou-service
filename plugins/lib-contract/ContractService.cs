@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Contract;
 /// Contracts store state, emit events, and execute prebound APIs on state transitions.
 /// </para>
 /// </remarks>
-[BannouService("contract", typeof(IContractService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("contract", typeof(IContractService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
 public partial class ContractService : IContractService
 {
     private readonly IMessageBus _messageBus;

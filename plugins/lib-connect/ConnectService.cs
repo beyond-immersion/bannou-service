@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Uses Permission service for dynamic API discovery and capability management.
 /// Implements IDisposable to enable graceful shutdown with WebSocket close frames.
 /// </summary>
-[BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.AppFoundation)]
 public partial class ConnectService : IConnectService, IDisposable
 {
     /// <summary>

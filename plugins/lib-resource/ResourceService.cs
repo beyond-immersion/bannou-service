@@ -29,7 +29,7 @@ namespace BeyondImmersion.BannouService.Resource;
 /// service registry - that would create implicit coupling to higher layers.
 /// </para>
 /// </remarks>
-[BannouService("resource", typeof(IResourceService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("resource", typeof(IResourceService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
 public partial class ResourceService : IResourceService
 {
     private readonly IMessageBus _messageBus;

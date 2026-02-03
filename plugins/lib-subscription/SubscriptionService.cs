@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.Subscription;
 /// Manages user subscriptions to game services with time-limited access control.
 /// Publishes subscription.updated events for real-time session authorization updates.
 /// </summary>
-[BannouService("subscription", typeof(ISubscriptionService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("subscription", typeof(ISubscriptionService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.GameFoundation)]
 public partial class SubscriptionService : ISubscriptionService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

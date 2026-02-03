@@ -17,7 +17,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// This class contains the business logic for all Orchestrator operations.
 /// Uses lib-state and lib-messaging infrastructure for state management and event publishing.
 /// </summary>
-[BannouService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class OrchestratorService : IOrchestratorService
 {
     private readonly IMessageBus _messageBus;
