@@ -33,6 +33,46 @@ if [ ! -f "$SCHEMA_FILE" ]; then
     exit 1
 fi
 
+# Extract x-service-layer from schema (defaults to GameFeatures if not specified)
+# Valid values: Infrastructure, AppFoundation, GameFoundation, AppFeatures, GameFeatures, Extensions
+SERVICE_LAYER=$(python3 -c "
+import yaml
+import sys
+
+try:
+    with open('$SCHEMA_FILE', 'r') as f:
+        schema = yaml.safe_load(f)
+
+    # x-service-layer can be specified as enum name or numeric value
+    layer = schema.get('x-service-layer', 'GameFeatures')
+
+    # Map numeric values to enum names
+    layer_map = {
+        0: 'Infrastructure',
+        100: 'AppFoundation',
+        200: 'GameFoundation',
+        300: 'AppFeatures',
+        400: 'GameFeatures',
+        500: 'Extensions'
+    }
+
+    # If numeric, convert to string
+    if isinstance(layer, int):
+        layer = layer_map.get(layer, 'GameFeatures')
+
+    # Validate the layer name
+    valid_layers = ['Infrastructure', 'AppFoundation', 'GameFoundation', 'AppFeatures', 'GameFeatures', 'Extensions']
+    if layer not in valid_layers:
+        print('GameFeatures', end='')  # Default fallback
+        sys.exit(0)
+
+    print(layer, end='')
+except Exception as e:
+    print('GameFeatures', end='')  # Default on error
+" 2>/dev/null || echo "GameFeatures")
+
+echo -e "  🏗️  Layer: $SERVICE_LAYER"
+
 # Check if implementation already exists
 if [ -f "$IMPLEMENTATION_FILE" ]; then
     echo -e "${YELLOW}📝 Service implementation already exists, skipping: $IMPLEMENTATION_FILE${NC}"
@@ -90,7 +130,7 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// </list>
 /// </para>
 /// </remarks>
-[BannouService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped)]
+[BannouService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.$SERVICE_LAYER)]
 public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 {
     private readonly IMessageBus _messageBus;

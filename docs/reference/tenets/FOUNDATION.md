@@ -76,6 +76,32 @@ httpClient.PostAsync("http://account/api/...");  // Use lib-mesh
 
 Generated clients are auto-registered as Singletons and use mesh service resolution internally.
 
+### Dependency Hardness by Layer (ABSOLUTE)
+
+**Rule**: Dependencies on L0/L1/L2 services MUST be hard (fail at startup if missing). Dependencies on L3/L4 MAY be soft (graceful degradation). See [SERVICE_HIERARCHY.md § Dependency Handling Patterns](../SERVICE_HIERARCHY.md#dependency-handling-patterns-mandatory) for the full pattern.
+
+The SERVICE_HIERARCHY guarantees that L0/L1/L2 services are running when higher layers are enabled. Silent degradation for these guaranteed dependencies hides deployment configuration errors.
+
+```csharp
+// IDEAL: Constructor injection for L0/L1/L2 dependencies
+public LocationService(IContractClient contractClient, ...)  // Fails at startup if missing
+{
+    _contractClient = contractClient;
+}
+
+// CURRENT WORKAROUND: For cross-plugin init (until layer-based loading is implemented)
+// Use OnRunningAsync with THROW on null - never silent degradation
+var contractClient = serviceProvider.GetService<IContractClient>()
+    ?? throw new InvalidOperationException("IContractClient required");  // THROW, don't skip
+
+// FORBIDDEN: Silent degradation for guaranteed service
+if (contractClient == null) { return; }  // NO! Hides deployment errors
+
+// CORRECT: Soft dependency on L4 service (truly optional)
+var analyticsClient = serviceProvider.GetService<IAnalyticsClient>();
+if (analyticsClient == null) { /* graceful degradation OK */ }  // L4 may not be enabled
+```
+
 ### Why Infrastructure Libs?
 
 1. **Consistent Serialization**: All libs use `BannouJson` for JSON handling
@@ -606,6 +632,7 @@ When a package changes license, pin to the last permissive version with XML comm
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use IMeshInvocationClient or generated clients via lib-mesh |
+| Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE_HIERARCHY.md |
 | Lua script when interface method exists | T4 | Use `ICacheableStateStore` or `IRedisOperations` methods |
 | Inline Lua script string | T4 | Move to `.lua` file with loader class |
 | Loop/iteration in Lua script | T4 | Restructure to avoid iteration; use C# for loops |

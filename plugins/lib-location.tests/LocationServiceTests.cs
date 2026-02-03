@@ -691,6 +691,274 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
     #endregion
 
+    #region ValidateTerritory Tests
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_WhenLocationNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var locationId = Guid.NewGuid();
+        var territoryId = Guid.NewGuid();
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { territoryId }
+        };
+
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((LocationService.LocationModel?)null);
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_ExclusiveMode_WhenLocationOverlapsTerritory_ShouldReturnInvalid()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var rootId = Guid.NewGuid();
+        var cityId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+
+        var locationModel = CreateTestLocationModel(locationId, realmId, "LOC", "Location", parentLocationId: cityId, depth: 2);
+        var cityModel = CreateTestLocationModel(cityId, realmId, "CITY", "City", parentLocationId: rootId, depth: 1);
+        var rootModel = CreateTestLocationModel(rootId, realmId, "ROOT", "Root", depth: 0);
+
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { cityId }, // Location is child of this territory
+            TerritoryMode = TerritoryMode.Exclusive
+        };
+
+        // Setup location retrieval
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(locationModel);
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{cityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cityModel);
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{rootId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(rootModel);
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.IsValid);
+        Assert.NotNull(response.ViolationReason);
+        Assert.Contains("exclusive", response.ViolationReason, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(cityId, response.MatchedTerritoryId);
+    }
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_ExclusiveMode_WhenLocationOutsideTerritory_ShouldReturnValid()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+        var unrelatedTerritoryId = Guid.NewGuid();
+
+        var locationModel = CreateTestLocationModel(locationId, realmId, "LOC", "Location", depth: 0);
+
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { unrelatedTerritoryId }, // No overlap
+            TerritoryMode = TerritoryMode.Exclusive
+        };
+
+        // Setup location retrieval (no parent, so no ancestors)
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(locationModel);
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsValid);
+        Assert.Null(response.ViolationReason);
+    }
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_InclusiveMode_WhenLocationInsideTerritory_ShouldReturnValid()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var rootId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+
+        var locationModel = CreateTestLocationModel(locationId, realmId, "LOC", "Location", parentLocationId: rootId, depth: 1);
+        var rootModel = CreateTestLocationModel(rootId, realmId, "ROOT", "Root", depth: 0);
+
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { rootId }, // Location is child of this territory
+            TerritoryMode = TerritoryMode.Inclusive
+        };
+
+        // Setup location retrieval
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(locationModel);
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{rootId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(rootModel);
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsValid);
+        Assert.Equal(rootId, response.MatchedTerritoryId);
+    }
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_InclusiveMode_WhenLocationOutsideTerritory_ShouldReturnInvalid()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+        var unrelatedTerritoryId = Guid.NewGuid();
+
+        var locationModel = CreateTestLocationModel(locationId, realmId, "LOC", "Location", depth: 0);
+
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { unrelatedTerritoryId }, // No overlap
+            TerritoryMode = TerritoryMode.Inclusive
+        };
+
+        // Setup location retrieval (no parent, so no ancestors)
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(locationModel);
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.IsValid);
+        Assert.NotNull(response.ViolationReason);
+        Assert.Contains("inclusive", response.ViolationReason, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(response.MatchedTerritoryId);
+    }
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_DefaultsToExclusiveMode_WhenModeNotSpecified()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+
+        var locationModel = CreateTestLocationModel(locationId, realmId, "LOC", "Location", depth: 0);
+
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { Guid.NewGuid() },
+            TerritoryMode = null // Not specified - should default to exclusive
+        };
+
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(locationModel);
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert - should pass since no overlap in exclusive mode
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsValid);
+    }
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_WhenLocationIsTerritory_ShouldMatchItself()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+
+        var locationModel = CreateTestLocationModel(locationId, realmId, "LOC", "Location", depth: 0);
+
+        // Location IS the territory (edge case)
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { locationId },
+            TerritoryMode = TerritoryMode.Exclusive
+        };
+
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(locationModel);
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert - location overlaps with itself, so exclusive mode fails
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.IsValid);
+        Assert.Equal(locationId, response.MatchedTerritoryId);
+    }
+
+    [Fact]
+    public async Task ValidateTerritoryAsync_WhenStoreFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+        var locationId = Guid.NewGuid();
+        var request = new ValidateTerritoryRequest
+        {
+            LocationId = locationId,
+            TerritoryLocationIds = new List<Guid> { Guid.NewGuid() }
+        };
+
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("State store connection failed"));
+
+        // Act
+        var (status, response) = await service.ValidateTerritoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "location", "ValidateTerritory", "unexpected_exception", It.IsAny<string>(),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object>(), It.IsAny<string>(), It.IsAny<Guid?>(), default), Times.Once);
+    }
+
+    #endregion
+
     #region ListRootLocations Tests
 
     [Fact]

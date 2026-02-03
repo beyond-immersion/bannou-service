@@ -153,6 +153,47 @@ info:
 
 **Generated output**: `{Service}EventsController.cs` (handlers) and `{Service}ServiceEvents.cs` (registration template).
 
+### x-service-layer (Service Hierarchy Layer)
+
+Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the service hierarchy per [SERVICE_HIERARCHY.md](SERVICE_HIERARCHY.md). This controls plugin load order and enables safe cross-layer constructor injection.
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Location Service API
+  version: 1.0.0
+x-service-layer: GameFoundation  # L2 service
+
+servers:
+  - url: http://localhost:5012
+```
+
+**Valid values** (in load order):
+| Value | Layer | Description | Example Services |
+|-------|-------|-------------|------------------|
+| `Infrastructure` | L0 | Core infrastructure plugins | state, messaging, mesh, telemetry |
+| `AppFoundation` | L1 | Required for any deployment | account, auth, connect, permission, contract, resource |
+| `GameFoundation` | L2 | Required for game deployments | realm, character, species, location, currency, item, inventory |
+| `AppFeatures` | L3 | Optional app capabilities | asset, orchestrator, documentation, website |
+| `GameFeatures` | L4 | Optional game capabilities | actor, behavior, matchmaking, analytics, achievement |
+| `Extensions` | L5 | Third-party/meta-services | Custom plugins that need full stack |
+
+**Numeric values also accepted** (for programmatic generation):
+- `0` = Infrastructure, `100` = AppFoundation, `200` = GameFoundation
+- `300` = AppFeatures, `400` = GameFeatures, `500` = Extensions
+
+**Generated output**: The `[BannouService]` attribute includes `layer: ServiceLayer.{Value}`:
+```csharp
+[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
+```
+
+**Why this matters**:
+1. **Load order**: Lower layers load before higher layers, ensuring dependencies are available
+2. **Constructor injection**: Services can safely inject clients from lower layers
+3. **Dependency validation**: Runtime validation can catch hierarchy violations
+
+**Default**: If `x-service-layer` is omitted, defaults to `GameFeatures` (most permissive).
+
 ### x-service-configuration (Configuration Properties)
 
 Defined in `{service}-configuration.yaml`, defines service configuration.
@@ -1167,6 +1208,7 @@ Before submitting schema changes, verify:
 - [ ] All endpoints have `x-permissions` (even if empty array)
 - [ ] All properties have `description` fields
 - [ ] `servers` URL uses base endpoint format (`http://localhost:5012`)
+- [ ] `x-service-layer` is set to the correct layer per SERVICE_HIERARCHY.md
 
 ### NRT Compliance
 - [ ] All optional reference types (string, object, array) have `nullable: true`

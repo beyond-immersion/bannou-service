@@ -164,31 +164,38 @@ public class PluginLoader
             return null; // Indicate fatal failure
         }
 
-        // STAGE 3: Sort enabled plugins so infrastructure loads FIRST in specific order
-        // Order: state → messaging → mesh → all other services alphabetically
-        // This ensures dependencies are available before dependent plugins load
+        // STAGE 3: Sort enabled plugins by service hierarchy layer per SERVICE_HIERARCHY.md
+        // Order: L0 (Infrastructure) → L1 (AppFoundation) → L2 (GameFoundation) →
+        //        L3 (AppFeatures) → L4 (GameFeatures) → L5 (Extensions)
+        // Within L0, use InfrastructureLoadOrder for internal ordering (telemetry → state → messaging → mesh)
+        // Within other layers, sort alphabetically
         var sortedPlugins = _enabledPlugins
-            .OrderBy(p =>
-            {
-                // Infrastructure plugins get priority order (0, 1, 2)
-                if (InfrastructureLoadOrder.TryGetValue(p.PluginName, out var order))
-                    return order;
-                // Non-infrastructure plugins get high value to sort after infrastructure
-                return 100;
-            })
-            .ThenBy(p => p.PluginName) // Alphabetical within non-infrastructure
+            .OrderBy(p => GetServiceLayer(p))           // Primary: service hierarchy layer
+            .ThenBy(p => GetInfrastructureSubOrder(p))  // Secondary: L0 internal order
+            .ThenBy(p => p.PluginName)                  // Tertiary: alphabetical within layer
             .ToList();
         _enabledPlugins.Clear();
         _enabledPlugins.AddRange(sortedPlugins);
 
         _logger.LogInformation(
-            "Infrastructure plugins validated. Loading order: [{LoadOrder}]",
-            string.Join(" -> ", _enabledPlugins.Select(p => p.PluginName)));
+            "Plugins sorted by service hierarchy. Loading order: [{LoadOrder}]",
+            string.Join(" -> ", _enabledPlugins.Select(p => $"{p.PluginName}(L{(int)GetServiceLayer(p) / 100})")));
 
         // STAGE 4: Discover types for DI registration from ALL assemblies
         DiscoverTypesForRegistration();
 
-        // STAGE 5: Build valid environment variable prefixes for orchestrator forwarding
+        // STAGE 5: Validate service hierarchy compliance
+        // This catches services that depend on higher-layer services (violates SERVICE_HIERARCHY.md)
+        if (!ValidateServiceHierarchies())
+        {
+            _logger.LogCritical(
+                "STARTUP FAILURE: Service hierarchy violations detected. " +
+                "Services cannot depend on higher-layer services per SERVICE_HIERARCHY.md. " +
+                "Fix the violations listed above before proceeding.");
+            return null; // Indicate fatal failure
+        }
+
+        // STAGE 6: Build valid environment variable prefixes for orchestrator forwarding
         PopulateValidEnvironmentPrefixes();
 
         var discoveredSummary = string.Join(", ", _allPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
@@ -748,6 +755,239 @@ public class PluginLoader
     {
         var bannouServiceAttr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
         return bannouServiceAttr?.Name;
+    }
+
+    /// <summary>
+    /// Get the ServiceLayer for a plugin based on its BannouServiceAttribute.
+    /// Infrastructure plugins (state, messaging, mesh, telemetry) always return Infrastructure.
+    /// Other plugins return the layer specified in their [BannouService] attribute,
+    /// defaulting to GameFeatures if not specified.
+    /// </summary>
+    private ServiceLayer GetServiceLayer(IBannouPlugin plugin)
+    {
+        // Infrastructure plugins are always L0 regardless of attribute
+        if (InfrastructureLoadOrder.ContainsKey(plugin.PluginName))
+            return ServiceLayer.Infrastructure;
+
+        // Look up the service's declared layer from BannouServiceAttribute
+        var assembly = _loadedAssemblies.GetValueOrDefault(plugin.PluginName);
+        if (assembly == null)
+            return ServiceLayer.GameFeatures; // Default to highest non-extension layer
+
+        // Find the service type with [BannouService] attribute matching this plugin
+        var serviceType = assembly.GetTypes()
+            .FirstOrDefault(t =>
+            {
+                var attr = t.GetCustomAttribute<BannouServiceAttribute>();
+                return attr != null && attr.Name.Equals(plugin.PluginName, StringComparison.OrdinalIgnoreCase);
+            });
+
+        var bannouServiceAttr = serviceType?.GetCustomAttribute<BannouServiceAttribute>();
+        return bannouServiceAttr?.Layer ?? ServiceLayer.GameFeatures;
+    }
+
+    /// <summary>
+    /// Get the sub-ordering for infrastructure plugins (L0).
+    /// Returns the InfrastructureLoadOrder value for L0 plugins, or int.MaxValue for others.
+    /// This ensures correct internal ordering: telemetry → state → messaging → mesh.
+    /// </summary>
+    private int GetInfrastructureSubOrder(IBannouPlugin plugin)
+    {
+        if (InfrastructureLoadOrder.TryGetValue(plugin.PluginName, out var order))
+            return order;
+        return int.MaxValue; // Non-infrastructure plugins sort after all L0 plugins
+    }
+
+    /// <summary>
+    /// Validates that all enabled services follow the service hierarchy rules per SERVICE_HIERARCHY.md.
+    /// Services may only depend on services in lower layers (lower ServiceLayer enum values).
+    /// </summary>
+    /// <returns>True if all services are compliant; false if violations are found.</returns>
+    public bool ValidateServiceHierarchies()
+    {
+        _logger.LogDebug("Validating service hierarchy compliance for {Count} enabled plugins", _enabledPlugins.Count);
+
+        var allViolations = new List<(string ServiceName, string Message)>();
+
+        foreach (var plugin in _enabledPlugins)
+        {
+            var assembly = _loadedAssemblies.GetValueOrDefault(plugin.PluginName);
+            if (assembly == null)
+                continue;
+
+            // Find the service type with [BannouService] attribute
+            var serviceType = assembly.GetTypes()
+                .FirstOrDefault(t =>
+                {
+                    var attr = t.GetCustomAttribute<BannouServiceAttribute>();
+                    return attr != null && attr.Name.Equals(plugin.PluginName, StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (serviceType == null)
+                continue;
+
+            var violations = GetServiceHierarchyViolations(serviceType);
+            allViolations.AddRange(violations);
+        }
+
+        if (allViolations.Count > 0)
+        {
+            _logger.LogError(
+                "SERVICE HIERARCHY VIOLATIONS DETECTED! The following services depend on higher-layer services:");
+
+            foreach (var (serviceName, message) in allViolations)
+            {
+                _logger.LogError("  {ServiceName}: {Message}", serviceName, message);
+            }
+
+            _logger.LogError(
+                "See SERVICE_HIERARCHY.md for dependency rules. Fix these violations before proceeding.");
+
+            return false;
+        }
+
+        _logger.LogDebug("Service hierarchy validation passed for all {Count} enabled plugins", _enabledPlugins.Count);
+        return true;
+    }
+
+    /// <summary>
+    /// Gets hierarchy violations for a single service type.
+    /// </summary>
+    private List<(string ServiceName, string Message)> GetServiceHierarchyViolations(Type serviceType)
+    {
+        var violations = new List<(string ServiceName, string Message)>();
+
+        var bannouServiceAttr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+        if (bannouServiceAttr == null)
+            return violations;
+
+        var serviceLayer = bannouServiceAttr.Layer;
+        var serviceName = bannouServiceAttr.Name;
+
+        // Get constructor parameters
+        var constructors = serviceType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+        if (constructors.Length == 0)
+            return violations;
+
+        var ctor = constructors[0];
+        var parameters = ctor.GetParameters();
+
+        foreach (var param in parameters)
+        {
+            var paramType = param.ParameterType;
+
+            // Check if this is a service client interface (I*Client)
+            if (!paramType.IsInterface || !paramType.Name.StartsWith('I') || !paramType.Name.EndsWith("Client"))
+                continue;
+
+            // Extract service name from client type (IAccountClient → account)
+            var clientServiceName = ExtractServiceNameFromClientType(paramType.Name);
+            if (clientServiceName == null)
+                continue;
+
+            // Get the client's service layer from our registry or attribute
+            var clientLayer = GetClientServiceLayer(clientServiceName);
+
+            // Check for violation based on hierarchy rules
+            if (IsHierarchyViolation(serviceLayer, clientLayer))
+            {
+                violations.Add((serviceName,
+                    $"Depends on {clientServiceName} ({clientLayer}, L{(int)clientLayer / 100}) " +
+                    $"which is higher than {serviceLayer} (L{(int)serviceLayer / 100})"));
+            }
+        }
+
+        return violations;
+    }
+
+    /// <summary>
+    /// Extracts service name from client interface name (IAccountClient → account).
+    /// </summary>
+    private static string? ExtractServiceNameFromClientType(string clientTypeName)
+    {
+        if (!clientTypeName.StartsWith('I') || !clientTypeName.EndsWith("Client"))
+            return null;
+
+        var servicePascal = clientTypeName[1..^6]; // Remove 'I' and 'Client'
+
+        // Convert PascalCase to kebab-case (GameSession → game-session)
+        return System.Text.RegularExpressions.Regex.Replace(servicePascal, "(?<!^)([A-Z])", "-$1").ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Gets the service layer for a client's service name.
+    /// First checks loaded assemblies for [BannouService] attribute, then falls back to static registry.
+    /// </summary>
+    private ServiceLayer GetClientServiceLayer(string serviceName)
+    {
+        // Try to find the service in loaded assemblies
+        foreach (var (pluginName, assembly) in _loadedAssemblies)
+        {
+            if (!pluginName.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var serviceType = assembly.GetTypes()
+                .FirstOrDefault(t => t.GetCustomAttribute<BannouServiceAttribute>()?.Name
+                    .Equals(serviceName, StringComparison.OrdinalIgnoreCase) == true);
+
+            if (serviceType != null)
+            {
+                var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+                if (attr != null)
+                    return attr.Layer;
+            }
+        }
+
+        // Fall back to static registry for known services
+        return GetServiceLayerFromRegistry(serviceName);
+    }
+
+    /// <summary>
+    /// Static registry mapping service names to layers (authoritative per SERVICE_HIERARCHY.md).
+    /// </summary>
+    private static ServiceLayer GetServiceLayerFromRegistry(string serviceName)
+    {
+        return serviceName.ToLowerInvariant() switch
+        {
+            // L0: Infrastructure
+            "telemetry" or "state" or "messaging" or "mesh" => ServiceLayer.Infrastructure,
+
+            // L1: App Foundation
+            "account" or "auth" or "connect" or "permission" or "contract" or "resource" => ServiceLayer.AppFoundation,
+
+            // L2: Game Foundation
+            "game-service" or "realm" or "character" or "species" or "location" or
+            "relationship-type" or "relationship" or "subscription" or "currency" or
+            "item" or "inventory" or "game-session" => ServiceLayer.GameFoundation,
+
+            // L3: App Features
+            "asset" or "orchestrator" or "documentation" or "website" => ServiceLayer.AppFeatures,
+
+            // L4: Game Features (default for unknown)
+            _ => ServiceLayer.GameFeatures
+        };
+    }
+
+    /// <summary>
+    /// Checks if depending on clientLayer from serviceLayer violates the hierarchy.
+    /// </summary>
+    private static bool IsHierarchyViolation(ServiceLayer serviceLayer, ServiceLayer clientLayer)
+    {
+        // Extensions (L5) can depend on anything
+        if (serviceLayer == ServiceLayer.Extensions)
+            return false;
+
+        // AppFeatures (L3) CANNOT depend on GameFoundation (L2) or GameFeatures (L4)
+        // They're separate branches in the hierarchy
+        if (serviceLayer == ServiceLayer.AppFeatures)
+        {
+            return clientLayer == ServiceLayer.GameFoundation ||
+                   clientLayer == ServiceLayer.GameFeatures ||
+                   clientLayer == ServiceLayer.Extensions;
+        }
+
+        // For other layers, simply check if client is in a higher layer
+        return clientLayer > serviceLayer;
     }
 
 

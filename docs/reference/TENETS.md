@@ -187,7 +187,7 @@ Tenets are organized into categories based on when they're needed:
 
 | # | Name | Core Rule |
 |---|------|-----------|
-| **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden |
+| **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden; L0/L1/L2 dependencies are hard (fail at startup) |
 | **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies |
 | **T13** | X-Permissions Usage | All endpoints declare x-permissions; enforced for WebSocket clients |
@@ -253,6 +253,7 @@ Tenets are organized into categories based on when they're needed:
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use generated clients via lib-mesh |
+| Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE_HIERARCHY.md |
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Service class missing `partial` | T6 | Add `partial` keyword |

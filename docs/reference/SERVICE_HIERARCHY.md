@@ -1,6 +1,6 @@
 # Bannou Service Hierarchy
 
-> **Version**: 2.1
+> **Version**: 2.2
 > **Last Updated**: 2026-02-03
 > **Scope**: All Bannou service plugins and their inter-dependencies
 
@@ -229,12 +229,55 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 |-------|---------------|------------------|------------|
 | L0 Infrastructure (required) | - | Everything | Crash |
 | L0 Infrastructure (telemetry) | - | Everything | Graceful degradation (NullTelemetryProvider) |
-| L1 App Foundation | L0, L1 | L2, L3, L4 | Crash |
-| L2 Game Foundation | L0, L1, L2 | L3, L4 | Crash (when L4 enabled) |
-| L3 App Features | L0, L1, L3* | L2, L4 | Graceful degradation |
-| L4 Game Features | L0, L1, L2, L3*, L4* | - | Graceful degradation |
+| L1 App Foundation | L0, L1 | L2, L3, L4, L5 | Crash |
+| L2 Game Foundation | L0, L1, L2 | L3, L4, L5 | Crash (when L4 enabled) |
+| L3 App Features | L0, L1, L3* | L2, L4, L5 | Graceful degradation |
+| L4 Game Features | L0, L1, L2, L3*, L4* | L5 | Graceful degradation |
+| L5 Extensions | L0, L1, L2, L3*, L4* | - | Graceful degradation |
 
 \* Must handle absence gracefully - check availability, use events, or provide reduced functionality.
+
+---
+
+## Schema-First Layer Declaration
+
+Service layers are declared in the API schema using the `x-service-layer` extension attribute. This follows the schema-first principle: the schema is the source of truth, and the code generator applies the layer to the generated `[BannouService]` attribute.
+
+```yaml
+# In location-api.yaml
+openapi: 3.0.0
+info:
+  title: Location Service API
+  version: 1.0.0
+x-service-layer: GameFoundation  # Declares this as L2
+
+servers:
+  - url: http://localhost:5012
+```
+
+**Generated attribute**:
+```csharp
+[BannouService("location", typeof(ILocationService),
+    lifetime: ServiceLifetime.Scoped,
+    layer: ServiceLayer.GameFoundation)]
+```
+
+**Valid layer values**:
+- `Infrastructure` (L0) - Infrastructure plugins only
+- `AppFoundation` (L1) - account, auth, connect, permission, contract, resource
+- `GameFoundation` (L2) - realm, character, species, location, etc.
+- `AppFeatures` (L3) - asset, orchestrator, documentation, website
+- `GameFeatures` (L4) - actor, behavior, matchmaking, etc. (default if omitted)
+- `Extensions` (L5) - Third-party plugins and meta-services
+
+See [SCHEMA-RULES.md](SCHEMA-RULES.md#x-service-layer-service-hierarchy-layer) for complete documentation.
+
+**Plugin Load Order**: PluginLoader reads the `ServiceLayer` from each service's `[BannouService]` attribute and sorts plugins accordingly:
+1. L0 plugins first (with internal ordering: telemetry → state → messaging → mesh)
+2. L1 plugins second (alphabetical within layer)
+3. L2, L3, L4, L5 in order (alphabetical within each layer)
+
+This ensures that when a service's constructor runs, all lower-layer services are already registered in DI.
 
 ---
 
@@ -394,6 +437,103 @@ This is simpler but means the foundational service can't gate deletion on active
 
 ---
 
+## Dependency Handling Patterns (MANDATORY)
+
+The hierarchy dictates not just WHAT services can depend on, but HOW those dependencies should be handled in code. This prevents silent degradation that hides deployment configuration errors.
+
+### Hard Dependencies (L0, L1, L2)
+
+Dependencies on L0, L1, and L2 services are **guaranteed available** by the hierarchy. When your service runs, these MUST be running. The goal is **constructor injection** - the DI container fails at startup if not registered, catching configuration errors immediately.
+
+> **Current Limitation**: Plugin load order is only enforced for L0 infrastructure plugins. L1-L4 plugins load without guaranteed ordering, so cross-plugin initialization currently happens in `OnRunningAsync()` rather than constructors. Even so, **graceful degradation is still wrong** - if a guaranteed dependency is null in `OnRunningAsync`, throw an exception rather than silently skipping. A future infrastructure improvement will add layer-based plugin loading priority, enabling true constructor injection for cross-layer dependencies.
+
+```csharp
+// IDEAL (future): Constructor injection for guaranteed dependencies
+// DI container fails at startup if IContractClient isn't registered
+public class LocationService : ILocationService
+{
+    private readonly IContractClient _contractClient;  // L1 - guaranteed
+
+    public LocationService(
+        IContractClient contractClient,  // Hard dependency - will throw if missing
+        ...)
+    {
+        _contractClient = contractClient;
+    }
+}
+
+// CURRENT WORKAROUND: OnRunningAsync with explicit throw
+// Until layer-based plugin loading is implemented, cross-plugin init happens in OnRunningAsync
+protected override async Task OnRunningAsync(CancellationToken ct)
+{
+    var contractClient = scope.ServiceProvider.GetService<IContractClient>()
+        ?? throw new InvalidOperationException(
+            "IContractClient not available - Contract (L1) must be loaded before Location (L2)");
+    await contractClient.RegisterClauseTypeAsync(...);
+}
+```
+
+**FORBIDDEN: Graceful degradation for guaranteed dependencies**
+
+```csharp
+// WRONG: GetService + null check that silently returns
+var contractClient = serviceProvider.GetService<IContractClient>();
+if (contractClient == null)
+{
+    _logger.LogDebug("Contract not available, skipping...");  // NO!
+    return;  // Silent degradation hides deployment errors - THROW INSTEAD
+}
+```
+
+This pattern is **forbidden** because:
+1. The hierarchy **guarantees** Contract (L1) is running when Location (L2) runs
+2. If Contract is somehow unavailable, that's a deployment configuration error
+3. Silent degradation means the error goes unnoticed until something breaks mysteriously
+4. Failing fast at startup gives a clear error message and prevents partial operation
+
+### Soft Dependencies (L3, L4)
+
+Dependencies on L3 and L4 services are **optional** - they may or may not be enabled. These MUST implement graceful degradation using runtime resolution with null checks.
+
+```csharp
+// CORRECT: Runtime resolution with graceful degradation for optional dependencies
+public async Task DoSomethingAsync(...)
+{
+    var analyticsClient = _serviceProvider.GetService<IAnalyticsClient>();
+    if (analyticsClient == null)
+    {
+        // L4 service may not be enabled - this is expected, not an error
+        _logger.LogDebug("Analytics not enabled, skipping metrics publication");
+        return;
+    }
+    await analyticsClient.PublishMetricsAsync(...);
+}
+```
+
+### Summary Table
+
+| Dependency Layer | DI Pattern | On Missing | Example |
+|------------------|------------|------------|---------|
+| L0 Infrastructure | Constructor injection | Crash at startup | `IStateStoreFactory`, `IMessageBus` |
+| L1 App Foundation | Constructor injection* | Crash at startup | `IContractClient`, `IAuthClient` |
+| L2 Game Foundation | Constructor injection* | Crash at startup | `IRealmClient`, `ICharacterClient` |
+| L3 App Features | `GetService<T>()` + null check | Graceful degradation | `IAssetClient`, `IOrchestratorClient` |
+| L4 Game Features | `GetService<T>()` + null check | Graceful degradation | `IAnalyticsClient`, `IActorClient` |
+
+\* For cross-plugin dependencies (e.g., L2 service depending on L1 client), constructor injection requires layer-based plugin loading (not yet implemented). Until then, use `GetService<T>()` in `OnRunningAsync()` **with throw on null** - never silent degradation.
+
+### Why This Distinction Matters
+
+1. **L0/L1/L2 are deployment prerequisites** - The hierarchy says "if L2 is enabled, L1 MUST be enabled". A missing L1 dependency in an L2 service is a deployment bug.
+
+2. **L3/L4 are truly optional** - These can be disabled independently. An L4 service should work (with reduced features) even if other L4 services are off.
+
+3. **Fail-fast catches errors early** - A deployment error caught at startup with "IContractClient not registered" is infinitely better than discovering hours later that territory validation silently never worked.
+
+4. **Silent degradation hides bugs** - If your logs show "Contract not available, skipping territory registration" as a debug message, you might never notice that a critical feature is broken.
+
+---
+
 ## Enforcement
 
 ### During Development
@@ -442,6 +582,7 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | **L2** | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory, game-session |
 | **L3** | asset, orchestrator, documentation, website |
 | **L4** | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history |
+| **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.
 
@@ -461,6 +602,8 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | 2026-02-01 | 1.0 | Initial version with 7 sub-layers |
 | 2026-02-02 | 2.0 | Simplified to 5-layer model with domain separation (app/game) and optionality (foundation/feature) |
 | 2026-02-03 | 2.1 | Moved telemetry from L3 to L0 as optional infrastructure; removed mesh/messaging/state from L3 (they're L0); removed testing from L3 (it's shared test infra, not a service); clarified L0 plugins load first |
+| 2026-02-03 | 2.2 | Added "Dependency Handling Patterns" section: L0/L1/L2 dependencies must be hard (constructor injection, fail at startup); L3/L4 may be soft (graceful degradation). This prevents silent degradation that hides deployment configuration errors. |
+| 2026-02-03 | 2.3 | Added schema-first layer declaration via `x-service-layer` in API schemas. Added `ServiceLayer` enum to `BannouServiceAttribute`. PluginLoader now sorts by layer for deterministic cross-layer dependency resolution. Added L5 (Extensions) layer for third-party plugins. |
 
 ---
 
