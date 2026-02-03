@@ -4,7 +4,7 @@
 > **Layer**: L1 (App Foundation)
 > **Schema**: schemas/resource-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL)
+> **State Stores**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis)
 
 ---
 
@@ -51,7 +51,7 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 
 ## State Storage
 
-**Stores**: 5 state stores (3 Redis-backed, 1 MySQL-backed)
+**Stores**: 6 state stores (5 Redis-backed, 1 MySQL-backed)
 
 | Store | Backend | Schema Prefix | Purpose |
 |-------|---------|---------------|---------|
@@ -60,6 +60,7 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | `resource-grace` | Redis | `resource:grace` | Grace period timestamps |
 | `resource-compress` | Redis | `resource:compress` | Compression callback definitions and indexes |
 | `resource-archives` | MySQL | N/A | Compressed archive bundles (durable storage) |
+| `resource-snapshots` | Redis | `resource:snapshot` | Ephemeral snapshots of living resources (TTL-based auto-expiry) |
 
 **Note**: The "Schema Prefix" column shows the prefix defined in `state-stores.yaml`. The actual Redis key is `{prefix}:{key}` where key patterns are shown below.
 
@@ -83,6 +84,12 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | `archive-version:{resourceType}:{resourceId}` | `int` (counter) | Current archive version (atomic increment) |
 | `archive:{resourceType}:{resourceId}:{version}` | `ResourceArchiveModel` (MySQL) | Bundled compressed archive data |
 
+**Snapshot Key Patterns** (resource-snapshots store):
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `snap:{snapshotId}` | `ResourceSnapshotModel` | Ephemeral snapshot with TTL (auto-expired by Redis) |
+
 ---
 
 ## Events
@@ -96,6 +103,7 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | `resource.compressed` | `ResourceCompressedEvent` | Compression completes successfully via `ExecuteCompressAsync` |
 | `resource.compress.callback-failed` | `ResourceCompressCallbackFailedEvent` | Compression callback fails during `ExecuteCompressAsync` |
 | `resource.decompressed` | `ResourceDecompressedEvent` | Decompression completes successfully via `ExecuteDecompressAsync` |
+| `resource.snapshot.created` | `ResourceSnapshotCreatedEvent` | Ephemeral snapshot created via `ExecuteSnapshotAsync` |
 
 ### Consumed Events
 
@@ -125,6 +133,14 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | `CompressionCallbackTimeoutSeconds` | `RESOURCE_COMPRESSION_CALLBACK_TIMEOUT_SECONDS` | 60 | Timeout for each compression callback execution |
 | `CompressionLockExpirySeconds` | `RESOURCE_COMPRESSION_LOCK_EXPIRY_SECONDS` | 600 | Distributed lock timeout during compression |
 
+### Snapshot Configuration
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `SnapshotDefaultTtlSeconds` | `RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS` | 3600 (1 hour) | Default TTL when not specified in request |
+| `SnapshotMinTtlSeconds` | `RESOURCE_SNAPSHOT_MIN_TTL_SECONDS` | 60 (1 minute) | Minimum allowed TTL (clamped) |
+| `SnapshotMaxTtlSeconds` | `RESOURCE_SNAPSHOT_MAX_TTL_SECONDS` | 86400 (24 hours) | Maximum allowed TTL (clamped) |
+
 All configuration properties are verified as used in `ResourceService.cs`.
 
 ---
@@ -135,7 +151,7 @@ All configuration properties are verified as used in `ResourceService.cs`.
 |---------|------|
 | `ILogger<ResourceService>` | Structured logging |
 | `ResourceServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access for all three stores |
+| `IStateStoreFactory` | State store access for all six stores |
 | `IDistributedLockProvider` | Acquiring cleanup locks |
 | `IMessageBus` | Publishing events |
 | `IServiceNavigator` | Executing cleanup callbacks |
@@ -147,6 +163,7 @@ All configuration properties are verified as used in `ResourceService.cs`.
 | `ResourceReferenceEntry` | Set member for reference tracking; equality based on `SourceType` + `SourceId` |
 | `GracePeriodRecord` | Records when refcount became zero |
 | `CleanupCallbackDefinition` | Stores callback registration (service, endpoint, template, onDeleteAction) |
+| `ResourceSnapshotModel` | Ephemeral snapshot with TTL (stored in Redis, mirrors archive structure) |
 
 ---
 
@@ -232,6 +249,33 @@ All configuration properties are verified as used in `ResourceService.cs`.
 3. For each archive entry, invoke the registered decompression callback
 4. Publish `resource.decompressed` event on success
 
+### Snapshot Management (Living Entity Snapshots)
+
+| Endpoint | Notes |
+|----------|-------|
+| `POST /resource/snapshot/execute` | Creates ephemeral snapshot using compression callbacks, stores in Redis with TTL |
+| `POST /resource/snapshot/get` | Retrieves snapshot by ID; returns 404 if expired or not found |
+
+**Key Differences from Compression**:
+- Stores in Redis (ephemeral) with TTL, not MySQL (permanent)
+- Never deletes source data (non-destructive)
+- Publishes `resource.snapshot.created` event (not `resource.compressed`)
+- Snapshot auto-expires after TTL (default 1 hour, max 24 hours)
+
+**Use Cases**:
+- Storyline Composer needs compressed data from living entities to seed emergent narratives
+- Actor behaviors can capture character state via ABML `service_call`
+- Analytics can capture living entity snapshots for point-in-time analysis
+
+**Snapshot Execution Flow**:
+1. Get all compression callbacks for resourceType (same as compression)
+2. If `dryRun: true`, return preview without executing
+3. Execute each callback to gather data (same as compression)
+4. Bundle responses into snapshot model
+5. Store in Redis with TTL via `SaveAsync` with `StateOptions { Ttl = ttlSeconds }`
+6. Publish `resource.snapshot.created` event
+7. Return snapshotId for later retrieval
+
 ---
 
 ## Visual Aid
@@ -301,6 +345,18 @@ All configuration properties are verified as used in `ResourceService.cs`.
 │  │   ],                                                                │   │
 │  │   CreatedAt, SourceDataDeleted                                      │   │
 │  │ }                                                                   │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  resource-snapshots (Redis with TTL)                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Key: snap:{snapshotId}                                              │   │
+│  │ Type: JSON object (ResourceSnapshotModel) with Redis TTL            │   │
+│  │ Value: {                                                            │   │
+│  │   SnapshotId, ResourceType, ResourceId, SnapshotType,               │   │
+│  │   Entries: [ ... ] (same format as archives),                       │   │
+│  │   CreatedAt, ExpiresAt                                              │   │
+│  │ }                                                                   │   │
+│  │ Auto-deleted: When Redis TTL expires (default 1 hour)               │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -551,6 +607,14 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed (Historical)
 
+- **2026-02-03**: Added ephemeral snapshot system for living entities:
+  - 2 new endpoints (`/resource/snapshot/execute`, `/resource/snapshot/get`)
+  - 1 new state store (`resource-snapshots` for Redis TTL-based storage)
+  - 1 new event (`resource.snapshot.created`)
+  - 3 configuration properties (`SnapshotDefaultTtlSeconds`, `SnapshotMinTtlSeconds`, `SnapshotMaxTtlSeconds`)
+  - Uses compression callbacks (same as permanent archival) but stores ephemerally
+  - Intended for Storyline Composer and Actor behaviors needing living entity data
+
 - **2026-02-03**: Added centralized compression system:
   - 5 new compression endpoints (`/compress/define`, `/compress/execute`, `/decompress/execute`, `/compress/list`, `/archive/get`)
   - 2 new state stores (`resource-compress` for callbacks, `resource-archives` for MySQL durable storage)
@@ -569,12 +633,13 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 The lib-resource service is feature-complete for the current integration requirements:
 - Schema files (api, events, configuration)
-- State store definitions (resource-refcounts, resource-cleanup, resource-grace, resource-compress, resource-archives)
+- State store definitions (resource-refcounts, resource-cleanup, resource-grace, resource-compress, resource-archives, resource-snapshots)
 - Service implementation with ICacheableStateStore for atomic set operations
 - Event handlers for reference tracking wired up via IEventConsumer
-- Unit tests (48 tests covering reference counting, grace periods, cleanup policies, compression)
+- Unit tests covering reference counting, grace periods, cleanup policies, compression, and snapshots
 - OnDeleteAction enum (CASCADE/RESTRICT/DETACH) for per-callback deletion behavior
 - CompressionPolicy enum (ALL_REQUIRED/BEST_EFFORT) for compression callback failure handling
+- Ephemeral snapshot system for living entity data capture
 
 **Integrated Consumers** (Reference Tracking & Cleanup):
 - lib-actor: `x-references` schema, `/actor/cleanup-by-character` endpoint
