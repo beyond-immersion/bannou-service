@@ -22,6 +22,19 @@ This command ensures deep dive documents are:
 
 All builds and tests are assumed passing. You are reading code to update docs, not modifying code.
 
+## ⛔ CRITICAL: THIS WORKFLOW REQUIRES EDITING THE DOCUMENT
+
+**This workflow is NOT just verification and reporting. You MUST edit the document.**
+
+If you complete this workflow without making any Edit tool calls to the deep dive document, **you have failed the workflow**. The only exception is if the document is already perfect (extremely rare).
+
+**"Process" means EDIT, not "verify and report":**
+- "Process FIXED items" = verify in code, then DELETE or MOVE the line using Edit tool
+- "Update the document" = use Edit tool to change the file
+- "Remove entirely" = use Edit tool to delete the line
+
+**Verification without editing is a workflow failure.**
+
 ## Critical Rules: Markers and Fixed Items
 
 ### Preserve AUDIT Markers (Active Work)
@@ -35,18 +48,32 @@ All builds and tests are assumed passing. You are reading code to update docs, n
 
 These are managed by `/audit-plugin` and represent active work tracking.
 
-### Process FIXED Items (Completed Work)
+### Process FIXED/IMPLEMENTED/MOVED Items (Completed Work)
 
-**ALWAYS verify and process these inline markers:**
+**You MUST verify AND edit (not just verify) these inline markers:**
+
+**FIXED items** (in Bugs, Stubs, Design Considerations):
 ```markdown
 N. ~~**Original title**~~: **FIXED** (YYYY-MM-DD) - Description of fix.
 ```
 
-These were completed by `/audit-plugin` and need verification:
-1. Verify the fix exists in source code
-2. If fix has non-obvious behavior → Move to "Intentional Quirks"
-3. If fix is clean with no quirks → Remove entirely
-4. If fix is missing (bug still exists!) → Restore as active bug
+**IMPLEMENTED items** (in Potential Extensions, Stubs):
+```markdown
+N. ~~**Feature name**~~: **IMPLEMENTED** (YYYY-MM-DD) - Description.
+```
+
+**MOVED items** (in Design Considerations):
+```markdown
+N. ~~**Issue title**~~: **MOVED TO QUIRKS** (YYYY-MM-DD) - Reason.
+```
+
+**For ALL of these, you MUST:**
+1. Verify the fix/implementation/move exists in source code or document
+2. **DELETE the line entirely using the Edit tool** (if clean with no quirks)
+3. Or **MOVE to Intentional Quirks using Edit tool** (if non-obvious behavior remains)
+4. Or **RESTORE as active item** (if the fix is missing from code)
+
+**Leaving strikethrough items in place is a workflow failure.**
 
 ## Workflow Phases
 
@@ -137,7 +164,9 @@ plugins/lib-{service}.tests/
 
 ### Phase 4: Content Accuracy Verification
 
-Compare the deep dive document against source code findings:
+Compare the deep dive document against source code findings.
+
+**NOTE: This phase IDENTIFIES inaccuracies. You will FIX them in Phase 6 using the Edit tool.**
 
 **For each section, verify:**
 
@@ -215,176 +244,227 @@ Systematically review the code for issues. Check for:
 - Are "intentional quirks" actually intentional? (check comments/tests)
 - Are "design considerations" still relevant?
 
-### Phase 5b: Verify Fixed Items
+### Phase 5b: Process Strikethrough Items (FIXED/IMPLEMENTED/MOVED)
 
-Scan for items marked with the `/audit-plugin` FIXED format:
+Scan for ALL items with strikethrough formatting. These include:
 
 ```markdown
-N. ~~**Original title**~~: **FIXED** (YYYY-MM-DD) - Description of the fix.
+N. ~~**Title**~~: **FIXED** (YYYY-MM-DD) - Description.
+N. ~~**Title**~~: **IMPLEMENTED** (YYYY-MM-DD) - Description.
+N. ~~**Title**~~: **MOVED TO QUIRKS** (YYYY-MM-DD) - Description.
 ```
 
-**For each FIXED item, you MUST:**
+**⛔ CRITICAL: For EACH strikethrough item, you MUST make an Edit tool call.**
 
-1. **Verify the fix exists in code**
-   - Read the relevant source code
-   - Confirm the described fix is actually implemented
-   - If the fix is NOT present, remove the FIXED marker and restore it as an active bug
+"Verify and report" is NOT sufficient. You must EDIT the document.
 
-2. **Assess if non-obvious behavior remains**
-   Ask: "Would a developer using this API be surprised by the current behavior?"
+**For each strikethrough item:**
 
-   **Non-obvious behavior examples:**
-   - Uses unconventional lock ordering (alphabetical, GUID-based, etc.)
-   - Has unusual error handling (warnings instead of errors, silent failures)
-   - Modifies state in unexpected places
-   - Has performance characteristics worth noting
-   - Behavior differs from similar methods in the same service
+1. **Verify in source code** that the fix/implementation/move actually exists
 
-   **NOT non-obvious (just remove entirely):**
-   - Standard fix that makes behavior match expectations
-   - Bug was internal implementation detail users never saw
-   - Fix aligns with how other similar code works
+2. **Decide the action:**
+   - **DELETE** (most common): Fix is clean, no quirks, just remove the line
+   - **MOVE TO QUIRKS**: Fix introduced non-obvious behavior worth documenting
+   - **RESTORE AS ACTIVE**: Fix is missing from code, remove strikethrough
 
-3. **Take action:**
+3. **IMMEDIATELY make the Edit tool call** - do NOT batch these for later
 
-   **If fix verified AND no non-obvious behavior remains:**
-   - DELETE the entire line from the Bugs section
-   - This keeps the doc clean - fixed bugs with standard behavior don't need documentation
+**Non-obvious behavior (warrants MOVE TO QUIRKS):**
+- Uses unconventional lock ordering
+- Has unusual error handling (warnings instead of errors, silent failures)
+- Behavior differs from similar methods in the same service
+- Performance characteristics worth noting
 
-   **If fix verified AND non-obvious behavior remains:**
-   - MOVE to "Intentional Quirks (Documented Behavior)" section
-   - REWRITE as a quirk (not a bug), explaining the current behavior:
-   ```markdown
-   N. **Descriptive title of current behavior**: {Explanation of what happens and why it matters to developers}
-   ```
-   - Example transformation:
-     - Before (in Bugs): `~~**MergeStacks only locks source container**~~: **FIXED** (2026-01-30) - Now locks both containers using deterministic GUID ordering.`
-     - After (in Quirks): `**MergeStacks uses deterministic lock ordering**: When merging stacks across containers, locks are acquired in GUID order (smaller first) to prevent deadlocks. Operations may briefly conflict if another operation is locking in the opposite order.`
+**NOT non-obvious (just DELETE):**
+- Standard fix that makes behavior match expectations
+- Bug was internal implementation detail users never saw
+- Fix aligns with how other similar code works
 
-4. **Update Work Tracking:**
-   - Move the "Completed" entry from Work Tracking to a "Historical" subsection if you want to preserve history
-   - Or simply remove it if the doc is getting cluttered
+**Example DELETE edit:**
+```
+Old: 1. ~~**Broken validation**~~: **FIXED** (2026-01-30) - Added null check.
+New: (delete the entire line)
+```
 
-**FIXED Item Verification Report Format:**
+**Example MOVE TO QUIRKS edit:**
+Delete from Bugs section:
+```
+Old: 1. ~~**MergeStacks locking**~~: **FIXED** (2026-01-30) - Now uses GUID ordering.
+New: (delete the line)
+```
+Add to Intentional Quirks section:
+```
+N. **MergeStacks uses deterministic lock ordering**: Locks acquired in GUID order (smaller first) to prevent deadlocks.
+```
+
+**Work Tracking cleanup (MANDATORY):**
+- DELETE all entries in "Completed" subsection that correspond to processed strikethrough items
+- If Work Tracking becomes empty, leave just the section header
+- Do NOT keep historical clutter - the git history preserves this
+
+**After processing ALL strikethrough items, create this table:**
 ```markdown
-### FIXED Item Verification
+### Strikethrough Items Processed
 
-| Item | Fix Verified | Has Quirks | Action |
-|------|-------------|------------|--------|
-| MergeStacks locking | Yes | Yes (lock ordering) | Move to Quirks |
-| SplitStack validation | Yes | No | Remove |
-| Cache TTL bug | No (still broken!) | N/A | Restore as Bug |
+| Item | Location | Action Taken | Edit Made |
+|------|----------|--------------|-----------|
+| Broken validation | Bugs #1 | Deleted | Yes |
+| MergeStacks locking | Bugs #2 | Moved to Quirks #5 | Yes |
+| Store metrics | Potential Extensions #1 | Deleted | Yes |
 ```
 
-### Phase 6: Document Update
+**⛔ If the "Edit Made" column has any "No" entries, you have failed this phase.**
 
-Based on Phases 2-5, update the document:
+### Phase 6: Document Update (MANDATORY EDITS)
 
-**Structure fixes:**
+**⛔ This phase REQUIRES Edit tool calls. If you have nothing to edit, re-check your work.**
+
+Based on Phases 2-5, make ALL necessary edits to the document:
+
+**Structure fixes (use Edit tool):**
 - Add missing sections with appropriate content
 - Fix section ordering to match template
 - Fix table formatting issues
 
-**Content updates:**
+**Content updates (use Edit tool):**
 - Add missing dependencies/dependents
 - Add missing state key patterns
 - Add missing events
 - Add missing configuration properties
 - Update outdated information
+- Remove obsolete information that no longer matches code
 
-**Quirks updates:**
+**Quirks updates (use Edit tool):**
 - Add newly discovered bugs to "Bugs (Fix Immediately)"
 - Add newly discovered quirks to appropriate section
-- Process FIXED items per Phase 5b (remove clean fixes, move quirky fixes to Intentional Quirks)
+- **Strikethrough items MUST already be processed in Phase 5b** - if any remain, go back
 - Preserve all AUDIT markers exactly as they are (IN_PROGRESS, NEEDS_DESIGN, BLOCKED)
 
-**Work Tracking section:**
+**Work Tracking section (use Edit tool):**
 - Add section 14 if missing
-- Do NOT modify existing markers
-- If items with markers have been fixed, note this but do not remove marker (let audit-plugin handle it)
+- DELETE all "Completed" entries that correspond to processed strikethrough items
+- Do NOT modify AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED)
 
-### Phase 7: Quality Check
+**⛔ CHECKPOINT before proceeding to Phase 7:**
+
+Count your Edit tool calls in this session. If the count is ZERO and you found ANY of the following, STOP and go back:
+- Strikethrough items (FIXED/IMPLEMENTED/MOVED)
+- Missing sections
+- Inaccurate content
+- Outdated information
+- Clutter in Work Tracking
+
+A maintenance workflow with zero edits is almost always a failure.
+
+### Phase 7: Quality Check (VERIFY EDITS WERE MADE)
 
 **IMPORTANT: This is documentation maintenance only. Do NOT build code or run tests.**
-All builds and tests are assumed passing. You are only updating the markdown documentation.
 
 Before finalizing, verify:
 
-1. **Check for marker preservation:**
-   - Count AUDIT markers before and after
-   - Must be equal (or more if you added new work tracking section)
+1. **⛔ MANDATORY: Verify edits were made:**
+   - Count Edit tool calls made to the deep dive document in this session
+   - If count is ZERO, **STOP** - you likely missed something, go back to Phase 5b/6
+   - The only valid reason for zero edits is a perfect document (extremely rare)
 
-2. **Verify all tables are valid markdown:**
+2. **Verify NO strikethrough items remain:**
+   - Search the document for `~~**` pattern
+   - If ANY strikethrough items remain, **STOP** - go back to Phase 5b
+   - Strikethrough items must be DELETED or MOVED, never left in place
+
+3. **Check for marker preservation:**
+   - Count AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED) before and after
+   - Must be equal (or more if you added new work tracking section)
+   - These are the ONLY markers that should remain
+
+4. **Verify Work Tracking is clean:**
+   - "Completed" subsection should NOT contain entries for items you just processed
+   - Historical clutter should be removed
+
+5. **Verify all tables are valid markdown:**
    - Consistent column counts
    - Proper alignment syntax
    - No broken pipe characters
 
 ### Phase 8: Report
 
+**⛔ Before generating this report, verify:**
+- You made Edit tool calls to the document (check your tool call history)
+- No strikethrough items remain in the document
+- Work Tracking "Completed" section is cleaned up
+
 **Final Report Format:**
 ```markdown
 ## Maintenance Complete: {Plugin Name}
 
 ### Summary
-- **Sections added:** {count}
-- **Sections updated:** {count}
-- **Bugs discovered:** {count}
-- **Quirks documented:** {count}
+- **Edit tool calls made:** {count} ← MUST be > 0 unless document was perfect
+- **Strikethrough items found:** {count}
+- **Strikethrough items processed:** {count} ← MUST equal found count
 - **AUDIT markers preserved:** {count}
-- **FIXED items processed:** {count}
-  - Removed (clean fixes): {count}
-  - Moved to Quirks: {count}
-  - Restored as bugs (fix missing): {count}
 
-### Changes Made
+### Edits Made (REQUIRED - list actual edits)
 
-#### Structural
-{List of structure changes}
+| Edit # | Section | Change |
+|--------|---------|--------|
+| 1 | Bugs | Deleted line: "~~**Broken validation**~~: **FIXED**..." |
+| 2 | Quirks | Added: "**Lock ordering behavior**: ..." |
+| 3 | Work Tracking | Deleted 3 completed entries |
 
-#### Content
-{List of content updates}
+### Strikethrough Items Processed
 
-#### Quirks
-{List of new items added to quirks sections}
+| Item | Original Location | Action | New Location (if moved) |
+|------|-------------------|--------|-------------------------|
+| Broken validation | Bugs #1 | Deleted | N/A |
+| Lock ordering | Bugs #2 | Moved | Quirks #5 |
+| Store metrics | Potential Extensions #1 | Deleted | N/A |
 
-#### FIXED Items Processed
-| Item | Action | Notes |
-|------|--------|-------|
-| {title} | {Removed/Moved to Quirks/Restored} | {brief note} |
+### Content Corrections (if any)
+{List any factual corrections made to match source code}
 
 ### Document Status
 - Template compliance: {Full/Partial}
-- Content accuracy: {Verified/Needs follow-up}
+- Strikethrough items remaining: **0** ← MUST be 0
 - Ready for /audit-plugin: {Yes/No}
-
-### Recommendations
-{Any follow-up actions needed}
 ```
+
+**⛔ WORKFLOW FAILURE CONDITIONS:**
+- "Edit tool calls made: 0" with strikethrough items found > 0
+- "Strikethrough items processed" < "Strikethrough items found"
+- "Strikethrough items remaining" > 0
+- Empty "Edits Made" table when changes were needed
+
+If any of these conditions are true, DO NOT report success. Go back and fix.
 
 ## Important Guidelines
 
-### DO:
+### MUST DO (workflow fails without these):
+- **EDIT the document** - verification without editing is failure
+- **DELETE all strikethrough items** (FIXED/IMPLEMENTED/MOVED) - none may remain
+- **CLEAN UP Work Tracking** - remove processed "Completed" entries
 - Read every line of service code
 - Verify claims against actual source
-- Add newly discovered issues
-- Preserve existing AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED)
-- Process FIXED items by verifying the fix exists in code
-- Move FIXED items with non-obvious behavior to Intentional Quirks
-- Remove FIXED items that are clean fixes with no quirks
-- Use tables for structured data
+- Preserve AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED)
 
-### DO NOT:
-- Remove AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED - ever!)
-- Leave FIXED items unprocessed (they must be verified and either removed or moved)
+### MUST NOT DO (these are workflow failures):
+- **Leave strikethrough items in document** - they must be deleted or moved
+- **Report "0 edits" when strikethrough items exist** - you missed the point
+- **Say "Already documented" without editing** - if it's marked FIXED, delete the mark
+- **Verify without acting** - verification is step 1, editing is step 2
+- Remove AUDIT markers (IN_PROGRESS, NEEDS_DESIGN, BLOCKED)
 - Guess at behavior without reading code
-- Copy from generated docs verbatim
-- Remove bug entries without verifying fix in actual code
 - Add speculative information
-- Skip reading test files
+
+### Common Failures to Avoid:
+- ❌ "I verified the fix exists" → but didn't delete the FIXED line
+- ❌ "Already in Work Tracking" → Work Tracking should be cleaned up too
+- ❌ "All content accurate" → but left 5 strikethrough items in place
+- ❌ "No changes needed" → when document has FIXED/IMPLEMENTED markers
+- ❌ Generating a report without making any Edit tool calls
 
 ### When Uncertain:
 - If behavior is unclear, note it as a quirk with "Needs investigation"
-- If fix status is unclear, leave AUDIT markers in place
+- If fix status is unclear, leave AUDIT markers in place (but still delete FIXED markers)
 - If section content is ambiguous, add a comment like `<!-- TODO: verify X -->`
 
 ## Error Recovery
@@ -396,3 +476,6 @@ If you encounter issues:
 3. **Tests missing:** Note in doc that test coverage is lacking
 4. **Build fails:** Do not proceed with updates until build is fixed
 5. **Conflicting information:** Prefer source code over existing documentation
+6. **Made zero edits but found strikethrough items:** GO BACK. You failed Phase 5b. Strikethrough items MUST be deleted or moved using the Edit tool. "Verifying" them is not enough.
+7. **Reported "no changes needed" but document has FIXED/IMPLEMENTED markers:** GO BACK. These markers are instructions to delete/move the lines, not to verify and leave in place.
+8. **Work Tracking has long "Completed" section:** DELETE entries corresponding to strikethrough items you processed. Don't preserve clutter.
