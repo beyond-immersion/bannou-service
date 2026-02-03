@@ -1,7 +1,7 @@
 # Service Hierarchy Violations Tracker
 
 > **Created**: 2026-02-01
-> **Updated**: 2026-02-02 (Character L4 dependencies removed)
+> **Updated**: 2026-02-03 (Contract → Location violation discovered)
 > **Purpose**: Track and remediate violations of the service dependency hierarchy
 
 This document tracks known violations of the service hierarchy, their severity under the 5-layer model, and suggested remediation patterns.
@@ -13,7 +13,7 @@ This document tracks known violations of the service hierarchy, their severity u
 | Layer | Name | Services |
 |-------|------|----------|
 | **L0** | Infrastructure | lib-state, lib-messaging, lib-mesh |
-| **L1** | App Foundation | account, auth, connect, permission, contract |
+| **L1** | App Foundation | account, auth, connect, permission, contract, resource |
 | **L2** | Game Foundation | game-service, realm, character, species, location, relationship-type, relationship, subscription, currency, item, inventory |
 | **L3** | App Features | asset, telemetry, orchestrator, documentation, website, testing, mesh, messaging, state |
 | **L4** | Game Features | actor, analytics*, behavior, mapping, scene, matchmaking, leaderboard, achievement, voice, save-load, music, game-session, escrow, character-personality, character-history, character-encounter, realm-history |
@@ -166,6 +166,34 @@ For comprehensive reference tracking including L4 services, the recommended patt
 
 ---
 
+### 11. Contract → Location (CRITICAL - NEW)
+
+**Service**: lib-contract (L1 App Foundation)
+**Violating Dependencies**:
+- `ILocationClient` (L2)
+
+**Location**: `ContractService.cs` line 40 (field), line 201 (constructor), line 1889 (usage)
+
+**Violation Type**: L1 → L2 (App Foundation depending on Game Foundation)
+
+**Original Intent**: Get location ancestry for contract clause validation (e.g., "within this region").
+
+**Impact**: Contract service cannot function in non-game deployments because it requires L2 Location service.
+
+**Suggested Remediation Options**:
+
+1. **Option A: Remove location validation** - If location-based contract clauses are rare, remove the feature entirely and use prebound APIs that callers validate.
+
+2. **Option B: Make location validation optional** - Check for LocationClient availability at runtime; skip location validation if unavailable. Log warning when location clauses are used without Location service.
+
+3. **Option C: Move location clause logic to L4** - Create a "ContractExtensions" service in L4 that subscribes to `contract.clause.validating` events and provides location-based validation. Contract (L1) publishes the event with location ID; ContractExtensions (L4) validates and publishes result.
+
+**Recommended**: Option B (graceful degradation) or Option C (event-driven extension)
+
+**Status**: P1 - CRITICAL (L1 → L2 violation prevents non-game deployments)
+
+---
+
 ## Confirmed Event Subscription Violations
 
 ### 7. Auth subscribes to subscription.updated (RESOLVED)
@@ -288,6 +316,7 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 | Priority | # | Violation | Reason |
 |----------|---|-----------|--------|
+| **P1** | 11 | Contract → Location | CRITICAL: L1 → L2 prevents non-game deployments |
 | **P3** | 6 | GameSession → Voice | Design improvement - invert dependency |
 | ✅ | 1 | Character → Actor/Encounter | Resolved by removing L4 dependencies |
 | ✅ | 2 | Character → Personality/History | Resolved by removing L4 dependencies |
@@ -301,10 +330,10 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 | Category | Count | Status |
 |----------|-------|--------|
-| L1 → L2 (App Foundation → Game Foundation) | 0 | ✅ All resolved |
+| L1 → L2 (App Foundation → Game Foundation) | 1 | **P1 - Contract → Location** |
 | L2 → L4 (Game Foundation → Game Features) | 0 | ✅ All resolved |
 | L4 → L4 (Design issues) | 1 | P3 - GameSession → Voice |
-| **Total active violations** | **1** | **1 P3** |
+| **Total active violations** | **2** | **1 P1, 1 P3** |
 | ✅ Resolved by removal | 2 | Character → Actor/Encounter/Personality/History |
 | ✅ Resolved by deletion | 2 | Auth → Subscription removed |
 | ✅ Resolved by reclassification | 4 | Analytics moved to L4 |
@@ -314,9 +343,10 @@ Realm deletion needs to verify no Location/Character references, but shouldn't q
 
 ## Next Steps
 
-1. **P2**: Implement missing event cascades (#152)
-2. **P3**: Invert GameSession → Voice dependency
-3. **Optional**: Implement event-driven reference registration for L4 reference tracking (if comprehensive cleanup eligibility checking is needed)
+1. **P1**: Remove Contract → Location dependency (#11) - L1 cannot depend on L2
+2. **P2**: Implement missing event cascades (#152)
+3. **P3**: Invert GameSession → Voice dependency
+4. **Optional**: Implement event-driven reference registration for L4 reference tracking (if comprehensive cleanup eligibility checking is needed)
 
 **Completed**:
 - ✅ Character → Actor/Encounter dependencies removed (IActorClient and ICharacterEncounterClient removed from CharacterService; CheckCharacterReferencesAsync now only checks L2/L1 services)

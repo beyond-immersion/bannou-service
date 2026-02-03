@@ -57,7 +57,11 @@ public sealed class DistributedCircuitBreaker
         _logger = logger;
         _threshold = threshold;
         _resetTimeout = resetTimeout;
-        _keyPrefix = "mesh:cb:";
+
+        // Use schema-defined key prefix from StateStoreDefinitions (per FOUNDATION TENETS - schema-first)
+        var config = StateStoreDefinitions.Configurations[StateStoreDefinitions.MeshCircuitBreaker];
+        _keyPrefix = config.KeyPrefix ?? throw new InvalidOperationException(
+            $"MeshCircuitBreaker store configuration missing KeyPrefix in state-stores.yaml");
 
         if (_redis == null)
         {
@@ -289,7 +293,7 @@ public sealed class DistributedCircuitBreaker
         _localCache.Clear();
     }
 
-    private string GetRedisKey(string appId) => $"{_keyPrefix}{appId}";
+    private string GetRedisKey(string appId) => $"{_keyPrefix}:{appId}";
 
     private async Task PublishStateChangeAsync(
         string appId,

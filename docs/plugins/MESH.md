@@ -251,6 +251,8 @@ Event-Driven Auto-Registration
 1. **`RegisterEndpointRequest.Metadata` not stored**: The schema defines `metadata` on `RegisterEndpointRequest` but `RegisterEndpointAsync` in `MeshService.cs:172-198` never reads or stores `body.Metadata`. Any metadata passed by clients is silently discarded.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/161 -->
 
+2. **Circuit breaker bypasses state store factory**: `mesh-circuit-breaker` is defined in `state-stores.yaml` with prefix `mesh:cb` and `StateStoreDefinitions.MeshCircuitBreaker` is generated, but `DistributedCircuitBreaker` uses a hardcoded `_keyPrefix = "mesh:cb:"` with raw `IRedisOperations` instead. This violates schema-first principles - either refactor to use the state store definition or remove the unused schema entry.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **HeartbeatStatus.Overloaded maps to EndpointStatus.Degraded**: The status mapping is lossy - `Overloaded` and `Degraded` heartbeat statuses both become `Degraded` endpoint status. No distinct "overloaded" endpoint state exists.
@@ -268,8 +270,6 @@ Event-Driven Auto-Registration
 7. **Empty service mappings reset to default routing**: When `HandleServiceMappingsAsync` receives a `FullServiceMappingsEvent` with empty mappings, it resets all routing to the default app-id ("bannou"). This is intentional for container teardown scenarios.
 
 8. **Health check deregistration uses configurable threshold**: After `HealthCheckFailureThreshold` (default 3) consecutive probe failures, endpoints are automatically deregistered with `HealthCheckFailed` reason. Set threshold to 0 to disable deregistration and rely solely on TTL expiry.
-
-9. **Circuit breaker bypasses state store factory**: Although `mesh-circuit-breaker` is defined in `state-stores.yaml` with prefix `mesh:cb`, the `DistributedCircuitBreaker` class uses raw `IRedisOperations` directly with a hardcoded `_keyPrefix = "mesh:cb:"`. This is because it requires Lua script execution for atomic state transitions, which isn't available through the standard `IStateStore<T>` interface. The schema definition serves as documentation only.
 
 ### Design Considerations (Requires Planning)
 
