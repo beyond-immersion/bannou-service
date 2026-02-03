@@ -917,7 +917,7 @@ public partial class ResourceService : IResourceService
                 if (result.IsSuccess && result.Result.StatusCode >= 200 && result.Result.StatusCode < 300)
                 {
                     // Get the response body and compress it
-                    var responseJson = result.Result.Body;
+                    var responseJson = result.Result.ResponseBody ?? "{}";
                     var originalBytes = System.Text.Encoding.UTF8.GetBytes(responseJson);
                     var compressedData = CompressJsonData(responseJson);
                     var checksum = ComputeChecksum(originalBytes);

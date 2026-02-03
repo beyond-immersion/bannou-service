@@ -1237,9 +1237,18 @@ public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
                 return default;
             }
 
+            // Check string fields first
             if (entry.Fields.TryGetValue(field, out var json))
             {
                 return BannouJson.Deserialize<TField>(json);
+            }
+
+            // Check numeric fields (used by HashIncrementAsync)
+            if (entry.NumericFields.TryGetValue(field, out var numValue))
+            {
+                // Serialize then deserialize to convert to TField
+                var numJson = BannouJson.Serialize(numValue);
+                return BannouJson.Deserialize<TField>(numJson);
             }
 
             return default;

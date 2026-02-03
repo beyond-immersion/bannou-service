@@ -213,16 +213,14 @@ public class InMemoryHashTests : IDisposable
     }
 
     [Fact]
-    public async Task HashGetAsync_WithWrongType_DeserializesOrReturnsDefault()
+    public async Task HashGetAsync_WithWrongType_ThrowsJsonException()
     {
         // Arrange - Store a string
         await _store.HashSetAsync("user:123", "data", "not-an-int");
 
-        // Act - Try to read as int (should handle gracefully)
-        var result = await _store.HashGetAsync<int>("user:123", "data");
-
-        // Assert - Default value for int
-        Assert.Equal(0, result);
+        // Act & Assert - Try to read as int should throw JsonException
+        await Assert.ThrowsAsync<System.Text.Json.JsonException>(async () =>
+            await _store.HashGetAsync<int>("user:123", "data"));
     }
 
     #endregion
@@ -411,17 +409,14 @@ public class InMemoryHashTests : IDisposable
     }
 
     [Fact]
-    public async Task HashIncrementAsync_WithNonNumericField_ThrowsOrReturnsZero()
+    public async Task HashIncrementAsync_WithNonNumericField_ThrowsJsonException()
     {
         // Arrange - Store a non-numeric value
         await _store.HashSetAsync("counters", "name", "Alice");
 
-        // Act - Increment should start from 0 (treating non-parseable as 0)
-        var result = await _store.HashIncrementAsync("counters", "name", 5);
-
-        // Assert - Implementation choice: starts from 0 or throws
-        // Our InMemory implementation starts from 0 when field can't be parsed as long
-        Assert.Equal(5, result);
+        // Act & Assert - Increment on non-numeric field throws JsonException
+        await Assert.ThrowsAsync<System.Text.Json.JsonException>(async () =>
+            await _store.HashIncrementAsync("counters", "name", 5));
     }
 
     #endregion
