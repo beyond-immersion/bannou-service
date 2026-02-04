@@ -1,8 +1,35 @@
 # Storyline SDK Gap Analysis
 
-> **Status**: Analysis Complete, Phase 1 Complete, Phase 2 Complete, Phase 3 Complete
+> **Status**: Analysis Complete, Phase 1-3 Complete, Phase 4 Planning Complete, SDK_FOUNDATIONS Audit Complete
 > **Date**: 2026-02-04 (updated)
 > **Purpose**: Identify missing components between research YAML files and complete SDK implementation
+
+## Recent Progress
+
+### SDK_FOUNDATIONS Audit (COMPLETE)
+- **Audited**: `SDK_REWRITE_PLAN.md` against `SDK_FOUNDATIONS.md`
+- **Decisions Made**:
+  1. TimeoutBehavior: `ForceTransition` only (others deferred)
+  2. Actant Roles: **Included** - Greimas' 6 actant roles for character-agnostic templates
+  3. KernelExtractor: **Separate** from ArchiveExtractor (different purposes)
+  4. Exclusion Logic: Schema metadata (`EffectCardinality`), not runtime Praxis patterns
+  5. Typed Intents: Generic `StoryIntentType` enum (SDK pure, plugin dispatches)
+  6. Plot Units: **Deferred** to future enhancement
+- **Plan Updated**: Version 1.2 with all audit decisions incorporated
+
+### Phase 4: SDK Rewrite Planning (COMPLETE)
+- **Created**: `SDK_REWRITE_PLAN.md` - Comprehensive implementation plan
+- **Key Decisions**:
+  - YAML files will be **directly loaded as data** (not just documentation)
+  - Two-layer architecture: `storyline-theory` (primitives) + `storyline-storyteller` (composition)
+  - Follows music SDK precedent (`music-theory` + `music-storyteller`)
+  - 6-phase implementation order (Phase 0-5) with validation checkpoints
+- **File Mappings**:
+  - `narrative-state.yaml` → `storyline-theory` (NarrativeState, SpectrumTypes, ActantRole)
+  - `emotional-arcs.yaml` → `storyline-theory` (EmotionalArc, ArcType)
+  - `story-actions.yaml` → `storyline-storyteller` (ActionRegistry, StoryAction, EffectCardinality)
+  - `story-templates.yaml` → `storyline-storyteller` (TemplateRegistry, StoryPhase)
+- **Next Step**: Begin Phase 0 (generation pipeline setup) or Phase 1 (storyline-theory foundation)
 
 ## Executive Summary
 
