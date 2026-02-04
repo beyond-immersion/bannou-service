@@ -170,30 +170,31 @@ narrative_state:
 
 ### Gap 2: Cross-Framework Mapping
 
-**Type**: Integration using NCP schema infrastructure (see Research Sprint Results)
+**Type**: Integration (SUPERSEDED - see "Decision History: NCP Hub Approach" below)
 
-**Current State**:
+**2026-02-04 DECISION**: Skip cross-framework mapping entirely. Use each framework for its specific concern.
+
+**Original Problem Statement**:
 - Each framework uses different units: percentages (STC), sentiment values (Arcs), events (Propp), scenes (Story Grid)
-- `emotional-arcs.yaml` has 2 partial beat mappings (man_in_hole, cinderella)
-- **NCP provides `custom_appreciation_namespace` for exactly this purpose**
-- **NCP's 144 narrative functions can serve as the hub vocabulary**
+- Original assumption: These frameworks describe the same thing in different vocabularies, requiring a "Rosetta Stone"
 
-**What's Missing** (mapping content, not schema):
+**Revised Understanding** (see `CROSS_FRAMEWORK_ANALYSIS.md`):
+These frameworks describe **different concerns** that work together, not competing descriptions:
 
-| From | To NCP Function | Status |
-|------|-----------------|--------|
-| Propp 31 Functions → NCP Functions | **TODO** | Map by semantic equivalence |
-| STC 16 Beats → NCP Functions | **TODO** | Map by narrative purpose |
-| Story Grid Scenes → NCP Functions | **TODO** | Map by structural role |
+| Framework | What It Describes | Role In Our System |
+|-----------|-------------------|--------------------|
+| **Story Grid** | WHAT MUST happen (requirements) | Genre constraints, obligatory scenes |
+| **Save the Cat** | WHEN things happen (timing) | Template phase boundaries |
+| **Reagan Arcs** | WHAT SHAPE (trajectory) | Value curve for primary spectrum |
+| **Propp Functions** | WHAT CAN happen (events) | Action library inspiration |
 
-**Note on Reagan Arcs**: Reagan arcs are **continuous mathematical functions** f(t) that output a value 0-1 at any normalized time t. They do NOT have discrete phases that map to NCP functions. Instead:
-- Reagan arcs provide the **shape** of how the primary Life Value spectrum changes over time
-- At any t, f(t) gives the current position on that spectrum
-- This is orthogonal to NCP function mapping - NCP functions are discrete events, Reagan arcs are continuous curves
+**No Translation Needed**: Each framework contributes its unique concern to the system. They don't translate to each other - they constrain/inform each other at different layers.
 
-**Resolved by NCP**: Schema structure for bidirectional framework lookup.
+**Deliverables** (replacing cross-framework-mapping.yaml):
+1. `story-actions.yaml` - GOAP actions inspired by Propp + Story Grid
+2. `story-templates.yaml` - Arc templates with STC timing + Reagan shape + genre constraints
 
-**Still Required**: Populate the mappings with our framework-specific data (Propp, STC, Story Grid only - Reagan is value curve, not event sequence).
+**Note on Reagan Arcs**: Reagan arcs are **continuous mathematical functions** f(t) → [0,1] that output the position on the primary Life Value spectrum at any normalized time t. They provide SHAPE, not events.
 
 ---
 
@@ -304,32 +305,32 @@ extraction_rules:
 
 ### Gap 6: Framework Compatibility Matrix
 
-**Type**: Integration (we derive empirically or define heuristically)
+**Type**: Integration (derivable from template usage patterns)
+
+**Status**: Partially addressed by subgenre arc mapping (2026-02-04)
 
 **Current State**:
 - `emotional-arcs.yaml` has `generation_guidance.recommendations_by_genre` (lines 439-445)
-- `save-the-cat-beats.yaml` genres are different from Story Grid genres
-- No unified compatibility assessment
+- `story-grid-genres.yaml` now has `arc_direction` + `compatible_arcs` per subgenre
+- Compatibility is now encoded at the subgenre level, not via cross-framework mapping
 
-**What's Missing**:
+**What's Already Done** (via subgenre mapping):
+- Each subgenre has `arc_direction`: "positive" | "negative" | "either"
+- Each subgenre has `compatible_arcs`: list of Reagan arc codes
+- This eliminates the need for a separate compatibility matrix for arc selection
+
+**What's Still Missing** (lower priority):
 ```yaml
+# Optional future work - can derive empirically from template usage
 compatibility_matrix:
-  # Story Grid Content Genre → Recommended Emotional Arcs
+  # Only needed if we want to document Propp path preferences
   action:
-    primary_arcs: [man_in_hole, cinderella]
-    secondary_arcs: [rags_to_riches]
-    avoid_arcs: [tragedy, oedipus]  # Action audiences expect triumph
-    stc_genre_mapping: [monster_in_the_house, dude_with_a_problem, golden_fleece]
     propp_path_preference: struggle  # vs task
-
   horror:
-    primary_arcs: [icarus, oedipus, tragedy]
-    avoid_arcs: [rags_to_riches]
-    stc_genre_mapping: [monster_in_the_house]
     propp_path_preference: struggle
 ```
 
-**Dependencies**: Gap 2 (Cross-Framework Mapping)
+**Dependencies**: None (subgenre mapping provides the essential data)
 
 ---
 
@@ -390,38 +391,40 @@ These gaps are almost certainly our own synthesis work:
 ## Dependency Graph
 
 ```
-                    ┌─────────────────────┐
-                    │  Gap 2: Cross-      │
-                    │  Framework Mapping  │◄──── USE NCP AS HUB SCHEMA
-                    │  (populate NCP      │      (~/repos/narrative-context-protocol)
-                    │   namespaces)       │
-                    └─────────┬───────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              │               │               │
-              ▼               ▼               ▼
-    ┌─────────────────┐ ┌───────────┐ ┌─────────────────┐
-    │ Gap 6:          │ │ Gap 3:    │ │ Gap 4:          │
-    │ Compatibility   │ │ Narrative │ │ Story Actions   │
-    │ Matrix          │ │ Templates │ │ (NCP functions  │
-    │ (derivable from │ │           │ │  → GOAP actions)│
-    │  NCP mappings)  │ │           │ │                 │
-    └─────────────────┘ └─────┬─────┘ └────────┬────────┘
-                              │                │
-                              │                │
-                              ▼                ▼
-                    ┌─────────────────────────────────┐
-                    │     Gap 1: NarrativeState       │◄──── FOUNDATIONAL
-                    │     (align with NCP storypoint  │      (can use NCP structure)
-                    │      structure)                 │
-                    └─────────────────┬───────────────┘
+                    ┌─────────────────────────────────────────┐
+                    │        DIRECT APPROACH (2026-02-04)      │
+                    │  Each framework used for its concern:    │
+                    │  • Story Grid → Genre Constraints        │
+                    │  • Save the Cat → Template Timing        │
+                    │  • Reagan → Trajectory Shape             │
+                    │  • Propp → Action Inspiration            │
+                    └─────────────────┬───────────────────────┘
                                       │
-                                      ▼
-                    ┌─────────────────────────────────┐
-                    │     Gap 5: Archive Extraction   │
-                    │     (depends on NarrativeState  │
-                    │      for scoring)               │
-                    └─────────────────────────────────┘
+              ┌───────────────────────┼───────────────────────┐
+              │                       │                       │
+              ▼                       ▼                       ▼
+    ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+    │ Gap 6:          │     │ Gap 3:          │     │ Gap 4:          │
+    │ Compatibility   │     │ Story Templates │     │ Story Actions   │
+    │ Matrix          │     │ (STC timing +   │     │ (Propp-inspired │
+    │ (derivable from │     │  Reagan shape)  │     │  + Story Grid)  │
+    │ template usage) │     │                 │     │                 │
+    └─────────────────┘     └────────┬────────┘     └────────┬────────┘
+                                     │                       │
+                                     │                       │
+                                     ▼                       ▼
+                    ┌─────────────────────────────────────────┐
+                    │       Gap 1: NarrativeState             │◄──── FOUNDATIONAL
+                    │  (10 Life Value spectrums from          │      (Story Grid source)
+                    │   Story Grid Four Core Framework)       │
+                    └─────────────────────┬───────────────────┘
+                                          │
+                                          ▼
+                    ┌─────────────────────────────────────────┐
+                    │       Gap 5: Archive Extraction         │
+                    │       (depends on NarrativeState        │
+                    │        for scoring)                     │
+                    └─────────────────────────────────────────┘
 ```
 
 ---
@@ -439,14 +442,14 @@ Before building, spend bounded time (1-2 days) searching for existing cross-fram
 
 Define NarrativeState as canonical SDK type. This unblocks everything else.
 
-### Phase 2: Mapping (Gap 2, if research found nothing)
+### Phase 2: Actions & Templates (Gap 4 + Gap 3)
 
-Create cross-framework mapping. This is the hardest intellectual work.
+**REVISED 2026-02-04**: Skip cross-framework mapping. Build actions and templates directly.
 
-Approach options:
-1. **Temporal alignment**: Map everything to percentage-of-story timeline
-2. **Functional equivalence**: Match by narrative purpose/effect
-3. **Empirical analysis**: Analyze existing stories with all four lenses
+Approach (from CROSS_FRAMEWORK_ANALYSIS.md):
+1. **Action Library**: Define GOAP actions inspired by Propp functions + Story Grid obligatory scenes
+2. **Template Library**: Define story arc templates with STC timing, Reagan shape, and genre constraints
+3. **No translation hub**: Each framework contributes its concern directly to NarrativeState
 
 ### Phase 3: Actions (Gap 4)
 
@@ -704,7 +707,24 @@ Primary source defines subgenres that affect value trajectory:
 | Tragic | Fall from grace |
 | Sentimental | Unearned success |
 
-**Action Required**: Add subgenre support to genre definitions. Subgenre affects which Reagan arc shapes are compatible.
+**COMPLETED (2026-02-04)**: Added `arc_direction` and `compatible_arcs` fields to all subgenres in `story-grid-genres.yaml`.
+
+**Implementation Details**:
+- `arc_direction`: "positive" | "negative" | "either" - constrains ending valence
+- `compatible_arcs`: list of Reagan arc codes from `narrative-state.yaml`
+- Positive arcs (end_range ≥ 0.7): rags_to_riches, man_in_hole, cinderella
+- Negative arcs (end_range ≤ 0.3): tragedy, icarus, oedipus
+- "either" allows all six arcs
+
+**Arc Direction Derivation**:
+- Internal genres: derived from spectrum direction (Maturation: Naivete→Sophistication = positive)
+- External genres: derived from genre conventions (Murder Mystery: detective restores justice = positive)
+- Domain-based genres (Thriller subgenres): all "either" since domain adds flavor, not arc constraint
+- Performance genres: all "either" due to "win-but-lose / lose-but-win" convention
+
+**Source Citations**:
+- Internal genre mappings: GAP_ANALYSIS.md lines 684-705 (Worldview, Morality, Status subgenre tables)
+- External genre mappings: Story Grid genre research documents in ~/repos/story-analysis/research/
 
 #### 5. Obligatory Scenes (for future Gap 3/4 work)
 
@@ -837,7 +857,7 @@ If the research sprint yields nothing substantial, we proceed with original synt
 - [x] Gap analysis complete
 - [x] Path forward documented
 - [x] **COMPLETE**: Research sprint for cross-framework mappings
-- [x] **DECISION MADE**: Use NCP as hub schema for cross-framework mapping
+- [x] **SUPERSEDED** ~~Use NCP as hub schema~~ → Direct approach (2026-02-04, see Decision History below)
 - [x] **COMPLETE**: Audit of existing research documents for gap-filling potential
 - [x] **COMPLETE**: Primary source extraction (`docs/research/STORY-GRID-PRIMARY-SOURCE.md`)
 - [x] **Phase 1: NarrativeState schema** → `schemas/storyline/narrative-state.yaml`
@@ -854,17 +874,59 @@ If the research sprint yields nothing substantial, we proceed with original synt
   - **DONE**: Added `contrary` field to all 10 spectrums (4-stage model per primary source)
   - **DONE**: Worldview keeps `wisdom_ignorance` spectrum (2026-02-04 decision) - concepts overlap with "meaning/meaninglessness", labels include both
   - **DONE**: Performance genre remapped to `success_failure` (2026-02-04 decision) - primary source says "Accomplishment vs Failure" which maps directly
-  - **TODO**: Add subgenre support for internal genres (affects arc compatibility) - requires architectural design
-- [ ] Phase 2: Framework-to-NCP mappings (Propp→NCP, STC→NCP, StoryGrid→NCP)
-  - **Note**: Reagan arcs are VALUE CURVES, not event sequences - they don't map to NCP functions
-  - Reagan arcs provide the SHAPE of how Life Value spectrums change over time f(t)→[0,1]
-- [ ] Phase 3: Story actions library (NCP functions as action templates)
+  - **DONE**: Subgenre arc mapping → `arc_direction` + `compatible_arcs` added to all subgenres in `story-grid-genres.yaml`
+- [ ] Phase 2: Story Actions Library → `schemas/storyline/story-actions.yaml`
+  - GOAP actions inspired by Propp functions + Story Grid obligatory scenes
   - **TODO**: Model crisis types (Best Bad Choice vs Irreconcilable Goods)
-- [ ] Phase 4: Narrative templates (leverage NCP's Four Throughlines + Nine Dynamics)
   - **TODO**: Capture obligatory scenes per genre from primary source
   - **TODO**: Capture conventions per genre from primary source
-- [ ] Phase 5: Archive extraction rules
-- [ ] Phase 6: Compatibility matrix (derivable from NCP mappings)
+- [ ] Phase 3: Story Templates → `schemas/storyline/story-templates.yaml`
+  - STC timing for phase boundaries
+  - Reagan arc shapes for trajectory constraints
+  - Genre constraints from Story Grid
+- [ ] Phase 4: Archive extraction rules
+- [ ] Phase 5: Compatibility matrix (derivable from template usage patterns)
+
+### Decision History: NCP Hub Approach (2026-02-04)
+
+**Context**: During the research sprint, we discovered the Narrative Context Protocol (NCP) - a JSON schema from The Dramatica Co. with 144 narrative functions and `custom_appreciation_namespace` for cross-framework mapping.
+
+**Original Plan**: Use NCP as a "hub" schema where we'd map:
+- Propp 31 functions → NCP functions
+- STC 16 beats → NCP functions
+- Story Grid scenes → NCP functions
+
+Then use NCP functions as the canonical vocabulary for GOAP actions.
+
+**Why We Considered It**:
+- NCP explicitly supports `custom_appreciation_namespace` for multi-framework annotations
+- 144 narrative functions seemed like a good translation intermediary
+- Appeared to solve the "Rosetta Stone" problem of framework interoperability
+
+**Why We're Skipping It** (see `CROSS_FRAMEWORK_ANALYSIS.md` for full analysis):
+
+1. **Wrong Problem Statement**: The frameworks don't describe the same thing in different vocabularies - they describe **different concerns** that layer together:
+   - Story Grid: Requirements (what MUST happen)
+   - Save the Cat: Timing (WHEN things happen)
+   - Reagan: Shape (trajectory of value change)
+   - Propp: Events (WHAT CAN happen)
+
+2. **Music SDK Precedent**: The music-storyteller SDK (our architectural inspiration) doesn't map between frameworks - it defines ONE state space (EmotionalState) and all actions/templates operate on it. We should follow the same pattern.
+
+3. **Added Complexity Without Benefit**: Mapping Propp→NCP→GOAP adds a translation layer. Mapping Propp→GOAP directly is simpler and achieves the same result.
+
+4. **NCP Is Itself a Framework**: NCP is Dramatica's vocabulary. Mapping to NCP means adopting Dramatica's worldview, which may not align with our needs.
+
+**What This Changes**:
+- No `cross-framework-mapping.yaml` deliverable
+- Actions derive directly from Propp + Story Grid (inspiration, not translation)
+- Templates use STC timing + Reagan shapes + genre constraints (composition, not mapping)
+- NCP research remains documented in `docs/research/NARRATIVE-CONTEXT-PROTOCOL.md` for reference
+
+**What This Does NOT Change**:
+- NarrativeState remains 10 Life Value spectrums from Story Grid
+- Reagan arcs still provide trajectory shapes
+- The overall architecture of state + actions + templates remains the same
 
 ---
 
@@ -1084,16 +1146,20 @@ compatibility_matrix:
 
 ## Research Sprint Results (2026-02-03)
 
+> **UPDATE 2026-02-04**: The NCP findings below are preserved for reference, but we have decided NOT to use NCP as a hub schema. See "Decision History: NCP Hub Approach" in Current Status section for full rationale. The research remains valuable for understanding the narrative structure landscape.
+
 ### Executive Summary
 
-**The Narrative Context Protocol (NCP) solves the schema infrastructure problem for Gap 2.** While no pre-built mapping between our four frameworks exists, NCP provides:
+**The Narrative Context Protocol (NCP) was identified as a potential hub schema for Gap 2.** While no pre-built mapping between our four frameworks exists, NCP provides:
 
 1. **The schema structure** for cross-framework mapping via `custom_appreciation_namespace`
 2. **145 canonical narrative functions** that can serve as translation intermediaries
 3. **979 appreciations** organized by the Four Throughlines
 4. **Framework-agnostic design** explicitly intended for multi-methodology support
 
-We don't need to invent a mapping schema - we need to populate NCP's existing schema with our Propp/STC/StoryGrid/Reagan mappings.
+~~We don't need to invent a mapping schema - we need to populate NCP's existing schema with our Propp/STC/StoryGrid/Reagan mappings.~~
+
+**SUPERSEDED**: After further analysis (see `CROSS_FRAMEWORK_ANALYSIS.md`), we determined that framework-to-framework mapping is the wrong approach. The frameworks describe different concerns (timing, shape, events, requirements) that compose rather than translate.
 
 ### KEY FINDING: Narrative Context Protocol (NCP)
 
@@ -1254,102 +1320,54 @@ Multiple formal ontologies exist but:
 | Story Grid ↔ Reagan arcs mapping | **NOT FOUND** |
 | Any unified model covering all four | **NOT FOUND** |
 
-### Conclusion
+### Conclusion (Historical - Superseded 2026-02-04)
 
-**NCP provides the schema infrastructure; we provide the mapping content.** The discovery changes our approach:
+> **Note**: This conclusion reflects our thinking during the research sprint. It was later superseded by the "direct approach" decision. See `CROSS_FRAMEWORK_ANALYSIS.md` for current thinking.
 
-| Original Assumption | Revised Understanding |
-|---------------------|----------------------|
-| We need to invent a mapping schema | NCP's `custom_appreciation_namespace` already exists |
-| We need a canonical function vocabulary | NCP's 144 narrative functions are our vocabulary |
-| Mapping Propp↔STC↔StoryGrid is 3 pairwise mappings | Map each event framework to NCP functions (3 mappings, hub-and-spoke); Reagan arcs are orthogonal value curves |
-| Gap 2 is entirely original synthesis | Gap 2 is populating an existing schema with our framework data |
+~~**NCP provides the schema infrastructure; we provide the mapping content.**~~
 
-**What we still do ourselves**:
-1. Map Propp's 31 functions to NCP narrative functions
-2. Map STC's 16 beats to NCP narrative functions
-3. Map Story Grid's obligatory scenes to NCP narrative functions
-4. Define NarrativeState deltas for each NCP function (using Story Grid Life Value spectrums)
-5. Select Reagan arc shape per template (continuous value curve, orthogonal to NCP event mapping)
+| Research Sprint Assumption | Final Understanding (2026-02-04) |
+|---------------------------|----------------------------------|
+| We need to map frameworks to each other | Each framework serves a different concern - no mapping needed |
+| NCP's 144 functions are our vocabulary | Our vocabulary is Story Grid's 10 Life Value spectrums |
+| Gap 2 is populating NCP with framework data | Gap 2 is eliminated - frameworks compose, don't translate |
 
-**What NCP gives us**:
-1. JSON Schema structure (v1.2.0, Draft-07 compliant)
-2. Cross-framework namespace pattern
-3. Four Throughlines for perspective tracking
-4. Nine Dynamics for story outcome constraints
-5. Storybeat sequencing with scope hierarchy
+**What NCP research taught us** (still valuable):
+1. The "Four Throughlines" concept (Objective, Main Character, Impact Character, Relationship) may inform future template design
+2. The "Nine Dynamics" for story outcome constraints could inform genre constraint modeling
+3. The schema design patterns (JSON Schema, namespace extensions) are solid examples
+4. Comprehensive documentation of Dramatica methodology is a useful reference
 
-### Recommended Mapping Approach (Revised)
+**Why we're not using NCP**:
+1. It adds a translation layer between frameworks that's unnecessary
+2. The frameworks describe orthogonal concerns, not competing vocabularies
+3. The music SDK pattern (one state space, actions affect it) is simpler and proven
 
-With NCP as the hub, we propose a **hub-and-spoke mapping strategy**:
+### Recommended Mapping Approach (SUPERSEDED 2026-02-04)
+
+> **Note**: This section describes the hub-and-spoke NCP strategy we originally proposed. It has been superseded by the "direct approach" - see `CROSS_FRAMEWORK_ANALYSIS.md` for current thinking.
+
+~~With NCP as the hub, we propose a **hub-and-spoke mapping strategy**~~:
 
 ```
-         ┌─────────────┐
-         │    Propp    │
-         │ 31 Functions│
-         └──────┬──────┘
-                │
-    ┌───────────┼───────────┐
-    │           │           │
-    ▼           ▼           ▼
-┌───────┐  ┌────────────┐  ┌──────────┐
-│ Save  │  │    NCP     │  │  Story   │
-│ the   │◄─┤   144      ├─►│  Grid    │
-│ Cat   │  │ Functions  │  │ Scenes   │
-└───────┘  └────────────┘  └──────────┘
+SUPERSEDED DIAGRAM - See CROSS_FRAMEWORK_ANALYSIS.md for current approach
 
-         ┌─────────────┐
-         │   Reagan    │ ─────► VALUE CURVES (orthogonal)
-         │   6 Arcs    │        Applied to Life Value spectrums
-         └─────────────┘        Not mapped to NCP functions
+Old approach:  Propp ─┬──► NCP Hub ◄──┬─ STC
+                      └──────────────┘
+                                      └─ Story Grid
+
+New approach:  Each framework contributes its specific concern directly:
+               • Propp ──────► Action Library (inspired by)
+               • STC ────────► Template Timing (use directly)
+               • Story Grid ──► Genre Constraints (use directly)
+               • Reagan ─────► Trajectory Shape (use directly)
+                                    │
+                                    ▼
+                              NarrativeState
+                              (10 Life Value spectrums)
 ```
 
-**Key insight**: Reagan arcs are NOT part of the hub-and-spoke. They are continuous value curves f(t) → [0,1] that describe HOW a Life Value spectrum changes over time. NCP functions are discrete narrative events. These are orthogonal concepts - Reagan provides shape, NCP/Propp/STC/StoryGrid provide events.
-
-**Phase 1: Map discrete event frameworks to NCP functions**
-
-For Propp, STC, and Story Grid (discrete event/beat frameworks), identify which NCP narrative function(s) correspond:
-
-```yaml
-# Example: Propp → NCP mapping
-propp_to_ncp:
-  VILLAINY:
-    ncp_functions: [Temptation, Threat, Uncontrolled]
-    typical_position: 0.10  # Timeline position (orthogonal to Reagan arc)
-    # Note: narrative_state_delta uses Story Grid Life Value spectrums
-
-  MEDIATION:
-    ncp_functions: [Aware, Consider, Knowledge]
-    typical_position: 0.12
-```
-
-**Reagan arcs are handled separately** - they provide the continuous value curve f(t) that determines the SHAPE of Life Value spectrum changes, not discrete events.
-
-**Phase 2: Use NCP `custom_appreciation_namespace` for bidirectional lookup**
-
-```json
-{
-    "narrative_function": "Temptation",
-    "custom_appreciation_namespace": {
-        "Propp": "VILLAINY",
-        "Save the Cat": "CATALYST",
-        "Story Grid": "Inciting Incident"
-    }
-}
-```
-
-**Note**: Reagan arcs are NOT included in namespace mappings because they are continuous value functions, not discrete events. Reagan arc selection (e.g., "man_in_hole") determines the SHAPE of primary spectrum change over time - a separate concern from event sequencing.
-
-**Phase 3: Normalize to timeline + NarrativeState**
-
-- All frameworks already have implicit or explicit timing
-- NCP's `sequence` field provides temporal ordering
-- Map each function to NarrativeState deltas
-- Reagan's arcs provide the "shape" that constrains delta sequences
-
-**Phase 4: Validate empirically**
-
-Analyze known stories through all five lenses (four frameworks + NCP) to verify mappings produce coherent results.
+**Why the old approach was wrong**: We assumed the frameworks were describing the same thing in different vocabularies. They're not - they describe different concerns (timing, shape, events, requirements) that layer together without translation.
 
 ---
 
@@ -1365,12 +1383,13 @@ Analyze known stories through all five lenses (four frameworks + NCP) to verify 
 ### Primary Source Extractions
 - **`docs/research/STORY-GRID-PRIMARY-SOURCE.md`** - Comprehensive extraction of Shawn Coyne's Story Grid methodology (extracted 2026-02-04). Authoritative reference for genre classifications, Four Core Framework, value spectrums, Five Commandments, obligatory scenes, and conventions.
 
-### Hub Schema (NCP)
+### NCP Research (Preserved for Reference - Not Used as Hub)
 - **The Dramatica Co.** (2024). Narrative Context Protocol Specification v1.2.0
 - **arXiv**: 2503.04844
 - **Local Repository**: `~/repos/narrative-context-protocol`
 - **Research Summary**: `docs/research/NARRATIVE-CONTEXT-PROTOCOL.md`
 - Phillips, M.A., & Huntley, C. (1993). *Dramatica: A New Theory of Story*
+- **Note**: NCP was considered as a hub schema for cross-framework mapping. Decision made 2026-02-04 to skip this approach in favor of direct framework composition. See `CROSS_FRAMEWORK_ANALYSIS.md` for rationale.
 
 ### Additional Research Documents (in docs/research/)
 

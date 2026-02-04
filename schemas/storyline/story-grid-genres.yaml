@@ -496,13 +496,25 @@ external_genres:
 
     subgenres:
       adventure:
+        description: "Quest-driven action through hostile environments"
         plots: ["Labyrinth", "Monster", "Environment", "Doomsday"]
+        arc_direction: "either"  # Quest outcome varies by plot
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
       duel:
+        description: "Personal combat between antagonists"
         plots: ["Revenge", "Hunted", "Machiavellian", "Collision"]
+        arc_direction: "either"  # Revenge can succeed or destroy the avenger
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
       epic:
+        description: "Large-scale heroic struggle against systemic evil"
         plots: ["Rebellion", "Conspiracy", "Vigilante", "Savior"]
+        arc_direction: "positive"  # Rebellion/savior typically triumphs
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
       clock:
+        description: "Time-pressured action with deadline stakes"
         plots: ["Ransom", "Countdown", "Holdout", "Fate"]
+        arc_direction: "either"  # Time pressure, outcome varies by story
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   horror:
     name: "Horror"
@@ -546,12 +558,21 @@ external_genres:
         description: "TWO endings required - monster appears defeated but isn't"
 
     subgenres:
-      - name: "Uncanny"
+      uncanny:
+        name: "Uncanny"
         description: "Rational evil (psychopaths, aliens)"
-      - name: "Supernatural"
+        arc_direction: "negative"  # Rational evil usually prevails or corrupts
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      supernatural:
+        name: "Supernatural"
         description: "Spirit-world evil (possession, undead)"
-      - name: "Ambiguous"
+        arc_direction: "negative"  # Cosmic/demonic horror typically ends badly
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      ambiguous:
+        name: "Ambiguous"
         description: "Unexplained evil"
+        arc_direction: "either"  # Ending uncertain by design
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   thriller:
     name: "Thriller"
@@ -587,31 +608,81 @@ external_genres:
       - name: "False Ending"
         description: "Two endings required"
 
+    # Thriller subgenres are domain-based (setting/context), not arc-determinative
+    # The domain adds flavor but does not constrain narrative outcome
     subgenres:
-      - name: "Serial Killer"
+      serial_killer:
+        name: "Serial Killer"
+        description: "Hunting a methodical murderer"
         example: "Red Dragon"
-      - name: "Medical"
+        arc_direction: "either"  # Hero can triumph or face damnation
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      medical:
+        name: "Medical"
+        description: "Conspiracy or threat in healthcare setting"
         example: "Coma"
-      - name: "Legal"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      legal:
+        name: "Legal"
+        description: "Courtroom or judicial thriller"
         example: "And Justice for All"
-      - name: "Psychological"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      psychological:
+        name: "Psychological"
+        description: "Mind games and mental manipulation"
         example: "Primal Fear"
-      - name: "Espionage"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      espionage:
+        name: "Espionage"
+        description: "Spy thriller with intelligence agencies"
         example: "The Bourne Identity"
-      - name: "Child in Jeopardy"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      child_in_jeopardy:
+        name: "Child in Jeopardy"
+        description: "Child as victim or target"
         example: "The Client"
-      - name: "Military"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      military:
+        name: "Military"
+        description: "Military context thriller"
         example: "Seven Days in May"
-      - name: "Political"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      political:
+        name: "Political"
+        description: "Political intrigue and conspiracy"
         example: "Marathon Man"
-      - name: "Journalism"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      journalism:
+        name: "Journalism"
+        description: "Reporter uncovering dangerous truth"
         example: "The Scarecrow"
-      - name: "Financial"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      financial:
+        name: "Financial"
+        description: "Financial world conspiracy"
         example: "Numbered Account"
-      - name: "Woman in Jeopardy"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      woman_in_jeopardy:
+        name: "Woman in Jeopardy"
+        description: "Female protagonist facing stalker/threat"
         example: "The Girl on the Train"
-      - name: "Hitchcock"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      hitchcock:
+        name: "Hitchcock"
+        description: "Ordinary person caught in extraordinary circumstances"
         example: "Rear Window"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   crime:
     name: "Crime"
@@ -658,9 +729,41 @@ external_genres:
 
     subgenres:
       murder_mystery:
-        types: ["Master Detective", "Cozy", "Historical", "Noir/Hardboiled", "Paranormal", "Police Procedural"]
-      other:
-        types: ["Organized Crime", "Caper", "Courtroom", "Newsroom", "Espionage", "Prison"]
+        name: "Murder Mystery"
+        description: "Detective solves homicide case"
+        types: ["Master Detective", "Cozy", "Historical", "Paranormal", "Police Procedural"]
+        arc_direction: "positive"  # Detective restores justice
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      noir:
+        name: "Noir/Hardboiled"
+        description: "Cynical world where corruption often wins"
+        types: ["Classic Noir", "Neo-Noir", "Tech Noir"]
+        arc_direction: "negative"  # Corruption wins, detective compromised
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      caper:
+        name: "Caper/Heist"
+        description: "Criminal crew pulls off elaborate scheme"
+        types: ["Heist", "Con Game", "Jewel Theft"]
+        arc_direction: "positive"  # Crew achieves goal (typically)
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      organized_crime:
+        name: "Organized Crime"
+        description: "Crime family or syndicate dynamics"
+        types: ["Mafia", "Cartel", "Gang"]
+        arc_direction: "either"  # Rise or fall within organization
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      courtroom:
+        name: "Courtroom"
+        description: "Legal proceedings reveal truth"
+        types: ["Criminal Trial", "Civil Case", "Legal Procedural"]
+        arc_direction: "either"  # Justice may or may not prevail
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      prison:
+        name: "Prison"
+        description: "Survival and justice within penal system"
+        types: ["Escape", "Reform", "Survival"]
+        arc_direction: "either"  # Redemption or corruption
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   love:
     name: "Love"
@@ -708,12 +811,21 @@ external_genres:
         description: "Final coming together"
 
     subgenres:
-      - name: "Obsession (Desire)"
-        description: "Cautionary, often tragic"
-      - name: "Courtship (Commitment)"
-        description: "Prescriptive, happily ever after"
-      - name: "Marriage (Intimacy)"
-        description: "Realistic, maintaining love"
+      obsession:
+        name: "Obsession (Desire)"
+        description: "Cautionary tale of intoxicating passion, often tragic"
+        arc_direction: "negative"  # Obsessive love destroys
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      courtship:
+        name: "Courtship (Commitment)"
+        description: "Prescriptive romance leading to happily ever after"
+        arc_direction: "positive"  # Love triumphs
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      marriage:
+        name: "Marriage (Intimacy)"
+        description: "Realistic story of maintaining or repairing existing love"
+        arc_direction: "either"  # Can repair or dissolve
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   war:
     name: "War"
@@ -759,9 +871,21 @@ external_genres:
         description: "Survivors receive recognition"
 
     subgenres:
-      - "Pro War"
-      - "Anti-War"
-      - "Kinship of War"
+      pro_war:
+        name: "Pro War"
+        description: "War as honorable necessity, victory through valor"
+        arc_direction: "positive"  # Honor achieved through victory
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      anti_war:
+        name: "Anti-War"
+        description: "War as destructive tragedy that destroys all it touches"
+        arc_direction: "negative"  # War destroys everyone
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      kinship:
+        name: "Kinship of War"
+        description: "Focus on brotherhood and bonds formed under fire"
+        arc_direction: "either"  # Brotherhood focus, outcome varies
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   society:
     name: "Society"
@@ -809,15 +933,24 @@ external_genres:
         description: "Protagonist's sacrifice acknowledged"
 
     subgenres:
-      - name: "First Party"
-        description: "Family members or close friends vs tyrant"
+      first_party:
+        name: "First Party"
+        description: "Family members or close friends vs domestic tyrant"
         examples: ["Ethan Frome", "Ordinary People", "Long Day's Journey into Night"]
-      - name: "Second Party"
-        description: "Tribe or identity group vs tyrant"
+        arc_direction: "either"  # Family struggles often bittersweet
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      second_party:
+        name: "Second Party"
+        description: "Tribe or identity group vs institutional tyrant"
         examples: ["Animal Farm", "Dead Poets Society"]
-      - name: "Third Party"
-        description: "Mass groups vs tyrant"
+        arc_direction: "either"  # Revolution can succeed or fail (Animal Farm ends badly)
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      third_party:
+        name: "Third Party"
+        description: "Mass groups vs societal/governmental tyrant"
         examples: ["1984", "Brave New World", "Ragtime"]
+        arc_direction: "either"  # Tyrants can win (1984) or fall
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   western_eastern:
     name: "Western/Eastern"
@@ -864,9 +997,21 @@ external_genres:
         description: "Hero's actions validated"
 
     subgenres:
-      - "Vengeance"
-      - "Transition"
-      - "Professional"
+      vengeance:
+        name: "Vengeance"
+        description: "Stranger arrives to right a wrong, typically succeeds"
+        arc_direction: "positive"  # Stranger restores justice/balance
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      transition:
+        name: "Transition"
+        description: "Old ways vs new, hero exiled or caught between worlds"
+        arc_direction: "either"  # Hero may win new world or lose everything
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      professional:
+        name: "Professional"
+        description: "Hero doing a job, outcome secondary to method"
+        arc_direction: "either"  # Job completed but personal cost varies
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   performance:
     name: "Performance"
@@ -912,11 +1057,29 @@ external_genres:
       - name: "Rewarded"
         description: "Recognition (external, interpersonal, or internal)"
 
+    # Performance subgenres all follow "win-but-lose or lose-but-win" convention
+    # External victory/defeat is often inverted against internal growth
     subgenres:
-      - "Sports"
-      - "Business/Profession"
-      - "Art"
-      - "Performing Arts"
+      sports:
+        name: "Sports"
+        description: "Athletic competition as proving ground"
+        arc_direction: "either"  # Win-but-lose or lose-but-win convention
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      business:
+        name: "Business/Profession"
+        description: "Corporate or professional competition"
+        arc_direction: "either"  # Same bittersweet pattern as sports
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      art:
+        name: "Art"
+        description: "Artistic achievement and recognition"
+        arc_direction: "either"  # External success often at personal cost
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      performing_arts:
+        name: "Performing Arts"
+        description: "Stage, music, or entertainment performance"
+        arc_direction: "either"  # Show must go on, but at what cost?
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
 # =============================================================================
 # INTERNAL GENRES (3)
@@ -970,14 +1133,30 @@ internal_genres:
         description: "Ignorance replaced with wisdom"
 
     subgenres:
-      - name: "Maturation"
+      maturation:
+        name: "Maturation"
+        description: "Coming of age, naive protagonist grows sophisticated"
         spectrum: "Naivete → Sophistication"
-      - name: "Disillusionment"
+        arc_direction: "positive"  # Growth toward sophistication
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      disillusionment:
+        name: "Disillusionment"
+        description: "Idealist confronts harsh reality, beliefs shattered"
         spectrum: "Belief → Disillusionment"
-      - name: "Education"
+        arc_direction: "negative"  # Loss of belief/hope
+        compatible_arcs: ["tragedy", "icarus"]
+      education:
+        name: "Education"
+        description: "Protagonist discovers meaning in meaningless world"
         spectrum: "Meaninglessness → Meaning"
-      - name: "Revelation"
+        arc_direction: "positive"  # Gains meaning/purpose
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      revelation:
+        name: "Revelation"
+        description: "Hidden truth revealed, protagonist gains wisdom"
         spectrum: "Ignorance → Wisdom"
+        arc_direction: "either"  # Truth can liberate or devastate
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
 
   morality:
     name: "Morality"
@@ -1017,14 +1196,26 @@ internal_genres:
         description: "Literal or metaphorical death with consequences"
 
     subgenres:
-      - name: "Punitive"
-        description: "Protagonist suffers deserved misfortune"
-      - name: "Redemption"
-        description: "Begins wrong, ends better"
-      - name: "Testing - Triumph"
-        description: "Remains morally steadfast"
-      - name: "Testing - Surrender"
-        description: "Cannot maintain moral code"
+      punitive:
+        name: "Punitive"
+        description: "Protagonist suffers deserved misfortune for moral failings"
+        arc_direction: "negative"  # Bad → worse
+        compatible_arcs: ["tragedy", "icarus"]
+      redemption:
+        name: "Redemption"
+        description: "Morally compromised protagonist finds path to good"
+        arc_direction: "positive"  # Bad → good
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      testing_triumph:
+        name: "Testing - Triumph"
+        description: "Good protagonist remains morally steadfast under pressure"
+        arc_direction: "either"  # Outcome depends on cost of moral victory
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      testing_surrender:
+        name: "Testing - Surrender"
+        description: "Good protagonist fails to maintain moral code under pressure"
+        arc_direction: "negative"  # Moral failure
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
 
   status:
     name: "Status"
@@ -1071,14 +1262,26 @@ internal_genres:
         description: "Outcome based on choice made"
 
     subgenres:
-      - name: "Pathetic"
-        description: "Attempts rising, fails"
-      - name: "Tragic"
-        description: "Mistake causes downfall"
-      - name: "Sentimental"
-        description: "Weak protagonist succeeds"
-      - name: "Admiration"
-        description: "Principled rise without compromise"
+      pathetic:
+        name: "Pathetic"
+        description: "Protagonist attempts to rise but fails due to character flaws"
+        arc_direction: "negative"  # Rise then fall (Icarus pattern)
+        compatible_arcs: ["icarus"]
+      tragic:
+        name: "Tragic"
+        description: "Protagonist's fatal mistake causes their downfall"
+        arc_direction: "negative"  # Fall from grace
+        compatible_arcs: ["tragedy"]
+      sentimental:
+        name: "Sentimental"
+        description: "Weak or underdog protagonist succeeds against odds"
+        arc_direction: "positive"  # Cinderella pattern - rise-fall-rise
+        compatible_arcs: ["cinderella"]
+      admiration:
+        name: "Admiration"
+        description: "Principled protagonist rises without compromising values"
+        arc_direction: "positive"  # Steady rise to success
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
 
 # =============================================================================
 # META-GENRE CATEGORIES (FIVE-LEAF GENRE CLOVER)
