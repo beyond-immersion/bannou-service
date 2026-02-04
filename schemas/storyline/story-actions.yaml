@@ -15,7 +15,7 @@
 #   - Cost semantics: micro (0.5-0.8), standard (1.0-1.5), macro (2.0-3.0)
 #   - Chained actions for multi-phase story beats (not deferred effects)
 
-version: "1.0"
+version: "1.1"
 source: "Propp Functions + Story Grid Obligatory Scenes + Save the Cat Beats"
 
 # =============================================================================
@@ -1131,6 +1131,88 @@ actions:
         description: "One rescues the other, proving love"
         probability_weight: 0.7
 
+  first_kiss:
+    category: "relationship"
+    universal_name: "First Kiss / First Connection"
+    description: |
+      The first physical or emotional intimacy between lovers.
+      Confirms mutual attraction beyond initial meeting.
+      A pivotal moment that deepens the relationship.
+
+    cost: 1.0
+
+    preconditions:
+      lovers.met: true
+      attraction.mutual: true
+
+    effects:
+      first_connection.established: true
+      relationship.deepened: true
+
+    narrative_effect:
+      primary_spectrum: +0.2
+      love_hate: +0.25
+
+    genre_labels:
+      love: "First Kiss"
+
+    satisfies_obligatory:
+      love: ["first_kiss_connection"]
+
+    variants:
+      - id: "romantic_kiss"
+        description: "Traditional romantic first kiss"
+        probability_weight: 1.0
+      - id: "emotional_connection"
+        description: "Deep conversation or shared vulnerability"
+        probability_weight: 0.9
+      - id: "physical_intimacy"
+        description: "First physical closeness beyond a kiss"
+        probability_weight: 0.7
+
+  confession_of_love:
+    category: "relationship"
+    universal_name: "Confession of Love"
+    description: |
+      One lover verbally declares their feelings.
+      A vulnerable moment that changes the relationship dynamic.
+      Can be reciprocated immediately or create tension.
+
+    cost: 1.2
+
+    preconditions:
+      first_connection.established: true
+      feelings.developed: true
+
+    effects:
+      love.declared: true
+      vulnerability.exposed: true
+
+    narrative_effect:
+      primary_spectrum: +0.15
+      love_hate: +0.2
+
+    genre_labels:
+      love: "Confession of Love"
+
+    satisfies_obligatory:
+      love: ["confession_of_love"]
+
+    variants:
+      - id: "reciprocated"
+        description: "Confession met with mutual declaration"
+        probability_weight: 0.8
+        effect_modifiers:
+          love.mutual: true
+      - id: "rejected"
+        description: "Confession not reciprocated (yet)"
+        probability_weight: 0.5
+        effect_modifiers:
+          rejection.experienced: true
+      - id: "interrupted"
+        description: "Confession cut short by external events"
+        probability_weight: 0.6
+
   training_montage:
     category: "transformation"
     universal_name: "Training Montage / Preparation"
@@ -1598,6 +1680,50 @@ actions:
         description: "Detail noticed by protagonist"
         probability_weight: 0.8
 
+  progressive_clue_following:
+    category: "mystery"
+    universal_name: "Progressive Clue Following"
+    description: |
+      The investigator connects evidence to build the case.
+      Each clue leads to the next, creating investigative momentum.
+      The audience sees the detective's methodology.
+
+    cost: 0.8
+
+    preconditions:
+      clue.available: true
+      investigation.in_progress: true
+
+    effects:
+      clues.connected: true
+      investigation.progressed: true
+      suspect_pool.narrowed: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      wisdom_ignorance: +0.15
+      justice_injustice: +0.1
+
+    genre_labels:
+      crime: "Progressive Clue Following"
+
+    satisfies_obligatory:
+      crime: ["progressive_clue_following"]
+
+    variants:
+      - id: "forensic_analysis"
+        description: "Physical evidence examined and interpreted"
+        probability_weight: 1.0
+      - id: "witness_interview"
+        description: "Information extracted through questioning"
+        probability_weight: 0.9
+      - id: "document_discovery"
+        description: "Paper trail or records reveal truth"
+        probability_weight: 0.8
+      - id: "pattern_recognition"
+        description: "Detective notices connection others missed"
+        probability_weight: 0.7
+
   reveal_secret:
     category: "mystery"
     universal_name: "Reveal Secret"
@@ -1725,6 +1851,14 @@ references:
 # =============================================================================
 
 changelog:
+  - version: "1.1"
+    date: "2026-02-04"
+    changes:
+      - "Added: first_kiss action for Love genre"
+      - "Added: confession_of_love action for Love genre"
+      - "Added: progressive_clue_following action for Crime genre"
+      - "Full obligatory scene coverage achieved for all 12 genres"
+
   - version: "1.0"
     date: "2026-02-04"
     changes:

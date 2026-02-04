@@ -19,7 +19,7 @@ Story actions are the atomic units that GOAP uses to compose narratives. This an
 | Obligatory Scenes | Hybrid: tagged actions + template validation |
 | Conventions | WorldState preconditions + soft validation |
 | Genre-Specific Actions | Universal actions with genre-contextual labels |
-| Minimum Action Count | ~50 actions with variant system |
+| Action Library Scope | Phased development: obligatory focus, Propp as inspiration only |
 
 These decisions optimize for:
 - **Compositional flexibility** (GOAP can find creative paths)
@@ -471,13 +471,13 @@ actions:
 
 ---
 
-## Decision 5: Minimum Viable Action Count
+## Decision 5: Action Library Scope & Phased Development
 
 ### Question
 
 Start with:
 - ~30 actions (obligatory scenes only)?
-- ~50 actions (obligatory + Propp variants)?
+- ~50 actions (obligatory + supporting)?
 - ~100+ actions (comprehensive library)?
 
 ### Analysis
@@ -486,39 +486,49 @@ Start with:
 
 | Category | Count | Source |
 |----------|-------|--------|
-| Core events (12 genres) | 12 | Mandatory terminal actions |
+| Core events (12 genres) | 11 | Mandatory terminal actions (Action+Thriller share one) |
 | Universal structure scenes | 7 | Inciting, Denial, Forced, Discovery, Fails, All Is Lost, Resolution |
 | Genre-specific obligatory | ~25 | Unique scenes per genre (de-duplicated) |
-| Propp core functions | 31 | Base narrative grammar |
-| SDK category actions | ~25 | ConflictActions, RelationshipActions, etc. |
+| SDK category actions | ~15 | ConflictActions, RelationshipActions, etc. |
 
-**Overlap analysis**: Many obligatory scenes map to Propp functions:
-- "Inciting Attack" ≈ Propp "Villainy" (A)
-- "Hero at Mercy of Villain" ≈ Propp "Struggle" (H) outcome
-- "Discovery of MacGuffin" ≈ Propp "Reconnaissance" (ε) result
+### Propp Functions: Inspiration, Not Coverage Target
 
-### Decision: ~50 Actions with Variant System
+**Critical clarification** (analyzed 2026-02-04):
 
-**Composition**:
-- 12 core event actions (one per genre, mandatory)
-- 7 universal structure actions (shared across genres)
-- 15-20 genre-specific actions (unique scenes)
-- 10-15 Propp-derived actions (non-overlapping)
+Propp functions in `propp-functions.yaml` are **narrative inspiration**, not a coverage target.
+
+**Why Propp alignment is NOT required for GOAP**:
+1. SDK_FOUNDATIONS.md defines a generic action library (ConflictActions, RelationshipActions, etc.) that is NOT Propp-based
+2. Propp is mentioned ONCE in SDK_FOUNDATIONS as ONE optional "kernel indicator" among several
+3. Propp preconditions/postconditions are boolean-only and lack costs, scoping, or numeric effects
+4. story-actions.yaml is already richer than Propp: it has costs, spectrum effects, chained actions, genre labels
+
+**What "Propp-inspired" means**:
+- Action NAMES may reference Propp concepts (e.g., "antagonist_deceives" inspired by Propp's TRICKERY)
+- Action DESIGN follows GOAP patterns from SDK_FOUNDATIONS, not Propp's pre/postconditions
+- No explicit `propp_mapping` field is required or tracked
+- "Propp coverage percentage" is a meaningless metric - don't measure it
+
+**Optional traceability**: If desired, add `propp_inspiration: TRICKERY` field for documentation. This is NOT alignment - just noting where the idea came from.
+
+### Decision: Phased Development with Obligatory Focus
+
+**Phase 1 Goal**: Cover all obligatory scenes across all genres.
+**Phase 2 Goal**: Fill remaining obligatory gaps + add supporting actions.
+**Phase 3 Goal**: Convention actions + rare mechanics.
 
 **Variant system**: Each action has 2-4 variants for manifestation flexibility.
-
-~50 base actions × ~3 variants = ~150 total action manifestations
 
 **Implementation Roadmap**:
 
 ```yaml
-# Phase 1: MVP (~30 actions)
+# Phase 1: MVP (~30 actions) - COMPLETE
 phase_1:
   target: 30
-  timeline: "Initial implementation"
+  status: "Complete"
 
   includes:
-    core_events: 12  # One per genre (mandatory)
+    core_events: 11  # One per genre (Action+Thriller share hero_at_mercy_of_villain)
     universal_structure: 7
       - inciting_incident
       - denial_resistance
@@ -539,34 +549,32 @@ phase_1:
       - showdown_approach  # Western
       - moral_temptation  # Morality
       - worldview_challenge  # Worldview
+    supporting: 9
+      - introduce_antagonist
+      - form_alliance
+      - betrayal_reveal
+      - confrontation_begin
+      - sacrifice_rewarded
+      - brought_to_justice
+      - plant_clue
+      - reveal_secret
+      - character_growth
 
-# Phase 2: Propp Integration (~50 actions)
+# Phase 2: Obligatory Completion (~45 actions)
 phase_2:
-  target: 50
+  target: 45
   timeline: "After MVP validation"
 
   adds:
-    propp_functions: 20
-      - absentation  # β - family member leaves
-      - interdiction  # γ - prohibition given
-      - violation  # δ - prohibition violated
-      - reconnaissance  # ε - villain seeks information
-      - delivery  # ζ - villain gains information
-      - trickery  # η - villain deceives
-      - complicity  # θ - victim deceived
-      - villainy_variants  # A - 19 variants
-      - mediation  # B - hero learns of lack
-      - departure  # ↑ - hero leaves home
-      - donor_test  # D - hero tested
-      - hero_reaction  # E - hero responds
-      - magical_agent  # F - hero receives help
-      - guidance  # G - hero guided to goal
-      - struggle  # H - hero and villain fight
-      - branding  # J - hero marked
-      - victory  # I - villain defeated
-      - liquidation  # K - lack resolved
-      - return  # ↓ - hero returns
-      - pursuit  # Pr - hero pursued
+    missing_obligatory: 3
+      - first_kiss              # Love: "First Kiss/Connection"
+      - confession_of_love      # Love: "Confession of Love"
+      - progressive_clue_following  # Crime: "Progressive Clue Following"
+
+    narrative_enrichment: ~5-10
+      # Additional actions that enhance story variety
+      # Selected based on narrative utility, NOT Propp coverage
+      # Examples: antagonist_deceives, disguised_return, impostor_exposed
 
 # Phase 3: Comprehensive (~100 actions)
 phase_3:
@@ -615,10 +623,10 @@ phase_3:
 
 **Rationale**:
 1. MVP covers all obligatory scenes across all genres
-2. Propp integration adds narrative grammar depth
-3. Variant system provides manifestation variety without action explosion
-4. Phased approach allows validation before expansion
-5. ~50 actions is tractable for manual curation and testing
+2. Phase 2 fills verified gaps (Love, Crime) + adds narrative variety
+3. Propp is inspiration for naming/concepts, not a coverage target
+4. Variant system provides manifestation variety without action explosion
+5. Phased approach allows validation before expansion
 
 ---
 
@@ -738,3 +746,4 @@ The storyline validator checks:
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-02-04 | 1.0 | Initial decisions document |
+| 2026-02-04 | 1.1 | Clarified Propp is inspiration only, not coverage target. Removed "Propp Integration" framing from Phase 2. Added explicit note that Propp alignment is NOT required for GOAP compatibility. |
