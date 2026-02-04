@@ -1,7 +1,7 @@
 # Storyline SDK Gap Analysis
 
-> **Status**: Analysis Complete
-> **Date**: 2026-02-03
+> **Status**: Analysis Complete, Phase 1 Complete, Phase 2 In Progress
+> **Date**: 2026-02-04 (updated)
 > **Purpose**: Identify missing components between research YAML files and complete SDK implementation
 
 ## Executive Summary
@@ -12,10 +12,16 @@ Four research frameworks have been distilled into YAML:
 3. **Story Grid Genres** (Shawn Coyne) - Structure and obligatory elements
 4. **Propp Functions** (Vladimir Propp) - Event sequencing and causality
 
-These are **vertical pillars** - each internally consistent but operating independently. The gaps fall into two categories:
+**Key Insight (2026-02-04)**: These frameworks describe **different concerns** that compose, not competing vocabularies that need translation:
 
-- **Integration Gaps**: Work we must do to connect these frameworks
-- **Research Gaps**: Potentially existing frameworks we should find before inventing
+| Framework | Concern | Role in SDK |
+|-----------|---------|-------------|
+| Story Grid | WHAT must happen | Genre constraints, obligatory scenes |
+| Save the Cat | WHEN things happen | Template phase boundaries |
+| Reagan Arcs | WHAT SHAPE trajectory | Value curves for Life Value spectrums |
+| Propp | WHAT CAN happen | Action library inspiration |
+
+This eliminates the need for cross-framework mapping (Gap 2). See `CROSS_FRAMEWORK_ANALYSIS.md` for full analysis.
 
 ---
 
@@ -839,18 +845,18 @@ After the research sprint, we reach a decision point:
     adapt to our needs            validate empirically
 ```
 
-### Resolution Order (If No External Research Found)
-
-If the research sprint yields nothing substantial, we proceed with original synthesis work in this order:
+### Resolution Order (Updated 2026-02-04)
 
 | Phase | Gap | Deliverable | Rationale |
 |-------|-----|-------------|-----------|
-| **1** | NarrativeState (Gap 1) | `narrative-state.yaml` | Foundation - everything needs this vocabulary |
-| **2** | Cross-Framework Mapping (Gap 2) | `cross-framework-mapping.yaml` | Core intellectual work - unlocks templates and actions |
-| **3** | Story Actions (Gap 4) | `story-actions.yaml` | GOAP building blocks that reference the mapping |
-| **4** | Narrative Templates (Gap 3) | `narrative-templates.yaml` | Composed from actions using mapping anchors |
-| **5** | Archive Extraction (Gap 5) | `archive-extraction.yaml` | Can parallel Phase 4 |
-| **6** | Compatibility Matrix (Gap 6) | `compatibility-matrix.yaml` | Derived from accumulated knowledge |
+| **1** | NarrativeState (Gap 1) | `narrative-state.yaml` | **COMPLETE** - 10 Life Value spectrums |
+| **1b** | Subgenre Arc Mapping | `story-grid-genres.yaml` | **COMPLETE** - arc_direction + compatible_arcs |
+| **2** | Story Actions (Gap 4) | `story-actions.yaml` | GOAP actions inspired by Propp + Story Grid |
+| **3** | Story Templates (Gap 3) | `story-templates.yaml` | STC timing + Reagan shape + genre constraints |
+| **4** | Archive Extraction (Gap 5) | `archive-extraction.yaml` | Can parallel Phase 3 |
+| **5** | Compatibility Matrix (Gap 6) | *(optional)* | Largely addressed by subgenre mapping |
+
+**Note**: Gap 2 (Cross-Framework Mapping) has been eliminated. See `CROSS_FRAMEWORK_ANALYSIS.md` for rationale.
 
 ### Current Status
 
@@ -884,8 +890,377 @@ If the research sprint yields nothing substantial, we proceed with original synt
   - STC timing for phase boundaries
   - Reagan arc shapes for trajectory constraints
   - Genre constraints from Story Grid
-- [ ] Phase 4: Archive extraction rules
-- [ ] Phase 5: Compatibility matrix (derivable from template usage patterns)
+- [ ] Phase 4: Archive Extraction → `schemas/storyline/archive-extraction.yaml`
+- [ ] Phase 5: Compatibility Matrix (validation, largely addressed by subgenre mapping)
+
+---
+
+## Future Phase Implementation Plans
+
+### Phase 3: Story Templates (`story-templates.yaml`)
+
+**Purpose**: Define composable arc templates that combine STC timing, Reagan trajectory shapes, and genre constraints into GOAP-compatible goal sequences.
+
+**Key Design Decisions** (from STORY_ACTIONS_ANALYSIS.md):
+- Templates are GOAP goal generators, not action sequences
+- Each template produces phase-by-phase NarrativeState targets
+- Templates validate obligatory scene coverage via `satisfies_obligatory` action tags
+- Lazy phase evaluation: only generate current phase; next phases trigger on state changes
+
+**Schema Structure**:
+```yaml
+version: "1.0"
+source: "Save the Cat + Reagan Arcs + Story Grid"
+
+# Template metadata
+templates:
+  revenge_arc:
+    description: "Classic revenge narrative with fall-then-rise structure"
+
+    # Compatibility constraints
+    genre_affinity:
+      primary: [action, thriller, western]
+      secondary: [crime]
+    subgenre_filter:
+      arc_direction: ["positive", "either"]  # Revenge typically succeeds
+    reagan_arc_affinity: [man_in_hole, cinderella]
+
+    # STC-derived phase boundaries (percentage of story)
+    phases:
+      incitement:
+        position: [0.0, 0.12]  # Opening Image → Catalyst
+        stc_beats: [OPENING_IMAGE, THEME_STATED, SET_UP, CATALYST]
+        target_state:
+          primary_spectrum: 0.4  # Threat introduced
+          tension: 0.6
+        obligatory_coverage: [inciting_attack, speech_praising_villain]
+
+      discovery:
+        position: [0.12, 0.25]  # Debate → Break Into 2
+        stc_beats: [DEBATE, BREAK_INTO_2]
+        target_state:
+          primary_spectrum: 0.3
+          tension: 0.7
+        obligatory_coverage: []
+
+      pursuit:
+        position: [0.25, 0.50]  # B Story → Midpoint
+        stc_beats: [B_STORY, FUN_AND_GAMES, MIDPOINT]
+        target_state:
+          primary_spectrum: 0.5  # Midpoint reversal
+          tension: 0.8
+        obligatory_coverage: []
+
+      setback:
+        position: [0.50, 0.75]  # Bad Guys Close In → All Is Lost
+        stc_beats: [BAD_GUYS_CLOSE_IN, ALL_IS_LOST, DARK_NIGHT_OF_SOUL]
+        target_state:
+          primary_spectrum: 0.2  # Rock bottom
+          tension: 0.9
+        obligatory_coverage: [hero_at_mercy_of_villain]
+
+      resolution:
+        position: [0.75, 1.0]  # Break Into 3 → Final Image
+        stc_beats: [BREAK_INTO_3, FINALE, FINAL_IMAGE]
+        target_state:
+          primary_spectrum: 0.85  # Victory (per reagan arc end_range)
+          tension: 0.3
+        obligatory_coverage: []
+
+    # Crisis configuration (from STORY_ACTIONS_ANALYSIS.md)
+    crisis_preference: best_bad_choice  # vs irreconcilable_goods
+
+    # Validation rules
+    validation:
+      min_actions_per_phase: 2
+      required_spectrum_delta: 0.15  # Per phase
+      must_satisfy_all_obligatory: true
+```
+
+**MVP Template Set (5 templates)**:
+1. `revenge_arc` - Fall-rise pattern with antagonist focus
+2. `mystery_arc` - Discovery-driven with revelation climax
+3. `redemption_arc` - Internal change from negative to positive
+4. `tragedy_arc` - Rise-fall pattern ending in loss
+5. `love_arc` - Meet-separate-reunite with proof of love climax
+
+**Implementation Steps**:
+
+1. **Step 1: Create template metadata schema**
+   - Version, source attribution
+   - Template validation rules (min phases, spectrum coverage)
+   - Phase boundary conventions
+
+2. **Step 2: Define STC phase mapping**
+   - Map 16 STC beats to ~5 phases per template
+   - Position ranges as percentage intervals
+   - Beat groupings per phase
+
+3. **Step 3: Add Reagan arc integration**
+   - `reagan_arc_affinity` field per template
+   - Target state values derived from arc `start_range`/`end_range`
+   - Phase-by-phase spectrum targets interpolated from arc shape
+
+4. **Step 4: Add genre constraint fields**
+   - `genre_affinity.primary` and `secondary` lists
+   - `subgenre_filter` using `arc_direction` from story-grid-genres.yaml
+   - Compatibility validation against selected genre
+
+5. **Step 5: Add obligatory scene coverage**
+   - `obligatory_coverage` list per phase
+   - Cross-reference with `satisfies_obligatory` in story-actions.yaml
+   - Validation: all genre obligatory scenes covered across phases
+
+6. **Step 6: Add crisis type configuration**
+   - `crisis_preference`: "best_bad_choice" | "irreconcilable_goods"
+   - Informs GOAP planner when multiple high-cost actions available
+   - Template-level default, overridable at phase level
+
+7. **Step 7: Implement 5 MVP templates**
+   - Start with `revenge_arc` (well-documented pattern)
+   - Add `mystery_arc`, `redemption_arc`, `tragedy_arc`, `love_arc`
+   - Validate each against story-grid-genres.yaml obligatory scenes
+
+**Key Reference Files**:
+- `schemas/storyline/STORY_ACTIONS_ANALYSIS.md` - Template integration section
+- `schemas/storyline/narrative-state.yaml` - Reagan arc integration
+- `schemas/storyline/story-grid-genres.yaml` - Obligatory scenes per genre
+- `schemas/storyline/save-the-cat-beats.yaml` - 16 beats with timing
+
+**Validation Checklist**:
+1. Every template has valid STC phase boundaries (no gaps, no overlaps)
+2. Target states follow Reagan arc shape (monotonic within arc type)
+3. All genre obligatory scenes are covered by some phase
+4. `subgenre_filter` values exist in story-grid-genres.yaml
+5. Crisis preference is semantically appropriate for template
+
+---
+
+### Phase 4: Archive Extraction (`archive-extraction.yaml`)
+
+**Purpose**: Map character archives (personality, history, encounters) to GOAP WorldState for template selection and action precondition evaluation.
+
+**Key Design Decisions**:
+- Archive fields become WorldState keys with transform rules
+- Scoring functions determine template affinity from character data
+- Encounter history influences antagonist relationship state
+- Backstory elements provide world-building constraints
+
+**Schema Structure**:
+```yaml
+version: "1.0"
+source: "Integration with lib-resource archive format"
+
+# Archive source definitions
+archive_sources:
+  character_personality:
+    service: lib-character-personality
+    fields:
+      confrontational:
+        world_state_key: "protagonist.aggression_preference"
+        transform: direct  # Value maps 1:1
+        range: [-1.0, 1.0]
+
+      trusting:
+        world_state_key: "protagonist.trust_baseline"
+        transform: direct
+        range: [-1.0, 1.0]
+
+      cautious:
+        world_state_key: "protagonist.risk_tolerance"
+        transform: invert  # High cautious = low risk tolerance
+        range: [-1.0, 1.0]
+
+  character_history:
+    service: lib-character-history
+    fields:
+      event_participations:
+        world_state_key: "protagonist.world_events"
+        transform: count  # Number of events
+
+      backstory.trauma:
+        world_state_key: "protagonist.has_trauma"
+        transform: exists  # Boolean: has any trauma
+
+      backstory.occupation:
+        world_state_key: "protagonist.profession"
+        transform: direct  # String value
+
+  character_encounter:
+    service: lib-character-encounter
+    aggregate_by: other_character_id
+    fields:
+      sentiment:
+        world_state_key: "protagonist.relationships.{other_id}.sentiment"
+        transform: weighted_average  # Across encounters
+        decay_factor: 0.9  # Per encounter age bucket
+
+      encounter_type:
+        world_state_key: "protagonist.relationships.{other_id}.encounter_types"
+        transform: collect  # Set of types
+
+# Template affinity scoring
+template_scoring:
+  revenge_arc:
+    conditions:
+      - field: character_encounter.sentiment
+        filter: "< -0.5"
+        weight: 0.4
+        description: "Strong negative relationship suggests revenge potential"
+
+      - field: character_personality.confrontational
+        filter: "> 0.3"
+        weight: 0.3
+        description: "Confrontational personality fits revenge narrative"
+
+      - field: character_history.backstory.trauma
+        filter: "exists"
+        weight: 0.3
+        description: "Past trauma provides motivation"
+
+    threshold: 0.6  # Minimum score for template selection
+
+  redemption_arc:
+    conditions:
+      - field: character_personality.altruistic
+        filter: "< 0.0"
+        weight: 0.5
+        description: "Currently selfish protagonist can grow"
+
+      - field: character_history.backstory.moral_failings
+        filter: "count > 0"
+        weight: 0.5
+        description: "Past wrongs to atone for"
+
+    threshold: 0.5
+
+# Antagonist detection
+antagonist_detection:
+  from_encounters:
+    sentiment_threshold: -0.5
+    encounter_count_minimum: 2
+    world_state_effects:
+      - key: "antagonist.known"
+        value: true
+      - key: "antagonist.id"
+        value: "{other_character_id}"
+      - key: "antagonist.relationship_sentiment"
+        value: "{sentiment}"
+
+# World-building constraints
+world_constraints:
+  from_realm_history:
+    active_conflicts:
+      world_state_key: "world.active_conflicts"
+      transform: collect
+
+    political_climate:
+      world_state_key: "world.political_stability"
+      transform: categorical  # "stable" | "unstable" | "war"
+```
+
+**Implementation Steps**:
+
+1. **Step 1: Define archive source schema**
+   - List all archive types (personality, history, encounter, realm-history)
+   - Document service ownership for each
+   - Define field path conventions
+
+2. **Step 2: Create field mapping rules**
+   - `transform` types: direct, invert, exists, count, collect, weighted_average, categorical
+   - Range normalization rules
+   - Null/missing value handling
+
+3. **Step 3: Implement encounter aggregation**
+   - Group by `other_character_id`
+   - Weighted average with time decay
+   - Encounter type collection for pattern matching
+
+4. **Step 4: Define template scoring functions**
+   - Conditions with field references and filters
+   - Weight distribution (must sum to 1.0)
+   - Threshold for template eligibility
+   - Tie-breaking rules when multiple templates qualify
+
+5. **Step 5: Implement antagonist detection**
+   - Sentiment threshold for "enemy" classification
+   - Minimum encounter count to avoid false positives
+   - WorldState population for GOAP preconditions
+
+6. **Step 6: Add world-building constraints**
+   - Realm history → world state mapping
+   - Location-based constraints
+   - Time period / era constraints
+
+7. **Step 7: Validate against GOAP WorldState keys**
+   - Cross-reference with propp-functions.yaml preconditions
+   - Cross-reference with story-actions.yaml preconditions
+   - Ensure key naming consistency
+
+**Key Reference Files**:
+- `schemas/storyline/propp-functions.yaml` - WorldState key conventions
+- `schemas/storyline/STORY_ACTIONS_ANALYSIS.md` - WorldState key section
+- Character service schemas for archive field definitions
+- `docs/research/RE-PRAXIS-LOGIC-DATABASE.md` - Query patterns
+
+**Validation Checklist**:
+1. All extracted keys exist in action precondition vocabulary
+2. Transform rules handle edge cases (null, out-of-range)
+3. Scoring weights sum to 1.0 per template
+4. Antagonist detection doesn't false-positive on neutral encounters
+5. Time decay factors are documented and tunable
+
+---
+
+### Phase 5: Compatibility Validation
+
+**Purpose**: Validate that the integrated system works correctly by testing template-action-archive combinations.
+
+**Status**: Largely addressed by subgenre arc mapping (2026-02-04). Remaining work is empirical validation.
+
+**Remaining Work**:
+
+1. **Template-Genre Compatibility Testing**
+   - For each (template, genre, subgenre) combination:
+     - Verify `arc_direction` compatibility
+     - Verify `compatible_arcs` includes template's `reagan_arc_affinity`
+     - Verify obligatory scenes can be satisfied by available actions
+   - Document incompatible combinations
+
+2. **Action Coverage Analysis**
+   - For each genre's obligatory scenes:
+     - Verify at least one action has `satisfies_obligatory` for that scene
+     - Document coverage gaps for Phase 2 expansion (50 actions)
+   - Generate coverage matrix report
+
+3. **Archive-Template Affinity Testing**
+   - Create synthetic character archives
+   - Run template scoring
+   - Verify scoring produces sensible results
+   - Tune thresholds based on test cases
+
+4. **GOAP Plan Generation Testing**
+   - For representative (archive, template, genre) combinations:
+     - Generate full story plan via GOAP
+     - Verify plan satisfies all obligatory scenes
+     - Verify plan respects arc trajectory constraints
+     - Measure planning time / complexity
+
+5. **Edge Case Documentation**
+   - Templates that work with very few genres
+   - Genres that have very few compatible templates
+   - Actions that satisfy multiple obligatory scenes
+   - Archive patterns that score high for conflicting templates
+
+**Deliverable**: Validation report rather than new schema file. May inform:
+- `story-actions.yaml` Phase 2 expansion priorities
+- `story-templates.yaml` additional templates
+- `archive-extraction.yaml` scoring threshold adjustments
+
+**No Schema File Required**: This phase produces documentation and test results, not a new YAML schema. The "compatibility matrix" concept from Gap 6 is now expressed through:
+- `arc_direction` + `compatible_arcs` in story-grid-genres.yaml (DONE)
+- `genre_affinity` + `subgenre_filter` in story-templates.yaml (Phase 3)
+- Template scoring in archive-extraction.yaml (Phase 4)
 
 ### Decision History: NCP Hub Approach (2026-02-04)
 
@@ -983,25 +1358,27 @@ public class NarrativeState
 
 The Story Grid spectrums define *what's at stake*. Reagan's arcs define *how that stake changes over time*.
 
-### Gap 2: Cross-Framework Mapping - Using Existing Research
+### Gap 2: Cross-Framework Mapping - ELIMINATED (2026-02-04)
 
-**NCP** (already documented) provides the hub schema.
+**Decision**: Gap 2 has been eliminated. See `CROSS_FRAMEWORK_ANALYSIS.md` for full rationale.
 
-**PROPPER-IMPLEMENTATION.md** provides Propp-specific detail:
+**Summary**: The frameworks describe different concerns (timing, shape, events, requirements) that compose rather than translate. No cross-framework mapping is needed.
+
+**PROPPER-IMPLEMENTATION.md** remains useful for story action library (Gap 4):
 - 31 functions with Greek letter symbols (β, γ, δ, ε, ζ, η, θ, A-W)
 - Variant counts per function (1-6 variants each)
 - Three-act timing: Act 1 (deterministic), Act 2 (50/50 struggle/task), Act 3 (deterministic)
 - Seeded generation for reproducibility
 
 ```yaml
-# From PROPPER-IMPLEMENTATION - Propp → NCP mapping source
+# From PROPPER-IMPLEMENTATION - inspiration for story actions (NOT NCP mapping)
 propp_functions:
   A_VILLAINY:
     symbol: "A"
     variants: ["villain causes harm", "member lacks something", "member desires something"]
     act: 1
     position_range: [0.08, 0.12]
-    ncp_functions: [Temptation, Threat, Uncontrolled]  # TO POPULATE
+    # Used as inspiration for GOAP action design, not mapped to NCP
 ```
 
 ### Gap 3: Narrative Templates - Using Existing Research
@@ -1127,20 +1504,20 @@ foreach (var encounter in archive.Encounters)
 - Time genre → pacing constraints
 - Style genre → comedy/drama, medium-specific affordances
 
-Combined with NCP mappings, this enables:
+With subgenre arc mapping, this simplifies to:
 ```yaml
-compatibility_matrix:
-  action:
-    story_grid_genre: action
-    reagan_arcs: [man_in_hole, cinderella]
-    ncp_dynamics:
-      story_outcome: success
-      story_judgment: good
-    core_need: survival
-    value_spectrum: life_death
-    propp_path: struggle  # vs task
-    obligatory_scenes: [hero_at_mercy_of_villain]
+# In story-grid-genres.yaml (already implemented)
+action:
+  subgenres:
+    adventure:
+      arc_direction: either
+      compatible_arcs: [rags_to_riches, tragedy, man_in_hole, icarus, cinderella, oedipus]
+    epic:
+      arc_direction: positive
+      compatible_arcs: [rags_to_riches, man_in_hole, cinderella]
 ```
+
+**Note**: The original compatibility_matrix concept with NCP dynamics is no longer needed - subgenre arc mapping provides the essential constraint data.
 
 ---
 
