@@ -39,9 +39,11 @@ concept:
 
   usage: |
     - Each story genre has a PRIMARY spectrum (the main stakes)
-    - Secondary spectrums may be active but are not the core conflict
+    - ANY spectrum can be secondary - determined by genre layering, not genre-specific rules
+    - Stories layer genres: Action/Love = life_death primary + love_hate secondary
     - Reagan's emotional arcs describe the SHAPE of movement on the primary spectrum
     - GOAP actions shift position on one or more spectrums
+    - See story_combinations section for common pairings with real media examples
 
 # =============================================================================
 # THE TEN LIFE VALUE SPECTRUMS
@@ -82,7 +84,6 @@ spectrums:
 
     genres:
       primary: ["action", "thriller", "horror"]
-      secondary: ["war", "western"]
 
     question: "Will the protagonist survive?"
 
@@ -120,7 +121,6 @@ spectrums:
 
     genres:
       primary: ["war"]
-      secondary: ["action", "society"]
 
     question: "Will the protagonist maintain integrity while serving the group?"
 
@@ -154,7 +154,6 @@ spectrums:
 
     genres:
       primary: ["crime"]
-      secondary: ["thriller", "society"]
 
     question: "Will the criminal be exposed and held accountable?"
 
@@ -188,7 +187,6 @@ spectrums:
 
     genres:
       primary: ["western", "society"]
-      secondary: ["thriller", "action"]
 
     question: "Will the protagonist gain or preserve their autonomy?"
 
@@ -226,7 +224,6 @@ spectrums:
 
     genres:
       primary: ["love"]
-      secondary: ["performance", "society"]
 
     question: "Will the lovers achieve genuine intimacy?"
 
@@ -264,7 +261,6 @@ spectrums:
 
     genres:
       primary: ["performance"]
-      secondary: ["status", "society"]
 
     question: "Will the protagonist earn genuine recognition?"
 
@@ -298,7 +294,6 @@ spectrums:
 
     genres:
       primary: ["society"]
-      secondary: ["thriller", "crime"]
 
     question: "Will the protagonist gain agency without corruption?"
 
@@ -332,7 +327,6 @@ spectrums:
 
     genres:
       primary: ["status"]
-      secondary: ["performance", "society"]
 
     question: "Will the protagonist succeed without compromising themselves?"
 
@@ -370,7 +364,6 @@ spectrums:
 
     genres:
       primary: ["morality"]
-      secondary: ["worldview", "love"]
 
     question: "Will the protagonist choose others over self?"
 
@@ -404,7 +397,6 @@ spectrums:
 
     genres:
       primary: ["worldview"]
-      secondary: ["morality", "crime"]
 
     question: "Will the protagonist achieve genuine understanding?"
 
@@ -416,64 +408,313 @@ genre_spectrum_mapping:
   # External genres (physical conflict)
   action:
     primary: "life_death"
-    secondary: ["freedom_subjugation"]
     core_event: "Hero at Mercy of Villain"
 
   war:
     primary: "honor_dishonor"
-    secondary: ["life_death"]
     core_event: "Big Battle"
 
   horror:
     primary: "life_death"
-    secondary: ["wisdom_ignorance"]  # Often involves forbidden knowledge
     core_event: "Victim at Mercy of Monster"
 
   crime:
     primary: "justice_injustice"
-    secondary: ["life_death", "power_impotence"]
     core_event: "Exposure of Criminal"
 
   thriller:
     primary: "life_death"
-    secondary: ["justice_injustice"]
     core_event: "Hero at Mercy of Villain"
 
   western:
     primary: "freedom_subjugation"
-    secondary: ["justice_injustice", "life_death"]
     core_event: "Big Showdown"
 
   # Internal genres (psychological/relational conflict)
   love:
     primary: "love_hate"
-    secondary: ["respect_shame"]
     core_event: "Proof of Love"
 
   performance:
     primary: "respect_shame"
-    secondary: ["success_failure"]
     core_event: "Big Performance"
 
   society:
     primary: "power_impotence"
-    secondary: ["freedom_subjugation", "justice_injustice"]
     core_event: "Revolution"
 
   status:
     primary: "success_failure"
-    secondary: ["respect_shame"]
     core_event: "Big Choice"
 
   morality:
     primary: "altruism_selfishness"
-    secondary: ["wisdom_ignorance"]
     core_event: "Big Choice"
 
   worldview:
     primary: "wisdom_ignorance"
-    secondary: ["altruism_selfishness"]
     core_event: "Cognitive Growth or Degeneration"
+
+# =============================================================================
+# GENRE COMBINATIONS (LAYERED STORIES)
+# =============================================================================
+
+story_combinations:
+  description: |
+    Most compelling stories layer multiple genres, each contributing its spectrum.
+    The PRIMARY genre determines the primary spectrum (the main stakes).
+    SECONDARY genres add additional spectrums that enrich the story.
+
+    ANY spectrum can be secondary - the choice depends on the story being told,
+    not on genre-specific restrictions. The examples below show common pairings
+    from popular media.
+
+  # -------------------------------------------------------------------------
+  # External Genre Primary + Internal Genre Secondary
+  # -------------------------------------------------------------------------
+
+  action_love:
+    primary_genre: "action"
+    primary_spectrum: "life_death"
+    secondary_genres: ["love"]
+    secondary_spectrums: ["love_hate"]
+    description: "Action story with romantic subplot"
+    examples:
+      - title: "Die Hard"
+        year: 1988
+        analysis: |
+          Primary: John McClane must survive (life/death)
+          Secondary: He's fighting to save his marriage (love/hate)
+          The terrorists are the external threat; his estranged wife is the emotional core.
+
+      - title: "True Lies"
+        year: 1994
+        analysis: |
+          Primary: Harry must stop nuclear terrorists (life/death)
+          Secondary: His marriage is falling apart from his lies (love/hate)
+          Both spectrums reach climax simultaneously.
+
+      - title: "Mr. & Mrs. Smith"
+        year: 2005
+        analysis: |
+          Primary: Married assassins must survive each other (life/death)
+          Secondary: Can their marriage survive the truth? (love/hate)
+
+  thriller_worldview:
+    primary_genre: "thriller"
+    primary_spectrum: "life_death"
+    secondary_genres: ["worldview"]
+    secondary_spectrums: ["wisdom_ignorance"]
+    description: "Thriller with philosophical depth"
+    examples:
+      - title: "The Silence of the Lambs"
+        year: 1991
+        analysis: |
+          Primary: Clarice must survive Hannibal and catch Buffalo Bill (life/death)
+          Secondary: She must understand the criminal mind to succeed (wisdom/ignorance)
+          Hannibal teaches her to see, but the knowledge has a cost.
+
+      - title: "Se7en"
+        year: 1995
+        analysis: |
+          Primary: Detectives hunting a serial killer (life/death)
+          Secondary: Somerset's cynical worldview vs Mills' naive idealism (wisdom/ignorance)
+          The ending destroys Mills' innocence.
+
+  horror_morality:
+    primary_genre: "horror"
+    primary_spectrum: "life_death"
+    secondary_genres: ["morality"]
+    secondary_spectrums: ["altruism_selfishness"]
+    description: "Horror that tests moral character"
+    examples:
+      - title: "Get Out"
+        year: 2017
+        analysis: |
+          Primary: Chris must survive the Armitage family (life/death)
+          Secondary: The film interrogates liberal racism vs genuine care (altruism/selfishness)
+
+      - title: "The Cabin in the Woods"
+        year: 2012
+        analysis: |
+          Primary: Teens must survive horror monsters (life/death)
+          Secondary: The ending poses the ultimate altruism question (save humanity or yourself?)
+
+  crime_society:
+    primary_genre: "crime"
+    primary_spectrum: "justice_injustice"
+    secondary_genres: ["society"]
+    secondary_spectrums: ["power_impotence"]
+    description: "Crime story exploring systemic power"
+    examples:
+      - title: "The Wire"
+        year: 2002
+        analysis: |
+          Primary: Can drug criminals be brought to justice? (justice/injustice)
+          Secondary: Are institutions capable of reform? (power/impotence)
+          The show argues institutions perpetuate dysfunction.
+
+      - title: "Chinatown"
+        year: 1974
+        analysis: |
+          Primary: Jake Gittes investigates murder and corruption (justice/injustice)
+          Secondary: He's powerless against the wealthy and connected (power/impotence)
+          "Forget it Jake, it's Chinatown."
+
+  # -------------------------------------------------------------------------
+  # Internal Genre Primary + External Genre Secondary
+  # -------------------------------------------------------------------------
+
+  love_thriller:
+    primary_genre: "love"
+    primary_spectrum: "love_hate"
+    secondary_genres: ["thriller"]
+    secondary_spectrums: ["life_death"]
+    description: "Romance under mortal threat"
+    examples:
+      - title: "Titanic"
+        year: 1997
+        analysis: |
+          Primary: Rose and Jack's forbidden love (love/hate)
+          Secondary: Will they survive the sinking ship? (life/death)
+          The love story is primary; the disaster is backdrop.
+
+      - title: "The Bodyguard"
+        year: 1992
+        analysis: |
+          Primary: Can Frank and Rachel overcome their differences? (love/hate)
+          Secondary: Will the stalker kill her? (life/death)
+
+  worldview_horror:
+    primary_genre: "worldview"
+    primary_spectrum: "wisdom_ignorance"
+    secondary_genres: ["horror"]
+    secondary_spectrums: ["life_death"]
+    description: "Cosmic horror / philosophical horror"
+    examples:
+      - title: "Arrival"
+        year: 2016
+        analysis: |
+          Primary: Louise learns to perceive time non-linearly (wisdom/ignorance)
+          Secondary: Humanity fears the aliens may be a threat (life/death)
+          The horror elements are mostly perceived threat; the real story is epistemological.
+
+      - title: "Annihilation"
+        year: 2018
+        analysis: |
+          Primary: What is the Shimmer? Can it be understood? (wisdom/ignorance)
+          Secondary: Will the team survive? (life/death)
+          Understanding destroys the self.
+
+  performance_action:
+    primary_genre: "performance"
+    primary_spectrum: "respect_shame"
+    secondary_genres: ["action"]
+    secondary_spectrums: ["life_death"]
+    description: "Competition with life-or-death stakes"
+    examples:
+      - title: "Rocky IV"
+        year: 1985
+        analysis: |
+          Primary: Rocky must prove American boxing spirit (respect/shame)
+          Secondary: Drago literally killed Apollo; Rocky might die (life/death)
+
+      - title: "Warrior"
+        year: 2011
+        analysis: |
+          Primary: Both brothers need to prove themselves (respect/shame)
+          Secondary: The fighting is brutal, career-ending (life/death stakes)
+
+  # -------------------------------------------------------------------------
+  # Multiple Secondary Spectrums
+  # -------------------------------------------------------------------------
+
+  action_love_worldview:
+    primary_genre: "action"
+    primary_spectrum: "life_death"
+    secondary_genres: ["love", "worldview"]
+    secondary_spectrums: ["love_hate", "wisdom_ignorance"]
+    description: "Complex action with romance and philosophy"
+    examples:
+      - title: "The Matrix"
+        year: 1999
+        analysis: |
+          Primary: Neo must survive against the Machines (life/death)
+          Secondary 1: Neo and Trinity's love (love/hate)
+          Secondary 2: "What is real?" - Neo's awakening (wisdom/ignorance)
+          All three spectrums reach climax together.
+
+      - title: "Inception"
+        year: 2010
+        analysis: |
+          Primary: The team must survive the dream heist (life/death)
+          Secondary 1: Cobb's guilt over Mal (love/hate)
+          Secondary 2: What is reality? Does it matter? (wisdom/ignorance)
+
+  crime_morality_society:
+    primary_genre: "crime"
+    primary_spectrum: "justice_injustice"
+    secondary_genres: ["morality", "society"]
+    secondary_spectrums: ["altruism_selfishness", "power_impotence"]
+    description: "Crime drama with moral and systemic complexity"
+    examples:
+      - title: "The Dark Knight"
+        year: 2008
+        analysis: |
+          Primary: Can the Joker be brought to justice? (justice/injustice)
+          Secondary 1: Will Batman break his one rule? (altruism/selfishness)
+          Secondary 2: Can Gotham's institutions be saved? (power/impotence)
+          Harvey Dent's fall represents all three spectrums collapsing.
+
+  # -------------------------------------------------------------------------
+  # Unusual Combinations
+  # -------------------------------------------------------------------------
+
+  western_love:
+    primary_genre: "western"
+    primary_spectrum: "freedom_subjugation"
+    secondary_genres: ["love"]
+    secondary_spectrums: ["love_hate"]
+    description: "Western with romantic core"
+    examples:
+      - title: "Brokeback Mountain"
+        year: 2005
+        analysis: |
+          Primary: Can Ennis live freely as himself? (freedom/subjugation)
+          Secondary: His love for Jack (love/hate)
+          Societal subjugation prevents the love from flourishing.
+
+  status_horror:
+    primary_genre: "status"
+    primary_spectrum: "success_failure"
+    secondary_genres: ["horror"]
+    secondary_spectrums: ["life_death"]
+    description: "Ambition with horrific consequences"
+    examples:
+      - title: "Black Swan"
+        year: 2010
+        analysis: |
+          Primary: Nina must achieve perfection to succeed (success/failure)
+          Secondary: Her pursuit is literally destroying her (life/death)
+          The horror is psychological but the death is real.
+
+      - title: "Whiplash"
+        year: 2014
+        analysis: |
+          Primary: Andrew must become a great drummer (success/failure)
+          Secondary: Fletcher's abuse and the car crash (life/death stakes implied)
+
+  note_on_combinations: |
+    These examples show common patterns, but ANY spectrum can be secondary.
+    The creative choice depends on what the story needs to explore.
+
+    Guidelines for combining spectrums:
+    1. The primary spectrum carries the main dramatic question
+    2. Secondary spectrums should create meaningful tension with the primary
+    3. The best combinations make the spectrums interact - success on one
+       spectrum should cost progress on another
+    4. Resolution can occur at different points (one spectrum resolved while
+       another remains in tension)
 
 # =============================================================================
 # PRESET STATES

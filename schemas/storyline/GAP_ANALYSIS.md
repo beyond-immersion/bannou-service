@@ -470,9 +470,11 @@ Derive compatibility matrix from accumulated knowledge. Largely empirical/heuris
 
 ## Open Questions
 
-1. **Should NarrativeState have 6 dimensions or fewer/more?**
-   - Music's EmotionalState has 6; is that the right number for narrative?
-   - Are all dimensions orthogonal, or do some correlate?
+1. ~~**Should NarrativeState have 6 dimensions or fewer/more?**~~
+   - **ANSWERED**: 10 dimensions based on Story Grid's Life Value spectrums
+   - Each dimension maps to a Maslow need level (properly grounded in human psychology)
+   - Dimensions are not orthogonal - they map to specific content genres
+   - Stories layer genres, each bringing its spectrum (1 primary, N secondary)
 
 2. **Are the frameworks genuinely compatible?**
    - STC is prescriptive (Hollywood structure)
@@ -575,6 +577,12 @@ If the research sprint yields nothing substantial, we proceed with original synt
 - [x] **DECISION MADE**: Use NCP as hub schema for cross-framework mapping
 - [x] **COMPLETE**: Audit of existing research documents for gap-filling potential
 - [x] **Phase 1: NarrativeState schema** → `schemas/storyline/narrative-state.yaml`
+  - 10 Life Value spectrums from Story Grid Four Core Framework
+  - Primary spectrum fixed per genre (genre_spectrum_mapping)
+  - Secondary spectrums unrestricted (ANY spectrum can be secondary via genre layering)
+  - story_combinations section with real media examples (Die Hard, Silence of the Lambs, etc.)
+  - Reagan arc integration for temporal dynamics
+  - Implementation notes with C# code patterns
 - [ ] Phase 2: Framework-to-NCP mappings (Propp→NCP, STC→NCP, StoryGrid→NCP, Reagan→NCP)
 - [ ] Phase 3: Story actions library (NCP functions as action templates)
 - [ ] Phase 4: Narrative templates (leverage NCP's Four Throughlines + Nine Dynamics)
