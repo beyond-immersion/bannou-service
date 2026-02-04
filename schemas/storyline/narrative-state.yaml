@@ -1,0 +1,696 @@
+# Narrative State Schema
+# Based on Story Grid's Life Value Spectrums (Four Core Framework)
+#
+# Sources:
+#   - Shawn Coyne, "The Four Core Framework" (Story Grid Publishing, 2020)
+#   - Shawn Coyne, "The Story Grid" (Story Grid Publishing, 2015)
+#   - docs/research/FOUR-CORE-FRAMEWORK.md (technical summary)
+#   - docs/research/STORY-GRID-GENRES.md (genre specifications)
+#
+# NOT based on STORYLINE_COMPOSER.md's 6-dimension model, which was derived
+# by analogy from music-storyteller SDK without proper citation. Musical
+# perception dimensions (brightness, warmth, energy) do not apply to
+# literary narrative structure.
+
+version: "1.0"
+source: "Shawn Coyne, Story Grid (2015-2020)"
+
+# =============================================================================
+# CORE CONCEPT
+# =============================================================================
+
+concept:
+  description: |
+    Every story genre is defined by movement along a Life Value spectrum.
+    The spectrum has three points:
+      - Positive pole: The ideal state (life, love, justice, etc.)
+      - Negative pole: The feared state (death, hate, injustice, etc.)
+      - Negation of negation: A fate WORSE than the negative pole
+
+    The negation of negation is critical for tragedy and complex stories.
+    It represents not just failure, but failure disguised as success -
+    the most insidious form of the negative value.
+
+  grounding: |
+    Based on Maslow's hierarchy of needs. Each spectrum corresponds to a
+    fundamental human need, which is why stories resonate universally.
+    When we watch a character's position on a spectrum change, we feel
+    the corresponding emotional response because we recognize the need.
+
+  usage: |
+    - Each story genre has a PRIMARY spectrum (the main stakes)
+    - Secondary spectrums may be active but are not the core conflict
+    - Reagan's emotional arcs describe the SHAPE of movement on the primary spectrum
+    - GOAP actions shift position on one or more spectrums
+
+# =============================================================================
+# THE TEN LIFE VALUE SPECTRUMS
+# =============================================================================
+
+spectrums:
+  # ---------------------------------------------------------------------------
+  # SURVIVAL DOMAIN (Maslow Level 1: Physiological)
+  # ---------------------------------------------------------------------------
+
+  life_death:
+    id: 1
+    code: "LIFE_DEATH"
+    name: "Life vs Death"
+    domain: "survival"
+    maslow_level: 1
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Life"
+        description: "Physical existence preserved, thriving"
+      negative:
+        value: 0.0
+        label: "Death"
+        description: "Physical existence ended or immediately threatened"
+      negation_of_negation:
+        value: -1.0  # Below zero indicates worse-than-death
+        label: "Damnation"
+        description: "A fate worse than death - eternal suffering, undeath, corruption"
+        examples:
+          - "Becoming the monster you fought"
+          - "Eternal imprisonment without death's release"
+          - "Living death (zombie, vampire against will)"
+
+    core_need: "Survival"
+    core_emotion: "Excitement"
+
+    genres:
+      primary: ["action", "thriller", "horror"]
+      secondary: ["war", "western"]
+
+    question: "Will the protagonist survive?"
+
+  # ---------------------------------------------------------------------------
+  # SAFETY DOMAIN (Maslow Level 2: Safety/Security)
+  # ---------------------------------------------------------------------------
+
+  honor_dishonor:
+    id: 2
+    code: "HONOR_DISHONOR"
+    name: "Honor vs Dishonor"
+    domain: "safety"
+    maslow_level: 2
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Honor with Victory"
+        description: "Integrity maintained while achieving collective goal"
+      negative:
+        value: 0.0
+        label: "Dishonor"
+        description: "Integrity compromised, shame before the group"
+      negation_of_negation:
+        value: -1.0
+        label: "Victory with Dishonor Masquerading as Honor"
+        description: "Winning through dishonorable means while being celebrated as honorable"
+        examples:
+          - "War hero whose victory came from atrocities covered up"
+          - "Leader praised while secretly corrupt"
+          - "Glory built on others' unacknowledged sacrifice"
+
+    core_need: "Safety (collective)"
+    core_emotion: "Intrigue"
+
+    genres:
+      primary: ["war"]
+      secondary: ["action", "society"]
+
+    question: "Will the protagonist maintain integrity while serving the group?"
+
+  justice_injustice:
+    id: 3
+    code: "JUSTICE_INJUSTICE"
+    name: "Justice vs Injustice"
+    domain: "safety"
+    maslow_level: 2
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Justice"
+        description: "Wrongdoers held accountable, victims vindicated"
+      negative:
+        value: 0.0
+        label: "Injustice"
+        description: "Wrongdoers escape accountability, victims unvindicated"
+      negation_of_negation:
+        value: -1.0
+        label: "Tyranny"
+        description: "The system of justice itself becomes the instrument of oppression"
+        examples:
+          - "Courts that punish the innocent and protect the guilty"
+          - "Laws designed to perpetuate injustice"
+          - "Justice system captured by criminals"
+
+    core_need: "Safety (societal)"
+    core_emotion: "Intrigue"
+
+    genres:
+      primary: ["crime"]
+      secondary: ["thriller", "society"]
+
+    question: "Will the criminal be exposed and held accountable?"
+
+  freedom_subjugation:
+    id: 4
+    code: "FREEDOM_SUBJUGATION"
+    name: "Freedom vs Subjugation"
+    domain: "safety"
+    maslow_level: 2
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Freedom"
+        description: "Individual autonomy and self-determination preserved"
+      negative:
+        value: 0.0
+        label: "Subjugation"
+        description: "Autonomy stripped, controlled by external force"
+      negation_of_negation:
+        value: -1.0
+        label: "Slavery with Illusion of Freedom"
+        description: "Controlled while believing oneself free"
+        examples:
+          - "Propaganda state where citizens police themselves"
+          - "Cult member who believes they chose their servitude"
+          - "Debt bondage disguised as opportunity"
+
+    core_need: "Individual Sovereignty"
+    core_emotion: "Intrigue"
+
+    genres:
+      primary: ["western", "society"]
+      secondary: ["thriller", "action"]
+
+    question: "Will the protagonist gain or preserve their autonomy?"
+
+  # ---------------------------------------------------------------------------
+  # CONNECTION DOMAIN (Maslow Level 3: Love/Belonging)
+  # ---------------------------------------------------------------------------
+
+  love_hate:
+    id: 5
+    code: "LOVE_HATE"
+    name: "Love vs Hate"
+    domain: "connection"
+    maslow_level: 3
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Love"
+        description: "Genuine intimate connection, mutual vulnerability"
+      negative:
+        value: 0.0
+        label: "Hate"
+        description: "Active rejection, desire to harm the other"
+      negation_of_negation:
+        value: -1.0
+        label: "Hate Masquerading as Love"
+        description: "Toxic attachment, possession, or control disguised as love"
+        examples:
+          - "Obsessive stalking framed as devotion"
+          - "Abusive relationship justified as passionate"
+          - "Codependency mistaken for connection"
+
+    core_need: "Connection"
+    core_emotion: "Romance"
+
+    genres:
+      primary: ["love"]
+      secondary: ["performance", "society"]
+
+    question: "Will the lovers achieve genuine intimacy?"
+
+  # ---------------------------------------------------------------------------
+  # ESTEEM DOMAIN (Maslow Level 4: Esteem)
+  # ---------------------------------------------------------------------------
+
+  respect_shame:
+    id: 6
+    code: "RESPECT_SHAME"
+    name: "Respect vs Shame"
+    domain: "esteem"
+    maslow_level: 4
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Respect"
+        description: "Recognition of worth by self and others"
+      negative:
+        value: 0.0
+        label: "Shame"
+        description: "Public humiliation, loss of face"
+      negation_of_negation:
+        value: -1.0
+        label: "Hollow Praise / False Respect"
+        description: "Being respected for the wrong reasons, or respect that rings hollow"
+        examples:
+          - "Praised for achievements that were stolen or faked"
+          - "Awarded for something you know you don't deserve"
+          - "Respected by people whose opinions you despise"
+
+    core_need: "Esteem"
+    core_emotion: "Triumph"
+
+    genres:
+      primary: ["performance"]
+      secondary: ["status", "society"]
+
+    question: "Will the protagonist earn genuine recognition?"
+
+  power_impotence:
+    id: 7
+    code: "POWER_IMPOTENCE"
+    name: "Power vs Impotence"
+    domain: "esteem"
+    maslow_level: 4
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Power"
+        description: "Agency to affect change, influence over circumstances"
+      negative:
+        value: 0.0
+        label: "Impotence"
+        description: "Helplessness, inability to affect outcomes"
+      negation_of_negation:
+        value: -1.0
+        label: "Power through Co-option"
+        description: "Power that comes from becoming what you fought against"
+        examples:
+          - "Revolutionary becomes tyrant"
+          - "Reformer becomes corrupt insider"
+          - "Survivor becomes perpetrator"
+
+    core_need: "Recognition"
+    core_emotion: "Intrigue / Triumph / Righteous Indignation"
+
+    genres:
+      primary: ["society"]
+      secondary: ["thriller", "crime"]
+
+    question: "Will the protagonist gain agency without corruption?"
+
+  success_failure:
+    id: 8
+    code: "SUCCESS_FAILURE"
+    name: "Success vs Failure"
+    domain: "esteem"
+    maslow_level: 4
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Success"
+        description: "Achievement of external goal, social advancement"
+      negative:
+        value: 0.0
+        label: "Failure"
+        description: "Inability to achieve goal, social decline"
+      negation_of_negation:
+        value: -1.0
+        label: "Selling Out"
+        description: "Success achieved by abandoning core values"
+        examples:
+          - "Artist who sacrifices vision for commercial success"
+          - "Politician who wins by becoming what they opposed"
+          - "Entrepreneur who succeeds by exploiting others"
+
+    core_need: "Respect"
+    core_emotion: "Admiration / Pity"
+
+    genres:
+      primary: ["status"]
+      secondary: ["performance", "society"]
+
+    question: "Will the protagonist succeed without compromising themselves?"
+
+  # ---------------------------------------------------------------------------
+  # SELF-ACTUALIZATION DOMAIN (Maslow Level 5)
+  # ---------------------------------------------------------------------------
+
+  altruism_selfishness:
+    id: 9
+    code: "ALTRUISM_SELFISHNESS"
+    name: "Altruism vs Selfishness"
+    domain: "self_transcendence"
+    maslow_level: 5
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Altruism"
+        description: "Action for others' benefit at cost to self"
+      negative:
+        value: 0.0
+        label: "Selfishness"
+        description: "Action solely for self-benefit regardless of harm to others"
+      negation_of_negation:
+        value: -1.0
+        label: "Selfishness Disguised as Altruism"
+        description: "Self-serving action wrapped in moral justification"
+        examples:
+          - "Charity for tax benefits and social status"
+          - "'Helping' that creates dependency for ego gratification"
+          - "Moral crusade driven by personal vengeance"
+
+    core_need: "Self-Transcendence"
+    core_emotion: "Satisfaction / Contempt"
+
+    genres:
+      primary: ["morality"]
+      secondary: ["worldview", "love"]
+
+    question: "Will the protagonist choose others over self?"
+
+  wisdom_ignorance:
+    id: 10
+    code: "WISDOM_IGNORANCE"
+    name: "Wisdom vs Ignorance"
+    domain: "self_actualization"
+    maslow_level: 5
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Wisdom"
+        description: "Understanding of how the world truly works"
+      negative:
+        value: 0.0
+        label: "Ignorance"
+        description: "Lack of understanding, naive worldview"
+      negation_of_negation:
+        value: -1.0
+        label: "Willful Ignorance / Denial"
+        description: "Actively rejecting truth to preserve comfortable illusion"
+        examples:
+          - "Knowing the truth but choosing to believe the lie"
+          - "Denying evidence to protect ego or worldview"
+          - "Sophistry - using intelligence to defend foolishness"
+
+    core_need: "Self-Actualization"
+    core_emotion: "Satisfaction / Pity"
+
+    genres:
+      primary: ["worldview"]
+      secondary: ["morality", "crime"]
+
+    question: "Will the protagonist achieve genuine understanding?"
+
+# =============================================================================
+# GENRE TO PRIMARY SPECTRUM MAPPING
+# =============================================================================
+
+genre_spectrum_mapping:
+  # External genres (physical conflict)
+  action:
+    primary: "life_death"
+    secondary: ["freedom_subjugation"]
+    core_event: "Hero at Mercy of Villain"
+
+  war:
+    primary: "honor_dishonor"
+    secondary: ["life_death"]
+    core_event: "Big Battle"
+
+  horror:
+    primary: "life_death"
+    secondary: ["wisdom_ignorance"]  # Often involves forbidden knowledge
+    core_event: "Victim at Mercy of Monster"
+
+  crime:
+    primary: "justice_injustice"
+    secondary: ["life_death", "power_impotence"]
+    core_event: "Exposure of Criminal"
+
+  thriller:
+    primary: "life_death"
+    secondary: ["justice_injustice"]
+    core_event: "Hero at Mercy of Villain"
+
+  western:
+    primary: "freedom_subjugation"
+    secondary: ["justice_injustice", "life_death"]
+    core_event: "Big Showdown"
+
+  # Internal genres (psychological/relational conflict)
+  love:
+    primary: "love_hate"
+    secondary: ["respect_shame"]
+    core_event: "Proof of Love"
+
+  performance:
+    primary: "respect_shame"
+    secondary: ["success_failure"]
+    core_event: "Big Performance"
+
+  society:
+    primary: "power_impotence"
+    secondary: ["freedom_subjugation", "justice_injustice"]
+    core_event: "Revolution"
+
+  status:
+    primary: "success_failure"
+    secondary: ["respect_shame"]
+    core_event: "Big Choice"
+
+  morality:
+    primary: "altruism_selfishness"
+    secondary: ["wisdom_ignorance"]
+    core_event: "Big Choice"
+
+  worldview:
+    primary: "wisdom_ignorance"
+    secondary: ["altruism_selfishness"]
+    core_event: "Cognitive Growth or Degeneration"
+
+# =============================================================================
+# PRESET STATES
+# =============================================================================
+
+presets:
+  description: |
+    Common narrative state configurations. Each preset specifies which
+    spectrums are active and their current values. Inactive spectrums
+    are not tracked (value: null).
+
+    In most stories, only 1-3 spectrums are actively tracked. The primary
+    spectrum is determined by genre; secondary spectrums add complexity.
+
+  # General presets (applicable to any genre)
+  equilibrium:
+    description: "Ordinary world, before the story disrupts it"
+    active_spectrums:
+      primary: 0.6  # Slightly positive, room to fall
+    tension_level: "low"
+
+  rising_action:
+    description: "Conflict escalating, stakes increasing"
+    active_spectrums:
+      primary: 0.4  # Trending negative
+    tension_level: "medium"
+
+  midpoint_false_victory:
+    description: "Protagonist seems to have won, but hasn't"
+    active_spectrums:
+      primary: 0.8  # Appears positive
+    tension_level: "medium"  # Audience senses something wrong
+
+  midpoint_false_defeat:
+    description: "Protagonist seems to have lost, but hasn't"
+    active_spectrums:
+      primary: 0.2  # Appears negative
+    tension_level: "high"
+
+  all_is_lost:
+    description: "Lowest point - something 'dies'"
+    active_spectrums:
+      primary: 0.1  # Near negative pole
+    tension_level: "maximum"
+
+  climax:
+    description: "Final confrontation, maximum stakes"
+    active_spectrums:
+      primary: 0.5  # Could go either way
+    tension_level: "maximum"
+
+  resolution_positive:
+    description: "Protagonist reaches positive pole"
+    active_spectrums:
+      primary: 0.9  # Near positive pole
+    tension_level: "released"
+
+  resolution_negative:
+    description: "Protagonist reaches negative pole (tragedy)"
+    active_spectrums:
+      primary: 0.1  # Near negative pole
+    tension_level: "released"
+
+  resolution_negation:
+    description: "Protagonist reaches negation of negation (darkest tragedy)"
+    active_spectrums:
+      primary: -0.5  # Below zero - worse than negative
+    tension_level: "released"
+
+# =============================================================================
+# REAGAN ARC INTEGRATION
+# =============================================================================
+
+arc_integration:
+  description: |
+    Reagan's six emotional arcs describe the SHAPE of how a value spectrum
+    changes over the course of a story. The arc is applied to the PRIMARY
+    spectrum for the genre.
+
+    Arc shape + Genre primary spectrum = Complete emotional trajectory
+
+    Example: "Man in Hole" arc + Crime genre
+      = Justice starts neutral (0.5)
+      → falls as criminal seems to escape (0.2)
+      → rises as detective closes in (0.9)
+      = Satisfying crime story
+
+    Example: "Tragedy" arc + Love genre
+      = Love starts positive (0.7)
+      → falls as relationship deteriorates (0.1)
+      = Tragic love story
+
+  arc_to_trajectory:
+    rags_to_riches:
+      shape: "↗"
+      start_range: [0.2, 0.4]
+      end_range: [0.8, 1.0]
+      description: "Primary spectrum rises steadily"
+
+    tragedy:
+      shape: "↘"
+      start_range: [0.6, 0.8]
+      end_range: [0.0, 0.2]
+      description: "Primary spectrum falls steadily"
+
+    man_in_hole:
+      shape: "↘↗"
+      start_range: [0.5, 0.7]
+      low_point_range: [0.1, 0.3]
+      end_range: [0.7, 0.9]
+      description: "Primary spectrum falls then rises (most common)"
+
+    icarus:
+      shape: "↗↘"
+      start_range: [0.3, 0.5]
+      high_point_range: [0.7, 0.9]
+      end_range: [0.1, 0.3]
+      description: "Primary spectrum rises then falls"
+
+    cinderella:
+      shape: "↗↘↗"
+      start_range: [0.2, 0.4]
+      first_peak_range: [0.6, 0.8]
+      valley_range: [0.2, 0.4]
+      end_range: [0.8, 1.0]
+      description: "Rise, fall, rise again"
+
+    oedipus:
+      shape: "↘↗↘"
+      start_range: [0.6, 0.8]
+      first_valley_range: [0.2, 0.4]
+      peak_range: [0.5, 0.7]
+      end_range: [0.0, 0.2]
+      description: "Fall, rise, fall again (complex tragedy)"
+
+# =============================================================================
+# IMPLEMENTATION NOTES
+# =============================================================================
+
+implementation:
+  data_structure: |
+    public sealed class NarrativeState
+    {
+        // Active spectrum values (null if not tracked)
+        public double? LifeDeath { get; set; }
+        public double? HonorDishonor { get; set; }
+        public double? JusticeInjustice { get; set; }
+        public double? FreedomSubjugation { get; set; }
+        public double? LoveHate { get; set; }
+        public double? RespectShame { get; set; }
+        public double? PowerImpotence { get; set; }
+        public double? SuccessFailure { get; set; }
+        public double? AltruismSelfishness { get; set; }
+        public double? WisdomIgnorance { get; set; }
+
+        // Which spectrum is primary (determined by genre)
+        public SpectrumType PrimarySpectrum { get; set; }
+
+        // Helper: Get the primary spectrum's current value
+        public double GetPrimaryValue() => PrimarySpectrum switch
+        {
+            SpectrumType.LifeDeath => LifeDeath ?? 0.5,
+            SpectrumType.HonorDishonor => HonorDishonor ?? 0.5,
+            // ... etc
+        };
+
+        // Distance for GOAP heuristics
+        public double DistanceTo(NarrativeState target)
+        {
+            // Only compare active spectrums
+            double sum = 0;
+            int count = 0;
+
+            if (LifeDeath.HasValue && target.LifeDeath.HasValue)
+            {
+                sum += Math.Abs(LifeDeath.Value - target.LifeDeath.Value);
+                count++;
+            }
+            // ... etc for each spectrum
+
+            return count > 0 ? sum / count : 0;
+        }
+    }
+
+  goap_integration: |
+    Story actions modify spectrum values:
+
+    public class IntroduceAntagonist : IStoryAction
+    {
+        public NarrativeStateDelta Effects => new()
+        {
+            LifeDeath = -0.1,  // Threat introduced
+            // Other spectrums unchanged
+        };
+
+        public double Cost => 2.0;
+    }
+
+    GOAP planner finds sequence of actions to move from current
+    NarrativeState to target NarrativeState (e.g., from equilibrium
+    to climax on the primary spectrum).
+
+  reagan_arc_application: |
+    To apply a Reagan arc to a genre:
+
+    1. Identify genre's primary spectrum (e.g., Crime → JusticeInjustice)
+    2. Select arc shape (e.g., "man_in_hole")
+    3. Divide story into 200 time points (Reagan standard)
+    4. For each time point, calculate target spectrum value from arc curve
+    5. GOAP planner finds actions to move toward each target
+
+    var arcCurve = ReaganArcs.ManInHole.GetCurve();  // 200-point array
+    var genrePrimary = GenreMapping.Crime.PrimarySpectrum;  // JusticeInjustice
+
+    for (int t = 0; t < 200; t++)
+    {
+        var targetValue = arcCurve[t];  // 0.0 to 1.0
+        var goal = new NarrativeState { [genrePrimary] = targetValue };
+        var actions = planner.FindPath(currentState, goal);
+    }
