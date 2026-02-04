@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>BeyondImmersion.Bannou.StorylineStoryteller</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.StorylineStoryteller</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Description>Narrative-driven story composition using formal narrative theory and GOAP planning. Designed for procedural story generation in games.</Description>
+    <Authors>Beyond Immersion</Authors>
+    <PackageId>BeyondImmersion.Bannou.StorylineStoryteller</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\storyline-theory\BeyondImmersion.Bannou.StorylineTheory.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -408,6 +408,11 @@
             Gets the typed proxy for Bannou RelationshipType Service API operations.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.Client.BannouClient.Resource">
+            <summary>
+            Gets the typed proxy for Resource Lifecycle API operations.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.Bannou.Client.BannouClient.SaveLoad">
             <summary>
             Gets the typed proxy for Save-Load Service API operations.
@@ -4503,6 +4508,16 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing StopActorResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ActorProxy.CleanupByCharacterAsync(BeyondImmersion.BannouService.Actor.CleanupByCharacterRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Cleanup actors referencing a deleted character
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CleanupByCharacterResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.ActorProxy.ListActorsAsync(BeyondImmersion.BannouService.Actor.ListActorsRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             List actors with optional filters
@@ -5287,6 +5302,26 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing DecayMemoriesResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterEncounterProxy.GetCompressDataAsync(BeyondImmersion.BannouService.CharacterEncounter.GetCompressDataRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get encounter data for compression
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing EncounterCompressData on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterEncounterProxy.RestoreFromArchiveAsync(BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Restore encounter data from archive
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing RestoreFromArchiveResponse on success.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.CharacterHistoryProxy">
             <summary>
             Typed proxy for Bannou Character History Service API API endpoints.
@@ -5396,6 +5431,26 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing HistorySummaryResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterHistoryProxy.GetCompressDataAsync(BeyondImmersion.BannouService.CharacterHistory.GetCompressDataRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get history data for compression
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing HistoryCompressData on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterHistoryProxy.RestoreFromArchiveAsync(BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Restore history data from archive
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing RestoreFromArchiveResponse on success.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.CharacterPersonalityProxy">
             <summary>
             Typed proxy for Bannou Character Personality Service API API endpoints.
@@ -5494,6 +5549,36 @@
             <param name="channel">Message channel for ordering (default 0).</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterPersonalityProxy.GetCompressDataAsync(BeyondImmersion.BannouService.CharacterPersonality.GetCompressDataRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get personality data for compression
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing PersonalityCompressData on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterPersonalityProxy.RestoreFromArchiveAsync(BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Restore personality data from archive
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing RestoreFromArchiveResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterPersonalityProxy.CleanupByCharacterAsync(BeyondImmersion.BannouService.CharacterPersonality.CleanupByCharacterRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Cleanup all personality data for a deleted character
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CleanupByCharacterResponse on success.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.CharacterProxy">
             <summary>
@@ -5614,6 +5699,16 @@
             <param name="timeout">Request timeout.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing CharacterResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.CharacterProxy.GetCompressDataAsync(BeyondImmersion.BannouService.Character.GetCompressDataRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get character base data for compression
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CharacterCompressData on success.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.ConnectProxy">
             <summary>
@@ -7508,6 +7603,16 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing LocationListResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.LocationProxy.ValidateTerritoryAsync(BeyondImmersion.BannouService.Location.ValidateTerritoryRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Validate location against territory boundaries
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ValidateTerritoryResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.LocationProxy.GetLocationDescendantsAsync(BeyondImmersion.BannouService.Location.GetLocationDescendantsRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Get all descendants of a location
@@ -8918,6 +9023,147 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing SeedRelationshipTypesResponse on success.</returns>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy">
+            <summary>
+            Typed proxy for Resource Lifecycle API API endpoints.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.#ctor(BeyondImmersion.Bannou.Client.IBannouClient)">
+            <summary>
+            Creates a new ResourceProxy instance.
+            </summary>
+            <param name="client">The underlying Bannou client.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.RegisterReferenceAsync(BeyondImmersion.BannouService.Resource.RegisterReferenceRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Register a reference to a resource
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing RegisterReferenceResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.UnregisterReferenceAsync(BeyondImmersion.BannouService.Resource.UnregisterReferenceRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Remove a reference to a resource
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing UnregisterReferenceResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.CheckReferencesAsync(BeyondImmersion.BannouService.Resource.CheckReferencesRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Check reference count and cleanup eligibility
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CheckReferencesResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.ListReferencesAsync(BeyondImmersion.BannouService.Resource.ListReferencesRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            List all references to a resource
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ListReferencesResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.DefineCleanupCallbackAsync(BeyondImmersion.BannouService.Resource.DefineCleanupRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Define cleanup callbacks for a resource type
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing DefineCleanupResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.ExecuteCleanupAsync(BeyondImmersion.BannouService.Resource.ExecuteCleanupRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Execute cleanup for a resource
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ExecuteCleanupResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.ListCleanupCallbacksAsync(BeyondImmersion.BannouService.Resource.ListCleanupCallbacksRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            List registered cleanup callbacks
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ListCleanupCallbacksResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.RemoveCleanupCallbackAsync(BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Remove a cleanup callback registration
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing RemoveCleanupCallbackResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.DefineCompressCallbackAsync(BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Register compression callback for a resource type
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing DefineCompressCallbackResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.ExecuteCompressAsync(BeyondImmersion.BannouService.Resource.ExecuteCompressRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Compress a resource and all dependents
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ExecuteCompressResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.ExecuteDecompressAsync(BeyondImmersion.BannouService.Resource.ExecuteDecompressRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Restore data from archive
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ExecuteDecompressResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.ListCompressCallbacksAsync(BeyondImmersion.BannouService.Resource.ListCompressCallbacksRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            List registered compression callbacks
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ListCompressCallbacksResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.ResourceProxy.GetArchiveAsync(BeyondImmersion.BannouService.Resource.GetArchiveRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Retrieve compressed archive
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing GetArchiveResponse on success.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.SaveLoadProxy">
             <summary>
             Typed proxy for Save-Load Service API API endpoints.
@@ -9858,15 +10104,6 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing NewsResponse on success.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetServerStatusAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
-            <summary>
-            Get game server status for all realms
-            </summary>
-            <param name="channel">Message channel for ordering (default 0).</param>
-            <param name="timeout">Request timeout.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-            <returns>ApiResponse containing ServerStatusResponse on success.</returns>
-        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetDownloadsAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Get download links for game clients
@@ -9894,15 +10131,6 @@
             <param name="timeout">Request timeout.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing AccountProfile on success.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetAccountCharactersAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
-            <summary>
-            Get character list for logged-in user
-            </summary>
-            <param name="channel">Message channel for ordering (default 0).</param>
-            <param name="timeout">Request timeout.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-            <returns>ApiResponse containing CharacterListResponse on success.</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.CreatePageAsync(BeyondImmersion.BannouService.Website.PageContent,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
@@ -9960,15 +10188,6 @@
             <param name="channel">Message channel for ordering (default 0).</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Proxies.WebsiteProxy.GetAccountSubscriptionAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
-            <summary>
-            Get subscription status
-            </summary>
-            <param name="channel">Message channel for ordering (default 0).</param>
-            <param name="timeout">Request timeout.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-            <returns>ApiResponse containing SubscriptionResponse on success.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.IBannouClient">
             <summary>
@@ -15226,6 +15445,36 @@
             Final status of the actor after stopping
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.CleanupByCharacterRequest">
+            <summary>
+            Request to cleanup actors referencing a deleted character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CleanupByCharacterRequest.CharacterId">
+            <summary>
+            ID of the character that was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.CleanupByCharacterResponse">
+            <summary>
+            Response from character cleanup operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CleanupByCharacterResponse.ActorsCleanedUp">
+            <summary>
+            Number of actors that were stopped and cleaned up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CleanupByCharacterResponse.ActorIds">
+            <summary>
+            IDs of actors that were cleaned up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CleanupByCharacterResponse.Success">
+            <summary>
+            Whether cleanup completed successfully
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Actor.ListActorsRequest">
             <summary>
             Request to list actor instances with optional filters
@@ -20208,6 +20457,98 @@
             Whether this was a preview run
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.GetCompressDataRequest">
+            <summary>
+            Request to get encounter data for compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.GetCompressDataRequest.CharacterId">
+            <summary>
+            ID of the character to get compress data for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterCompressData">
+            <summary>
+            Complete encounter data for archive storage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterCompressData.CharacterId">
+            <summary>
+            Character this data belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterCompressData.HasEncounters">
+            <summary>
+            Whether encounters exist for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterCompressData.EncounterCount">
+            <summary>
+            Number of encounters archived
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterCompressData.Encounters">
+            <summary>
+            Encounters with perspectives (empty if hasEncounters=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterCompressData.AggregateSentiment">
+            <summary>
+            Map of target characterId to aggregate sentiment.
+            <br/>Preserves sentiment relationships for historical reference.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterCompressData.CompressedAt">
+            <summary>
+            When this data was compressed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveRequest">
+            <summary>
+            Request to restore encounter data from archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveRequest.CharacterId">
+            <summary>
+            ID of the character to restore data for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveRequest.Data">
+            <summary>
+            Base64-encoded gzipped EncounterCompressData JSON
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveResponse">
+            <summary>
+            Result of restoration from archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveResponse.CharacterId">
+            <summary>
+            Character data was restored for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveResponse.EncountersRestored">
+            <summary>
+            Number of encounters restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveResponse.PerspectivesRestored">
+            <summary>
+            Number of perspectives restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveResponse.Success">
+            <summary>
+            Whether restoration completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RestoreFromArchiveResponse.ErrorMessage">
+            <summary>
+            Error details if restoration failed
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.CharacterHistory.EventCategory">
             <summary>
             Categories of historical events that characters can participate in
@@ -20632,6 +20973,101 @@
             Major historical events as text summaries.
             <br/>e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
             <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.GetCompressDataRequest">
+            <summary>
+            Request to get history data for compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetCompressDataRequest.CharacterId">
+            <summary>
+            ID of the character to get compress data for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData">
+            <summary>
+            Complete history data for archive storage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData.CharacterId">
+            <summary>
+            Character this data belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData.HasParticipations">
+            <summary>
+            Whether historical participations exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData.Participations">
+            <summary>
+            Historical event participations (empty if hasParticipations=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData.HasBackstory">
+            <summary>
+            Whether backstory elements exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData.Backstory">
+            <summary>
+            Backstory data (null if hasBackstory=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData.Summaries">
+            <summary>
+            Text summaries for reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoryCompressData.CompressedAt">
+            <summary>
+            When this data was compressed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveRequest">
+            <summary>
+            Request to restore history data from archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveRequest.CharacterId">
+            <summary>
+            ID of the character to restore data for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveRequest.Data">
+            <summary>
+            Base64-encoded gzipped HistoryCompressData JSON
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveResponse">
+            <summary>
+            Result of restoration from archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveResponse.CharacterId">
+            <summary>
+            Character data was restored for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveResponse.ParticipationsRestored">
+            <summary>
+            Number of participation records restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveResponse.BackstoryRestored">
+            <summary>
+            Whether backstory was restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveResponse.Success">
+            <summary>
+            Whether restoration completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RestoreFromArchiveResponse.ErrorMessage">
+            <summary>
+            Error details if restoration failed
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.CharacterStatus">
@@ -21348,6 +21784,78 @@
             When refCount first reached zero (null if refCount &gt; 0)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Character.GetCompressDataRequest">
+            <summary>
+            Request to get character data for compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetCompressDataRequest.CharacterId">
+            <summary>
+            ID of the character to get compress data for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CharacterCompressData">
+            <summary>
+            Core character data for archive storage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.CharacterId">
+            <summary>
+            Unique identifier for the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.Name">
+            <summary>
+            Display name of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.RealmId">
+            <summary>
+            Realm ID (partition key)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.SpeciesId">
+            <summary>
+            Species ID (foreign key to Species service)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.BirthDate">
+            <summary>
+            In-game birth timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.DeathDate">
+            <summary>
+            In-game death timestamp (required for compression)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.Status">
+            <summary>
+            Current lifecycle status (must be dead for compression)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.FamilySummary">
+            <summary>
+            Text summary of family relationships.
+            <br/>Example: "Father of 3, married to Elena, orphaned at young age"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.CompressedAt">
+            <summary>
+            When this data was compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.CreatedAt">
+            <summary>
+            Real-world creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterCompressData.UpdatedAt">
+            <summary>
+            Real-world last update timestamp
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.CharacterPersonality.TraitAxis">
             <summary>
             Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
@@ -21751,6 +22259,126 @@
             Optional context for logging and debugging (e.g., enemy type,
             <br/>ally count, location). Not used in evolution calculations.
             <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CleanupByCharacterRequest">
+            <summary>
+            Request to cleanup all personality data for a deleted character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CleanupByCharacterRequest.CharacterId">
+            <summary>
+            ID of the character that was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CleanupByCharacterResponse">
+            <summary>
+            Response from character cleanup operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CleanupByCharacterResponse.PersonalityDeleted">
+            <summary>
+            Whether personality traits were found and deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CleanupByCharacterResponse.CombatPreferencesDeleted">
+            <summary>
+            Whether combat preferences were found and deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CleanupByCharacterResponse.Success">
+            <summary>
+            Whether cleanup completed successfully
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.GetCompressDataRequest">
+            <summary>
+            Request to get personality data for compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.GetCompressDataRequest.CharacterId">
+            <summary>
+            ID of the character to get compress data for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.PersonalityCompressData">
+            <summary>
+            Complete personality data for archive storage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityCompressData.CharacterId">
+            <summary>
+            Character this data belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityCompressData.HasPersonality">
+            <summary>
+            Whether personality traits exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityCompressData.Personality">
+            <summary>
+            Personality traits (null if hasPersonality=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityCompressData.HasCombatPreferences">
+            <summary>
+            Whether combat preferences exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityCompressData.CombatPreferences">
+            <summary>
+            Combat preferences (null if hasCombatPreferences=false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityCompressData.CompressedAt">
+            <summary>
+            When this data was compressed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveRequest">
+            <summary>
+            Request to restore personality data from archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveRequest.CharacterId">
+            <summary>
+            ID of the character to restore data for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveRequest.Data">
+            <summary>
+            Base64-encoded gzipped PersonalityCompressData JSON
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveResponse">
+            <summary>
+            Result of restoration from archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveResponse.CharacterId">
+            <summary>
+            Character data was restored for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveResponse.PersonalityRestored">
+            <summary>
+            Whether personality traits were restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveResponse.CombatPreferencesRestored">
+            <summary>
+            Whether combat preferences were restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveResponse.Success">
+            <summary>
+            Whether restoration completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RestoreFromArchiveResponse.ErrorMessage">
+            <summary>
+            Error details if restoration failed
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ContractStatus">
@@ -33654,6 +34282,51 @@
             Type classification for locations
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.TerritoryMode">
+            <summary>
+            Territory validation mode for constraint checking
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.ValidateTerritoryRequest">
+            <summary>
+            Request to validate a location against territory boundaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Location.ValidateTerritoryRequest.LocationId">
+            <summary>
+            The location to validate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Location.ValidateTerritoryRequest.TerritoryLocationIds">
+            <summary>
+            Territory boundary location IDs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Location.ValidateTerritoryRequest.TerritoryMode">
+            <summary>
+            Validation mode (exclusive or inclusive). Defaults to exclusive.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.ValidateTerritoryResponse">
+            <summary>
+            Territory validation result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Location.ValidateTerritoryResponse.IsValid">
+            <summary>
+            True if location passes territory validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Location.ValidateTerritoryResponse.ViolationReason">
+            <summary>
+            Human-readable reason if validation failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Location.ValidateTerritoryResponse.MatchedTerritoryId">
+            <summary>
+            The territory location that matched (for inclusive) or conflicted (for exclusive)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Location.GetLocationRequest">
             <summary>
             Request to retrieve a location by its unique identifier
@@ -36899,7 +37572,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.AutoAck">
             <summary>
-            Whether messages should be auto-acknowledged
+            Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.PrefetchCount">
@@ -41860,6 +42533,1209 @@
             Error message explaining why the migration failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.OnDeleteAction">
+            <summary>
+            Action to take when the referenced resource is deleted.
+            <br/>CASCADE: Delete dependent entities when resource is deleted
+            <br/>RESTRICT: Block resource deletion if references exist
+            <br/>DETACH: Set reference to null when resource is deleted
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CleanupPolicy">
+            <summary>
+            Policy for cleanup callback execution.
+            <br/>BEST_EFFORT: Proceed with deletion even if some callbacks fail
+            <br/>ALL_REQUIRED: Abort deletion if any callback fails
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CompressionPolicy">
+            <summary>
+            Policy for compression callback execution.
+            <br/>BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
+            <br/>ALL_REQUIRED: Abort compression if any callback fails
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.RegisterReferenceRequest">
+            <summary>
+            Request to register a reference to a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceRequest.ResourceType">
+            <summary>
+            Type of resource being referenced (opaque identifier, e.g., "character", "realm")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceRequest.ResourceId">
+            <summary>
+            ID of the resource being referenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceRequest.SourceType">
+            <summary>
+            Type of entity holding the reference (opaque identifier, e.g., "actor", "scene")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceRequest.SourceId">
+            <summary>
+            ID of the entity holding the reference (opaque string, supports non-Guid IDs)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.RegisterReferenceResponse">
+            <summary>
+            Response after registering a reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceResponse.ResourceType">
+            <summary>
+            Type of resource referenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceResponse.ResourceId">
+            <summary>
+            ID of the resource referenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceResponse.NewRefCount">
+            <summary>
+            Reference count after registration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RegisterReferenceResponse.AlreadyRegistered">
+            <summary>
+            True if this exact reference was already registered
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.UnregisterReferenceRequest">
+            <summary>
+            Request to unregister a reference to a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceRequest.ResourceType">
+            <summary>
+            Type of resource being dereferenced (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceRequest.ResourceId">
+            <summary>
+            ID of the resource being dereferenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceRequest.SourceType">
+            <summary>
+            Type of entity releasing the reference (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceRequest.SourceId">
+            <summary>
+            ID of the entity releasing the reference (opaque string, supports non-Guid IDs)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.UnregisterReferenceResponse">
+            <summary>
+            Response after unregistering a reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceResponse.ResourceType">
+            <summary>
+            Type of resource dereferenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceResponse.ResourceId">
+            <summary>
+            ID of the resource dereferenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceResponse.NewRefCount">
+            <summary>
+            Reference count after unregistration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceResponse.WasRegistered">
+            <summary>
+            True if this reference existed before unregistration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.UnregisterReferenceResponse.GracePeriodStartedAt">
+            <summary>
+            When grace period started (null if refCount &gt; 0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CheckReferencesRequest">
+            <summary>
+            Request to check reference status for a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesRequest.ResourceType">
+            <summary>
+            Type of resource to check (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesRequest.ResourceId">
+            <summary>
+            ID of the resource to check
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CheckReferencesResponse">
+            <summary>
+            Response containing reference status for a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesResponse.ResourceType">
+            <summary>
+            Type of resource checked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesResponse.ResourceId">
+            <summary>
+            ID of the resource checked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesResponse.RefCount">
+            <summary>
+            Current reference count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesResponse.Sources">
+            <summary>
+            List of entities referencing this resource (optional, for diagnostics)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesResponse.IsCleanupEligible">
+            <summary>
+            True if refCount=0 and grace period has passed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesResponse.GracePeriodEndsAt">
+            <summary>
+            When grace period ends (null if refCount &gt; 0 or already passed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CheckReferencesResponse.LastZeroTimestamp">
+            <summary>
+            When refCount last became zero
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ResourceReference">
+            <summary>
+            A reference from a source entity to a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceReference.SourceType">
+            <summary>
+            Type of entity holding the reference (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceReference.SourceId">
+            <summary>
+            ID of the entity holding the reference (opaque string, supports non-Guid IDs)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceReference.RegisteredAt">
+            <summary>
+            When this reference was registered
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ListReferencesRequest">
+            <summary>
+            Request to list all references to a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesRequest.ResourceType">
+            <summary>
+            Type of resource to list references for (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesRequest.ResourceId">
+            <summary>
+            ID of the resource to list references for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesRequest.FilterSourceType">
+            <summary>
+            Optional filter by source type (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesRequest.Limit">
+            <summary>
+            Maximum references to return
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ListReferencesResponse">
+            <summary>
+            Response containing list of references to a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesResponse.ResourceType">
+            <summary>
+            Type of resource listed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesResponse.ResourceId">
+            <summary>
+            ID of the resource listed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesResponse.References">
+            <summary>
+            List of references
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListReferencesResponse.TotalCount">
+            <summary>
+            Total reference count (may exceed returned list if limit applied)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.DefineCleanupRequest">
+            <summary>
+            Request to define a cleanup callback for a resource type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupRequest.ResourceType">
+            <summary>
+            Type of resource this cleanup handles (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupRequest.SourceType">
+            <summary>
+            Type of entity that will be cleaned up (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupRequest.OnDeleteAction">
+            <summary>
+            Action to take when resource is deleted (defaults to CASCADE if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupRequest.ServiceName">
+            <summary>
+            Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupRequest.CallbackEndpoint">
+            <summary>
+            Endpoint path (e.g., /actor/cleanup-by-character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupRequest.PayloadTemplate">
+            <summary>
+            JSON template with {{resourceId}} placeholder
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupRequest.Description">
+            <summary>
+            Human-readable description of cleanup action
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.DefineCleanupResponse">
+            <summary>
+            Response after defining a cleanup callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupResponse.ResourceType">
+            <summary>
+            Resource type for callback (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupResponse.SourceType">
+            <summary>
+            Source type for callback (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupResponse.Registered">
+            <summary>
+            True if callback was registered (or updated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCleanupResponse.PreviouslyDefined">
+            <summary>
+            True if this callback was already defined (updated)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteCleanupRequest">
+            <summary>
+            Request to execute cleanup for a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupRequest.ResourceType">
+            <summary>
+            Type of resource to clean up (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupRequest.ResourceId">
+            <summary>
+            ID of the resource to clean up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupRequest.GracePeriodSeconds">
+            <summary>
+            Override grace period in seconds (uses default if not specified, 0 to skip)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupRequest.CleanupPolicy">
+            <summary>
+            Override cleanup policy (uses resource default if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupRequest.DryRun">
+            <summary>
+            If true, returns what callbacks WOULD execute without actually
+            <br/>executing them. Useful for pre-deletion validation and debugging.
+            <br/>Defaults to false.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse">
+            <summary>
+            Response after attempting to execute cleanup
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse.ResourceType">
+            <summary>
+            Type of resource cleaned up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse.ResourceId">
+            <summary>
+            ID of the resource cleaned up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse.Success">
+            <summary>
+            True if cleanup completed (per cleanup policy)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse.AbortReason">
+            <summary>
+            Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse.CallbackResults">
+            <summary>
+            Results of each cleanup callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse.CleanupDurationMs">
+            <summary>
+            Total cleanup execution time in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCleanupResponse.DryRun">
+            <summary>
+            True if this was a preview (no callbacks were actually executed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CleanupCallbackResult">
+            <summary>
+            Result of executing a single cleanup callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackResult.SourceType">
+            <summary>
+            Source type that was cleaned up (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackResult.ServiceName">
+            <summary>
+            Service that was called
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackResult.Endpoint">
+            <summary>
+            Endpoint that was called
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackResult.Success">
+            <summary>
+            Whether callback succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackResult.StatusCode">
+            <summary>
+            HTTP status code from callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackResult.ErrorMessage">
+            <summary>
+            Error message if callback failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackResult.DurationMs">
+            <summary>
+            Callback execution time in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ListCleanupCallbacksRequest">
+            <summary>
+            Request to list registered cleanup callbacks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCleanupCallbacksRequest.ResourceType">
+            <summary>
+            Filter by resource type (list all if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCleanupCallbacksRequest.SourceType">
+            <summary>
+            Filter by source type (requires resourceType)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ListCleanupCallbacksResponse">
+            <summary>
+            List of registered cleanup callbacks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCleanupCallbacksResponse.Callbacks">
+            <summary>
+            Registered callbacks matching filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCleanupCallbacksResponse.TotalCount">
+            <summary>
+            Total number of callbacks returned
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary">
+            <summary>
+            Summary of a registered cleanup callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary.ResourceType">
+            <summary>
+            Type of resource this callback handles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary.SourceType">
+            <summary>
+            Type of entity that will be cleaned up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary.OnDeleteAction">
+            <summary>
+            Action taken when resource is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary.ServiceName">
+            <summary>
+            Target service for callback invocation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary.CallbackEndpoint">
+            <summary>
+            Endpoint path called during cleanup
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary.RegisteredAt">
+            <summary>
+            When this callback was registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CleanupCallbackSummary.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackRequest">
+            <summary>
+            Request to remove a cleanup callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackRequest.ResourceType">
+            <summary>
+            Type of resource the callback handles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackRequest.SourceType">
+            <summary>
+            Type of entity the callback cleans up
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackResponse">
+            <summary>
+            Response after removing a cleanup callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackResponse.ResourceType">
+            <summary>
+            Resource type of removed callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackResponse.SourceType">
+            <summary>
+            Source type of removed callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackResponse.WasRegistered">
+            <summary>
+            True if callback existed before removal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.RemoveCleanupCallbackResponse.RemovedAt">
+            <summary>
+            When callback was removed (null if wasn't registered)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest">
+            <summary>
+            Request to register a compression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.ResourceType">
+            <summary>
+            Type of resource this compression handles (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.SourceType">
+            <summary>
+            Type of data being compressed (opaque identifier, e.g., "character-personality")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.ServiceName">
+            <summary>
+            Target service name (defaults to sourceType if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.CompressEndpoint">
+            <summary>
+            Endpoint returning compressed data (e.g., /character-personality/get-compress-data)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.CompressPayloadTemplate">
+            <summary>
+            JSON template with {{resourceId}} placeholder
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.DecompressEndpoint">
+            <summary>
+            Endpoint for restoring data (e.g., /character-personality/restore-from-archive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.DecompressPayloadTemplate">
+            <summary>
+            JSON template with {{resourceId}} and {{data}} placeholders
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.Priority">
+            <summary>
+            Execution order (lower = earlier). Use for dependency ordering.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackRequest.Description">
+            <summary>
+            Human-readable description of what data this compresses
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.DefineCompressCallbackResponse">
+            <summary>
+            Response after registering compression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackResponse.ResourceType">
+            <summary>
+            Resource type for callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackResponse.SourceType">
+            <summary>
+            Source type for callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackResponse.Registered">
+            <summary>
+            True if callback was registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DefineCompressCallbackResponse.PreviouslyDefined">
+            <summary>
+            True if callback was already defined (updated)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteCompressRequest">
+            <summary>
+            Request to compress a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressRequest.ResourceType">
+            <summary>
+            Type of resource to compress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressRequest.ResourceId">
+            <summary>
+            ID of the resource to compress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressRequest.DeleteSourceData">
+            <summary>
+            If true, invoke cleanup callbacks after successful archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressRequest.CompressionPolicy">
+            <summary>
+            Override policy (uses default from config if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressRequest.DryRun">
+            <summary>
+            If true, return what would be compressed without executing
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse">
+            <summary>
+            Compression execution result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.ResourceType">
+            <summary>
+            Type of resource compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.ResourceId">
+            <summary>
+            ID of the resource compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.Success">
+            <summary>
+            True if compression completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.ArchiveId">
+            <summary>
+            ID of created archive (null if failed or dryRun)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.AbortReason">
+            <summary>
+            Why compression was aborted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.CallbackResults">
+            <summary>
+            Results of each compression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.SourceDataDeleted">
+            <summary>
+            Whether cleanup callbacks were executed after archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.DryRun">
+            <summary>
+            True if this was a preview (no callbacks actually executed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteCompressResponse.CompressionDurationMs">
+            <summary>
+            Total compression execution time in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CompressCallbackResult">
+            <summary>
+            Result of a single compression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.SourceType">
+            <summary>
+            Source type that provided data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.ServiceName">
+            <summary>
+            Service that was called
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.Endpoint">
+            <summary>
+            Endpoint that was called
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.Success">
+            <summary>
+            Whether callback succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.StatusCode">
+            <summary>
+            HTTP status code from callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.ErrorMessage">
+            <summary>
+            Error message if callback failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.DataSize">
+            <summary>
+            Size of compressed data in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackResult.DurationMs">
+            <summary>
+            Callback execution time in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteDecompressRequest">
+            <summary>
+            Request to decompress and restore a resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressRequest.ResourceType">
+            <summary>
+            Type of resource to decompress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressRequest.ResourceId">
+            <summary>
+            ID of the resource to decompress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressRequest.ArchiveId">
+            <summary>
+            Specific archive version (latest if not specified)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse">
+            <summary>
+            Decompression execution result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse.ResourceType">
+            <summary>
+            Type of resource decompressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse.ResourceId">
+            <summary>
+            ID of the resource decompressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse.Success">
+            <summary>
+            True if decompression completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse.ArchiveId">
+            <summary>
+            ID of archive that was restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse.AbortReason">
+            <summary>
+            Why decompression was aborted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse.CallbackResults">
+            <summary>
+            Results of each decompression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteDecompressResponse.DecompressionDurationMs">
+            <summary>
+            Total decompression execution time in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.DecompressCallbackResult">
+            <summary>
+            Result of a single decompression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DecompressCallbackResult.SourceType">
+            <summary>
+            Source type that was restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DecompressCallbackResult.ServiceName">
+            <summary>
+            Service that was called
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DecompressCallbackResult.Endpoint">
+            <summary>
+            Endpoint that was called
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DecompressCallbackResult.Success">
+            <summary>
+            Whether callback succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DecompressCallbackResult.StatusCode">
+            <summary>
+            HTTP status code from callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DecompressCallbackResult.ErrorMessage">
+            <summary>
+            Error message if callback failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.DecompressCallbackResult.DurationMs">
+            <summary>
+            Callback execution time in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ListCompressCallbacksRequest">
+            <summary>
+            Request to list registered compression callbacks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCompressCallbacksRequest.ResourceType">
+            <summary>
+            Filter by resource type (list all if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCompressCallbacksRequest.SourceType">
+            <summary>
+            Filter by source type (requires resourceType)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ListCompressCallbacksResponse">
+            <summary>
+            List of registered compression callbacks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCompressCallbacksResponse.Callbacks">
+            <summary>
+            Registered callbacks matching filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ListCompressCallbacksResponse.TotalCount">
+            <summary>
+            Total number of callbacks returned
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.CompressCallbackSummary">
+            <summary>
+            Summary of a registered compression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.ResourceType">
+            <summary>
+            Type of resource this callback handles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.SourceType">
+            <summary>
+            Type of data being compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.ServiceName">
+            <summary>
+            Target service for callback invocation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.CompressEndpoint">
+            <summary>
+            Endpoint called during compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.DecompressEndpoint">
+            <summary>
+            Endpoint called during decompression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.Priority">
+            <summary>
+            Execution order (lower = earlier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.RegisteredAt">
+            <summary>
+            When this callback was registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.CompressCallbackSummary.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.GetArchiveRequest">
+            <summary>
+            Request to retrieve a compressed archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetArchiveRequest.ResourceType">
+            <summary>
+            Type of resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetArchiveRequest.ResourceId">
+            <summary>
+            ID of the resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetArchiveRequest.ArchiveId">
+            <summary>
+            Specific version (latest if not specified)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.GetArchiveResponse">
+            <summary>
+            Response containing archive data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetArchiveResponse.ResourceType">
+            <summary>
+            Type of resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetArchiveResponse.ResourceId">
+            <summary>
+            ID of the resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetArchiveResponse.Found">
+            <summary>
+            True if archive exists
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetArchiveResponse.Archive">
+            <summary>
+            The archive data (null if not found)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ResourceArchive">
+            <summary>
+            Bundled compressed archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceArchive.ArchiveId">
+            <summary>
+            Unique identifier for this archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceArchive.ResourceType">
+            <summary>
+            Type of resource archived
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceArchive.ResourceId">
+            <summary>
+            ID of the resource archived
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceArchive.Version">
+            <summary>
+            Archive version (increments on re-compression)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceArchive.Entries">
+            <summary>
+            Data entries from each compression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceArchive.CreatedAt">
+            <summary>
+            When this archive was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceArchive.SourceDataDeleted">
+            <summary>
+            Whether original source data was deleted after archival
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ArchiveBundleEntry">
+            <summary>
+            Single entry in the archive bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ArchiveBundleEntry.SourceType">
+            <summary>
+            Type of data (e.g., "character-personality")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ArchiveBundleEntry.ServiceName">
+            <summary>
+            Service that provided the data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ArchiveBundleEntry.Data">
+            <summary>
+            Base64-encoded gzipped JSON from the service callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ArchiveBundleEntry.CompressedAt">
+            <summary>
+            When this entry was compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ArchiveBundleEntry.DataChecksum">
+            <summary>
+            SHA256 hash for integrity verification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ArchiveBundleEntry.OriginalSizeBytes">
+            <summary>
+            Size before compression
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteSnapshotRequest">
+            <summary>
+            Request to create an ephemeral snapshot of a living resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotRequest.ResourceType">
+            <summary>
+            Type of resource to snapshot (opaque identifier).
+            <br/>Must match compression callback registrations.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotRequest.ResourceId">
+            <summary>
+            ID of the resource to snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotRequest.SnapshotType">
+            <summary>
+            Optional label for the snapshot purpose (e.g., "storyline_seed", "analytics").
+            <br/>Stored in metadata for filtering/debugging.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotRequest.TtlSeconds">
+            <summary>
+            Time-to-live in seconds for the snapshot.
+            <br/>If not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).
+            <br/>Value is clamped to configured min/max range.
+            <br/>Snapshot is automatically deleted by Redis after TTL expires.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotRequest.CompressionPolicy">
+            <summary>
+            Policy for callback execution.
+            <br/>If not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotRequest.DryRun">
+            <summary>
+            If true, return what would be captured without storing
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse">
+            <summary>
+            Result of snapshot execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.ResourceType">
+            <summary>
+            Type of resource snapshotted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.ResourceId">
+            <summary>
+            ID of the resource snapshotted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.Success">
+            <summary>
+            True if snapshot completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.DryRun">
+            <summary>
+            True if this was a dry run
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.SnapshotId">
+            <summary>
+            Unique ID for this snapshot (null on failure or dry run)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.ExpiresAt">
+            <summary>
+            When this snapshot will expire (null on failure or dry run)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.AbortReason">
+            <summary>
+            Why snapshot was aborted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.CallbackResults">
+            <summary>
+            Results of each compression callback
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ExecuteSnapshotResponse.SnapshotDurationMs">
+            <summary>
+            Total snapshot execution time in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.GetSnapshotRequest">
+            <summary>
+            Request to retrieve a snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetSnapshotRequest.SnapshotId">
+            <summary>
+            ID of the snapshot to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.GetSnapshotResponse">
+            <summary>
+            Response containing snapshot data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetSnapshotResponse.SnapshotId">
+            <summary>
+            ID of the snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetSnapshotResponse.Found">
+            <summary>
+            True if snapshot exists (hasn't expired)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.GetSnapshotResponse.Snapshot">
+            <summary>
+            The snapshot data (null if not found/expired)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Resource.ResourceSnapshot">
+            <summary>
+            Ephemeral snapshot of a living resource
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceSnapshot.SnapshotId">
+            <summary>
+            Unique identifier for this snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceSnapshot.ResourceType">
+            <summary>
+            Type of resource snapshotted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceSnapshot.ResourceId">
+            <summary>
+            ID of the resource snapshotted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceSnapshot.SnapshotType">
+            <summary>
+            Label for snapshot purpose (e.g., "storyline_seed")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceSnapshot.Entries">
+            <summary>
+            Data entries from each compression callback (same format as archives)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceSnapshot.CreatedAt">
+            <summary>
+            When this snapshot was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Resource.ResourceSnapshot.ExpiresAt">
+            <summary>
+            When this snapshot will expire
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.SaveLoad.OwnerType">
             <summary>
             Type of entity that owns this save slot
@@ -46050,11 +47926,6 @@
             TTL in seconds (Redis only)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.State.StateOptions.Consistency">
-            <summary>
-            Consistency level
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.State.StateOptions.Etag">
             <summary>
             Optimistic concurrency check - save fails if ETag mismatch
@@ -46394,11 +48265,6 @@
         <member name="P:BeyondImmersion.BannouService.State.StoreInfo.KeyCount">
             <summary>
             Number of keys (only if includeStats=true)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.State.ConsistencyLevel">
-            <summary>
-            Consistency level for state operations
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.GetAccountSubscriptionsRequest">
@@ -47443,56 +49309,6 @@
             URL of the featured image for the news item
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Website.ServerStatusResponse">
-            <summary>
-            Aggregated status of all game server realms
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.ServerStatusResponse.GlobalStatus">
-            <summary>
-            Overall status across all game realms
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.ServerStatusResponse.Realms">
-            <summary>
-            Status information for each game realm
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.RealmStatus">
-            <summary>
-            Status and population information for a single game realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.RealmId">
-            <summary>
-            Unique identifier for the game realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Name">
-            <summary>
-            Display name of the game realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Status">
-            <summary>
-            Current operational status of the realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Population">
-            <summary>
-            Current player population level
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.PlayerCount">
-            <summary>
-            Current number of players online
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.Ping">
-            <summary>
-            Latency in milliseconds
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Website.DownloadsResponse">
             <summary>
             Collection of available game client downloads by platform
@@ -47616,91 +49432,6 @@
         <member name="P:BeyondImmersion.BannouService.Website.AccountProfile.LastLogin">
             <summary>
             Date and time of the last successful login
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.AccountProfile.CharacterSlots">
-            <summary>
-            Total number of character slots available
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.AccountProfile.UsedSlots">
-            <summary>
-            Number of character slots currently in use
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.CharacterListResponse">
-            <summary>
-            List of all characters belonging to an account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterListResponse.Characters">
-            <summary>
-            List of characters owned by the account
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.CharacterSummary">
-            <summary>
-            Brief overview of a character for display in character lists
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.CharacterId">
-            <summary>
-            Unique identifier for the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Name">
-            <summary>
-            Name of the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Realm">
-            <summary>
-            Name of the realm the character belongs to
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Level">
-            <summary>
-            Current level of the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.Class">
-            <summary>
-            Character class or profession
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.LastPlayed">
-            <summary>
-            Date and time of last gameplay session
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Website.SubscriptionResponse">
-            <summary>
-            Current subscription status and plan details for an account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.Status">
-            <summary>
-            Current state of the subscription
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.Type">
-            <summary>
-            Subscription tier or plan type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.ExpiresAt">
-            <summary>
-            Date and time when the subscription expires
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.AutoRenew">
-            <summary>
-            Whether automatic renewal is enabled
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.Benefits">
-            <summary>
-            List of benefits included in the subscription
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Website.ErrorResponse">
@@ -58544,6 +60275,48 @@
             Why the endpoint was removed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CircuitState">
+            <summary>
+            Circuit breaker state for mesh endpoints
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent">
+            <summary>
+            Published when circuit breaker state changes for an app-id.
+            <br/>Consumed by all mesh instances to update local caches.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.AppId">
+            <summary>
+            The app-id whose circuit state changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.NewState">
+            <summary>
+            The new circuit breaker state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.PreviousState">
+            <summary>
+            Previous circuit state (null for first state change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.ConsecutiveFailures">
+            <summary>
+            Current consecutive failure count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.ChangedAt">
+            <summary>
+            When the state change occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MeshCircuitStateChangedEvent.OpenedAt">
+            <summary>
+            When the circuit was opened (null if not Open state)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent">
             <summary>
             Simple health ping event published to verify pub/sub path is active.
@@ -59550,6 +61323,324 @@
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceReferenceRegisteredEvent">
+            <summary>
+            Published by higher-layer services when they create a reference to a
+            <br/>foundational resource. For example, when ActorService creates an actor
+            <br/>that references a character, it publishes this event.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceRegisteredEvent.ResourceType">
+            <summary>
+            Type of resource being referenced (opaque identifier, e.g., "character")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceRegisteredEvent.ResourceId">
+            <summary>
+            ID of the resource being referenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceRegisteredEvent.SourceType">
+            <summary>
+            Type of entity holding the reference (opaque identifier, e.g., "actor")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceRegisteredEvent.SourceId">
+            <summary>
+            ID of the entity holding the reference (opaque string, supports non-Guid IDs)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceRegisteredEvent.Timestamp">
+            <summary>
+            When the reference was registered
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceReferenceUnregisteredEvent">
+            <summary>
+            Published by higher-layer services when they delete a reference to a
+            <br/>foundational resource. For example, when ActorService deletes an actor,
+            <br/>it publishes this event to release the character reference.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceUnregisteredEvent.ResourceType">
+            <summary>
+            Type of resource being dereferenced (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceUnregisteredEvent.ResourceId">
+            <summary>
+            ID of the resource being dereferenced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceUnregisteredEvent.SourceType">
+            <summary>
+            Type of entity releasing the reference (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceUnregisteredEvent.SourceId">
+            <summary>
+            ID of the entity releasing the reference (opaque string, supports non-Guid IDs)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceReferenceUnregisteredEvent.Timestamp">
+            <summary>
+            When the reference was unregistered
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent">
+            <summary>
+            Published when a cleanup callback fails during resource deletion.
+            <br/>Used for monitoring and alerting on cleanup failures.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.ResourceType">
+            <summary>
+            Type of resource being cleaned up (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.ResourceId">
+            <summary>
+            ID of the resource being cleaned up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.SourceType">
+            <summary>
+            Type of entity whose cleanup failed (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.ServiceName">
+            <summary>
+            Service whose callback failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.Endpoint">
+            <summary>
+            Endpoint that failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.StatusCode">
+            <summary>
+            HTTP status code returned (0 if connection failed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.ErrorMessage">
+            <summary>
+            Error details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCleanupCallbackFailedEvent.Timestamp">
+            <summary>
+            When the failure occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceGracePeriodStartedEvent">
+            <summary>
+            Published when a resource's reference count reaches zero.
+            <br/>The resource enters a grace period before becoming eligible for cleanup.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceGracePeriodStartedEvent.ResourceType">
+            <summary>
+            Type of resource entering grace period (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceGracePeriodStartedEvent.ResourceId">
+            <summary>
+            ID of the resource entering grace period
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceGracePeriodStartedEvent.GracePeriodEndsAt">
+            <summary>
+            When the grace period ends and cleanup becomes eligible
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceGracePeriodStartedEvent.Timestamp">
+            <summary>
+            When the grace period started
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceCompressedEvent">
+            <summary>
+            Published when compression completes successfully.
+            <br/>Services can subscribe to perform post-compression actions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressedEvent.Timestamp">
+            <summary>
+            When the compression completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressedEvent.ResourceType">
+            <summary>
+            Type of resource compressed (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressedEvent.ResourceId">
+            <summary>
+            ID of the resource compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressedEvent.ArchiveId">
+            <summary>
+            ID of the created archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressedEvent.SourceDataDeleted">
+            <summary>
+            Whether source data was deleted after archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressedEvent.EntriesCount">
+            <summary>
+            Number of services that contributed data to the archive
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent">
+            <summary>
+            Published when a compression callback fails.
+            <br/>Used for monitoring and alerting on compression failures.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.Timestamp">
+            <summary>
+            When the failure occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.ResourceType">
+            <summary>
+            Type of resource being compressed (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.ResourceId">
+            <summary>
+            ID of the resource being compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.SourceType">
+            <summary>
+            Type of data whose compression failed (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.ServiceName">
+            <summary>
+            Service whose callback failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.Endpoint">
+            <summary>
+            Endpoint that failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.StatusCode">
+            <summary>
+            HTTP status code returned (0 if connection failed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceCompressCallbackFailedEvent.ErrorMessage">
+            <summary>
+            Error details
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceDecompressedEvent">
+            <summary>
+            Published when decompression completes successfully.
+            <br/>Services can subscribe to perform post-decompression actions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceDecompressedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceDecompressedEvent.Timestamp">
+            <summary>
+            When the decompression completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceDecompressedEvent.ResourceType">
+            <summary>
+            Type of resource decompressed (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceDecompressedEvent.ResourceId">
+            <summary>
+            ID of the resource decompressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceDecompressedEvent.ArchiveId">
+            <summary>
+            ID of the archive that was restored
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent">
+            <summary>
+            Published when an ephemeral snapshot of a living resource is created.
+            <br/>Unlike ResourceCompressedEvent, this indicates a non-destructive capture
+            <br/>of data from a resource that continues to exist.
+            <br/>
+            <br/>**Use Case**: Storyline Composer and Actor behaviors need compressed
+            <br/>data from living entities to seed emergent narratives without affecting
+            <br/>the source data.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.Timestamp">
+            <summary>
+            When the snapshot was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.ResourceType">
+            <summary>
+            Type of resource snapshotted (opaque identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.ResourceId">
+            <summary>
+            ID of the resource snapshotted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.SnapshotId">
+            <summary>
+            ID of the created snapshot (for retrieval)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.SnapshotType">
+            <summary>
+            Label for snapshot purpose (e.g., "storyline_seed")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.ExpiresAt">
+            <summary>
+            When this snapshot will expire
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ResourceSnapshotCreatedEvent.EntriesCount">
+            <summary>
+            Number of services that contributed data to the snapshot
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.SaveCreatedEvent">
