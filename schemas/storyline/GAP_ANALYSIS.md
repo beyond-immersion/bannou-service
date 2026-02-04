@@ -242,12 +242,17 @@ templates:
 
 **Type**: Integration (we define it)
 
-**Current State**:
-- lib-behavior has GOAP infrastructure (A* planner, actions with preconditions/effects)
-- music-storyteller has action categories (TensionActions, ColorActions, etc.)
-- No storyline action library exists
+**Status**: RESOLVED - see `schemas/storyline/story-actions.yaml`
 
-**What's Missing**:
+**Resolution** (2026-02-04):
+- 30+ GOAP actions defined with preconditions, effects, costs
+- Obligatory scene coverage via `satisfies_obligatory` field per action
+- Genre conventions as WorldState preconditions
+- Variants for key actions
+
+**Note on Propp alignment**: The original example below showed `propp_equivalent` field. After analysis (see "Propp Alignment Analysis" section), we determined Propp alignment is NOT required for GOAP compatibility. The implemented schema does NOT include explicit Propp mapping fields. Propp is inspiration for naming/concepts only.
+
+**Original example** (historical - schema evolved):
 ```yaml
 actions:
   conflict:
@@ -255,23 +260,16 @@ actions:
       preconditions:
         - key: antagonist.known
           value: false
-        - key: tension.current
-          operator: "<"
-          value: 0.7
       effects:
         - key: antagonist.known
           value: true
-        - key: tension.current
-          operator: "+="
-          value: 0.3
       cost: 2.0
-      propp_equivalent: VILLAINY  # Links to Propp
-      stc_beat_affinity: CATALYST  # Likely occurs near this beat
+      # propp_equivalent: VILLAINY  # REMOVED - not required for GOAP
       narrative_state_delta:
-        life_death: -0.3  # Threat to survival introduced
+        life_death: -0.3
 ```
 
-**Dependencies**: Requires Gap 1 (NarrativeState), Gap 2 (mapping to understand affinities)
+**Dependencies**: Requires Gap 1 (NarrativeState) ✓ Complete
 
 ---
 
@@ -882,13 +880,14 @@ After the research sprint, we reach a decision point:
   - **DONE**: Performance genre remapped to `success_failure` (2026-02-04 decision) - primary source says "Accomplishment vs Failure" which maps directly
   - **DONE**: Subgenre arc mapping → `arc_direction` + `compatible_arcs` added to all subgenres in `story-grid-genres.yaml`
 - [x] Phase 2: Story Actions Library → `schemas/storyline/story-actions.yaml`
-  - GOAP actions inspired by Propp functions + Story Grid obligatory scenes
+  - GOAP actions with obligatory scene focus (Propp is inspiration only, not coverage target)
   - **DONE**: 30 MVP actions (11 core events, 7 universal structure, 11 high-frequency genre, 1 supporting)
   - **DONE**: Model crisis types (emergent from 2+ macro-cost actions with divergent effects)
   - **DONE**: Obligatory scene satisfaction via `satisfies_obligatory` per action
   - **DONE**: Genre conventions as WorldState preconditions (macguffin, clock, etc.)
   - **DONE**: Variants for key actions (inciting_incident, resolution)
   - **DONE**: Chained actions for multi-phase story beats
+  - **CLARIFIED**: Propp alignment is NOT required for GOAP - see "Propp Alignment Analysis" below
 - [ ] Phase 3: Story Templates → `schemas/storyline/story-templates.yaml`
   - STC timing for phase boundaries
   - Reagan arc shapes for trajectory constraints
@@ -1044,6 +1043,49 @@ Phase 4 becomes "loader specification" documentation, not a YAML schema in `sche
 4. Document edge cases
 
 **No schema file required.** This phase produces test results and documentation.
+
+---
+
+## Propp Alignment Analysis (2026-02-04)
+
+### Question
+
+Should story-actions.yaml align with propp-functions.yaml preconditions/postconditions?
+
+### Analysis
+
+**SDK_FOUNDATIONS.md findings**:
+1. GOAP actions require: preconditions, effects, costs - story-actions.yaml already has all three
+2. Propp is mentioned ONCE as ONE optional "kernel indicator" among several
+3. SDK_FOUNDATIONS defines a generic action library (ConflictActions, RelationshipActions, etc.) that is NOT Propp-based
+4. Propp alignment is **architecturally optional**
+
+**propp-functions.yaml findings**:
+1. Propp preconditions/postconditions are boolean-only (no numeric values)
+2. Propp lacks: costs, spectrum effects, scoping, temporal bounds
+3. story-actions.yaml is already richer: costs, narrative_effect, chained_action, genre_labels
+
+### Decision: Propp Is Inspiration, Not Alignment Target
+
+**What this means**:
+- Action NAMES may reference Propp concepts (e.g., "antagonist_deceives" inspired by TRICKERY)
+- Action DESIGN follows SDK_FOUNDATIONS GOAP patterns, NOT Propp pre/postconditions
+- No explicit `propp_mapping` field is required
+- "Propp coverage percentage" is a meaningless metric - don't track it
+
+**Optional traceability**: If desired, add `propp_inspiration: TRICKERY` as documentation field. This is NOT alignment.
+
+**What NOT to do**:
+- Don't audit story-actions.yaml to match Propp pre/postconditions
+- Don't claim "X% Propp coverage" as a success metric
+- Don't add actions just to "complete Propp coverage"
+
+**What TO do**:
+- Add actions to fill obligatory scene gaps (verified: first_kiss, confession_of_love, progressive_clue_following)
+- Add actions for narrative variety based on story utility
+- Use Propp as one source of naming inspiration among many
+
+---
 
 ### Decision History: NCP Hub Approach (2026-02-04)
 
