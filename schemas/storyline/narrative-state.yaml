@@ -12,13 +12,15 @@
 #   - Added genre_overrides: Horror="Fear", Thriller="Anxiety/Dread"
 #   - Added four-stage spectrum model (Positive → Contrary → Negative → Negation)
 #   - love_hate: Added Indifference as separate stage between Desire and Hate
+#   - Performance genre remapped from respect_shame to success_failure
+#   - wisdom_ignorance retained for Worldview (overlaps with "meaning/meaninglessness")
 #
 # NOT based on STORYLINE_COMPOSER.md's 6-dimension model, which was derived
 # by analogy from music-storyteller SDK without proper citation. Musical
 # perception dimensions (brightness, warmth, energy) do not apply to
 # literary narrative structure.
 
-version: "1.1"  # 2026-02-04: Corrections per primary source extraction
+version: "1.2"  # 2026-02-04: All corrections complete per primary source + decisions
 source: "Shawn Coyne, Story Grid (2015-2020) via docs/research/STORY-GRID-PRIMARY-SOURCE.md"
 
 # =============================================================================
@@ -120,6 +122,11 @@ spectrums:
         value: 1.0
         label: "Honor with Victory"
         description: "Integrity maintained while achieving collective goal"
+      contrary:
+        value: 0.66
+        label: "Honor without Victory"
+        description: "Integrity maintained but mission failed; noble defeat"
+        # Inferred: the 'less than ideal' state is keeping honor but losing the battle
       negative:
         value: 0.0
         label: "Dishonor"
@@ -191,6 +198,11 @@ spectrums:
         value: 1.0
         label: "Freedom"
         description: "Individual autonomy and self-determination preserved"
+      contrary:
+        value: 0.66
+        label: "Restriction"
+        description: "Some freedoms curtailed but core autonomy intact; compromise with society"
+        # Inferred: constrained but not subjugated - laws, obligations, duties
       negative:
         value: 0.0
         label: "Subjugation"
@@ -271,6 +283,11 @@ spectrums:
         value: 1.0
         label: "Respect"
         description: "Recognition of worth by self and others"
+      contrary:
+        value: 0.66
+        label: "Obscurity"
+        description: "Neither respected nor shamed; anonymous, unnoticed, irrelevant"
+        # Inferred: the 'less than ideal' state is being ignored rather than recognized
       negative:
         value: 0.0
         label: "Shame"
@@ -288,7 +305,7 @@ spectrums:
     core_emotion: "Triumph"
 
     genres:
-      primary: ["performance"]
+      primary: []  # Performance remapped to success_failure per primary source (2026-02-04)
 
     question: "Will the protagonist earn genuine recognition?"
 
@@ -304,6 +321,11 @@ spectrums:
         value: 1.0
         label: "Power"
         description: "Agency to affect change, influence over circumstances"
+      contrary:
+        value: 0.66
+        label: "Limited Influence"
+        description: "Some agency but constrained; can affect small things, not the system"
+        # Inferred: partial power - enough to matter locally, not enough to change everything
       negative:
         value: 0.0
         label: "Impotence"
@@ -359,7 +381,7 @@ spectrums:
     core_emotion: "Admiration / Pity"
 
     genres:
-      primary: ["status"]
+      primary: ["status", "performance"]  # Performance added per primary source (2026-02-04)
 
     question: "Will the protagonist succeed without compromising themselves?"
 
@@ -412,23 +434,34 @@ spectrums:
     domain: "self_actualization"
     maslow_level: 5
 
+    # NOTE: Primary source uses "Meaning vs Meaninglessness" for Worldview.
+    # We retain "Wisdom vs Ignorance" as the spectrum name (2026-02-04 decision).
+    # The concepts overlap: wisdom enables meaning; ignorance leads to meaninglessness.
+    # Labels include both terms for clarity.
+
     poles:
       positive:
         value: 1.0
-        label: "Wisdom"
-        description: "Understanding of how the world truly works"
+        label: "Wisdom / Meaning"
+        description: "Understanding of how the world truly works; life has purpose"
+      contrary:
+        value: 0.66
+        label: "Doubt / Confusion"
+        description: "Questioning beliefs, uncertain but seeking; existential uncertainty"
+        # Per primary source (lines 168-174, 253): Doubt/Confusion is the contrary stage
       negative:
         value: 0.0
-        label: "Ignorance"
-        description: "Lack of understanding, naive worldview"
+        label: "Ignorance / Meaninglessness"
+        description: "Lack of understanding, naive worldview; life feels purposeless"
       negation_of_negation:
         value: -1.0
-        label: "Willful Ignorance / Denial"
-        description: "Actively rejecting truth to preserve comfortable illusion"
+        label: "Willful Denial / Nihilism"
+        description: "Actively rejecting truth; embracing destruction of meaning itself"
         examples:
           - "Knowing the truth but choosing to believe the lie"
           - "Denying evidence to protect ego or worldview"
           - "Sophistry - using intelligence to defend foolishness"
+          - "Active destruction of meaning systems (nihilism)"
 
     core_need: "Self-Actualization"
     core_emotion: "Satisfaction / Pity"
@@ -474,10 +507,9 @@ genre_spectrum_mapping:
     core_event: "Proof of Love"
 
   performance:
-    # NOTE: Primary source (line 224) says "Accomplishment vs. Failure"
-    # This maps better to success_failure than respect_shame
-    # TODO: Consider remapping to success_failure, or create accomplishment_failure spectrum
-    primary: "respect_shame"  # Current mapping; may need correction
+    # Primary source (line 224) says "Accomplishment vs. Failure"
+    # Remapped from respect_shame to success_failure per 2026-02-04 decision
+    primary: "success_failure"
     core_event: "Big Performance"
 
   society:

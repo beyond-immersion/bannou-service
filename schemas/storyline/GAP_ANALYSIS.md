@@ -647,43 +647,35 @@ The following findings from `docs/research/STORY-GRID-PRIMARY-SOURCE.md` require
 | Love | Love | Desire | Indifference | Hate/Self-hatred |
 | Morality | Good | Wavering | Indifference | Evil |
 
-**Action Required**: Add `contrary` field to all spectrum definitions in `narrative-state.yaml`.
+**Action Required**: ~~Add `contrary` field to all spectrum definitions in `narrative-state.yaml`.~~ **DONE** (2026-02-04)
 
-```yaml
-# Example updated spectrum
-life_death:
-  positive: life
-  contrary: unconsciousness     # NEW - less than ideal but not death
-  negative: death
-  negation_of_negation: damnation
-```
+All 10 spectrums now have `contrary` field with appropriate values:
+- life_death: Unconsciousness
+- honor_dishonor: Honor without Victory
+- justice_injustice: Unfairness
+- freedom_subjugation: Restriction
+- love_hate: Desire (with Indifference as separate negative stage)
+- respect_shame: Obscurity
+- power_impotence: Limited Influence
+- success_failure: Compromise
+- altruism_selfishness: Wavering/Temptation (with Indifference as separate stage)
+- wisdom_ignorance: Doubt/Confusion
 
 #### 2. Performance Genre Core Value Correction
 
-**Current (WRONG)**: `respect_shame` spectrum assigned to Performance
+~~**Current (WRONG)**: `respect_shame` spectrum assigned to Performance~~ **RESOLVED**
 **Primary Source (line 224)**: "Accomplishment vs. Failure"
 
-**Action Required**: Either:
-- Option A: Create new `accomplishment_failure` spectrum for Performance
-- Option B: Map Performance to `success_failure` spectrum (similar values)
-
-**Recommendation**: Option B - `success_failure` already exists and is semantically close. Update genre mapping.
+**Resolution (2026-02-04)**: Performance genre remapped to `success_failure` spectrum. Both Status and Performance now share this spectrum, which is appropriate as both involve achievement-based narratives.
 
 #### 3. Worldview Genre Core Value Discrepancy
 
 **Current**: `wisdom_ignorance` spectrum (Wisdom vs. Ignorance)
 **Primary Source (line 225)**: "Meaning vs. Meaninglessness"
 
-**Analysis**: These are different concepts:
-- Wisdom/Ignorance = knowledge acquisition
-- Meaning/Meaninglessness = existential significance
+~~**Analysis**: These are different concepts~~ **RESOLVED**
 
-**Action Required**: Either:
-- Option A: Create new `meaning_meaninglessness` spectrum for Worldview
-- Option B: Rename `wisdom_ignorance` to `meaning_meaninglessness` (breaking change)
-- Option C: Document as acceptable semantic overlap (wisdom enables meaning)
-
-**Recommendation**: Option A - add new spectrum. Keep `wisdom_ignorance` as it may serve Education subgenre distinctly.
+**Resolution (2026-02-04)**: Retain `wisdom_ignorance` as the spectrum name. The concepts overlap: wisdom enables meaning; ignorance leads to meaninglessness. Spectrum labels include both terms for clarity (e.g., "Wisdom / Meaning"). No compelling reason to change the naming.
 
 #### 4. Internal Genre Subgenres (for reference)
 
@@ -858,11 +850,11 @@ If the research sprint yields nothing substantial, we proceed with original synt
   - **RESOLVED**: External/Internal genre classification uses 9+3 split per primary source
   - **RESOLVED**: Core Need = "Safety" for all life_death spectrum genres (Action, Horror, Thriller)
   - **RESOLVED**: Genre emotion overrides: Horror="Fear", Thriller="Anxiety/Dread"
-  - **TODO**: Add `genre_overrides` section to YAML schema
-  - **TODO**: Add `contrary` field to all spectrums (4-stage model per primary source)
-  - **TODO**: Create `meaning_meaninglessness` spectrum for Worldview genre
-  - **TODO**: Remap Performance genre to `success_failure` (not `respect_shame`)
-  - **TODO**: Add subgenre support for internal genres (affects arc compatibility)
+  - **DONE**: Added `genre_overrides` section to YAML schema (Horror, Thriller emotion overrides)
+  - **DONE**: Added `contrary` field to all 10 spectrums (4-stage model per primary source)
+  - **DONE**: Worldview keeps `wisdom_ignorance` spectrum (2026-02-04 decision) - concepts overlap with "meaning/meaninglessness", labels include both
+  - **DONE**: Performance genre remapped to `success_failure` (2026-02-04 decision) - primary source says "Accomplishment vs Failure" which maps directly
+  - **TODO**: Add subgenre support for internal genres (affects arc compatibility) - requires architectural design
 - [ ] Phase 2: Framework-to-NCP mappings (Propp→NCP, STC→NCP, StoryGrid→NCP)
   - **Note**: Reagan arcs are VALUE CURVES, not event sequences - they don't map to NCP functions
   - Reagan arcs provide the SHAPE of how Life Value spectrums change over time f(t)→[0,1]
