@@ -1,17 +1,21 @@
 # Storyline SDK Critical Audit
 
-> **Status**: PHASES 1-4 COMPLETE, RESEARCH VALIDATION COMPLETE
+> **Status**: PHASES 1-5 COMPLETE, YAML SCHEMAS FIXED AND AUGMENTED
 > **Started**: 2026-02-03
 > **Last Updated**: 2026-02-03
 > **Auditor**: Claude (with supervision)
 >
-> **⛔ KEY FINDING**: YAML schemas were MOSTLY done correctly but have specific errors:
-> - propp-functions.yaml: I/J symbol swap for Branding (17) and Victory (18)
-> - story-grid-genres.yaml: 6 Core Need/Emotion values don't match research
-> - save-the-cat-beats.yaml: ✅ VERIFIED EXCELLENT
-> - emotional-arcs.yaml: ✅ VERIFIED EXCELLENT
+> **✅ YAML SCHEMAS NOW AUTHORITATIVE AND AUGMENTED** (all errors fixed, research integrated):
+> - propp-functions.yaml: ✅ FIXED+AUGMENTED - I/J symbols corrected; added three-act structure, Act 2 branching, generation algorithm
+> - story-grid-genres.yaml: ✅ FIXED+AUGMENTED - Core Need/Emotion corrected; added story units, scene analysis, value poles, Five-Leaf Clover, planning tools
+> - save-the-cat-beats.yaml: ✅ VERIFIED EXCELLENT (no changes needed)
+> - emotional-arcs.yaml: ✅ AUGMENTED - Added classification algorithm, NarrativeState mappings, distance metrics
 >
-> C# implementations ignored YAML schemas entirely and made up numbers.
+> **Reference Documents** (implementation guidance, not YAML augmentation):
+> - NARRATIVE-CONTEXT-PROTOCOL.md - Dramatica framework (potential standalone dramatica.yaml)
+> - RE-PRAXIS-LOGIC-DATABASE.md - Actor/Behavior service knowledge base architecture
+>
+> C# implementations still need to be updated to use these authoritative YAML values.
 
 ## Audit Scope
 
@@ -49,10 +53,10 @@ Auditing storyline SDKs against:
 - [x] Planning/StoryPlanner.cs - **⚠️ DEVIATES** - Urgency tiers don't match design, no timeout
 - [x] Templates/NarrativeTemplate.cs - **⚠️ MIXED** - Beat positions good, ALL TargetState values arbitrary
 
-### Phase 4: Schema Files (Research Verified)
-- [x] schemas/storyline/propp-functions.yaml - **⚠️ SYMBOL SWAP** - Verified against PROPP-THIRTY-ONE-FUNCTIONS.md: Branding/Victory symbols I/J swapped (id 17 & 18)
+### Phase 4: Schema Files (Research Verified & Fixed)
+- [x] schemas/storyline/propp-functions.yaml - **✅ FIXED** - Branding→I, Victory→J (plus variant IDs corrected)
 - [x] schemas/storyline/save-the-cat-beats.yaml - **✅ EXCELLENT** - Verified against SAVE-THE-CAT-BEAT-SHEET.md: YAML is MORE accurate (uses page numbers not rounded %)
-- [x] schemas/storyline/story-grid-genres.yaml - **⚠️ FOUR CORE ERRORS** - Verified against FOUR-CORE-FRAMEWORK.md and STORY-GRID-GENRES.md: 6 Core Need/Emotion values incorrect
+- [x] schemas/storyline/story-grid-genres.yaml - **✅ FIXED** - 6 Core Need/Emotion values corrected: War(Safety/Intrigue), Crime(Safety), Thriller(Excitement), Status(Respect), Society(Intrigue/Triumph), Worldview(Satisfaction/Pity)
 - [x] schemas/storyline/emotional-arcs.yaml - **✅ EXCELLENT** - Full Reagan et al. methodology, SVD variance percentages, HONEST about preliminary mode vectors
 
 ### Phase 5: Research Documents (24 total)
@@ -689,11 +693,11 @@ This is a STANDARD A* heuristic - admissible for optimal pathfinding. Not narrat
 
 **OVERALL ASSESSMENT**: The LOGIC is reasonable (tension-stakes should align, mystery decreases, urgency peaks at climax). The NUMBERS are arbitrary but honestly documented as hypotheses. This is the same pattern as GenreComplianceScorer - acceptable for now, needs empirical validation later.
 
-### 15. propp-functions.yaml - ⚠️ MOSTLY GOOD, SYMBOL SWAP ERROR
+### 15. propp-functions.yaml - ✅ FIXED
 
 **File**: `schemas/storyline/propp-functions.yaml`
 
-**Proper citations and structure, but has a symbol swap error in Quest phase.**
+**Proper citations and structure. Symbol swap error in Quest phase has been FIXED.**
 
 **✅ PROPER CITATIONS** (lines 1-10, 917-940):
 - Vladimir Propp "Morphology of the Folktale" (1928)
@@ -803,11 +807,11 @@ The YAML schema is clean. The C# implementation added arbitrary values that Snyd
 
 **KEY INSIGHT REINFORCED**: The YAML schemas represent the research accurately. The C# implementations deviated by adding arbitrary numeric values.
 
-### 17. story-grid-genres.yaml - ⚠️ FOUR CORE FRAMEWORK DISCREPANCIES
+### 17. story-grid-genres.yaml - ✅ FIXED
 
 **File**: `schemas/storyline/story-grid-genres.yaml`
 
-**818 lines of Story Grid methodology. Complete citations BUT Core Framework values DON'T MATCH research.**
+**818 lines of Story Grid methodology. Complete citations. Core Framework values now MATCH research.**
 
 **✅ PROPER CITATIONS** (lines 1-18, 800-818):
 - Shawn Coyne "The Story Grid: What Good Editors Know" (2015)
@@ -865,7 +869,7 @@ Verified against `docs/research/FOUR-CORE-FRAMEWORK.md` and `docs/research/STORY
 6. **Worldview Genre** (minor):
    - Emotion: YAML="Relief or Pity", Research="Satisfaction/Pity" (Relief ≠ Satisfaction)
 
-**ACTION REQUIRED**: Verify which source is authoritative (Coyne's original Four Core Framework document) and correct the YAML.
+**✅ FIXED**: All 6 discrepancies corrected based on Four Core Framework research documents.
 
 **✅ ALL 12 CONTENT GENRES DOCUMENTED** (with above discrepancies):
 
@@ -1002,10 +1006,10 @@ mode_2.sampled_shape: [-0.12, -0.11, -0.05, +0.03, +0.12, +0.15, +0.12, +0.04, -
 
 | Schema File | C# Implementation | What Went Wrong |
 |-------------|-------------------|-----------------|
-| propp-functions.yaml | ProppFunctions.cs | YAML has correct symbols (H, I, K); C# has errors (H→I, I→K, K duplicated). YAML has no arbitrary weights; C# adds arbitrary "significance" values. |
-| save-the-cat-beats.yaml | SaveTheCatBeats.cs | YAML has percentages from Snyder's page numbers; C# adds arbitrary `Importance` and `Tolerance` fields Snyder never defined. |
-| story-grid-genres.yaml | StoryGridGenres.cs | YAML has complete Four Core Framework; C# likely adds arbitrary weights (TBD - verify). |
-| emotional-arcs.yaml | EmotionalArc.cs | YAML has Reagan et al. SVD methodology with HONEST "PRELIMINARY" caveats; C# has arbitrary 8-point arrays presented as authoritative. |
+| propp-functions.yaml ✅ FIXED | ProppFunctions.cs | YAML now has correct symbols (I, J fixed); C# has errors (H→I, I→K, K duplicated). YAML has no arbitrary weights; C# adds arbitrary "significance" values. |
+| save-the-cat-beats.yaml ✅ | SaveTheCatBeats.cs | YAML has percentages from Snyder's page numbers; C# adds arbitrary `Importance` and `Tolerance` fields Snyder never defined. |
+| story-grid-genres.yaml ✅ FIXED | StoryGridGenres.cs | YAML now has correct Four Core Framework values; C# likely adds arbitrary weights (TBD - verify). |
+| emotional-arcs.yaml ✅ | EmotionalArc.cs | YAML has Reagan et al. SVD methodology with HONEST "PRELIMINARY" caveats; C# has arbitrary 8-point arrays presented as authoritative. |
 
 **Root Cause**: The developer who wrote the C# implementations either:
 1. Didn't read the YAML research files
@@ -1067,10 +1071,10 @@ mode_2.sampled_shape: [-0.12, -0.11, -0.05, +0.03, +0.12, +0.15, +0.12, +0.04, -
 | SaveTheCatBeats.cs | Beat percentages ARE from Snyder's actual page numbers |
 | StoryGridGenres.cs | Obligatory scenes match Coyne's actual book |
 | CoreValue.cs | Core values correctly sourced from Coyne's Story Grid |
-| **propp-functions.yaml** | **⚠️ SYMBOL SWAP** - Proper citations, complete variant docs, BUT symbols I/J swapped for Branding/Victory |
+| **propp-functions.yaml** | **✅ FIXED+AUGMENTED** - Proper citations, complete variant docs, symbols I/J corrected. NOW INCLUDES: Three-act structure with function assignments, Act 2 branching logic (Struggle/Task paths, 4 outcomes), seeded generation algorithm, rule composition, deduplication |
 | **save-the-cat-beats.yaml** | **✅ EXCELLENT** - Percentages calculated from Snyder's page numbers, multiple timing strategies, no arbitrary Importance/Tolerance - VERIFIED against research |
-| **story-grid-genres.yaml** | **⚠️ FOUR CORE ERRORS** - Complete 12-genre system, Five Commandments correct, BUT 6 Core Need/Emotion values don't match FOUR-CORE-FRAMEWORK.md and STORY-GRID-GENRES.md research docs |
-| **emotional-arcs.yaml** | **✅ EXCELLENT** - Full Reagan et al. methodology, SVD variance percentages, mode vectors marked PRELIMINARY with documented deviation, HONEST about limitations |
+| **story-grid-genres.yaml** | **✅ FIXED+AUGMENTED** - Complete 12-genre system, Five Commandments correct, Core Need/Emotion values match research. NOW INCLUDES: Story unit hierarchy (Beat→Global), scene analysis questions, value poles table, story boundaries concept, planning tools (Foolscap/Spreadsheet/Infographic), Five-Leaf Genre Clover with Structure/Reality/Time/Style |
+| **emotional-arcs.yaml** | **✅ AUGMENTED** - Full Reagan et al. methodology, SVD variance percentages, mode vectors marked PRELIMINARY. NOW INCLUDES: classification algorithm (0.1 threshold), NarrativeState mapping formulas (Hope/Tension/Stakes), distance metrics, sliding window algorithm from EMOTIONAL-ARCS-SVD-METHODOLOGY.md |
 
 ---
 
@@ -1100,34 +1104,40 @@ All 4 YAML schema files audited. **KEY FINDING**: The schemas are EXCELLENT - th
 
 | Schema | Rating | Key Finding |
 |--------|--------|-------------|
-| propp-functions.yaml | ⚠️ SYMBOL ERROR | Branding/Victory symbols I/J swapped; otherwise good |
+| propp-functions.yaml | ✅ FIXED | Branding/Victory symbols I/J corrected |
 | save-the-cat-beats.yaml | ✅ EXCELLENT | Percentages from Snyder's page numbers |
-| story-grid-genres.yaml | ⚠️ FOUR CORE ERRORS | 6 Core Need/Emotion values don't match research (War, Crime, Thriller, Status, Society, Worldview) |
+| story-grid-genres.yaml | ✅ FIXED | 6 Core Need/Emotion values corrected to match research |
 | emotional-arcs.yaml | ✅ EXCELLENT | Full Reagan methodology, honest limitations |
 
 ### Phase 5 Complete: Research Documents Cross-Reference ✅
 
 Verified against `docs/research/` compiled summaries:
 
-| Research Doc | Schema Verified | Status |
-|--------------|-----------------|--------|
-| PROPP-THIRTY-ONE-FUNCTIONS.md | propp-functions.yaml | ⚠️ I/J swap for Branding(17)/Victory(18) |
+| Research Doc | Schema Verified/Augmented | Status |
+|--------------|---------------------------|--------|
+| PROPP-THIRTY-ONE-FUNCTIONS.md | propp-functions.yaml | ✅ FIXED - I/J symbols corrected |
 | SAVE-THE-CAT-BEAT-SHEET.md | save-the-cat-beats.yaml | ✅ YAML more accurate (page numbers) |
-| FOUR-CORE-FRAMEWORK.md | story-grid-genres.yaml | ⚠️ 6 Core Need/Emotion errors |
-| STORY-GRID-GENRES.md | story-grid-genres.yaml | ⚠️ Confirms Four Core errors |
-| emotional-arcs.yaml | (self-documented) | ✅ Honest about limitations |
+| FOUR-CORE-FRAMEWORK.md | story-grid-genres.yaml | ✅ FIXED - 6 Core Need/Emotion corrected |
+| STORY-GRID-GENRES.md | story-grid-genres.yaml | ✅ FIXED - Confirms corrections |
+| EMOTIONAL-ARCS-SVD-METHODOLOGY.md | emotional-arcs.yaml | ✅ AUGMENTED - Added classification algorithm, NarrativeState mapping formulas, distance metrics |
+| FIVE-LEAF-GENRE-CLOVER.md | story-grid-genres.yaml | ✅ AUGMENTED - Added Five-Leaf Genre Clover (Structure, Reality with 15+ subgenres, Time, Style mediums) |
+| STORY-GRID-101.md | story-grid-genres.yaml | ✅ AUGMENTED - Added story unit hierarchy (Beat→Scene→Sequence→Act→Subplot→Global), scene analysis (4 questions), value poles table, story boundaries, planning tools (Foolscap, Spreadsheet, Infographic) |
+| NARRATIVE-CONTEXT-PROTOCOL.md | N/A (new file needed) | 📋 REFERENCE - Dramatica-based framework with Four Perspectives, Nine Dynamics, 145 Narrative Functions. Different theoretical foundation; would require standalone dramatica.yaml. Integration points noted for GOAP goal constraints and framework translation. |
+| PROPPER-IMPLEMENTATION.md | propp-functions.yaml | ✅ AUGMENTED - Added detailed three-act structure with function assignments (Act 1: A,B,C,↑,D,E,F,G; Act 3: Q,Ex,T,U,W), Act 2 branching logic (Struggle vs Task paths, 50/50 probability, 4 possible outcomes), seeded generation algorithm, rule composition patterns, deduplication, output format |
+| RE-PRAXIS-LOGIC-DATABASE.md | N/A (Actor service) | 📋 REFERENCE - Implementation architecture for NPC knowledge bases (exclusion logic database, tree storage, variable unification). Applicable to Actor/Behavior service, not narrative theory YAML. |
 
-### Action Items Identified:
+### Action Items ✅ COMPLETED:
 
-1. **propp-functions.yaml**: Fix symbol swap
-   - Branding (id:17): Change "J" → "I"
-   - Victory (id:18): Change "I" → "J"
+1. **propp-functions.yaml**: ✅ Symbol swap FIXED
+   - Branding (id:17): "J" → "I" ✓
+   - Victory (id:18): "I" → "J" ✓
+   - Variant IDs also corrected (I1/I2 ↔ J1-J6)
 
-2. **story-grid-genres.yaml**: Fix Core Need/Emotion values
-   - War: Need Safety (not Self-Actualization), Emotion Intrigue (not Pride)
-   - Crime: Need Safety (not Individual Sovereignty)
-   - Thriller: Emotion Excitement (not Dread)
-   - Status: Need Respect (not Esteem)
-   - Society: Emotion Intrigue/Triumph (not Catharsis)
-   - Worldview: Emotion Satisfaction/Pity (not Relief or Pity)
+2. **story-grid-genres.yaml**: ✅ Core Need/Emotion values FIXED
+   - War: Safety/Intrigue ✓
+   - Crime: Safety ✓
+   - Thriller: Excitement ✓
+   - Status: Respect ✓
+   - Society: Intrigue/Triumph ✓
+   - Worldview: Satisfaction/Pity ✓
 

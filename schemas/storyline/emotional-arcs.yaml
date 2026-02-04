@@ -466,9 +466,36 @@ generation_guidance:
 # =============================================================================
 # NARRATIVE STATE INTEGRATION
 # =============================================================================
+# Source: docs/research/EMOTIONAL-ARCS-SVD-METHODOLOGY.md
 
 narrative_state_mapping:
   description: "Map emotional arcs to NarrativeState dimensions"
+
+  # Direct mapping formulas from Reagan et al. methodology
+  # These provide quantitative conversion from arc sentiment to NarrativeState
+  quantitative_mapping:
+    hope:
+      description: "Direct mapping from sentiment value"
+      formula: "narrativeState.Hope = arcTrajectory.Points[(int)(t * 199)]"
+      note: "t is story position [0,1], trajectory has 200 points"
+
+    tension:
+      description: "Derived from slope/derivative of arc"
+      formula: |
+        # Approximate derivative using finite differences
+        slope = (trajectory[i+1] - trajectory[i-1]) / 2
+        # Negative slope (falling) = high tension
+        # Positive slope (rising) = lower tension
+        tension = 0.5 - (slope * scaling_factor)
+      note: "Falling emotional trajectory correlates with rising tension"
+
+    stakes:
+      description: "Derived from distance from neutral sentiment"
+      formula: |
+        # Neutral sentiment = 5.0 on labMT scale (normalized to 0.5)
+        distance_from_neutral = abs(sentiment - 0.5)
+        stakes = distance_from_neutral * 2  # Scale to [0,1]
+      note: "Extreme emotions (very high or very low) indicate higher stakes"
 
   dimension_correlations:
     tension:
@@ -495,6 +522,82 @@ narrative_state_mapping:
       directly_maps_to: "emotional valence"
       high_during: ["rising sections"]
       low_during: ["falling sections", "all is lost"]
+
+# =============================================================================
+# IMPLEMENTATION ALGORITHMS
+# =============================================================================
+# Source: docs/research/EMOTIONAL-ARCS-SVD-METHODOLOGY.md
+
+implementation:
+  classification_algorithm:
+    description: "Classify a story into one of 6 arc types based on SVD mode loadings"
+    threshold: 0.1  # Significance threshold for mode coefficients (tune empirically)
+
+    algorithm: |
+      def classify_arc(book_coefficients):
+          mode1_loading = book_coefficients[0]  # First SVD mode coefficient
+          mode2_loading = book_coefficients[1]  # Second SVD mode coefficient
+          threshold = 0.1
+
+          # Single mode dominant
+          if abs(mode1_loading) > threshold and abs(mode2_loading) < threshold:
+              return "rags_to_riches" if mode1_loading > 0 else "tragedy"
+
+          if abs(mode2_loading) > threshold and abs(mode1_loading) < threshold:
+              return "man_in_hole" if mode2_loading > 0 else "icarus"
+
+          # Combined modes (both significant)
+          if mode1_loading > 0 and mode2_loading > 0:
+              return "cinderella"
+          elif mode1_loading < 0 and mode2_loading < 0:
+              return "oedipus"
+
+          return "mixed"  # No dominant pattern
+
+  distance_metrics:
+    manhattan:
+      description: "City Block distance - used for hierarchical clustering"
+      formula: "d(a,b) = sum(|a_i - b_i|)"
+      use_case: "Clustering stories by arc similarity"
+
+    euclidean:
+      description: "Euclidean distance - used for SOM and nearest-neighbor"
+      formula: "d(a,b) = sqrt(sum((a_i - b_i)²))"
+      use_case: "Finding similar stories, NarrativeState distance"
+
+  sliding_window:
+    description: "Generate overlapping sentiment windows across story"
+    parameters:
+      min_size: 10000  # Words per window
+      num_points: 200  # Sampling resolution
+      step_size: "(total_words - min_size) / (num_points - 1)"
+
+    algorithm: |
+      def chopper_sliding(text_words, min_size=10000, num_points=200):
+          total_words = len(text_words)
+          step = (total_words - min_size) // (num_points - 1)
+
+          timeseries = []
+          for i in range(num_points):
+              start = i * step
+              end = start + min_size
+              window = text_words[start:end]
+              sentiment = calculate_sentiment(window)
+              timeseries.append(sentiment)
+
+          return timeseries  # Length: 200 points
+
+  sentiment_calculation:
+    description: "labMT weighted average happiness score"
+    algorithm: |
+      def calculate_sentiment(word_frequencies, labmt_scores):
+          total_score = 0
+          total_weight = 0
+          for word, frequency in word_frequencies.items():
+              if word in labmt_scores:
+                  total_score += labmt_scores[word] * frequency
+                  total_weight += frequency
+          return total_score / total_weight if total_weight > 0 else 5.0  # 5.0 = neutral
 
 # =============================================================================
 # REFERENCES

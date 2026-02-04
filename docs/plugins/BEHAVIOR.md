@@ -164,6 +164,60 @@ Service lifetime is **Scoped** (per-request). `BehaviorModelCache` is a singleto
 
 ---
 
+## GOAP Implementation Notes
+
+### Canonical GOAP vs Bannou Implementation
+
+The GOAP planner follows the architecture from [Jeff Orkin's original F.E.A.R. implementation](https://www.gamedeveloper.com/design/building-the-ai-of-f-e-a-r-with-goal-oriented-action-planning) with deliberate enhancements for richer NPC behaviors:
+
+| Aspect | Canonical GOAP (F.E.A.R.) | Bannou Implementation |
+|--------|--------------------------|----------------------|
+| **World State** | 64-bit bit field (boolean atoms only) | `ImmutableDictionary<string, object>` (numeric, boolean, string) |
+| **Conditions** | Boolean equality only | Full comparison operators (`==`, `!=`, `>`, `>=`, `<`, `<=`) |
+| **Effects** | Set boolean flags | Set, Add (+delta), Subtract (-delta) |
+| **Search Direction** | Regressive (backward from goal) | Forward (from current state) |
+| **Heuristic** | Count of unsatisfied conditions | Sum of condition distances (numeric-aware) |
+
+**Why the enhancements matter**: Boolean-only state forces awkward decomposition (e.g., `energy_low`, `energy_medium`, `energy_high` flags instead of `energy >= 50`). Numeric state with delta effects enables natural expressions like "resting adds 20 energy" without manual flag management.
+
+### Forward vs Regressive Search Tradeoff
+
+Jeff Orkin's paper recommends **regressive (backward) search** for efficiency:
+
+> "A regressive search is more efficient and intuitive. Searching backwards will start at the goal, and find actions that will satisfy the goal."
+
+**Why regressive search works for classic GOAP:**
+- Goal: `hasWeapon == true`
+- Find actions whose effects set `hasWeapon = true` → direct lookup
+- New subgoals: that action's preconditions
+- Simple 1:1 mapping between effects and subgoals
+
+**Why regressive search is impractical for Bannou's implementation:**
+
+With numeric effects and inequality conditions, reversing the search is non-trivial:
+
+```
+Goal: energy >= 10
+Current: energy = 3
+Action "Rest": effect energy += 5
+
+Forward search: Apply Rest → energy = 8 → Apply Rest → energy = 13 → Goal satisfied
+
+Regressive search would need to:
+  1. Goal: energy >= 10
+  2. Find actions affecting energy → Rest (energy += 5)
+  3. Work backward: Before Rest, need energy >= 5 (10 - 5)
+  4. Still unsatisfied (3 < 5), recurse...
+  5. Need another Rest → Before that, need energy >= 0
+  6. Now current state satisfies
+```
+
+This requires tracking **partial satisfaction** through accumulated deltas, which essentially simulates forward search with extra complexity. The richer expression language trades regressive-search-friendliness for expressiveness.
+
+**Practical impact**: For typical NPC behavior (10-20 actions per actor), forward search with bounded depth (3-10), node limits (200-1000), and timeouts (20-100ms) performs adequately. The urgency-tiered parameters ensure reactive behaviors under time pressure.
+
+---
+
 ## Visual Aid
 
 ```
@@ -435,7 +489,11 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **WorldState hash collisions in A***: The closed set uses `GetHashCode()` of `WorldState` for visited-state tracking. Hash collisions could cause the planner to skip valid states or revisit states. The `ComputeHashCode` implementation orders keys before hashing to ensure determinism, but the hash space is limited to 32 bits.
+1. **WorldState hash collisions in A* closed set**: The closed set uses `int` hash codes (`GetHashCode()`) for visited-state tracking rather than full state equality. With 32-bit hashes and potentially thousands of world states explored, hash collisions can cause two failure modes:
+   - **False positive (skip valid state)**: If state A and state B hash to the same value, and A is explored first, B will be incorrectly skipped as "already visited" even though it's a different state with different goal distance.
+   - **Missed optimization**: A shorter path to the same logical state might be skipped.
+
+   The `ComputeHashCode` implementation orders keys before hashing for determinism, but collision probability follows the birthday problem: with ~77,000 unique states, there's a 50% chance of at least one collision. In practice, the node limits (200-1000) keep exploration well below this threshold, and the timeout bounds provide a safety net. This is a standard performance tradeoff in game AI planners—full state equality comparison on every closed-set check would be prohibitively expensive.
 
 2. **Constant pool pre-seeds 0, 1, -1**: `ConstantPoolBuilder.AddCommonConstants()` pre-allocates indices 0-2 for common numeric literals. User constants start at index 3. The pre-seeded constants count against the `CompilerMaxConstants` limit (256 default), so users actually have 253 available slots.
 
@@ -455,27 +513,29 @@ No bugs identified.
 
 7. **No plan cost upper bound**: The A* planner has no mechanism to abandon search if the best found plan exceeds a cost threshold. It will explore all nodes up to the limit even if the cheapest partial plan already exceeds a practical budget.
 
-8. **'in' operator requires array literal with max 16 elements**: The `in` operator in ABML expressions only supports static array literals (`x in ['a', 'b', 'c']`), not dynamic arrays. Additionally, the array is limited to 16 elements maximum (line 244 of StackExpressionCompiler.cs). Arrays with more elements produce a compiler error suggesting pre-computed boolean flags. The expansion emits short-circuit OR chains.
+8. **Forward search over regressive search**: The GOAP planner uses forward A* search (from current state toward goal) rather than the regressive search recommended by Jeff Orkin's original F.E.A.R. implementation. This is a deliberate tradeoff: regressive search is more efficient for boolean-only world state (direct precondition→effect matching), but Bannou's numeric state with delta effects (`energy += 5`) and inequality conditions (`energy >= 10`) makes regressive search impractical without essentially simulating forward search. See "GOAP Implementation Notes" section for detailed analysis.
 
-9. **ValidateAbml runs full compilation pipeline**: The `/validate` endpoint calls `_compiler.CompileYaml()` which executes the entire pipeline including flow compilation and bytecode emission. The generated bytecode is discarded. This wastes CPU for validation-only requests - could use a validation-specific compiler path that stops after semantic analysis.
+9. **'in' operator requires array literal with max 16 elements**: The `in` operator in ABML expressions only supports static array literals (`x in ['a', 'b', 'c']`), not dynamic arrays. Additionally, the array is limited to 16 elements maximum (line 244 of StackExpressionCompiler.cs). Arrays with more elements produce a compiler error suggesting pre-computed boolean flags. The expansion emits short-circuit OR chains.
 
-10. **Array literals unsupported outside 'in' operator**: Standalone array literals in bytecode (`var arr = [1, 2, 3]`) are not supported. The compiler emits an error: "Array literals are only supported with the 'in' operator in bytecode." Dynamic collections require cloud-side execution.
+10. **ValidateAbml runs full compilation pipeline**: The `/validate` endpoint calls `_compiler.CompileYaml()` which executes the entire pipeline including flow compilation and bytecode emission. The generated bytecode is discarded. This wastes CPU for validation-only requests - could use a validation-specific compiler path that stops after semantic analysis.
 
-11. **VmConfig hardcoded limits not configurable**: Several VM limits are hardcoded in `VmConfig.cs` and not exposed via service configuration: MaxRegisters (256), MaxInstructions (65536), MaxJumpOffset (65535), MaxFunctionArgs (16), MaxNestingDepth (100). Only MaxConstants and MaxStrings are configurable.
+11. **Array literals unsupported outside 'in' operator**: Standalone array literals in bytecode (`var arr = [1, 2, 3]`) are not supported. The compiler emits an error: "Array literals are only supported with the 'in' operator in bytecode." Dynamic collections require cloud-side execution.
 
-12. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
+12. **VmConfig hardcoded limits not configurable**: Several VM limits are hardcoded in `VmConfig.cs` and not exposed via service configuration: MaxRegisters (256), MaxInstructions (65536), MaxJumpOffset (65535), MaxFunctionArgs (16), MaxNestingDepth (100). Only MaxConstants and MaxStrings are configurable.
 
-13. ~~**Memory store unbounded index growth**~~: **FIXED**: `AddToMemoryIndexAsync` now enforces `DefaultMemoryLimit` on write. When the index exceeds capacity, oldest entries are trimmed from the front and their corresponding memory records are deleted (best-effort cleanup). The index is bounded to `DefaultMemoryLimit` (default 100) entries per entity.
+13. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
 
-14. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update falls back to unconditional save (lines 289-299 of ActorLocalMemoryStore.cs), potentially losing concurrent updates.
+14. ~~**Memory store unbounded index growth**~~: **FIXED**: `AddToMemoryIndexAsync` now enforces `DefaultMemoryLimit` on write. When the index exceeds capacity, oldest entries are trimmed from the front and their corresponding memory records are deleted (best-effort cleanup). The index is bounded to `DefaultMemoryLimit` (default 100) entries per entity.
 
-15. **ClearAsync deletes memories sequentially**: Clearing an entity's memories iterates through each memory ID and issues individual delete calls (lines 234-237 of ActorLocalMemoryStore.cs). An entity with 100 memories generates 101 state store operations (100 deletes + 1 index delete).
+15. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update falls back to unconditional save (lines 289-299 of ActorLocalMemoryStore.cs), potentially losing concurrent updates.
 
-16. **Unreachable code in BinaryOperator switch**: The `BinaryOperator.In` case at line 207 of StackExpressionCompiler.cs is dead code - the `in` operator is handled by `CompileInOperator` at lines 181-184 before the switch is reached. The throw statement can never execute. Kept as defensive code for future refactoring safety.
+16. **ClearAsync deletes memories sequentially**: Clearing an entity's memories iterates through each memory ID and issues individual delete calls (lines 234-237 of ActorLocalMemoryStore.cs). An entity with 100 memories generates 101 state store operations (100 deletes + 1 index delete).
 
-17. **BehaviorModelCache.GetInterpreter race condition on cold cache**: At lines 142-158 of BehaviorModelCache.cs, two concurrent threads calling `GetInterpreter` for the same character/type/variant can both miss the cache check (line 144), both create separate `BehaviorModelInterpreter` instances (line 155), and both write to the cache via direct assignment. The last writer wins and the earlier caller's interpreter is evicted from the cache while potentially still in use. In practice benign because actors run single-threaded behavior loops, so concurrent access to the same character's interpreter doesn't occur.
+17. **Unreachable code in BinaryOperator switch**: The `BinaryOperator.In` case at line 207 of StackExpressionCompiler.cs is dead code - the `in` operator is handled by `CompileInOperator` at lines 181-184 before the switch is reached. The throw statement can never execute. Kept as defensive code for future refactoring safety.
 
-18. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
+18. **BehaviorModelCache.GetInterpreter race condition on cold cache**: At lines 142-158 of BehaviorModelCache.cs, two concurrent threads calling `GetInterpreter` for the same character/type/variant can both miss the cache check (line 144), both create separate `BehaviorModelInterpreter` instances (line 155), and both write to the cache via direct assignment. The last writer wins and the earlier caller's interpreter is evicted from the cache while potentially still in use. In practice benign because actors run single-threaded behavior loops, so concurrent access to the same character's interpreter doesn't occur.
+
+19. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
 
 ---
 

@@ -507,15 +507,15 @@ functions:
 
   branding:
     id: 17
-    symbol: "J"
+    symbol: "I"
     code: "BRANDING"
     name: "Branding"
     definition: "The hero is branded or marked"
     phase: "quest"
     variants:
-      - id: "J1"
+      - id: "I1"
         description: "Mark applied to body (wound, brand, star)"
-      - id: "J2"
+      - id: "I2"
         description: "Hero receives ring or towel"
     preconditions:
       - "combat_engaged"
@@ -526,23 +526,23 @@ functions:
 
   victory:
     id: 18
-    symbol: "I"
+    symbol: "J"
     code: "VICTORY"
     name: "Victory"
     definition: "The villain is defeated"
     phase: "quest"
     variants:
-      - id: "I1"
+      - id: "J1"
         description: "Villain beaten in open combat"
-      - id: "I2"
+      - id: "J2"
         description: "Villain beaten in contest"
-      - id: "I3"
+      - id: "J3"
         description: "Villain loses at cards"
-      - id: "I4"
+      - id: "J4"
         description: "Villain loses at weighing"
-      - id: "I5"
+      - id: "J5"
         description: "Villain killed without fight"
-      - id: "I6"
+      - id: "J6"
         description: "Villain banished"
     preconditions:
       - "combat_engaged"
@@ -889,6 +889,7 @@ structure:
 # =============================================================================
 # COMPUTATIONAL PROPERTIES
 # =============================================================================
+# Source: docs/research/PROPPER-IMPLEMENTATION.md
 
 computational:
   automaton_type: "finite_state"
@@ -896,20 +897,129 @@ computational:
   complexity: "O(31)"  # Linear in function count
   determinism: "deterministic_with_seed"
 
+  # ---------------------------------------------------------------------------
+  # THREE-ACT STRUCTURE
+  # ---------------------------------------------------------------------------
+  # Source: ~/repos/propper (Go implementation)
+
+  three_act_structure:
+    description: "Deterministic frame with probabilistic middle"
+
+    act_1:
+      name: "Exposition & Preparation"
+      determinism: "deterministic"
+      description: "Setup sequence - all functions applied in order"
+      functions: ["A", "B", "C", "↑", "D", "E", "F", "G"]
+      narrative_sequence:
+        - "Villainy/Lack (A) - Initial harm or need established"
+        - "Mediation (B) - Call to adventure"
+        - "Counteraction (C) - Decision to act"
+        - "Departure (↑) - Hero leaves home"
+        - "Testing (D) - Donor tests hero"
+        - "Reaction (E) - Hero responds to test"
+        - "Acquisition (F) - Magical agent received"
+        - "Guidance (G) - Transfer to object of search"
+
+    act_2:
+      name: "Conflict Resolution"
+      determinism: "probabilistic"
+      description: "Two mutually exclusive paths with 50/50 selection"
+
+      branching:
+        probability: 0.5  # Each path has 50% chance of being selected
+        outcomes: 4       # struggle only, task only, both, or neither
+
+        path_a_struggle:
+          name: "Struggle Flow"
+          description: "Direct combat resolution"
+          functions: ["H", "J", "I", "K", "↓", "Pr", "Rs", "o", "L"]
+          narrative_sequence:
+            - "Struggle (H) - Direct combat"
+            - "Victory (J) - Villain defeated"
+            - "Branding (I) - Hero marked"
+            - "Liquidation (K) - Misfortune resolved"
+            - "Return (↓) - Hero returns"
+            - "Pursuit (Pr) - Hero pursued"
+            - "Rescue (Rs) - Escape from pursuit"
+            - "Arrival (o) - Arrives unrecognized"
+            - "Unfounded Claims (L) - False hero appears"
+
+        path_b_task:
+          name: "Task Flow"
+          description: "Trial/challenge resolution"
+          functions: ["L", "M", "J", "N", "K", "↓", "Pr", "Rs"]
+          narrative_sequence:
+            - "Unfounded Claims (L) - False hero appears"
+            - "Difficult Task (M) - Task proposed"
+            - "Branding (J) - Hero marked (variant position)"
+            - "Solution (N) - Task resolved"
+            - "Liquidation (K) - Misfortune resolved"
+            - "Return (↓) - Hero returns"
+            - "Pursuit (Pr) - Hero pursued"
+            - "Rescue (Rs) - Escape from pursuit"
+
+    act_3:
+      name: "Resolution"
+      determinism: "deterministic"
+      description: "Recognition and reward sequence"
+      functions: ["Q", "Ex", "T", "U", "W"]
+      narrative_sequence:
+        - "Recognition (Q) - Hero recognized"
+        - "Exposure (Ex) - False hero/villain exposed"
+        - "Transfiguration (T) - Hero transformed"
+        - "Punishment (U) - Villain punished"
+        - "Wedding (W) - Hero rewarded"
+
+  # ---------------------------------------------------------------------------
+  # GENERATION ALGORITHM
+  # ---------------------------------------------------------------------------
+
   generation_algorithm:
     name: "Three-Act Compositional Generation"
+
+    seeded_generation:
+      description: "Same seed produces identical story every time"
+      seed_source: "Unix timestamp if not provided"
+      determinism: "Fully deterministic given seed"
+
     steps:
       - "Initialize random generator with seed"
-      - "Generate Act 1: mandatory + optional functions"
-      - "Select Act 2 path: struggle OR task"
-      - "Generate Act 2: selected path functions"
-      - "Generate Act 3: return and recognition"
+      - "Generate Act 1: Apply all functions A,B,C,↑,D,E,F,G in sequence"
+      - "Select Act 2 path with 50/50 branching:"
+      - "  - 25% chance: Struggle path only"
+      - "  - 25% chance: Task path only"
+      - "  - 25% chance: Both paths (struggle then task)"
+      - "  - 25% chance: Neither (abbreviated quest)"
+      - "Generate Act 2: Apply selected path functions"
+      - "Generate Act 3: Apply all functions Q,Ex,T,U,W in sequence"
       - "Deduplicate consecutive identical outputs"
-      - "Return function sequence"
+      - "Return (seed, function_codes, prose_lines)"
+
+    rule_composition:
+      apply_all_rules:
+        description: "Sequential application - all rules in order"
+        use_case: "Acts 1 and 3 (deterministic)"
+
+      apply_any_rule:
+        description: "Random selection - pick ONE rule"
+        use_case: "Act 2 branching"
+
+      choose:
+        description: "Uniform random selection from array"
+        probability: "1/N for N variants"
+
+    deduplication:
+      description: "Skip consecutive duplicate lines"
+      reason: "Prevents repetitive output when same variant selected twice"
 
   variant_probabilities:
     strategy: "uniform_random"
     per_function: true  # Each function variant selected independently
+    formula: "probability = 1 / number_of_variants"
+
+  output_format:
+    stderr: "Seed + function codes (e.g., ABC↑DEFGHJIK↓PrRsoLQExTUW)"
+    stdout: "Prose narrative (human-readable story outline)"
 
 # =============================================================================
 # REFERENCES
