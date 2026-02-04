@@ -111,6 +111,8 @@ actions:
       action: ["hero_at_mercy_of_villain"]
       thriller: ["hero_at_mercy_of_villain"]
 
+    propp_inspiration: ["STRUGGLE"]  # H - direct combat/confrontation
+
     chained_action: "sacrifice_rewarded"
 
     variants:
@@ -155,6 +157,8 @@ actions:
     satisfies_obligatory:
       horror: ["victim_at_mercy_of_monster"]
 
+    propp_inspiration: ["STRUGGLE", "VILLAINY"]  # H + A - combat with monstrous villain
+
     variants:
       - id: "cornered"
         description: "Physically trapped with monster approaching"
@@ -197,6 +201,8 @@ actions:
 
     satisfies_obligatory:
       crime: ["exposure_of_criminal"]
+
+    propp_inspiration: ["EXPOSURE"]  # Ex - false hero/villain exposed
 
     chained_action: "brought_to_justice"
 
@@ -241,6 +247,8 @@ actions:
     satisfies_obligatory:
       love: ["proof_of_love"]
 
+    propp_inspiration: ["DIFFICULT_TASK", "SOLUTION"]  # M + N - trial and completion
+
     variants:
       - id: "grand_gesture"
         description: "Public declaration or dramatic action"
@@ -284,6 +292,8 @@ actions:
     satisfies_obligatory:
       war: ["big_battle_scene"]
 
+    propp_inspiration: ["STRUGGLE", "VICTORY"]  # H + J - combat and victory
+
     variants:
       - id: "siege_assault"
         description: "Attack on fortified position"
@@ -325,6 +335,8 @@ actions:
 
     satisfies_obligatory:
       society: ["revolution_scene"]
+
+    propp_inspiration: ["STRUGGLE", "VICTORY"]  # H + J - collective combat and change
 
     variants:
       - id: "mass_uprising"
@@ -368,6 +380,8 @@ actions:
     satisfies_obligatory:
       western: ["showdown"]
 
+    propp_inspiration: ["STRUGGLE", "VICTORY"]  # H + J - duel to resolution
+
     variants:
       - id: "duel"
         description: "One-on-one confrontation"
@@ -410,6 +424,8 @@ actions:
     satisfies_obligatory:
       performance: ["big_performance_scene"]
 
+    propp_inspiration: ["DIFFICULT_TASK", "SOLUTION"]  # M + N - performance as trial
+
     variants:
       - id: "competition"
         description: "Direct competition against rival"
@@ -450,6 +466,8 @@ actions:
 
     satisfies_obligatory:
       worldview: ["gifts_expressed"]
+
+    propp_inspiration: ["TRANSFIGURATION"]  # T - hero transformed by new understanding
 
     variants:
       - id: "epiphany"
@@ -492,6 +510,8 @@ actions:
     satisfies_obligatory:
       morality: ["sacrifice"]
 
+    propp_inspiration: ["HERO_REACTION"]  # E - hero's definitive moral response
+
     variants:
       - id: "ultimate_sacrifice"
         description: "Protagonist gives their life"
@@ -532,6 +552,8 @@ actions:
 
     satisfies_obligatory:
       morality: ["faces_death"]
+
+    propp_inspiration: ["BRANDING"]  # I - hero marked by crisis/mortality
 
     variants:
       - id: "literal_death"
@@ -577,6 +599,8 @@ actions:
 
     satisfies_obligatory:
       status: ["big_choice"]
+
+    propp_inspiration: ["HERO_REACTION"]  # E - hero's defining choice
 
     variants:
       - id: "reject_corrupt_success"
@@ -645,6 +669,8 @@ actions:
       morality: ["shock"]
       status: ["inciting_challenge"]
 
+    propp_inspiration: ["VILLAINY", "LACK"]  # A/a - initial misfortune or need
+
     variants:
       - id: "villainy"
         description: "External attack or harm from antagonist"
@@ -702,6 +728,8 @@ actions:
       performance: ["sidesteps_responsibility"]
       morality: ["expresses_inner_darkness"]
 
+    propp_inspiration: ["COUNTERACTION"]  # C - hero's initial resistance before commitment
+
     variants:
       - id: "active_refusal"
         description: "Protagonist explicitly refuses the call"
@@ -748,6 +776,8 @@ actions:
       society: ["forced_engagement"]
       performance: ["lashes_out"]
       worldview: ["lashes_out"]
+
+    propp_inspiration: ["DEPARTURE"]  # ↑ - hero leaves ordinary world
 
     variants:
       - id: "external_force"
@@ -802,6 +832,8 @@ actions:
       performance: ["discovers_antagonist_goal"]
       worldview: ["learns_antagonist_goal"]
 
+    propp_inspiration: ["DELIVERY"]  # ζ - critical information gained
+
     variants:
       - id: "object_discovery"
         description: "Physical MacGuffin found or identified"
@@ -852,6 +884,8 @@ actions:
       society: ["initial_strategy_fails"]
       worldview: ["initial_strategy_fails"]
       status: ["initial_strategy_fails"]
+
+    propp_inspiration: ["HERO_REACTION"]  # E_neg - hero's failed approach
 
     variants:
       - id: "plan_discovered"
@@ -907,6 +941,8 @@ actions:
       morality: ["all_is_lost"]
       status: ["all_is_lost"]
 
+    propp_inspiration: ["BRANDING"]  # I - hero marked by crisis/lowest point
+
     variants:
       - id: "mentor_death"
         description: "Mentor or key ally dies"
@@ -956,6 +992,8 @@ actions:
       society: ["recognition_awarded"]
       worldview: ["deeper_understanding"]
       status: ["salvation_or_loss"]
+
+    propp_inspiration: ["LIQUIDATION", "WEDDING"]  # K + W - problem resolved, equilibrium restored
 
     variants:
       - id: "positive_resolution"
@@ -1014,6 +1052,8 @@ actions:
       thriller: ["speech_praising_villain"]
       western: ["speech_praising_villain"]
 
+    propp_inspiration: ["RECONNAISSANCE", "DELIVERY"]  # ε + ζ - establishing villain's threat
+
     variants:
       - id: "reputation_recounted"
         description: "Third party describes villain's past deeds"
@@ -1053,6 +1093,8 @@ actions:
     satisfies_obligatory:
       horror: ["false_ending"]
       thriller: ["false_ending"]
+
+    propp_inspiration: ["UNFOUNDED_CLAIMS"]  # L - false victory/premature resolution
 
     variants:
       - id: "monster_returns"
@@ -1094,6 +1136,8 @@ actions:
     satisfies_obligatory:
       thriller: ["protagonist_becomes_victim"]
 
+    propp_inspiration: ["VILLAINY"]  # A - villain targets hero directly
+
     variants:
       - id: "direct_attack"
         description: "Villain attacks protagonist directly"
@@ -1131,6 +1175,8 @@ actions:
 
     satisfies_obligatory:
       love: ["lovers_meet"]
+
+    propp_inspiration: ["LACK"]  # a1 - lack of bride/partner established
 
     variants:
       - id: "cute_meet"
@@ -1172,6 +1218,8 @@ actions:
     satisfies_obligatory:
       love: ["lovers_break_up"]
 
+    propp_inspiration: ["PURSUIT"]  # Pr - separation/crisis in return journey
+
     variants:
       - id: "misunderstanding"
         description: "Separation due to miscommunication"
@@ -1211,6 +1259,8 @@ actions:
 
     satisfies_obligatory:
       love: ["lovers_reunite"]
+
+    propp_inspiration: ["WEDDING"]  # W - hero receives reward/union
 
     variants:
       - id: "grand_reunion"
@@ -1252,6 +1302,8 @@ actions:
     satisfies_obligatory:
       love: ["first_kiss_connection"]
 
+    propp_inspiration: ["PROVISION_OF_MAGICAL_AGENT"]  # F - emotional gift/connection gained
+
     variants:
       - id: "romantic_kiss"
         description: "Traditional romantic first kiss"
@@ -1292,6 +1344,8 @@ actions:
 
     satisfies_obligatory:
       love: ["confession_of_love"]
+
+    propp_inspiration: ["RECOGNITION"]  # Q - truth/identity revealed
 
     variants:
       - id: "reciprocated"
@@ -1338,6 +1392,8 @@ actions:
     satisfies_obligatory:
       performance: ["training_sequences"]
 
+    propp_inspiration: ["FIRST_DONOR_FUNCTION", "HERO_REACTION"]  # D + E - hero tested and responds
+
     variants:
       - id: "physical_training"
         description: "Building strength, speed, technique"
@@ -1373,6 +1429,8 @@ actions:
 
     genre_labels:
       war: "Big Battle Preparation"
+
+    propp_inspiration: ["COUNTERACTION", "DEPARTURE"]  # C + ↑ - commitment and departure for conflict
 
     variants:
       - id: "strategic_planning"
@@ -1410,6 +1468,8 @@ actions:
     genre_labels:
       society: "Revolution Planning"
 
+    propp_inspiration: ["MEDIATION", "COUNTERACTION"]  # B + C - call to action and commitment
+
     variants:
       - id: "secret_meetings"
         description: "Conspirators gather covertly"
@@ -1445,6 +1505,8 @@ actions:
 
     genre_labels:
       western: "Showdown Approach"
+
+    propp_inspiration: ["GUIDANCE"]  # G - journey to location of conflict
 
     variants:
       - id: "walk_to_confrontation"
@@ -1482,6 +1544,8 @@ actions:
     genre_labels:
       morality: "Moral Temptation"
 
+    propp_inspiration: ["TRICKERY", "COMPLICITY"]  # η + θ - temptation and potential fall
+
     variants:
       - id: "corruption_offered"
         description: "Power or wealth in exchange for principles"
@@ -1517,6 +1581,8 @@ actions:
 
     genre_labels:
       worldview: "Worldview Challenge"
+
+    propp_inspiration: ["FIRST_DONOR_FUNCTION"]  # D - hero tested through belief challenge
 
     variants:
       - id: "mentor_challenge"
@@ -1556,6 +1622,8 @@ actions:
     narrative_effect:
       primary_spectrum: -0.15
 
+    propp_inspiration: ["VILLAINY"]  # A - villain established as threat
+
     variants:
       - id: "direct_confrontation"
         description: "Antagonist and protagonist meet face-to-face"
@@ -1588,6 +1656,8 @@ actions:
     narrative_effect:
       primary_spectrum: +0.1
       love_hate: +0.1
+
+    propp_inspiration: ["PROVISION_OF_MAGICAL_AGENT"]  # F - hero gains helper/ally
 
     variants:
       - id: "mutual_benefit"
@@ -1622,6 +1692,8 @@ actions:
       primary_spectrum: -0.25
       love_hate: -0.3
 
+    propp_inspiration: ["EXPOSURE"]  # Ex - false ally exposed
+
     variants:
       - id: "spy_revealed"
         description: "Ally was working for antagonist"
@@ -1654,6 +1726,8 @@ actions:
 
     narrative_effect:
       primary_spectrum: -0.25
+
+    propp_inspiration: ["STRUGGLE"]  # H - hero and villain join in direct combat
 
     chained_action: "hero_at_mercy_of_villain"
 
@@ -1694,6 +1768,8 @@ actions:
       action: ["sacrifice_rewarded"]
       western: ["sacrifice_rewarded"]
 
+    propp_inspiration: ["TRANSFIGURATION", "WEDDING"]  # T + W - hero transformed and rewarded
+
     variants:
       - id: "external_reward"
         description: "Tangible victory or recognition"
@@ -1729,6 +1805,8 @@ actions:
 
     satisfies_obligatory:
       crime: ["brought_to_justice"]
+
+    propp_inspiration: ["PUNISHMENT"]  # U - villain punished
 
     variants:
       - id: "legal_justice"
@@ -1767,6 +1845,8 @@ actions:
     narrative_effect:
       primary_spectrum: +0.05
       wisdom_ignorance: +0.05
+
+    propp_inspiration: ["DELIVERY"]  # ζ - information is introduced
 
     variants:
       - id: "physical_evidence"
@@ -1812,6 +1892,8 @@ actions:
     satisfies_obligatory:
       crime: ["progressive_clue_following"]
 
+    propp_inspiration: ["GUIDANCE"]  # G - following trail to truth
+
     variants:
       - id: "forensic_analysis"
         description: "Physical evidence examined and interpreted"
@@ -1848,6 +1930,8 @@ actions:
       primary_spectrum: +0.1
       wisdom_ignorance: +0.2
 
+    propp_inspiration: ["RECOGNITION", "EXPOSURE"]  # Q + Ex - truth revealed
+
     variants:
       - id: "confession"
         description: "Character reveals their own secret"
@@ -1880,6 +1964,8 @@ actions:
     narrative_effect:
       primary_spectrum: +0.2
       wisdom_ignorance: +0.15
+
+    propp_inspiration: ["TRANSFIGURATION"]  # T - hero transformed by experience
 
     variants:
       - id: "overcoming_fear"
@@ -1925,6 +2011,8 @@ actions:
     satisfies_obligatory:
       status: ["leaves_home"]
 
+    propp_inspiration: ["DEPARTURE"]  # ↑ - hero leaves ordinary world
+
     variants:
       - id: "physical_departure"
         description: "Moves to new location"
@@ -1964,6 +2052,8 @@ actions:
 
     satisfies_obligatory:
       status: ["forced_adaptation"]
+
+    propp_inspiration: ["FIRST_DONOR_FUNCTION", "HERO_REACTION"]  # D + E - hero tested, fails
 
     variants:
       - id: "public_humiliation"
@@ -2007,6 +2097,8 @@ actions:
 
     satisfies_obligatory:
       status: ["learns_and_pursues"]
+
+    propp_inspiration: ["HERO_REACTION", "PROVISION_OF_MAGICAL_AGENT"]  # E + F - hero learns, gains competence
 
     variants:
       - id: "mentor_guidance"
@@ -2083,6 +2175,14 @@ references:
 # =============================================================================
 
 changelog:
+  - version: "1.4"
+    date: "2026-02-04"
+    changes:
+      - "Added propp_inspiration field to all 46 actions for Propp function traceability"
+      - "Mapping provides documentation linkage to Vladimir Propp's 31 narrative functions"
+      - "Field is informational only - not used by GOAP planner"
+      - "References propp-functions.yaml for function definitions and codes"
+
   - version: "1.3"
     date: "2026-02-04"
     changes:
