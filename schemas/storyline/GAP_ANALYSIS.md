@@ -1,6 +1,6 @@
 # Storyline SDK Gap Analysis
 
-> **Status**: Analysis Complete, Phase 1 Complete, Phase 2 In Progress
+> **Status**: Analysis Complete, Phase 1 Complete, Phase 2 Complete
 > **Date**: 2026-02-04 (updated)
 > **Purpose**: Identify missing components between research YAML files and complete SDK implementation
 
@@ -881,11 +881,14 @@ After the research sprint, we reach a decision point:
   - **DONE**: Worldview keeps `wisdom_ignorance` spectrum (2026-02-04 decision) - concepts overlap with "meaning/meaninglessness", labels include both
   - **DONE**: Performance genre remapped to `success_failure` (2026-02-04 decision) - primary source says "Accomplishment vs Failure" which maps directly
   - **DONE**: Subgenre arc mapping → `arc_direction` + `compatible_arcs` added to all subgenres in `story-grid-genres.yaml`
-- [ ] Phase 2: Story Actions Library → `schemas/storyline/story-actions.yaml`
+- [x] Phase 2: Story Actions Library → `schemas/storyline/story-actions.yaml`
   - GOAP actions inspired by Propp functions + Story Grid obligatory scenes
-  - **TODO**: Model crisis types (Best Bad Choice vs Irreconcilable Goods)
-  - **TODO**: Capture obligatory scenes per genre from primary source
-  - **TODO**: Capture conventions per genre from primary source
+  - **DONE**: 30 MVP actions (11 core events, 7 universal structure, 11 high-frequency genre, 1 supporting)
+  - **DONE**: Model crisis types (emergent from 2+ macro-cost actions with divergent effects)
+  - **DONE**: Obligatory scene satisfaction via `satisfies_obligatory` per action
+  - **DONE**: Genre conventions as WorldState preconditions (macguffin, clock, etc.)
+  - **DONE**: Variants for key actions (inciting_incident, resolution)
+  - **DONE**: Chained actions for multi-phase story beats
 - [ ] Phase 3: Story Templates → `schemas/storyline/story-templates.yaml`
   - STC timing for phase boundaries
   - Reagan arc shapes for trajectory constraints

@@ -1,0 +1,1736 @@
+# Story Actions Library for GOAP-based Narrative Composition
+# Phase 2 of the Storyline SDK implementation
+#
+# Sources:
+#   - STORY_ACTIONS_ANALYSIS.md (design decisions and schema)
+#   - SDK_FOUNDATIONS.md (GOAP patterns, cost semantics)
+#   - story-grid-genres.yaml (obligatory scenes, core events)
+#   - propp-functions.yaml (preconditions/postconditions patterns)
+#   - narrative-state.yaml (10 Life Value spectrums)
+#
+# Design Principles:
+#   - Actions are atomic units that GOAP uses to compose narratives
+#   - Universal actions with genre-contextual labeling (not genre-restricted)
+#   - Preconditions/effects use consistent WorldState keys from propp-functions.yaml
+#   - Cost semantics: micro (0.5-0.8), standard (1.0-1.5), macro (2.0-3.0)
+#   - Chained actions for multi-phase story beats (not deferred effects)
+
+version: "1.0"
+source: "Propp Functions + Story Grid Obligatory Scenes + Save the Cat Beats"
+
+# =============================================================================
+# ACTION CATEGORIES
+# =============================================================================
+
+categories:
+  conflict:
+    description: "Actions that introduce and escalate opposition"
+    examples: ["introduce_antagonist", "escalate_conflict", "betrayal_reveal"]
+
+  relationship:
+    description: "Actions that build and modify character bonds"
+    examples: ["form_alliance", "shared_ordeal", "destroy_trust"]
+
+  mystery:
+    description: "Actions for information revelation and concealment"
+    examples: ["plant_clue", "reveal_secret", "red_herring"]
+
+  resolution:
+    description: "Actions that move toward story conclusion"
+    examples: ["confrontation_begin", "confrontation_resolve", "sacrifice"]
+
+  transformation:
+    description: "Actions representing character growth and change"
+    examples: ["character_growth", "revelation", "worldview_shift"]
+
+# =============================================================================
+# COST SEMANTICS
+# =============================================================================
+
+cost_semantics:
+  micro:
+    range: [0.5, 0.8]
+    description: "Pacing beats, investigation steps, minor reveals"
+    usage: "Use for actions that should be low-cost in GOAP planning"
+    examples: ["plant_clue", "training_montage"]
+
+  standard:
+    range: [1.0, 1.5]
+    description: "Major story beats, scene transitions, significant moments"
+    usage: "Default cost for most meaningful narrative actions"
+    examples: ["inciting_incident", "discovery", "lovers_meet"]
+
+  macro:
+    range: [2.0, 3.0]
+    description: "Climax moments, irreversible changes, core events"
+    usage: "High-cost actions that GOAP uses sparingly"
+    examples: ["sacrifice", "core events", "destroy_trust"]
+
+# =============================================================================
+# ACTIONS LIBRARY
+# =============================================================================
+
+actions:
+
+  # ---------------------------------------------------------------------------
+  # CORE EVENT ACTIONS (11 unique actions for 12 genres)
+  # These are the climactic actions that define genre satisfaction
+  # All marked is_core_event: true with macro cost (2.0-3.0)
+  # ---------------------------------------------------------------------------
+
+  hero_at_mercy_of_villain:
+    category: "resolution"
+    universal_name: "Hero at Mercy of Villain"
+    description: |
+      The protagonist is cornered by the antagonist with no apparent escape.
+      This is the darkest moment where the villain appears to have won.
+      The hero must use everything they've learned to survive.
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      antagonist.known: true
+      antagonist.present: true
+      protagonist.ready: true
+      confrontation.in_progress: true
+
+    effects:
+      hero.at_mercy: true
+      stakes.maximum: true
+
+    narrative_effect:
+      primary_spectrum: -0.4  # Crisis point - situation at worst
+      life_death: -0.4  # Explicit for Action/Thriller
+
+    genre_labels:
+      action: "Hero at Mercy of Villain"
+      thriller: "Hero at Mercy of Villain"
+
+    satisfies_obligatory:
+      action: ["hero_at_mercy_of_villain"]
+      thriller: ["hero_at_mercy_of_villain"]
+
+    chained_action: "sacrifice_rewarded"
+
+    variants:
+      - id: "physical_capture"
+        description: "Hero physically restrained or cornered"
+        probability_weight: 1.0
+      - id: "strategic_defeat"
+        description: "Hero's plans completely dismantled"
+        probability_weight: 1.0
+      - id: "loved_ones_threatened"
+        description: "Villain threatens those hero cares about"
+        probability_weight: 0.8
+
+  victim_at_mercy_of_monster:
+    category: "resolution"
+    universal_name: "Victim at Mercy of Monster"
+    description: |
+      The protagonist directly confronts the monster with no escape.
+      Unlike Action's hero, the Horror protagonist is often powerless.
+      Survival depends on understanding what the monster truly is.
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      monster.revealed: true
+      monster.present: true
+      protagonist.isolated: true
+      escape_routes.exhausted: true
+
+    effects:
+      victim.at_mercy: true
+      monster.power.demonstrated: true
+
+    narrative_effect:
+      primary_spectrum: -0.5  # Horror goes darker than action
+      life_death: -0.5
+
+    genre_labels:
+      horror: "Victim at Mercy of Monster"
+
+    satisfies_obligatory:
+      horror: ["victim_at_mercy_of_monster"]
+
+    variants:
+      - id: "cornered"
+        description: "Physically trapped with monster approaching"
+        probability_weight: 1.0
+      - id: "possession"
+        description: "Monster takes control of victim or ally"
+        probability_weight: 0.8
+      - id: "revelation_of_true_form"
+        description: "Monster reveals its true horrific nature"
+        probability_weight: 0.9
+
+  exposure_of_criminal:
+    category: "resolution"
+    universal_name: "Exposure of Criminal"
+    description: |
+      The perpetrator's identity and methods are revealed.
+      The detective/protagonist proves who committed the crime.
+      Justice becomes possible (though not guaranteed).
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      crime.committed: true
+      investigation.complete: true
+      evidence.sufficient: true
+      perpetrator.identified: true
+
+    effects:
+      criminal.exposed: true
+      truth.revealed: true
+
+    narrative_effect:
+      primary_spectrum: +0.3  # Movement toward justice
+      justice_injustice: +0.3
+      wisdom_ignorance: +0.2  # Truth discovered
+
+    genre_labels:
+      crime: "Exposure of Criminal"
+
+    satisfies_obligatory:
+      crime: ["exposure_of_criminal"]
+
+    chained_action: "brought_to_justice"
+
+    variants:
+      - id: "public_revelation"
+        description: "Criminal exposed before witnesses"
+        probability_weight: 1.0
+      - id: "confession_extracted"
+        description: "Criminal confesses under pressure"
+        probability_weight: 0.8
+      - id: "evidence_confrontation"
+        description: "Overwhelming evidence presented"
+        probability_weight: 1.0
+
+  proof_of_love:
+    category: "resolution"
+    universal_name: "Proof of Love"
+    description: |
+      Love demonstrated through meaningful action, not just words.
+      The protagonist proves their commitment through sacrifice or deed.
+      This is what distinguishes true love from infatuation.
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      lovers.separated: true
+      love.tested: true
+      obstacle.present: true
+
+    effects:
+      love.proven: true
+      lovers.reunited: true
+
+    narrative_effect:
+      primary_spectrum: +0.4
+      love_hate: +0.4
+
+    genre_labels:
+      love: "Proof of Love"
+
+    satisfies_obligatory:
+      love: ["proof_of_love"]
+
+    variants:
+      - id: "grand_gesture"
+        description: "Public declaration or dramatic action"
+        probability_weight: 1.0
+      - id: "quiet_sacrifice"
+        description: "Private sacrifice for beloved's benefit"
+        probability_weight: 0.9
+      - id: "choosing_love_over_safety"
+        description: "Risking everything for the relationship"
+        probability_weight: 0.8
+
+  big_battle_scene:
+    category: "resolution"
+    universal_name: "Big Battle Scene"
+    description: |
+      The major combat sequence where honor is tested.
+      Individual and group valor are demonstrated.
+      Bonds forged under fire are proven or broken.
+
+    cost: 3.0
+    is_core_event: true
+
+    preconditions:
+      war.declared: true
+      forces.assembled: true
+      point_of_no_return.passed: true
+
+    effects:
+      battle.occurred: true
+      honor.tested: true
+      casualties.suffered: true
+
+    narrative_effect:
+      primary_spectrum: -0.2  # Battle is costly even in victory
+      honor_dishonor: +0.3  # But honor can be achieved
+      life_death: -0.3  # People die
+
+    genre_labels:
+      war: "Big Battle Scene"
+
+    satisfies_obligatory:
+      war: ["big_battle_scene"]
+
+    variants:
+      - id: "siege_assault"
+        description: "Attack on fortified position"
+        probability_weight: 1.0
+      - id: "open_field"
+        description: "Two forces meet in battle"
+        probability_weight: 1.0
+      - id: "desperate_last_stand"
+        description: "Outnumbered defense against overwhelming odds"
+        probability_weight: 0.8
+
+  revolution_scene:
+    category: "resolution"
+    universal_name: "Revolution Scene"
+    description: |
+      The uprising against established power.
+      The system is challenged or overthrown.
+      Power dynamics fundamentally shift.
+
+    cost: 3.0
+    is_core_event: true
+
+    preconditions:
+      revolution.planned: true
+      forces.mobilized: true
+      tyrant.vulnerable: true
+
+    effects:
+      revolution.occurred: true
+      power.redistributed: true
+
+    narrative_effect:
+      primary_spectrum: +0.3  # Power gained (if successful)
+      power_impotence: +0.4
+      freedom_subjugation: +0.3
+
+    genre_labels:
+      society: "Revolution Scene"
+
+    satisfies_obligatory:
+      society: ["revolution_scene"]
+
+    variants:
+      - id: "mass_uprising"
+        description: "Popular revolt against authority"
+        probability_weight: 1.0
+      - id: "palace_coup"
+        description: "Internal power takeover"
+        probability_weight: 0.8
+      - id: "symbolic_defiance"
+        description: "Public act of resistance that sparks change"
+        probability_weight: 0.9
+
+  showdown:
+    category: "resolution"
+    universal_name: "Showdown"
+    description: |
+      Direct confrontation between hero and villain.
+      Individual courage and skill determine outcome.
+      The Western's definitive moment of truth.
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      showdown.arranged: true
+      hero.present: true
+      villain.present: true
+      community.watching: true
+
+    effects:
+      showdown.occurred: true
+      freedom.determined: true
+
+    narrative_effect:
+      primary_spectrum: +0.3
+      freedom_subjugation: +0.4
+
+    genre_labels:
+      western: "Showdown"
+
+    satisfies_obligatory:
+      western: ["showdown"]
+
+    variants:
+      - id: "duel"
+        description: "One-on-one confrontation"
+        probability_weight: 1.0
+      - id: "gang_standoff"
+        description: "Hero against multiple opponents"
+        probability_weight: 0.8
+      - id: "psychological_showdown"
+        description: "Battle of wills rather than guns"
+        probability_weight: 0.7
+
+  big_performance_scene:
+    category: "resolution"
+    universal_name: "Big Performance Scene"
+    description: |
+      The main event where protagonist's abilities are tested.
+      Everything they've trained for comes down to this moment.
+      Win-but-lose or lose-but-win outcomes common.
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      training.complete: true
+      competition.present: true
+      stakes.established: true
+
+    effects:
+      performance.occurred: true
+      respect.determined: true
+
+    narrative_effect:
+      primary_spectrum: +0.2  # Varies based on outcome
+      respect_shame: +0.3
+      success_failure: +0.2
+
+    genre_labels:
+      performance: "Big Performance Scene"
+
+    satisfies_obligatory:
+      performance: ["big_performance_scene"]
+
+    variants:
+      - id: "competition"
+        description: "Direct competition against rival"
+        probability_weight: 1.0
+      - id: "solo_performance"
+        description: "Individual showcase of ability"
+        probability_weight: 0.9
+      - id: "team_event"
+        description: "Group performance or team competition"
+        probability_weight: 0.8
+
+  gifts_expressed:
+    category: "transformation"
+    universal_name: "Gifts Expressed / Worldview Acceptance"
+    description: |
+      Protagonist accepts new understanding of reality.
+      Old worldview is transcended or abandoned.
+      This can be positive (wisdom) or negative (disillusionment).
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      worldview.challenged: true
+      evidence.accumulated: true
+      resistance.overcome: true
+
+    effects:
+      worldview.transformed: true
+      wisdom.gained: true
+
+    narrative_effect:
+      primary_spectrum: +0.3  # Direction depends on subgenre
+      wisdom_ignorance: +0.4
+
+    genre_labels:
+      worldview: "Gifts Expressed"
+
+    satisfies_obligatory:
+      worldview: ["gifts_expressed"]
+
+    variants:
+      - id: "epiphany"
+        description: "Sudden realization of truth"
+        probability_weight: 1.0
+      - id: "gradual_acceptance"
+        description: "Slow integration of new understanding"
+        probability_weight: 0.9
+      - id: "bitter_wisdom"
+        description: "Truth accepted at great cost"
+        probability_weight: 0.8
+
+  sacrifice:
+    category: "resolution"
+    universal_name: "Sacrifice"
+    description: |
+      Protagonist gives up something valuable for others.
+      The definitive moral choice that reveals character.
+      Can be literal (death) or metaphorical (dreams, status).
+
+    cost: 3.0
+    is_core_event: true
+
+    preconditions:
+      sacrifice.possible: true
+      stakes.clear: true
+      character.willing: true
+
+    effects:
+      sacrifice.made: true
+      moral.demonstrated: true
+
+    narrative_effect:
+      primary_spectrum: +0.4
+      altruism_selfishness: +0.5
+
+    genre_labels:
+      morality: "Sacrifice"
+
+    satisfies_obligatory:
+      morality: ["sacrifice"]
+
+    variants:
+      - id: "ultimate_sacrifice"
+        description: "Protagonist gives their life"
+        probability_weight: 0.6
+      - id: "dream_sacrifice"
+        description: "Protagonist abandons personal goal for others"
+        probability_weight: 1.0
+      - id: "status_sacrifice"
+        description: "Protagonist gives up position or wealth"
+        probability_weight: 0.9
+
+  big_choice:
+    category: "resolution"
+    universal_name: "Big Choice"
+    description: |
+      Protagonist must choose between status and integrity.
+      External success vs internal values.
+      The choice defines who they truly are.
+
+    cost: 2.5
+    is_core_event: true
+
+    preconditions:
+      status.attainable: true
+      values.threatened: true
+      choice.required: true
+
+    effects:
+      choice.made: true
+      identity.defined: true
+
+    narrative_effect:
+      primary_spectrum: +0.2  # Depends on choice made
+      success_failure: +0.2  # External outcome
+      altruism_selfishness: +0.2  # Internal truth
+
+    genre_labels:
+      status: "Big Choice"
+
+    satisfies_obligatory:
+      status: ["big_choice"]
+
+    variants:
+      - id: "reject_corrupt_success"
+        description: "Protagonist chooses integrity over achievement"
+        probability_weight: 1.0
+      - id: "embrace_corrupt_success"
+        description: "Protagonist sells out (cautionary)"
+        probability_weight: 0.6
+      - id: "redefine_success"
+        description: "Protagonist finds alternative path"
+        probability_weight: 0.8
+
+  # ---------------------------------------------------------------------------
+  # UNIVERSAL STRUCTURE ACTIONS (7 actions)
+  # These map to STC beats and appear across most genres
+  # ---------------------------------------------------------------------------
+
+  inciting_incident:
+    category: "conflict"
+    universal_name: "Inciting Incident / Catalyst"
+    description: |
+      The event that disrupts equilibrium and launches the story.
+      Can be villainy (external attack) or lack (internal need).
+      Protagonist cannot ignore this - action becomes necessary.
+
+    cost: 1.0
+
+    preconditions:
+      equilibrium.established: true
+
+    effects:
+      equilibrium.disrupted: true
+      narrative_problem.established: true
+      quest.initiated: true
+
+    narrative_effect:
+      primary_spectrum: -0.2  # Situation worsens
+
+    genre_labels:
+      action: "Inciting Attack"
+      horror: "Inciting Attack"
+      thriller: "Inciting Crime"
+      crime: "Inciting Crime"
+      love: "Lovers Meet"
+      war: "Inciting Attack"
+      western: "Inciting Attack"
+      performance: "Inciting Opportunity"
+      society: "External Threat"
+      worldview: "Inciting Challenge"
+      morality: "Shock"
+      status: "Inciting Challenge"
+
+    satisfies_obligatory:
+      action: ["inciting_attack"]
+      horror: ["inciting_attack"]
+      thriller: ["inciting_crime"]
+      crime: ["inciting_crime"]
+      war: ["inciting_attack"]
+      western: ["inciting_attack"]
+      performance: ["inciting_opportunity"]
+      society: ["external_threat"]
+      worldview: ["inciting_challenge"]
+      morality: ["shock"]
+      status: ["inciting_challenge"]
+
+    variants:
+      - id: "villainy"
+        description: "External attack or harm from antagonist"
+        probability_weight: 1.0
+        precondition_modifiers:
+          villain.present: true
+        effect_modifiers:
+          harm.caused: true
+      - id: "lack"
+        description: "Internal need or desire awakened"
+        probability_weight: 1.0
+        effect_modifiers:
+          lack.established: true
+      - id: "opportunity"
+        description: "Chance for advancement or change presented"
+        probability_weight: 0.8
+        effect_modifiers:
+          opportunity.presented: true
+
+  denial_resistance:
+    category: "conflict"
+    universal_name: "Denial / Debate"
+    description: |
+      Protagonist initially resists the call to action.
+      They try to maintain their ordinary world.
+      This establishes what they have to lose.
+
+    cost: 0.8
+
+    preconditions:
+      narrative_problem.established: true
+      protagonist.aware: true
+
+    effects:
+      denial.expressed: true
+      ordinary_world.valued: true
+
+    narrative_effect:
+      primary_spectrum: -0.1  # Slight worsening during delay
+
+    genre_labels:
+      action: "Hero Sidesteps"
+      horror: "Non-Heroic Protagonist"
+      war: "Denial of Responsibility"
+      society: "Refuses to Act"
+      worldview: "Denies Responsibility"
+      morality: "Expresses Inner Darkness"
+
+    satisfies_obligatory:
+      action: ["hero_sidesteps"]
+      war: ["denial_of_responsibility"]
+      society: ["refuses_to_act"]
+      worldview: ["denies_responsibility"]
+
+    variants:
+      - id: "active_refusal"
+        description: "Protagonist explicitly refuses the call"
+        probability_weight: 1.0
+      - id: "passive_avoidance"
+        description: "Protagonist ignores or downplays the problem"
+        probability_weight: 0.9
+      - id: "attempted_delegation"
+        description: "Protagonist tries to pass responsibility to others"
+        probability_weight: 0.7
+
+  forced_engagement:
+    category: "conflict"
+    universal_name: "Forced Engagement / Break Into Two"
+    description: |
+      Protagonist is forced to commit to the journey.
+      There's no going back to the ordinary world.
+      This marks the transition to Act Two.
+
+    cost: 1.2
+
+    preconditions:
+      denial.expressed: true
+      pressure.mounting: true
+
+    effects:
+      protagonist.committed: true
+      ordinary_world.left: true
+      quest.active: true
+
+    narrative_effect:
+      primary_spectrum: -0.15  # Commitment to uncertain path
+
+    genre_labels:
+      action: "Forced to Leave"
+      war: "Forced Response"
+      society: "Forced Engagement"
+      performance: "Lashes Out"
+      worldview: "Lashes Out"
+
+    satisfies_obligatory:
+      action: ["forced_to_leave"]
+      war: ["forced_response"]
+      society: ["forced_engagement"]
+      performance: ["lashes_out"]
+      worldview: ["lashes_out"]
+
+    variants:
+      - id: "external_force"
+        description: "Circumstances leave no choice but to act"
+        probability_weight: 1.0
+      - id: "internal_realization"
+        description: "Protagonist recognizes they must act"
+        probability_weight: 0.9
+      - id: "loved_one_threatened"
+        description: "Someone they care about forces their hand"
+        probability_weight: 0.8
+
+  discovery:
+    category: "mystery"
+    universal_name: "Discovery / Fun and Games"
+    description: |
+      Protagonist learns critical information about the conflict.
+      The MacGuffin, the antagonist's goal, or key truth revealed.
+      This sets up the specific nature of the challenge.
+
+    cost: 1.0
+
+    preconditions:
+      quest.active: true
+      investigation.in_progress: true
+
+    effects:
+      macguffin.discovered: true
+      antagonist_goal.known: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      wisdom_ignorance: +0.15
+
+    genre_labels:
+      action: "Discovers MacGuffin"
+      thriller: "Discovery of MacGuffin"
+      crime: "Discovery of MacGuffin"
+      war: "Discover Antagonist's Goal"
+      western: "Discovers MacGuffin"
+      society: "Discover Antagonist's Objective"
+      performance: "Discovers Antagonist's Goal"
+      worldview: "Learns Antagonist's Goal"
+
+    satisfies_obligatory:
+      action: ["discovers_macguffin"]
+      crime: ["discovery_of_macguffin"]
+      war: ["discover_antagonist_goal"]
+      western: ["discovers_macguffin"]
+      society: ["discover_antagonist_objective"]
+      performance: ["discovers_antagonist_goal"]
+      worldview: ["learns_antagonist_goal"]
+
+    variants:
+      - id: "object_discovery"
+        description: "Physical MacGuffin found or identified"
+        probability_weight: 1.0
+      - id: "information_discovery"
+        description: "Critical knowledge obtained"
+        probability_weight: 1.0
+      - id: "person_discovery"
+        description: "Key ally or enemy identified"
+        probability_weight: 0.8
+
+  strategy_fails:
+    category: "conflict"
+    universal_name: "Strategy Fails / Bad Guys Close In"
+    description: |
+      The protagonist's initial approach doesn't work.
+      Complications mount and pressure increases.
+      This raises stakes and forces adaptation.
+
+    cost: 1.0
+
+    preconditions:
+      quest.active: true
+      strategy.attempted: true
+
+    effects:
+      strategy.failed: true
+      pressure.increased: true
+      adaptation.required: true
+
+    narrative_effect:
+      primary_spectrum: -0.2
+
+    genre_labels:
+      action: "Initial Strategy Fails"
+      war: "Initial Strategy Fails"
+      western: "Initial Strategy Fails"
+      performance: "Initial Strategy Fails"
+      society: "Initial Strategy Fails"
+      worldview: "Initial Strategy Fails"
+      status: "Initial Strategy Fails"
+
+    satisfies_obligatory:
+      action: ["initial_strategy_fails"]
+      war: ["initial_strategy_fails"]
+      western: ["initial_strategy_fails"]
+      performance: ["initial_strategy_fails"]
+      society: ["initial_strategy_fails"]
+      worldview: ["initial_strategy_fails"]
+      status: ["initial_strategy_fails"]
+
+    variants:
+      - id: "plan_discovered"
+        description: "Antagonist learns of and counters the plan"
+        probability_weight: 1.0
+      - id: "unexpected_complication"
+        description: "Unforeseen obstacle derails approach"
+        probability_weight: 1.0
+      - id: "resource_failure"
+        description: "Critical resource or ally lost"
+        probability_weight: 0.8
+
+  all_is_lost:
+    category: "resolution"
+    universal_name: "All Is Lost / Whiff of Death"
+    description: |
+      The lowest point - something 'dies' (literally or metaphorically).
+      All hope seems lost. The protagonist is at their worst.
+      This precedes the dark night of the soul and final push.
+
+    cost: 1.5
+
+    preconditions:
+      strategy.failed: true
+      resources.depleted: true
+
+    effects:
+      all_is_lost: true
+      dark_night.entered: true
+      death_whiff: true
+
+    narrative_effect:
+      primary_spectrum: -0.35  # Near the negative pole
+
+    genre_labels:
+      action: "All Is Lost"
+      horror: "Final Victim"
+      war: "All Is Lost"
+      western: "All Is Lost"
+      performance: "All Is Lost"
+      society: "All Is Lost Crisis"
+      worldview: "All Is Lost"
+      morality: "All Is Lost"
+      status: "All Is Lost"
+
+    satisfies_obligatory:
+      action: ["all_is_lost"]
+      war: ["all_is_lost"]
+      western: ["all_is_lost"]
+      performance: ["all_is_lost"]
+      society: ["all_is_lost_crisis"]
+      worldview: ["all_is_lost"]
+      morality: ["all_is_lost"]
+      status: ["all_is_lost"]
+
+    variants:
+      - id: "mentor_death"
+        description: "Mentor or key ally dies"
+        probability_weight: 0.8
+      - id: "hope_crushed"
+        description: "Source of hope destroyed or revealed false"
+        probability_weight: 1.0
+      - id: "betrayal_revealed"
+        description: "Trusted ally revealed as enemy"
+        probability_weight: 0.7
+
+  resolution:
+    category: "resolution"
+    universal_name: "Resolution / Final Image"
+    description: |
+      The new equilibrium after the climax.
+      Shows how the world has changed (or not).
+      Provides closure and establishes new normal.
+
+    cost: 1.0
+
+    preconditions:
+      climax.occurred: true
+      stakes.resolved: true
+
+    effects:
+      equilibrium.restored: true
+      story.complete: true
+
+    narrative_effect:
+      primary_spectrum: +0.3  # Movement toward positive (for positive arcs)
+
+    genre_labels:
+      action: "Sacrifice Rewarded"
+      war: "Satisfaction Rewarded"
+      western: "Sacrifice Rewarded"
+      performance: "Rewarded"
+      society: "Recognition Awarded"
+      worldview: "Deeper Understanding"
+      status: "Salvation or Loss"
+
+    satisfies_obligatory:
+      action: ["sacrifice_rewarded"]
+      war: ["satisfaction_rewarded"]
+      western: ["sacrifice_rewarded"]
+      performance: ["rewarded"]
+      society: ["recognition_awarded"]
+      worldview: ["deeper_understanding"]
+      status: ["salvation_or_loss"]
+
+    variants:
+      - id: "positive_resolution"
+        description: "Protagonist achieves goal and personal growth"
+        probability_weight: 1.0
+        effect_modifiers:
+          outcome.positive: true
+      - id: "negative_resolution"
+        description: "Protagonist fails or loses what matters"
+        probability_weight: 0.6
+        effect_modifiers:
+          outcome.negative: true
+      - id: "bittersweet_resolution"
+        description: "Victory with significant cost, or defeat with growth"
+        probability_weight: 0.8
+        effect_modifiers:
+          outcome.mixed: true
+
+  # ---------------------------------------------------------------------------
+  # HIGH-FREQUENCY GENRE ACTIONS (11 actions)
+  # Actions that appear in multiple genres or are critical to specific genres
+  # ---------------------------------------------------------------------------
+
+  speech_praising_villain:
+    category: "conflict"
+    universal_name: "Speech Praising Villain"
+    description: |
+      A moment establishing the antagonist's power and threat.
+      Someone (often a third party) describes how dangerous they are.
+      This raises stakes and establishes the challenge ahead.
+
+    cost: 0.8
+
+    preconditions:
+      antagonist.known: true
+      antagonist_reputation.exists: true
+
+    effects:
+      antagonist_power.established: true
+      stakes.raised: true
+
+    narrative_effect:
+      primary_spectrum: -0.1  # Threat perception increases
+
+    genre_labels:
+      action: "Speech Praising Villain"
+      horror: "Speech Praising Monster"
+      crime: "Speech Praising Villain"
+      thriller: "Speech Praising Villain"
+      western: "Speech Praising Villain"
+
+    satisfies_obligatory:
+      action: ["speech_praising_villain"]
+      horror: ["speech_praising_monster"]
+      crime: ["speech_praising_villain"]
+      thriller: ["speech_praising_villain"]
+      western: ["speech_praising_villain"]
+
+    variants:
+      - id: "reputation_recounted"
+        description: "Third party describes villain's past deeds"
+        probability_weight: 1.0
+      - id: "demonstration_of_power"
+        description: "Villain displays their capabilities"
+        probability_weight: 0.9
+      - id: "victim_warning"
+        description: "Previous victim warns protagonist"
+        probability_weight: 0.8
+
+  false_ending:
+    category: "resolution"
+    universal_name: "False Ending"
+    description: |
+      The antagonist appears defeated but isn't.
+      This is a genre requirement for Horror and Thriller.
+      Creates final tension spike before true resolution.
+
+    cost: 1.0
+
+    preconditions:
+      confrontation.occurred: true
+      antagonist.apparently_defeated: true
+
+    effects:
+      false_victory.revealed: true
+      antagonist.returns: true
+
+    narrative_effect:
+      primary_spectrum: -0.25  # Reversal when victory seemed near
+
+    genre_labels:
+      horror: "False Ending"
+      thriller: "False Ending"
+
+    satisfies_obligatory:
+      horror: ["false_ending"]
+      thriller: ["false_ending"]
+
+    variants:
+      - id: "monster_returns"
+        description: "Seemingly dead antagonist revives"
+        probability_weight: 1.0
+      - id: "true_threat_revealed"
+        description: "Defeated enemy was not the real threat"
+        probability_weight: 0.8
+      - id: "escape_revealed"
+        description: "Antagonist's apparent death was faked"
+        probability_weight: 0.7
+
+  lovers_meet:
+    category: "relationship"
+    universal_name: "Lovers Meet"
+    description: |
+      The first encounter between the romantic leads.
+      Often involves conflict, misunderstanding, or unusual circumstances.
+      Establishes the dynamic that will develop.
+
+    cost: 1.0
+
+    preconditions:
+      lovers.unacquainted: true
+
+    effects:
+      lovers.met: true
+      attraction.sparked: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      love_hate: +0.15
+
+    genre_labels:
+      love: "Lovers Meet"
+
+    satisfies_obligatory:
+      love: ["lovers_meet"]
+
+    variants:
+      - id: "cute_meet"
+        description: "Charming chance encounter"
+        probability_weight: 1.0
+      - id: "conflict_meet"
+        description: "First meeting involves argument or competition"
+        probability_weight: 0.9
+      - id: "rescue_meet"
+        description: "One saves the other from danger"
+        probability_weight: 0.7
+
+  lovers_break_up:
+    category: "relationship"
+    universal_name: "Lovers Break Up"
+    description: |
+      The separation that tests the relationship.
+      Seems final but creates the crisis that proves love.
+      Essential for demonstrating what's at stake.
+
+    cost: 1.5
+
+    preconditions:
+      lovers.together: true
+      conflict.present: true
+
+    effects:
+      lovers.separated: true
+      love.tested: true
+
+    narrative_effect:
+      primary_spectrum: -0.3
+      love_hate: -0.35
+
+    genre_labels:
+      love: "Lovers Break Up"
+
+    satisfies_obligatory:
+      love: ["lovers_break_up"]
+
+    variants:
+      - id: "misunderstanding"
+        description: "Separation due to miscommunication"
+        probability_weight: 1.0
+      - id: "external_obstacle"
+        description: "Outside force separates lovers"
+        probability_weight: 0.9
+      - id: "choice_separation"
+        description: "One lover chooses to leave"
+        probability_weight: 0.8
+
+  lovers_reunite:
+    category: "relationship"
+    universal_name: "Lovers Reunite"
+    description: |
+      The reconciliation after the separation.
+      Love has been proven and obstacles overcome.
+      The happy ending of romantic stories.
+
+    cost: 1.2
+
+    preconditions:
+      lovers.separated: true
+      love.proven: true
+      obstacles.overcome: true
+
+    effects:
+      lovers.reunited: true
+      love.confirmed: true
+
+    narrative_effect:
+      primary_spectrum: +0.4
+      love_hate: +0.45
+
+    genre_labels:
+      love: "Lovers Reunite"
+
+    satisfies_obligatory:
+      love: ["lovers_reunite"]
+
+    variants:
+      - id: "grand_reunion"
+        description: "Public dramatic reunion"
+        probability_weight: 0.9
+      - id: "quiet_reunion"
+        description: "Private, intimate reconciliation"
+        probability_weight: 1.0
+      - id: "rescue_reunion"
+        description: "One rescues the other, proving love"
+        probability_weight: 0.7
+
+  training_montage:
+    category: "transformation"
+    universal_name: "Training Montage / Preparation"
+    description: |
+      The protagonist prepares for the challenge ahead.
+      Skills are developed, weaknesses addressed.
+      Establishes the growth needed for success.
+
+    cost: 0.8
+
+    preconditions:
+      mentor.present: true
+      skill_gap.identified: true
+
+    effects:
+      skills.improved: true
+      confidence.built: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      respect_shame: +0.1
+      success_failure: +0.1
+
+    genre_labels:
+      performance: "Training Sequences"
+
+    satisfies_obligatory:
+      performance: ["training_sequences"]
+
+    variants:
+      - id: "physical_training"
+        description: "Building strength, speed, technique"
+        probability_weight: 1.0
+      - id: "mental_preparation"
+        description: "Strategy, focus, psychological readiness"
+        probability_weight: 0.9
+      - id: "team_building"
+        description: "Group cohesion and coordination"
+        probability_weight: 0.8
+
+  big_battle_preparation:
+    category: "conflict"
+    universal_name: "Big Battle Preparation"
+    description: |
+      Forces gather and prepare for the decisive engagement.
+      Last moments of calm before the storm.
+      Bonds are strengthened, fears addressed.
+
+    cost: 1.0
+
+    preconditions:
+      battle.imminent: true
+      forces.assembled: true
+
+    effects:
+      preparation.complete: true
+      morale.established: true
+
+    narrative_effect:
+      primary_spectrum: 0  # Tension without movement
+      honor_dishonor: +0.1
+
+    genre_labels:
+      war: "Big Battle Preparation"
+
+    variants:
+      - id: "strategic_planning"
+        description: "Leaders discuss battle plans"
+        probability_weight: 1.0
+      - id: "eve_of_battle"
+        description: "Personal moments before combat"
+        probability_weight: 0.9
+      - id: "rallying_speech"
+        description: "Leader inspires troops"
+        probability_weight: 0.8
+
+  revolution_planning:
+    category: "conflict"
+    universal_name: "Revolution Planning"
+    description: |
+      The resistance organizes against the oppressor.
+      Resources gathered, allies recruited, plans made.
+      The calm before the storm of upheaval.
+
+    cost: 1.0
+
+    preconditions:
+      tyranny.established: true
+      resistance.forming: true
+
+    effects:
+      revolution.planned: true
+      forces.mobilized: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      power_impotence: +0.15
+
+    genre_labels:
+      society: "Revolution Planning"
+
+    variants:
+      - id: "secret_meetings"
+        description: "Conspirators gather covertly"
+        probability_weight: 1.0
+      - id: "recruitment"
+        description: "Building the revolutionary force"
+        probability_weight: 0.9
+      - id: "sabotage"
+        description: "Weakening the oppressor's power"
+        probability_weight: 0.7
+
+  showdown_approach:
+    category: "conflict"
+    universal_name: "Showdown Approach"
+    description: |
+      The buildup to the final confrontation.
+      Hero prepares mentally and physically.
+      The town/community awaits the reckoning.
+
+    cost: 1.2
+
+    preconditions:
+      showdown.inevitable: true
+      hero.ready: true
+
+    effects:
+      showdown.imminent: true
+      tension.maximum: true
+
+    narrative_effect:
+      primary_spectrum: -0.1
+      freedom_subjugation: +0.1
+
+    genre_labels:
+      western: "Showdown Approach"
+
+    variants:
+      - id: "walk_to_confrontation"
+        description: "Classic approach down main street"
+        probability_weight: 1.0
+      - id: "final_preparations"
+        description: "Loading guns, saying goodbyes"
+        probability_weight: 0.9
+      - id: "town_clears"
+        description: "Community prepares for violence"
+        probability_weight: 0.8
+
+  moral_temptation:
+    category: "conflict"
+    universal_name: "Moral Temptation"
+    description: |
+      The protagonist faces a choice to take the easy/wrong path.
+      Selfish option is presented attractively.
+      This tests and reveals true character.
+
+    cost: 1.5
+
+    preconditions:
+      moral_choice.available: true
+      selfish_option.attractive: true
+
+    effects:
+      temptation.faced: true
+      character.tested: true
+
+    narrative_effect:
+      primary_spectrum: -0.1
+      altruism_selfishness: -0.2
+
+    genre_labels:
+      morality: "Moral Temptation"
+
+    variants:
+      - id: "corruption_offered"
+        description: "Power or wealth in exchange for principles"
+        probability_weight: 1.0
+      - id: "revenge_opportunity"
+        description: "Chance to hurt enemy at moral cost"
+        probability_weight: 0.9
+      - id: "abandonment_option"
+        description: "Can save self by abandoning others"
+        probability_weight: 0.8
+
+  worldview_challenge:
+    category: "transformation"
+    universal_name: "Worldview Challenge"
+    description: |
+      Evidence contradicts protagonist's beliefs.
+      Cognitive dissonance creates internal conflict.
+      The beginning of potential transformation.
+
+    cost: 1.2
+
+    preconditions:
+      worldview.established: true
+      contradicting_evidence.present: true
+
+    effects:
+      worldview.challenged: true
+      cognitive_dissonance.active: true
+
+    narrative_effect:
+      primary_spectrum: -0.15
+      wisdom_ignorance: +0.1
+
+    genre_labels:
+      worldview: "Worldview Challenge"
+
+    variants:
+      - id: "mentor_challenge"
+        description: "Wise figure questions beliefs"
+        probability_weight: 1.0
+      - id: "experience_challenge"
+        description: "Direct experience contradicts worldview"
+        probability_weight: 0.9
+      - id: "contradiction_revealed"
+        description: "Hidden truth exposed"
+        probability_weight: 0.8
+
+  # ---------------------------------------------------------------------------
+  # SUPPORTING ACTIONS (Additional common patterns)
+  # These fill in common narrative needs beyond the MVP set
+  # ---------------------------------------------------------------------------
+
+  introduce_antagonist:
+    category: "conflict"
+    universal_name: "Introduce Antagonist"
+    description: |
+      The opposing force is revealed to the audience/protagonist.
+      Establishes the nature and threat level of opposition.
+      May or may not involve direct confrontation.
+
+    cost: 1.0
+
+    preconditions:
+      antagonist.known: false
+
+    effects:
+      antagonist.known: true
+      threat.established: true
+
+    narrative_effect:
+      primary_spectrum: -0.15
+
+    variants:
+      - id: "direct_confrontation"
+        description: "Antagonist and protagonist meet face-to-face"
+        probability_weight: 0.8
+      - id: "evidence_of_actions"
+        description: "Antagonist's deeds revealed without direct meeting"
+        probability_weight: 1.0
+      - id: "hidden_reveal"
+        description: "Antagonist revealed to audience but not protagonist"
+        probability_weight: 0.7
+
+  form_alliance:
+    category: "relationship"
+    universal_name: "Form Alliance"
+    description: |
+      Protagonist gains an ally or forms a partnership.
+      Resources and capabilities expand.
+      Trust is established (to be tested later).
+
+    cost: 1.0
+
+    preconditions:
+      potential_ally.present: true
+      common_interest.exists: true
+
+    effects:
+      alliance.formed: true
+      resources.expanded: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      love_hate: +0.1
+
+    variants:
+      - id: "mutual_benefit"
+        description: "Alliance based on shared goals"
+        probability_weight: 1.0
+      - id: "reluctant_alliance"
+        description: "Former enemies unite against greater threat"
+        probability_weight: 0.8
+      - id: "mentorship"
+        description: "Experienced ally takes protagonist under wing"
+        probability_weight: 0.9
+
+  betrayal_reveal:
+    category: "conflict"
+    universal_name: "Betrayal Reveal"
+    description: |
+      A trusted ally is revealed as working against the protagonist.
+      Shatters trust and complicates the situation.
+      High-impact reversal that raises stakes.
+
+    cost: 2.0
+
+    preconditions:
+      trusted_character.exists: true
+      betrayal.hidden: true
+
+    effects:
+      betrayal.revealed: true
+      trust.destroyed: true
+
+    narrative_effect:
+      primary_spectrum: -0.25
+      love_hate: -0.3
+
+    variants:
+      - id: "spy_revealed"
+        description: "Ally was working for antagonist"
+        probability_weight: 1.0
+      - id: "selfish_betrayal"
+        description: "Ally chose personal gain over loyalty"
+        probability_weight: 0.9
+      - id: "coerced_betrayal"
+        description: "Ally forced to betray (still painful)"
+        probability_weight: 0.7
+
+  confrontation_begin:
+    category: "resolution"
+    universal_name: "Confrontation Begins"
+    description: |
+      The final conflict is engaged.
+      Protagonist and antagonist face each other directly.
+      The crisis point where everything is at stake.
+
+    cost: 1.5
+
+    preconditions:
+      antagonist.known: true
+      protagonist.ready: true
+
+    effects:
+      confrontation.in_progress: true
+      stakes.maximum: true
+
+    narrative_effect:
+      primary_spectrum: -0.25
+
+    chained_action: "hero_at_mercy_of_villain"
+
+    variants:
+      - id: "physical_confrontation"
+        description: "Direct combat or physical struggle"
+        probability_weight: 1.0
+      - id: "verbal_confrontation"
+        description: "Battle of wits and words"
+        probability_weight: 0.8
+      - id: "strategic_confrontation"
+        description: "Competing plans clash"
+        probability_weight: 0.7
+
+  sacrifice_rewarded:
+    category: "resolution"
+    universal_name: "Sacrifice Rewarded"
+    description: |
+      The protagonist's sacrifice leads to success.
+      The price paid proves worth it.
+      Victory achieved through selflessness.
+
+    cost: 1.0
+
+    preconditions:
+      sacrifice.made: true
+      stakes.resolved: true
+
+    effects:
+      sacrifice.rewarded: true
+      victory.achieved: true
+
+    narrative_effect:
+      primary_spectrum: +0.35
+      altruism_selfishness: +0.3
+
+    satisfies_obligatory:
+      action: ["sacrifice_rewarded"]
+      western: ["sacrifice_rewarded"]
+
+    variants:
+      - id: "external_reward"
+        description: "Tangible victory or recognition"
+        probability_weight: 1.0
+      - id: "internal_reward"
+        description: "Personal growth and peace"
+        probability_weight: 0.9
+      - id: "legacy_reward"
+        description: "Others benefit from sacrifice"
+        probability_weight: 0.8
+
+  brought_to_justice:
+    category: "resolution"
+    universal_name: "Brought to Justice"
+    description: |
+      The criminal faces consequences for their actions.
+      Justice is served (or fails, in noir).
+      Societal order is restored (or shown corrupt).
+
+    cost: 1.0
+
+    preconditions:
+      criminal.exposed: true
+      evidence.sufficient: true
+
+    effects:
+      justice.served: true
+      order.restored: true
+
+    narrative_effect:
+      primary_spectrum: +0.3
+      justice_injustice: +0.35
+
+    satisfies_obligatory:
+      crime: ["brought_to_justice"]
+
+    variants:
+      - id: "legal_justice"
+        description: "Criminal arrested and prosecuted"
+        probability_weight: 1.0
+      - id: "poetic_justice"
+        description: "Criminal undone by own actions"
+        probability_weight: 0.8
+      - id: "vigilante_justice"
+        description: "Justice outside legal system"
+        probability_weight: 0.6
+      - id: "escaped_justice"
+        description: "Criminal evades consequences (noir)"
+        probability_weight: 0.4
+        effect_modifiers:
+          justice.served: false
+          injustice.persists: true
+
+  plant_clue:
+    category: "mystery"
+    universal_name: "Plant Clue"
+    description: |
+      Evidence is introduced that will be significant later.
+      Fair play for the audience - information available.
+      Builds the mystery that will be solved.
+
+    cost: 0.5
+
+    preconditions:
+      mystery.active: true
+
+    effects:
+      clue.available: true
+      clue_count.incremented: true
+
+    narrative_effect:
+      primary_spectrum: +0.05
+      wisdom_ignorance: +0.05
+
+    variants:
+      - id: "physical_evidence"
+        description: "Object that proves something"
+        probability_weight: 1.0
+      - id: "testimony"
+        description: "Information from a character"
+        probability_weight: 0.9
+      - id: "observation"
+        description: "Detail noticed by protagonist"
+        probability_weight: 0.8
+
+  reveal_secret:
+    category: "mystery"
+    universal_name: "Reveal Secret"
+    description: |
+      Hidden information comes to light.
+      Changes understanding of the situation.
+      Can be positive (truth helps) or negative (truth hurts).
+
+    cost: 1.2
+
+    preconditions:
+      secret.hidden: true
+      revelation.justified: true
+
+    effects:
+      secret.revealed: true
+      understanding.changed: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      wisdom_ignorance: +0.2
+
+    variants:
+      - id: "confession"
+        description: "Character reveals their own secret"
+        probability_weight: 0.9
+      - id: "discovery"
+        description: "Secret found through investigation"
+        probability_weight: 1.0
+      - id: "exposure"
+        description: "Secret revealed by third party"
+        probability_weight: 0.8
+
+  character_growth:
+    category: "transformation"
+    universal_name: "Character Growth"
+    description: |
+      The protagonist learns and changes.
+      Weakness is overcome or perspective shifts.
+      Essential for internal genre satisfaction.
+
+    cost: 1.5
+
+    preconditions:
+      challenge.faced: true
+      lesson.available: true
+
+    effects:
+      character.transformed: true
+      growth.achieved: true
+
+    narrative_effect:
+      primary_spectrum: +0.2
+      wisdom_ignorance: +0.15
+
+    variants:
+      - id: "overcoming_fear"
+        description: "Character conquers a personal fear"
+        probability_weight: 1.0
+      - id: "accepting_truth"
+        description: "Character embraces difficult reality"
+        probability_weight: 0.9
+      - id: "changing_behavior"
+        description: "Character breaks destructive pattern"
+        probability_weight: 0.8
+
+# =============================================================================
+# VALIDATION RULES
+# =============================================================================
+
+validation:
+  description: "Rules for validating story action usage"
+
+  rules:
+    - name: "Core event required"
+      description: "Every story must reach the core event for its genre"
+      severity: "error"
+
+    - name: "Precondition satisfaction"
+      description: "Action preconditions must be satisfied before use"
+      severity: "error"
+
+    - name: "Chained action sequencing"
+      description: "If an action specifies chained_action, GOAP should plan that next"
+      severity: "warning"
+
+    - name: "Obligatory scene coverage"
+      description: "Template-required scenes must be satisfied by some action"
+      severity: "error"
+
+    - name: "Cost budget"
+      description: "Total action costs should align with story length expectations"
+      severity: "warning"
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  primary:
+    - title: "Morphology of the Folktale"
+      author: "Vladimir Propp"
+      year: 1928
+      usage: "Precondition/postcondition patterns"
+
+    - title: "The Story Grid: What Good Editors Know"
+      author: "Shawn Coyne"
+      year: 2015
+      usage: "Obligatory scenes and conventions"
+
+    - title: "Save the Cat!"
+      author: "Blake Snyder"
+      year: 2005
+      usage: "Universal structure beats"
+
+  schemas:
+    - "schemas/storyline/propp-functions.yaml"
+    - "schemas/storyline/story-grid-genres.yaml"
+    - "schemas/storyline/narrative-state.yaml"
+    - "schemas/storyline/SDK_FOUNDATIONS.md"
+    - "schemas/storyline/STORY_ACTIONS_ANALYSIS.md"
+
+# =============================================================================
+# CHANGELOG
+# =============================================================================
+
+changelog:
+  - version: "1.0"
+    date: "2026-02-04"
+    changes:
+      - "Initial implementation with 30 MVP actions"
+      - "11 unique core event actions (12 genres, Action/Thriller share one)"
+      - "7 universal structure actions"
+      - "11 high-frequency genre actions"
+      - "Supporting actions for common patterns"
+      - "Variants for key actions with probability weights"
