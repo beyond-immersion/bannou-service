@@ -229,7 +229,7 @@ actions:
 
     effects:
       love.proven: true
-      lovers.reunited: true
+      obstacles.overcome: true
 
     narrative_effect:
       primary_spectrum: +0.4
@@ -567,6 +567,9 @@ actions:
       equilibrium.disrupted: true
       narrative_problem.established: true
       quest.initiated: true
+      crime.committed: true
+      investigation.in_progress: true
+      mystery.active: true
 
     narrative_effect:
       primary_spectrum: -0.2  # Situation worsens
@@ -727,6 +730,7 @@ actions:
     effects:
       macguffin.discovered: true
       antagonist_goal.known: true
+      clue.available: true
 
     narrative_effect:
       primary_spectrum: +0.1
@@ -1069,6 +1073,7 @@ actions:
     effects:
       lovers.separated: true
       love.tested: true
+      obstacle.present: true
 
     narrative_effect:
       primary_spectrum: -0.3
@@ -1143,11 +1148,12 @@ actions:
 
     preconditions:
       lovers.met: true
-      attraction.mutual: true
+      attraction.sparked: true
 
     effects:
       first_connection.established: true
       relationship.deepened: true
+      feelings.developed: true
 
     narrative_effect:
       primary_spectrum: +0.2
@@ -1187,6 +1193,8 @@ actions:
     effects:
       love.declared: true
       vulnerability.exposed: true
+      lovers.together: true
+      conflict.present: true
 
     narrative_effect:
       primary_spectrum: +0.15
@@ -1453,6 +1461,7 @@ actions:
 
     effects:
       antagonist.known: true
+      antagonist_reputation.exists: true
       threat.established: true
 
     narrative_effect:
@@ -1697,7 +1706,10 @@ actions:
     effects:
       clues.connected: true
       investigation.progressed: true
+      investigation.complete: true
       suspect_pool.narrowed: true
+      perpetrator.identified: true
+      evidence.sufficient: true
 
     narrative_effect:
       primary_spectrum: +0.1
