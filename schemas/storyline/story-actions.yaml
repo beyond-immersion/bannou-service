@@ -15,7 +15,7 @@
 #   - Cost semantics: micro (0.5-0.8), standard (1.0-1.5), macro (2.0-3.0)
 #   - Chained actions for multi-phase story beats (not deferred effects)
 
-version: "1.1"
+version: "1.2"
 source: "Propp Functions + Story Grid Obligatory Scenes + Save the Cat Beats"
 
 # =============================================================================
@@ -503,6 +503,50 @@ actions:
         description: "Protagonist gives up position or wealth"
         probability_weight: 0.9
 
+  faces_death:
+    category: "resolution"
+    universal_name: "Faces Death"
+    description: |
+      Protagonist confronts literal or metaphorical death.
+      The ultimate consequence of their moral choices.
+      Death of self, identity, relationships, or physical being.
+
+    cost: 2.0
+
+    preconditions:
+      sacrifice.made: true
+      stakes.maximum: true
+
+    effects:
+      death.faced: true
+      consequences.realized: true
+      transformation.complete: true
+
+    narrative_effect:
+      primary_spectrum: -0.3
+      life_death: -0.4
+      altruism_selfishness: +0.2
+
+    genre_labels:
+      morality: "Faces Death"
+
+    satisfies_obligatory:
+      morality: ["faces_death"]
+
+    variants:
+      - id: "literal_death"
+        description: "Protagonist faces physical death"
+        probability_weight: 0.7
+      - id: "identity_death"
+        description: "Old self dies, new self emerges"
+        probability_weight: 1.0
+      - id: "social_death"
+        description: "Protagonist faces exile or ostracism"
+        probability_weight: 0.8
+      - id: "relationship_death"
+        description: "Meaningful bonds severed as consequence"
+        probability_weight: 0.9
+
   big_choice:
     category: "resolution"
     universal_name: "Big Choice"
@@ -648,12 +692,15 @@ actions:
       society: "Refuses to Act"
       worldview: "Denies Responsibility"
       morality: "Expresses Inner Darkness"
+      performance: "Sidesteps Responsibility"
 
     satisfies_obligatory:
       action: ["hero_sidesteps"]
       war: ["denial_of_responsibility"]
       society: ["refuses_to_act"]
       worldview: ["denies_responsibility"]
+      performance: ["sidesteps_responsibility"]
+      morality: ["expresses_inner_darkness"]
 
     variants:
       - id: "active_refusal"
@@ -1018,6 +1065,46 @@ actions:
         description: "Antagonist's apparent death was faked"
         probability_weight: 0.7
 
+  protagonist_becomes_victim:
+    category: "conflict"
+    universal_name: "Protagonist Becomes Victim"
+    description: |
+      The stakes become personal to the hero.
+      The antagonist specifically targets the protagonist or their loved ones.
+      This transforms the conflict from professional to personal.
+
+    cost: 1.2
+
+    preconditions:
+      antagonist.known: true
+      investigation.in_progress: true
+
+    effects:
+      stakes.personal: true
+      protagonist.targeted: true
+      motivation.intensified: true
+
+    narrative_effect:
+      primary_spectrum: -0.2
+      life_death: -0.15
+
+    genre_labels:
+      thriller: "Protagonist Becomes Victim"
+
+    satisfies_obligatory:
+      thriller: ["protagonist_becomes_victim"]
+
+    variants:
+      - id: "direct_attack"
+        description: "Villain attacks protagonist directly"
+        probability_weight: 1.0
+      - id: "loved_one_threatened"
+        description: "Family or friend becomes target"
+        probability_weight: 0.9
+      - id: "personal_stakes_revealed"
+        description: "Connection to protagonist discovered"
+        probability_weight: 0.8
+
   lovers_meet:
     category: "relationship"
     universal_name: "Lovers Meet"
@@ -1238,6 +1325,7 @@ actions:
     effects:
       skills.improved: true
       confidence.built: true
+      protagonist.ready: true
 
     narrative_effect:
       primary_spectrum: +0.1
@@ -1462,6 +1550,7 @@ actions:
     effects:
       antagonist.known: true
       antagonist_reputation.exists: true
+      antagonist.present: true
       threat.established: true
 
     narrative_effect:
@@ -1560,6 +1649,7 @@ actions:
 
     effects:
       confrontation.in_progress: true
+      antagonist.present: true
       stakes.maximum: true
 
     narrative_effect:
@@ -1802,6 +1892,136 @@ actions:
         description: "Character breaks destructive pattern"
         probability_weight: 0.8
 
+  # ---------------------------------------------------------------------------
+  # Status Genre Actions (v1.3)
+  # ---------------------------------------------------------------------------
+
+  leaves_home:
+    category: "transition"
+    universal_name: "Leaves Home"
+    description: |
+      The protagonist departs their familiar world.
+      Enters a new status hierarchy where old rules don't apply.
+      The fish-out-of-water moment that sets up the status journey.
+
+    cost: 1.0
+
+    preconditions:
+      status_opportunity.exists: true
+      protagonist.ready: true
+
+    effects:
+      old_world.departed: true
+      new_world.entered: true
+      status_journey.begun: true
+
+    narrative_effect:
+      primary_spectrum: +0.1
+      life_death: +0.05
+
+    genre_labels:
+      status: "Leaves Home"
+
+    satisfies_obligatory:
+      status: ["leaves_home"]
+
+    variants:
+      - id: "physical_departure"
+        description: "Moves to new location"
+        probability_weight: 1.0
+      - id: "social_departure"
+        description: "Enters new social circle"
+        probability_weight: 0.9
+      - id: "professional_departure"
+        description: "Starts new career or role"
+        probability_weight: 0.8
+
+  forced_adaptation:
+    category: "conflict"
+    universal_name: "Forced Adaptation"
+    description: |
+      The protagonist faces humiliation in the new environment.
+      Old skills and status markers prove worthless here.
+      Must learn new rules or be crushed by the system.
+
+    cost: 1.2
+
+    preconditions:
+      new_world.entered: true
+      status_journey.begun: true
+
+    effects:
+      humiliation.experienced: true
+      old_methods.failed: true
+      adaptation.required: true
+
+    narrative_effect:
+      primary_spectrum: -0.2
+      wisdom_ignorance: -0.1
+
+    genre_labels:
+      status: "Forced Adaptation"
+
+    satisfies_obligatory:
+      status: ["forced_adaptation"]
+
+    variants:
+      - id: "public_humiliation"
+        description: "Embarrassed in front of new peers"
+        probability_weight: 1.0
+      - id: "skill_failure"
+        description: "Old expertise proves useless"
+        probability_weight: 0.9
+      - id: "status_rejection"
+        description: "Denied entry to desired group"
+        probability_weight: 0.8
+      - id: "cultural_blunder"
+        description: "Violates unwritten social rules"
+        probability_weight: 0.7
+
+  learns_and_pursues:
+    category: "development"
+    universal_name: "Learns and Pursues"
+    description: |
+      The protagonist begins to understand the new world's rules.
+      Actively pursues the status goal with increasing effectiveness.
+      Marks the transition from passive victim to active player.
+
+    cost: 1.0
+
+    preconditions:
+      adaptation.required: true
+      humiliation.experienced: true
+
+    effects:
+      new_rules.understood: true
+      status_goal.pursued: true
+      competence.developing: true
+
+    narrative_effect:
+      primary_spectrum: +0.15
+      wisdom_ignorance: +0.2
+
+    genre_labels:
+      status: "Learns and Pursues"
+
+    satisfies_obligatory:
+      status: ["learns_and_pursues"]
+
+    variants:
+      - id: "mentor_guidance"
+        description: "Learns from experienced figure"
+        probability_weight: 1.0
+      - id: "trial_and_error"
+        description: "Discovers rules through failure"
+        probability_weight: 0.9
+      - id: "observation"
+        description: "Watches and imitates successful others"
+        probability_weight: 0.8
+      - id: "insider_help"
+        description: "Ally reveals the unwritten rules"
+        probability_weight: 0.7
+
 # =============================================================================
 # VALIDATION RULES
 # =============================================================================
@@ -1863,6 +2083,38 @@ references:
 # =============================================================================
 
 changelog:
+  - version: "1.3"
+    date: "2026-02-04"
+    changes:
+      - "Fixed 7 genre obligatory scene coverage gaps"
+      - "  - denial_resistance: added Performance 'sidesteps_responsibility' to satisfies_obligatory"
+      - "  - denial_resistance: added Morality 'expresses_inner_darkness' to satisfies_obligatory"
+      - "Added: protagonist_becomes_victim action for Thriller genre"
+      - "Added: faces_death action for Morality genre"
+      - "Added: leaves_home action for Status genre"
+      - "Added: forced_adaptation action for Status genre"
+      - "Added: learns_and_pursues action for Status genre"
+      - "All 12 genres now have complete obligatory scene coverage"
+
+  - version: "1.2"
+    date: "2026-02-04"
+    changes:
+      - "CRITICAL: Fixed Love genre WorldState chain (7 issues)"
+      - "  - first_kiss: changed precondition attraction.mutual → attraction.sparked"
+      - "  - first_kiss: added feelings.developed to effects"
+      - "  - confession_of_love: added lovers.together, conflict.present to effects"
+      - "  - lovers_break_up: added obstacle.present to effects"
+      - "  - proof_of_love: removed premature lovers.reunited, added obstacles.overcome"
+      - "CRITICAL: Fixed Crime genre WorldState chain (6 issues)"
+      - "  - inciting_incident: added crime.committed, investigation.in_progress, mystery.active"
+      - "  - introduce_antagonist: added antagonist_reputation.exists, antagonist.present"
+      - "  - discovery: added clue.available to effects"
+      - "  - progressive_clue_following: added investigation.complete, evidence.sufficient, perpetrator.identified"
+      - "CRITICAL: Fixed core event bootstraps"
+      - "  - training_montage: added protagonist.ready to effects"
+      - "  - confrontation_begin: added antagonist.present to effects"
+      - "All genre chains now valid for GOAP planning"
+
   - version: "1.1"
     date: "2026-02-04"
     changes:
