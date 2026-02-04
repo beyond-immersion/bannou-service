@@ -587,6 +587,32 @@ external_genres:
       - name: "False Ending"
         description: "Two endings required"
 
+    subgenres:
+      - name: "Serial Killer"
+        example: "Red Dragon"
+      - name: "Medical"
+        example: "Coma"
+      - name: "Legal"
+        example: "And Justice for All"
+      - name: "Psychological"
+        example: "Primal Fear"
+      - name: "Espionage"
+        example: "The Bourne Identity"
+      - name: "Child in Jeopardy"
+        example: "The Client"
+      - name: "Military"
+        example: "Seven Days in May"
+      - name: "Political"
+        example: "Marathon Man"
+      - name: "Journalism"
+        example: "The Scarecrow"
+      - name: "Financial"
+        example: "Numbered Account"
+      - name: "Woman in Jeopardy"
+        example: "The Girl on the Train"
+      - name: "Hitchcock"
+        example: "Rear Window"
+
   crime:
     name: "Crime"
     type: "external"
@@ -781,6 +807,17 @@ external_genres:
         is_core_event: true
       - name: "Recognition Awarded"
         description: "Protagonist's sacrifice acknowledged"
+
+    subgenres:
+      - name: "First Party"
+        description: "Family members or close friends vs tyrant"
+        examples: ["Ethan Frome", "Ordinary People", "Long Day's Journey into Night"]
+      - name: "Second Party"
+        description: "Tribe or identity group vs tyrant"
+        examples: ["Animal Farm", "Dead Poets Society"]
+      - name: "Third Party"
+        description: "Mass groups vs tyrant"
+        examples: ["1984", "Brave New World", "Ragtime"]
 
   western_eastern:
     name: "Western/Eastern"

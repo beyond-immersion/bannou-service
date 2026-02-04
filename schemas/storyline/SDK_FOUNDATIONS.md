@@ -192,18 +192,19 @@ The following architectural decisions guide SDK implementation.
 
 **Decision**: Use atomic action sequences; GOAP handles sequencing naturally.
 
-**Problem**: Some story beats have multi-phase effects (e.g., tension spikes during confrontation, then resolves). How do we model this?
+**Problem**: Some story beats have multi-phase effects (e.g., primary spectrum drops during confrontation crisis, then rises on resolution). How do we model this?
 
 **Rejected Approach**: Complex effect objects with "then" clauses
 ```csharp
 // INVALID - complex deferred effects
-NarrativeStateEffect = new() { Tension = +0.3, then = -0.4 }
+NarrativeStateEffect = new() { PrimarySpectrum = -0.3, then = +0.4 }
 ```
 
 **Accepted Approach**: Chained atomic actions
 ```csharp
 // VALID - atomic actions, GOAP plans the sequence
-ConfrontationBegin  → { Tension = +0.3 }  → chains to → ConfrontationResolve → { Tension = -0.4 }
+// For Action genre: PrimarySpectrum = life_death
+ConfrontationBegin  → { LifeDeath = -0.3 }  → chains to → ConfrontationResolve → { LifeDeath = +0.4 }
 ```
 
 **Rationale**:
@@ -219,7 +220,8 @@ public static IStoryAction ConfrontationBegin => new StoryAction
     Id = "confrontation_begin",
     Preconditions = { ("antagonist.known", true), ("protagonist.ready", true) },
     Effects = { ("confrontation.in_progress", true) },
-    NarrativeStateEffect = new() { Tension = +0.3, Urgency = +0.2 },
+    // For Action genre, this affects life_death spectrum
+    NarrativeStateEffect = new() { PrimarySpectrum = -0.3 },
     ChainedAction = "confrontation_resolve"  // GOAP will plan this next
 };
 
@@ -228,7 +230,8 @@ public static IStoryAction ConfrontationResolve => new StoryAction
     Id = "confrontation_resolve",
     Preconditions = { ("confrontation.in_progress", true) },
     Effects = { ("confrontation.in_progress", false), ("confrontation.occurred", true) },
-    NarrativeStateEffect = new() { Tension = -0.4, Urgency = -0.3 }
+    // Resolution moves toward positive (for positive arc stories)
+    NarrativeStateEffect = new() { PrimarySpectrum = +0.4 }
 };
 ```
 
@@ -317,6 +320,25 @@ public async Task ExecuteAsync(BehaviorIntent intent, CancellationToken ct)
 
 Story actions parallel music-storyteller's action categories. Each action has preconditions, effects, cost, and NarrativeState delta.
 
+**IMPORTANT: Genre-Contextual Effects**
+
+NarrativeStateEffect operates on the **primary Life Value spectrum** for the story's genre. The 10 spectrums are:
+
+| Spectrum | Primary Genres |
+|----------|----------------|
+| `life_death` | Action, Thriller, Horror |
+| `honor_dishonor` | War |
+| `justice_injustice` | Crime |
+| `freedom_subjugation` | Western, Society |
+| `love_hate` | Love |
+| `respect_shame` | Performance, Status |
+| `power_impotence` | Society |
+| `success_failure` | Status |
+| `altruism_selfishness` | Morality |
+| `wisdom_ignorance` | Worldview |
+
+Actions affect the **primary spectrum** based on genre context. Secondary spectrums from layered genres may also be affected. The examples below show spectrum-agnostic patterns using `PrimarySpectrum` - at runtime, this resolves to the actual spectrum (e.g., `life_death` for Action genre).
+
 ### ConflictActions
 
 Actions that introduce and escalate opposition.
@@ -329,14 +351,14 @@ public static class ConflictActions
         Id = "introduce_antagonist",
         Preconditions = { ("antagonist.known", false) },
         Effects = {
-            ("antagonist.known", true),
-            ("tension", +0.2)
+            ("antagonist.known", true)
         },
         Cost = 1.0,
+        // Moves protagonist AWAY from positive pole (threat introduced)
+        // For Action: life_death decreases (closer to death)
+        // For Crime: justice_injustice decreases (injustice revealed)
         NarrativeStateEffect = new() {
-            Tension = +0.15,
-            Stakes = +0.1,
-            Mystery = +0.2
+            PrimarySpectrum = -0.2  // Genre-contextual
         }
     };
 
@@ -345,14 +367,12 @@ public static class ConflictActions
         Id = "escalate_conflict",
         Preconditions = { ("conflict.active", true) },
         Effects = {
-            ("tension", +0.15),
-            ("stakes", +0.1)
+            ("conflict.intensity", +0.15)
         },
         Cost = 1.0,
+        // Further movement away from positive pole
         NarrativeStateEffect = new() {
-            Tension = +0.15,
-            Stakes = +0.1,
-            Urgency = +0.1
+            PrimarySpectrum = -0.15
         }
     };
 
@@ -364,16 +384,15 @@ public static class ConflictActions
             ("betrayal.hidden", true)
         },
         Effects = {
-            ("betrayal.hidden", false),
-            ("tension", +0.3),
-            ("intimacy", -0.2)
+            ("betrayal.hidden", false)
         },
         Cost = 2.0,  // High impact, use sparingly
+        // Major negative shift - may also affect secondary spectrum
+        // For Love genre stories, this hits love_hate hard
         NarrativeStateEffect = new() {
-            Tension = +0.25,
-            Stakes = +0.15,
-            Hope = -0.2,
-            Intimacy = -0.15
+            PrimarySpectrum = -0.25,
+            // If Love is layered genre:
+            LoveHate = -0.3  // Betrayal directly affects love/hate
         }
     };
 }
@@ -381,7 +400,7 @@ public static class ConflictActions
 
 ### RelationshipActions
 
-Actions that build and modify character bonds.
+Actions that build and modify character bonds. These primarily affect the `love_hate` spectrum when Love is a layered genre.
 
 ```csharp
 public static class RelationshipActions
@@ -391,13 +410,13 @@ public static class RelationshipActions
         Id = "form_alliance",
         Preconditions = { ("characters.compatible", true) },
         Effects = {
-            ("alliance.formed", true),
-            ("intimacy", +0.15)
+            ("alliance.formed", true)
         },
         Cost = 1.0,
+        // Positive movement - allies improve protagonist's position
         NarrativeStateEffect = new() {
-            Intimacy = +0.15,
-            Hope = +0.1
+            PrimarySpectrum = +0.1,
+            LoveHate = +0.15  // If Love is layered genre
         }
     };
 
@@ -409,14 +428,13 @@ public static class RelationshipActions
             ("characters.together", true)
         },
         Effects = {
-            ("intimacy", +0.2),
-            ("trust", +0.15)
+            ("bond.strengthened", true)
         },
         Cost = 1.5,
+        // Temporary negative (danger) with relationship positive
         NarrativeStateEffect = new() {
-            Intimacy = +0.2,
-            Tension = +0.1,
-            Hope = +0.05
+            PrimarySpectrum = -0.1,  // Danger present
+            LoveHate = +0.2  // Bond deepens through adversity
         }
     };
 
@@ -427,13 +445,14 @@ public static class RelationshipActions
             ("hidden_connection.exists", true)
         },
         Effects = {
-            ("hidden_connection.revealed", true),
-            ("mystery", -0.15)
+            ("hidden_connection.revealed", true)
         },
         Cost = 1.2,
+        // For Worldview genre: moves toward wisdom (understanding)
+        // For Love genre: deepens connection
         NarrativeStateEffect = new() {
-            Mystery = -0.15,
-            Intimacy = +0.1
+            WisdomIgnorance = +0.15,  // If Worldview is layered
+            LoveHate = +0.1  // If Love is layered
         }
     };
 
@@ -445,14 +464,13 @@ public static class RelationshipActions
             ("justification.exists", true)
         },
         Effects = {
-            ("trust.exists", false),
-            ("intimacy", -0.3)
+            ("trust.exists", false)
         },
         Cost = 2.5,  // Major irreversible action
+        // Strong negative on relationship spectrum
         NarrativeStateEffect = new() {
-            Intimacy = -0.25,
-            Hope = -0.1,
-            Tension = +0.15
+            LoveHate = -0.3,  // Trust destruction moves toward hate
+            PrimarySpectrum = -0.15  // Generally worsens situation
         }
     };
 }
@@ -460,7 +478,7 @@ public static class RelationshipActions
 
 ### MysteryActions
 
-Actions for information revelation and concealment.
+Actions for information revelation and concealment. These primarily affect `wisdom_ignorance` (Worldview) and `justice_injustice` (Crime) spectrums.
 
 ```csharp
 public static class MysteryActions
@@ -470,13 +488,14 @@ public static class MysteryActions
         Id = "plant_clue",
         Preconditions = { ("mystery.active", true) },
         Effects = {
-            ("clue.available", true),
-            ("mystery", -0.1)
+            ("clue.available", true)
         },
         Cost = 0.5,
+        // Small positive movement - protagonist gains knowledge
+        // For Crime: moves toward justice (understanding the crime)
+        // For Worldview: moves toward wisdom
         NarrativeStateEffect = new() {
-            Mystery = -0.1,
-            Hope = +0.05
+            PrimarySpectrum = +0.1
         }
     };
 
@@ -488,15 +507,13 @@ public static class MysteryActions
             ("revelation.justified", true)
         },
         Effects = {
-            ("secret.hidden", false),
-            ("mystery", -0.2),
-            ("tension", +0.1)
+            ("secret.hidden", false)
         },
         Cost = 1.5,
+        // Revelation advances understanding but may worsen immediate situation
         NarrativeStateEffect = new() {
-            Mystery = -0.2,
-            Tension = +0.1,
-            Stakes = +0.05
+            WisdomIgnorance = +0.2,  // Knowledge gained
+            PrimarySpectrum = -0.1   // Truth may be uncomfortable
         }
     };
 
@@ -506,9 +523,10 @@ public static class MysteryActions
         Preconditions = { ("mystery.active", true) },
         Effects = { ("false_lead.planted", true) },
         Cost = 0.8,
+        // Temporarily moves away from truth
         NarrativeStateEffect = new() {
-            Mystery = +0.1,
-            Urgency = +0.05
+            WisdomIgnorance = -0.1,  // False understanding
+            JusticeInjustice = -0.05  // If Crime genre: injustice persists
         }
     };
 
@@ -519,13 +537,13 @@ public static class MysteryActions
             ("clues.count", ">=", 3)
         },
         Effects = {
-            ("pattern.recognized", true),
-            ("mystery", -0.3)
+            ("pattern.recognized", true)
         },
         Cost = 1.0,
+        // Major positive shift - understanding achieved
         NarrativeStateEffect = new() {
-            Mystery = -0.3,
-            Hope = +0.15
+            WisdomIgnorance = +0.3,  // Breakthrough understanding
+            PrimarySpectrum = +0.15  // Advances toward resolution
         }
     };
 }
@@ -548,9 +566,10 @@ public static class ResolutionActions
         },
         Effects = { ("confrontation.in_progress", true) },
         Cost = 1.5,
+        // Crisis point - situation worsens before resolution
+        // For Action: protagonist faces mortal danger (life_death drops)
         NarrativeStateEffect = new() {
-            Tension = +0.3,
-            Urgency = +0.2
+            PrimarySpectrum = -0.3  // "Hero at Mercy of Villain" moment
         },
         ChainedAction = "confrontation_resolve"
     };
@@ -564,9 +583,11 @@ public static class ResolutionActions
             ("confrontation.occurred", true)
         },
         Cost = 0.5,
+        // Resolution - direction depends on arc_direction (positive/negative)
+        // For positive arcs: large positive shift
+        // For negative arcs: this would be a smaller or negative shift
         NarrativeStateEffect = new() {
-            Tension = -0.4,
-            Urgency = -0.3
+            PrimarySpectrum = +0.4  // Assuming positive arc resolution
         }
     };
 
@@ -582,10 +603,12 @@ public static class ResolutionActions
             ("stakes.resolved", true)
         },
         Cost = 3.0,  // Major story beat
+        // Sacrifice typically serves positive resolution
+        // For Morality genre: moves strongly toward altruism
         NarrativeStateEffect = new() {
-            Tension = -0.2,
-            Intimacy = +0.3,
-            Hope = +0.2
+            AltruismSelfishness = +0.4,  // If Morality genre
+            PrimarySpectrum = +0.2,
+            LoveHate = +0.3  // If Love is layered - sacrifice proves love
         }
     };
 
@@ -600,9 +623,9 @@ public static class ResolutionActions
             ("justice.served", true)
         },
         Cost = 1.5,
+        // Crime genre climax - strong positive on justice spectrum
         NarrativeStateEffect = new() {
-            Tension = -0.3,
-            Hope = +0.25
+            JusticeInjustice = +0.4  // Core event for Crime genre
         }
     };
 
@@ -617,9 +640,10 @@ public static class ResolutionActions
             ("restoration.complete", true)
         },
         Cost = 1.2,
+        // Healing/restoration moves toward positive pole
         NarrativeStateEffect = new() {
-            Hope = +0.3,
-            Intimacy = +0.1
+            PrimarySpectrum = +0.3,
+            LoveHate = +0.1  // Relationships heal
         }
     };
 }
@@ -627,7 +651,7 @@ public static class ResolutionActions
 
 ### TransformationActions
 
-Actions representing character growth and change.
+Actions representing character growth and change. These primarily affect the internal genre spectrums (`wisdom_ignorance`, `altruism_selfishness`, `respect_shame`).
 
 ```csharp
 public static class TransformationActions
@@ -643,8 +667,12 @@ public static class TransformationActions
             ("character.transformed", true)
         },
         Cost = 2.0,
+        // Internal genres: character moves toward positive pole
+        // Worldview: ignorance → wisdom
+        // Morality: selfishness → altruism
+        // Status: shame → respect
         NarrativeStateEffect = new() {
-            Hope = +0.2
+            PrimarySpectrum = +0.2  // For internal genres
         }
     };
 
@@ -660,9 +688,13 @@ public static class TransformationActions
             ("worldview.shifted", true)
         },
         Cost = 2.5,
+        // Worldview genre core event - cognitive growth
+        // Direction depends on subgenre:
+        //   Education/Maturation: positive (toward wisdom)
+        //   Disillusionment: negative (toward meaninglessness)
+        //   Revelation: either (context-determined)
         NarrativeStateEffect = new() {
-            Mystery = -0.4,
-            Hope = +0.1
+            WisdomIgnorance = +0.4  // Assuming positive Education arc
         }
     };
 }
@@ -996,7 +1028,7 @@ The music SDK provides a proven architecture pattern. Below is the conceptual ma
 | `HarmonicFunction` | `ActantRole` | Greimas' 6 actants |
 | `Cadence` | `ResolutionPattern` | Genre-specific endings |
 | `Voice` | `CharacterThread` | Dramatica throughlines |
-| `EmotionalState` (6D) | `NarrativeState` (10D) | Story Grid Life Value spectrums |
+| `EmotionalState` (6D music) | `NarrativeState` (10D literary) | Story Grid Life Value spectrums |
 | `ListenerModel` (ITPRA) | `AudienceModel` | Genre expectations |
 | `MechanismState` (BRECVEMA) | `EngagementState` | Active narrative hooks |
 | `NarrativeTemplate` | `StoryArcTemplate` | Hero's Journey, Save the Cat |
