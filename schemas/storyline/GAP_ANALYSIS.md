@@ -505,12 +505,8 @@ During schema validation, several inconsistencies were identified between the re
 Both `STORY-GRID-101.md` and `FOUR-CORE-FRAMEWORK.md` are interpretations of **Shawn Coyne's Story Grid methodology**. When they conflict, we defer to:
 
 1. **Primary Source**: "The Story Grid: What Good Editors Know" by Shawn Coyne (2015)
-2. **Local Extraction**: `docs/research/STORY-GRID-PRIMARY-SOURCE.md` - comprehensive extraction from the book
-3. **Authoritative Website**: [storygrid.com](https://storygrid.com) - free, continuously updated
-4. **Direct Quotes**: STORY-GRID-101.md contains direct quotes; FOUR-CORE-FRAMEWORK.md is interpretive synthesis
-
-**Reference Hierarchy**:
-- `STORY-GRID-PRIMARY-SOURCE.md` > `STORY-GRID-101.md` > `FOUR-CORE-FRAMEWORK.md`
+2. **Authoritative Website**: [storygrid.com](https://storygrid.com) - free, continuously updated
+3. **Direct Quotes**: STORY-GRID-101.md contains direct quotes; FOUR-CORE-FRAMEWORK.md is interpretive synthesis
 
 ### Issue 1: Horror Core Emotion (Fear vs Excitement)
 
@@ -1217,7 +1213,7 @@ Analyze known stories through all five lenses (four frameworks + NCP) to verify 
 ### Primary Sources (Already Captured in YAML)
 - Blake Snyder, "Save the Cat!" (2005)
 - Reagan et al., "Emotional arcs of stories" (2016)
-- Shawn Coyne, "The Story Grid" (2015) → **Local extraction**: `docs/research/STORY-GRID-PRIMARY-SOURCE.md`
+- Shawn Coyne, "The Story Grid" (2015)
 - Vladimir Propp, "Morphology of the Folktale" (1928)
 - Pablo Gervás, "Propp's Morphology as Grammar for Generation" (2013)
 

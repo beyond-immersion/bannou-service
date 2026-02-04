@@ -1,596 +1,678 @@
 # Story Grid Methodology - Primary Source Reference
 
-> **Source**: *The Story Grid: What Good Editors Know* by Shawn Coyne (Black Irish Entertainment, 2015)
-> **Extracted**: 2026-02-04
-> **Purpose**: Authoritative reference for narrative generation systems
-> **Local Source File**: `~/repos/story-analysis/research/Shawn-Coyne_The-Story-Grid-1.md`
-
-This document consolidates critical data points directly from Shawn Coyne's foundational text. When secondary interpretations (FOUR-CORE-FRAMEWORK.md, STORY-GRID-101.md) conflict, this document represents the authoritative source.
+> **Source**: Shawn Coyne, *The Story Grid: What Good Editors Know*
+> **Extraction Date**: 2026-02-04
+> **Purpose**: Comprehensive reference for narrative system development
 
 ---
 
-## Executive Summary
+## Table of Contents
 
-The Story Grid is a systematic framework for analyzing and crafting compelling stories. Key components:
-
-1. **Genre taxonomy** - 9 External + 3 Internal content genres with specific conventions and obligatory scenes
-2. **Five Commandments** - Universal elements every story unit must have
-3. **Value spectrum analysis** - Tracking life value shifts across genre
-4. **Structural mathematics** - 25/50/25 proportions, scene counts, unit hierarchy
-5. **Foolscap method** - One-page planning framework
-
-**Critical principle**: "There is no Formula, just Form" - these principles describe underlying structure of ALL working stories, not a template to plug into.
-
----
-
-## 1. Genre Classification (AUTHORITATIVE)
-
-### External Content Genres (9 Total)
-
-**Definition**: Stories driven by external forces of antagonism with clear closing action.
-
-| # | Genre | Core Value | Core Emotion | Core Event |
-|---|-------|------------|--------------|------------|
-| 1 | Action | Life/Death | Excitement | Hero at Mercy of Villain |
-| 2 | Horror | Life/Death (to Damnation) | Fear | Victim at Mercy of Monster |
-| 3 | Thriller | Life/Death → Damnation | Intrigue→Excitement→Fear→Terror | Hero as Victim at Mercy of Villain |
-| 4 | Crime | Justice/Injustice | Intrigue | Exposure of Criminal |
-| 5 | War | Victory/Defeat or Honor/Disgrace | Varies | The Big Battle |
-| 6 | Western | Civilization/Wilderness, Strong/Weak | Varies | The Showdown |
-| 7 | Love | Love/Hate | Romance | Proof of Love |
-| 8 | Performance | (Respect/Shame implied) | Triumph | (Big Performance implied) |
-| 9 | Society | Varies by subgenre | Varies | Revolution/Showdown |
-
-### Internal Content Genres (3 Total)
-
-**Definition**: Stories that move a character's status, worldview, or morality from one place to another with cathartic climax.
-
-| # | Genre | Focus |
-|---|-------|-------|
-| 1 | Status | Character's position in social hierarchy |
-| 2 | Morality | Character's ethical compass |
-| 3 | Worldview | Character's fundamental beliefs about reality |
-
-**Critical Distinction**: External genres = protagonist's WANTS (conscious desire). Internal genres = protagonist's NEEDS (subconscious desire).
-
-### Internal Genre Plot Types (Mentioned in Text)
-
-| Plot Type | Description | Example |
-|-----------|-------------|---------|
-| Disillusionment | Blind belief → Justified skepticism | Silence of the Lambs (Clarice's arc) |
-| Status Admiration | Character gains/loses respect | Clarice earning institutional respect |
-| Redemption | Character redeems self through moral action | The Verdict |
-| Revelation | Ignorance → Knowledge | Military preparation examples |
-| Punitive | Character suffers consequences | The Shining (Jack Torrance) |
-| Maturation | Character grows through experience | Coming-of-age stories |
+1. [Genre Classifications](#genre-classifications)
+2. [Four Core Framework](#four-core-framework)
+3. [Value Spectrums](#value-spectrums)
+4. [Five Commandments of Storytelling](#five-commandments-of-storytelling)
+5. [Story Structure](#story-structure)
+6. [Obligatory Scenes by Genre](#obligatory-scenes-by-genre)
+7. [Conventions by Genre](#conventions-by-genre)
+8. [Controlling Idea / Theme](#controlling-idea--theme)
+9. [Foolscap Global Story Grid](#foolscap-global-story-grid)
+10. [Scene Analysis Framework](#scene-analysis-framework)
+11. [Kubler-Ross Change Curve Application](#kubler-ross-change-curve-application)
 
 ---
 
-## 2. External Genre Details
+## Genre Classifications
 
-### 2.1 Action Genre
+### External Content Genres
 
-**Core Value**: Life/Death
-**Core Emotion**: Excitement
-**Core Event**: "The hero at the mercy of the villain"
-**Protagonist Type**: Hero (sacrifices self for others)
+External genres deal with **external forces of antagonism** - conflicts happening in the world outside the protagonist's mind.
 
-#### Subgenre Categories (16 Total)
+#### Action Genre
 
-**Man Against Nature (Adventure)**:
-| Subgenre | Description | Example |
-|----------|-------------|---------|
-| Labyrinth | Save victim(s), escape maze | Die Hard |
-| Monster | Villain is animal | Jaws |
-| Environment | Setting is villain | Gravity |
-| Doomsday | Save environment from disaster | Independence Day |
+> "The Action Genre's core emotion is excitement and the core value is Life vs. Death."
 
-**Man Against State (Epic)**:
-| Subgenre | Description | Example |
-|----------|-------------|---------|
-| Rebellion | Hero vs visible tyrant | Star Wars |
-| Conspiracy | Hero vs invisible tyrant | The Bourne Identity |
-| Vigilante | Hero vs criminal organization | Above the Law |
-| Savior | Hero vs society destroyer | The Dark Knight |
+**Subgenres** (4):
+1. **Adventure** - Quest-based action
+2. **Epic** - Large-scale heroic action
+3. **Duel** - One-on-one confrontation
+4. **Rescue** - Saving someone from danger
 
-**Man Against Man (Duel)**:
-| Subgenre | Description | Example |
-|----------|-------------|---------|
-| Revenge | Hero chases villain | - |
-| Hunted | Villain chases hero | - |
-| Machiavellian | Hero pits villains against each other | A Fistful of Dollars |
-| Collision | Villain pits heroes against each other | Troy |
+**Plot Devices** (16):
+1. Ticking clock
+2. Narrow escape
+3. Chase
+4. Life-threatening situations
+5. Physical confrontation
+6. Pursuit
+7. Capture
+8. Imprisonment
+9. Escape
+10. Deadly obstacles
+11. Life-or-death decisions
+12. Sacrifice
+13. Survival challenges
+14. Combat
+15. Perilous journey
+16. Final confrontation
 
-**Man Against Time (Clock)**:
-| Subgenre | Description | Example |
-|----------|-------------|---------|
-| Ransom | Deadline from villain | - |
-| Countdown | Deadline from circumstance | Andromeda Strain |
-| Holdout | Hold position until reinforcements | The 300 |
-| Fate | Time itself is villain | Back to the Future |
+#### Horror Genre
 
----
+> "Horror's core emotion is fear and the core value is Life vs. Fate Worse Than Death."
 
-### 2.2 Horror Genre
+**Subgenres** (3):
+1. **The Uncanny** - Explicable horror (serial killers, etc.)
+2. **The Supernatural** - Inexplicable horror (ghosts, demons)
+3. **Super-Uncanny** - Ambiguous (could be either)
 
-**Core Value**: Life/Death (taken to "fate worse than death")
-**Core Emotion**: Fear
-**Core Event**: "The victim at the mercy of the monster"
-**Reality Genre**: Fantasy Reality (unrealistic)
-**Protagonist**: Non-heroic (ordinary person forced into survival)
-**Key Characteristic**: Antagonist possessed by "evil" - cannot be reasoned with
+#### Crime Genre
 
-#### Subgenres (3 Types - How Monster is Explained)
+> "Crime's core emotion is intrigue and the core value is Justice vs. Injustice."
 
-| Subgenre | Monster Source | Example |
-|----------|---------------|---------|
-| Uncanny | Explainable (man-made, aliens, possessed human) | Friday the 13th (Jason) |
-| Supernatural | Spirit realm (zombies, vampires, demons) | The Amityville Horror |
-| Ambiguous | Source unclear, protagonist's sanity in doubt | The Shining |
+**Subgenres** (7):
+1. **Murder Mystery** - Whodunit format
+2. **Caper/Heist** - Criminal protagonists
+3. **Gangster** - Organized crime
+4. **Thriller** - (see separate category)
+5. **Courtroom** - Legal drama
+6. **Police Procedural** - Law enforcement POV
+7. **Prison** - Incarceration setting
 
----
+#### Western Genre
 
-### 2.3 Thriller Genre
+> "The Western's core emotion is nostalgia/admiration and the core value is Freedom vs. Subjugation."
 
-**Definition**: Mashed combination of Action + Horror + Crime
-**Core Value**: Life/Death escalating to Damnation (internal fate worse than death)
-**Core Emotion**: Escalation pattern: Intrigue → Excitement → Fear → Terror
-**Protagonist**: Heroic but vulnerable
+**Subgenres** (4):
+1. **Classic Western** - Traditional frontier setting
+2. **Revisionist Western** - Deconstructs myths
+3. **Professional Western** - Hired gun narratives
+4. **Contemporary Western** - Modern setting, Western themes
 
-**CRITICAL REQUIREMENT**: Must have supporting Internal Content Genre for "B" Story
-- External threats profoundly impact internal conflicts
-- Protagonist cannot be indifferent (unlike action heroes)
+#### Thriller Genre
 
-**Key Distinguishing Feature**: Protagonist revealed as VICTIM
-- Sociopath singles out hero for fate worse than death
-- Hero has deep inner life with all three conflict levels
+> "The Thriller's core emotion is anxiety/dread and the core value is Life vs. Death (with emphasis on Fate Worse Than Death)."
 
-#### Subgenres (12 Types - By Setting/Protagonist)
+**Subgenres** (12):
+1. **Serial Killer** - Hunting/hunted by murderer
+2. **Legal Thriller** - Legal/justice system focus
+3. **Political Thriller** - Government/political intrigue
+4. **Medical Thriller** - Healthcare/disease threats
+5. **Military Thriller** - Armed forces focus
+6. **Spy Thriller** - Espionage
+7. **Psychological Thriller** - Mind games
+8. **Techno-Thriller** - Technology focus
+9. **Supernatural Thriller** - Unexplained threats
+10. **Woman-in-Jeopardy** - Female protagonist in danger
+11. **Child-in-Jeopardy** - Child protagonist in danger
+12. **Hitchcockian** - Wrong man/paranoid thriller
 
-| # | Subgenre | Protagonist | Example |
-|---|----------|-------------|---------|
-| 1 | Serial Killer | FBI/police/PI | Red Dragon |
-| 2 | Legal | Lawyer/judge | Presumed Innocent |
-| 3 | Medical | Doctor/nurse/researcher | Coma |
-| 4 | Military | Soldier | Seven Days In May |
-| 5 | Political | Everyman/politician | Marathon Man |
-| 6 | Journalism | Journalist | The Scarecrow |
-| 7 | Psychological | Core question: "Is he/she crazy?" | Primal Fear |
-| 8 | Financial | Financial world setting | Numbered Account |
-| 9 | Espionage | Spy as hero/victim | The Bourne Identity |
-| 10 | Woman in Jeopardy | Woman as hero/victim | Sleeping with the Enemy |
-| 11 | Child in Jeopardy | Child as hero/victim | The Client |
-| 12 | Hitchcock | Wrong man accused | A Coffin For Dimitrios |
+#### War Genre
 
----
+> "War's core emotion is a sense of honor and the core value is Life vs. Death with societal implications."
 
-### 2.4 Crime Genre
+**Key Elements**:
+- Large-scale conflict
+- Sacrifice themes
+- Brotherhood/camaraderie
+- Loss and survival
 
-**Core Value**: Justice/Injustice
-**Core Emotion**: Intrigue
-**Core Event**: Exposure/revelation of the criminal
-**Inciting Incident**: Unjust event (typically discovery of crime)
+#### Society Genre
 
-#### Murder Mystery Sub-Subgenres (6 Types)
+> "Society's core emotion is a sense of injustice and the core value is Power vs. Impotence."
 
-| Subgenre | Investigator Type | Example |
-|----------|------------------|---------|
-| Master Detective | Professional detective | Sherlock Holmes, Poirot, Columbo |
-| Cozy | Amateur with special expertise | Miss Marple, Jessica Fletcher |
-| Historical | Historical figures/professionals | The Name of the Rose |
-| Noir/Hard-Boiled | Good guy seduced by femme fatale | Double Indemnity, Body Heat |
-| Paranormal | Supernatural elements | True Blood/Sookie Stackhouse |
-| Police Procedural | Cop POV | 87th Precinct series |
+**Subgenres** (5):
+1. **Domestic** - Family/household power dynamics
+2. **Women's** - Female experience in society
+3. **Political** - Government/political systems
+4. **Business** - Corporate/commercial world
+5. **Academic** - Educational institutions
 
-#### Other Crime Subgenres
+#### Love Genre (Romance)
 
-| Subgenre | POV | Example |
-|----------|-----|---------|
-| Organized Crime | Criminal (reader roots for criminal) | The Godfather, Breaking Bad |
-| Caper | Master criminal | Rififi, Sexy Beast |
-| Courtroom | Lawyer | The Verdict |
-| Newsroom | Reporter | All the President's Men |
-| Espionage | Spy | Tinker Tailor Soldier Spy |
-| Prison | Prisoner solving setup mystery | - |
+> "Love's core emotion is intimacy and the core value is Love vs. Hate."
+
+**Subgenres** (3):
+1. **Courtship** - Journey to commitment
+2. **Marriage** - Within established relationship
+3. **Obsession** - Destructive love
+
+#### Performance Genre
+
+> "Performance's core emotion is excitement/admiration and the core value is Accomplishment vs. Failure."
+
+**Subgenres** (4):
+1. **Sports** - Athletic competition
+2. **Business** - Professional achievement
+3. **Art** - Creative accomplishment
+4. **Music** - Musical achievement
 
 ---
 
-### 2.5 Western Genre
+### Internal Content Genres
 
-**Core Values**: Individual inside/outside society, good/evil, strong/weak, wilderness/civilization
-**Core Event**: Showdown between hero and villain
+Internal genres deal with **internal forces of antagonism** - conflicts happening within the protagonist's mind.
 
-#### Subgenres (4 Types)
+#### Worldview Genre
 
-| Subgenre | Hero Movement | Example |
-|----------|--------------|---------|
-| Classical | Stranger → saves town → departs | Shane |
-| Vengeance | Outside → inside society | One-Eyed Jacks |
-| Transition | Inside → outside society | High Noon |
-| Professional | Outside law, doing jobs | Butch Cassidy and the Sundance Kid |
+> "Worldview's core emotion is insight and the core value is Meaning vs. Meaninglessness."
 
----
+**Subgenres** (4):
 
-### 2.6 War Genre
+| Subgenre | Starting Point | Ending Point | Value Shift |
+|----------|---------------|--------------|-------------|
+| **Maturation** | Naive | Sophisticated | Positive |
+| **Education** | Ignorant | Wise | Positive |
+| **Disillusionment** | Belief | Disillusion | Negative |
+| **Revelation** | Blindness | Understanding | Can be either |
 
-**Core Value**: Victory/Defeat (straightforward) OR Honor/Disgrace (brotherhood)
-**Reality Genre**: Typically Factualism
-**Core Event**: The big battle
-**Examples**: The Longest Day, Platoon, Gates of Fire
+**Disillusionment Value Spectrum**:
+- Illusion (Blind Belief)
+- Confirmation (Justified Belief)
+- Confusion (Doubt)
+- Disillusionment
+- Dysthymia (chronic depression - end of the line)
 
-**Note**: Love stories often used as subplots to ground war narratives (e.g., Atonement)
+#### Morality Genre
 
----
+> "Morality's core emotion is moral/ethical conflict and the core value is Good vs. Evil."
 
-### 2.7 Society Genre
+**Subgenres** (3):
+1. **Redemption** - Bad to Good (positive)
+2. **Punitive** - Good to Bad (negative)
+3. **Testing** - Maintaining goodness under pressure
 
-**Definition**: Stories driven by big ideas, particular POV/argument for political purposes
-**Protagonist**: Often multiple protagonists
-**Core Values**: Dependent on subgenre
+**Value Spectrum**:
+- Good
+- Wavering/Temptation
+- Indifference
+- Evil
 
-#### Subgenres (5 Types)
+#### Status Genre
 
-| Subgenre | Core Dynamic | Core Event | Example |
-|----------|-------------|------------|---------|
-| Domestic | Individual vs family bond | Showdown between control figure and rebel | Long Day's Journey into Night |
-| Woman's | Independent woman vs patriarch | Rebellion and/or submission | Anna Karenina |
-| Political | Struggle for power | Revolution (power gained/lost) | The Godfather |
-| Biographical | Varies by figure | Varies | - |
-| Historical | Varies by period | Must comment on contemporary life | Ragtime |
+> "Status's core emotion is a sense of self-worth and the core value is Success vs. Failure (socially defined)."
 
----
-
-### 2.8 Love Genre
-
-**Core Value**: Love/Hate
-**Core Emotion**: Romance
-**Core Event**: Proof of love of one character for another
-
-**Additional Values**: Dependence/Independence, Communication/Misunderstanding, Morality/Immorality, Social Approval/Disapproval, Togetherness/Loneliness
-
-#### Subgenres (3 Types)
-
-| Subgenre | Focus | Additional Values |
-|----------|-------|-------------------|
-| Courtship | Meeting → commitment | Dependence/independence, communication/misunderstanding |
-| Marriage | Committed relationships deepening/breaking | Loyalty/Betrayal, Truth/Lie, Fidelity/Infidelity |
-| Obsession | Desire and passion | May shift to Survival/Death, Romance → Fear |
+**Subgenres** (4):
+1. **Admiration** - Rise to success
+2. **Pathetic** - Rise then fall
+3. **Tragic** - Fall from grace
+4. **Sentimental** - Unearned success
 
 ---
 
-## 3. The Five Commandments (UNIVERSAL)
+## Four Core Framework
 
-**Critical Principle**: These five elements MUST appear in EVERY unit of story: beat, scene, sequence, act, subplot, and global story.
+Each genre has four core elements that define its essential nature:
 
-### Commandment 1: Inciting Incident
+| Element | Definition |
+|---------|------------|
+| **Core Need** | The human need the genre satisfies |
+| **Core Emotion** | The primary emotional experience for the audience |
+| **Core Event** | The obligatory climactic moment |
+| **Core Value** | The value spectrum at stake |
 
-**Definition**: Event that upsets life balance of protagonist(s), making them uncomfortably out of sync.
+### Core Framework by Genre
+
+| Genre | Core Need | Core Emotion | Core Event | Core Value |
+|-------|-----------|--------------|------------|------------|
+| **Action** | Safety | Excitement | Hero at mercy of villain | Life vs. Death |
+| **Horror** | Safety | Fear | Victim at mercy of monster | Life vs. Fate Worse Than Death |
+| **Crime** | Justice | Intrigue | Exposure of criminal | Justice vs. Injustice |
+| **Thriller** | Safety | Anxiety/Dread | Hero at mercy of villain | Life vs. Fate Worse Than Death |
+| **War** | Purpose | Honor | Big battle/sacrifice | Life vs. Death (societal) |
+| **Society** | Equality | Injustice | Revolution/change | Power vs. Impotence |
+| **Love** | Connection | Intimacy | Proof of love | Love vs. Hate |
+| **Performance** | Achievement | Admiration | Big event/performance | Accomplishment vs. Failure |
+| **Worldview** | Understanding | Insight | Moment of realization | Meaning vs. Meaninglessness |
+| **Morality** | Redemption | Moral conflict | Choice between good and evil | Good vs. Evil |
+| **Status** | Worth | Self-worth | Status achieved/lost | Success vs. Failure |
+
+---
+
+## Value Spectrums
+
+> "Every story is a negotiation of values. The more finely you understand the value spectrum, the more nuanced your story can be."
+
+### The Four-Stage Value Spectrum
+
+Each core value has a four-stage progression:
+
+1. **Positive** - The ideal state
+2. **Contrary** - A less-than-ideal state (but not terrible)
+3. **Negative** - The bad state
+4. **Negation of the Negation** - Fate worse than the negative
+
+### Value Spectrums by Genre
+
+| Genre | Positive | Contrary | Negative | Negation of Negation |
+|-------|----------|----------|----------|----------------------|
+| **Action/Thriller** | Life | Unconsciousness | Death | Damnation (fate worse than death) |
+| **Crime** | Justice | Unfairness | Injustice | Tyranny |
+| **Love** | Love | Desire | Indifference | Hate/Self-hatred |
+| **Morality** | Good | Wavering | Indifference | Evil |
+| **Status** | Success | Compromise | Failure | Selling out |
+| **Worldview** | Meaning | Doubt | Meaninglessness | Nihilism |
+
+### Key Principle
+
+> "The negation of the negation is critical. It's not enough to simply go to the negative value. To create a truly powerful climax, you must threaten or achieve the negation of the negation - the absolute worst state."
+
+---
+
+## Five Commandments of Storytelling
+
+> "Every unit of story - from the global story down to the individual scene - must contain all Five Commandments."
+
+### 1. Inciting Incident
+
+> "The Inciting Incident is the event that upsets the life balance of your protagonist. It's the Big Bang that creates the universe of your story."
 
 **Two Types**:
-| Type | Definition | Examples |
-|------|------------|----------|
-| Causal | Result of active choice | Wife leaves husband; Man enlists in Marines |
-| Coincidental | Unexpected, random, accidental | Man wins lottery; Woman takes wrong suitcase |
 
-**Critical Rule**: Inciting Incident must PROMISE the ending
-- Ending must be perfectly reasonable AND inevitable
-- Must ALSO be surprising
-
-**Pro Tip**: Mix causal and coincidental throughout story
-
----
-
-### Commandment 2: Progressive Complications
-
-**Definition**: Escalating degrees of conflict, increasing difficulty that forces larger risks.
-
-**Critical Rule**: Cannot have protagonist face same dilemma in Act 3 that was faced in Act 1.
-
-**Reversibility Factor Test** (Scale 1-10):
-- 1 = Easy to reverse decision
-- 10 = Absolutely irreversible
-
-**Point of No Return**: Moment where character will never be same regardless of choice.
-
-**Evaluation Method**: Track difficulty numbers (1-10) from beginning to end. Should show clear escalation pattern.
-
-#### Turning Points (Sub-element)
-
-**Definition**: Moment when new information comes to fore and character must react.
-
-**Two ONLY Methods**:
-| Method | Definition | Example |
-|--------|------------|---------|
-| Character Action | Physical motion showing internal shift | Bill Murray swatting invisible fly (Tootsie) |
-| Revelation | New information revealed | Chinatown - Gardener reveals saltwater in pool |
-
-**Critical Balance**:
-- All action = "Overly plotted"
-- All revelation = "Melodramatic"
-- Mix for best results
-
----
-
-### Commandment 3: Crisis
-
-**Definition**: A question offering choice between two options with no good answer.
-
-**Two Types**:
 | Type | Definition | Example |
 |------|------------|---------|
-| Best Bad Choice | Both options lead to negative outcomes | Choosing between two losses |
-| Irreconcilable Goods | Both options lead to positive outcomes, but choosing one loses the other | Clarice: save woman OR keep devil out of mind |
+| **Causal** | Caused by another character's deliberate action | Crawford assigns Starling to interview Lecter |
+| **Coincidental** | Random event/chance occurrence | Discovering a dead body by accident |
 
-**Key Characteristic**: Whatever choice made, character loses something.
+**Key Rule**: The Inciting Incident must be specific enough to hook the audience and create an immediate question.
 
----
+### 2. Progressive Complications
 
-### Commandment 4: Climax
+> "Progressive Complications are the forces of antagonism that make it harder and harder for the protagonist to get what they want."
 
-**Definition**: The active choice protagonist makes in response to crisis.
+**The Turning Point** - Every sequence of progressive complications builds to a turning point that creates the crisis.
 
-**Principle**: Climax must be earned through progressive complications.
+**Two Types of Turning Points**:
 
-**Resolution vs Climax**:
-- Climax = When character makes active choice determining outcome
-- Resolution = What that climax MEANS to character
+| Type | Definition | Effect |
+|------|------------|--------|
+| **Active** | A character takes action that changes the story | Protagonist discovers the killer's identity |
+| **Revelatory** | Information is revealed that changes everything | Protagonist learns a secret about themselves |
 
----
+### 3. Crisis
 
-### Commandment 5: Resolution
+> "The Crisis is the dilemma the protagonist must face. It's an active question, not a passive state."
 
-**Definition**: The fallout from climax AND what it MEANS to the character.
+**Two Types of Crisis**:
 
-**Critical Principle**: Shows how worldview has shifted. Not a recap - a revelation of meaning.
+| Type | Definition | Example |
+|------|------------|---------|
+| **Best Bad Choice** | Two negative options, must choose lesser evil | Save one person or many (both have costs) |
+| **Irreconcilable Goods** | Two positive options, can only choose one | Love vs. duty (both are good, can't have both) |
 
-**Common Mistakes**:
-- Dashing off in epilogues
-- One/two sentence updates
-- Summing up what already happened
+**Key Principle**: The crisis must be a genuine dilemma. If the choice is obvious, there is no drama.
 
----
+### 4. Climax
 
-## 4. Value Spectrums
+> "The Climax is the active choice the protagonist makes in response to the crisis. It must be a decision followed by action."
 
-**Structure**:
-1. **Positive Pole**: Desired state
-2. **Negative Pole**: Undesired state
-3. **Negation of Negation**: Worst state (far worse than simple negative)
+**Requirements**:
+- Must be an irreversible action
+- Must demonstrate character (who they are under pressure)
+- Must resolve the crisis question
+- Must shift values (positive to negative or vice versa)
 
-### Genre-Specific Value Spectrums
+### 5. Resolution
 
-| Genre | Positive | Negative | Negation of Negation |
-|-------|----------|----------|---------------------|
-| Action | Life | Death | Fate Worse Than Death |
-| Horror | Life | Death | Damnation |
-| Thriller | Life | Death | Damnation (internal) |
-| Crime | Justice | Injustice | Corruption of Justice |
-| Western | Civilization/Strong/Good | Wilderness/Weak/Evil | - |
-| War | Victory/Honor | Defeat/Disgrace | - |
-| Love | Love | Hate | Obsessive Destruction |
+> "The Resolution shows the new state of affairs after the climactic action. It tells the reader what the climax MEANS."
 
-**Scene Value Turns**:
-- Positive → Negative
-- Negative → Positive
-- Negative → Double Negative (worse)
-- Positive → Double Positive (greater)
+**Key Principle**:
+> "Another trick to keep in mind is if your global Story rests on a massive internal shift in your lead character, the resolution scene should resolve the external changes in that character. If your maturation plot is the global Story climax, the resolution scene should revolve around a subplot External Genre. Likewise, if your global Story rests on a massive external shift like WAR, then the resolution scene should resolve the internal changes in your character."
 
 ---
 
-## 5. Story Structure Mathematics
+## Story Structure
 
-### Story Proportions (25/50/25 Rule)
+### The 25/50/25 Principle
 
-| Section | Percentage | Word Count (100k novel) | Scene Count |
-|---------|------------|------------------------|-------------|
-| Beginning Hook | 25% | 20,000-25,000 | 12-13 |
-| Middle Build | 50% | 40,000-50,000 | 25 |
-| Ending Payoff | 25% | 20,000-25,000 | 12-13 |
-| **Total** | 100% | 80,000-100,000 | ~50 |
+> "The Beginning Hook comprises approximately 25% of the story, the Middle Build 50%, and the Ending Payoff 25%."
 
-### Scene Metrics
+| Section | Percentage | Function |
+|---------|------------|----------|
+| **Beginning Hook** | ~25% | Setup, inciting incident, first major turn |
+| **Middle Build** | ~50% | Progressive complications, point of no return |
+| **Ending Payoff** | ~25% | Crisis, climax, resolution |
 
-| Metric | Value |
-|--------|-------|
-| Optimal scene length | 2,000 words |
-| Acceptable range | 1,000-5,000 words |
-| Minimum core scenes | 15 (5 per section) |
-| Total scenes (100k novel) | ~50 |
+### Word Count Guidelines
 
-### Kubler-Ross Change Curve Mapping
+| Story Type | Total Words | Beginning Hook | Middle Build | Ending Payoff |
+|------------|-------------|----------------|--------------|---------------|
+| **Novel** | 80,000-100,000 | 20,000-25,000 | 40,000-50,000 | 20,000-25,000 |
+| **Short Story** | 2,000-7,500 | 500-1,875 | 1,000-3,750 | 500-1,875 |
+| **Novella** | 17,500-40,000 | 4,375-10,000 | 8,750-20,000 | 4,375-10,000 |
 
-| Stage | Story Section | Function |
-|-------|--------------|----------|
-| Shock + Denial | Beginning Hook | Initial disturbance, pretend normalcy |
-| Anger + Bargaining | Middle Build (early) | Lash out, search for easy way out |
-| Depression + Deliberation | Middle Build (late) | Bottom out, weigh options |
-| Choice | Ending Payoff (climax) | Active decision |
-| Acceptance | Ending Payoff (resolution) | New reality accepted |
+### Scene Count Guidelines
 
----
+> "A novel of 100,000 words will have approximately 50 scenes, with each scene averaging 2,000 words."
 
-## 6. Story Units Hierarchy
+| Section | Scene Count (for 50-scene novel) |
+|---------|----------------------------------|
+| **Beginning Hook** | 12-13 scenes |
+| **Middle Build** | 25 scenes |
+| **Ending Payoff** | 12-13 scenes |
 
-| Unit | Definition | Scope |
-|------|------------|-------|
-| Beat | Smallest identifiable moment of change | Moment-to-moment character choices |
-| Scene | Basic building block with clear value shift | Must have all Five Commandments |
-| Sequence | Group of scenes building toward larger turning point | Multiple scenes with cumulative progression |
-| Act | Major structural division | Less important than Hook/Build/Payoff |
-| Subplot | Secondary storyline parallel to global story | Often carries Internal Genre |
-| Global Story | Entire narrative arc | Contains all other units |
+### The Silence of the Lambs - Actual Distribution
 
-**Critical Rule**: Every unit at every level must have all Five Commandments.
+| Section | Chapters/Scenes | Words | Percentage |
+|---------|-----------------|-------|------------|
+| **Beginning Hook** | 10 chapters / 12 scenes | 18,152 | 19% |
+| **Middle Build** | 38 chapters | 55,238 | 57% |
+| **Ending Payoff** | Remaining | ~22,909 | 24% |
+| **Total** | - | 96,299 | 100% |
+
+> "A 19/57/24 distribution of Beginning Hook, Middle Build and Ending Payoff. This is absolutely in the realm of standard novel form."
 
 ---
 
-## 7. Obligatory Scenes & Conventions
+## Obligatory Scenes by Genre
 
-### Definitions
+### Thriller Genre Obligatory Scenes
 
-| Term | Definition |
-|------|------------|
-| Convention | Expected scene type readers anticipate (can be subverted brilliantly) |
-| Obligatory Scene | Scene absolutely necessary for story to work (cannot be omitted) |
+> "Obligatory Scenes are the must-have moments readers expect. Miss one, and you'll hear about it."
 
-### Genre-Specific Obligatory Scenes
+| Obligatory Scene | Description | Silence of the Lambs Example |
+|------------------|-------------|------------------------------|
+| **Inciting Crime/Event** | The crime or threat that launches the story | Buffalo Bill's victims established |
+| **Speech in Praise of the Villain** | Establishes the antagonist's power and threat | Starling reads Buffalo Bill case file (scene 13) |
+| **Hero at the Mercy of the Villain** | Protagonist faces antagonist with death possible | Starling vs. Buffalo Bill in the dark |
+| **False Ending** | Seems like resolution, but isn't | HRT raids wrong house (scene 58) |
+| **Hero Becomes the Victim** | Protagonist transitions from hunter to hunted | Starling alone with Buffalo Bill |
+| **Clock Plot** | Time pressure intensifies threat | "Six or seven days" to save Catherine Martin |
+| **Make It Personal** | Stakes become personally meaningful | Starling's career and inner peace at stake |
 
-| Genre | Obligatory Scene(s) |
-|-------|---------------------|
-| Action | Hero at the mercy of villain |
-| Horror | Monster attack (inciting); Ultimate confrontation (climax) |
-| Thriller | Hero at mercy of villain; Protagonist revealed as victim |
-| Murder Mystery | Discovery of body (inciting); Revelation of murderer (climax) |
-| Love | Lovers meet (inciting); Resolution of "do they stay together?" |
+### Love Genre Obligatory Scenes
+
+| Obligatory Scene | Description |
+|------------------|-------------|
+| **Lovers Meet** | First encounter between romantic leads |
+| **First Kiss/Intimate Connection** | Physical/emotional intimacy milestone |
+| **Confession of Love** | Declaration of feelings |
+| **Proof of Love** | Sacrifice or action demonstrating love |
+| **Lovers Break Up** | Separation before final resolution |
+| **Lovers Reunite** | Final coming together |
+
+### Action Genre Obligatory Scenes
+
+| Obligatory Scene | Description |
+|------------------|-------------|
+| **Hero Outmatched** | Antagonist demonstrates superior power |
+| **Hero at Mercy of Villain** | Life-threatening confrontation |
+| **Hero's Sacrifice** | Willingness to die for cause |
+| **Final Confrontation** | Climactic face-off |
 
 ---
 
-## 8. Controlling Idea / Theme
+## Conventions by Genre
 
-**Definition**: The takeaway message the writer wants the reader to discover.
+> "Conventions are elements readers expect in your genre. They're the 'flavor' that makes your story feel right."
 
-### Three Requirements (per Robert McKee)
+### Thriller Genre Conventions
 
-1. **Brevity**: Cannot exceed one-sentence statement
-2. **Climactic value charge**: Must address final value shift
-3. **Cause specificity**: Must explain WHY value shifts, not just that it does
+| Convention | Description | Example |
+|------------|-------------|---------|
+| **MacGuffin** | The "why" behind the antagonist's actions | Buffalo Bill wants to make a "woman suit" |
+| **Red Herring** | False lead that misdirects | Lecter's "Billy Rubin" deception |
+| **Ticking Clock** | Time pressure element | Catherine Martin's limited survival time |
+| **Strong Mentor Figure** | Guide for protagonist | Jack Crawford |
+| **Hidden/Masked Villain** | Antagonist's true identity concealed | Buffalo Bill's identity unknown |
 
-### Formula Structure
+### Love Genre Conventions
 
-`[Character trait/action] + [Value shift] = [Consequence/Meaning]`
+| Convention | Description |
+|------------|-------------|
+| **External Need** | Something beyond love driving the plot |
+| **Opposing Forces** | Characters/circumstances keeping lovers apart |
+| **Secondary Romance** | Subplot romance for contrast |
+| **Rivals** | Competition for romantic interest |
+| **Secrets** | Information withheld between lovers |
+| **Gender-Specific Challenges** | Social/cultural obstacles |
+| **Moral Weight** | Ethical dimension to romantic choice |
+
+### Horror Genre Conventions
+
+| Convention | Description |
+|------------|-------------|
+| **Sin/Transgression** | Characters violate taboo |
+| **Supernatural or Serial Antagonist** | Non-standard threat |
+| **Labyrinth** | Confined, complex space |
+| **Past Evil** | Historical wrong being punished |
+
+---
+
+## Controlling Idea / Theme
+
+> "The Controlling Idea is a single sentence that expresses your story's ultimate meaning. It's the argument your story is making about life."
+
+### The Formula
+
+**Structure**: [VALUE] + [CAUSE]
+
+> "[VALUE] is achieved/lost when/because [CAUSE]."
 
 ### Examples
 
 | Story | Controlling Idea |
-|-------|-----------------|
-| The Firm | "Justice prevails when an everyman victim is more clever than the criminals" |
-| The Shining | "Narcissistic self-abuse annihilates all forms of human love" |
-| Silence of the Lambs | "Disillusionment comes from discovering fundamental corruption in systems you trusted" |
+|-------|------------------|
+| **The Silence of the Lambs** | Justice prevails when the protagonist is willing to sacrifice her career and psychological well-being to save an innocent life |
+| **Romeo and Juliet** | Love destroys when it defies social order |
+| **The Godfather** | Power corrupts when family loyalty supersedes morality |
+
+### Types by Ending
+
+| Ending Type | Value Direction | Example |
+|-------------|-----------------|---------|
+| **Prescriptive (Positive)** | Positive value achieved | "Justice prevails when..." |
+| **Cautionary (Negative)** | Negative value results | "Corruption triumphs when..." |
+| **Ironic** | Mixed/ambiguous result | External positive, internal negative |
+
+### Silence of the Lambs - Ironic Ending
+
+> "While Starling's external Genre has moved from negative to positive (she saved Catherine Martin and killed Buffalo Bill), her internal worldview has moved from positive (blind belief in the FBI) to negative (disillusionment). This creates an ironic ending - she's won externally but lost internally."
 
 ---
 
-## 9. Foolscap Global Story Grid Method
+## Foolscap Global Story Grid
 
-**Definition**: One-page planning document for systematic story analysis.
+> "The Foolscap Global Story Grid is a one-page document that contains all of the essential elements of your story."
 
-### Top Section: Global Elements
-- Genre (External + Internal)
-- Point of View character
-- Controlling Idea/Theme
-- Object of Desire (conscious)
-- Object of Desire (subconscious)
+### Foolscap Components
 
-### Bottom Section: Three-Part Scene Breakdown
+#### Section 1: Global Genre
+- External Content Genre
+- Internal Content Genre
+- Style (Archplot, Miniplot, Antiplot)
+- Structure (novel, novella, etc.)
+- Reality (realism, fantasy, etc.)
 
-Each section contains 5 core scenes:
-1. Inciting Incident
-2. Progressive Complication
-3. Crisis
-4. Climax
-5. Resolution
+#### Section 2: Obligatory Scenes Checklist
+- List all required scenes for your genre
+- Check off as you identify them in your manuscript
 
-### Tracking Rows
-- Scene number/chapter
-- POV character
-- Scene value (what life value shifts)
-- External/Internal genre progression
-- Turning point method (action vs. revelation)
+#### Section 3: Conventions Checklist
+- List all required conventions for your genre
+- Check off as you identify them in your manuscript
 
----
+#### Section 4: Point of View
+- First person, third person limited, omniscient
+- Whose POV per scene/chapter
 
-## 10. Genre Blending Rules
+#### Section 5: Objects of Desire
+- **Conscious Object of Desire**: What the protagonist wants externally
+- **Unconscious Object of Desire**: What the protagonist needs internally
 
-### Innovation Principles
+#### Section 6: Controlling Idea/Theme
+- The single-sentence meaning of the story
 
-1. **Know the form first** - Master conventions before breaking them
-2. **Break brilliantly** - Subvert deliberately, not negligently
-3. **Fulfill expectations** - Even when innovative
+#### Section 7: Beginning Hook
+- Inciting Incident
+- Progressive Complications
+- Turning Point
+- Crisis
+- Climax
+- Resolution
 
-### Successful Blend Examples
+#### Section 8: Middle Build
+- Inciting Incident (of Middle Build)
+- Progressive Complications
+- Point of No Return
+- All Is Lost Moment
+- Crisis
+- Climax
+- Resolution
 
-| Blend | Components | Example |
-|-------|------------|---------|
-| Thriller | Action + Horror + Crime | The Silence of the Lambs |
-| Crime + Redemption | External crime + Internal redemption | The Verdict |
-| War + Love | External war + Internal love | Atonement |
-| Literary Horror | Horror + deep internal controlling idea | The Shining |
-
----
-
-## 11. Quality Verification Checklist
-
-### Story Works When:
-- [ ] Readers finish and want to recommend
-- [ ] Scenes have clear value shifts
-- [ ] Progressive complications genuinely escalate
-- [ ] Obligatory scenes present and earned
-- [ ] Controlling idea evident
-- [ ] Resolution shows changed worldview
-- [ ] Climax flows inevitably yet surprisingly
-
-### Story Fails When:
-- [ ] Weak or absent Inciting Incident
-- [ ] Flat progressive complications (same dilemma repeated)
-- [ ] Missing obligatory scenes
-- [ ] Soft climax that doesn't earn resolution
-- [ ] No clear controlling idea
-- [ ] Scenes don't turn (no value shift)
-- [ ] Protagonist can easily reverse decisions
+#### Section 9: Ending Payoff
+- Inciting Incident (of Ending Payoff)
+- Progressive Complications
+- Crisis
+- Climax (Global Climax)
+- Resolution (Global Resolution)
 
 ---
 
-## 12. Implementation Notes for Narrative Generation
+## Scene Analysis Framework
 
-### Data Structure Priorities
+### Story Grid Spreadsheet
 
-1. **Genre classification** - Determines conventions/obligatory scenes
-2. **Value spectrum tracking** - Shows story progression
-3. **Inciting Incident architecture** - Opens every unit level
-4. **Progressive complication engine** - Escalates difficulty (1-10 scale)
-5. **Crisis/climax logic** - Decision based on objects of desire
-6. **Resolution mapping** - Connects climax to worldview change
+> "The Story Grid Spreadsheet is a tool to analyze every scene in your manuscript."
 
-### Critical Checkpoints
+### Spreadsheet Columns
 
-- Every scene must have all Five Commandments
-- Complications must escalate (track 1-10 scale)
-- Turning points must alternate action/revelation
-- Obligatory scenes must be present for chosen genre
-- Controlling idea must thread through all decisions
+| Column | Purpose |
+|--------|---------|
+| **Scene Number** | Sequential numbering |
+| **Word Count** | Length of scene |
+| **Story Event** | What happens (shortest possible description) |
+| **Value Shift** | From X to Y (e.g., Life to Death, Love to Indifference) |
+| **Polarity Shift** | + to - or - to + |
+| **Turning Point Type** | Active or Revelatory |
+| **POV** | Whose perspective |
+| **Period/Time** | When it occurs |
+| **Duration** | How long in story time |
+| **Location** | Where it occurs |
+
+### Scene Requirements
+
+> "Every scene must turn. That is, it must shift values. A scene that doesn't turn is not a scene - it's exposition."
+
+**Scene Must Have**:
+1. Clear beginning, middle, end
+2. Value shift (polarity change)
+3. At least one of the Five Commandments clearly present
+4. Contribute to overall story progression
+
+### The Editor's Approach
+
+> "FINDING THE PROBLEMS IS THE EDITOR'S #1 JOB. This first draft spreadsheet round is all about finding the problems. It's not about solving the problems."
+
+> "The last thing you want to do is lie to yourself about what is actually on the page. You need to remind yourself that you are going to fix the problems in due course. This is the time to find the problems, not to sweep them under the rug."
 
 ---
 
-## References
+## Kubler-Ross Change Curve Application
 
-### Primary Source
-- Coyne, Shawn. *The Story Grid: What Good Editors Know*. Black Irish Entertainment, April 2015.
+### The Five Stages Applied to Story
 
-### Secondary Sources Referenced in Text
-- Robert McKee (story structure)
-- David Mamet & William H. Macy (Practical Aesthetics)
-- Elizabeth Kubler-Ross (*On Death and Dying*)
-- Thomas Harris (craft example - Silence of the Lambs)
-- Stephen King (craft example - The Shining)
-- Steven Pressfield (writing partner, examples)
+Coyne applies the Kubler-Ross grief/change model to story structure:
+
+| Stage | Story Application | Typical Location |
+|-------|-------------------|------------------|
+| **Denial** | Character refuses to accept new reality | Beginning Hook |
+| **Anger** | Character rages against circumstances | Early Middle Build |
+| **Bargaining** | Character attempts to negotiate/avoid | Mid Middle Build |
+| **Depression** | "All Is Lost" moment | Late Middle Build |
+| **Acceptance** | Character accepts and acts | Ending Payoff |
+
+### Key Insight
+
+> "The protagonist must go through a complete internal change arc that mirrors the external plot progression. The 'All Is Lost' moment (depression) typically comes at the midpoint, not the end."
 
 ---
 
-## Appendix: Authoritative Classification Summary
+## Additional Frameworks and Tools
 
-**EXTERNAL GENRES (9)**:
-1. Action
-2. Horror
-3. Thriller
-4. Crime
-5. War
-6. Western
-7. Love
-8. Performance
-9. Society
+### The Point of No Return
 
-**INTERNAL GENRES (3)**:
-1. Status
-2. Morality
-3. Worldview
+> "The Point of No Return is the moment when the protagonist can no longer go back to their ordinary world. They are committed to the journey."
 
-This 9+3 classification is directly from the primary source and should be used when secondary interpretations conflict.
+**Location**: Typically at the midpoint of the story (end of first half of Middle Build)
+
+**Requirements**:
+- Must be an irreversible action or choice
+- Stakes must be clear
+- Creates urgency for remainder of story
+
+### Protagonist vs. Antagonist
+
+> "The protagonist and the antagonist are polar expressions of a single archetype. What separates them is often a single choice or capability."
+
+**Example from Silence of the Lambs**:
+> "What separates Buffalo Bill and Clarice Starling, both abandoned children with deep-seated anger, is the ability to confront their inner demons. Buffalo Bill is incapable of doing so. Instead he decides he must literally change himself. But Starling is capable of confronting her inner demons and she does so with Lecter as her guide."
+
+### Object of Desire - Dual Layer
+
+| Layer | Definition | Silence of the Lambs Example |
+|-------|------------|------------------------------|
+| **Conscious** | What the character says/thinks they want | Starling wants to be a respected FBI agent |
+| **Unconscious** | What the character actually needs | Starling needs to confront her childhood trauma and accept herself |
+
+### The "It's Personal" Requirement
+
+> "You must make the case personal to your protagonist. This doesn't mean the antagonist has to have a personal beef with them - it means the stakes must become personally meaningful."
+
+**Innovative Approach** (from Silence of the Lambs):
+> "Harris has taken a rather tired convention 'make it personal,' turned it on its ear, and made it a seamless and inevitable progressive complication. The case becomes personal to Starling not because Buffalo Bill targets her, but because her career, her psychological stability, and her sense of self are all at stake."
+
+---
+
+## Key Principles and Quotes
+
+### On Genre Mastery
+
+> "If you want your Story to be great, you've got to hone it and edit it yourself."
+
+### On The Story Grid Purpose
+
+> "The Story Grid is all about getting from 'Doesn't Work' to 'Works' to 'Holy Moly This is Incredible!'"
+
+### On Story vs. Formula
+
+> "The Story Grid is a tool. It is not a formula. You cannot just plug a bunch of stuff into The Foolscap Global Story Grid or The Story Grid Spreadsheet and then diagram it out in the final Story Grid and voila have a terrific book come out at the end."
+
+### On The Editor's Role
+
+> "The inescapable fact is that you need an editor who cares about making your book not just 'work' but for it to transcend its Genre...to break new ground in such a way that it changes the way people see the world. And there is only one editor alive with that kind of commitment. You."
+
+### On Innovation Within Genre
+
+> "You look at [conventions and obligatory scenes] in a different way than just a checklist of things you have to cram into your Story. You look at them as opportunities to elevate your Story."
+
+---
+
+## Appendix: Silence of the Lambs Analysis Summary
+
+### Global Genre Classification
+- **External Genre**: Thriller (Serial Killer subgenre)
+- **Internal Genre**: Worldview (Disillusionment subgenre)
+- **Style**: Archplot
+- **POV**: Third person limited (primarily Starling)
+
+### Value Tracking
+- **External Value**: Life vs. Death (progressing to Fate Worse Than Death/Damnation)
+- **Internal Value**: Belief (Illusion) vs. Disillusionment
+
+### Structure Breakdown
+
+| Section | Key Events |
+|---------|------------|
+| **Beginning Hook** | Crawford assigns Starling; meets Lecter; Miggs incident; finds storage unit head |
+| **Middle Build** | West Virginia body; Catherine Martin abducted; Starling's Faustian bargain with Lecter; Point of No Return; Lecter escapes |
+| **Ending Payoff** | Starling follows Bimmel lead; FBI raids wrong house (false ending); Starling confronts Buffalo Bill; kills him in darkness; resolution |
+
+### Ironic Ending
+
+> "External Genre: Positive (saved Catherine, killed Buffalo Bill)
+> Internal Genre: Negative (Disillusionment with FBI)
+> Result: Ironic ending - protagonist wins externally but loses internally"
+
+---
+
+*This document serves as a comprehensive extraction of the Story Grid methodology for reference in narrative system development. All quotes are directly from the source material.*
