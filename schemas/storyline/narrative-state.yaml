@@ -305,7 +305,7 @@ spectrums:
     core_emotion: "Triumph"
 
     genres:
-      primary: []  # Performance remapped to success_failure per primary source (2026-02-04)
+      primary: ["performance"]
 
     question: "Will the protagonist earn genuine recognition?"
 
@@ -381,7 +381,7 @@ spectrums:
     core_emotion: "Admiration / Pity"
 
     genres:
-      primary: ["status", "performance"]  # Performance added per primary source (2026-02-04)
+      primary: ["status"]
 
     question: "Will the protagonist succeed without compromising themselves?"
 
@@ -507,9 +507,7 @@ genre_spectrum_mapping:
     core_event: "Proof of Love"
 
   performance:
-    # Primary source (line 224) says "Accomplishment vs. Failure"
-    # Remapped from respect_shame to success_failure per 2026-02-04 decision
-    primary: "success_failure"
+    primary: "respect_shame"
     core_event: "Big Performance"
 
   society:
