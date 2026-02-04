@@ -84,8 +84,22 @@ arcs:
 
     shape_definition:
       type: "monotonic_increase"
-      mathematical_form: "f(t) ≈ mt + c where m > 0"
+      mathematical_form: "f(t) = 0.25 + 0.65*t  (linear rise from 0.25 to 0.90)"
       inflection_points: 0
+
+      control_points:
+        - position: 0.00
+          value: 0.25
+          label: "start"
+          description: "Protagonist at disadvantage"
+
+        - position: 1.00
+          value: 0.90
+          label: "triumph"
+          description: "Success achieved"
+
+      # Pre-computed trajectory for direct interpolation (11 points, 0% to 100%)
+      sampled_trajectory: [0.25, 0.32, 0.38, 0.45, 0.52, 0.58, 0.65, 0.71, 0.78, 0.84, 0.90]
 
     narrative_characteristics:
       - "Progressive improvement in protagonist's situation"
@@ -121,8 +135,22 @@ arcs:
 
     shape_definition:
       type: "monotonic_decrease"
-      mathematical_form: "f(t) ≈ -mt + c where m > 0"
+      mathematical_form: "f(t) = 0.85 - 0.70*t  (linear fall from 0.85 to 0.15)"
       inflection_points: 0
+
+      control_points:
+        - position: 0.00
+          value: 0.85
+          label: "start"
+          description: "Protagonist at heights of fortune"
+
+        - position: 1.00
+          value: 0.15
+          label: "catastrophe"
+          description: "Complete downfall"
+
+      # Pre-computed trajectory for direct interpolation (11 points, 0% to 100%)
+      sampled_trajectory: [0.85, 0.78, 0.71, 0.64, 0.57, 0.50, 0.43, 0.36, 0.29, 0.22, 0.15]
 
     narrative_characteristics:
       - "Progressive deterioration"
@@ -159,9 +187,29 @@ arcs:
 
     shape_definition:
       type: "U_shaped"
-      mathematical_form: "f(t) ≈ a(t - 0.5)² + c where a > 0"
+      mathematical_form: "f(t) = 2.4*(t - 0.5)² + 0.20  (parabola with nadir at t=0.5)"
       inflection_points: 1
-      nadir_position: 0.40-0.60  # Position of lowest point (40-60%)
+      nadir_position: [0.40, 0.60]  # Position of lowest point (40-60%)
+
+      control_points:
+        - position: 0.00
+          value: 0.60
+          label: "start"
+          description: "Initial stability"
+
+        - position: 0.50
+          value: 0.20
+          label: "nadir"
+          description: "Bottom of the hole - lowest point"
+
+        - position: 1.00
+          value: 0.85
+          label: "triumph"
+          description: "Emerged stronger than before"
+
+      # Pre-computed trajectory for direct interpolation (11 points, 0% to 100%)
+      # Parabolic U-shape: high → low → high
+      sampled_trajectory: [0.60, 0.50, 0.38, 0.27, 0.21, 0.20, 0.21, 0.32, 0.48, 0.66, 0.85]
 
     narrative_characteristics:
       - "Initial stability or success"
@@ -200,9 +248,29 @@ arcs:
 
     shape_definition:
       type: "inverted_U"
-      mathematical_form: "f(t) ≈ -a(t - 0.5)² + c where a > 0"
+      mathematical_form: "f(t) = -2.4*(t - 0.5)² + 0.85  (inverted parabola with apex at t=0.5)"
       inflection_points: 1
-      apex_position: 0.40-0.60  # Position of highest point
+      apex_position: [0.40, 0.60]  # Position of highest point
+
+      control_points:
+        - position: 0.00
+          value: 0.35
+          label: "start"
+          description: "Humble beginnings or ordinary state"
+
+        - position: 0.50
+          value: 0.85
+          label: "apex"
+          description: "Peak of triumph - height of power"
+
+        - position: 1.00
+          value: 0.15
+          label: "catastrophe"
+          description: "Complete downfall"
+
+      # Pre-computed trajectory for direct interpolation (11 points, 0% to 100%)
+      # Inverted parabola: low → high → low
+      sampled_trajectory: [0.35, 0.47, 0.60, 0.73, 0.82, 0.85, 0.82, 0.68, 0.52, 0.33, 0.15]
 
     narrative_characteristics:
       - "Initial struggles or ordinary state"
@@ -242,11 +310,53 @@ arcs:
 
     shape_definition:
       type: "W_inverted"
-      mathematical_form: "Complex - combination of modes"
       inflection_points: 2
-      peak_1_position: 0.30-0.40
-      valley_position: 0.60-0.70
-      final_rise: 0.70-1.00
+
+      # SDK-implementable specification: piecewise quadratic through control points
+      mathematical_form: |
+        Piecewise quadratic interpolation through 4 control points:
+          Segment 1 (t: 0.00 → 0.35): Quadratic rise from start to first peak
+          Segment 2 (t: 0.35 → 0.65): Quadratic fall from peak to valley
+          Segment 3 (t: 0.65 → 1.00): Quadratic rise from valley to triumph
+
+        For each segment, use quadratic interpolation:
+          f(t) = a*t² + b*t + c
+        where coefficients are derived from segment endpoints and midpoint slope.
+
+        Simplified linear interpolation is acceptable for MVP:
+          f(t) = lerp(control_points, t)
+
+      control_points:
+        # (position, value) pairs defining the arc shape
+        # SDK interpolates between these points
+        - position: 0.00
+          value: 0.25
+          label: "start"
+          description: "Initial hardship - protagonist at disadvantage"
+
+        - position: 0.35
+          value: 0.75
+          label: "first_peak"
+          description: "False victory - initial success achieved"
+
+        - position: 0.65
+          value: 0.30
+          label: "valley"
+          description: "Setback - success stripped away, dark moment"
+
+        - position: 1.00
+          value: 0.90
+          label: "triumph"
+          description: "True victory - exceeds first peak"
+
+      # Pre-computed trajectory for direct interpolation (11 points, 0% to 100%)
+      # SDK can use these directly with linear interpolation
+      sampled_trajectory: [0.25, 0.42, 0.58, 0.72, 0.75, 0.65, 0.45, 0.30, 0.45, 0.68, 0.90]
+
+      # Key positions for validation
+      first_peak_position: [0.30, 0.40]   # Where first peak occurs
+      valley_position: [0.60, 0.70]        # Where setback valley occurs
+      final_rise_start: 0.65               # Where final ascent begins
 
     narrative_characteristics:
       - "Initial hardship"
@@ -286,11 +396,54 @@ arcs:
 
     shape_definition:
       type: "M_shape"
-      mathematical_form: "Complex - combination of modes"
       inflection_points: 2
-      valley_1_position: 0.30-0.40
-      peak_position: 0.50-0.60
-      final_fall: 0.60-1.00
+
+      # SDK-implementable specification: piecewise quadratic through control points
+      # Oedipus is the inverse of Cinderella: fall-rise-fall instead of rise-fall-rise
+      mathematical_form: |
+        Piecewise quadratic interpolation through 4 control points:
+          Segment 1 (t: 0.00 → 0.35): Quadratic fall from start to first valley
+          Segment 2 (t: 0.35 → 0.55): Quadratic rise from valley to false hope peak
+          Segment 3 (t: 0.55 → 1.00): Quadratic fall from peak to final tragedy
+
+        For each segment, use quadratic interpolation:
+          f(t) = a*t² + b*t + c
+        where coefficients are derived from segment endpoints and midpoint slope.
+
+        Simplified linear interpolation is acceptable for MVP:
+          f(t) = lerp(control_points, t)
+
+      control_points:
+        # (position, value) pairs defining the arc shape
+        # SDK interpolates between these points
+        - position: 0.00
+          value: 0.70
+          label: "start"
+          description: "Apparent stability - protagonist seems secure"
+
+        - position: 0.35
+          value: 0.30
+          label: "first_valley"
+          description: "Initial crisis - fall into trouble"
+
+        - position: 0.55
+          value: 0.65
+          label: "false_hope"
+          description: "False hope - apparent recovery that will fail"
+
+        - position: 1.00
+          value: 0.10
+          label: "tragedy"
+          description: "Final catastrophe - worse than first valley"
+
+      # Pre-computed trajectory for direct interpolation (11 points, 0% to 100%)
+      # SDK can use these directly with linear interpolation
+      sampled_trajectory: [0.70, 0.58, 0.42, 0.30, 0.35, 0.50, 0.65, 0.55, 0.40, 0.25, 0.10]
+
+      # Key positions for validation
+      first_valley_position: [0.30, 0.40]  # Where first valley occurs
+      peak_position: [0.50, 0.60]          # Where false hope peaks
+      final_fall_start: 0.55               # Where final descent begins
 
     narrative_characteristics:
       - "Initial state (may be good or neutral)"
