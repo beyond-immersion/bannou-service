@@ -1,6 +1,6 @@
 # Storyline SDK Gap Analysis
 
-> **Status**: Analysis Complete, Phase 1 Complete, Phase 2 Complete
+> **Status**: Analysis Complete, Phase 1 Complete, Phase 2 Complete, Phase 3 Complete
 > **Date**: 2026-02-04 (updated)
 > **Purpose**: Identify missing components between research YAML files and complete SDK implementation
 
@@ -888,10 +888,14 @@ After the research sprint, we reach a decision point:
   - **DONE**: Variants for key actions (inciting_incident, resolution)
   - **DONE**: Chained actions for multi-phase story beats
   - **CLARIFIED**: Propp alignment is NOT required for GOAP - see "Propp Alignment Analysis" below
-- [ ] Phase 3: Story Templates → `schemas/storyline/story-templates.yaml`
-  - STC timing for phase boundaries
-  - Reagan arc shapes for trajectory constraints
-  - Genre constraints from Story Grid
+- [x] **Phase 3: Story Templates** → `schemas/storyline/story-templates.yaml`
+  - **DONE**: 6 templates (one per Reagan arc) with genre-agnostic design
+  - **DONE**: STC-derived phase boundaries with position floor/ceiling ranges
+  - **DONE**: Target state derivation using arc-shape + STC anchors (hybrid approach)
+  - **DONE**: Hybrid phase transition triggers (position floor + state ceiling)
+  - **DONE**: SDK-implementable arc functions in `emotional-arcs.yaml` (control_points, sampled_trajectory)
+  - **DONE**: Documentation in `STORY_TEMPLATES.md` and `STORY_TEMPLATE_ANALYSIS.md`
+  - See Open Questions 3.1-3.6 below for decision rationale
 - [ ] Phase 4: Archive Extraction → `schemas/storyline/archive-extraction.yaml`
 - [ ] Phase 5: Compatibility Matrix (validation, largely addressed by subgenre mapping)
 
@@ -912,81 +916,139 @@ After the research sprint, we reach a decision point:
 
 ### Open Question 3.1: Target State Derivation Methodology
 
+**Status**: ✅ RESOLVED (2026-02-04)
+
 **Problem**: How do we calculate numeric `target_state` values for each phase?
 
-We have:
-- Reagan arc `start_range` (e.g., 0.3-0.5) and `end_range` (e.g., 0.7-1.0) from narrative-state.yaml
-- STC beat emotional functions (establish_baseline, hit_rock_bottom, etc.)
-- No formula connecting these to mid-story phase targets
+**Decision**: **Arc-Shape-Derived with STC Anchors** (Option 3, hybrid with Option 2)
 
-**Options**:
-1. **Linear interpolation**: Divide arc range evenly across phases
-2. **STC-derived**: Map beat emotional functions to spectrum positions
-3. **Arc-shape-derived**: Use Reagan's mathematical form (e.g., parabola for man_in_hole)
-4. **Hand-tuned**: Define each template's phase targets manually
+Target spectrum values come from evaluating the arc's mathematical form at phase midpoints, validated against STC beat expectations. The `emotional-arcs.yaml` now provides SDK-implementable specifications:
+- `control_points`: Key positions with exact values (start, inflection points, end)
+- `sampled_trajectory`: 11-point normalized array for simple interpolation
 
-**Decision needed before implementation.**
+**Rationale**: Reagan arcs ARE the mathematical relationship between story position and emotional value. STC provides validation anchors (e.g., nadir at ~75% for tragedy should align with ALL_IS_LOST beat expectations).
+
+**Implementation**: See `STORY_TEMPLATE_ANALYSIS.md` for full analysis.
 
 ### Open Question 3.2: Phase Transition Triggers
 
+**Status**: ✅ RESOLVED (2026-02-04)
+
 **Problem**: What fires the transition from one phase to the next?
 
-**Options**:
-1. **Position-based**: At 25% of story duration, advance to next phase (pure STC)
-2. **Action-based**: When specific actions execute (e.g., `inciting_incident` → phase 2)
-3. **State-threshold**: When `primary_spectrum < 0.3`, enter "setback" phase
-4. **Hybrid**: Position gates + action confirmation
+**Decision**: **Hybrid Position Floor + State Ceiling** (Option 4)
 
-**Implications**: Affects whether GOAP can complete phases early/late.
+Each phase has:
+- `position.floor`: Minimum story position before advancement allowed (prevents speed-running)
+- `position.ceiling`: Maximum position at which forced advancement occurs (prevents deadlock)
+- `transition.state_requirements`: State conditions that enable advancement
+
+**Transition Logic**:
+```
+IF position >= floor AND state meets requirements:
+    ADVANCE to next phase
+ELIF position >= ceiling:
+    LOG WARNING "Forced advancement"
+    ADVANCE to next phase (deadlock prevention)
+```
+
+**Rationale**: Pure position-based loses narrative coherence. Pure state-based can deadlock. Hybrid prevents both failure modes while preserving lazy phase evaluation.
+
+**Implementation**: See `story-templates.yaml` phase definitions.
 
 ### Open Question 3.3: Multi-Genre Template Handling
 
+**Status**: ✅ RESOLVED (2026-02-04)
+
 **Problem**: Stories layer genres (Die Hard = Action + Love). How do templates handle multiple primary spectrums?
 
-**Options**:
-1. **Single-genre templates**: Layering happens at composition time, not template level
-2. **Multi-spectrum targets**: Templates specify targets for primary + secondary spectrums
-3. **Genre-agnostic templates**: Templates define abstract phase shapes; genre selected separately
+**Decision**: **Genre-Agnostic Templates with Primary-Secondary Pattern** (Option 3)
 
-**Not decided.**
+Templates define the SHAPE of emotional progression (arc trajectory + phase boundaries). The primary emotional spectrum is determined by genre selection at composition time, not by the template.
+
+**Primary-Secondary Pattern**:
+- **Primary genre**: Determines the tracked spectrum (e.g., Action → life_death)
+- **Secondary genres**: Add obligatory scene requirements and available actions but don't change the arc shape
+- Template validates genre compatibility via `compatible_genres` mapping
+
+**Rationale**: This follows the music-storyteller SDK pattern where EmotionalState has one primary dimension that the template drives, with secondary dimensions for flavor. Die Hard's primary is life_death (Action); the Love subplot adds obligatory scenes but doesn't change the U-shaped trajectory.
+
+**Implementation**: See `story-templates.yaml` `compatible_genres` and `STORY_TEMPLATES.md`.
 
 ### Open Question 3.4: Obligatory Scene Coverage Completeness
 
+**Status**: ✅ RESOLVED (2026-02-04)
+
 **Problem**: A genre may have 7 obligatory scenes but a template only has 5 phases.
 
-**Options**:
-1. **Require 100%**: Reject incompatible template/genre combinations
-2. **Allow partial**: Document gaps, let GOAP handle
-3. **Multiple actions per phase**: Implicitly assumed but not validated
+**Decision**: **Multiple Actions Per Phase + Static Validation** (Option 3 with validation)
 
-**Validation rule needed.**
+Phases have a `scene_capacity` guideline (not hard limit) that indicates expected action density. Multiple actions execute within each phase to satisfy obligatory scenes.
+
+**Validation Approach**:
+- Static validation at composition time (before GOAP execution)
+- Verify that available actions can satisfy all obligatory scenes for the selected genre
+- Verify action preconditions are satisfiable given template constraints
+- Log warnings for missing coverage; fail hard only if core events are unsatisfiable
+
+**Rationale**: GOAP naturally handles multiple actions per phase. The phase is a container with a target state; how many actions it takes to reach that state is GOAP's problem, not the template's. Static validation catches impossible combinations early.
+
+**Implementation**: See `story-actions.yaml` `satisfies_obligatory` field and `STORY_TEMPLATE_ANALYSIS.md`.
 
 ### Open Question 3.5: Template Count and Scope
 
+**Status**: ✅ RESOLVED (2026-02-04)
+
 **Problem**: How many templates? What scope for each?
 
-STORYLINE_COMPOSER.md mentions: RevengeArc, MysteryArc, RedemptionArc, LegacyArc, TragicArc
+**Decision**: **6 Templates (One Per Reagan Arc)** with genre-based selection
 
-**Not formally analyzed**:
-- Are these the right templates?
-- Is 5 enough? Too few = samey stories. Too many = analysis paralysis.
-- What's the selection criteria for "this deserves to be a template"?
+Templates are based on Reagan's 6 emotional arcs, not narrative themes:
+1. **Rags to Riches** (monotonic rise) - Epic action, Courtship, Redemption
+2. **Tragedy** (monotonic fall) - Horror, Noir, Disillusionment
+3. **Man in a Hole** (fall-rise, U-shaped) - Most popular fiction, Thrillers
+4. **Icarus** (rise-fall, inverted U) - Cautionary tales, Hubris
+5. **Cinderella** (rise-fall-rise) - Fairy tales, Ultimate triumph
+6. **Oedipus** (fall-rise-fall) - Complex tragedy, False hope
+
+**Why not theme-based templates** (RevengeArc, MysteryArc, etc.):
+- Themes cross-cut arc shapes (revenge can be man_in_hole OR tragedy)
+- Genre already captures thematic constraints via obligatory scenes
+- Arc shape is the orthogonal dimension that templates should capture
+
+**Coverage**: Reagan's SVD analysis shows these 6 shapes cover ~94% of published fiction. Adding more templates has diminishing returns.
+
+**Selection criteria**: Subgenres define `compatible_arcs` in `story-grid-genres.yaml`. Template selection follows genre selection.
+
+**Implementation**: See `story-templates.yaml` and `STORY_TEMPLATE_ANALYSIS.md`.
 
 ### Open Question 3.6: Phase Boundary Precision
 
+**Status**: ✅ RESOLVED (2026-02-04)
+
 **Problem**: STC provides exact percentages. Do we use them directly or round?
 
-From `save-the-cat-beats.yaml`:
-- CATALYST: 0.10-0.12
-- MIDPOINT: 0.50
-- ALL_IS_LOST: 0.75
+**Decision**: **STC-Derived Ranges with Validation Bands** (Option 1 with flexibility)
 
-**Options**:
-1. **Use exact STC values**: Phases match beat positions precisely
-2. **Round to clean intervals**: [0.0, 0.25], [0.25, 0.50], etc.
-3. **Template-specific**: Each template defines its own phase boundaries
+Use STC beat percentages as the basis, with ±5% tolerance bands for natural variation:
 
-**Affects phase count and boundary definitions.**
+- Each phase specifies `position.stc_center` (target from STC timing)
+- `position.floor` allows advancement starting ~10% before center
+- `position.ceiling` forces advancement ~10% after center
+- `validation_band` of ±5% for semantic correctness checking
+
+**Example** (man_in_hole phase 2 "descent"):
+```yaml
+position:
+  stc_center: 0.35      # Target from STC "Fun and Games"
+  floor: 0.15           # Can advance after Theme Stated
+  ceiling: 0.55         # Must advance before Midpoint
+  validation_band: 0.05 # ±5% tolerance
+```
+
+**Rationale**: STC percentages are empirically derived from successful stories. Clean intervals (25%, 50%) ignore this research. Template-specific boundaries without STC basis would require per-template empirical validation we don't have.
+
+**Implementation**: See `story-templates.yaml` phase definitions and `STORY_TEMPLATES.md`.
 
 ---
 
