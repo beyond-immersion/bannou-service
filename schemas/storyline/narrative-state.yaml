@@ -1,19 +1,25 @@
 # Narrative State Schema
 # Based on Story Grid's Life Value Spectrums (Four Core Framework)
 #
-# Sources:
-#   - Shawn Coyne, "The Four Core Framework" (Story Grid Publishing, 2020)
-#   - Shawn Coyne, "The Story Grid" (Story Grid Publishing, 2015)
-#   - docs/research/FOUR-CORE-FRAMEWORK.md (technical summary)
+# Sources (in order of authority):
+#   - docs/research/STORY-GRID-PRIMARY-SOURCE.md (comprehensive extraction, 2026-02-04)
+#   - Shawn Coyne, "The Story Grid: What Good Editors Know" (Story Grid Publishing, 2015)
+#   - docs/research/FOUR-CORE-FRAMEWORK.md (technical summary - contains some errors, see PRIMARY-SOURCE)
 #   - docs/research/STORY-GRID-GENRES.md (genre specifications)
+#
+# Corrections applied (2026-02-04) per PRIMARY-SOURCE:
+#   - life_death core_need: "Survival" → "Safety" (all three genres share Safety)
+#   - Added genre_overrides: Horror="Fear", Thriller="Anxiety/Dread"
+#   - Added four-stage spectrum model (Positive → Contrary → Negative → Negation)
+#   - love_hate: Added Indifference as separate stage between Desire and Hate
 #
 # NOT based on STORYLINE_COMPOSER.md's 6-dimension model, which was derived
 # by analogy from music-storyteller SDK without proper citation. Musical
 # perception dimensions (brightness, warmth, energy) do not apply to
 # literary narrative structure.
 
-version: "1.0"
-source: "Shawn Coyne, Story Grid (2015-2020)"
+version: "1.1"  # 2026-02-04: Corrections per primary source extraction
+source: "Shawn Coyne, Story Grid (2015-2020) via docs/research/STORY-GRID-PRIMARY-SOURCE.md"
 
 # =============================================================================
 # CORE CONCEPT
@@ -22,10 +28,16 @@ source: "Shawn Coyne, Story Grid (2015-2020)"
 concept:
   description: |
     Every story genre is defined by movement along a Life Value spectrum.
-    The spectrum has three points:
+    The spectrum has FOUR points (per primary source - Story Grid):
       - Positive pole: The ideal state (life, love, justice, etc.)
+      - Contrary: A less-than-ideal but not terrible state (unconsciousness, unfairness, desire)
       - Negative pole: The feared state (death, hate, injustice, etc.)
       - Negation of negation: A fate WORSE than the negative pole
+
+    The four-stage model enables more nuanced storytelling:
+      - Positive (1.0) → Contrary (0.66) → Negative (0.33) → Negation (-0.5)
+      - Most scenes move between adjacent stages
+      - Jumping stages creates dramatic impact (positive → negative = shocking reversal)
 
     The negation of negation is critical for tragedy and complex stories.
     It represents not just failure, but failure disguised as success -
@@ -66,6 +78,11 @@ spectrums:
         value: 1.0
         label: "Life"
         description: "Physical existence preserved, thriving"
+      contrary:
+        value: 0.66
+        label: "Unconsciousness"
+        description: "Life threatened but not ended - knocked out, near-death, coma"
+        # Per primary source: "A less-than-ideal state (but not terrible)"
       negative:
         value: 0.0
         label: "Death"
@@ -79,8 +96,8 @@ spectrums:
           - "Eternal imprisonment without death's release"
           - "Living death (zombie, vampire against will)"
 
-    core_need: "Survival"
-    core_emotion: "Excitement"
+    core_need: "Safety"  # CORRECTED per primary source - all life_death genres share Safety need
+    core_emotion: "Excitement"  # Default; Horror and Thriller override this
 
     genres:
       primary: ["action", "thriller", "horror"]
@@ -136,6 +153,11 @@ spectrums:
         value: 1.0
         label: "Justice"
         description: "Wrongdoers held accountable, victims vindicated"
+      contrary:
+        value: 0.66
+        label: "Unfairness"
+        description: "Minor wrongs unpunished, technicalities exploited - not ideal but tolerable"
+        # Per primary source table (line 249)
       negative:
         value: 0.0
         label: "Injustice"
@@ -206,14 +228,20 @@ spectrums:
         value: 1.0
         label: "Love"
         description: "Genuine intimate connection, mutual vulnerability"
+      contrary:
+        value: 0.66
+        label: "Desire"
+        description: "Attraction without commitment, infatuation, lust"
+        # Per primary source table (line 250): Love → Desire → Indifference → Hate
       negative:
-        value: 0.0
-        label: "Hate"
-        description: "Active rejection, desire to harm the other"
+        value: 0.33
+        label: "Indifference"
+        description: "Emotional disconnection, apathy toward the other"
+        # Note: Primary source puts Indifference as negative, Hate as negation
       negation_of_negation:
         value: -1.0
-        label: "Hate Masquerading as Love"
-        description: "Toxic attachment, possession, or control disguised as love"
+        label: "Hate / Self-Hatred"
+        description: "Active rejection, desire to harm; or toxic attachment disguised as love"
         examples:
           - "Obsessive stalking framed as devotion"
           - "Abusive relationship justified as passionate"
@@ -309,6 +337,11 @@ spectrums:
         value: 1.0
         label: "Success"
         description: "Achievement of external goal, social advancement"
+      contrary:
+        value: 0.66
+        label: "Compromise"
+        description: "Partial achievement, trading off some goals for others"
+        # Per primary source (line 252): Success → Compromise → Failure → Selling out
       negative:
         value: 0.0
         label: "Failure"
@@ -344,16 +377,21 @@ spectrums:
     poles:
       positive:
         value: 1.0
-        label: "Altruism"
+        label: "Good / Altruism"
         description: "Action for others' benefit at cost to self"
+      contrary:
+        value: 0.66
+        label: "Wavering / Temptation"
+        description: "Moral uncertainty, considering selfish action, internal conflict"
+        # Per primary source (line 252): Good → Wavering → Indifference → Evil
       negative:
-        value: 0.0
-        label: "Selfishness"
-        description: "Action solely for self-benefit regardless of harm to others"
+        value: 0.33
+        label: "Indifference"
+        description: "Neither helping nor harming, moral disengagement"
       negation_of_negation:
         value: -1.0
-        label: "Selfishness Disguised as Altruism"
-        description: "Self-serving action wrapped in moral justification"
+        label: "Evil / Selfishness Disguised as Altruism"
+        description: "Self-serving action wrapped in moral justification; active harm to others"
         examples:
           - "Charity for tax benefits and social status"
           - "'Helping' that creates dependency for ego gratification"
@@ -436,7 +474,10 @@ genre_spectrum_mapping:
     core_event: "Proof of Love"
 
   performance:
-    primary: "respect_shame"
+    # NOTE: Primary source (line 224) says "Accomplishment vs. Failure"
+    # This maps better to success_failure than respect_shame
+    # TODO: Consider remapping to success_failure, or create accomplishment_failure spectrum
+    primary: "respect_shame"  # Current mapping; may need correction
     core_event: "Big Performance"
 
   society:
@@ -454,6 +495,27 @@ genre_spectrum_mapping:
   worldview:
     primary: "wisdom_ignorance"
     core_event: "Cognitive Growth or Degeneration"
+
+# =============================================================================
+# GENRE OVERRIDES
+# =============================================================================
+# Per primary source (STORY-GRID-PRIMARY-SOURCE.md), some genres sharing a
+# spectrum have different core emotions or other properties.
+# These overrides take precedence over spectrum defaults.
+
+genre_overrides:
+  horror:
+    # Horror shares life_death spectrum with Action, but evokes different emotion
+    core_emotion: "Fear"  # Overrides spectrum default "Excitement"
+    # Core need remains "Safety" (same as spectrum default)
+
+  thriller:
+    # Thriller shares life_death spectrum with Action, but evokes different emotion
+    core_emotion: "Anxiety/Dread"  # Overrides spectrum default "Excitement"
+    # Core need remains "Safety" (same as spectrum default)
+
+  # Note: Action uses spectrum defaults (core_emotion: "Excitement", core_need: "Safety")
+  # No override entry needed
 
 # =============================================================================
 # GENRE COMBINATIONS (LAYERED STORIES)

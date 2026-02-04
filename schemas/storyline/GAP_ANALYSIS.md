@@ -504,48 +504,61 @@ During schema validation, several inconsistencies were identified between the re
 
 Both `STORY-GRID-101.md` and `FOUR-CORE-FRAMEWORK.md` are interpretations of **Shawn Coyne's Story Grid methodology**. When they conflict, we defer to:
 
-1. **Primary Source**: "The Story Grid: What Good Editors Know" by Shawn Coyne (2015)
-2. **Authoritative Website**: [storygrid.com](https://storygrid.com) - free, continuously updated
-3. **Direct Quotes**: STORY-GRID-101.md contains direct quotes; FOUR-CORE-FRAMEWORK.md is interpretive synthesis
+1. **Primary Source Extraction**: `docs/research/STORY-GRID-PRIMARY-SOURCE.md` (extracted 2026-02-04)
+2. **Original Book**: "The Story Grid: What Good Editors Know" by Shawn Coyne (2015)
+3. **Authoritative Website**: [storygrid.com](https://storygrid.com) - free, continuously updated
 
-### Issue 1: Horror Core Emotion (Fear vs Excitement)
+**Reference Hierarchy**: `STORY-GRID-PRIMARY-SOURCE.md` > `STORY-GRID-101.md` > `FOUR-CORE-FRAMEWORK.md`
 
-**Problem**: The current model assigns `core_emotion` per spectrum, not per genre. The `life_death` spectrum has `core_emotion: "Excitement"`. However, Action, Thriller, and Horror all use `life_death` as their primary spectrum, but research indicates:
-- Action → Excitement ✓
-- Thriller → Excitement ✓
-- Horror → **Fear** ✗ (gets Excitement from spectrum)
+### Issue 1: Core Emotions by Genre
 
-**Resolution**: Add `genre_overrides` section to `narrative-state.yaml` for per-genre emotion overrides.
+**Problem**: The current model assigns `core_emotion` per spectrum, not per genre. But genres sharing a spectrum have different emotions.
 
-```yaml
-genre_overrides:
-  horror:
-    core_emotion: "Fear"  # Override spectrum default "Excitement"
-```
+**Primary Source Data** (from STORY-GRID-PRIMARY-SOURCE.md):
 
-**Rationale**: The spectrum-centric model is elegant and maps to Maslow's hierarchy. Rather than abandon it, we acknowledge that specific genres have research-backed exceptions. This is additive (one place to check for defaults, one for overrides) rather than destructive.
+| Genre | Core Emotion (PRIMARY SOURCE) |
+|-------|-------------------------------|
+| Action | Excitement |
+| Horror | **Fear** |
+| Thriller | **Anxiety/Dread** |
 
-### Issue 2: Thriller/Horror Core Need (Safety vs Survival)
-
-**Problem**: Research (FOUR-CORE-FRAMEWORK.md) indicates:
-- Action → Core Need: **Survival** (Maslow Level 1: physiological)
-- Thriller → Core Need: **Safety** (Maslow Level 2: security)
-- Horror → Core Need: **Safety** (Maslow Level 2: security)
-
-The `life_death` spectrum has `core_need: "Survival"`, causing Thriller and Horror to inherit the wrong need.
-
-**Resolution**: Same `genre_overrides` mechanism:
+**Resolution**: Add `genre_overrides` section to `narrative-state.yaml`:
 
 ```yaml
 genre_overrides:
   horror:
-    core_emotion: "Fear"
-    core_need: "Safety"
+    core_emotion: "Fear"           # Spectrum default: "Excitement"
   thriller:
-    core_need: "Safety"  # Emotion stays "Excitement" (no override)
+    core_emotion: "Anxiety/Dread"  # Spectrum default: "Excitement"
 ```
 
-**Rationale**: "Survival" (Maslow 1) is immediate physiological need. "Safety" (Maslow 2) is protection from harm, security. Thriller/Horror are about *threat of harm* (safety), not *immediate physiological crisis* (survival). The distinction matters for character motivation modeling in GOAP.
+**Note**: FOUR-CORE-FRAMEWORK.md incorrectly stated Thriller = "Excitement". Primary source clearly states "anxiety/dread".
+
+### Issue 2: Core Need - All Life/Death Genres Use "Safety"
+
+**Problem**: FOUR-CORE-FRAMEWORK.md indicated:
+- Action → Core Need: "Survival"
+- Thriller/Horror → Core Need: "Safety"
+
+**Primary Source Correction** (STORY-GRID-PRIMARY-SOURCE.md line 217):
+
+| Genre | Core Need (PRIMARY SOURCE) |
+|-------|---------------------------|
+| Action | **Safety** |
+| Horror | **Safety** |
+| Thriller | **Safety** |
+
+**All three genres have Core Need = Safety.** FOUR-CORE-FRAMEWORK.md was WRONG about Action having "Survival".
+
+**Resolution**: Change the `life_death` spectrum default to `core_need: "Safety"`. No genre overrides needed for core_need.
+
+```yaml
+life_death:
+  core_need: "Safety"  # CORRECTED from "Survival" per primary source
+  core_emotion: "Excitement"  # Default, overridden per genre
+```
+
+**Rationale**: The primary source is authoritative. All three genres sharing this spectrum address the same fundamental human need (Safety/security from harm), but evoke different emotions.
 
 ### Issue 3: External vs Internal Genre Classification Conflict
 
@@ -585,19 +598,151 @@ FOUR-CORE-FRAMEWORK.md's 6/6 split is an interpretive synthesis, not a direct qu
 
 ### Schema Change Required
 
-Add to `narrative-state.yaml`:
+Update `narrative-state.yaml` with these corrections:
 
+**1. Fix `life_death` spectrum default:**
+```yaml
+life_death:
+  negative: death
+  positive: life
+  negation_of_negation: damnation
+  core_need: "Safety"        # CORRECTED from "Survival" per primary source
+  core_emotion: "Excitement" # Default (Action uses this)
+  genres: [action, thriller, horror]
+```
+
+**2. Add genre_overrides section (emotions only - need is now correct at spectrum level):**
 ```yaml
 # Genre-specific overrides for spectrum defaults
 # Use when research indicates a genre differs from its primary spectrum's default
 genre_overrides:
   horror:
-    core_emotion: "Fear"           # Spectrum default: "Excitement"
-    core_need: "Safety"            # Spectrum default: "Survival"
+    core_emotion: "Fear"           # Override spectrum default "Excitement"
   thriller:
-    core_need: "Safety"            # Emotion stays "Excitement" (no override needed)
-  # All other genres use spectrum defaults
+    core_emotion: "Anxiety/Dread"  # Override spectrum default "Excitement"
+  # Action uses spectrum default (Excitement) - no override needed
 ```
+
+**Note**: No `core_need` overrides are required. All three genres (Action, Horror, Thriller) sharing the `life_death` spectrum have Core Need = "Safety" per the primary source.
+
+### New Discoveries from Primary Source (2026-02-04)
+
+The following findings from `docs/research/STORY-GRID-PRIMARY-SOURCE.md` require schema updates or documentation:
+
+#### 1. Four-Stage Value Spectrum (MAJOR FINDING)
+
+**Current Model**: 3 stages (Negative, Positive, Negation of Negation)
+
+**Primary Source Model** (lines 236-257): 4 stages:
+1. **Positive** - The ideal state
+2. **Contrary** - A less-than-ideal state (but not terrible)
+3. **Negative** - The bad state
+4. **Negation of the Negation** - Fate worse than the negative
+
+**Example from Primary Source**:
+| Genre | Positive | Contrary | Negative | Negation of Negation |
+|-------|----------|----------|----------|----------------------|
+| Action/Thriller | Life | Unconsciousness | Death | Damnation |
+| Crime | Justice | Unfairness | Injustice | Tyranny |
+| Love | Love | Desire | Indifference | Hate/Self-hatred |
+| Morality | Good | Wavering | Indifference | Evil |
+
+**Action Required**: Add `contrary` field to all spectrum definitions in `narrative-state.yaml`.
+
+```yaml
+# Example updated spectrum
+life_death:
+  positive: life
+  contrary: unconsciousness     # NEW - less than ideal but not death
+  negative: death
+  negation_of_negation: damnation
+```
+
+#### 2. Performance Genre Core Value Correction
+
+**Current (WRONG)**: `respect_shame` spectrum assigned to Performance
+**Primary Source (line 224)**: "Accomplishment vs. Failure"
+
+**Action Required**: Either:
+- Option A: Create new `accomplishment_failure` spectrum for Performance
+- Option B: Map Performance to `success_failure` spectrum (similar values)
+
+**Recommendation**: Option B - `success_failure` already exists and is semantically close. Update genre mapping.
+
+#### 3. Worldview Genre Core Value Discrepancy
+
+**Current**: `wisdom_ignorance` spectrum (Wisdom vs. Ignorance)
+**Primary Source (line 225)**: "Meaning vs. Meaninglessness"
+
+**Analysis**: These are different concepts:
+- Wisdom/Ignorance = knowledge acquisition
+- Meaning/Meaninglessness = existential significance
+
+**Action Required**: Either:
+- Option A: Create new `meaning_meaninglessness` spectrum for Worldview
+- Option B: Rename `wisdom_ignorance` to `meaning_meaninglessness` (breaking change)
+- Option C: Document as acceptable semantic overlap (wisdom enables meaning)
+
+**Recommendation**: Option A - add new spectrum. Keep `wisdom_ignorance` as it may serve Education subgenre distinctly.
+
+#### 4. Internal Genre Subgenres (for reference)
+
+Primary source defines subgenres that affect value trajectory:
+
+**Worldview Subgenres** (line 159):
+| Subgenre | Start | End | Direction |
+|----------|-------|-----|-----------|
+| Maturation | Naive | Sophisticated | Positive |
+| Education | Ignorant | Wise | Positive |
+| Disillusionment | Belief | Disillusion | Negative |
+| Revelation | Blindness | Understanding | Either |
+
+**Morality Subgenres** (line 179):
+| Subgenre | Arc |
+|----------|-----|
+| Redemption | Bad → Good |
+| Punitive | Good → Bad |
+| Testing | Maintaining goodness under pressure |
+
+**Status Subgenres** (line 194):
+| Subgenre | Arc |
+|----------|-----|
+| Admiration | Rise to success |
+| Pathetic | Rise then fall |
+| Tragic | Fall from grace |
+| Sentimental | Unearned success |
+
+**Action Required**: Add subgenre support to genre definitions. Subgenre affects which Reagan arc shapes are compatible.
+
+#### 5. Obligatory Scenes (for future Gap 3/4 work)
+
+Primary source provides detailed obligatory scenes per genre. Key examples:
+
+**Thriller** (7 scenes): Inciting Crime, Speech in Praise of Villain, Hero at Mercy of Villain, False Ending, Hero Becomes Victim, Clock Plot, Make It Personal
+
+**Love** (6 scenes): Lovers Meet, First Kiss, Confession of Love, Proof of Love, Break Up, Reunite
+
+**Action** (4 scenes): Hero Outmatched, Hero at Mercy of Villain, Hero's Sacrifice, Final Confrontation
+
+**Action Required**: Capture in `story-grid-genres.yaml` under each genre's `obligatory_scenes` list.
+
+#### 6. Conventions by Genre (for future Gap 3/4 work)
+
+Primary source provides conventions that set genre "flavor":
+
+**Thriller**: MacGuffin, Red Herring, Ticking Clock, Strong Mentor, Hidden/Masked Villain
+**Love**: External Need, Opposing Forces, Secondary Romance, Rivals, Secrets, Gender Challenges, Moral Weight
+**Horror**: Sin/Transgression, Supernatural or Serial Antagonist, Labyrinth, Past Evil
+
+**Action Required**: Capture in `story-grid-genres.yaml` under each genre's `conventions` list.
+
+#### 7. Crisis Types (for Gap 4 Story Actions)
+
+Primary source distinguishes two crisis types (line 295):
+- **Best Bad Choice**: Two negative options, must choose lesser evil
+- **Irreconcilable Goods**: Two positive options, can only choose one
+
+**Action Required**: Model crisis type in story action library. This affects how GOAP presents climactic choices.
 
 ### Implementation Notes
 
@@ -702,6 +847,7 @@ If the research sprint yields nothing substantial, we proceed with original synt
 - [x] **COMPLETE**: Research sprint for cross-framework mappings
 - [x] **DECISION MADE**: Use NCP as hub schema for cross-framework mapping
 - [x] **COMPLETE**: Audit of existing research documents for gap-filling potential
+- [x] **COMPLETE**: Primary source extraction (`docs/research/STORY-GRID-PRIMARY-SOURCE.md`)
 - [x] **Phase 1: NarrativeState schema** → `schemas/storyline/narrative-state.yaml`
   - 10 Life Value spectrums from Story Grid Four Core Framework
   - Primary spectrum fixed per genre (genre_spectrum_mapping)
@@ -709,15 +855,22 @@ If the research sprint yields nothing substantial, we proceed with original synt
   - story_combinations section with real media examples (Die Hard, Silence of the Lambs, etc.)
   - Reagan arc integration for temporal dynamics
   - Implementation notes with C# code patterns
-  - **TODO**: Add `genre_overrides` section (see Resolved Modeling Issues below):
-    - Horror: core_emotion="Fear", core_need="Safety"
-    - Thriller: core_need="Safety"
-  - **RESOLVED**: External/Internal genre classification uses 9+3 split per STORY-GRID-101.md direct quotes
+  - **RESOLVED**: External/Internal genre classification uses 9+3 split per primary source
+  - **RESOLVED**: Core Need = "Safety" for all life_death spectrum genres (Action, Horror, Thriller)
+  - **RESOLVED**: Genre emotion overrides: Horror="Fear", Thriller="Anxiety/Dread"
+  - **TODO**: Add `genre_overrides` section to YAML schema
+  - **TODO**: Add `contrary` field to all spectrums (4-stage model per primary source)
+  - **TODO**: Create `meaning_meaninglessness` spectrum for Worldview genre
+  - **TODO**: Remap Performance genre to `success_failure` (not `respect_shame`)
+  - **TODO**: Add subgenre support for internal genres (affects arc compatibility)
 - [ ] Phase 2: Framework-to-NCP mappings (Propp→NCP, STC→NCP, StoryGrid→NCP)
   - **Note**: Reagan arcs are VALUE CURVES, not event sequences - they don't map to NCP functions
   - Reagan arcs provide the SHAPE of how Life Value spectrums change over time f(t)→[0,1]
 - [ ] Phase 3: Story actions library (NCP functions as action templates)
+  - **TODO**: Model crisis types (Best Bad Choice vs Irreconcilable Goods)
 - [ ] Phase 4: Narrative templates (leverage NCP's Four Throughlines + Nine Dynamics)
+  - **TODO**: Capture obligatory scenes per genre from primary source
+  - **TODO**: Capture conventions per genre from primary source
 - [ ] Phase 5: Archive extraction rules
 - [ ] Phase 6: Compatibility matrix (derivable from NCP mappings)
 
@@ -1213,9 +1366,12 @@ Analyze known stories through all five lenses (four frameworks + NCP) to verify 
 ### Primary Sources (Already Captured in YAML)
 - Blake Snyder, "Save the Cat!" (2005)
 - Reagan et al., "Emotional arcs of stories" (2016)
-- Shawn Coyne, "The Story Grid" (2015)
+- **Shawn Coyne, "The Story Grid: What Good Editors Know" (2015)** - See `docs/research/STORY-GRID-PRIMARY-SOURCE.md` for comprehensive extraction
 - Vladimir Propp, "Morphology of the Folktale" (1928)
 - Pablo Gervás, "Propp's Morphology as Grammar for Generation" (2013)
+
+### Primary Source Extractions
+- **`docs/research/STORY-GRID-PRIMARY-SOURCE.md`** - Comprehensive extraction of Shawn Coyne's Story Grid methodology (extracted 2026-02-04). Authoritative reference for genre classifications, Four Core Framework, value spectrums, Five Commandments, obligatory scenes, and conventions.
 
 ### Hub Schema (NCP)
 - **The Dramatica Co.** (2024). Narrative Context Protocol Specification v1.2.0
@@ -1228,7 +1384,8 @@ Analyze known stories through all five lenses (four frameworks + NCP) to verify 
 
 | Document | Gaps Addressed | Key Contribution |
 |----------|----------------|------------------|
-| `FOUR-CORE-FRAMEWORK.md` | Gap 1, Gap 6 | 10 Life Value spectrums as NarrativeState dimensions; Genre→Need→Value→Emotion→Event table |
+| **`STORY-GRID-PRIMARY-SOURCE.md`** | **Gap 1, 3, 4, 6** | **AUTHORITATIVE**: Four Core Framework with exact values, 4-stage value spectrums, obligatory scenes, conventions, Five Commandments, genre subgenres |
+| `FOUR-CORE-FRAMEWORK.md` | Gap 1, Gap 6 | 10 Life Value spectrums as NarrativeState dimensions; Genre→Need→Value→Emotion→Event table (**NOTE**: Contains errors corrected by primary source) |
 | `FIVE-LEAF-GENRE-CLOVER.md` | Gap 3, Gap 6 | FiveLeafGenreClassification schema; StoryConfiguration with derived constraints |
 | `STORY-GRID-101.md` | Gap 3, Gap 4 | Foolscap template for planning; Five Commandments → GOAP action pattern |
 | `RE-PRAXIS-LOGIC-DATABASE.md` | Gap 4, Gap 5 | Hierarchical tree storage for world state; query patterns for action preconditions |
