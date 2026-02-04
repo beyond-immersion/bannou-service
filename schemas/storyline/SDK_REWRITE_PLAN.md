@@ -158,6 +158,20 @@ lib-storyline (L4 plugin)
 
 **Purpose**: Defines the 10 Life Value spectrums and their four-stage poles
 
+**YAML Schema Additions Needed** (for action count modifiers):
+```yaml
+# In narrative-state.yaml - Genre-level pacing modifiers
+genre_action_modifiers:
+  thriller:
+    multiplier: 0.8   # Tighter pacing
+  epic_fantasy:
+    multiplier: 1.5   # More expansive
+  romance:
+    multiplier: 1.0   # Neutral
+  horror:
+    multiplier: 0.9   # Slightly tighter
+```
+
 **C# Types to Generate**:
 
 ```csharp
@@ -437,6 +451,15 @@ public static class ActionRegistry
 ### 2.4 story-templates.yaml → storyline-storyteller
 
 **Purpose**: Defines the 6 phase-based story templates with transition triggers
+
+**YAML Schema Additions Needed** (for action count estimation):
+```yaml
+# In story-templates.yaml - Template-level defaults
+man_in_hole:
+  default_action_count: 50
+  action_count_range: [30, 100]  # Valid override range
+  # ...existing fields...
+```
 
 **C# Types to Generate**:
 
@@ -1310,7 +1333,7 @@ sdks/storyline-theory/Generated/CompressModels/
 
 **Files to Create**:
 1. `storyline-storyteller/Templates/StoryPhase.cs` - Phase model
-2. `storyline-storyteller/Templates/StoryTemplate.cs` - Template model
+2. `storyline-storyteller/Templates/StoryTemplate.cs` - Template model with DefaultActionCount, ActionCountRange
 3. `storyline-storyteller/Templates/TemplateRegistry.cs` - Loads story-templates.yaml
 4. `storyline-storyteller/Templates/PhaseEvaluator.cs` - Transition logic
 
@@ -1319,6 +1342,7 @@ sdks/storyline-theory/Generated/CompressModels/
 - [ ] Phase positions parse correctly
 - [ ] Transition logic works (floor/ceiling/state)
 - [ ] Genre compatibility filtering works
+- [ ] DefaultActionCount and ActionCountRange parse correctly
 
 ### Phase 4: GOAP Planner
 
@@ -1327,12 +1351,17 @@ sdks/storyline-theory/Generated/CompressModels/
 2. `storyline-storyteller/Planning/StoryGoapPlanner.cs` - A* search
 3. `storyline-storyteller/Planning/StorylinePlan.cs` - Output format
 4. `storyline-storyteller/Planning/PlanningUrgency.cs` - Search parameters
+5. `storyline-storyteller/Planning/StoryProgress.cs` - Position tracking with lazy recalculation
+6. `storyline-storyteller/Planning/ActionCountResolver.cs` - Layered resolution (template → genre → override)
 
 **Validation**:
 - [ ] A* search finds valid paths
 - [ ] Heuristic (DistanceTo) guides search effectively
 - [ ] Urgency parameters affect search behavior
 - [ ] Plans include all required core events
+- [ ] ActionCountResolver applies genre modifiers correctly
+- [ ] StoryProgress recalculates position on phase generation
+- [ ] Position ceiling prevents estimation drift deadlocks
 
 ### Phase 5: Integration & Tuning
 
@@ -1562,3 +1591,4 @@ This enables CI validation that YAML files remain well-formed. Low priority - ca
 | 2026-02-04 | 1.0 | Initial plan document |
 | 2026-02-04 | 1.1 | Added Music vs Storyline comparison, ArchiveExtractor pattern, opaque string keys, generated compress models from plugin schemas, Phase 0 for generation setup, lib-storyline plugin appendix, clarified Gap 5 is NOT core SDK |
 | 2026-02-04 | 1.2 | Audit against SDK_FOUNDATIONS: Added ActantRole enum (Greimas), KernelExtractor (separate from ArchiveExtractor), EffectCardinality (schema metadata), StoryIntentType enum (generic with typed parameters), deferred Plot Units to future |
+| 2026-02-04 | 1.3 | Added position estimation: StoryProgress with lazy recalculation, ActionCountResolver (template default → genre modifier → request override → clamped), StoryContext.TargetActionCount, StoryTemplate.DefaultActionCount/ActionCountRange, YAML schema additions for action count modifiers |
