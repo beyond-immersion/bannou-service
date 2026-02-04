@@ -176,7 +176,7 @@ narrative_state:
 - Each framework uses different units: percentages (STC), sentiment values (Arcs), events (Propp), scenes (Story Grid)
 - `emotional-arcs.yaml` has 2 partial beat mappings (man_in_hole, cinderella)
 - **NCP provides `custom_appreciation_namespace` for exactly this purpose**
-- **NCP's 145 narrative functions can serve as the hub vocabulary**
+- **NCP's 144 narrative functions can serve as the hub vocabulary**
 
 **What's Missing** (mapping content, not schema):
 
@@ -185,11 +185,15 @@ narrative_state:
 | Propp 31 Functions → NCP Functions | **TODO** | Map by semantic equivalence |
 | STC 16 Beats → NCP Functions | **TODO** | Map by narrative purpose |
 | Story Grid Scenes → NCP Functions | **TODO** | Map by structural role |
-| Reagan Arc Phases → NCP Functions | **TODO** | Map by emotional trajectory |
+
+**Note on Reagan Arcs**: Reagan arcs are **continuous mathematical functions** f(t) that output a value 0-1 at any normalized time t. They do NOT have discrete phases that map to NCP functions. Instead:
+- Reagan arcs provide the **shape** of how the primary Life Value spectrum changes over time
+- At any t, f(t) gives the current position on that spectrum
+- This is orthogonal to NCP function mapping - NCP functions are discrete events, Reagan arcs are continuous curves
 
 **Resolved by NCP**: Schema structure for bidirectional framework lookup.
 
-**Still Required**: Populate the mappings with our framework-specific data.
+**Still Required**: Populate the mappings with our framework-specific data (Propp, STC, Story Grid only - Reagan is value curve, not event sequence).
 
 ---
 
@@ -477,21 +481,27 @@ Derive compatibility matrix from accumulated knowledge. Largely empirical/heuris
    - Stories layer genres, each bringing its spectrum (1 primary, N secondary)
 
 2. **Are the frameworks genuinely compatible?**
+   - **STATUS**: INVESTIGATING
    - STC is prescriptive (Hollywood structure)
    - Propp is descriptive (folktale patterns)
    - Story Grid is analytical (editor's lens)
    - Emotional Arcs are statistical (corpus-derived)
    - They may describe different phenomena
+   - **INVESTIGATION NEEDED**: Do they describe the same underlying structure from different angles, or fundamentally different things?
 
 3. **What's the right granularity for templates?**
+   - **STATUS**: INVESTIGATING
    - Too coarse: "revenge_arc" is too vague
    - Too fine: Loses generativity
    - music-storyteller uses 3 templates; is 5-7 right for storylines?
+   - **INVESTIGATION NEEDED**: What does "template" actually mean in our system? Is it genre? Arc shape? Beat sequence? All three?
 
 4. **How do we validate mappings?**
+   - **STATUS**: INVESTIGATING
    - Analyze existing stories?
    - Expert review?
    - Generated story quality testing?
+   - **INVESTIGATION NEEDED**: What does "correct" mean for a Propp→NCP mapping? What would prove it wrong?
 
 ---
 
@@ -583,7 +593,9 @@ If the research sprint yields nothing substantial, we proceed with original synt
   - story_combinations section with real media examples (Die Hard, Silence of the Lambs, etc.)
   - Reagan arc integration for temporal dynamics
   - Implementation notes with C# code patterns
-- [ ] Phase 2: Framework-to-NCP mappings (Propp→NCP, STC→NCP, StoryGrid→NCP, Reagan→NCP)
+- [ ] Phase 2: Framework-to-NCP mappings (Propp→NCP, STC→NCP, StoryGrid→NCP)
+  - **Note**: Reagan arcs are VALUE CURVES, not event sequences - they don't map to NCP functions
+  - Reagan arcs provide the SHAPE of how Life Value spectrums change over time f(t)→[0,1]
 - [ ] Phase 3: Story actions library (NCP functions as action templates)
 - [ ] Phase 4: Narrative templates (leverage NCP's Four Throughlines + Nine Dynamics)
 - [ ] Phase 5: Archive extraction rules
@@ -847,7 +859,7 @@ This is **exactly what we need** - a standardized way to express that a single n
 
 #### 145 Narrative Functions as Translation Layer
 
-NCP defines 145 narrative functions organized into categories:
+NCP defines 144 narrative functions organized into categories:
 
 | Category | Count | Examples |
 |----------|-------|----------|
@@ -864,7 +876,8 @@ These functions can serve as the **canonical vocabulary** for our cross-framewor
 - Propp Function → NCP Narrative Function
 - STC Beat → NCP Narrative Function
 - Story Grid Scene → NCP Narrative Function
-- Reagan Arc Phase → NCP Narrative Function
+
+**Note**: Reagan arcs are NOT mapped to NCP functions. Reagan arcs are continuous mathematical functions f(t)→[0,1] that describe how the primary Life Value spectrum changes over time. They provide SHAPE, not events. NCP functions are discrete narrative events.
 
 #### Integration with GOAP
 
@@ -982,16 +995,16 @@ Multiple formal ontologies exist but:
 | Original Assumption | Revised Understanding |
 |---------------------|----------------------|
 | We need to invent a mapping schema | NCP's `custom_appreciation_namespace` already exists |
-| We need a canonical function vocabulary | NCP's 145 narrative functions are our vocabulary |
-| Mapping Propp↔STC↔StoryGrid↔Reagan is 6 pairwise mappings | Map each framework to NCP functions (4 mappings, hub-and-spoke) |
+| We need a canonical function vocabulary | NCP's 144 narrative functions are our vocabulary |
+| Mapping Propp↔STC↔StoryGrid is 3 pairwise mappings | Map each event framework to NCP functions (3 mappings, hub-and-spoke); Reagan arcs are orthogonal value curves |
 | Gap 2 is entirely original synthesis | Gap 2 is populating an existing schema with our framework data |
 
 **What we still do ourselves**:
 1. Map Propp's 31 functions to NCP narrative functions
 2. Map STC's 16 beats to NCP narrative functions
 3. Map Story Grid's obligatory scenes to NCP narrative functions
-4. Map Reagan's arc phases to NCP narrative functions
-5. Define NarrativeState deltas for each NCP function
+4. Define NarrativeState deltas for each NCP function (using Story Grid Life Value spectrums)
+5. Select Reagan arc shape per template (continuous value curve, orthogonal to NCP event mapping)
 
 **What NCP gives us**:
 1. JSON Schema structure (v1.2.0, Draft-07 compliant)
@@ -1015,34 +1028,36 @@ With NCP as the hub, we propose a **hub-and-spoke mapping strategy**:
     ▼           ▼           ▼
 ┌───────┐  ┌────────────┐  ┌──────────┐
 │ Save  │  │    NCP     │  │  Story   │
-│ the   │◄─┤   145      ├─►│  Grid    │
+│ the   │◄─┤   144      ├─►│  Grid    │
 │ Cat   │  │ Functions  │  │ Scenes   │
-└───────┘  └─────┬──────┘  └──────────┘
-                 │
-                 ▼
+└───────┘  └────────────┘  └──────────┘
+
          ┌─────────────┐
-         │   Reagan    │
-         │   6 Arcs    │
-         └─────────────┘
+         │   Reagan    │ ─────► VALUE CURVES (orthogonal)
+         │   6 Arcs    │        Applied to Life Value spectrums
+         └─────────────┘        Not mapped to NCP functions
 ```
 
-**Phase 1: Map each framework to NCP functions**
+**Key insight**: Reagan arcs are NOT part of the hub-and-spoke. They are continuous value curves f(t) → [0,1] that describe HOW a Life Value spectrum changes over time. NCP functions are discrete narrative events. These are orthogonal concepts - Reagan provides shape, NCP/Propp/STC/StoryGrid provide events.
 
-For each framework, identify which NCP narrative function(s) correspond:
+**Phase 1: Map discrete event frameworks to NCP functions**
+
+For Propp, STC, and Story Grid (discrete event/beat frameworks), identify which NCP narrative function(s) correspond:
 
 ```yaml
 # Example: Propp → NCP mapping
 propp_to_ncp:
   VILLAINY:
     ncp_functions: [Temptation, Threat, Uncontrolled]
-    typical_position: 0.10
-    narrative_state_delta: { tension: +0.4, stakes: +0.3, hope: -0.2 }
+    typical_position: 0.10  # Timeline position (orthogonal to Reagan arc)
+    # Note: narrative_state_delta uses Story Grid Life Value spectrums
 
   MEDIATION:
     ncp_functions: [Aware, Consider, Knowledge]
     typical_position: 0.12
-    narrative_state_delta: { urgency: +0.3, mystery: +0.2 }
 ```
+
+**Reagan arcs are handled separately** - they provide the continuous value curve f(t) that determines the SHAPE of Life Value spectrum changes, not discrete events.
 
 **Phase 2: Use NCP `custom_appreciation_namespace` for bidirectional lookup**
 
@@ -1052,11 +1067,12 @@ propp_to_ncp:
     "custom_appreciation_namespace": {
         "Propp": "VILLAINY",
         "Save the Cat": "CATALYST",
-        "Story Grid": "Inciting Incident",
-        "Reagan Arc Phase": "fall_begin"
+        "Story Grid": "Inciting Incident"
     }
 }
 ```
+
+**Note**: Reagan arcs are NOT included in namespace mappings because they are continuous value functions, not discrete events. Reagan arc selection (e.g., "man_in_hole") determines the SHAPE of primary spectrum change over time - a separate concern from event sequencing.
 
 **Phase 3: Normalize to timeline + NarrativeState**
 

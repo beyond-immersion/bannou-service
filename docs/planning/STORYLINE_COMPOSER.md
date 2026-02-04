@@ -5,6 +5,12 @@
 > **Related**: `docs/planning/COMPRESSION_AS_SEED_DATA.md`, `docs/planning/COMPRESSION_CHARTS.md`, `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md`, `docs/planning/COMPOSER-LAYER.md`, `docs/plugins/RESOURCE.md`
 > **SDK Precedent**: `sdks/music-storyteller/`, `sdks/music-theory/`, `docs/plugins/MUSIC.md`
 > **Services**: Proposed `lib-storyline` (or `lib-seed`), depends on `lib-resource`, `lib-character`, `lib-realm`, `lib-scene`, `lib-quest`, `lib-actor` clients as needed
+>
+> **⚠️ AUTHORITY HIERARCHY**:
+> - **YAML schemas** (`schemas/storyline/*.yaml`) are authoritative for narrative theory
+> - **This document** describes architecture and integration patterns
+> - **If this document conflicts with YAML schemas, the YAML is correct**
+> - **Gap analysis**: See `schemas/storyline/GAP_ANALYSIS.md` for implementation status
 
 ## Summary
 
@@ -100,49 +106,107 @@ This keeps the "brains" shareable with clients and tools, while the plugin handl
 
 ## Architectural Precedent from MusicStoryteller
 
-The `music-storyteller` SDK provides a proven architecture for narrative-driven generation that directly maps to storyline composition:
+The `music-storyteller` SDK provides a proven architecture pattern for narrative-driven generation. However, **the music SDK's dimensions do not apply to literary narrative**. Musical perception dimensions (brightness, warmth, energy, valence) describe how music *sounds*, not how stories *mean*.
 
-### Music → Storyline Mapping
+### Music → Storyline Mapping (Pattern Only, Not Content)
 
 | Music Concept | Storyline Equivalent | Purpose |
 |--------------|---------------------|---------|
-| `EmotionalState` (6 dimensions: tension, brightness, energy, warmth, stability, valence) | `NarrativeState` | Target emotional/dramatic state for story beat |
+| `EmotionalState` | `NarrativeState` (10 Life Value Spectrums) | Target dramatic state for story beat |
 | `CompositionRequest` | `StorylineRequest` | High-level input specifying goals and constraints |
-| `NarrativeTemplate` (SimpleArc, JourneyAndReturn, TensionAndRelease) | `StoryArcTemplate` (Revenge, Legacy, Mystery, Redemption) | Structural blueprint with phases |
+| `NarrativeTemplate` | `StoryArcTemplate` | Structural blueprint with phases |
 | `NarrativePhase` | `StoryPhase` | Sequential progression points with target states |
-| `CompositionIntent` (harmonic, melodic, thematic) | `StorylineIntent` (character, relationship, conflict, resolution) | Concrete instructions for each section |
 | `GOAPPlanner` with A* search | Same | Action sequencing toward goal states |
-| `ActionLibrary` (TensionActions, ColorActions, etc.) | `StoryActionLibrary` (IntroduceConflict, RevealSecret, etc.) | Atomic story modifications |
+| `ActionLibrary` | `StoryActionLibrary` | Atomic story modifications |
 | `Plan` with action sequence | `StorylinePlan` | Ordered steps to reach narrative goal |
 
-### NarrativeState (Proposed)
+### NarrativeState (Authoritative Definition)
 
-Parallel to `EmotionalState` in music, storylines need a multi-dimensional state space:
+> **AUTHORITATIVE SOURCE**: `schemas/storyline/narrative-state.yaml`
+>
+> Based on Story Grid's Life Value Spectrums from the Four Core Framework (Shawn Coyne, 2015-2020).
+> Grounded in Maslow's hierarchy of needs - each spectrum maps to a fundamental human need.
 
 ```csharp
 public sealed class NarrativeState
 {
-    // Dramatic dimensions (0-1 normalized)
-    public double Tension { get; set; }      // Conflict intensity (resolved → climax)
-    public double Stakes { get; set; }       // What's at risk (trivial → existential)
-    public double Mystery { get; set; }      // Unanswered questions (clear → enigmatic)
-    public double Urgency { get; set; }      // Time pressure (leisurely → desperate)
-    public double Intimacy { get; set; }     // Character closeness (strangers → deeply bonded)
-    public double Hope { get; set; }         // Outcome expectation (despair → triumph)
+    // Each spectrum is a three-point scale:
+    //   +1.0 = Positive pole (life, love, justice, etc.)
+    //    0.0 = Negative pole (death, hate, injustice, etc.)
+    //   -1.0 = Negation of negation (fate WORSE than negative - damnation, tyranny, etc.)
 
-    // Distance calculations for GOAP heuristics
-    public double DistanceTo(NarrativeState target) { ... }
-    public NarrativeState InterpolateTo(NarrativeState target, double t) { ... }
+    // Survival Domain (Maslow Level 1)
+    public double? LifeDeath { get; set; }           // Action, Thriller, Horror
 
-    public static class Presets
+    // Safety Domain (Maslow Level 2)
+    public double? HonorDishonor { get; set; }       // War
+    public double? JusticeInjustice { get; set; }    // Crime
+    public double? FreedomSubjugation { get; set; }  // Western, Society
+
+    // Connection Domain (Maslow Level 3)
+    public double? LoveHate { get; set; }            // Love
+
+    // Esteem Domain (Maslow Level 4)
+    public double? RespectShame { get; set; }        // Performance
+    public double? PowerImpotence { get; set; }      // Society
+    public double? SuccessFailure { get; set; }      // Status
+
+    // Self-Actualization Domain (Maslow Level 5)
+    public double? AltruismSelfishness { get; set; } // Morality
+    public double? WisdomIgnorance { get; set; }     // Worldview
+
+    // Which spectrum is primary (determined by genre)
+    public SpectrumType PrimarySpectrum { get; set; }
+
+    // Distance for GOAP heuristics (only compares active spectrums)
+    public double DistanceTo(NarrativeState target)
     {
-        public static NarrativeState Equilibrium => new(0.2, 0.3, 0.2, 0.2, 0.5, 0.7);
-        public static NarrativeState RisingAction => new(0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
-        public static NarrativeState Climax => new(0.95, 0.9, 0.3, 0.9, 0.8, 0.4);
-        public static NarrativeState Resolution => new(0.1, 0.2, 0.1, 0.1, 0.9, 0.85);
-        public static NarrativeState Tragedy => new(0.1, 0.3, 0.1, 0.1, 0.8, 0.1);
+        double sum = 0;
+        int count = 0;
+        if (LifeDeath.HasValue && target.LifeDeath.HasValue)
+        {
+            sum += Math.Abs(LifeDeath.Value - target.LifeDeath.Value);
+            count++;
+        }
+        // ... etc for each spectrum
+        return count > 0 ? sum / count : 0;
     }
 }
+```
+
+### Genre → Primary Spectrum Mapping
+
+Each content genre has a PRIMARY spectrum (the main stakes). Secondary spectrums are unrestricted - any spectrum can be secondary via genre layering.
+
+| Genre | Primary Spectrum | Core Event |
+|-------|------------------|------------|
+| Action | LifeDeath | Hero at Mercy of Villain |
+| Thriller | LifeDeath | Hero at Mercy of Villain |
+| Horror | LifeDeath | Victim at Mercy of Monster |
+| War | HonorDishonor | Big Battle |
+| Crime | JusticeInjustice | Exposure of Criminal |
+| Western | FreedomSubjugation | Big Showdown |
+| Love | LoveHate | Proof of Love |
+| Performance | RespectShame | Big Performance |
+| Society | PowerImpotence | Revolution |
+| Status | SuccessFailure | Big Choice |
+| Morality | AltruismSelfishness | Big Choice |
+| Worldview | WisdomIgnorance | Cognitive Growth |
+
+### Reagan Arc Integration
+
+Reagan's 6 emotional arcs describe the *shape* of how the PRIMARY spectrum changes over time:
+
+| Arc | Shape | Description |
+|-----|-------|-------------|
+| Rags to Riches | ↗ | Primary spectrum rises steadily |
+| Tragedy | ↘ | Primary spectrum falls steadily |
+| Man in Hole | ↘↗ | Falls then rises (most common) |
+| Icarus | ↗↘ | Rises then falls |
+| Cinderella | ↗↘↗ | Rise, fall, rise again |
+| Oedipus | ↘↗↘ | Fall, rise, fall again (complex tragedy) |
+
+Example: Crime genre + Man in Hole arc = JusticeInjustice starts neutral (0.5) → falls as criminal seems to escape (0.2) → rises as detective closes in (0.9)
 ```
 
 ### GOAP Planning for Storylines
@@ -155,54 +219,74 @@ The behavior service uses urgency-tiered GOAP planning with A* search. The same 
 | **Medium** (0.3-0.7) | Active questlines, session arcs | 10 | 100ms | 1000 |
 | **High** (> 0.7) | Immediate reactions, triggered events | 5 | 50ms | 200 |
 
-**WorldState for Storylines**:
+**NarrativeState for GOAP** (replaces WorldState for story planning):
 ```csharp
-// Derived from compressed archives + live snapshots
-worldState.Set("protagonist.alive", true);
-worldState.Set("antagonist.known", false);
-worldState.Set("mcguffin.location", "lost");
-worldState.Set("relationship.hero_mentor", 0.8);
-worldState.Set("tension.current", 0.3);
+// Crime story: Justice spectrum is primary
+var currentState = new NarrativeState
+{
+    PrimarySpectrum = SpectrumType.JusticeInjustice,
+    JusticeInjustice = 0.3,  // Criminal is winning
+    LifeDeath = 0.6,         // Secondary: detective's life at risk
+};
+
+var goalState = new NarrativeState
+{
+    JusticeInjustice = 0.9,  // Criminal exposed
+    LifeDeath = 0.8,         // Detective survives
+};
 ```
 
-**GOAPGoal for Storylines**:
+**GOAPGoal using NarrativeState**:
 ```csharp
-// "Reveal the villain" story beat
-var goal = new GOAPGoal("reveal_antagonist")
-    .Require("antagonist.known", true)
-    .Require("tension.current", v => v > 0.6)
+// "Expose the criminal" story beat
+var goal = GOAPGoal.FromNarrativeState(goalState)
+    .WithMinimumProgress(SpectrumType.JusticeInjustice, 0.6)
     .WithPriority(0.8);
 ```
 
-### Story Action Library (Parallel to Musical Actions)
+### Story Action Library
 
-The music SDK organizes actions by category (TensionActions, ColorActions, ResolutionActions, TextureActions, ThematicActions). Storyline actions follow the same pattern:
+> **AUTHORITATIVE SOURCE**: `schemas/storyline/story-grid-genres.yaml` (Five Commandments), `schemas/storyline/propp-functions.yaml` (31 functions)
 
-**ConflictActions**:
-- `IntroduceAntagonist` - Reveal opposition force
-- `EscalateConflict` - Raise stakes via new threat
-- `CreateDilemma` - Force protagonist choice
-- `BetrayalReveal` - Trusted character turns
+Story actions are derived from two sources:
+1. **Story Grid's Five Commandments** - Scene-level action patterns
+2. **Propp's 31 Functions** - Event-level narrative primitives
 
-**RelationshipActions**:
-- `FormAlliance` - Create bond between entities
-- `DestroyTrust` - Break existing relationship
-- `RevealConnection` - Expose hidden link
-- `SacrificeForOther` - Demonstrate commitment
+**Five Commandments → GOAP Action Pattern**:
+```
+Inciting Incident → Initial world state perturbation
+Turning Point     → Complication requiring re-planning
+Crisis            → Decision point requiring character choice
+Climax            → Action execution
+Resolution        → New world state
+```
 
-**MysteryActions**:
-- `PlantClue` - Add discoverable evidence
-- `RevealSecret` - Expose hidden truth
-- `IntroduceRedHerring` - Misdirect attention
-- `ConnectDots` - Link existing clues
+**Propp Functions as Actions** (from `propp-functions.yaml`):
 
-**ResolutionActions**:
-- `ConfrontAntagonist` - Final confrontation setup
-- `OfferRedemption` - Path to character change
-- `ExactJustice` - Consequences for actions
-- `RestoreEquilibrium` - Return to (new) normal
+| Phase | Key Functions | Effect on Primary Spectrum |
+|-------|---------------|---------------------------|
+| Preparation | Interdiction, Violation | Establishes stakes |
+| Complication | Villainy/Lack, Mediation | Primary spectrum falls |
+| Donor | Testing, Reaction, Acquisition | Enables comeback |
+| Quest | Struggle/Task, Victory | Climactic reversal |
+| Return | Pursuit, Rescue | Secondary tension |
+| Recognition | Recognition, Punishment, Wedding | Resolution |
 
-Each action has preconditions, effects, and cost - enabling GOAP planning.
+**Action Example** (using NCP as hub vocabulary):
+```yaml
+actions:
+  villainy:
+    propp_symbol: "A"
+    ncp_functions: [Temptation, Threat, Uncontrolled]
+    preconditions:
+      primary_spectrum: { max: 0.7 }  # Not already in crisis
+    effects:
+      primary_spectrum_delta: -0.3    # Falls toward negative pole
+    cost: 2.0
+    typical_position: [0.08, 0.12]    # ~10% into story
+```
+
+Each action has preconditions (NarrativeState ranges), effects (spectrum deltas), and cost - enabling GOAP planning.
 
 ### Continuation Points for Ongoing Storylines (Lazy Phase Evaluation)
 
@@ -739,146 +823,161 @@ This allows the storyline composer to output not just entity definitions but beh
 4. Composer outputs a plan that spawns a guardian actor and a quest chain.
 5. God calls `/storyline/instantiate` to enact it.
 
-## Missing Pieces
+## Authoritative Sources
 
-1. A schema-defined `lib-storyline` service with the endpoints above.
-2. A stable StorylinePlan data model for inspection and replay.
-3. Live compression snapshots for living entities.
-4. Optional archive indexing for discovery across a realm.
-5. Policy for how plans map to concrete quest and actor templates.
-6. **StorylineTheory SDK** - Pure computation library for story primitives.
-7. **StorylineStoryteller SDK** - GOAP-based narrative planning.
-8. **Narrative template registry** - Archetypes with phase definitions.
-9. **Archive-to-WorldState extraction** - Converting compressed data to GOAP state.
-10. **Intent-to-ABML compiler** - Generating behavior fragments from intents.
+> **YAML schemas in `schemas/storyline/` are the single source of truth for narrative theory.**
+> This document describes architecture and integration patterns.
+> For research-validated data, see the YAML files directly.
+
+| Schema | Content |
+|--------|---------|
+| `narrative-state.yaml` | 10 Life Value spectrums, genre mappings, Reagan arc integration |
+| `save-the-cat-beats.yaml` | 16 beats with percentage timing, dual strategies (bs2/fiction) |
+| `emotional-arcs.yaml` | 6 Reagan arcs with SVD methodology, classification algorithms |
+| `story-grid-genres.yaml` | 12 genres, Five Commandments, Four Core Framework, Five-Leaf Clover |
+| `propp-functions.yaml` | 31 functions with variants, three-act structure, generation algorithm |
+| `GAP_ANALYSIS.md` | Gap inventory, NCP integration strategy, implementation phases |
+
+## Remaining Work
+
+> **See `schemas/storyline/GAP_ANALYSIS.md` for detailed gap analysis and implementation phases.**
+
+| Phase | Gap | Deliverable | Status |
+|-------|-----|-------------|--------|
+| 1 | NarrativeState | `narrative-state.yaml` | ✅ Complete |
+| 2 | Cross-Framework Mapping | NCP function mappings | 🔄 In Progress |
+| 3 | Story Actions | `story-actions.yaml` | ⏳ Pending |
+| 4 | Narrative Templates | `narrative-templates.yaml` | ⏳ Pending |
+| 5 | Archive Extraction | `archive-extraction.yaml` | ⏳ Pending |
+| 6 | Compatibility Matrix | `compatibility-matrix.yaml` | ⏳ Pending |
+
+**Service Implementation**:
+1. Schema-defined `lib-storyline` service with endpoints above
+2. StorylinePlan data model for inspection and replay
+3. Live compression snapshots for living entities
+4. Archive indexing for discovery across a realm
+5. Intent-to-ABML compiler for generated behavior fragments
 
 ## Detailed SDK Architecture (Proposed)
 
 ### storyline-theory SDK
 
-Pure data structures and mechanics, no service dependencies:
+Pure data structures and mechanics, no service dependencies. **Loads data from YAML schemas.**
 
 ```
 sdks/storyline-theory/
-├── Elements/
-│   ├── StoryElement.cs           # Base class for narrative atoms
-│   ├── Character.cs              # Character with traits, roles
-│   ├── Conflict.cs               # Opposing forces definition
-│   ├── Setting.cs                # Place and time context
-│   └── MacGuffin.cs              # Object of desire/quest target
-├── Relationships/
-│   ├── Relationship.cs           # Entity-to-entity connection
-│   ├── RelationshipType.cs       # Taxonomy (parallel to lib-relationship-type)
-│   └── SentimentCalculator.cs    # Aggregate sentiment from encounters
-├── Structure/
-│   ├── StoryBeat.cs              # Atomic narrative moment
-│   ├── StoryArc.cs               # Sequence of beats forming arc
-│   ├── Subplot.cs                # Secondary narrative thread
-│   └── Theme.cs                  # Thematic throughline (revenge, redemption, etc.)
 ├── State/
-│   ├── NarrativeState.cs         # 6-dimensional emotional/dramatic state
-│   ├── WorldState.cs             # GOAP-compatible world representation
+│   ├── NarrativeState.cs         # 10 Life Value spectrums (from narrative-state.yaml)
+│   ├── SpectrumType.cs           # Enum of spectrum types
 │   └── StoryProgress.cs          # Arc completion tracking
+├── Arcs/
+│   ├── EmotionalArc.cs           # Reagan's 6 arcs (from emotional-arcs.yaml)
+│   └── ArcClassifier.cs          # SVD-based arc classification
+├── Genre/
+│   ├── StoryGridGenre.cs         # 12 content genres (from story-grid-genres.yaml)
+│   ├── FiveLeafClover.cs         # Meta-genre classification
+│   └── FourCoreFramework.cs      # Need, Value, Emotion, Event
+├── Structure/
+│   ├── SaveTheCatBeats.cs        # 16 beats with timing (from save-the-cat-beats.yaml)
+│   ├── ProppFunctions.cs         # 31 functions (from propp-functions.yaml)
+│   └── FiveCommandments.cs       # Scene-level structure
 ├── Scoring/
-│   ├── PlausibilityScorer.cs     # How believable is this development?
-│   ├── SatisfactionScorer.cs     # How satisfying is this resolution?
+│   ├── GenreComplianceScorer.cs  # Obligatory scenes, conventions
+│   ├── PacingSatisfactionScorer.cs # Beat timing validation
 │   └── FidelityScorer.cs         # How true to source material?
 └── Output/
     ├── StorylinePlan.cs          # Complete plan output
-    └── StorylineJson.cs          # Serialization (parallel to MidiJson)
+    └── StorylineJson.cs          # Serialization
 ```
 
 ### storyline-storyteller SDK
 
-Planning and template system:
+Planning and template system. **Uses NCP (Narrative Context Protocol) as hub vocabulary for cross-framework mapping.**
 
 ```
 sdks/storyline-storyteller/
 ├── Templates/
-│   ├── NarrativeTemplate.cs      # Base template class
-│   ├── RevengeArc.cs             # Setup → Discovery → Pursuit → Confrontation → Aftermath
-│   ├── MysteryArc.cs             # Hook → Investigation → Revelations → Resolution
-│   ├── RedemptionArc.cs          # Fall → Suffering → Realization → Atonement → Renewal
-│   ├── LegacyArc.cs              # Death → Memory → Inspiration → Continuation
-│   └── TragicArc.cs              # Hubris → Warning → Denial → Fall → Consequences
+│   ├── NarrativeTemplate.cs      # Base template using genre + arc combination
+│   ├── TemplateRegistry.cs       # Genre → Arc → Template selection
+│   └── PhaseDefinition.cs        # Beat positions + spectrum targets
 ├── Actions/
 │   ├── IStoryAction.cs           # Action interface with preconditions/effects
-│   ├── ActionLibrary.cs          # Registry of available actions
-│   ├── ConflictActions.cs        # IntroduceAntagonist, EscalateConflict, etc.
-│   ├── RelationshipActions.cs    # FormAlliance, BetrayalReveal, etc.
-│   ├── MysteryActions.cs         # PlantClue, RevealSecret, etc.
-│   └── ResolutionActions.cs      # Confrontation, Redemption, Justice, etc.
+│   ├── ProppActionLibrary.cs     # 31 Propp functions as GOAP actions
+│   ├── CommandmentActions.cs     # Five Commandments → action patterns
+│   └── NCPFunctionActions.cs     # NCP 145 functions as action vocabulary
 ├── Planning/
-│   ├── GOAPPlanner.cs            # A* search for story actions (reuse from music-storyteller)
-│   ├── GOAPGoal.cs               # Target narrative state
-│   ├── GOAPAction.cs             # Wrapper for IStoryAction
-│   ├── Plan.cs                   # Action sequence result
-│   └── Replanner.cs              # Mid-story adaptation
-├── Intent/
-│   ├── StorylineIntent.cs        # Concrete instruction for implementation
-│   ├── IntentGenerator.cs        # Plan → Intent conversion
-│   ├── CharacterIntent.cs        # Spawn/modify character
-│   ├── RelationshipIntent.cs     # Create/modify relationship
-│   └── ConflictIntent.cs         # Establish/escalate conflict
+│   ├── StoryPlanner.cs           # A* search in NarrativeState space
+│   ├── GOAPGoal.cs               # Target NarrativeState
+│   ├── UrgencyTiers.cs           # Low/Medium/High planning parameters
+│   └── Replanner.cs              # Mid-story adaptation for lazy phase evaluation
+├── Mapping/
+│   ├── NCPHub.cs                 # Hub-and-spoke framework mapping
+│   ├── ProppToNCP.cs             # Propp 31 functions → NCP functions
+│   ├── STCToNCP.cs               # Save the Cat beats → NCP functions
+│   └── StoryGridToNCP.cs         # Story Grid scenes → NCP functions
 ├── Extraction/
-│   ├── ArchiveExtractor.cs       # ResourceArchive → WorldState
-│   ├── SnapshotExtractor.cs      # Live snapshot → WorldState
-│   ├── BackstoryParser.cs        # Extract story elements from backstory
-│   └── EncounterAnalyzer.cs      # Extract relationship data from encounters
-└── Storyteller.cs                # Main orchestrator (parallel to music Storyteller)
+│   ├── ArchiveExtractor.cs       # ResourceArchive → NarrativeState
+│   ├── SnapshotExtractor.cs      # Live snapshot → NarrativeState
+│   └── EncounterAnalyzer.cs      # Extract relationship sentiment
+└── Storyteller.cs                # Main orchestrator
 ```
 
 ### Storyteller Orchestrator Pattern
 
-Following the music SDK's `Storyteller.Compose()` pattern:
+Following the music SDK's `Storyteller.Compose()` pattern, but using NarrativeState (10 Life Value spectrums) instead of WorldState:
 
 ```csharp
 public sealed class Storyteller
 {
-    private readonly ActionLibrary _actions;
-    private readonly GOAPPlanner _planner;
-    private readonly Replanner _replanner;
-    private readonly IntentGenerator _intentGenerator;
-    private readonly NarrativeSelector _narrativeSelector;
+    private readonly ProppActionLibrary _actions;
+    private readonly StoryPlanner _planner;
+    private readonly TemplateRegistry _templates;
     private readonly ArchiveExtractor _archiveExtractor;
 
     public StorylineResult Compose(StorylineRequest request)
     {
-        // 1. Extract world state from archives/snapshots
-        var worldState = _archiveExtractor.Extract(request.SeedSources);
+        // 1. Determine genre and primary spectrum
+        var genre = request.Genre ?? InferGenreFromArchives(request.SeedSources);
+        var primarySpectrum = GenreMapping.GetPrimarySpectrum(genre);
 
-        // 2. Select narrative template based on extracted elements
-        var narrative = request.TemplateId != null
-            ? _narrativeSelector.GetById(request.TemplateId)
-            : _narrativeSelector.Select(request, worldState);
+        // 2. Extract initial NarrativeState from archives
+        var currentState = _archiveExtractor.ExtractState(request.SeedSources, primarySpectrum);
 
-        // 3. Process each phase
+        // 3. Select Reagan arc based on genre affinity
+        var arc = request.ArcType ?? GenreMapping.GetRecommendedArc(genre);
+
+        // 4. Get template: Genre + Arc = phase definitions with spectrum targets
+        var template = _templates.GetTemplate(genre, arc);
+
+        // 5. Process each phase using lazy evaluation
         var sections = new List<StorylineSection>();
-        var state = new NarrativeState();
 
-        foreach (var phase in narrative.Phases)
+        foreach (var phase in template.Phases)
         {
-            // 4. Create GOAP plan to reach phase target
-            var goal = GOAPGoal.FromNarrativePhase(phase);
-            var plan = _planner.CreatePlan(worldState, goal);
+            // Target state comes from arc shape applied to primary spectrum
+            var goalState = phase.GetTargetState(primarySpectrum, arc);
 
-            // 5. Generate intents from plan
-            var intents = _intentGenerator.FromPlan(plan, state, phase);
+            // GOAP plan finds actions to reach target
+            var plan = _planner.Plan(currentState, goalState, request.Urgency);
 
-            sections.Add(new StorylineSection { Phase = phase, Plan = plan, Intents = intents });
+            sections.Add(new StorylineSection
+            {
+                Phase = phase,
+                Plan = plan,
+                SpectrumDelta = goalState.GetPrimaryValue() - currentState.GetPrimaryValue()
+            });
 
-            // 6. Apply plan effects for next phase
-            foreach (var action in plan.Actions)
-                action.Apply(worldState);
+            // Apply effects for next phase
+            currentState = plan.ResultingState;
         }
 
         return new StorylineResult
         {
-            Request = request,
-            Narrative = narrative,
+            Genre = genre,
+            Arc = arc,
+            PrimarySpectrum = primarySpectrum,
             Sections = sections,
-            Confidence = CalculateConfidence(sections),
-            WorldState = worldState
+            Confidence = CalculateConfidence(sections)
         };
     }
 }
@@ -1255,13 +1354,14 @@ The storyline composer doesn't invent stories. It discovers the stories that alr
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
+| **NarrativeState Model** | 10 Life Value spectrums | Story Grid Four Core Framework (Coyne, 2015-2020); grounded in Maslow's hierarchy |
+| **Temporal Dynamics** | Reagan's 6 emotional arcs | SVD-derived shapes (Reagan et al., 2016); applied to primary spectrum |
+| **Cross-Framework Mapping** | NCP as hub vocabulary | 145 narrative functions enable Propp↔STC↔StoryGrid↔Reagan translation |
 | **Service Layer** | L4 (Application / Thin Orchestration) | Alongside lib-quest; driven by Behavioral Intelligence Layer |
-| **SDK Pattern** | Two-tier (storyline-theory, storyline-storyteller) | Follows MusicTheory/MusicStoryteller precedent |
-| **Planning Approach** | GOAP with urgency-tiered parameters | Proven in lib-behavior; A* search with action libraries |
+| **SDK Pattern** | Two-tier (storyline-theory, storyline-storyteller) | Theory loads YAML; Storyteller does planning |
+| **Planning Approach** | GOAP with urgency-tiered parameters | A* search in NarrativeState space |
 | **Phase Generation** | Lazy evaluation via continuation points | World changes while players offline; fresh state for each phase |
-| **Archive Access** | API via lib-resource | Authoritative source; infrequent read, no direct store access |
-| **Actor Integration** | Variable Provider + QueryOptions | Follows ACTOR_DATA_ACCESS_PATTERNS.md |
-| **Storyline State** | Shared store (owned by composer) | High-frequency read/write during storyline lifetime |
+| **Archive Access** | API via lib-resource | Authoritative source; extract to NarrativeState |
 | **Instantiation** | Delegates to existing services | lib-quest, lib-actor, lib-character-encounter, lib-contract |
 | **Determinism** | Hash-based plan IDs from inputs | Enables caching, replay, moderation |
 
@@ -1280,11 +1380,25 @@ The storyline composer doesn't invent stories. It discovers the stories that alr
 
 ## Related Documents
 
-- `docs/planning/ACTOR_DATA_ACCESS_PATTERNS.md` - Data access patterns for actors (service dependency graph, Variable Providers)
+### Authoritative YAML Schemas (in `schemas/storyline/`)
+- `narrative-state.yaml` - 10 Life Value spectrums, genre mappings, Reagan arc integration
+- `save-the-cat-beats.yaml` - 16 beats with percentage timing, dual strategies
+- `emotional-arcs.yaml` - 6 Reagan arcs with SVD methodology
+- `story-grid-genres.yaml` - 12 genres, Five Commandments, Four Core Framework
+- `propp-functions.yaml` - 31 functions with variants, generation algorithm
+- `GAP_ANALYSIS.md` - Gap inventory, NCP integration strategy, implementation phases
+
+### Research Summaries (in `docs/research/`)
+- `FOUR-CORE-FRAMEWORK.md` - Story Grid's authoritative model
+- `FIVE-LEAF-GENRE-CLOVER.md` - Complete genre classification
+- `EMOTIONAL-ARCS-SVD-METHODOLOGY.md` - Reagan et al. sentiment analysis
+- `NARRATIVE-CONTEXT-PROTOCOL.md` - NCP hub schema for cross-framework mapping
+- `PROPPER-IMPLEMENTATION.md` - Propp generation algorithm details
+
+### Architecture Documents
+- `docs/planning/ACTOR_DATA_ACCESS_PATTERNS.md` - Data access patterns for actors
 - `docs/planning/COMPRESSION_AS_SEED_DATA.md` - Archive structure as narrative seeds
-- `docs/planning/COMPRESSION_CHARTS.md` - Data flow diagrams for compression
 - `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` - God actor patterns
-- `docs/planning/COMPOSER-LAYER.md` - General composer architecture principles
 - `docs/plugins/RESOURCE.md` - Compression infrastructure
 - `docs/plugins/MUSIC.md` - SDK layering precedent
-- `sdks/music-storyteller/` - Reference implementation for GOAP + narrative templates
+- `sdks/music-storyteller/` - Reference implementation for GOAP
