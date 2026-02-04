@@ -186,7 +186,7 @@ spectrums:
     core_emotion: "Intrigue"
 
     genres:
-      primary: ["western", "society"]
+      primary: ["western"]
 
     question: "Will the protagonist gain or preserve their autonomy?"
 

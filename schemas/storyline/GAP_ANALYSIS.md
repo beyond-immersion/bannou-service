@@ -45,7 +45,7 @@ These are **vertical pillars** - each internally consistent but operating indepe
 **Key Data Points**:
 - 6 canonical arcs with mathematical forms
 - SVD modes 1-3 with variance explained
-- Sentiment → NarrativeState dimension formulas (Hope, Tension, Stakes)
+- Sentiment → NarrativeState dimension formulas (maps to primary Life Value spectrum based on genre)
 
 ### Pillar 3: Story Grid Genres (`story-grid-genres.yaml`)
 
@@ -216,14 +216,14 @@ templates:
     phases:
       incitement:
         position: [0.0, 0.12]  # Percentage range
-        target_state: { tension: 0.4, stakes: 0.5, hope: 0.6, mystery: 0.3 }
+        target_state: { life_death: 0.4 }  # Primary spectrum for action genre
         required_beats: [OPENING_IMAGE, CATALYST]
         propp_functions: [VILLAINY]
         obligatory_scenes: [inciting_attack]
 
       discovery:
         position: [0.12, 0.25]
-        target_state: { tension: 0.5, stakes: 0.6, hope: 0.5, mystery: 0.7 }
+        target_state: { life_death: 0.3 }  # Threat increasing
         # ...
 ```
 
@@ -261,10 +261,7 @@ actions:
       propp_equivalent: VILLAINY  # Links to Propp
       stc_beat_affinity: CATALYST  # Likely occurs near this beat
       narrative_state_delta:
-        tension: +0.3
-        stakes: +0.2
-        hope: -0.1
-        mystery: +0.2
+        life_death: -0.3  # Threat to survival introduced
 ```
 
 **Dependencies**: Requires Gap 1 (NarrativeState), Gap 2 (mapping to understand affinities)
@@ -481,27 +478,150 @@ Derive compatibility matrix from accumulated knowledge. Largely empirical/heuris
    - Stories layer genres, each bringing its spectrum (1 primary, N secondary)
 
 2. **Are the frameworks genuinely compatible?**
-   - **STATUS**: INVESTIGATING
    - STC is prescriptive (Hollywood structure)
    - Propp is descriptive (folktale patterns)
    - Story Grid is analytical (editor's lens)
    - Emotional Arcs are statistical (corpus-derived)
    - They may describe different phenomena
-   - **INVESTIGATION NEEDED**: Do they describe the same underlying structure from different angles, or fundamentally different things?
 
 3. **What's the right granularity for templates?**
-   - **STATUS**: INVESTIGATING
    - Too coarse: "revenge_arc" is too vague
    - Too fine: Loses generativity
    - music-storyteller uses 3 templates; is 5-7 right for storylines?
-   - **INVESTIGATION NEEDED**: What does "template" actually mean in our system? Is it genre? Arc shape? Beat sequence? All three?
 
 4. **How do we validate mappings?**
-   - **STATUS**: INVESTIGATING
    - Analyze existing stories?
    - Expert review?
    - Generated story quality testing?
-   - **INVESTIGATION NEEDED**: What does "correct" mean for a Propp→NCP mapping? What would prove it wrong?
+
+---
+
+## Resolved Modeling Issues (2026-02-04)
+
+During schema validation, several inconsistencies were identified between the research documents and the `narrative-state.yaml` implementation. These have been analyzed and resolved.
+
+### Primary Source Authority
+
+Both `STORY-GRID-101.md` and `FOUR-CORE-FRAMEWORK.md` are interpretations of **Shawn Coyne's Story Grid methodology**. When they conflict, we defer to:
+
+1. **Primary Source**: "The Story Grid: What Good Editors Know" by Shawn Coyne (2015)
+2. **Local Extraction**: `docs/research/STORY-GRID-PRIMARY-SOURCE.md` - comprehensive extraction from the book
+3. **Authoritative Website**: [storygrid.com](https://storygrid.com) - free, continuously updated
+4. **Direct Quotes**: STORY-GRID-101.md contains direct quotes; FOUR-CORE-FRAMEWORK.md is interpretive synthesis
+
+**Reference Hierarchy**:
+- `STORY-GRID-PRIMARY-SOURCE.md` > `STORY-GRID-101.md` > `FOUR-CORE-FRAMEWORK.md`
+
+### Issue 1: Horror Core Emotion (Fear vs Excitement)
+
+**Problem**: The current model assigns `core_emotion` per spectrum, not per genre. The `life_death` spectrum has `core_emotion: "Excitement"`. However, Action, Thriller, and Horror all use `life_death` as their primary spectrum, but research indicates:
+- Action → Excitement ✓
+- Thriller → Excitement ✓
+- Horror → **Fear** ✗ (gets Excitement from spectrum)
+
+**Resolution**: Add `genre_overrides` section to `narrative-state.yaml` for per-genre emotion overrides.
+
+```yaml
+genre_overrides:
+  horror:
+    core_emotion: "Fear"  # Override spectrum default "Excitement"
+```
+
+**Rationale**: The spectrum-centric model is elegant and maps to Maslow's hierarchy. Rather than abandon it, we acknowledge that specific genres have research-backed exceptions. This is additive (one place to check for defaults, one for overrides) rather than destructive.
+
+### Issue 2: Thriller/Horror Core Need (Safety vs Survival)
+
+**Problem**: Research (FOUR-CORE-FRAMEWORK.md) indicates:
+- Action → Core Need: **Survival** (Maslow Level 1: physiological)
+- Thriller → Core Need: **Safety** (Maslow Level 2: security)
+- Horror → Core Need: **Safety** (Maslow Level 2: security)
+
+The `life_death` spectrum has `core_need: "Survival"`, causing Thriller and Horror to inherit the wrong need.
+
+**Resolution**: Same `genre_overrides` mechanism:
+
+```yaml
+genre_overrides:
+  horror:
+    core_emotion: "Fear"
+    core_need: "Safety"
+  thriller:
+    core_need: "Safety"  # Emotion stays "Excitement" (no override)
+```
+
+**Rationale**: "Survival" (Maslow 1) is immediate physiological need. "Safety" (Maslow 2) is protection from harm, security. Thriller/Horror are about *threat of harm* (safety), not *immediate physiological crisis* (survival). The distinction matters for character motivation modeling in GOAP.
+
+### Issue 3: External vs Internal Genre Classification Conflict
+
+**Problem**: Research documents disagree on classification of Love, Performance, and Society:
+
+| Genre | STORY-GRID-101.md | FOUR-CORE-FRAMEWORK.md |
+|-------|-------------------|------------------------|
+| Love | External | Internal |
+| Performance | External | Internal |
+| Society | External | Internal |
+| **Total** | 9 external + 3 internal | 6 external + 6 internal |
+
+**Resolution**: Trust STORY-GRID-101.md (9 external + 3 internal).
+
+STORY-GRID-101.md directly quotes Coyne:
+> "Nine are external and based on your protagonist's wants. Those external genres are Action, War, Horror, Crime, Thriller, Western, Love, Performance, and Society."
+
+FOUR-CORE-FRAMEWORK.md's 6/6 split is an interpretive synthesis, not a direct quote.
+
+**Canonical Classification**:
+- **External** (9): Action, War, Horror, Crime, Thriller, Western, Love, Performance, Society
+- **Internal** (3): Status, Morality, Worldview
+
+**Note**: Document the discrepancy in YAML as a comment for future reference.
+
+### Issue 4: One-Spectrum-One-Emotion Model Limitation
+
+**Problem**: The architecture assigns one `core_emotion` per spectrum, but multiple genres sharing a spectrum may have different emotions (Action=Excitement, Horror=Fear on same `life_death` spectrum).
+
+**Resolution**: The `genre_overrides` mechanism (Issues 1-2) solves this without abandoning the spectrum-centric model.
+
+**Alternatives Considered**:
+- **Split spectrums**: Create `survival_physical` (Action), `survival_existential` (Thriller), `survival_horror` (Horror). Rejected: spectrum explosion, breaks Maslow correspondence.
+- **Move emotions to genre level entirely**: Remove `core_emotion` from spectrums. Rejected: larger refactor, loses intuitive defaults.
+
+**Decision**: Genre-level overrides are the minimum viable change. Spectrum defaults handle the common case; overrides handle research-documented exceptions.
+
+### Schema Change Required
+
+Add to `narrative-state.yaml`:
+
+```yaml
+# Genre-specific overrides for spectrum defaults
+# Use when research indicates a genre differs from its primary spectrum's default
+genre_overrides:
+  horror:
+    core_emotion: "Fear"           # Spectrum default: "Excitement"
+    core_need: "Safety"            # Spectrum default: "Survival"
+  thriller:
+    core_need: "Safety"            # Emotion stays "Excitement" (no override needed)
+  # All other genres use spectrum defaults
+```
+
+### Implementation Notes
+
+When querying core_emotion or core_need for a genre:
+
+```csharp
+public string GetCoreEmotion(string genre)
+{
+    // Check override first
+    if (_genreOverrides.TryGetValue(genre, out var overrides)
+        && overrides.CoreEmotion != null)
+    {
+        return overrides.CoreEmotion;
+    }
+
+    // Fall back to spectrum default
+    var spectrum = GetPrimarySpectrum(genre);
+    return spectrum.CoreEmotion;
+}
+```
 
 ---
 
@@ -593,6 +713,10 @@ If the research sprint yields nothing substantial, we proceed with original synt
   - story_combinations section with real media examples (Die Hard, Silence of the Lambs, etc.)
   - Reagan arc integration for temporal dynamics
   - Implementation notes with C# code patterns
+  - **TODO**: Add `genre_overrides` section (see Resolved Modeling Issues below):
+    - Horror: core_emotion="Fear", core_need="Safety"
+    - Thriller: core_need="Safety"
+  - **RESOLVED**: External/Internal genre classification uses 9+3 split per STORY-GRID-101.md direct quotes
 - [ ] Phase 2: Framework-to-NCP mappings (Propp→NCP, STC→NCP, StoryGrid→NCP)
   - **Note**: Reagan arcs are VALUE CURVES, not event sequences - they don't map to NCP functions
   - Reagan arcs provide the SHAPE of how Life Value spectrums change over time f(t)→[0,1]
@@ -885,20 +1009,21 @@ The existing research document shows how NCP dynamics can inform GOAP goals:
 
 ```csharp
 // Dynamics define binary story constraints
+// For an Action genre story (primary spectrum: LifeDeath)
 if (dynamics.StoryOutcome == "success" && dynamics.StoryJudgment == "good")
 {
-    goalState.Hope = 0.9;
-    goalState.Tension = 0.1;  // Resolved
+    goalState.LifeDeath = 0.9;  // Hero survives, threat resolved
 }
 ```
 
 And how narrative functions map to GOAP actions:
 
 ```csharp
+// Example: VILLAINY action for Action genre (primary: LifeDeath)
 var goapAction = new NarrativeAction(
-    name: "Temptation",
-    preconditions: new NarrativeStateRange { MinMystery = 0.3 },
-    effects: new NarrativeStateDelta { Hope = -0.1, Tension = +0.15 },
+    name: "Villainy",
+    preconditions: new NarrativeStateRange { MaxLifeDeath = 0.7 },  // Not already in mortal peril
+    effects: new NarrativeStateDelta { LifeDeath = -0.3 },  // Threat introduced
     cost: 1.2
 );
 ```
@@ -1092,7 +1217,7 @@ Analyze known stories through all five lenses (four frameworks + NCP) to verify 
 ### Primary Sources (Already Captured in YAML)
 - Blake Snyder, "Save the Cat!" (2005)
 - Reagan et al., "Emotional arcs of stories" (2016)
-- Shawn Coyne, "The Story Grid" (2015)
+- Shawn Coyne, "The Story Grid" (2015) → **Local extraction**: `docs/research/STORY-GRID-PRIMARY-SOURCE.md`
 - Vladimir Propp, "Morphology of the Folktale" (1928)
 - Pablo Gervás, "Propp's Morphology as Grammar for Generation" (2013)
 
