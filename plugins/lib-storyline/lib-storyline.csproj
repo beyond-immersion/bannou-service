@@ -17,8 +17,11 @@
     <ServiceLib>storyline</ServiceLib>
   </PropertyGroup>
 
-  <!-- SDK references come transitively from bannou-service (which references both storyline SDKs) -->
-  <!-- No additional ProjectReferences needed -->
+  <!-- Direct SDK references needed for type resolution (transitive refs don't expose SDK types to plugins) -->
+  <ItemGroup>
+    <ProjectReference Include="../../sdks/storyline-theory/BeyondImmersion.Bannou.StorylineTheory.csproj" />
+    <ProjectReference Include="../../sdks/storyline-storyteller/BeyondImmersion.Bannou.StorylineStoryteller.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->

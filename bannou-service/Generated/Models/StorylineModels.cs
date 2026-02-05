@@ -24,7 +24,11 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Storyline;
+using BeyondImmersion.Bannou.StorylineStoryteller.Actions;
 using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
+using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
+using BeyondImmersion.Bannou.StorylineTheory.Arcs;
+using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -74,85 +78,6 @@ public enum StorylineGoal
 
     [System.Runtime.Serialization.EnumMember(Value = @"peace")]
     Peace = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Emotional arc shapes from Reagan et al. research.
-/// <br/>rags_to_riches: Rise (1)
-/// <br/>tragedy: Fall (2)
-/// <br/>man_in_hole: Fall then rise (3)
-/// <br/>icarus: Rise then fall (4)
-/// <br/>cinderella: Rise, fall, rise (5)
-/// <br/>oedipus: Fall, rise, fall (6)
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ArcType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"rags_to_riches")]
-    RagsToRiches = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"tragedy")]
-    Tragedy = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"man_in_hole")]
-    ManInHole = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"icarus")]
-    Icarus = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cinderella")]
-    Cinderella = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"oedipus")]
-    Oedipus = 5,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// The 10 Story Grid Life Value spectrums.
-/// <br/>These are bipolar axes for emotional progression.
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SpectrumType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"life_death")]
-    LifeDeath = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"honor_dishonor")]
-    HonorDishonor = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"justice_injustice")]
-    JusticeInjustice = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"freedom_subjugation")]
-    FreedomSubjugation = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"love_hate")]
-    LoveHate = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"respect_shame")]
-    RespectShame = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"power_impotence")]
-    PowerImpotence = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"success_failure")]
-    SuccessFailure = 7,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"altruism_selfishness")]
-    AltruismSelfishness = 8,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"wisdom_ignorance")]
-    WisdomIgnorance = 9,
 
 }
 #pragma warning restore CS1591
@@ -481,184 +406,6 @@ public partial class ListPlansResponse
 }
 
 /// <summary>
-/// A phase in the storyline plan
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StorylinePlanPhase
-{
-
-    /// <summary>
-    /// 1-based phase number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("phaseNumber")]
-    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int PhaseNumber { get; set; } = default!;
-
-    /// <summary>
-    /// Phase name (e.g., "discovery", "confrontation", "resolution")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Actions in this phase
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("actions")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<StorylinePlanAction> Actions { get; set; } = new System.Collections.ObjectModel.Collection<StorylinePlanAction>();
-
-    /// <summary>
-    /// Target emotional/world state for phase completion
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetState")]
-    public PhaseTargetState? TargetState { get; set; } = default!;
-
-    /// <summary>
-    /// Position bounds for this phase (0-1 story progress)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("positionBounds")]
-    public PhasePosition? PositionBounds { get; set; } = default!;
-
-}
-
-/// <summary>
-/// An action in the storyline plan
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StorylinePlanAction
-{
-
-    /// <summary>
-    /// Action identifier from action registry
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("actionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ActionId { get; set; } = default!;
-
-    /// <summary>
-    /// Action category (e.g., "conflict", "relationship", "mystery")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable action description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this is an obligatory scene
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isCoreEvent")]
-    public bool IsCoreEvent { get; set; } = default!;
-
-    /// <summary>
-    /// Character/entity roles involved
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("participants")]
-    public System.Collections.Generic.ICollection<string>? Participants { get; set; } = default!;
-
-    /// <summary>
-    /// World state effects of this action
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effects")]
-    public System.Collections.Generic.ICollection<ActionEffect>? Effects { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Effect of an action on world state
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ActionEffect
-{
-
-    /// <summary>
-    /// State key affected
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Key { get; set; } = default!;
-
-    /// <summary>
-    /// New value (as string, caller interprets type)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("value")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Value { get; set; } = default!;
-
-    /// <summary>
-    /// How to apply the effect
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cardinality")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ActionEffectCardinality Cardinality { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Target state for phase completion
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PhaseTargetState
-{
-
-    /// <summary>
-    /// Target spectrum values (spectrum name -&gt; value)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("narrativeState")]
-    public System.Collections.Generic.IDictionary<string, double>? NarrativeState { get; set; } = default!;
-
-    /// <summary>
-    /// Required world state facts
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("facts")]
-    public System.Collections.Generic.IDictionary<string, string>? Facts { get; set; } = default!;
-
-    /// <summary>
-    /// Target story position (0-1)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("position")]
-    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
-    public double? Position { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Position bounds for a phase
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PhasePosition
-{
-
-    /// <summary>
-    /// Start position (0-1)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("start")]
-    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
-    public double Start { get; set; } = default!;
-
-    /// <summary>
-    /// End position (0-1)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("end")]
-    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
-    public double End { get; set; } = default!;
-
-}
-
-/// <summary>
 /// An entity required for the storyline
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -836,29 +583,6 @@ public partial class PlanSummary
     public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ActionEffectCardinality
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"set")]
-    Set = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"add")]
-    Add = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"remove")]
-    Remove = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"increment")]
-    Increment = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"decrement")]
-    Decrement = 4,
-
-}
-#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

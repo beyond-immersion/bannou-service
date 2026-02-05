@@ -17,7 +17,7 @@ public sealed class StorylinePlanPhase
     /// <summary>
     /// Phase name.
     /// </summary>
-    public required string PhaseName { get; init; }
+    public required string Name { get; init; }
 
     /// <summary>
     /// Actions planned for this phase.

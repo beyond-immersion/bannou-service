@@ -1,8 +1,11 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.StorylineStoryteller.Actions;
 using BeyondImmersion.Bannou.StorylineStoryteller.Composition;
+using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
 using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
 using BeyondImmersion.Bannou.StorylineTheory.Actants;
 using BeyondImmersion.Bannou.StorylineTheory.Archives;
+using BeyondImmersion.Bannou.StorylineTheory.Arcs;
 using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -16,12 +19,9 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using SdkActionEffect = BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect;
-using SdkArcType = BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType;
 using SdkEffectCardinality = BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality;
 using SdkPhasePosition = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition;
 using SdkPhaseTargetState = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState;
-using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
-using SdkSpectrumType = BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType;
 using SdkStorylinePlan = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlan;
 using SdkStorylinePlanAction = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction;
 using SdkStorylinePlanPhase = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase;
@@ -604,38 +604,38 @@ public partial class StorylineService : IStorylineService
     /// <summary>
     /// Resolves arc type from request or goal.
     /// </summary>
-    private SdkArcType ResolveArcType(ArcType? requestedArcType, StorylineGoal goal)
+    private static ArcType ResolveArcType(ArcType? requestedArcType, StorylineGoal goal)
     {
         if (requestedArcType.HasValue)
         {
-            return ConvertToSdkArcType(requestedArcType.Value);
+            return requestedArcType.Value;
         }
 
         // Map goal to appropriate arc type
         return goal switch
         {
-            StorylineGoal.Revenge => SdkArcType.Oedipus,       // Fall-rise-fall, seeking vengeance ends badly
-            StorylineGoal.Resurrection => SdkArcType.ManInHole, // Fall then rise, bringing back what was lost
-            StorylineGoal.Legacy => SdkArcType.RagsToRiches,   // Monotonic rise, building lasting impact
-            StorylineGoal.Mystery => SdkArcType.Cinderella,    // Rise-fall-rise, uncovering and resolving
-            StorylineGoal.Peace => SdkArcType.ManInHole,       // Fall then rise, resolving conflicts
-            _ => SdkArcType.ManInHole                          // Default: most common arc
+            StorylineGoal.Revenge => ArcType.Oedipus,       // Fall-rise-fall, seeking vengeance ends badly
+            StorylineGoal.Resurrection => ArcType.ManInHole, // Fall then rise, bringing back what was lost
+            StorylineGoal.Legacy => ArcType.RagsToRiches,   // Monotonic rise, building lasting impact
+            StorylineGoal.Mystery => ArcType.Cinderella,    // Rise-fall-rise, uncovering and resolving
+            StorylineGoal.Peace => ArcType.ManInHole,       // Fall then rise, resolving conflicts
+            _ => ArcType.ManInHole                          // Default: most common arc
         };
     }
 
     /// <summary>
     /// Resolves primary spectrum from story goal.
     /// </summary>
-    private static SdkSpectrumType ResolveSpectrumFromGoal(StorylineGoal goal)
+    private static SpectrumType ResolveSpectrumFromGoal(StorylineGoal goal)
     {
         return goal switch
         {
-            StorylineGoal.Revenge => SdkSpectrumType.JusticeInjustice,
-            StorylineGoal.Resurrection => SdkSpectrumType.LifeDeath,
-            StorylineGoal.Legacy => SdkSpectrumType.SuccessFailure,
-            StorylineGoal.Mystery => SdkSpectrumType.WisdomIgnorance,
-            StorylineGoal.Peace => SdkSpectrumType.LoveHate,
-            _ => SdkSpectrumType.JusticeInjustice
+            StorylineGoal.Revenge => SpectrumType.JusticeInjustice,
+            StorylineGoal.Resurrection => SpectrumType.LifeDeath,
+            StorylineGoal.Legacy => SpectrumType.SuccessFailure,
+            StorylineGoal.Mystery => SpectrumType.WisdomIgnorance,
+            StorylineGoal.Peace => SpectrumType.LoveHate,
+            _ => SpectrumType.JusticeInjustice
         };
     }
 
@@ -716,61 +716,6 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
-    /// Converts API ArcType to SDK ArcType.
-    /// </summary>
-    private static SdkArcType ConvertToSdkArcType(ArcType arcType)
-    {
-        return arcType switch
-        {
-            ArcType.RagsToRiches => SdkArcType.RagsToRiches,
-            ArcType.Tragedy => SdkArcType.Tragedy,
-            ArcType.ManInHole => SdkArcType.ManInHole,
-            ArcType.Icarus => SdkArcType.Icarus,
-            ArcType.Cinderella => SdkArcType.Cinderella,
-            ArcType.Oedipus => SdkArcType.Oedipus,
-            _ => SdkArcType.ManInHole
-        };
-    }
-
-    /// <summary>
-    /// Converts SDK ArcType to API ArcType.
-    /// </summary>
-    private static ArcType ConvertFromSdkArcType(SdkArcType arcType)
-    {
-        return arcType switch
-        {
-            SdkArcType.RagsToRiches => ArcType.RagsToRiches,
-            SdkArcType.Tragedy => ArcType.Tragedy,
-            SdkArcType.ManInHole => ArcType.ManInHole,
-            SdkArcType.Icarus => ArcType.Icarus,
-            SdkArcType.Cinderella => ArcType.Cinderella,
-            SdkArcType.Oedipus => ArcType.Oedipus,
-            _ => ArcType.ManInHole
-        };
-    }
-
-    /// <summary>
-    /// Converts SDK SpectrumType to API SpectrumType.
-    /// </summary>
-    private static SpectrumType ConvertFromSdkSpectrumType(SdkSpectrumType spectrumType)
-    {
-        return spectrumType switch
-        {
-            SdkSpectrumType.LifeDeath => SpectrumType.LifeDeath,
-            SdkSpectrumType.HonorDishonor => SpectrumType.HonorDishonor,
-            SdkSpectrumType.JusticeInjustice => SpectrumType.JusticeInjustice,
-            SdkSpectrumType.FreedomSubjugation => SpectrumType.FreedomSubjugation,
-            SdkSpectrumType.LoveHate => SpectrumType.LoveHate,
-            SdkSpectrumType.RespectShame => SpectrumType.RespectShame,
-            SdkSpectrumType.PowerImpotence => SpectrumType.PowerImpotence,
-            SdkSpectrumType.SuccessFailure => SpectrumType.SuccessFailure,
-            SdkSpectrumType.AltruismSelfishness => SpectrumType.AltruismSelfishness,
-            SdkSpectrumType.WisdomIgnorance => SpectrumType.WisdomIgnorance,
-            _ => SpectrumType.JusticeInjustice
-        };
-    }
-
-    /// <summary>
     /// Builds ComposeResponse from SDK StorylinePlan.
     /// </summary>
     private ComposeResponse BuildComposeResponse(
@@ -788,8 +733,8 @@ public partial class StorylineService : IStorylineService
             Confidence = CalculateConfidence(sdkPlan),
             Goal = goal,
             Genre = sdkPlan.Genre,
-            ArcType = ConvertFromSdkArcType(sdkPlan.ArcType),
-            PrimarySpectrum = ConvertFromSdkSpectrumType(sdkPlan.PrimarySpectrum),
+            ArcType = sdkPlan.ArcType,
+            PrimarySpectrum = sdkPlan.PrimarySpectrum,
             Themes = InferThemes(goal, sdkPlan).ToList(),
             Phases = phases,
             EntitiesToSpawn = null, // MVP: callers provide archive IDs, no entity spawning
@@ -958,27 +903,27 @@ public partial class StorylineService : IStorylineService
         // Additional themes based on arc type
         switch (plan.ArcType)
         {
-            case SdkArcType.Tragedy:
+            case ArcType.Tragedy:
                 yield return "loss";
                 yield return "fate";
                 break;
-            case SdkArcType.RagsToRiches:
+            case ArcType.RagsToRiches:
                 yield return "transformation";
                 yield return "hope";
                 break;
-            case SdkArcType.ManInHole:
+            case ArcType.ManInHole:
                 yield return "resilience";
                 yield return "recovery";
                 break;
-            case SdkArcType.Icarus:
+            case ArcType.Icarus:
                 yield return "hubris";
                 yield return "warning";
                 break;
-            case SdkArcType.Cinderella:
+            case ArcType.Cinderella:
                 yield return "perseverance";
                 yield return "triumph";
                 break;
-            case SdkArcType.Oedipus:
+            case ArcType.Oedipus:
                 yield return "fate";
                 yield return "inevitability";
                 break;

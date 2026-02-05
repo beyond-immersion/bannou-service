@@ -138,36 +138,38 @@ components:
         peace: Resolving conflicts and finding harmony
 
     ArcType:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType
       type: string
       enum:
-      - rags_to_riches
-      - tragedy
-      - man_in_hole
-      - icarus
-      - cinderella
-      - oedipus
+      - RagsToRiches
+      - Tragedy
+      - ManInHole
+      - Icarus
+      - Cinderella
+      - Oedipus
       description: |
         Emotional arc shapes from Reagan et al. research.
-        rags_to_riches: Rise (1)
-        tragedy: Fall (2)
-        man_in_hole: Fall then rise (3)
-        icarus: Rise then fall (4)
-        cinderella: Rise, fall, rise (5)
-        oedipus: Fall, rise, fall (6)
+        RagsToRiches: Rise (1)
+        Tragedy: Fall (2)
+        ManInHole: Fall then rise (3)
+        Icarus: Rise then fall (4)
+        Cinderella: Rise, fall, rise (5)
+        Oedipus: Fall, rise, fall (6)
 
     SpectrumType:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType
       type: string
       enum:
-      - life_death
-      - honor_dishonor
-      - justice_injustice
-      - freedom_subjugation
-      - love_hate
-      - respect_shame
-      - power_impotence
-      - success_failure
-      - altruism_selfishness
-      - wisdom_ignorance
+      - LifeDeath
+      - HonorDishonor
+      - JusticeInjustice
+      - FreedomSubjugation
+      - LoveHate
+      - RespectShame
+      - PowerImpotence
+      - SuccessFailure
+      - AltruismSelfishness
+      - WisdomIgnorance
       description: |
         The 10 Story Grid Life Value spectrums.
         These are bipolar axes for emotional progression.
@@ -430,17 +432,20 @@ components:
           description: Total matching plans
 
     # =========================================================================
-    # Supporting Models
+    # Supporting Models (SDK types exposed via x-sdk-type)
     # =========================================================================
 
     StorylinePlanPhase:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase
       type: object
       additionalProperties: false
-      description: A phase in the storyline plan
+      description: A phase in the storyline plan (SDK type)
       required:
       - phaseNumber
       - name
       - actions
+      - targetState
+      - positionBounds
       properties:
         phaseNumber:
           type: integer
@@ -448,7 +453,7 @@ components:
           description: 1-based phase number
         name:
           type: string
-          description: Phase name (e.g., "discovery", "confrontation", "resolution")
+          description: Phase name
         actions:
           type: array
           items:
@@ -456,112 +461,144 @@ components:
           description: Actions in this phase
         targetState:
           $ref: '#/components/schemas/PhaseTargetState'
-          nullable: true
-          description: Target emotional/world state for phase completion
+          description: Target state for phase completion
         positionBounds:
           $ref: '#/components/schemas/PhasePosition'
-          nullable: true
-          description: Position bounds for this phase (0-1 story progress)
+          description: Position bounds for this phase
 
     StorylinePlanAction:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction
       type: object
       additionalProperties: false
-      description: An action in the storyline plan
+      description: A planned action in the storyline (SDK type)
       required:
       - actionId
-      - category
-      - description
+      - sequenceIndex
+      - effects
+      - narrativeEffect
+      - isCoreEvent
       properties:
         actionId:
           type: string
           description: Action identifier from action registry
-        category:
-          type: string
-          description: Action category (e.g., "conflict", "relationship", "mystery")
-        description:
-          type: string
-          description: Human-readable action description
-        isCoreEvent:
-          type: boolean
-          description: Whether this is an obligatory scene
-        participants:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: Character/entity roles involved
+        sequenceIndex:
+          type: integer
+          description: Sequence index within the plan
         effects:
           type: array
           items:
             $ref: '#/components/schemas/ActionEffect'
-          nullable: true
           description: World state effects of this action
+        narrativeEffect:
+          $ref: '#/components/schemas/NarrativeEffect'
+          description: Narrative effect on the emotional arc
+        isCoreEvent:
+          type: boolean
+          description: Whether this is an obligatory scene
+        chainedFrom:
+          type: string
+          nullable: true
+          description: If chained, the ID of the action it was chained from
 
     ActionEffect:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect
       type: object
       additionalProperties: false
-      description: Effect of an action on world state
+      description: Effect of an action on world state (SDK type)
       required:
       - key
       - value
       properties:
         key:
           type: string
-          description: State key affected
+          description: State key to modify
         value:
-          type: string
-          description: New value (as string, caller interprets type)
+          description: New value to set (any type)
         cardinality:
+          $ref: '#/components/schemas/EffectCardinality'
+          description: How the effect is applied
+
+    EffectCardinality:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality
+      type: string
+      enum:
+      - Exclusive
+      - Additive
+      description: |
+        Cardinality for effect application.
+        Exclusive: Replaces existing value at key
+        Additive: Adds to collection at key
+
+    NarrativeEffect:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect
+      type: object
+      additionalProperties: false
+      description: Narrative effect on the emotional arc (SDK type)
+      properties:
+        primarySpectrumDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Delta to apply to the primary spectrum
+        secondarySpectrumDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Delta to apply to the secondary spectrum
+        positionAdvance:
           type: string
-          enum: [set, add, remove, increment, decrement]
-          description: How to apply the effect
+          nullable: true
+          description: Position advance type (micro, standard, macro)
 
     PhaseTargetState:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState
       type: object
       additionalProperties: false
-      description: Target state for phase completion
+      description: Target state for phase completion (SDK type)
+      required:
+      - minPrimarySpectrum
+      - maxPrimarySpectrum
       properties:
-        narrativeState:
-          type: object
-          additionalProperties:
-            type: number
-            format: double
-          nullable: true
-          description: Target spectrum values (spectrum name -> value)
-        facts:
-          type: object
-          additionalProperties:
-            type: string
-          nullable: true
-          description: Required world state facts
-        position:
+        minPrimarySpectrum:
           type: number
           format: double
-          minimum: 0
-          maximum: 1
+          description: Minimum primary spectrum value for this phase
+        maxPrimarySpectrum:
+          type: number
+          format: double
+          description: Maximum primary spectrum value for this phase
+        rangeDescription:
+          type: string
           nullable: true
-          description: Target story position (0-1)
+          description: Human-readable description of this state range
 
     PhasePosition:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition
       type: object
       additionalProperties: false
-      description: Position bounds for a phase
+      description: Phase position constraints from Save the Cat beat timing (SDK type)
       required:
-      - start
-      - end
+      - stcCenter
+      - floor
+      - ceiling
+      - validationBand
       properties:
-        start:
+        stcCenter:
           type: number
           format: double
-          minimum: 0
-          maximum: 1
-          description: Start position (0-1)
-        end:
+          description: Target position from STC beat timing
+        floor:
           type: number
           format: double
-          minimum: 0
-          maximum: 1
-          description: End position (0-1)
+          description: Earliest advancement position (prevents speed-running)
+        ceiling:
+          type: number
+          format: double
+          description: Forced advancement position (prevents deadlock)
+        validationBand:
+          type: number
+          format: double
+          description: Validation tolerance (±)
 
     EntityRequirement:
       type: object

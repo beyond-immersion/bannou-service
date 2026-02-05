@@ -69,7 +69,7 @@ public sealed class StoryGoapPlanner
         var phasePlan = new StorylinePlanPhase
         {
             PhaseNumber = targetPhase.PhaseNumber,
-            PhaseName = targetPhase.Name,
+            Name = targetPhase.Name,
             Actions = planActions.ToArray(),
             TargetState = targetPhase.TargetState,
             PositionBounds = targetPhase.Position
