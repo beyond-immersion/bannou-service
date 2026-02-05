@@ -24,6 +24,7 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Storyline;
+using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -152,30 +153,6 @@ public enum SpectrumType
 
     [System.Runtime.Serialization.EnumMember(Value = @"wisdom_ignorance")]
     WisdomIgnorance = 9,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// GOAP planning urgency level affecting search parameters.
-/// <br/>low: More iterations, wider beam (1000/20)
-/// <br/>medium: Balanced (500/15)
-/// <br/>high: Fewer iterations, narrower beam (200/10)
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlanningUrgency
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"low")]
-    Low = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"medium")]
-    Medium = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"high")]
-    High = 2,
 
 }
 #pragma warning restore CS1591

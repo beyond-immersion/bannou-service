@@ -71,6 +71,8 @@
   <ItemGroup>
     <ProjectReference Include="../sdks/core/BeyondImmersion.Bannou.Core.csproj" />
     <ProjectReference Include="../sdks/music-theory/BeyondImmersion.Bannou.MusicTheory.csproj" />
+    <ProjectReference Include="../sdks/storyline-theory/BeyondImmersion.Bannou.StorylineTheory.csproj" />
+    <ProjectReference Include="../sdks/storyline-storyteller/BeyondImmersion.Bannou.StorylineStoryteller.csproj" />
   </ItemGroup>
 
 

@@ -173,16 +173,17 @@ components:
         These are bipolar axes for emotional progression.
 
     PlanningUrgency:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency
       type: string
       enum:
-      - low
-      - medium
-      - high
+      - Low
+      - Medium
+      - High
       description: |
         GOAP planning urgency level affecting search parameters.
-        low: More iterations, wider beam (1000/20)
-        medium: Balanced (500/15)
-        high: Fewer iterations, narrower beam (200/10)
+        Low: More iterations, wider beam (1000/20)
+        Medium: Balanced (500/15)
+        High: Fewer iterations, narrower beam (200/10)
 
     # =========================================================================
     # Request Models

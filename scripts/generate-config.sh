@@ -90,6 +90,7 @@ try:
     # Look for enums in the corresponding API schema and generated models
     api_schema_path = f'../schemas/{service_name}-api.yaml'
     existing_api_enums = set()
+    api_schema = None
     try:
         with open(api_schema_path, 'r') as api_f:
             api_schema = yaml.safe_load(api_f)
@@ -103,6 +104,9 @@ try:
 
     # Track enum types to generate
     enum_types = []
+
+    # Track SDK namespaces needed for x-sdk-type references
+    sdk_namespaces = set()
 
     # Extract configuration from x-service-configuration section
     config_properties = []
@@ -145,6 +149,18 @@ try:
                 # Mark as enum for default value handling
                 prop_enum = True  # Signal that this is an enum type
                 print(f'# NOTE: Using \$ref enum {ref_type_name} from {prop_ref}', file=sys.stderr)
+
+                # Check if the referenced type has x-sdk-type (use SDK type directly)
+                if api_schema and 'components' in api_schema and 'schemas' in api_schema['components']:
+                    ref_schema = api_schema['components']['schemas'].get(ref_type_name)
+                    if ref_schema and 'x-sdk-type' in ref_schema:
+                        sdk_type = ref_schema['x-sdk-type']
+                        # Extract namespace (everything before the last dot)
+                        last_dot = sdk_type.rfind('.')
+                        if last_dot > 0:
+                            sdk_namespace = sdk_type[:last_dot]
+                            sdk_namespaces.add(sdk_namespace)
+                            print(f'# NOTE: Adding SDK namespace {sdk_namespace} for x-sdk-type {sdk_type}', file=sys.stderr)
             # Check if this is an inline enum property
             elif prop_enum and prop_type == 'string':
                 # Generate enum type name from property name
@@ -260,8 +276,13 @@ try:
 using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Configuration;''')
 
+    # Add SDK namespace usings for x-sdk-type references
+    for ns in sorted(sdk_namespaces):
+        print(f'using {ns};')
+
+    print(f'''
 #nullable enable
 
 namespace BeyondImmersion.BannouService.{service_pascal};

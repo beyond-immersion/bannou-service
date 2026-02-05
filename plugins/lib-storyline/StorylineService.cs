@@ -20,7 +20,7 @@ using SdkArcType = BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType;
 using SdkEffectCardinality = BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality;
 using SdkPhasePosition = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition;
 using SdkPhaseTargetState = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState;
-using SdkPlanningUrgency = BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency;
+using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
 using SdkSpectrumType = BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType;
 using SdkStorylinePlan = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlan;
 using SdkStorylinePlanAction = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction;
@@ -593,20 +593,12 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
-    /// Resolves planning urgency from request or configuration, converting to SDK type.
+    /// Resolves planning urgency from request or configuration.
     /// </summary>
-    private SdkPlanningUrgency ResolveUrgency(PlanningUrgency? requestedUrgency)
+    private PlanningUrgency ResolveUrgency(PlanningUrgency? requestedUrgency)
     {
         // Request override takes precedence, then config default
-        var urgency = requestedUrgency ?? _configuration.DefaultPlanningUrgency;
-
-        return urgency switch
-        {
-            PlanningUrgency.Low => SdkPlanningUrgency.Low,
-            PlanningUrgency.Medium => SdkPlanningUrgency.Medium,
-            PlanningUrgency.High => SdkPlanningUrgency.High,
-            _ => SdkPlanningUrgency.Medium
-        };
+        return requestedUrgency ?? _configuration.DefaultPlanningUrgency;
     }
 
     /// <summary>

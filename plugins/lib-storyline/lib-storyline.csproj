@@ -17,16 +17,8 @@
     <ServiceLib>storyline</ServiceLib>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Infrastructure libs (lib-state, lib-messaging, lib-mesh) are accessed via DI interfaces -->
-    <!-- from bannou-service (IStateStoreFactory, IMessageBus, I*Client, etc.) -->
-    <!-- DO NOT add ProjectReferences to infrastructure libs - use injected interfaces instead -->
-    <!-- Add plugin-to-plugin references here ONLY for non-infrastructure cross-plugin types -->
-
-    <!-- SDK references - pure computation engines for storyline generation -->
-    <ProjectReference Include="../../sdks/storyline-theory/BeyondImmersion.Bannou.StorylineTheory.csproj" />
-    <ProjectReference Include="../../sdks/storyline-storyteller/BeyondImmersion.Bannou.StorylineStoryteller.csproj" />
-  </ItemGroup>
+  <!-- SDK references come transitively from bannou-service (which references both storyline SDKs) -->
+  <!-- No additional ProjectReferences needed -->
 
   <ItemGroup>
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
