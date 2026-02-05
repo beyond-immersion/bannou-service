@@ -431,7 +431,7 @@ components:
       type: object
       description: Request to create a new quest definition with objectives and rewards
       additionalProperties: false
-      required: [code, name, objectives, gameServiceId]
+      required: [code, name, objectives]
       properties:
         code:
           type: string

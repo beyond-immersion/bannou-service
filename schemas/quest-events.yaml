@@ -56,7 +56,6 @@ components:
         - definitionId
         - questCode
         - questorCharacterIds
-        - gameServiceId
       properties:
         eventId:
           type: string
@@ -96,11 +95,9 @@ components:
         - eventId
         - timestamp
         - questInstanceId
-        - questCode
         - objectiveCode
         - currentCount
         - requiredCount
-        - isComplete
       properties:
         eventId:
           type: string
@@ -138,10 +135,8 @@ components:
         - eventId
         - timestamp
         - questInstanceId
-        - definitionId
         - questCode
         - questorCharacterIds
-        - gameServiceId
       properties:
         eventId:
           type: string
@@ -182,7 +177,6 @@ components:
         - timestamp
         - questInstanceId
         - questCode
-        - questorCharacterIds
         - reason
       properties:
         eventId:

@@ -331,8 +331,6 @@ public partial class CreateQuestDefinitionRequest
     /// Game service this quest belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GameServiceId { get; set; } = default!;
 
 }
