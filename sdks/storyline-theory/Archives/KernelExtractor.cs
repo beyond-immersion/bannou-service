@@ -48,7 +48,7 @@ public sealed class KernelExtractor
         // Score and adjust significance based on cross-kernel analysis
         foreach (var kernel in kernels)
         {
-            _scorer.AdjustSignificance(kernel, kernels);
+            _scorer.AdjustSignificance(kernel);
         }
 
         return kernels

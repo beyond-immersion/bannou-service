@@ -8,7 +8,7 @@ namespace BeyondImmersion.Bannou.StorylineTheory.Archives;
 /// </summary>
 public sealed class ArchiveBundle
 {
-    private readonly Dictionary<string, object> _entries = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, object> _entries = new();
 
     /// <summary>
     /// Adds an entry to the bundle.
@@ -48,18 +48,4 @@ public sealed class ArchiveBundle
     {
         return _entries.Values.OfType<ArchiveBundle>();
     }
-
-    /// <summary>
-    /// Gets all entry keys in this bundle.
-    /// </summary>
-    /// <returns>Collection of entry keys.</returns>
-    public IEnumerable<string> GetKeys()
-    {
-        return _entries.Keys;
-    }
-
-    /// <summary>
-    /// Gets the number of entries in this bundle.
-    /// </summary>
-    public int Count => _entries.Count;
 }

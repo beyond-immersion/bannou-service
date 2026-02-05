@@ -91,17 +91,6 @@
             </summary>
             <returns>Collection of nested archive bundles, or empty if none exist.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle.GetKeys">
-            <summary>
-            Gets all entry keys in this bundle.
-            </summary>
-            <returns>Collection of entry keys.</returns>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle.Count">
-            <summary>
-            Gets the number of entries in this bundle.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor">
             <summary>
             Extracts narrative-relevant data from archives using opaque keys.
@@ -517,13 +506,12 @@
             </para>
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelScorer.AdjustSignificance(BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelScorer.AdjustSignificance(BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel)">
             <summary>
-            Adjust a kernel's significance based on its context within a kernel set.
+            Adjust a kernel's significance based on cross-kernel analysis.
             Call this after initial extraction to refine significance scores.
             </summary>
             <param name="kernel">The kernel to adjust.</param>
-            <param name="allKernels">All kernels in the set for cross-reference.</param>
             <remarks>
             Adjustment factors include:
             - Character overlap with other kernels (shared story threads)
@@ -547,17 +535,6 @@
             connectivity feel more coherent and satisfying. This method measures
             how well a set of kernels could combine into a unified narrative.
             </remarks>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelScorer.SelectBestKernels(System.Collections.Generic.IEnumerable{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel},System.String,System.Nullable{BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType},System.Int32)">
-            <summary>
-            Find the best kernel subset for a given story goal.
-            Selects kernels that maximize narrative potential for the target genre and arc.
-            </summary>
-            <param name="allKernels">All available kernels.</param>
-            <param name="targetGenre">The desired genre (e.g., "action", "love", "horror").</param>
-            <param name="targetArc">The desired emotional arc, or null for any arc.</param>
-            <param name="maxKernels">Maximum number of kernels to select.</param>
-            <returns>Ordered list of kernels best suited for the story goal.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType">
             <summary>

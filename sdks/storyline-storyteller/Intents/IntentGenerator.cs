@@ -8,6 +8,7 @@ namespace BeyondImmersion.Bannou.StorylineStoryteller.Intents;
 
 /// <summary>
 /// Generates story-level intents from plan execution.
+/// SDK defines intent vocabulary; plugin dispatches to appropriate service clients.
 /// </summary>
 public sealed class IntentGenerator
 {
@@ -23,99 +24,8 @@ public sealed class IntentGenerator
         StoryPhase currentPhase,
         WorldState currentState)
     {
-        var intents = new List<StorylineIntent>();
-
-        // Generate intents based on planned actions
-        foreach (var phase in plan.Phases)
-        {
-            foreach (var action in phase.Actions)
-            {
-                // Map action effects to intents
-                var actionIntents = MapActionToIntents(action, currentState);
-                intents.AddRange(actionIntents);
-            }
-        }
-
-        return intents.OrderByDescending(i => i.Urgency);
-    }
-
-    private static IEnumerable<StorylineIntent> MapActionToIntents(
-        StorylinePlanAction action,
-        WorldState currentState)
-    {
-        // Basic intent mapping based on action effects
-        // Full implementation would analyze action semantics more deeply
-
-        var intents = new List<StorylineIntent>();
-
-        foreach (var effect in action.Effects)
-        {
-            // Map effect keys to intent types
-            var intent = MapEffectToIntent(effect.Key, effect.Value, action);
-            if (intent != null)
-            {
-                intents.Add(intent);
-            }
-        }
-
-        return intents;
-    }
-
-    private static StorylineIntent? MapEffectToIntent(string effectKey, object effectValue, StorylinePlanAction action)
-    {
-        // Pattern matching on effect keys to determine intent type
-        // This is a simplified mapping - full implementation would be more sophisticated
-
-        if (effectKey.Contains("encounter", StringComparison.OrdinalIgnoreCase))
-        {
-            return new StorylineIntent
-            {
-                Type = StoryIntentType.TriggerEncounter,
-                Parameters = new Dictionary<string, object>
-                {
-                    ["action_id"] = action.ActionId,
-                    ["effect_key"] = effectKey,
-                    ["effect_value"] = effectValue
-                },
-                Urgency = action.IsCoreEvent ? 1.0 : 0.5,
-                TargetRole = null
-            };
-        }
-
-        if (effectKey.Contains("relationship", StringComparison.OrdinalIgnoreCase))
-        {
-            return new StorylineIntent
-            {
-                Type = StoryIntentType.ModifyRelationship,
-                Parameters = new Dictionary<string, object>
-                {
-                    ["action_id"] = action.ActionId,
-                    ["effect_key"] = effectKey,
-                    ["effect_value"] = effectValue
-                },
-                Urgency = 0.6,
-                TargetRole = null
-            };
-        }
-
-        if (effectKey.Contains("behavior", StringComparison.OrdinalIgnoreCase) ||
-            effectKey.Contains("goal", StringComparison.OrdinalIgnoreCase))
-        {
-            return new StorylineIntent
-            {
-                Type = StoryIntentType.AssignBehavior,
-                Parameters = new Dictionary<string, object>
-                {
-                    ["action_id"] = action.ActionId,
-                    ["effect_key"] = effectKey,
-                    ["effect_value"] = effectValue
-                },
-                Urgency = 0.7,
-                TargetRole = null
-            };
-        }
-
-        // No matching intent type
-        return null;
+        // Implementation awaits integration with lib-storyline plugin.
+        // Intent generation logic will map plan actions to service intents.
+        return [];
     }
 }
