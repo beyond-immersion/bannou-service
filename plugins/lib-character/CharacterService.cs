@@ -936,6 +936,12 @@ public partial class CharacterService : ICharacterService
 
             var compressData = new CharacterBaseArchive
             {
+                // ResourceArchiveBase fields
+                ResourceId = character.CharacterId,
+                ResourceType = "character",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                // Service-specific fields
                 CharacterId = character.CharacterId,
                 Name = character.Name,
                 RealmId = character.RealmId,
@@ -944,7 +950,6 @@ public partial class CharacterService : ICharacterService
                 DeathDate = character.DeathDate.Value,
                 Status = character.Status,
                 FamilySummary = familySummary,
-                CompressedAt = DateTimeOffset.UtcNow,
                 CreatedAt = character.CreatedAt,
                 UpdatedAt = character.UpdatedAt
             };

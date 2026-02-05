@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Common;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
@@ -805,6 +806,288 @@ public partial class RealmHistoryService : IRealmHistoryService
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    // ============================================================================
+    // Archive Methods (for lib-resource compression)
+    // ============================================================================
+
+    /// <summary>
+    /// Gets realm history data for compression during realm archival.
+    /// Called by Resource service during realm compression via compression callback.
+    /// </summary>
+    public async Task<(StatusCodes, RealmHistoryArchive?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting compress data for realm {RealmId}", body.RealmId);
+
+        try
+        {
+            // Get participations using helper
+            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.RealmId.ToString(),
+                cancellationToken);
+
+            var participations = participationRecords
+                .Select(MapToRealmHistoricalParticipation)
+                .OrderByDescending(p => p.EventDate)
+                .ToList();
+
+            // Get lore using helper
+            var loreData = await _loreHelper.GetAsync(body.RealmId.ToString(), cancellationToken);
+
+            RealmLoreResponse? loreResponse = null;
+            if (loreData != null)
+            {
+                loreResponse = new RealmLoreResponse
+                {
+                    RealmId = body.RealmId,
+                    Elements = loreData.Elements.Select(MapToRealmLoreElement).ToList(),
+                    CreatedAt = TimestampHelper.FromUnixSeconds(loreData.CreatedAtUnix),
+                    UpdatedAt = TimestampHelper.FromUnixSeconds(loreData.UpdatedAtUnix)
+                };
+            }
+
+            // Return 404 only if BOTH are missing
+            if (participations.Count == 0 && loreData == null)
+            {
+                _logger.LogDebug("No history data found for realm {RealmId}", body.RealmId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Generate text summaries for the archive
+            var summaries = await GenerateSummariesForArchiveAsync(body.RealmId, participations, loreData, cancellationToken);
+
+            var response = new RealmHistoryArchive
+            {
+                // ResourceArchiveBase fields
+                ResourceId = body.RealmId,
+                ResourceType = "realm-history",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                // Service-specific fields
+                RealmId = body.RealmId,
+                HasParticipations = participations.Count > 0,
+                Participations = participations,
+                HasLore = loreData != null,
+                Lore = loreResponse,
+                Summaries = summaries
+            };
+
+            _logger.LogInformation(
+                "Compress data retrieved for realm {RealmId}: participations={ParticipationCount}, hasLore={HasLore}",
+                body.RealmId, participations.Count, response.HasLore);
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting compress data for realm {RealmId}", body.RealmId);
+            await _messageBus.TryPublishErrorAsync(
+                "realm-history",
+                "GetCompressData",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/realm-history/get-compress-data",
+                details: new { body.RealmId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Restores realm history data from a compressed archive.
+    /// Called by Resource service during realm decompression via decompression callback.
+    /// </summary>
+    public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Restoring history data from archive for realm {RealmId}", body.RealmId);
+
+        var participationsRestored = 0;
+        var loreRestored = false;
+
+        try
+        {
+            // Decompress the archive data
+            RealmHistoryArchive archiveData;
+            try
+            {
+                var compressedBytes = Convert.FromBase64String(body.Data);
+                var jsonData = DecompressJsonData(compressedBytes);
+                archiveData = BannouJson.Deserialize<RealmHistoryArchive>(jsonData)
+                    ?? throw new InvalidOperationException("Deserialized archive data is null");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to decompress archive data for realm {RealmId}", body.RealmId);
+                return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
+                {
+                    RealmId = body.RealmId,
+                    ParticipationsRestored = 0,
+                    LoreRestored = false,
+                    Success = false,
+                    ErrorMessage = $"Invalid archive data: {ex.Message}"
+                });
+            }
+
+            // Restore participations
+            if (archiveData.HasParticipations && archiveData.Participations.Count > 0)
+            {
+                foreach (var participation in archiveData.Participations)
+                {
+                    var participationData = new RealmParticipationData
+                    {
+                        ParticipationId = participation.ParticipationId,
+                        RealmId = participation.RealmId,
+                        EventId = participation.EventId,
+                        EventName = participation.EventName,
+                        EventCategory = participation.EventCategory,
+                        Role = participation.Role,
+                        EventDateUnix = participation.EventDate.ToUnixTimeSeconds(),
+                        Impact = participation.Impact,
+                        Metadata = participation.Metadata,
+                        CreatedAtUnix = participation.CreatedAt.ToUnixTimeSeconds()
+                    };
+
+                    await _participationHelper.AddRecordAsync(
+                        participationData,
+                        participation.ParticipationId.ToString(),
+                        participation.RealmId.ToString(),
+                        participation.EventId.ToString(),
+                        cancellationToken);
+
+                    // Re-register realm reference
+                    await RegisterRealmReferenceAsync(participation.ParticipationId.ToString(), participation.RealmId, cancellationToken);
+
+                    participationsRestored++;
+                }
+            }
+
+            // Restore lore
+            if (archiveData.HasLore && archiveData.Lore != null)
+            {
+                var elementDataList = archiveData.Lore.Elements.Select(MapToRealmLoreElementData).ToList();
+                await _loreHelper.SetAsync(
+                    body.RealmId.ToString(),
+                    elementDataList,
+                    replaceExisting: true,
+                    cancellationToken);
+
+                // Re-register realm reference for lore
+                await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
+
+                loreRestored = true;
+            }
+
+            _logger.LogInformation(
+                "Restored history data for realm {RealmId}: {ParticipationsRestored} participations, lore={LoreRestored}",
+                body.RealmId, participationsRestored, loreRestored);
+
+            return (StatusCodes.OK, new RestoreFromArchiveResponse
+            {
+                RealmId = body.RealmId,
+                ParticipationsRestored = participationsRestored,
+                LoreRestored = loreRestored,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring history data from archive for realm {RealmId}", body.RealmId);
+            await _messageBus.TryPublishErrorAsync(
+                "realm-history",
+                "RestoreFromArchive",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/realm-history/restore-from-archive",
+                details: new { body.RealmId, participationsRestored, loreRestored },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    private async Task<RealmHistorySummaryResponse> GenerateSummariesForArchiveAsync(
+        Guid realmId,
+        List<RealmHistoricalParticipation> participations,
+        RealmLoreData? loreData,
+        CancellationToken cancellationToken)
+    {
+        var keyLorePoints = new List<string>();
+        var majorHistoricalEvents = new List<string>();
+
+        // Generate lore summaries
+        if (loreData != null)
+        {
+            var topElements = loreData.Elements
+                .OrderByDescending(e => e.Strength)
+                .Take(10);
+
+            foreach (var element in topElements)
+            {
+                var summary = GenerateLoreSummary(element);
+                if (!string.IsNullOrEmpty(summary))
+                {
+                    keyLorePoints.Add(summary);
+                }
+            }
+        }
+
+        // Generate event summaries
+        if (participations.Count > 0)
+        {
+            var topParticipations = participations
+                .OrderByDescending(p => p.Impact)
+                .Take(10);
+
+            foreach (var participation in topParticipations)
+            {
+                var summary = GenerateEventSummaryFromModel(participation);
+                if (!string.IsNullOrEmpty(summary))
+                {
+                    majorHistoricalEvents.Add(summary);
+                }
+            }
+        }
+
+        return new RealmHistorySummaryResponse
+        {
+            RealmId = realmId,
+            KeyLorePoints = keyLorePoints,
+            MajorHistoricalEvents = majorHistoricalEvents
+        };
+    }
+
+    private static string GenerateEventSummaryFromModel(RealmHistoricalParticipation participation)
+    {
+        var roleVerb = participation.Role switch
+        {
+            RealmEventRole.ORIGIN => "originated",
+            RealmEventRole.AGGRESSOR => "instigated",
+            RealmEventRole.DEFENDER => "defended against",
+            RealmEventRole.MEDIATOR => "mediated",
+            RealmEventRole.AFFECTED => "was affected by",
+            RealmEventRole.BENEFICIARY => "benefited from",
+            RealmEventRole.INSTIGATOR => "instigated",
+            RealmEventRole.NEUTRAL_PARTY => "observed",
+            _ => "participated in"
+        };
+
+        return $"{participation.EventName} ({roleVerb})";
+    }
+
+    private static string DecompressJsonData(byte[] compressedBytes)
+    {
+        using var input = new System.IO.MemoryStream(compressedBytes);
+        using var gzip = new System.IO.Compression.GZipStream(input, System.IO.Compression.CompressionMode.Decompress);
+        using var reader = new System.IO.StreamReader(gzip, System.Text.Encoding.UTF8);
+        return reader.ReadToEnd();
     }
 
     // ============================================================================

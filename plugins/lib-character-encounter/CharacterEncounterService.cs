@@ -1616,12 +1616,17 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             var response = new CharacterEncounterArchive
             {
+                // ResourceArchiveBase fields
+                ResourceId = body.CharacterId,
+                ResourceType = "character-encounter",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                // Service-specific fields
                 CharacterId = body.CharacterId,
                 HasEncounters = encounters.Count > 0,
                 EncounterCount = encounters.Count,
                 Encounters = encounters,
-                AggregateSentiment = aggregateSentiment.Count > 0 ? aggregateSentiment : null,
-                CompressedAt = DateTimeOffset.UtcNow
+                AggregateSentiment = aggregateSentiment.Count > 0 ? aggregateSentiment : null
             };
 
             _logger.LogInformation(

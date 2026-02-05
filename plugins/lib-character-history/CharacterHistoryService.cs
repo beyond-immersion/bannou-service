@@ -945,13 +945,18 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             var response = new CharacterHistoryArchive
             {
+                // ResourceArchiveBase fields
+                ResourceId = body.CharacterId,
+                ResourceType = "character-history",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                // Service-specific fields
                 CharacterId = body.CharacterId,
                 HasParticipations = participations.Count > 0,
                 Participations = participations,
                 HasBackstory = backstoryData != null,
                 Backstory = backstoryResponse,
-                Summaries = summaries,
-                CompressedAt = DateTimeOffset.UtcNow
+                Summaries = summaries
             };
 
             _logger.LogInformation(

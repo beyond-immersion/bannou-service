@@ -1027,12 +1027,17 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             var response = new CharacterPersonalityArchive
             {
+                // ResourceArchiveBase fields
+                ResourceId = body.CharacterId,
+                ResourceType = "character-personality",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                // Service-specific fields
                 CharacterId = body.CharacterId,
                 HasPersonality = personalityData != null,
                 Personality = personalityData != null ? MapToPersonalityResponse(personalityData) : null,
                 HasCombatPreferences = combatData != null,
-                CombatPreferences = combatData != null ? MapToCombatPreferencesResponse(combatData) : null,
-                CompressedAt = DateTimeOffset.UtcNow
+                CombatPreferences = combatData != null ? MapToCombatPreferencesResponse(combatData) : null
             };
 
             _logger.LogInformation(

@@ -1721,6 +1721,12 @@ public class CharacterPersonalityServiceTests
         var characterId = Guid.NewGuid();
         var archiveData = new CharacterPersonalityArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-personality",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasPersonality = true,
             Personality = new PersonalityResponse
@@ -1749,8 +1755,7 @@ public class CharacterPersonalityServiceTests
                 },
                 Version = 1,
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
-            },
-            CompressedAt = DateTimeOffset.UtcNow
+            }
         };
 
         var compressedData = CompressArchiveData(archiveData);
@@ -1796,6 +1801,12 @@ public class CharacterPersonalityServiceTests
         var characterId = Guid.NewGuid();
         var archiveData = new CharacterPersonalityArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-personality",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasPersonality = true,
             Personality = new PersonalityResponse
@@ -1809,8 +1820,7 @@ public class CharacterPersonalityServiceTests
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
             },
             HasCombatPreferences = false,
-            CombatPreferences = null,
-            CompressedAt = DateTimeOffset.UtcNow
+            CombatPreferences = null
         };
 
         var compressedData = CompressArchiveData(archiveData);
