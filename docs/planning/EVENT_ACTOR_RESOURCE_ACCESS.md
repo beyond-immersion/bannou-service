@@ -1,6 +1,6 @@
 # Event Actor Resource Access Pattern
 
-> **Status**: Design / Open Questions
+> **Status**: Design / Most Questions Resolved
 > **Created**: 2026-02-05
 > **Priority**: High
 > **Last Updated**: 2026-02-05
@@ -341,42 +341,63 @@ condition: "${candidate.personality.aggression} > 0.5"
 
 The template declaration enables compile-time validation that ABML only accesses declared resource types.
 
-### Q2: Provider Naming and Namespace
+### Q2: Provider Naming and Namespace ✅ CLARIFIED
 
-How should the provider expose archive entries?
+~~How should the provider expose archive entries?~~
 
-**Option A: Flat with prefix stripping**
+**Resolution**: The `IResourceArchive` interface already provides proper typing and nesting.
+
+**IResourceArchive interface** (`bannou-service/Archives/IResourceArchive.cs`):
+```csharp
+public interface IResourceArchive
+{
+    Guid ResourceId { get; }
+    string ResourceType { get; }           // "character", "character-personality", etc.
+    DateTimeOffset ArchivedAt { get; }
+    int SchemaVersion { get; }
+    IReadOnlyList<IResourceArchive> NestedArchives { get; }  // Hierarchical!
+}
 ```
-sourceType: "character-personality" → namespace: "personality"
-sourceType: "character-history" → namespace: "history"
 
-${candidate.personality.aggression}
-${candidate.history.backstory.origin}
+**Key insight**: Archives are **hierarchical via `NestedArchives`**, not just flat entries:
 ```
-- Pro: Clean, intuitive
-- Con: Assumes consistent naming convention
+CharacterArchive (IResourceArchive)
+├── ResourceType: "character"
+├── [character-specific data]
+└── NestedArchives:
+    ├── CharacterPersonalityArchive (IResourceArchive)
+    │   ├── ResourceType: "character-personality"
+    │   └── [personality data]
+    ├── CharacterHistoryArchive (IResourceArchive)
+    │   ├── ResourceType: "character-history"
+    │   └── [history data]
+    └── CharacterEncounterArchive (IResourceArchive)
+        ├── ResourceType: "character-encounter"
+        └── [encounter data]
+```
 
-**Option B: Full sourceType as namespace**
-```
+**Namespace = ResourceType**: Each nested archive's `ResourceType` IS the namespace. No prefix stripping needed.
+
+**Provider access pattern**:
+```yaml
+# Access nested archives by their ResourceType
 ${candidate.character-personality.aggression}
 ${candidate.character-history.backstory.origin}
-```
-- Pro: No ambiguity, matches internal structure
-- Con: Verbose, hyphens in paths
 
-**Option C: Configurable mapping**
-Provider constructor takes a mapping:
-```csharp
-new ResourceArchiveProvider("candidate", archive, new()
-{
-    ["character-personality"] = "personality",
-    ["character-history"] = "history"
-});
+# Or if template defines short aliases (optional convenience)
+${candidate.personality.aggression}  # alias for character-personality
 ```
-- Pro: Flexible
-- Con: Boilerplate, inconsistent across behaviors
 
-**Current Recommendation**: Option A with documented convention
+**Template can define aliases** for convenience:
+```yaml
+resource_templates:
+  - type: character-personality
+    alias: personality  # Optional short name for ABML
+  - type: character-history
+    alias: history
+```
+
+**Implementation**: Provider walks `NestedArchives` to build namespace map. If Resource plugin isn't returning `IResourceArchive`, that needs to be fixed first.
 
 ### Q3: What About Live State Not in Archives? ✅ CLARIFIED
 
@@ -483,45 +504,58 @@ public class CharacterPersonalityTemplate : IResourceTemplate
 
 **Recommendation**: Option A - generate templates from the `GetCompressDataResponse` types defined in each service's API schema.
 
-### Q5: Multiple Character Access in Single Flow ✅ PARTIALLY CLARIFIED
+### Q5: Multiple Character Access in Single Flow ✅ CLARIFIED
 
 A watcher evaluating 10 candidates needs 10 archives. The template + dynamic ID pattern informs this.
 
-**Key insight**: The ActorRunner can see "this behavior uses character templates" and pre-warm caches. Combined with batch loading, most accesses hit local cache.
+**Resolution**: Three complementary fetch modes, configurable per event actor instance:
 
-**Recommended pattern - Scoped provider per iteration:**
-
+**Mode 1: Automatic fetch on access (lazy)**
+When the behavior accesses data about something the actor doesn't have cached, automatically fetch it (and all supported connected types):
 ```yaml
-- foreach:
-    collection: "${candidates}"
-    as: candidate
-    do:
-      # Load snapshot for this candidate (usually cache hit)
-      - load_snapshot:
-          type: character
-          id: "${candidate.id}"
-          as: current
+# No explicit load needed - access triggers fetch
+- cond:
+    - when: "${candidate.personality.aggression} > 0.5"  # Auto-fetches if not cached
+```
+- Pro: Simplest ABML, no boilerplate
+- Con: First access may have latency
 
-      # Access via provider (validated against declared templates)
-      - cond:
-          - when: "${current.personality.aggression} > 0.5"
-            then:
-              - call: consider_for_tragedy
+**Mode 2: Implicit tracking (watch on store)**
+When the behavior stores an ID to track (starts "watching" something), prefetch proactively:
+```yaml
+- set:
+    current_target: "${candidate.id}"  # Actor now "tracking" this character
+    # ActorRunner detects: "oh, it's storing a characterId, let's prefetch"
+```
+- Pro: Natural, matches mental model of "watching" something
+- Con: Requires ActorRunner to understand variable semantics
 
-      # Provider automatically unregistered at end of iteration
+**Mode 3: Explicit watch command**
+Explicit command to declare intent:
+```yaml
+- watch:
+    type: character
+    id: "${candidate.id}"
+    as: target  # Provider name
+
+# Now target.* is available and will stay fresh
+condition: "${target.personality.aggression} > 0.5"
+```
+- Pro: Clear intent, predictable behavior
+- Con: More verbose
+
+**All three can coexist**, configurable per event actor instance:
+```yaml
+metadata:
+  id: god-of-tragedy
+  fetch_mode: auto  # or "explicit" or "track_on_store"
+  # Could also be "all" to enable all modes
 ```
 
-**Why this works well:**
-- Simple, readable ABML
-- Each iteration has clean `${current.*}` access
-- ActorRunner can batch-prefetch based on `${candidates}` before loop starts
-- Templates validate paths at compile time
-- Cache makes individual loads cheap
-
-**Optimization - explicit batch hint:**
+**Prefetch optimization still applies**:
 ```yaml
-# Hint to prefetch all candidates before loop
-- prefetch_snapshots:
+# Explicit batch prefetch for known collections
+- prefetch:
     type: character
     ids: "${candidates.map(c => c.id)}"
 
@@ -529,55 +563,74 @@ A watcher evaluating 10 candidates needs 10 archives. The template + dynamic ID 
     collection: "${candidates}"
     as: candidate
     do:
-      # Now guaranteed cache hit
-      - load_snapshot:
-          type: character
-          id: "${candidate.id}"
-          as: current
-      # ...
+      # Guaranteed cache hit regardless of fetch_mode
+      condition: "${candidate.personality.aggression} > 0.5"
 ```
 
-**Remaining question**: Should `foreach` automatically prefetch when it sees `load_snapshot` in the body? Or require explicit `prefetch_snapshots`?
+**Implementation note**: The ActorRunner maintains a "watched resources" set per actor instance. Watched resources are kept fresh (re-fetched on TTL expiry or invalidation event).
 
-### Q6: Cache Invalidation and TTL
+### Q6: Cache Invalidation and TTL ✅ CLARIFIED
 
 Snapshots are point-in-time. How long should they be cached?
 
-**Considerations:**
-- Watcher tick interval (e.g., 30 minutes)
-- Data change frequency (personality rarely changes, location changes often)
-- Memory pressure from caching many character snapshots
+**Resolution**: Hierarchical configuration - global default, per-resource override.
 
-**Options:**
+**Configuration hierarchy** (most specific wins):
 
-**A. Per-load TTL:**
 ```yaml
-- load_resource_snapshot:
-    type: character
-    id: "${candidate.id}"
-    ttl_seconds: 300
+# 1. Global default (actor-configuration.yaml)
+ResourceSnapshotDefaultTtlMinutes:
+  type: integer
+  default: 5
+  description: Default TTL for all resource snapshots
+  x-env-name: ACTOR_RESOURCE_SNAPSHOT_DEFAULT_TTL_MINUTES
+
+# 2. Per-resource-type override (in resource template definition)
+# Example: character-personality-api.yaml
+components:
+  schemas:
+    CharacterPersonalityCompressData:
+      x-resource-template: true
+      x-template-namespace: personality
+      x-snapshot-ttl-minutes: 60  # Personality rarely changes - longer TTL
 ```
 
-**B. Global configuration:**
-```yaml
-# In actor-configuration.yaml
-ResourceSnapshotCacheTtlSeconds: 300
+**Resolution order:**
+1. If resource template defines `x-snapshot-ttl-minutes`, use that
+2. Otherwise, use global `ResourceSnapshotDefaultTtlMinutes`
+
+**Example TTLs by data volatility:**
+| Resource Type | Suggested TTL | Rationale |
+|---------------|---------------|-----------|
+| character-personality | 60 min | Rarely changes, only through gameplay events |
+| character-history | 30 min | Changes on major events |
+| character-encounter | 10 min | Changes with gameplay interactions |
+| character-storyline | 5 min | Active storylines change frequently |
+| character-quest | 5 min | Quest progress changes frequently |
+
+**Cache invalidation** (complement to TTL):
+- Event-driven invalidation when source data changes
+- `resource.compressed` event triggers cache clear for that resource
+- Watched resources (Mode 2/3 from Q5) re-fetch on invalidation
+
+**Implementation:**
+```csharp
+public class ResourceSnapshotCache
+{
+    private readonly int _defaultTtlMinutes;
+    private readonly IResourceTemplateRegistry _templates;
+
+    public TimeSpan GetTtlForResource(string resourceType)
+    {
+        if (_templates.TryGet(resourceType, out var template)
+            && template.SnapshotTtlMinutes.HasValue)
+        {
+            return TimeSpan.FromMinutes(template.SnapshotTtlMinutes.Value);
+        }
+        return TimeSpan.FromMinutes(_defaultTtlMinutes);
+    }
+}
 ```
-
-**C. Per-sourceType TTL:**
-```yaml
-ResourceSnapshotCacheTtl:
-  personality: 3600  # 1 hour (rarely changes)
-  encounters: 300    # 5 minutes (changes with play)
-  location: 60       # 1 minute (changes frequently)
-```
-
-**D. No caching - always fresh:**
-Each `load_resource_snapshot` calls the Resource service.
-- Pro: Always current
-- Con: Expensive for batch operations
-
-**Current Recommendation**: Option B with reasonable default (5 minutes), Option C as future enhancement.
 
 ### Q7: Error Handling
 

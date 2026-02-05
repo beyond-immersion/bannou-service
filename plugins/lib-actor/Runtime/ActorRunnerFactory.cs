@@ -21,6 +21,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IPersonalityCache _personalityCache;
     private readonly IEncounterCache _encounterCache;
+    private readonly IQuestCache _questCache;
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
 
@@ -36,6 +37,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="behaviorCache">Behavior document cache for loading ABML.</param>
     /// <param name="personalityCache">Personality cache for character traits.</param>
     /// <param name="encounterCache">Encounter cache for character encounter data.</param>
+    /// <param name="questCache">Quest cache for character quest data.</param>
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     public ActorRunnerFactory(
@@ -48,6 +50,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         IBehaviorDocumentCache behaviorCache,
         IPersonalityCache personalityCache,
         IEncounterCache encounterCache,
+        IQuestCache questCache,
         IDocumentExecutorFactory executorFactory,
         IExpressionEvaluator expressionEvaluator)
     {
@@ -60,6 +63,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _behaviorCache = behaviorCache;
         _personalityCache = personalityCache;
         _encounterCache = encounterCache;
+        _questCache = questCache;
         _executorFactory = executorFactory;
         _expressionEvaluator = expressionEvaluator;
     }
@@ -100,6 +104,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
             _behaviorCache,
             _personalityCache,
             _encounterCache,
+            _questCache,
             executor,
             _expressionEvaluator,
             logger,

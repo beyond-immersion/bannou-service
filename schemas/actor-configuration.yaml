@@ -254,5 +254,18 @@ x-service-configuration:
       default: 3
       description: Maximum retry attempts for memory store operations
 
+    # === Variable Provider Caching (Tier 2) ===
+    StorylineCacheTtlMinutes:
+      type: integer
+      env: ACTOR_STORYLINE_CACHE_TTL_MINUTES
+      default: 5
+      description: TTL in minutes for cached storyline participation data
+
+    QuestCacheTtlMinutes:
+      type: integer
+      env: ACTOR_QUEST_CACHE_TTL_MINUTES
+      default: 5
+      description: TTL in minutes for cached quest data
+
 components:
   schemas: {}

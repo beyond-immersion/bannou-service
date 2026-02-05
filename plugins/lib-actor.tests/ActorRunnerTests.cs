@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -78,6 +79,14 @@ public class ActorRunnerTests
         var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
         var personalityCacheMock = new Mock<IPersonalityCache>();
         var encounterCacheMock = new Mock<IEncounterCache>();
+        var questCacheMock = new Mock<IQuestCache>();
+
+        // Set up quest cache to return empty response (character has no quests)
+        questCacheMock.Setup(c => c.GetActiveQuestsOrLoadAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListQuestsResponse { Quests = new List<QuestInstanceResponse>(), Total = 0 });
+
         var executorMock = new Mock<IDocumentExecutor>();
         var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
 
@@ -118,6 +127,7 @@ public class ActorRunnerTests
             behaviorCacheMock.Object,
             personalityCacheMock.Object,
             encounterCacheMock.Object,
+            questCacheMock.Object,
             executorMock.Object,
             expressionEvaluatorMock.Object,
             loggerMock.Object,

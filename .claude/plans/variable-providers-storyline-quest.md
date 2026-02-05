@@ -1,11 +1,32 @@
 # Variable Providers: Storyline & Quest
 
-> **Status**: Ready for Implementation
+> **Status**: Quest Provider IMPLEMENTED, Storyline Provider BLOCKED (missing API)
 > **Created**: 2026-02-05
 > **Resolved**: 2026-02-05
+> **Implemented**: 2026-02-05 (Quest Provider only)
 > **TENET Review**: 2026-02-05 (all examples verified compliant)
 > **Related**: Quest Plugin, Storyline Plugin, Actor Service
 > **Service Hierarchy**: L4 (Game Features) providers accessing L4 services
+
+## Implementation Status
+
+### ✅ Quest Provider (COMPLETE)
+- `IQuestCache` interface created
+- `QuestCache` implementation with TTL caching
+- `QuestProvider` with static `Empty` property for non-character actors
+- Event handlers for cache invalidation (quest.accepted, completed, failed, abandoned)
+- DI registration in ActorServicePlugin
+- Integration with ActorRunner and ActorRunnerFactory
+
+### ⚠️ Storyline Provider (BLOCKED)
+**Blocker**: The lib-storyline service is a "Storyline Composer" - it generates narrative PLANS from archives. It does NOT track character participation in active storyline instances.
+
+**Missing from lib-storyline:**
+- `/storyline/list-by-character` endpoint
+- `StorylineParticipation` model with `Priority`, `JoinedAt`, `CurrentPhase`
+- Character participation events (`storyline.character.joined`, `storyline.character.left`)
+
+**Next Steps**: Add storyline instance/participation tracking API to lib-storyline schema before implementing StorylineProvider.
 
 ---
 
@@ -229,15 +250,15 @@ Add to `ActorServiceConfiguration` schema (`schemas/actor-configuration.yaml`):
 ```yaml
 StorylineCacheTtlMinutes:
   type: integer
+  env: ACTOR_STORYLINE_CACHE_TTL_MINUTES
   default: 5
   description: TTL in minutes for cached storyline participation data
-  x-env-name: ACTOR_STORYLINE_CACHE_TTL_MINUTES
 
 QuestCacheTtlMinutes:
   type: integer
+  env: ACTOR_QUEST_CACHE_TTL_MINUTES
   default: 5
   description: TTL in minutes for cached quest data
-  x-env-name: ACTOR_QUEST_CACHE_TTL_MINUTES
 ```
 
 **Rationale:** 5-minute TTL matches personality/backstory pattern. Storyline and quest state changes via explicit actions, not high-frequency mutations.
@@ -647,15 +668,15 @@ private readonly Dictionary<Guid, CachedStorylineData> _cache = new();  // NO!
 # schemas/actor-configuration.yaml - matches Cache Strategy section above
 StorylineCacheTtlMinutes:
   type: integer
+  env: ACTOR_STORYLINE_CACHE_TTL_MINUTES
   default: 5
   description: TTL in minutes for cached storyline participation data
-  x-env-name: ACTOR_STORYLINE_CACHE_TTL_MINUTES
 
 QuestCacheTtlMinutes:
   type: integer
+  env: ACTOR_QUEST_CACHE_TTL_MINUTES
   default: 5
   description: TTL in minutes for cached quest data
-  x-env-name: ACTOR_QUEST_CACHE_TTL_MINUTES
 ```
 
 ```csharp

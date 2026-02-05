@@ -49,6 +49,7 @@ public partial class ActorService : IActorService
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IActorPoolManager _poolManager;
     private readonly IPersonalityCache _personalityCache;
+    private readonly IQuestCache _questCache;
     private readonly IMeshInvocationClient _meshClient;
 
     // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
@@ -71,6 +72,7 @@ public partial class ActorService : IActorService
     /// <param name="behaviorCache">Behavior document cache for hot-reload invalidation.</param>
     /// <param name="poolManager">Pool manager for distributed actor routing.</param>
     /// <param name="personalityCache">Cache for character personality data.</param>
+    /// <param name="questCache">Cache for character quest data.</param>
     /// <param name="meshClient">Mesh client for invoking methods on remote nodes.</param>
     public ActorService(
         IMessageBus messageBus,
@@ -83,6 +85,7 @@ public partial class ActorService : IActorService
         IBehaviorDocumentCache behaviorCache,
         IActorPoolManager poolManager,
         IPersonalityCache personalityCache,
+        IQuestCache questCache,
         IMeshInvocationClient meshClient)
     {
         _messageBus = messageBus;
@@ -95,6 +98,7 @@ public partial class ActorService : IActorService
         _behaviorCache = behaviorCache;
         _poolManager = poolManager;
         _personalityCache = personalityCache;
+        _questCache = questCache;
         _meshClient = meshClient;
 
         // Register event handlers via partial class (ActorServiceEvents.cs)

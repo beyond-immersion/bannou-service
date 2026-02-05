@@ -32,6 +32,7 @@ public sealed class ActorRunner : IActorRunner
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IPersonalityCache _personalityCache;
     private readonly IEncounterCache _encounterCache;
+    private readonly IQuestCache _questCache;
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
 
@@ -122,6 +123,8 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="stateStore">State store for actor persistence.</param>
     /// <param name="behaviorCache">Behavior document cache.</param>
     /// <param name="personalityCache">Personality cache for character traits.</param>
+    /// <param name="encounterCache">Encounter cache for character encounter data.</param>
+    /// <param name="questCache">Quest cache for character quest data.</param>
     /// <param name="executor">Document executor for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     /// <param name="logger">Logger instance.</param>
@@ -138,6 +141,7 @@ public sealed class ActorRunner : IActorRunner
         IBehaviorDocumentCache behaviorCache,
         IPersonalityCache personalityCache,
         IEncounterCache encounterCache,
+        IQuestCache questCache,
         IDocumentExecutor executor,
         IExpressionEvaluator expressionEvaluator,
         ILogger<ActorRunner> logger,
@@ -154,6 +158,7 @@ public sealed class ActorRunner : IActorRunner
         _behaviorCache = behaviorCache;
         _personalityCache = personalityCache;
         _encounterCache = encounterCache;
+        _questCache = questCache;
         _executor = executor;
         _expressionEvaluator = expressionEvaluator;
         _logger = logger;
@@ -755,14 +760,20 @@ public sealed class ActorRunner : IActorRunner
             // Load encounter data for the character
             var encounters = await _encounterCache.GetEncountersOrLoadAsync(CharacterId.Value, ct);
             scope.RegisterProvider(new EncountersProvider(encounters));
+
+            // Load quest data for the character
+            var quests = await _questCache.GetActiveQuestsOrLoadAsync(CharacterId.Value, ct);
+            scope.RegisterProvider(new QuestProvider(quests));
         }
         else
         {
             // Register empty providers for non-character actors to avoid null reference issues
+            // Per QUALITY TENETS (T12): use static Empty property, not null
             scope.RegisterProvider(new PersonalityProvider(null));
             scope.RegisterProvider(new CombatPreferencesProvider(null));
             scope.RegisterProvider(new BackstoryProvider(null));
             scope.RegisterProvider(new EncountersProvider(null));
+            scope.RegisterProvider(QuestProvider.Empty);
         }
 
         return scope;

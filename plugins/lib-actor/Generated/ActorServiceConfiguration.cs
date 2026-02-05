@@ -289,4 +289,16 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MemoryStoreMaxRetries { get; set; } = 3;
 
+    /// <summary>
+    /// TTL in minutes for cached storyline participation data
+    /// Environment variable: ACTOR_STORYLINE_CACHE_TTL_MINUTES
+    /// </summary>
+    public int StorylineCacheTtlMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// TTL in minutes for cached quest data
+    /// Environment variable: ACTOR_QUEST_CACHE_TTL_MINUTES
+    /// </summary>
+    public int QuestCacheTtlMinutes { get; set; } = 5;
+
 }
