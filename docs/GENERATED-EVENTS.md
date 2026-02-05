@@ -411,6 +411,12 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `SpeciesMergedEvent` | Custom | `species-merged` | Published when two species are merged, with the so... |
 
+### Storyline
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `StorylineComposedEvent` | Custom | `storyline-composed` | Event published when a storyline plan is generated |
+
 ### Subscription
 
 | Event | Type | Likely Topic | Description |

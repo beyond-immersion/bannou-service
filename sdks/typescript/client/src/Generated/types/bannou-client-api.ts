@@ -6497,6 +6497,77 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/storyline/compose': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Compose a storyline plan from archive seeds
+     * @description Generates a storyline plan using data from compressed archives and/or
+     *     live snapshots. The plan describes phases, actions, and entity requirements
+     *     but does NOT create any entities - callers decide whether to instantiate.
+     *
+     *     **Workflow**:
+     *     1. Fetch archive/snapshot data via IResourceClient
+     *     2. Extract world state from archive bundle
+     *     3. Select template based on goal and constraints
+     *     4. Run GOAP planner to generate action sequences
+     *     5. Cache plan and publish storyline.composed event
+     */
+    post: operations['Compose'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/plan/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Retrieve a cached storyline plan
+     * @description Retrieves a previously generated storyline plan by its ID.
+     *     Returns 404 if the plan has expired from cache or doesn't exist.
+     */
+    post: operations['GetPlan'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/storyline/plan/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List cached storyline plans
+     * @description Lists storyline plans in the cache, optionally filtered by realm.
+     *     Plans are ordered by creation time (newest first).
+     */
+    post: operations['ListPlans'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/subscription/account/list': {
     parameters: {
       query?: never;
@@ -6952,6 +7023,18 @@ export interface components {
      * @enum {string}
      */
     AchievementType: 'standard' | 'progressive' | 'hidden' | 'secret';
+    /** @description Effect of an action on world state */
+    ActionEffect: {
+      /** @description State key affected */
+      key: string;
+      /** @description New value (as string, caller interprets type) */
+      value: string;
+      /**
+       * @description How to apply the effect
+       * @enum {string}
+       */
+      cardinality?: 'set' | 'add' | 'remove' | 'increment' | 'decrement';
+    };
     /**
      * @description Actor-specific capabilities that affect affordance evaluation.
      *     Same location may afford different actions to different actor types.
@@ -7263,6 +7346,17 @@ export interface components {
       /** @description ICE candidates for NAT traversal (can be trickled later) */
       iceCandidates?: string[];
     };
+    /**
+     * @description Emotional arc shapes from Reagan et al. research.
+     *     rags_to_riches: Rise (1)
+     *     tragedy: Fall (2)
+     *     man_in_hole: Fall then rise (3)
+     *     icarus: Rise then fall (4)
+     *     cinderella: Rise, fall, rise (5)
+     *     oedipus: Fall, rise, fall (6)
+     * @enum {string}
+     */
+    ArcType: 'rags_to_riches' | 'tragedy' | 'man_in_hole' | 'icarus' | 'cinderella' | 'oedipus';
     /** @description Single entry in the archive bundle */
     ArchiveBundleEntry: {
       /** @description Type of data (e.g., "character-personality") */
@@ -9410,6 +9504,84 @@ export interface components {
       partNumber: number;
       /** @description ETag returned from part upload */
       etag: string;
+    };
+    /** @description Constraints on storyline composition */
+    ComposeConstraints: {
+      /**
+       * Format: uuid
+       * @description Realm to anchor the storyline in
+       */
+      realmId?: string | null;
+      /**
+       * Format: uuid
+       * @description Optional starting location
+       */
+      locationId?: string | null;
+      /** @description Maximum entities the plan can require (default from config) */
+      maxEntities?: number | null;
+      /** @description Maximum phases in the plan (default unlimited) */
+      maxPhases?: number | null;
+    };
+    /** @description Request to compose a storyline plan */
+    ComposeRequest: {
+      /**
+       * @description Archive or snapshot sources to seed the storyline.
+       *     At least one source is required. Mix of archives and snapshots allowed.
+       */
+      seedSources: components['schemas']['SeedSource'][];
+      /** @description The high-level goal driving arc selection */
+      goal: components['schemas']['StorylineGoal'];
+      /** @description Optional constraints on composition */
+      constraints?: components['schemas']['ComposeConstraints'];
+      /**
+       * @description Genre filter (e.g., "crime", "action", "romance").
+       *     If omitted, inferred from archive data.
+       */
+      genre?: string | null;
+      /** @description Specific arc type to use. If omitted, selected based on goal. */
+      arcType?: components['schemas']['ArcType'];
+      /** @description Planning urgency level. Defaults to configuration value. */
+      urgency?: components['schemas']['PlanningUrgency'];
+      /** @description Random seed for deterministic output (enables caching) */
+      seed?: number | null;
+    };
+    /** @description Composed storyline plan */
+    ComposeResponse: {
+      /**
+       * Format: uuid
+       * @description Unique plan identifier
+       */
+      planId: string;
+      /**
+       * Format: double
+       * @description Plan viability score (0-1)
+       */
+      confidence: number;
+      /** @description The goal that was used */
+      goal: components['schemas']['StorylineGoal'];
+      /** @description Inferred or specified genre */
+      genre?: string | null;
+      /** @description Emotional arc type used */
+      arcType: components['schemas']['ArcType'];
+      /** @description Primary Life Value spectrum */
+      primarySpectrum: components['schemas']['SpectrumType'];
+      /** @description Inferred thematic elements */
+      themes?: string[] | null;
+      /** @description Planned phases with actions */
+      phases: components['schemas']['StorylinePlanPhase'][];
+      /**
+       * @description Entities required for this storyline (descriptions only).
+       *     Callers decide whether to spawn them.
+       */
+      entitiesToSpawn?: components['schemas']['EntityRequirement'][] | null;
+      /** @description Links between entities in the plan */
+      links?: components['schemas']['StorylineLink'][] | null;
+      /** @description Identified risks or weak points in the plan */
+      risks?: components['schemas']['StorylineRisk'][] | null;
+      /** @description Time taken to generate in milliseconds */
+      generationTimeMs: number;
+      /** @description Whether this was returned from cache */
+      cached: boolean;
     };
     /** @description Metadata about a generated composition */
     CompositionMetadata: {
@@ -11995,6 +12167,24 @@ export interface components {
        */
       percentile?: number;
     };
+    /** @description An entity required for the storyline */
+    EntityRequirement: {
+      /** @description Role in the story (e.g., "witness", "informant", "target") */
+      role: string;
+      /** @description Type of entity needed (e.g., "character", "location", "item") */
+      entityType: string;
+      /** @description Description of what's needed */
+      description: string;
+      /** @description Constraints on entity selection/creation */
+      constraints?: {
+        [key: string]: string;
+      } | null;
+      /**
+       * Format: uuid
+       * @description If derived from an archive, that archive's ID
+       */
+      sourceArchiveId?: string | null;
+    };
     /**
      * @description Universal entity type identifier used across Bannou services.
      *     Provides first-class support for various kinds of entities in analytics,
@@ -14130,6 +14320,21 @@ export interface components {
        */
       characterId: string;
     };
+    /** @description Request to retrieve a cached plan */
+    GetPlanRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the plan to retrieve
+       */
+      planId: string;
+    };
+    /** @description Retrieved plan */
+    GetPlanResponse: {
+      /** @description Whether the plan was found */
+      found: boolean;
+      /** @description The plan (null if not found) */
+      plan?: components['schemas']['ComposeResponse'];
+    };
     /** @description Request to get details of a specific queue */
     GetQueueRequest: {
       /** @description ID of the queue to retrieve */
@@ -15931,6 +16136,31 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to list cached plans */
+    ListPlansRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by realm (optional)
+       */
+      realmId?: string | null;
+      /**
+       * @description Maximum plans to return
+       * @default 20
+       */
+      limit: number;
+      /**
+       * @description Pagination offset
+       * @default 0
+       */
+      offset: number;
+    };
+    /** @description List of plans */
+    ListPlansResponse: {
+      /** @description Plan summaries */
+      plans: components['schemas']['PlanSummary'][];
+      /** @description Total matching plans */
+      totalCount: number;
+    };
     /** @description Request to list available matchmaking queues */
     ListQueuesRequest: {
       /** @description Filter by game ID (null for all games) */
@@ -17626,6 +17856,35 @@ export interface components {
       /** @description The character's perspective on the encounter */
       perspective: components['schemas']['EncounterPerspectiveModel'];
     };
+    /** @description Position bounds for a phase */
+    PhasePosition: {
+      /**
+       * Format: double
+       * @description Start position (0-1)
+       */
+      start: number;
+      /**
+       * Format: double
+       * @description End position (0-1)
+       */
+      end: number;
+    };
+    /** @description Target state for phase completion */
+    PhaseTargetState: {
+      /** @description Target spectrum values (spectrum name -> value) */
+      narrativeState?: {
+        [key: string]: number;
+      } | null;
+      /** @description Required world state facts */
+      facts?: {
+        [key: string]: string;
+      } | null;
+      /**
+       * Format: double
+       * @description Target story position (0-1)
+       */
+      position?: number | null;
+    };
     /** @description Request to pin a save version as a checkpoint to prevent cleanup */
     PinVersionRequest: {
       /**
@@ -17663,6 +17922,38 @@ export interface components {
       /** @description Highest pitch (inclusive) */
       high: components['schemas']['Pitch'];
     };
+    /** @description Summary of a cached plan */
+    PlanSummary: {
+      /**
+       * Format: uuid
+       * @description Plan identifier
+       */
+      planId: string;
+      /** @description Story goal */
+      goal: components['schemas']['StorylineGoal'];
+      /** @description Arc type */
+      arcType: components['schemas']['ArcType'];
+      /**
+       * Format: double
+       * @description Viability score
+       */
+      confidence: number;
+      /**
+       * Format: uuid
+       * @description Anchored realm (if any)
+       */
+      realmId?: string | null;
+      /**
+       * Format: date-time
+       * @description When plan was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When plan expires from cache
+       */
+      expiresAt?: string | null;
+    };
     /** @description Single action within a GOAP plan with position and cost information */
     PlannedActionResponse: {
       /** @description ID of the action (flow name) */
@@ -17675,6 +17966,14 @@ export interface components {
        */
       cost: number;
     };
+    /**
+     * @description GOAP planning urgency level affecting search parameters.
+     *     low: More iterations, wider beam (1000/20)
+     *     medium: Balanced (500/15)
+     *     high: Fewer iterations, narrower beam (200/10)
+     * @enum {string}
+     */
+    PlanningUrgency: 'low' | 'medium' | 'high';
     /**
      * @description External platform for achievement sync
      * @enum {string}
@@ -20043,6 +20342,24 @@ export interface components {
        */
       entryCount?: number;
     };
+    /** @description A source of seed data (archive or snapshot) */
+    SeedSource: {
+      /**
+       * Format: uuid
+       * @description ID of a compressed archive (dead entity)
+       */
+      archiveId?: string | null;
+      /**
+       * Format: uuid
+       * @description ID of a live snapshot (living entity)
+       */
+      snapshotId?: string | null;
+      /**
+       * @description Optional actant role hint (e.g., "protagonist", "antagonist", "helper").
+       *     Used for Greimas actant assignment if provided.
+       */
+      role?: string | null;
+    };
     /** @description Response containing aggregate sentiment */
     SentimentResponse: {
       /**
@@ -20416,6 +20733,22 @@ export interface components {
        */
       updatedAt: string;
     };
+    /**
+     * @description The 10 Story Grid Life Value spectrums.
+     *     These are bipolar axes for emotional progression.
+     * @enum {string}
+     */
+    SpectrumType:
+      | 'life_death'
+      | 'honor_dishonor'
+      | 'justice_injustice'
+      | 'freedom_subjugation'
+      | 'love_hate'
+      | 'respect_shame'
+      | 'power_impotence'
+      | 'success_failure'
+      | 'altruism_selfishness'
+      | 'wisdom_ignorance';
     /** @description Allocation of assets to a party in a split resolution */
     SplitAllocation: {
       /**
@@ -20538,6 +20871,78 @@ export interface components {
       stopped: boolean;
       /** @description Final status of the actor after stopping */
       finalStatus: components['schemas']['ActorStatus'];
+    };
+    /**
+     * @description High-level story goal that drives arc selection.
+     *     revenge: Character seeks vengeance for past wrongs
+     *     resurrection: Restoring something/someone lost
+     *     legacy: Creating or continuing a lasting impact
+     *     mystery: Uncovering hidden truths
+     *     peace: Resolving conflicts and finding harmony
+     *     redemption: Atoning for past mistakes
+     *     conquest: Achieving dominion or victory
+     *     survival: Overcoming threats to existence
+     * @enum {string}
+     */
+    StorylineGoal:
+      | 'revenge'
+      | 'resurrection'
+      | 'legacy'
+      | 'mystery'
+      | 'peace'
+      | 'redemption'
+      | 'conquest'
+      | 'survival';
+    /** @description A relationship link in the storyline */
+    StorylineLink: {
+      /** @description Source entity role */
+      sourceRole: string;
+      /** @description Target entity role */
+      targetRole: string;
+      /** @description Type of relationship (e.g., "opposes", "allies_with", "seeks") */
+      linkType: string;
+    };
+    /** @description An action in the storyline plan */
+    StorylinePlanAction: {
+      /** @description Action identifier from action registry */
+      actionId: string;
+      /** @description Action category (e.g., "conflict", "relationship", "mystery") */
+      category: string;
+      /** @description Human-readable action description */
+      description: string;
+      /** @description Whether this is an obligatory scene */
+      isCoreEvent?: boolean;
+      /** @description Character/entity roles involved */
+      participants?: string[] | null;
+      /** @description World state effects of this action */
+      effects?: components['schemas']['ActionEffect'][] | null;
+    };
+    /** @description A phase in the storyline plan */
+    StorylinePlanPhase: {
+      /** @description 1-based phase number */
+      phaseNumber: number;
+      /** @description Phase name (e.g., "discovery", "confrontation", "resolution") */
+      name: string;
+      /** @description Actions in this phase */
+      actions: components['schemas']['StorylinePlanAction'][];
+      /** @description Target emotional/world state for phase completion */
+      targetState?: components['schemas']['PhaseTargetState'];
+      /** @description Position bounds for this phase (0-1 story progress) */
+      positionBounds?: components['schemas']['PhasePosition'];
+    };
+    /** @description Identified risk in the plan */
+    StorylineRisk: {
+      /** @description Risk category (e.g., "missing_entity", "low_tension", "weak_climax") */
+      riskType: string;
+      /** @description Risk description */
+      description: string;
+      /**
+       * @description Risk severity
+       * @enum {string}
+       */
+      severity: 'low' | 'medium' | 'high';
+      /** @description Suggested mitigation */
+      mitigation?: string | null;
     };
     /** @description Response containing a style definition */
     StyleDefinitionResponse: {
@@ -31699,6 +32104,99 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  Compose: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ComposeRequest'];
+      };
+    };
+    responses: {
+      /** @description Storyline plan generated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ComposeResponse'];
+        };
+      };
+      /** @description Invalid request (no valid archives, incompatible goal/genre) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Archive or snapshot not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  GetPlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetPlanRequest'];
+      };
+    };
+    responses: {
+      /** @description Plan retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetPlanResponse'];
+        };
+      };
+      /** @description Plan not found or expired */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ListPlans: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListPlansRequest'];
+      };
+    };
+    responses: {
+      /** @description Plans listed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListPlansResponse'];
+        };
       };
     };
   };

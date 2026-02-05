@@ -52,6 +52,7 @@ public partial class BannouClient
     private SceneProxy? _scene;
     private SpeciesProxy? _species;
     private StateProxy? _state;
+    private StorylineProxy? _storyline;
     private SubscriptionProxy? _subscription;
     private TelemetryProxy? _telemetry;
     private VoiceProxy? _voice;
@@ -284,6 +285,12 @@ public partial class BannouClient
     /// </summary>
     public StateProxy State =>
         _state ??= new StateProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Storyline Composer API operations.
+    /// </summary>
+    public StorylineProxy Storyline =>
+        _storyline ??= new StorylineProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Subscription Service API operations.

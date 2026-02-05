@@ -47,6 +47,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
+| [Storyline Composer API](#storyline) | `client.Storyline` | 3 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
@@ -1652,6 +1653,27 @@ Repository pattern state management with Redis and MySQL backends.
 
 ---
 
+## Storyline Composer API {#storyline}
+
+**Proxy**: `client.Storyline` | **Version**: 1.0.0
+
+Seeded narrative generation from compressed archives using the storyline SDKs.
+
+### Composition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ComposeAsync` | `ComposeRequest` | `ComposeResponse` | Compose a storyline plan from archive seeds |
+
+### Plans
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetPlanAsync` | `GetPlanRequest` | `GetPlanResponse` | Retrieve a cached storyline plan |
+| `ListPlansAsync` | `ListPlansRequest` | `ListPlansResponse` | List cached storyline plans |
+
+---
+
 ## Bannou Subscription Service API {#subscription}
 
 **Proxy**: `client.Subscription` | **Version**: 1.0.0
@@ -1764,8 +1786,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 42
-- **Total methods**: 569
+- **Total services**: 43
+- **Total methods**: 572
 
 ---
 

@@ -38,6 +38,7 @@ export { SaveLoadProxy } from './SaveLoadProxy.js';
 export { SceneProxy } from './SceneProxy.js';
 export { SessionsProxy } from './SessionsProxy.js';
 export { SpeciesProxy } from './SpeciesProxy.js';
+export { StorylineProxy } from './StorylineProxy.js';
 export { SubscriptionProxy } from './SubscriptionProxy.js';
 export { ValidateProxy } from './ValidateProxy.js';
 export { VoiceProxy } from './VoiceProxy.js';

@@ -2,6 +2,8 @@
 
 This document provides a comprehensive overview of Bannou's narrative generation system, including the theoretical foundations, plugin architecture, and integration patterns for both traditional quest-hub gameplay and emergent AI-driven storytelling.
 
+> **Implementation Status**: The `lib-storyline` plugin exists with SDK integration for archives, spectrums, and arcs. The Quest and Scenario capabilities described here are planned extensions. See [Implementation Gaps](#implementation-gaps) for current state.
+
 ## Overview
 
 The Bannou story system consists of three interconnected layers that work together to generate meaningful, character-driven narratives:
@@ -9,10 +11,57 @@ The Bannou story system consists of three interconnected layers that work togeth
 | Layer | Location | Purpose |
 |-------|----------|---------|
 | Story Templates (SDK) | `sdks/storyline-theory/` | Abstract narrative patterns from formal storytelling theory |
-| Scenarios (Plugin) | `plugins/lib-scenario/` | Concrete game-world implementations of story patterns |
+| Scenarios (Storyline Plugin) | `plugins/lib-storyline/` | Concrete game-world implementations of story patterns |
 | Storyline Instances | Runtime state | Active narratives bound to specific characters |
 
 The system is designed around a key insight: **the same scenario definitions power both simple deterministic games and complex emergent storytelling**. The triggering mechanism differs, not the content.
+
+---
+
+## Critical Architecture Principle
+
+### The Plugin is PASSIVE - Actors Do the Searching
+
+A common misconception: "The Storyline/Scenario plugin scans for characters that meet conditions."
+
+**This is wrong.**
+
+The correct architecture:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   REGIONAL WATCHER (Actor)                      │
+│                                                                 │
+│  ACTIVE: The actor's BEHAVIOR defines what it finds interesting │
+│  • Receives events live in its region                          │
+│  • "Navigates around" looking for characters/situations        │
+│  • Queries plugins with specific characters/conditions         │
+│  • Decides what to trigger based on its preferences            │
+│                                                                 │
+│  The BEHAVIOR is the soul - game-specific, expressive          │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ queries
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    STORYLINE PLUGIN (Passive)                   │
+│                                                                 │
+│  PASSIVE: Stores definitions, matches conditions, executes     │
+│  • "What scenarios exist?" → returns list                      │
+│  • "Does this character fit?" → returns matches                │
+│  • "Test this scenario" → returns predicted outcome            │
+│  • "Trigger this scenario" → applies mutations, spawns quests  │
+│                                                                 │
+│  Simple infrastructure - NO searching, NO decisions            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why this matters:**
+- The "soul" of storyline discovery is in **behavior documents**, not plugin code
+- Different watchers can use radically different search strategies
+- Behaviors are game-specific content; the plugin is reusable infrastructure
+- This keeps the plugin simple and behaviors expressive
+
+See [Regional Watchers Behavior](../planning/REGIONAL_WATCHERS_BEHAVIOR.md) for active orchestration patterns.
 
 ---
 
@@ -245,36 +294,32 @@ public async Task CheckScenarioTriggers(Guid characterId)
 
 ### Mode 2: Emergent Mode (Regional Watcher Discovery)
 
-AI-driven storytelling where Regional Watchers actively seek and orchestrate narrative opportunities.
+AI-driven storytelling where Regional Watchers **actively search** and orchestrate narrative opportunities. The key insight: **the actor does the searching, not the plugin**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                   REGIONAL WATCHER (Actor)                       │
 │  "I like tragedy. I favor underdogs. Let me find a story..."    │
 │                                                                  │
-│  Preferences: favored_story_types, favored_outcomes, disfavored │
+│  ACTIVE SEARCHING (via behavior document):                       │
+│  • Subscribe to events in my region                              │
+│  • Query character service for interesting candidates            │
+│  • Score "tragic potential" using MY preferences                 │
+│  • Decide which characters to investigate further                │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ browses / tests / triggers
+                            │ queries with specific characters
                             ▼
 ┌───────────────────────────────────────────────────────────────────┐
-│                      SCENARIO PLUGIN                               │
+│                     STORYLINE PLUGIN (Passive)                     │
 │                                                                    │
-│  /scenario/watcher/scan     → Find characters with narrative potential │
-│  /scenario/find-available   → Get matching scenarios               │
-│  /scenario/test             → Dry-run to see what would happen     │
-│  /scenario/evaluate-fit     → Score narrative potential            │
-│  /scenario/trigger          → Execute chosen scenario              │
+│  /storyline/scenario/list        → "What scenarios interest me?"  │
+│  /storyline/scenario/find-matching → "What fits THIS character?"  │
+│  /storyline/scenario/test        → "What would happen if...?"     │
+│  /storyline/scenario/trigger     → "Execute this scenario"        │
+│  /storyline/compose              → "Plan from this archive"       │
+│  /storyline/instantiate          → "Spawn the storyline"          │
 │                                                                    │
-└───────────────────────────┬───────────────────────────────────────┘
-                            │
-                            ▼
-┌───────────────────────────────────────────────────────────────────┐
-│                     STORYLINE PLUGIN                               │
-│                                                                    │
-│  /storyline/compose         → Generate StorylinePlan from archives │
-│  /storyline/instantiate     → Spawn entities and actors           │
-│  /storyline/discover        → Find narrative opportunities        │
-│                                                                    │
+│  NOTE: Plugin does NOT scan for characters - watcher provides them│
 └───────────────────────────────────────────────────────────────────┘
 ```
 
@@ -285,54 +330,80 @@ metadata:
   domain: tragedy_and_redemption
   realm_ids: ["realm-omega"]
 
-context:
+config:
   preferences:
-    favored_story_types: [tragedy, survival, coming_of_age]
-    favored_outcomes: [character_growth, relationship_formation]
+    favored_story_templates: [FALL_FROM_GRACE, DOOMED_LOVE, LOSS_OF_INNOCENCE]
+    favored_outcomes: [character_growth, meaningful_sacrifice]
     disfavored: [easy_victory, deus_ex_machina]
 
 flows:
   periodic_scan:
-    - interval: "PT1H"  # Every hour
-    - scan_for_candidates:
-        location: "{my_region}"
-        criteria:
-          has_narrative_potential: true
-          not_in_active_storyline: true
+    - schedule:
+        interval: "PT1H"
+        call: scan_for_tragedy_opportunities
 
-    - for_each: candidate
-      do:
-        - evaluate_scenarios:
-            character: "{candidate}"
-            limit: 5
+  scan_for_tragedy_opportunities:
+    # ACTOR searches for characters (not the plugin!)
+    - api_call:
+        service: character
+        endpoint: /character/query
+        data:
+          realmId: "${my_realm}"
+          filters:
+            hasRelationships: true      # Something to lose
+            notInActiveStoryline: true  # Not already in a story
+            age: { min: 8, max: 30 }    # Prime tragedy candidates
+        result: potential_victims
 
-        - for_each: scenario
-          do:
-            - score_narrative_fit:
-                scenario: "{scenario}"
-                character: "{candidate}"
-                my_preferences: "{preferences}"
+    # ACTOR scores by "tragic potential" using its own preferences
+    - foreach:
+        collection: "${potential_victims}"
+        as: candidate
+        do:
+          - set:
+              "candidate.tragic_score": >
+                ${0.3 * candidate.relationships.positiveCount +
+                  0.3 * candidate.backstory.goals.length +
+                  0.2 * (candidate.age < 25 ? 1 : 0) +
+                  0.2 * (candidate.hasLivingFamily ? 1 : 0)}
 
-            - if: narrative_score > 0.7
-              then:
-                - test_scenario:
-                    scenario: "{scenario}"
-                    dry_run: true
+    # For top candidates, ask PLUGIN what scenarios fit
+    - set:
+        top_candidates: "${potential_victims.filter(c => c.tragic_score > 0.6).slice(0, 3)}"
 
-                - if: test_result.dramatically_interesting
-                  then:
-                    - trigger_scenario:
-                        scenario: "{scenario}"
-                        orchestrator: "{self}"
+    - foreach:
+        collection: "${top_candidates}"
+        as: candidate
+        do:
+          # Now query the plugin with a SPECIFIC character
+          - api_call:
+              service: storyline
+              endpoint: /storyline/scenario/find-matching
+              data:
+                characterId: "${candidate.id}"
+                preferredTemplates: "${preferences.favored_story_templates}"
+              result: matching_scenarios
+
+          - cond:
+              - when: "${matching_scenarios.length > 0}"
+                then:
+                  - call: evaluate_and_trigger
+                    with:
+                      character: "${candidate}"
+                      scenarios: "${matching_scenarios}"
 ```
 
-**What Regional Watchers Do**:
-1. **Scan** for characters with narrative potential
-2. **Browse** available scenarios that could apply
-3. **Evaluate** narrative fit against their preferences
-4. **Test** scenarios via dry-run (see what would happen)
-5. **Select** the most dramatically interesting option
-6. **Trigger** the chosen scenario, becoming the orchestrator
+**Three Watcher-to-Plugin Interaction Patterns**:
+
+| Pattern | Watcher Asks | When Used |
+|---------|--------------|-----------|
+| **Scenarios-First** | "What scenarios interest me?" → searches for fitting characters | Watcher has narrative preferences, seeks characters to match |
+| **Characters-First** | "I found interesting characters - what fits them?" | Watcher is exploratory, finds opportunities in whoever's around |
+| **Event-Triggered** | "This event just happened - any consequences?" | Reactive (death → vengeance, betrayal → revenge) |
+
+**The key insight**: The watcher's **behavior document** defines the search strategy. Different watchers can use completely different approaches with the same plugin APIs.
+
+See [Regional Watchers Behavior](../planning/REGIONAL_WATCHERS_BEHAVIOR.md) for detailed patterns.
 
 **Best for**:
 - Emergent, unpredictable narrative
@@ -485,69 +556,93 @@ Quests are a **thin orchestration layer** over lib-contract, adding game-specifi
 
 ### How Regional Watchers Orchestrate Everything
 
-Regional Watchers are the **creative agents** that tie all components together.
+Regional Watchers are the **active agents** that tie all components together. The watcher's **behavior document** is the soul - it defines search strategies, preferences, and decision-making logic.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                   REGIONAL WATCHER (Actor)                       │
-│  "God of Vengeance" behavior document                           │
+│  "God of Tragedy" - ACTIVE agent with behavior document         │
 │                                                                  │
-│  Subscriptions:                                                  │
-│    - character.died (high significance deaths)                  │
-│    - resource.compressed (archives available)                   │
-│    - quest.completed (storyline progression)                    │
+│  ACTIVE RESPONSIBILITIES (defined in behavior):                  │
+│    • Subscribe to events (deaths, relationships, prosperity)    │
+│    • Search for characters via lib-character queries            │
+│    • Score "tragic potential" using MY preferences              │
+│    • Decide which opportunities to pursue                       │
+│    • Track active storylines I'm orchestrating                  │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │
+                            │ queries (watcher provides the inputs)
          ┌──────────────────┼──────────────────┐
          ▼                  ▼                  ▼
 ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ lib-resource    │ │ lib-storyline   │ │ lib-scenario    │
-│ (archives)      │ │ (composition)   │ │ (triggers)      │
+│ lib-character   │ │ lib-storyline   │ │ lib-resource    │
+│ (searching)     │ │ (PASSIVE)       │ │ (archives)      │
 │                 │ │                 │ │                 │
-│ • Get archive   │ │ • Compose plan  │ │ • Find available│
-│ • Snapshot live │ │ • Instantiate   │ │ • Test dry-run  │
-│ • Extract data  │ │ • Track active  │ │ • Trigger       │
+│ • Query chars   │ │ • Match scenario│ │ • Get archive   │
+│ • Get backstory │ │ • Test dry-run  │ │ • Snapshot live │
+│ • Get relations │ │ • Trigger       │ │ • Extract data  │
+│                 │ │ • Compose plan  │ │                 │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
          │                  │                  │
          └──────────────────┼──────────────────┘
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      DECISION FLOW                               │
+│                 WATCHER DECISION FLOW (in behavior)              │
 │                                                                  │
-│  1. Detect opportunity (significant death event)                │
-│  2. Fetch archive from lib-resource                             │
-│  3. Call /storyline/compose with goal: "revenge"                │
-│  4. Evaluate plan confidence (> 0.7?)                           │
-│  5. If worthy: /storyline/instantiate                           │
-│  6. Monitor progress, adjust as needed                          │
+│  1. Receive event OR periodic scan triggers                     │
+│  2. WATCHER searches for characters (lib-character query)       │
+│  3. WATCHER scores candidates using its own preferences         │
+│  4. WATCHER asks plugin: "what scenarios fit THIS character?"   │
+│  5. WATCHER evaluates: test dry-run, check narrative score      │
+│  6. WATCHER decides: trigger or skip based on preferences       │
+│  7. WATCHER tracks: monitor active storylines, advance phases   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Watcher Workflow** (ABML):
+**Key insight**: Plugins are **passive infrastructure**. Watchers are **active agents** whose behavior documents define game-specific search strategies and narrative preferences. We provide **base templates**; games provide **the soul**.
+
+**Event-Triggered Watcher Flow** (ABML - reactive to deaths):
 ```yaml
 flows:
-  process_death:
+  on_character_died:
+    # Event-triggered pattern (Pattern C)
     - when: "perception:type == 'character_died'"
       then:
-        - call: evaluate_vengeance_potential
+        # WATCHER decides if this death interests ME
+        - cond:
+            - when: "${event.character.hadLovedOnes || event.wasWitnessed}"
+              then:
+                - call: evaluate_vengeance_potential
 
   evaluate_vengeance_potential:
-    - set: { temp.archive_id: "perception:archive_id" }
-    - call_service:
+    # WATCHER fetches the archive
+    - api_call:
+        service: resource
+        endpoint: /resource/archive/get
+        data:
+          resourceId: "${event.character.id}"
+          resourceType: "character"
+        result: archive
+
+    # WATCHER asks plugin to compose (plugin is passive)
+    - api_call:
         service: storyline
         endpoint: /storyline/compose
-        body:
-          seed_sources: ["{{temp.archive_id}}"]
-          goal: revenge
-          constraints:
-            max_new_entities: 3
-          dry_run: true
+        data:
+          archiveId: "${archive.id}"
+          goals: ["revenge", "justice"]
+          dryRun: true
+        result: plan
 
-    - when: "response.plan.confidence > 0.7"
-      then:
-        # God's willful decision - not automated
-        - set: { memories.pending_vengeance: "response.plan_id" }
-        - emit: { channel: "intention", value: "will_review_vengeance_opportunity" }
+    # WATCHER decides based on MY preferences
+    - cond:
+        - when: "${plan.confidence > 0.7 && plan.matchesMyPreferences}"
+          then:
+            # Track for later decision (watcher is willful, not automatic)
+            - set:
+                memories.pending_vengeance: "${plan.id}"
+            - emit:
+                channel: "intention"
+                value: "considering_vengeance_storyline"
 ```
 
 ---
@@ -989,57 +1084,94 @@ ScenarioDefinition:
 
 ### Regional Watcher Behaviors
 
-**Basic Pattern**:
+**Key Architecture**: Watchers are **active agents**. They search, score, and decide. Plugins are **passive infrastructure**. They store definitions and answer queries.
+
+**Base Template** (games extend this):
 ```yaml
+# templates/regional-watcher-base.yaml
 metadata:
+  id: regional-watcher-base
   type: event_brain
-  domain: your_domain
-  realm_ids: ["target_realm"]
+  abstract: true  # Can't be instantiated directly
 
-context:
+config:
+  subscriptions: []  # Override in concrete template
   preferences:
-    favored_story_types: [...]
-    favored_outcomes: [...]
-    disfavored: [...]
-
-  subscriptions:
-    - topic: "relevant.event"
+    favored_story_templates: []
+    favored_outcomes: []
+    disfavored: []
 
 flows:
-  process_event:
-    - when: "perception:type == 'relevant_event'"
-      then:
-        - call: evaluate_opportunity
+  # Common periodic scan pattern
+  periodic_scan:
+    - schedule:
+        interval: "${config.scan_interval || 'PT30M'}"
+        call: scan_for_opportunities
 
-  evaluate_opportunity:
-    - call_service:
-        service: storyline
-        endpoint: /storyline/compose
-        body:
-          seed_sources: ["{{archive_id}}"]
-          goal: appropriate_goal
-          dry_run: true
+  # Abstract - games implement their own search logic
+  scan_for_opportunities:
+    - abstract: true
 
-    - when: "response.plan.confidence > 0.7"
-      then:
-        - call: decide_enactment
-
-  decide_enactment:
-    # Watcher's willful decision
-    - set: { memories.pending_opportunity: "{{plan_id}}" }
-    # Later, if conditions remain favorable:
-    - call_service:
-        service: storyline
-        endpoint: /storyline/instantiate
+  # Common storyline tracking
+  track_storyline:
+    - set:
+        active_storylines: "${active_storylines.concat([storyline])}"
 ```
 
-**Watcher Preference Categories**:
-| Preference | Effect |
-|------------|--------|
-| `favored_story_types` | Higher scores for matching scenarios |
-| `favored_outcomes` | Prefer scenarios leading to these |
-| `disfavored` | Avoid scenarios with these elements |
-| `domain` | What types of events this watcher cares about |
+**Game-Specific Implementation** (the "soul"):
+```yaml
+# arcadia/behaviors/god-of-tragedy.yaml
+extends: regional-watcher-base
+
+metadata:
+  id: arcadia-god-of-tragedy
+  description: "Moira, the Fate-Weaver"
+
+config:
+  scan_interval: "PT20M"
+  subscriptions:
+    - "character.arcadia.*.relationship.formed"
+    - "character.arcadia.*.prosperity.gained"
+  preferences:
+    favored_story_templates: [FALL_FROM_GRACE, DOOMED_LOVE]
+    disfavored: [easy_escape, consequence_free_choices]
+
+flows:
+  scan_for_opportunities:
+    # GAME-SPECIFIC: What makes someone "tragically interesting"?
+    - api_call:
+        service: character
+        endpoint: /character/query
+        data:
+          realmId: "arcadia"
+          filters:
+            hasPositiveRelationships: true
+            recentAchievements: true
+        result: candidates
+
+    # GAME-SPECIFIC: Arcadia's happiness scoring formula
+    - foreach:
+        collection: "${candidates}"
+        as: char
+        do:
+          - set:
+              "char.happiness_score": >
+                ${0.3 * char.relationships.positiveCount +
+                  0.3 * char.recentAchievements.length +
+                  0.4 * (char.hasLivingFamily ? 1 : 0)}
+    # ... continue with scenario matching
+```
+
+**What We Provide vs What Games Provide**:
+
+| We Provide (Templates) | Games Provide (Soul) |
+|------------------------|----------------------|
+| Base watcher structure | Search strategies |
+| Common flows (scan, track) | Scoring formulas |
+| Plugin query patterns | Narrative preferences |
+| Storyline tracking | Domain-specific logic |
+
+See [Regional Watchers Behavior](../planning/REGIONAL_WATCHERS_BEHAVIOR.md) for complete patterns.
 
 ---
 
@@ -1101,3 +1233,47 @@ Are you implementing narrative systems?
 
 - [storyline-theory SDK](../../sdks/storyline-theory/) - Narrative theory primitives
 - [storyline-storyteller SDK](../../sdks/storyline-storyteller/) - Planning and composition
+
+---
+
+## Implementation Gaps
+
+The `lib-storyline` plugin exists with foundational SDK integration. The following capabilities are **planned but not yet implemented**:
+
+### Current State (lib-storyline)
+
+| Capability | Status | Notes |
+|------------|--------|-------|
+| SDK integration (archives, spectrums, arcs) | ✅ Exists | Core narrative theory available |
+| Archive mining | ✅ Exists | Can extract narrative state from compressed data |
+| Basic storyline tracking | ✅ Exists | Can track active storylines |
+
+### Planned Extensions
+
+| Capability | Status | Planning Doc |
+|------------|--------|--------------|
+| Scenario definitions | 📋 Planned | [SCENARIO_PLUGIN_ARCHITECTURE.md](../planning/SCENARIO_PLUGIN_ARCHITECTURE.md) |
+| Scenario condition matching | 📋 Planned | Passive APIs for watcher queries |
+| Scenario triggering & mutations | 📋 Planned | State changes to characters |
+| Quest spawning via hooks | 📋 Planned | Integration with lib-quest |
+| Lazy phase evaluation | 📋 Planned | Continuation points |
+| Storyline composition from archives | 📋 Planned | GOAP planning in narrative space |
+
+### Quest Plugin (lib-quest)
+
+| Capability | Status | Planning Doc |
+|------------|--------|--------------|
+| Quest definitions (contract templates) | 📋 Planned | [QUEST_PLUGIN_ARCHITECTURE.md](../planning/QUEST_PLUGIN_ARCHITECTURE.md) |
+| Objective tracking | 📋 Planned | Event-driven progress updates |
+| Quest log UI support | 📋 Planned | Player-facing views |
+| Reward distribution | 📋 Planned | Via lib-contract prebound APIs |
+
+### Next Steps
+
+1. **Audit existing lib-storyline** against this guide to identify gaps
+2. **Implement scenario APIs** as passive query endpoints
+3. **Implement quest plugin** as thin wrapper over lib-contract
+4. **Create watcher base templates** for regional watcher behaviors
+5. **Test with simple watcher** (Monster God pattern) before complex (Tragedy God)
+
+Run `/audit-plugin storyline` to begin gap analysis against these requirements.

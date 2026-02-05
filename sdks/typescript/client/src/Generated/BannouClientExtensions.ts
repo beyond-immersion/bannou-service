@@ -47,6 +47,7 @@ import { SaveLoadProxy } from './proxies/SaveLoadProxy.js';
 import { SceneProxy } from './proxies/SceneProxy.js';
 import { SessionsProxy } from './proxies/SessionsProxy.js';
 import { SpeciesProxy } from './proxies/SpeciesProxy.js';
+import { StorylineProxy } from './proxies/StorylineProxy.js';
 import { SubscriptionProxy } from './proxies/SubscriptionProxy.js';
 import { ValidateProxy } from './proxies/ValidateProxy.js';
 import { VoiceProxy } from './proxies/VoiceProxy.js';
@@ -92,6 +93,7 @@ interface ProxyCache {
   scene?: SceneProxy;
   sessions?: SessionsProxy;
   species?: SpeciesProxy;
+  storyline?: StorylineProxy;
   subscription?: SubscriptionProxy;
   validate?: ValidateProxy;
   voice?: VoiceProxy;
@@ -522,6 +524,18 @@ Object.defineProperty(BannouClient.prototype, 'species', {
 });
 
 /**
+ * Add lazy-initialized storyline proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'storyline', {
+  get(this: BannouClientWithCache): StorylineProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.storyline ??= new StorylineProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
  * Add lazy-initialized subscription proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'subscription', {
@@ -712,6 +726,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Species API endpoints.
      */
     readonly species: SpeciesProxy;
+    /**
+     * Typed proxy for Storyline API endpoints.
+     */
+    readonly storyline: StorylineProxy;
     /**
      * Typed proxy for Subscription API endpoints.
      */

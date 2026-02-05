@@ -35,12 +35,7 @@ public static class YamlLoader
                 $"Embedded resource '{resourceName}' not found. Available resources: {available}");
         }
 
-        using var stream = assembly.GetManifestResourceStream(fullName);
-        if (stream is null)
-        {
-            throw new InvalidOperationException($"Could not open stream for resource '{fullName}'.");
-        }
-
+        using var stream = assembly.GetManifestResourceStream(fullName) ?? throw new InvalidOperationException($"Could not open stream for resource '{fullName}'.");
         using var reader = new StreamReader(stream);
         return Deserializer.Deserialize<T>(reader);
     }

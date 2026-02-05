@@ -773,6 +773,24 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
+### Storyline
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `STORYLINE_DEFAULT_GENRE` | string | `drama` | Default genre when not specified and cannot be inferred.
+ |
+| `STORYLINE_DEFAULT_MAX_ENTITIES` | int | `10` | Default maximum entities per storyline plan.
+Can be overridd... |
+| `STORYLINE_DEFAULT_PLANNING_URGENCY` | string | `medium` | Default urgency tier for GOAP planning.
+low = more iteration... |
+| `STORYLINE_MAX_PLANNING_ITERATIONS` | int | `500` | Maximum A* iterations for GOAP planning.
+Higher values allow... |
+| `STORYLINE_MAX_SEED_SOURCES` | int | `10` | Maximum number of seed sources per compose request.
+ |
+| `STORYLINE_PLAN_CACHE_ENABLED` | bool | `true` | Whether to cache deterministic plans (those with explicit se... |
+| `STORYLINE_PLAN_CACHE_TTL_SECONDS` | int | `3600` | TTL in seconds for cached composed plans.
+Default: 3600 (1 h... |
+
 ### Subscription
 
 | Environment Variable | Type | Default | Description |
@@ -816,9 +834,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 627
+- **Total properties**: 634
 - **Required (no default)**: 41
-- **Optional (has default)**: 586
+- **Optional (has default)**: 593
 
 ## Environment Variable Naming Convention
 

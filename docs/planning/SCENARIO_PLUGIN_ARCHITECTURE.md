@@ -1,15 +1,58 @@
 # Scenario Plugin Architecture
 
-> **Version**: 1.0
+> **Version**: 1.1
 > **Last Updated**: 2026-02-05
 > **Status**: Planning
-> **Dependencies**: lib-character (L2), lib-realm (L2), lib-location (L2), lib-quest (L4), lib-storyline (L4)
+> **Dependencies**: lib-character (L2), lib-realm (L2), lib-location (L2), lib-quest (L4)
+> **Recommendation**: Merge into lib-storyline rather than separate plugin
 
 ## Executive Summary
 
 The Scenario plugin is the **bridge between narrative theory and game mechanics**. If Story Templates (in the SDK) define the *kinds* of stories that can exist (tragedy, hero's journey, revenge arc), Scenarios define the *concrete implementations* of those stories in the game world - complete with triggering conditions, character archetypes, situational requirements, and resulting state changes.
 
 **Core Principle**: Scenarios are reusable narrative building blocks. They can be triggered directly by game servers (traditional MMO style) or discovered and composed by Regional Watchers (emergent storytelling style). The same scenario definitions power both modes.
+
+---
+
+## Critical Architecture Clarification
+
+### The Scenario Plugin is PASSIVE
+
+**The Scenario plugin does NOT scan, search, or make decisions.**
+
+It is a passive data store with matching APIs. The active searching and decision-making happens in **actor behaviors** (Regional Watchers), not in plugin code.
+
+```
+WRONG MENTAL MODEL:
+  Scenario plugin scans for characters → finds matches → triggers scenarios
+
+CORRECT MENTAL MODEL:
+  Watcher actor searches for characters (via behavior)
+      ↓ provides character + world state
+  Scenario plugin checks if conditions match (passive query)
+      ↓ returns matching scenarios
+  Watcher actor decides whether to trigger (via behavior)
+```
+
+**Why this matters:**
+- The "soul" of storyline discovery is in **behavior documents**, not plugin code
+- Different watchers can use radically different search strategies
+- Behaviors are game-specific content; the plugin is reusable infrastructure
+- This keeps the plugin simple and behaviors expressive
+
+See [Regional Watchers Behavior](REGIONAL_WATCHERS_BEHAVIOR.md) for the active orchestration patterns.
+
+### Recommendation: Merge into Storyline Plugin
+
+Given the passive nature of Scenario and its tight coupling with Storyline, we recommend **merging Scenario APIs into the Storyline plugin**:
+
+- Scenario definition storage
+- Scenario condition matching
+- Scenario triggering and mutation application
+- Storyline composition from scenarios
+- Archive mining and GOAP planning
+
+This reduces service-to-service calls and keeps related functionality together. The APIs documented below would become `/storyline/scenario/*` endpoints.
 
 ---
 

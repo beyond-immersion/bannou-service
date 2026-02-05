@@ -43,6 +43,7 @@ using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Scene;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Storyline;
 using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Voice;
@@ -244,6 +245,11 @@ public partial interface IServiceNavigator
     /// Gets the State service client.
     /// </summary>
     IStateClient State { get; }
+
+    /// <summary>
+    /// Gets the Storyline service client.
+    /// </summary>
+    IStorylineClient Storyline { get; }
 
     /// <summary>
     /// Gets the Subscription service client.

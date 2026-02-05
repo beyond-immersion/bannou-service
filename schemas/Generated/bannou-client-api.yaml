@@ -8438,6 +8438,93 @@ paths:
                 $ref: '#/components/schemas/SpeciesListResponse'
         '404':
           description: Realm not found
+  /storyline/compose:
+    post:
+      summary: Compose a storyline plan from archive seeds
+      description: |
+        Generates a storyline plan using data from compressed archives and/or
+        live snapshots. The plan describes phases, actions, and entity requirements
+        but does NOT create any entities - callers decide whether to instantiate.
+
+        **Workflow**:
+        1. Fetch archive/snapshot data via IResourceClient
+        2. Extract world state from archive bundle
+        3. Select template based on goal and constraints
+        4. Run GOAP planner to generate action sequences
+        5. Cache plan and publish storyline.composed event
+      operationId: Compose
+      tags:
+      - Composition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComposeRequest'
+      responses:
+        '200':
+          description: Storyline plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeResponse'
+        '400':
+          description: Invalid request (no valid archives, incompatible 
+            goal/genre)
+        '404':
+          description: Archive or snapshot not found
+  /storyline/plan/get:
+    post:
+      summary: Retrieve a cached storyline plan
+      description: |
+        Retrieves a previously generated storyline plan by its ID.
+        Returns 404 if the plan has expired from cache or doesn't exist.
+      operationId: GetPlan
+      tags:
+      - Plans
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPlanRequest'
+      responses:
+        '200':
+          description: Plan retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPlanResponse'
+        '404':
+          description: Plan not found or expired
+  /storyline/plan/list:
+    post:
+      summary: List cached storyline plans
+      description: |
+        Lists storyline plans in the cache, optionally filtered by realm.
+        Plans are ordered by creation time (newest first).
+      operationId: ListPlans
+      tags:
+      - Plans
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListPlansRequest'
+      responses:
+        '200':
+          description: Plans listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPlansResponse'
   /subscription/account/list:
     post:
       summary: Get subscriptions for an account
@@ -9166,6 +9253,29 @@ components:
       - progressive
       - hidden
       - secret
+    ActionEffect:
+      type: object
+      additionalProperties: false
+      description: Effect of an action on world state
+      required:
+      - key
+      - value
+      properties:
+        key:
+          type: string
+          description: State key affected
+        value:
+          type: string
+          description: New value (as string, caller interprets type)
+        cardinality:
+          type: string
+          enum:
+          - set
+          - add
+          - remove
+          - increment
+          - decrement
+          description: How to apply the effect
     ActorCapabilities:
       type: object
       description: |
@@ -9613,6 +9723,23 @@ components:
           items:
             type: string
           description: ICE candidates for NAT traversal (can be trickled later)
+    ArcType:
+      type: string
+      enum:
+      - rags_to_riches
+      - tragedy
+      - man_in_hole
+      - icarus
+      - cinderella
+      - oedipus
+      description: |
+        Emotional arc shapes from Reagan et al. research.
+        rags_to_riches: Rise (1)
+        tragedy: Fall (2)
+        man_in_hole: Fall then rise (3)
+        icarus: Rise then fall (4)
+        cinderella: Rise, fall, rise (5)
+        oedipus: Fall, rise, fall (6)
     ArchiveBundleEntry:
       type: object
       additionalProperties: false
@@ -12853,6 +12980,152 @@ components:
         etag:
           type: string
           description: ETag returned from part upload
+    ComposeConstraints:
+      type: object
+      additionalProperties: false
+      description: Constraints on storyline composition
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm to anchor the storyline in
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional starting location
+        maxEntities:
+          type: integer
+          minimum: 1
+          maximum: 50
+          nullable: true
+          description: Maximum entities the plan can require (default from 
+            config)
+        maxPhases:
+          type: integer
+          minimum: 1
+          maximum: 10
+          nullable: true
+          description: Maximum phases in the plan (default unlimited)
+    ComposeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compose a storyline plan
+      required:
+      - seedSources
+      - goal
+      properties:
+        seedSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedSource'
+          minItems: 1
+          maxItems: 10
+          description: |
+            Archive or snapshot sources to seed the storyline.
+            At least one source is required. Mix of archives and snapshots allowed.
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: The high-level goal driving arc selection
+        constraints:
+          $ref: '#/components/schemas/ComposeConstraints'
+          nullable: true
+          description: Optional constraints on composition
+        genre:
+          type: string
+          nullable: true
+          description: |
+            Genre filter (e.g., "crime", "action", "romance").
+            If omitted, inferred from archive data.
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          nullable: true
+          description: |
+            Specific arc type to use. If omitted, selected based on goal.
+        urgency:
+          $ref: '#/components/schemas/PlanningUrgency'
+          nullable: true
+          description: |
+            Planning urgency level. Defaults to configuration value.
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed for deterministic output (enables caching)
+    ComposeResponse:
+      type: object
+      additionalProperties: false
+      description: Composed storyline plan
+      required:
+      - planId
+      - confidence
+      - goal
+      - arcType
+      - primarySpectrum
+      - phases
+      - generationTimeMs
+      - cached
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: Unique plan identifier
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Plan viability score (0-1)
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: The goal that was used
+        genre:
+          type: string
+          nullable: true
+          description: Inferred or specified genre
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          description: Emotional arc type used
+        primarySpectrum:
+          $ref: '#/components/schemas/SpectrumType'
+          description: Primary Life Value spectrum
+        themes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Inferred thematic elements
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylinePlanPhase'
+          description: Planned phases with actions
+        entitiesToSpawn:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityRequirement'
+          nullable: true
+          description: |
+            Entities required for this storyline (descriptions only).
+            Callers decide whether to spawn them.
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineLink'
+          nullable: true
+          description: Links between entities in the plan
+        risks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineRisk'
+          nullable: true
+          description: Identified risks or weak points in the plan
+        generationTimeMs:
+          type: integer
+          description: Time taken to generate in milliseconds
+        cached:
+          type: boolean
+          description: Whether this was returned from cache
     CompositionMetadata:
       description: Metadata about a generated composition
       type: object
@@ -16767,6 +17040,37 @@ components:
           type: number
           format: double
           description: Percentile ranking (0-100)
+    EntityRequirement:
+      type: object
+      additionalProperties: false
+      description: An entity required for the storyline
+      required:
+      - role
+      - entityType
+      - description
+      properties:
+        role:
+          type: string
+          description: Role in the story (e.g., "witness", "informant", 
+            "target")
+        entityType:
+          type: string
+          description: Type of entity needed (e.g., "character", "location", 
+            "item")
+        description:
+          type: string
+          description: Description of what's needed
+        constraints:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Constraints on entity selection/creation
+        sourceArchiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: If derived from an archive, that archive's ID
     EntityType:
       type: string
       description: |
@@ -19855,6 +20159,31 @@ components:
           type: string
           format: uuid
           description: Character whose perspective to retrieve
+    GetPlanRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a cached plan
+      required:
+      - planId
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: ID of the plan to retrieve
+    GetPlanResponse:
+      type: object
+      additionalProperties: false
+      description: Retrieved plan
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether the plan was found
+        plan:
+          $ref: '#/components/schemas/ComposeResponse'
+          nullable: true
+          description: The plan (null if not found)
     GetQueueRequest:
       type: object
       description: Request to get details of a specific queue
@@ -22512,6 +22841,43 @@ components:
           maximum: 100
           default: 20
           description: Number of results per page
+    ListPlansRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list cached plans
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm (optional)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Maximum plans to return
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+    ListPlansResponse:
+      type: object
+      additionalProperties: false
+      description: List of plans
+      required:
+      - plans
+      - totalCount
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanSummary'
+          description: Plan summaries
+        totalCount:
+          type: integer
+          description: Total matching plans
     ListQueuesRequest:
       type: object
       description: Request to list available matchmaking queues
@@ -25068,6 +25434,51 @@ components:
           allOf:
           - $ref: '#/components/schemas/EncounterPerspectiveModel'
           description: The character's perspective on the encounter
+    PhasePosition:
+      type: object
+      additionalProperties: false
+      description: Position bounds for a phase
+      required:
+      - start
+      - end
+      properties:
+        start:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Start position (0-1)
+        end:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: End position (0-1)
+    PhaseTargetState:
+      type: object
+      additionalProperties: false
+      description: Target state for phase completion
+      properties:
+        narrativeState:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+          nullable: true
+          description: Target spectrum values (spectrum name -> value)
+        facts:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Required world state facts
+        position:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Target story position (0-1)
     PinVersionRequest:
       type: object
       description: Request to pin a save version as a checkpoint to prevent 
@@ -25149,6 +25560,45 @@ components:
         high:
           $ref: '#/components/schemas/Pitch'
           description: Highest pitch (inclusive)
+    PlanSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a cached plan
+      required:
+      - planId
+      - goal
+      - arcType
+      - confidence
+      - createdAt
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: Plan identifier
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: Story goal
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          description: Arc type
+        confidence:
+          type: number
+          format: double
+          description: Viability score
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Anchored realm (if any)
+        createdAt:
+          type: string
+          format: date-time
+          description: When plan was created
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When plan expires from cache
     PlannedActionResponse:
       description: Single action within a GOAP plan with position and cost 
         information
@@ -25169,6 +25619,17 @@ components:
           type: number
           format: float
           description: Cost of this action
+    PlanningUrgency:
+      type: string
+      enum:
+      - low
+      - medium
+      - high
+      description: |
+        GOAP planning urgency level affecting search parameters.
+        low: More iterations, wider beam (1000/20)
+        medium: Balanced (500/15)
+        high: Fewer iterations, narrower beam (200/10)
     Platform:
       type: string
       description: External platform for achievement sync
@@ -28758,6 +29219,27 @@ components:
           type: integer
           format: int64
           description: Number of entries in this season
+    SeedSource:
+      type: object
+      additionalProperties: false
+      description: A source of seed data (archive or snapshot)
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a compressed archive (dead entity)
+        snapshotId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a live snapshot (living entity)
+        role:
+          type: string
+          nullable: true
+          description: |
+            Optional actant role hint (e.g., "protagonist", "antagonist", "helper").
+            Used for Greimas actant assignment if provided.
     SentimentResponse:
       type: object
       description: Response containing aggregate sentiment
@@ -29323,6 +29805,22 @@ components:
           type: string
           format: date-time
           description: Timestamp when the species was last updated
+    SpectrumType:
+      type: string
+      enum:
+      - life_death
+      - honor_dishonor
+      - justice_injustice
+      - freedom_subjugation
+      - love_hate
+      - respect_shame
+      - power_impotence
+      - success_failure
+      - altruism_selfishness
+      - wisdom_ignorance
+      description: |
+        The 10 Story Grid Life Value spectrums.
+        These are bipolar axes for emotional progression.
     SplitAllocation:
       type: object
       description: Allocation of assets to a party in a split resolution
@@ -29510,6 +30008,137 @@ components:
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
+    StorylineGoal:
+      type: string
+      enum:
+      - revenge
+      - resurrection
+      - legacy
+      - mystery
+      - peace
+      - redemption
+      - conquest
+      - survival
+      description: |
+        High-level story goal that drives arc selection.
+        revenge: Character seeks vengeance for past wrongs
+        resurrection: Restoring something/someone lost
+        legacy: Creating or continuing a lasting impact
+        mystery: Uncovering hidden truths
+        peace: Resolving conflicts and finding harmony
+        redemption: Atoning for past mistakes
+        conquest: Achieving dominion or victory
+        survival: Overcoming threats to existence
+    StorylineLink:
+      type: object
+      additionalProperties: false
+      description: A relationship link in the storyline
+      required:
+      - sourceRole
+      - targetRole
+      - linkType
+      properties:
+        sourceRole:
+          type: string
+          description: Source entity role
+        targetRole:
+          type: string
+          description: Target entity role
+        linkType:
+          type: string
+          description: Type of relationship (e.g., "opposes", "allies_with", 
+            "seeks")
+    StorylinePlanAction:
+      type: object
+      additionalProperties: false
+      description: An action in the storyline plan
+      required:
+      - actionId
+      - category
+      - description
+      properties:
+        actionId:
+          type: string
+          description: Action identifier from action registry
+        category:
+          type: string
+          description: Action category (e.g., "conflict", "relationship", 
+            "mystery")
+        description:
+          type: string
+          description: Human-readable action description
+        isCoreEvent:
+          type: boolean
+          description: Whether this is an obligatory scene
+        participants:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Character/entity roles involved
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionEffect'
+          nullable: true
+          description: World state effects of this action
+    StorylinePlanPhase:
+      type: object
+      additionalProperties: false
+      description: A phase in the storyline plan
+      required:
+      - phaseNumber
+      - name
+      - actions
+      properties:
+        phaseNumber:
+          type: integer
+          minimum: 1
+          description: 1-based phase number
+        name:
+          type: string
+          description: Phase name (e.g., "discovery", "confrontation", 
+            "resolution")
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylinePlanAction'
+          description: Actions in this phase
+        targetState:
+          $ref: '#/components/schemas/PhaseTargetState'
+          nullable: true
+          description: Target emotional/world state for phase completion
+        positionBounds:
+          $ref: '#/components/schemas/PhasePosition'
+          nullable: true
+          description: Position bounds for this phase (0-1 story progress)
+    StorylineRisk:
+      type: object
+      additionalProperties: false
+      description: Identified risk in the plan
+      required:
+      - riskType
+      - description
+      - severity
+      properties:
+        riskType:
+          type: string
+          description: Risk category (e.g., "missing_entity", "low_tension", 
+            "weak_climax")
+        description:
+          type: string
+          description: Risk description
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          description: Risk severity
+        mitigation:
+          type: string
+          nullable: true
+          description: Suggested mitigation
     StyleDefinitionResponse:
       description: Response containing a style definition
       type: object
@@ -32180,3 +32809,6 @@ tags:
   description: Resource reference tracking and lifecycle management.
 - name: Save-Load
   description: Generic save/load system for game state persistence.
+- name: Storyline Composer
+  description: Seeded narrative generation from compressed archives using the 
+    storyline SDKs.

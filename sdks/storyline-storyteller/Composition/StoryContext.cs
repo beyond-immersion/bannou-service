@@ -1,10 +1,10 @@
 // Copyright (c) Beyond Immersion. All rights reserved.
 
+using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
+using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
 using BeyondImmersion.Bannou.StorylineTheory.Actants;
 using BeyondImmersion.Bannou.StorylineTheory.Planning;
 using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
-using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
-using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
 
 namespace BeyondImmersion.Bannou.StorylineStoryteller.Composition;
 
