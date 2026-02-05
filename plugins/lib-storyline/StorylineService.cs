@@ -18,13 +18,6 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
-using SdkActionEffect = BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect;
-using SdkEffectCardinality = BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality;
-using SdkPhasePosition = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition;
-using SdkPhaseTargetState = BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState;
-using SdkStorylinePlan = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlan;
-using SdkStorylinePlanAction = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction;
-using SdkStorylinePlanPhase = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase;
 
 [assembly: InternalsVisibleTo("lib-storyline.tests")]
 
@@ -721,12 +714,10 @@ public partial class StorylineService : IStorylineService
     private ComposeResponse BuildComposeResponse(
         Guid planId,
         StorylineGoal goal,
-        SdkStorylinePlan sdkPlan,
+        StorylinePlan sdkPlan,
         int generationTimeMs,
         bool cached)
     {
-        var phases = sdkPlan.Phases.Select(ConvertPhase).ToList();
-
         return new ComposeResponse
         {
             PlanId = planId,
@@ -736,7 +727,7 @@ public partial class StorylineService : IStorylineService
             ArcType = sdkPlan.ArcType,
             PrimarySpectrum = sdkPlan.PrimarySpectrum,
             Themes = InferThemes(goal, sdkPlan).ToList(),
-            Phases = phases,
+            Phases = sdkPlan.Phases.ToList(), // SDK types used directly via x-sdk-type
             EntitiesToSpawn = null, // MVP: callers provide archive IDs, no entity spawning
             Links = null,           // MVP: no link extraction
             Risks = IdentifyRisks(sdkPlan).ToList(),
@@ -769,99 +760,9 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
-    /// Converts SDK phase to API phase.
-    /// </summary>
-    private static StorylinePlanPhase ConvertPhase(SdkStorylinePlanPhase sdkPhase)
-    {
-        return new StorylinePlanPhase
-        {
-            PhaseNumber = sdkPhase.PhaseNumber,
-            Name = sdkPhase.PhaseName,
-            Actions = sdkPhase.Actions.Select(ConvertAction).ToList(),
-            TargetState = ConvertTargetState(sdkPhase.TargetState),
-            PositionBounds = ConvertPositionBounds(sdkPhase.PositionBounds)
-        };
-    }
-
-    /// <summary>
-    /// Converts SDK action to API action.
-    /// </summary>
-    private static StorylinePlanAction ConvertAction(SdkStorylinePlanAction sdkAction)
-    {
-        // ToString() on enum is never null but compiler's nullable analysis doesn't know this
-        var category = sdkAction.NarrativeEffect.ToString() ?? "unknown";
-        return new StorylinePlanAction
-        {
-            ActionId = sdkAction.ActionId,
-            Category = category,
-            Description = $"Action {sdkAction.ActionId}",
-            IsCoreEvent = sdkAction.IsCoreEvent,
-            Participants = null, // MVP: no participant extraction
-            Effects = sdkAction.Effects.Select(ConvertEffect).ToList()
-        };
-    }
-
-    /// <summary>
-    /// Converts SDK action effect to API action effect.
-    /// </summary>
-    private static ActionEffect ConvertEffect(SdkActionEffect sdkEffect)
-    {
-        return new ActionEffect
-        {
-            Key = sdkEffect.Key,
-            Value = sdkEffect.Value?.ToString() ?? "",
-            Cardinality = sdkEffect.Cardinality switch
-            {
-                SdkEffectCardinality.Exclusive => ActionEffectCardinality.Set,
-                SdkEffectCardinality.Additive => ActionEffectCardinality.Add,
-                _ => ActionEffectCardinality.Set
-            }
-        };
-    }
-
-    /// <summary>
-    /// Converts SDK target state to API target state.
-    /// </summary>
-    private static PhaseTargetState? ConvertTargetState(SdkPhaseTargetState? sdkTargetState)
-    {
-        if (sdkTargetState == null)
-        {
-            return null;
-        }
-
-        return new PhaseTargetState
-        {
-            NarrativeState = new Dictionary<string, double>
-            {
-                ["primarySpectrumMin"] = sdkTargetState.MinPrimarySpectrum,
-                ["primarySpectrumMax"] = sdkTargetState.MaxPrimarySpectrum
-            },
-            Facts = null,
-            Position = null
-        };
-    }
-
-    /// <summary>
-    /// Converts SDK position bounds to API position bounds.
-    /// </summary>
-    private static PhasePosition? ConvertPositionBounds(SdkPhasePosition? sdkPosition)
-    {
-        if (sdkPosition == null)
-        {
-            return null;
-        }
-
-        return new PhasePosition
-        {
-            Start = sdkPosition.Floor,
-            End = sdkPosition.Ceiling
-        };
-    }
-
-    /// <summary>
     /// Calculates plan confidence score.
     /// </summary>
-    private static double CalculateConfidence(SdkStorylinePlan plan)
+    private static double CalculateConfidence(StorylinePlan plan)
     {
         // Simple confidence heuristic based on plan completeness
         var phaseCount = plan.Phases.Length;
@@ -895,7 +796,7 @@ public partial class StorylineService : IStorylineService
     /// <summary>
     /// Infers thematic elements from goal and plan.
     /// </summary>
-    private static IEnumerable<string> InferThemes(StorylineGoal goal, SdkStorylinePlan plan)
+    private static IEnumerable<string> InferThemes(StorylineGoal goal, StorylinePlan plan)
     {
         // Base theme from goal
         yield return goal.ToString().ToLowerInvariant();
@@ -933,7 +834,7 @@ public partial class StorylineService : IStorylineService
     /// <summary>
     /// Identifies potential risks in the plan.
     /// </summary>
-    private static IEnumerable<StorylineRisk> IdentifyRisks(SdkStorylinePlan plan)
+    private static IEnumerable<StorylineRisk> IdentifyRisks(StorylinePlan plan)
     {
         var actionCount = plan.Phases.Sum(p => p.Actions.Length);
         var coreEventCount = plan.Phases.Sum(p => p.Actions.Count(a => a.IsCoreEvent));
