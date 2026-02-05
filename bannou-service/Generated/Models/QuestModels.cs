@@ -708,14 +708,14 @@ public partial class ListQuestDefinitionsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestCategory Category { get; set; } = default!;
+    public QuestCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Filter by difficulty rating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("difficulty")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestDifficulty Difficulty { get; set; } = default!;
+    public QuestDifficulty? Difficulty { get; set; } = default!;
 
     /// <summary>
     /// Filter by tags (any match)
@@ -798,14 +798,14 @@ public partial class UpdateQuestDefinitionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestCategory Category { get; set; } = default!;
+    public QuestCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// New difficulty rating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("difficulty")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestDifficulty Difficulty { get; set; } = default!;
+    public QuestDifficulty? Difficulty { get; set; } = default!;
 
     /// <summary>
     /// New tags

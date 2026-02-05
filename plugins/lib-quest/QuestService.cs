@@ -352,10 +352,8 @@ public partial class QuestService : IQuestService
 
             var total = results.Count;
 
-            // Apply pagination
-            var offset = body.Offset ?? 0;
-            var limit = body.Limit ?? 50;
-            var paged = results.Skip(offset).Take(limit).ToList();
+            // Apply pagination (Offset and Limit have schema defaults of 0 and 50)
+            var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
 
             var response = new ListQuestDefinitionsResponse
             {
@@ -541,13 +539,7 @@ public partial class QuestService : IQuestService
             QuestDefinitionModel? definition = null;
             if (body.DefinitionId.HasValue)
             {
-                var (status, response) = await GetQuestDefinitionAsync(
-                    new GetQuestDefinitionRequest { DefinitionId = body.DefinitionId },
-                    cancellationToken);
-                if (status == StatusCodes.OK && response != null)
-                {
-                    definition = await GetDefinitionModelAsync(body.DefinitionId.Value, cancellationToken);
-                }
+                definition = await GetDefinitionModelAsync(body.DefinitionId.Value, cancellationToken);
             }
             else if (!string.IsNullOrWhiteSpace(body.Code))
             {
@@ -992,10 +984,8 @@ public partial class QuestService : IQuestService
 
             var total = results.Count;
 
-            // Apply pagination
-            var offset = body.Offset ?? 0;
-            var limit = body.Limit ?? 50;
-            var paged = results.Skip(offset).Take(limit).ToList();
+            // Apply pagination (Offset and Limit have schema defaults of 0 and 50)
+            var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
 
             var responseQuests = new List<QuestInstanceResponse>();
             foreach (var instance in paged)
@@ -1281,7 +1271,6 @@ public partial class QuestService : IQuestService
                     progressKey,
                     progress,
                     etag ?? string.Empty,
-                    new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
                     cancellationToken);
 
                 if (saveResult == null)

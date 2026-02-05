@@ -728,10 +728,14 @@ components:
           description: Filter by game service
         category:
           description: Filter by quest category
-          $ref: '#/components/schemas/QuestCategory'
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/QuestCategory'
         difficulty:
           description: Filter by difficulty rating
-          $ref: '#/components/schemas/QuestDifficulty'
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/QuestDifficulty'
         tags:
           type: array
           nullable: true
@@ -786,10 +790,14 @@ components:
           description: New description
         category:
           description: New quest category
-          $ref: '#/components/schemas/QuestCategory'
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/QuestCategory'
         difficulty:
           description: New difficulty rating
-          $ref: '#/components/schemas/QuestDifficulty'
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/QuestDifficulty'
         tags:
           type: array
           nullable: true
