@@ -225,6 +225,13 @@ public partial class EncounterPerspectiveModel
     public EmotionalImpact EmotionalImpact { get; set; } = default!;
 
     /// <summary>
+    /// Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (&gt;0.7 indicates high-impact encounter).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("impactIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float ImpactIntensity { get; set; } = default!;
+
+    /// <summary>
     /// Opinion change toward other participants (-1.0 to +1.0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sentimentShift")]
@@ -612,6 +619,13 @@ public partial class PerspectiveInput
     public EmotionalImpact EmotionalImpact { get; set; } = default!;
 
     /// <summary>
+    /// Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("impactIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float? ImpactIntensity { get; set; } = default!;
+
+    /// <summary>
     /// Opinion change toward other participants
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sentimentShift")]
@@ -923,6 +937,13 @@ public partial class UpdatePerspectiveRequest
     [System.Text.Json.Serialization.JsonPropertyName("emotionalImpact")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EmotionalImpact? EmotionalImpact { get; set; } = default!;
+
+    /// <summary>
+    /// New impact intensity (0.0-1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("impactIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float? ImpactIntensity { get; set; } = default!;
 
     /// <summary>
     /// New sentiment shift

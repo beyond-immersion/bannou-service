@@ -11818,6 +11818,11 @@ export interface components {
       emotionalImpact: components['schemas']['EmotionalImpact'];
       /**
        * Format: float
+       * @description Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).
+       */
+      impactIntensity?: number;
+      /**
+       * Format: float
        * @description Opinion change toward other participants (-1.0 to +1.0)
        */
       sentimentShift?: number | null;

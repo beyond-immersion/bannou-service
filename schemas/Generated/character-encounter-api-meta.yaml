@@ -475,19 +475,23 @@ paths:
         \                \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n           \
         \                 \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n     \
         \               \"description\": \"Character's emotional response to the encounter\"\n                },\n       \
-        \         \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Opinion change toward other participants\"\n                },\n \
-        \               \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\":
-        \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\"\
-        : 1.0,\n                    \"description\": \"Initial memory strength\"\n                },\n                \"rememberedAs\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"How this character remembers the encounter\"\n                }\n\
-        \            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\"\
-        ,\n                \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\"\
-        ,\n                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n             \
-        \   \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        \         \"impactIntensity\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact
+        if not provided.\"\n                },\n                \"sentimentShift\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Opinion change toward other
+        participants\"\n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 1.0,\n                    \"description\": \"Initial memory strength\"\n\
+        \                },\n                \"rememberedAs\": {\n                    \"type\": \"string\",\n            \
+        \        \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\": \"How
+        this character remembers the encounter\"\n                }\n            }\n        },\n        \"EmotionalImpact\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the
+        character\",\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n              \
+        \  \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n      \
+        \          \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n\
+        \            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterResponse\"\
         ,\n    \"$defs\": {\n        \"EncounterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing an encounter with perspectives\",\n            \"additionalProperties\": false,\n        \
@@ -541,27 +545,30 @@ paths:
         \                    \"description\": \"Character holding this perspective\"\n                },\n               \
         \ \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                          \
         \  \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                    \"\
-        description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record new encounter with perspectives\",\n    \"description\": \"Records
         a new encounter between two or more characters. Creates the shared\\nencounter record and individual perspectives
         for each participant.\\n\\nPerspectives can be provided in the request or will be auto-generated with\\ndefault values
@@ -683,27 +690,30 @@ paths:
         \                    \"description\": \"Character holding this perspective\"\n                },\n               \
         \ \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                          \
         \  \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                    \"\
-        description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character's encounters (paginated)\",\n    \"description\": \"Retrieves
         all encounters for a character with optional filtering.\\nMemory decay is applied lazily on access.\\n\",\n    \"\
         tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryByCharacter\"\n}"
@@ -816,27 +826,30 @@ paths:
         \                    \"description\": \"Character holding this perspective\"\n                },\n               \
         \ \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                          \
         \  \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                    \"\
-        description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get encounters between two characters\",\n    \"description\": \"Retrieves
         all encounters between two specific characters.\\nUseful for relationship history and dialogue context.\\n\",\n  \
         \  \"tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryBetween\"\n}"
@@ -946,27 +959,30 @@ paths:
         \                    \"description\": \"Character holding this perspective\"\n                },\n               \
         \ \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                          \
         \  \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                    \"\
-        description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Recent encounters at location\",\n    \"description\": \"Retrieves recent
         encounters at a specific location.\\nUseful for scene context and area history.\\n\",\n    \"tags\": [\n        \"\
         Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryByLocation\"\n}"
@@ -1194,27 +1210,30 @@ paths:
         ,\n                    \"description\": \"Character holding this perspective\"\n                },\n             \
         \   \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                        \
         \    \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                  \
-        \  \"description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        \  \"description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character's view of encounter\",\n    \"description\": \"Retrieves
         a specific character's perspective on an encounter.\\nIncludes emotional impact, sentiment shift, and memory strength.\\\
         n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getPerspective\"\
@@ -1254,6 +1273,9 @@ paths:
         ,\n                    \"description\": \"Character whose perspective to update\"\n                },\n          \
         \      \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"\
         nullable\": true,\n                    \"description\": \"New emotional impact\"\n                },\n           \
+        \     \"impactIntensity\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New impact intensity (0.0-1.0)\"\n                },\n           \
         \     \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
         ,\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
         : true,\n                    \"description\": \"New sentiment shift\"\n                },\n                \"rememberedAs\"\
@@ -1283,27 +1305,30 @@ paths:
         ,\n                    \"description\": \"Character holding this perspective\"\n                },\n             \
         \   \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                        \
         \    \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                  \
-        \  \"description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        \  \"description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update perspective (reflection)\",\n    \"description\": \"Updates a character's
         perspective on an encounter. Used when a character\\nreflects on past events or gains new information about an encounter.\\\
         n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updatePerspective\"\
@@ -1364,27 +1389,30 @@ paths:
         ,\n                    \"description\": \"Character holding this perspective\"\n                },\n             \
         \   \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                        \
         \    \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                  \
-        \  \"description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        \  \"description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Strengthen memory (referenced)\",\n    \"description\": \"Strengthens a
         character's memory of an encounter. Called when the encounter\\nis referenced in dialogue, thought, or action. Counteracts
         memory decay.\\n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1631,27 +1659,30 @@ paths:
         \                    \"description\": \"Character holding this perspective\"\n                },\n               \
         \ \"emotionalImpact\": {\n                    \"allOf\": [\n                        {\n                          \
         \  \"$ref\": \"#/$defs/EmotionalImpact\"\n                        }\n                    ],\n                    \"\
-        description\": \"Primary emotional response to the encounter\"\n                },\n                \"sentimentShift\"\
+        description\": \"Primary emotional response to the encounter\"\n                },\n                \"impactIntensity\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n                },\n         \
-        \       \"memoryStrength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n                \"rememberedAs\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Short description from this character's POV\"\n                },\n\
-        \                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When memory decay
-        was last applied\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"System timestamp when record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last modification timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
-        \   }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Intensity of emotional
+        impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).\"\n               \
+        \ },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n\
+        \                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get encounter data for compression\",\n    \"description\": \"Called by
         Resource service during character compression.\\nReturns encounters and perspectives involving this character for
         archival.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1820,6 +1851,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/EmotionalImpact'
           description: Primary emotional response to the encounter
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates 
+            high-impact encounter).
         sentimentShift:
           type: number
           format: float
@@ -2079,6 +2117,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/EmotionalImpact'
           description: Character's emotional response to the encounter
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided.
         sentimentShift:
           type: number
           format: float
@@ -2302,6 +2347,13 @@ components:
           $ref: '#/components/schemas/EmotionalImpact'
           nullable: true
           description: New emotional impact
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: New impact intensity (0.0-1.0)
         sentimentShift:
           type: number
           format: float

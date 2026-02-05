@@ -1070,6 +1070,14 @@ public partial class CharacterEncounterController
                     ],
                     "description": "Character's emotional response to the encounter"
                 },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided."
+                },
                 "sentimentShift": {
                     "type": "number",
                     "format": "float",
@@ -1266,6 +1274,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -1654,6 +1669,13 @@ public partial class CharacterEncounterController
                     ],
                     "description": "Primary emotional response to the encounter"
                 },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
+                },
                 "sentimentShift": {
                     "type": "number",
                     "format": "float",
@@ -2019,6 +2041,13 @@ public partial class CharacterEncounterController
                     ],
                     "description": "Primary emotional response to the encounter"
                 },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
+                },
                 "sentimentShift": {
                     "type": "number",
                     "format": "float",
@@ -2375,6 +2404,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -3023,6 +3059,13 @@ public partial class CharacterEncounterController
                     ],
                     "description": "Primary emotional response to the encounter"
                 },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
+                },
                 "sentimentShift": {
                     "type": "number",
                     "format": "float",
@@ -3168,6 +3211,14 @@ public partial class CharacterEncounterController
                     "nullable": true,
                     "description": "New emotional impact"
                 },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "New impact intensity (0.0-1.0)"
+                },
                 "sentimentShift": {
                     "type": "number",
                     "format": "float",
@@ -3262,6 +3313,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -3475,6 +3533,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -4154,6 +4219,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
