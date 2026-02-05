@@ -99,6 +99,11 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
 
+        // From quest-events.yaml
+        EventSubscriptionRegistry.Register<ContractMilestoneCompletedEvent>("contract.milestone.completed");
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+
         // From resource-events.yaml
         EventSubscriptionRegistry.Register<ResourceReferenceRegisteredEvent>("resource.reference.registered");
         EventSubscriptionRegistry.Register<ResourceReferenceUnregisteredEvent>("resource.reference.unregistered");

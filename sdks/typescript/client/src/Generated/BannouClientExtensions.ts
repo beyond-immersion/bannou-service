@@ -38,6 +38,7 @@ import { LocationProxy } from './proxies/LocationProxy.js';
 import { MappingProxy } from './proxies/MappingProxy.js';
 import { MatchmakingProxy } from './proxies/MatchmakingProxy.js';
 import { MusicProxy } from './proxies/MusicProxy.js';
+import { QuestProxy } from './proxies/QuestProxy.js';
 import { RealmProxy } from './proxies/RealmProxy.js';
 import { RealmHistoryProxy } from './proxies/RealmHistoryProxy.js';
 import { RelationshipProxy } from './proxies/RelationshipProxy.js';
@@ -84,6 +85,7 @@ interface ProxyCache {
   mapping?: MappingProxy;
   matchmaking?: MatchmakingProxy;
   music?: MusicProxy;
+  quest?: QuestProxy;
   realm?: RealmProxy;
   realmHistory?: RealmHistoryProxy;
   relationship?: RelationshipProxy;
@@ -416,6 +418,18 @@ Object.defineProperty(BannouClient.prototype, 'music', {
 });
 
 /**
+ * Add lazy-initialized quest proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'quest', {
+  get(this: BannouClientWithCache): QuestProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.quest ??= new QuestProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
  * Add lazy-initialized realm proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'realm', {
@@ -690,6 +704,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Music API endpoints.
      */
     readonly music: MusicProxy;
+    /**
+     * Typed proxy for Quest API endpoints.
+     */
+    readonly quest: QuestProxy;
     /**
      * Typed proxy for Realm API endpoints.
      */

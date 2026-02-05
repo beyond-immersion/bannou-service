@@ -349,6 +349,16 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
+### Quest
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `QuestAbandonedEvent` | Custom | `quest-abandoned` | Published when quest is voluntarily abandoned |
+| `QuestAcceptedEvent` | Custom | `quest-accepted` | Published when a character accepts a quest |
+| `QuestCompletedEvent` | Custom | `quest-completed` | Published when quest is completed successfully |
+| `QuestFailedEvent` | Custom | `quest-failed` | Published when quest fails |
+| `QuestObjectiveProgressedEvent` | Custom | `quest-objective-progressed` | Published when objective progress changes |
+
 ### Realm History
 
 | Event | Type | Likely Topic | Description |

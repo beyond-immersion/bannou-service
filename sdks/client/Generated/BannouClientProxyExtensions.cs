@@ -43,6 +43,7 @@ public partial class BannouClient
     private MusicProxy? _music;
     private OrchestratorProxy? _orchestrator;
     private PermissionProxy? _permission;
+    private QuestProxy? _quest;
     private RealmProxy? _realm;
     private RealmHistoryProxy? _realmHistory;
     private RelationshipProxy? _relationship;
@@ -231,6 +232,12 @@ public partial class BannouClient
     /// </summary>
     public PermissionProxy Permission =>
         _permission ??= new PermissionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Quest Service API operations.
+    /// </summary>
+    public QuestProxy Quest =>
+        _quest ??= new QuestProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Realm Service API operations.

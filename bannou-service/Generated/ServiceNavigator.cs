@@ -38,6 +38,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Music;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Permission;
+using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.RealmHistory;
 using BeyondImmersion.BannouService.Relationship;
@@ -106,6 +107,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IMusicClient _music;
     private readonly IOrchestratorClient _orchestrator;
     private readonly IPermissionClient _permission;
+    private readonly IQuestClient _quest;
     private readonly IRealmClient _realm;
     private readonly IRealmHistoryClient _realmHistory;
     private readonly IRelationshipClient _relationship;
@@ -159,6 +161,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IMusicClient music,
         IOrchestratorClient orchestrator,
         IPermissionClient permission,
+        IQuestClient quest,
         IRealmClient realm,
         IRealmHistoryClient realmHistory,
         IRelationshipClient relationship,
@@ -208,6 +211,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _music = music;
         _orchestrator = orchestrator;
         _permission = permission;
+        _quest = quest;
         _realm = realm;
         _realmHistory = realmHistory;
         _relationship = relationship;
@@ -354,6 +358,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IPermissionClient Permission => _permission;
+
+    /// <inheritdoc />
+    public IQuestClient Quest => _quest;
 
     /// <inheritdoc />
     public IRealmClient Realm => _realm;

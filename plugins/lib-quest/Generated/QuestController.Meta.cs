@@ -24,12 +24,12 @@ public partial class QuestController
     "$defs": {
         "CreateQuestDefinitionRequest": {
             "type": "object",
+            "description": "Request to create a new quest definition with objectives and rewards",
             "additionalProperties": false,
             "required": [
                 "code",
                 "name",
-                "objectives",
-                "gameServiceId"
+                "objectives"
             ],
             "properties": {
                 "code": {
@@ -46,9 +46,11 @@ public partial class QuestController
                     "description": "Quest description for players"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "difficulty": {
+                    "description": "Difficulty rating of the quest",
                     "$ref": "#/$defs/QuestDifficulty"
                 },
                 "levelRequirement": {
@@ -147,6 +149,7 @@ public partial class QuestController
         },
         "ObjectiveDefinition": {
             "type": "object",
+            "description": "Definition of a single quest objective with tracking parameters",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -169,6 +172,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "requiredCount": {
@@ -197,6 +201,7 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
+                    "description": "When a hidden objective is revealed in the quest log",
                     "$ref": "#/$defs/ObjectiveRevealBehavior"
                 },
                 "optional": {
@@ -234,12 +239,14 @@ public partial class QuestController
         },
         "PrerequisiteDefinition": {
             "type": "object",
+            "description": "Requirement that must be met before a quest can be accepted",
             "additionalProperties": false,
             "required": [
                 "type"
             ],
             "properties": {
                 "type": {
+                    "description": "Type of prerequisite check",
                     "$ref": "#/$defs/PrerequisiteType"
                 },
                 "questCode": {
@@ -292,6 +299,7 @@ public partial class QuestController
         },
         "RewardDefinition": {
             "type": "object",
+            "description": "Reward granted when a quest is completed",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -345,6 +353,7 @@ public partial class QuestController
     "$defs": {
         "QuestDefinitionResponse": {
             "type": "object",
+            "description": "Complete quest definition including objectives, prerequisites, and rewards",
             "additionalProperties": false,
             "required": [
                 "definitionId",
@@ -385,9 +394,11 @@ public partial class QuestController
                     "description": "Quest description"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "difficulty": {
+                    "description": "Difficulty rating of the quest",
                     "$ref": "#/$defs/QuestDifficulty"
                 },
                 "levelRequirement": {
@@ -487,6 +498,7 @@ public partial class QuestController
         },
         "ObjectiveDefinition": {
             "type": "object",
+            "description": "Definition of a single quest objective with tracking parameters",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -509,6 +521,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "requiredCount": {
@@ -537,6 +550,7 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
+                    "description": "When a hidden objective is revealed in the quest log",
                     "$ref": "#/$defs/ObjectiveRevealBehavior"
                 },
                 "optional": {
@@ -574,12 +588,14 @@ public partial class QuestController
         },
         "PrerequisiteDefinition": {
             "type": "object",
+            "description": "Requirement that must be met before a quest can be accepted",
             "additionalProperties": false,
             "required": [
                 "type"
             ],
             "properties": {
                 "type": {
+                    "description": "Type of prerequisite check",
                     "$ref": "#/$defs/PrerequisiteType"
                 },
                 "questCode": {
@@ -632,6 +648,7 @@ public partial class QuestController
         },
         "RewardDefinition": {
             "type": "object",
+            "description": "Reward granted when a quest is completed",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -741,6 +758,7 @@ public partial class QuestController
     "$defs": {
         "GetQuestDefinitionRequest": {
             "type": "object",
+            "description": "Request to retrieve a quest definition by ID or code",
             "additionalProperties": false,
             "properties": {
                 "definitionId": {
@@ -767,6 +785,7 @@ public partial class QuestController
     "$defs": {
         "QuestDefinitionResponse": {
             "type": "object",
+            "description": "Complete quest definition including objectives, prerequisites, and rewards",
             "additionalProperties": false,
             "required": [
                 "definitionId",
@@ -807,9 +826,11 @@ public partial class QuestController
                     "description": "Quest description"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "difficulty": {
+                    "description": "Difficulty rating of the quest",
                     "$ref": "#/$defs/QuestDifficulty"
                 },
                 "levelRequirement": {
@@ -909,6 +930,7 @@ public partial class QuestController
         },
         "ObjectiveDefinition": {
             "type": "object",
+            "description": "Definition of a single quest objective with tracking parameters",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -931,6 +953,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "requiredCount": {
@@ -959,6 +982,7 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
+                    "description": "When a hidden objective is revealed in the quest log",
                     "$ref": "#/$defs/ObjectiveRevealBehavior"
                 },
                 "optional": {
@@ -996,12 +1020,14 @@ public partial class QuestController
         },
         "PrerequisiteDefinition": {
             "type": "object",
+            "description": "Requirement that must be met before a quest can be accepted",
             "additionalProperties": false,
             "required": [
                 "type"
             ],
             "properties": {
                 "type": {
+                    "description": "Type of prerequisite check",
                     "$ref": "#/$defs/PrerequisiteType"
                 },
                 "questCode": {
@@ -1054,6 +1080,7 @@ public partial class QuestController
         },
         "RewardDefinition": {
             "type": "object",
+            "description": "Reward granted when a quest is completed",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -1163,6 +1190,7 @@ public partial class QuestController
     "$defs": {
         "ListQuestDefinitionsRequest": {
             "type": "object",
+            "description": "Request to list quest definitions with optional filtering",
             "additionalProperties": false,
             "properties": {
                 "gameServiceId": {
@@ -1172,10 +1200,22 @@ public partial class QuestController
                     "description": "Filter by game service"
                 },
                 "category": {
-                    "$ref": "#/$defs/QuestCategory"
+                    "description": "Filter by quest category",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/QuestCategory"
+                        }
+                    ]
                 },
                 "difficulty": {
-                    "$ref": "#/$defs/QuestDifficulty"
+                    "description": "Filter by difficulty rating",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/QuestDifficulty"
+                        }
+                    ]
                 },
                 "tags": {
                     "type": "array",
@@ -1238,6 +1278,7 @@ public partial class QuestController
     "$defs": {
         "ListQuestDefinitionsResponse": {
             "type": "object",
+            "description": "Paginated list of quest definitions",
             "additionalProperties": false,
             "required": [
                 "definitions",
@@ -1259,6 +1300,7 @@ public partial class QuestController
         },
         "QuestDefinitionResponse": {
             "type": "object",
+            "description": "Complete quest definition including objectives, prerequisites, and rewards",
             "additionalProperties": false,
             "required": [
                 "definitionId",
@@ -1299,9 +1341,11 @@ public partial class QuestController
                     "description": "Quest description"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "difficulty": {
+                    "description": "Difficulty rating of the quest",
                     "$ref": "#/$defs/QuestDifficulty"
                 },
                 "levelRequirement": {
@@ -1401,6 +1445,7 @@ public partial class QuestController
         },
         "ObjectiveDefinition": {
             "type": "object",
+            "description": "Definition of a single quest objective with tracking parameters",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -1423,6 +1468,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "requiredCount": {
@@ -1451,6 +1497,7 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
+                    "description": "When a hidden objective is revealed in the quest log",
                     "$ref": "#/$defs/ObjectiveRevealBehavior"
                 },
                 "optional": {
@@ -1488,12 +1535,14 @@ public partial class QuestController
         },
         "PrerequisiteDefinition": {
             "type": "object",
+            "description": "Requirement that must be met before a quest can be accepted",
             "additionalProperties": false,
             "required": [
                 "type"
             ],
             "properties": {
                 "type": {
+                    "description": "Type of prerequisite check",
                     "$ref": "#/$defs/PrerequisiteType"
                 },
                 "questCode": {
@@ -1546,6 +1595,7 @@ public partial class QuestController
         },
         "RewardDefinition": {
             "type": "object",
+            "description": "Reward granted when a quest is completed",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -1655,6 +1705,7 @@ public partial class QuestController
     "$defs": {
         "UpdateQuestDefinitionRequest": {
             "type": "object",
+            "description": "Request to update quest definition metadata",
             "additionalProperties": false,
             "required": [
                 "definitionId"
@@ -1676,10 +1727,22 @@ public partial class QuestController
                     "description": "New description"
                 },
                 "category": {
-                    "$ref": "#/$defs/QuestCategory"
+                    "description": "New quest category",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/QuestCategory"
+                        }
+                    ]
                 },
                 "difficulty": {
-                    "$ref": "#/$defs/QuestDifficulty"
+                    "description": "New difficulty rating",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/QuestDifficulty"
+                        }
+                    ]
                 },
                 "tags": {
                     "type": "array",
@@ -1727,6 +1790,7 @@ public partial class QuestController
     "$defs": {
         "QuestDefinitionResponse": {
             "type": "object",
+            "description": "Complete quest definition including objectives, prerequisites, and rewards",
             "additionalProperties": false,
             "required": [
                 "definitionId",
@@ -1767,9 +1831,11 @@ public partial class QuestController
                     "description": "Quest description"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "difficulty": {
+                    "description": "Difficulty rating of the quest",
                     "$ref": "#/$defs/QuestDifficulty"
                 },
                 "levelRequirement": {
@@ -1869,6 +1935,7 @@ public partial class QuestController
         },
         "ObjectiveDefinition": {
             "type": "object",
+            "description": "Definition of a single quest objective with tracking parameters",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -1891,6 +1958,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "requiredCount": {
@@ -1919,6 +1987,7 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
+                    "description": "When a hidden objective is revealed in the quest log",
                     "$ref": "#/$defs/ObjectiveRevealBehavior"
                 },
                 "optional": {
@@ -1956,12 +2025,14 @@ public partial class QuestController
         },
         "PrerequisiteDefinition": {
             "type": "object",
+            "description": "Requirement that must be met before a quest can be accepted",
             "additionalProperties": false,
             "required": [
                 "type"
             ],
             "properties": {
                 "type": {
+                    "description": "Type of prerequisite check",
                     "$ref": "#/$defs/PrerequisiteType"
                 },
                 "questCode": {
@@ -2014,6 +2085,7 @@ public partial class QuestController
         },
         "RewardDefinition": {
             "type": "object",
+            "description": "Reward granted when a quest is completed",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -2123,6 +2195,7 @@ public partial class QuestController
     "$defs": {
         "DeprecateQuestDefinitionRequest": {
             "type": "object",
+            "description": "Request to mark a quest definition as deprecated",
             "additionalProperties": false,
             "required": [
                 "definitionId"
@@ -2146,6 +2219,7 @@ public partial class QuestController
     "$defs": {
         "QuestDefinitionResponse": {
             "type": "object",
+            "description": "Complete quest definition including objectives, prerequisites, and rewards",
             "additionalProperties": false,
             "required": [
                 "definitionId",
@@ -2186,9 +2260,11 @@ public partial class QuestController
                     "description": "Quest description"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "difficulty": {
+                    "description": "Difficulty rating of the quest",
                     "$ref": "#/$defs/QuestDifficulty"
                 },
                 "levelRequirement": {
@@ -2288,6 +2364,7 @@ public partial class QuestController
         },
         "ObjectiveDefinition": {
             "type": "object",
+            "description": "Definition of a single quest objective with tracking parameters",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -2310,6 +2387,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "requiredCount": {
@@ -2338,6 +2416,7 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
+                    "description": "When a hidden objective is revealed in the quest log",
                     "$ref": "#/$defs/ObjectiveRevealBehavior"
                 },
                 "optional": {
@@ -2375,12 +2454,14 @@ public partial class QuestController
         },
         "PrerequisiteDefinition": {
             "type": "object",
+            "description": "Requirement that must be met before a quest can be accepted",
             "additionalProperties": false,
             "required": [
                 "type"
             ],
             "properties": {
                 "type": {
+                    "description": "Type of prerequisite check",
                     "$ref": "#/$defs/PrerequisiteType"
                 },
                 "questCode": {
@@ -2433,6 +2514,7 @@ public partial class QuestController
         },
         "RewardDefinition": {
             "type": "object",
+            "description": "Reward granted when a quest is completed",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -2542,6 +2624,7 @@ public partial class QuestController
     "$defs": {
         "AcceptQuestRequest": {
             "type": "object",
+            "description": "Request to accept a quest and create an active instance",
             "additionalProperties": false,
             "required": [
                 "questorCharacterId"
@@ -2590,6 +2673,7 @@ public partial class QuestController
     "$defs": {
         "QuestInstanceResponse": {
             "type": "object",
+            "description": "Active or completed quest instance with progress information",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -2627,6 +2711,7 @@ public partial class QuestController
                     "description": "Quest name"
                 },
                 "status": {
+                    "description": "Current status of the quest",
                     "$ref": "#/$defs/QuestStatus"
                 },
                 "questorCharacterIds": {
@@ -2682,6 +2767,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -2709,6 +2795,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -2821,6 +2908,7 @@ public partial class QuestController
     "$defs": {
         "AbandonQuestRequest": {
             "type": "object",
+            "description": "Request to abandon an active quest",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -2850,6 +2938,7 @@ public partial class QuestController
     "$defs": {
         "QuestInstanceResponse": {
             "type": "object",
+            "description": "Active or completed quest instance with progress information",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -2887,6 +2976,7 @@ public partial class QuestController
                     "description": "Quest name"
                 },
                 "status": {
+                    "description": "Current status of the quest",
                     "$ref": "#/$defs/QuestStatus"
                 },
                 "questorCharacterIds": {
@@ -2942,6 +3032,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -2969,6 +3060,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -3081,6 +3173,7 @@ public partial class QuestController
     "$defs": {
         "GetQuestRequest": {
             "type": "object",
+            "description": "Request to get details of a quest instance",
             "additionalProperties": false,
             "required": [
                 "questInstanceId"
@@ -3104,6 +3197,7 @@ public partial class QuestController
     "$defs": {
         "QuestInstanceResponse": {
             "type": "object",
+            "description": "Active or completed quest instance with progress information",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -3141,6 +3235,7 @@ public partial class QuestController
                     "description": "Quest name"
                 },
                 "status": {
+                    "description": "Current status of the quest",
                     "$ref": "#/$defs/QuestStatus"
                 },
                 "questorCharacterIds": {
@@ -3196,6 +3291,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -3223,6 +3319,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -3335,6 +3432,7 @@ public partial class QuestController
     "$defs": {
         "ListQuestsRequest": {
             "type": "object",
+            "description": "Request to list quests for a character with optional status filtering",
             "additionalProperties": false,
             "required": [
                 "characterId"
@@ -3387,6 +3485,7 @@ public partial class QuestController
     "$defs": {
         "ListQuestsResponse": {
             "type": "object",
+            "description": "Paginated list of quest instances",
             "additionalProperties": false,
             "required": [
                 "quests",
@@ -3408,6 +3507,7 @@ public partial class QuestController
         },
         "QuestInstanceResponse": {
             "type": "object",
+            "description": "Active or completed quest instance with progress information",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -3445,6 +3545,7 @@ public partial class QuestController
                     "description": "Quest name"
                 },
                 "status": {
+                    "description": "Current status of the quest",
                     "$ref": "#/$defs/QuestStatus"
                 },
                 "questorCharacterIds": {
@@ -3500,6 +3601,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -3527,6 +3629,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -3639,6 +3742,7 @@ public partial class QuestController
     "$defs": {
         "ListAvailableQuestsRequest": {
             "type": "object",
+            "description": "Request to list quests available for a character to accept",
             "additionalProperties": false,
             "required": [
                 "characterId"
@@ -3674,6 +3778,7 @@ public partial class QuestController
     "$defs": {
         "ListAvailableQuestsResponse": {
             "type": "object",
+            "description": "List of quest definitions available for acceptance",
             "additionalProperties": false,
             "required": [
                 "available"
@@ -3690,6 +3795,7 @@ public partial class QuestController
         },
         "QuestDefinitionResponse": {
             "type": "object",
+            "description": "Complete quest definition including objectives, prerequisites, and rewards",
             "additionalProperties": false,
             "required": [
                 "definitionId",
@@ -3730,9 +3836,11 @@ public partial class QuestController
                     "description": "Quest description"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "difficulty": {
+                    "description": "Difficulty rating of the quest",
                     "$ref": "#/$defs/QuestDifficulty"
                 },
                 "levelRequirement": {
@@ -3832,6 +3940,7 @@ public partial class QuestController
         },
         "ObjectiveDefinition": {
             "type": "object",
+            "description": "Definition of a single quest objective with tracking parameters",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -3854,6 +3963,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "requiredCount": {
@@ -3882,6 +3992,7 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
+                    "description": "When a hidden objective is revealed in the quest log",
                     "$ref": "#/$defs/ObjectiveRevealBehavior"
                 },
                 "optional": {
@@ -3919,12 +4030,14 @@ public partial class QuestController
         },
         "PrerequisiteDefinition": {
             "type": "object",
+            "description": "Requirement that must be met before a quest can be accepted",
             "additionalProperties": false,
             "required": [
                 "type"
             ],
             "properties": {
                 "type": {
+                    "description": "Type of prerequisite check",
                     "$ref": "#/$defs/PrerequisiteType"
                 },
                 "questCode": {
@@ -3977,6 +4090,7 @@ public partial class QuestController
         },
         "RewardDefinition": {
             "type": "object",
+            "description": "Reward granted when a quest is completed",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -4086,6 +4200,7 @@ public partial class QuestController
     "$defs": {
         "GetQuestLogRequest": {
             "type": "object",
+            "description": "Request to get a player-facing quest log summary",
             "additionalProperties": false,
             "required": [
                 "characterId"
@@ -4109,6 +4224,7 @@ public partial class QuestController
     "$defs": {
         "QuestLogResponse": {
             "type": "object",
+            "description": "Player-facing quest log with active quests and completion counts",
             "additionalProperties": false,
             "required": [
                 "activeQuests",
@@ -4135,6 +4251,7 @@ public partial class QuestController
         },
         "QuestLogEntry": {
             "type": "object",
+            "description": "Single entry in the quest log with progress summary",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -4161,9 +4278,11 @@ public partial class QuestController
                     "description": "Quest name"
                 },
                 "category": {
+                    "description": "Quest category for organization",
                     "$ref": "#/$defs/QuestCategory"
                 },
                 "status": {
+                    "description": "Current status of the quest",
                     "$ref": "#/$defs/QuestStatus"
                 },
                 "overallProgress": {
@@ -4217,6 +4336,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -4244,6 +4364,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -4356,6 +4477,7 @@ public partial class QuestController
     "$defs": {
         "ReportProgressRequest": {
             "type": "object",
+            "description": "Request to report progress on a quest objective",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -4395,6 +4517,7 @@ public partial class QuestController
     "$defs": {
         "ObjectiveProgressResponse": {
             "type": "object",
+            "description": "Response with objective progress and milestone completion status",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -4408,6 +4531,7 @@ public partial class QuestController
                     "description": "Quest instance ID"
                 },
                 "objective": {
+                    "description": "Current progress state of the objective",
                     "$ref": "#/$defs/ObjectiveProgress"
                 },
                 "milestoneCompleted": {
@@ -4418,6 +4542,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -4445,6 +4570,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -4557,6 +4683,7 @@ public partial class QuestController
     "$defs": {
         "ForceCompleteObjectiveRequest": {
             "type": "object",
+            "description": "Request to force complete an objective (admin/debug only)",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -4585,6 +4712,7 @@ public partial class QuestController
     "$defs": {
         "ObjectiveProgressResponse": {
             "type": "object",
+            "description": "Response with objective progress and milestone completion status",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -4598,6 +4726,7 @@ public partial class QuestController
                     "description": "Quest instance ID"
                 },
                 "objective": {
+                    "description": "Current progress state of the objective",
                     "$ref": "#/$defs/ObjectiveProgress"
                 },
                 "milestoneCompleted": {
@@ -4608,6 +4737,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -4635,6 +4765,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -4747,6 +4878,7 @@ public partial class QuestController
     "$defs": {
         "GetObjectiveProgressRequest": {
             "type": "object",
+            "description": "Request to get detailed progress for a specific objective",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -4775,6 +4907,7 @@ public partial class QuestController
     "$defs": {
         "ObjectiveProgressResponse": {
             "type": "object",
+            "description": "Response with objective progress and milestone completion status",
             "additionalProperties": false,
             "required": [
                 "questInstanceId",
@@ -4788,6 +4921,7 @@ public partial class QuestController
                     "description": "Quest instance ID"
                 },
                 "objective": {
+                    "description": "Current progress state of the objective",
                     "$ref": "#/$defs/ObjectiveProgress"
                 },
                 "milestoneCompleted": {
@@ -4798,6 +4932,7 @@ public partial class QuestController
         },
         "ObjectiveProgress": {
             "type": "object",
+            "description": "Current progress state of a quest objective",
             "additionalProperties": false,
             "required": [
                 "code",
@@ -4825,6 +4960,7 @@ public partial class QuestController
                     "description": "Objective description"
                 },
                 "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
                     "$ref": "#/$defs/ObjectiveType"
                 },
                 "currentCount": {
@@ -4937,6 +5073,7 @@ public partial class QuestController
     "$defs": {
         "MilestoneCompletedCallback": {
             "type": "object",
+            "description": "Callback from Contract service when a milestone is completed",
             "additionalProperties": false,
             "required": [
                 "contractInstanceId",
@@ -5025,6 +5162,7 @@ public partial class QuestController
     "$defs": {
         "QuestCompletedCallback": {
             "type": "object",
+            "description": "Callback when all quest milestones are completed",
             "additionalProperties": false,
             "required": [
                 "contractInstanceId"

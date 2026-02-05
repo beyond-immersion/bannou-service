@@ -34,6 +34,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Music;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Permission;
+using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.RealmHistory;
 using BeyondImmersion.BannouService.Relationship;
@@ -200,6 +201,11 @@ public partial interface IServiceNavigator
     /// Gets the Permission service client.
     /// </summary>
     IPermissionClient Permission { get; }
+
+    /// <summary>
+    /// Gets the Quest service client.
+    /// </summary>
+    IQuestClient Quest { get; }
 
     /// <summary>
     /// Gets the Realm service client.

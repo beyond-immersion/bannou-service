@@ -38,6 +38,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
+| [Bannou Quest Service API](#quest) | `client.Quest` | 16 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
@@ -1311,6 +1312,50 @@ Redis-backed high-performance permission system for WebSocket services.
 
 ---
 
+## Bannou Quest Service API {#quest}
+
+**Proxy**: `client.Quest` | **Version**: 1.0.0
+
+Quest system providing objective-based gameplay progression as a thin orchestration layer over lib-contract. Quests are contracts with game-flavore...
+
+### Definitions
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateQuestdefinitionAsync` | `CreateQuestDefinitionRequest` | `QuestDefinitionResponse` | Create a new quest definition |
+| `GetQuestdefinitionAsync` | `GetQuestDefinitionRequest` | `QuestDefinitionResponse` | Get quest definition by ID or code |
+| `ListQuestdefinitionsAsync` | `ListQuestDefinitionsRequest` | `ListQuestDefinitionsResponse` | List quest definitions with filtering |
+| `UpdateQuestdefinitionAsync` | `UpdateQuestDefinitionRequest` | `QuestDefinitionResponse` | Update quest definition metadata |
+| `DeprecatequestdefinitionAsync` | `DeprecateQuestDefinitionRequest` | `QuestDefinitionResponse` | Mark quest definition as deprecated |
+
+### Instances
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AcceptquestAsync` | `AcceptQuestRequest` | `QuestInstanceResponse` | Accept a quest |
+| `AbandonquestAsync` | `AbandonQuestRequest` | `QuestInstanceResponse` | Abandon an active quest |
+| `GetQuestAsync` | `GetQuestRequest` | `QuestInstanceResponse` | Get quest instance details |
+| `ListQuestsAsync` | `ListQuestsRequest` | `ListQuestsResponse` | List character's quests |
+| `ListAvailablequestsAsync` | `ListAvailableQuestsRequest` | `ListAvailableQuestsResponse` | List quests available to accept |
+| `GetQuestlogAsync` | `GetQuestLogRequest` | `QuestLogResponse` | Get player-facing quest log |
+
+### Internal
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `HandlemilestonecompletedEventAsync` | `MilestoneCompletedCallback` | *(fire-and-forget)* | Handle milestone completion callback |
+| `HandlequestcompletedEventAsync` | `QuestCompletedCallback` | *(fire-and-forget)* | Handle quest completion callback |
+
+### Objectives
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportobjectiveprogressAsync` | `ReportProgressRequest` | `ObjectiveProgressResponse` | Report progress on an objective |
+| `ForcecompleteobjectiveAsync` | `ForceCompleteObjectiveRequest` | `ObjectiveProgressResponse` | Force complete an objective (debug/GM) |
+| `GetObjectiveprogressAsync` | `GetObjectiveProgressRequest` | `ObjectiveProgressResponse` | Get objective progress details |
+
+---
+
 ## Bannou Realm Service API {#realm}
 
 **Proxy**: `client.Realm` | **Version**: 1.0.0
@@ -1786,8 +1831,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 43
-- **Total methods**: 572
+- **Total services**: 44
+- **Total methods**: 588
 
 ---
 

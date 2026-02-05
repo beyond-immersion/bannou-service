@@ -76,11 +76,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
 | `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
 | `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | int | `5000` | Default max age in milliseconds for cached query options |
+| `ACTOR_QUEST_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached quest data |
 | `ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS` | int | `100` | Interval in milliseconds for checking scheduled events |
 | `ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY` | double | `0.7` | Default urgency value for scheduled event perceptions (0.0-1... |
 | `ACTOR_SHORT_TERM_MEMORY_MINUTES` | int | `5` | Expiration time in minutes for short-term memories from high... |
 | `ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS` | int | `50` | Base delay in milliseconds between state persistence retry a... |
 | `ACTOR_STOP_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for graceful actor stop operations |
+| `ACTOR_STORYLINE_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached storyline participation data |
 
 ### Analytics
 
@@ -616,6 +618,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `MUSIC_COMPOSITION_CACHE_TTL_SECONDS` | int | `86400` | TTL in seconds for cached deterministic compositions |
+| `MUSIC_CONTOUR_DEFAULT_TENSION` | double | `0.5` | Default initial tension used when no section provides a valu... |
+| `MUSIC_CONTOUR_TENSION_THRESHOLD` | double | `0.2` | Tension delta threshold for determining ascending/descending... |
 | `MUSIC_DEFAULT_BEATS_PER_CHORD` | double | `4.0` | Default beats per chord in progression generation |
 | `MUSIC_DEFAULT_CHORDS_PER_BAR` | int | `1` | Default number of chords per bar in generated progressions |
 | `MUSIC_DEFAULT_EMOTIONAL_BRIGHTNESS` | double | `0.5` | Default brightness value for emotional state (0.0-1.0) |
@@ -628,6 +632,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MUSIC_DEFAULT_MELODY_SYNCOPATION` | double | `0.2` | Default syncopation amount for melody generation (0.0-1.0) |
 | `MUSIC_DEFAULT_TICKS_PER_BEAT` | int | `480` | Default MIDI ticks per beat (PPQN) for composition rendering |
 | `MUSIC_DEFAULT_VOICE_COUNT` | int | `4` | Default number of voices for chord voicing |
+| `MUSIC_DENSITY_ENERGY_MULTIPLIER` | double | `0.5` | Multiplier applied to energy for density calculation.
+Final ... |
+| `MUSIC_DENSITY_MINIMUM` | double | `0.4` | Minimum melody density (floor value before energy scaling).
+ |
 
 ### Orchestrator
 
@@ -668,6 +676,21 @@ This document lists all configuration options defined in Bannou's configuration 
 | `PERMISSION_LOCK_BASE_DELAY_MS` | int | `100` | Base delay in ms between lock retry attempts (exponential ba... |
 | `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
 | `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
+
+### Quest
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `QUEST_COOLDOWN_CACHE_TTL_SECONDS` | int | `86400` | TTL for quest cooldown tracking |
+| `QUEST_DEFAULT_DEADLINE_SECONDS` | int | `604800` | Default quest deadline in seconds (7 days) |
+| `QUEST_DEFINITION_CACHE_TTL_SECONDS` | int | `3600` | TTL for quest definition cache in Redis |
+| `QUEST_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL for idempotency keys (24 hours) |
+| `QUEST_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiry for quest mutations |
+| `QUEST_LOCK_RETRY_ATTEMPTS` | int | `3` | Retry attempts when lock acquisition fails |
+| `QUEST_MAX_ACTIVE_QUESTS_PER_CHARACTER` | int | `25` | Maximum concurrent active quests per character |
+| `QUEST_MAX_CONCURRENCY_RETRIES` | int | `5` | ETag concurrency retry attempts |
+| `QUEST_MAX_QUESTORS_PER_QUEST` | int | `5` | Maximum party members per quest instance |
+| `QUEST_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL for objective progress cache |
 
 ### Relationship Type
 
@@ -777,19 +800,32 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `STORYLINE_CONFIDENCE_ACTION_COUNT_BONUS` | double | `0.15` | Confidence bonus when action count is within acceptable rang... |
+| `STORYLINE_CONFIDENCE_BASE_SCORE` | double | `0.5` | Base confidence score before any bonuses are applied.
+ |
+| `STORYLINE_CONFIDENCE_CORE_EVENT_BONUS` | double | `0.15` | Confidence bonus when plan contains core events.
+ |
+| `STORYLINE_CONFIDENCE_MAX_ACTION_COUNT` | int | `20` | Maximum action count for action count bonus.
+ |
+| `STORYLINE_CONFIDENCE_MIN_ACTION_COUNT` | int | `5` | Minimum action count for action count bonus.
+ |
+| `STORYLINE_CONFIDENCE_PHASE_BONUS` | double | `0.2` | Confidence bonus when phase threshold is met.
+ |
+| `STORYLINE_CONFIDENCE_PHASE_THRESHOLD` | int | `3` | Minimum number of phases to receive a phase count bonus.
+ |
 | `STORYLINE_DEFAULT_GENRE` | string | `drama` | Default genre when not specified and cannot be inferred.
  |
-| `STORYLINE_DEFAULT_MAX_ENTITIES` | int | `10` | Default maximum entities per storyline plan.
-Can be overridd... |
 | `STORYLINE_DEFAULT_PLANNING_URGENCY` | string | `medium` | Default urgency tier for GOAP planning.
 low = more iteration... |
-| `STORYLINE_MAX_PLANNING_ITERATIONS` | int | `500` | Maximum A* iterations for GOAP planning.
-Higher values allow... |
 | `STORYLINE_MAX_SEED_SOURCES` | int | `10` | Maximum number of seed sources per compose request.
  |
 | `STORYLINE_PLAN_CACHE_ENABLED` | bool | `true` | Whether to cache deterministic plans (those with explicit se... |
 | `STORYLINE_PLAN_CACHE_TTL_SECONDS` | int | `3600` | TTL in seconds for cached composed plans.
 Default: 3600 (1 h... |
+| `STORYLINE_RISK_MIN_ACTION_THRESHOLD` | int | `3` | Minimum action count before "thin_content" risk is flagged.
+ |
+| `STORYLINE_RISK_MIN_PHASE_THRESHOLD` | int | `2` | Minimum phase count before "flat_arc" risk is flagged.
+ |
 
 ### Subscription
 
@@ -834,9 +870,9 @@ Default: 3600 (1 h... |
 
 ## Configuration Summary
 
-- **Total properties**: 634
+- **Total properties**: 657
 - **Required (no default)**: 41
-- **Optional (has default)**: 593
+- **Optional (has default)**: 616
 
 ## Environment Variable Naming Convention
 

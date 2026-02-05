@@ -29,6 +29,7 @@ export { LocationProxy } from './LocationProxy.js';
 export { MappingProxy } from './MappingProxy.js';
 export { MatchmakingProxy } from './MatchmakingProxy.js';
 export { MusicProxy } from './MusicProxy.js';
+export { QuestProxy } from './QuestProxy.js';
 export { RealmProxy } from './RealmProxy.js';
 export { RealmHistoryProxy } from './RealmHistoryProxy.js';
 export { RelationshipProxy } from './RelationshipProxy.js';

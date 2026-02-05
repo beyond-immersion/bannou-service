@@ -4983,6 +4983,266 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/quest/definition/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new quest definition
+     * @description Creates a quest definition wrapping a contract template with quest metadata.
+     */
+    post: operations['createQuestDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/definition/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get quest definition by ID or code
+     * @description Retrieves a quest definition by its unique identifier or code.
+     */
+    post: operations['getQuestDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/definition/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List quest definitions with filtering
+     * @description Lists quest definitions with optional filtering by category, difficulty, tags.
+     */
+    post: operations['listQuestDefinitions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/definition/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update quest definition metadata
+     * @description Updates quest metadata (not contract template - that's immutable).
+     */
+    post: operations['updateQuestDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/definition/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mark quest definition as deprecated
+     * @description Marks a quest definition as deprecated. No new instances can be created.
+     */
+    post: operations['deprecateQuestDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Accept a quest
+     * @description Creates a contract instance and auto-consents for the questor. Returns the active quest.
+     */
+    post: operations['acceptQuest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/abandon': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Abandon an active quest
+     * @description Terminates the underlying contract and marks the quest as abandoned.
+     */
+    post: operations['abandonQuest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get quest instance details
+     * @description Retrieves detailed quest instance information including objectives.
+     */
+    post: operations['getQuest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List character's quests
+     * @description Lists quests for a character filtered by status.
+     */
+    post: operations['listQuests'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/list-available': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List quests available to accept
+     * @description Lists quests a character can accept (prerequisites met, not on cooldown, not active).
+     */
+    post: operations['listAvailableQuests'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/log': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get player-facing quest log
+     * @description Returns UI-optimized quest log with progress summaries.
+     */
+    post: operations['getQuestLog'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/objective/progress': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Report progress on an objective
+     * @description Manually reports progress on a quest objective. Used by game systems.
+     */
+    post: operations['reportObjectiveProgress'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quest/objective/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get objective progress details
+     * @description Returns detailed progress information for a specific objective.
+     */
+    post: operations['getObjectiveProgress'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/realm/get': {
     parameters: {
       query?: never;
@@ -6830,6 +7090,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @description Request to abandon an active quest */
+    AbandonQuestRequest: {
+      /**
+       * Format: uuid
+       * @description Quest instance to abandon
+       */
+      questInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Character abandoning
+       */
+      questorCharacterId: string;
+    };
     /** @description Request to accept a formed match */
     AcceptMatchRequest: {
       /**
@@ -6866,6 +7139,30 @@ export interface components {
        * @description Game session ID (set when all players accept)
        */
       gameSessionId?: string | null;
+    };
+    /** @description Request to accept a quest and create an active instance */
+    AcceptQuestRequest: {
+      /**
+       * Format: uuid
+       * @description Quest definition ID (provide either this or code)
+       */
+      definitionId?: string | null;
+      /** @description Quest code (provide either this or definitionId) */
+      code?: string | null;
+      /**
+       * Format: uuid
+       * @description Character accepting the quest
+       */
+      questorCharacterId: string;
+      /**
+       * Format: uuid
+       * @description NPC offering the quest
+       */
+      questGiverCharacterId?: string | null;
+      /** @description Template variable overrides */
+      termOverrides?: {
+        [key: string]: string;
+      } | null;
     };
     /** @description User account information displayed on the website profile page */
     AccountProfile: {
@@ -7023,17 +7320,14 @@ export interface components {
      * @enum {string}
      */
     AchievementType: 'standard' | 'progressive' | 'hidden' | 'secret';
-    /** @description Effect of an action on world state */
+    /** @description Effect of an action on world state (SDK type) */
     ActionEffect: {
-      /** @description State key affected */
+      /** @description State key to modify */
       key: string;
-      /** @description New value (as string, caller interprets type) */
-      value: string;
-      /**
-       * @description How to apply the effect
-       * @enum {string}
-       */
-      cardinality?: 'set' | 'add' | 'remove' | 'increment' | 'decrement';
+      /** @description New value to set (any type) */
+      value: unknown;
+      /** @description How the effect is applied */
+      cardinality?: components['schemas']['EffectCardinality'];
     };
     /**
      * @description Actor-specific capabilities that affect affordance evaluation.
@@ -7348,15 +7642,15 @@ export interface components {
     };
     /**
      * @description Emotional arc shapes from Reagan et al. research.
-     *     rags_to_riches: Rise (1)
-     *     tragedy: Fall (2)
-     *     man_in_hole: Fall then rise (3)
-     *     icarus: Rise then fall (4)
-     *     cinderella: Rise, fall, rise (5)
-     *     oedipus: Fall, rise, fall (6)
+     *     RagsToRiches: Rise (1)
+     *     Tragedy: Fall (2)
+     *     ManInHole: Fall then rise (3)
+     *     Icarus: Rise then fall (4)
+     *     Cinderella: Rise, fall, rise (5)
+     *     Oedipus: Fall, rise, fall (6)
      * @enum {string}
      */
-    ArcType: 'rags_to_riches' | 'tragedy' | 'man_in_hole' | 'icarus' | 'cinderella' | 'oedipus';
+    ArcType: 'RagsToRiches' | 'Tragedy' | 'ManInHole' | 'Icarus' | 'Cinderella' | 'Oedipus';
     /** @description Single entry in the archive bundle */
     ArchiveBundleEntry: {
       /** @description Type of data (e.g., "character-personality") */
@@ -10978,6 +11272,53 @@ export interface components {
       /** @description Present if creation failed due to asset conflicts */
       conflicts?: components['schemas']['AssetConflict'][] | null;
     };
+    /** @description Request to create a new quest definition with objectives and rewards */
+    CreateQuestDefinitionRequest: {
+      /** @description Unique quest code (uppercase, underscores) */
+      code: string;
+      /** @description Display name of the quest */
+      name: string;
+      /** @description Quest description for players */
+      description?: string | null;
+      /** @description Quest category for organization */
+      category?: components['schemas']['QuestCategory'];
+      /** @description Difficulty rating of the quest */
+      difficulty?: components['schemas']['QuestDifficulty'];
+      /** @description Minimum character level required */
+      levelRequirement?: number | null;
+      /**
+       * @description Whether quest can be repeated
+       * @default false
+       */
+      repeatable: boolean;
+      /** @description Cooldown in seconds for repeatable quests */
+      cooldownSeconds?: number | null;
+      /** @description Time limit in seconds (null for no deadline) */
+      deadlineSeconds?: number | null;
+      /**
+       * @description Maximum party members (1 for solo)
+       * @default 1
+       */
+      maxQuestors: number;
+      /** @description List of quest objectives (ordered) */
+      objectives: components['schemas']['ObjectiveDefinition'][];
+      /** @description Requirements to accept the quest */
+      prerequisites?: components['schemas']['PrerequisiteDefinition'][] | null;
+      /** @description Rewards granted on completion */
+      rewards?: components['schemas']['RewardDefinition'][] | null;
+      /** @description Tags for filtering and organization */
+      tags?: string[] | null;
+      /**
+       * Format: uuid
+       * @description Character who offers this quest (null for any)
+       */
+      questGiverCharacterId?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service this quest belongs to
+       */
+      gameServiceId?: string;
+    };
     /** @description Request to create a new scene */
     CreateSceneRequest: {
       /** @description The scene document to create */
@@ -11604,6 +11945,14 @@ export interface components {
       /** @description Release tokens (issued when fully funded) */
       releaseTokens: components['schemas']['PartyToken'][];
     };
+    /** @description Request to mark a quest definition as deprecated */
+    DeprecateQuestDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Definition to deprecate
+       */
+      definitionId: string;
+    };
     /** @description Request to destroy an item instance */
     DestroyItemInstanceRequest: {
       /**
@@ -11860,6 +12209,13 @@ export interface components {
        */
       weeklyResetsAt: string;
     };
+    /**
+     * @description Cardinality for effect application.
+     *     Exclusive: Replaces existing value at key
+     *     Additive: Adds to collection at key
+     * @enum {string}
+     */
+    EffectCardinality: 'Exclusive' | 'Additive';
     /**
      * @description How the encounter emotionally affected the character
      * @enum {string}
@@ -14220,6 +14576,16 @@ export interface components {
       /** @description Milestone code */
       milestoneCode: string;
     };
+    /** @description Request to get detailed progress for a specific objective */
+    GetObjectiveProgressRequest: {
+      /**
+       * Format: uuid
+       * @description Quest instance
+       */
+      questInstanceId: string;
+      /** @description Objective code */
+      objectiveCode: string;
+    };
     /** @description Request to get or create a container */
     GetOrCreateContainerRequest: {
       /**
@@ -14334,6 +14700,32 @@ export interface components {
       found: boolean;
       /** @description The plan (null if not found) */
       plan?: components['schemas']['ComposeResponse'];
+    };
+    /** @description Request to retrieve a quest definition by ID or code */
+    GetQuestDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Definition ID (provide either this or code)
+       */
+      definitionId?: string | null;
+      /** @description Quest code (provide either this or definitionId) */
+      code?: string | null;
+    };
+    /** @description Request to get a player-facing quest log summary */
+    GetQuestLogRequest: {
+      /**
+       * Format: uuid
+       * @description Character to get log for
+       */
+      characterId: string;
+    };
+    /** @description Request to get details of a quest instance */
+    GetQuestRequest: {
+      /**
+       * Format: uuid
+       * @description Quest instance ID
+       */
+      questInstanceId: string;
     };
     /** @description Request to get details of a specific queue */
     GetQueueRequest: {
@@ -15670,6 +16062,29 @@ export interface components {
       /** @description Total number of archives */
       total: number;
     };
+    /** @description Request to list quests available for a character to accept */
+    ListAvailableQuestsRequest: {
+      /**
+       * Format: uuid
+       * @description Character to check availability for
+       */
+      characterId: string;
+      /**
+       * Format: uuid
+       * @description Filter by quest giver
+       */
+      questGiverCharacterId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter by game service
+       */
+      gameServiceId?: string | null;
+    };
+    /** @description List of quest definitions available for acceptance */
+    ListAvailableQuestsResponse: {
+      /** @description Available quest definitions */
+      available: components['schemas']['QuestDefinitionResponse'][];
+    };
     /** @description Request to list bundle version history */
     ListBundleVersionsRequest: {
       /** @description Human-readable bundle identifier to get history for */
@@ -16160,6 +16575,69 @@ export interface components {
       plans: components['schemas']['PlanSummary'][];
       /** @description Total matching plans */
       totalCount: number;
+    };
+    /** @description Request to list quest definitions with optional filtering */
+    ListQuestDefinitionsRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by game service
+       */
+      gameServiceId?: string | null;
+      /** @description Filter by quest category */
+      category?: components['schemas']['QuestCategory'] | null;
+      /** @description Filter by difficulty rating */
+      difficulty?: components['schemas']['QuestDifficulty'] | null;
+      /** @description Filter by tags (any match) */
+      tags?: string[] | null;
+      /**
+       * @description Include deprecated definitions
+       * @default false
+       */
+      includeDeprecated: boolean;
+      /**
+       * @description Max results
+       * @default 50
+       */
+      limit: number;
+      /**
+       * @description Pagination offset
+       * @default 0
+       */
+      offset: number;
+    };
+    /** @description Paginated list of quest definitions */
+    ListQuestDefinitionsResponse: {
+      /** @description List of definitions */
+      definitions: components['schemas']['QuestDefinitionResponse'][];
+      /** @description Total count for pagination */
+      total: number;
+    };
+    /** @description Request to list quests for a character with optional status filtering */
+    ListQuestsRequest: {
+      /**
+       * Format: uuid
+       * @description Character to list quests for
+       */
+      characterId: string;
+      /** @description Filter by statuses (null for all) */
+      statuses?: components['schemas']['QuestStatus'][] | null;
+      /**
+       * @description Max results
+       * @default 50
+       */
+      limit: number;
+      /**
+       * @description Pagination offset
+       * @default 0
+       */
+      offset: number;
+    };
+    /** @description Paginated list of quest instances */
+    ListQuestsResponse: {
+      /** @description Quest instances */
+      quests: components['schemas']['QuestInstanceResponse'][];
+      /** @description Total count */
+      total: number;
     };
     /** @description Request to list available matchmaking queues */
     ListQueuesRequest: {
@@ -17385,6 +17863,21 @@ export interface components {
       /** @description Pre-signed URLs for each part of the multipart upload */
       uploadUrls?: components['schemas']['PartUploadInfo'][] | null;
     };
+    /** @description Narrative effect on the emotional arc (SDK type) */
+    NarrativeEffect: {
+      /**
+       * Format: double
+       * @description Delta to apply to the primary spectrum
+       */
+      primarySpectrumDelta?: number | null;
+      /**
+       * Format: double
+       * @description Delta to apply to the secondary spectrum
+       */
+      secondarySpectrumDelta?: number | null;
+      /** @description Position advance type (micro, standard, macro) */
+      positionAdvance?: string | null;
+    };
     /** @description Options for narrative-driven composition using the Storyteller engine */
     NarrativeOptions: {
       /**
@@ -17519,6 +18012,98 @@ export interface components {
       /** @description Information about the client device (optional) */
       deviceInfo?: components['schemas']['DeviceInfo'];
     };
+    /** @description Definition of a single quest objective with tracking parameters */
+    ObjectiveDefinition: {
+      /** @description Unique objective code within quest */
+      code: string;
+      /** @description Display name of the objective */
+      name: string;
+      /** @description Objective description */
+      description?: string | null;
+      /** @description Type of objective determining progress tracking logic */
+      objectiveType: components['schemas']['ObjectiveType'];
+      /** @description Count needed to complete */
+      requiredCount: number;
+      /** @description Entity type for kill/collect objectives */
+      targetEntityType?: string | null;
+      /** @description Subtype filter (e.g., species:wolf) */
+      targetEntitySubtype?: string | null;
+      /**
+       * Format: uuid
+       * @description Location for travel/deliver objectives
+       */
+      targetLocationId?: string | null;
+      /**
+       * @description Whether objective is hidden initially
+       * @default false
+       */
+      hidden: boolean;
+      /** @description When a hidden objective is revealed in the quest log */
+      revealBehavior?: components['schemas']['ObjectiveRevealBehavior'];
+      /**
+       * @description Whether objective is optional for completion
+       * @default false
+       */
+      optional: boolean;
+    };
+    /** @description Current progress state of a quest objective */
+    ObjectiveProgress: {
+      /** @description Objective code */
+      code: string;
+      /** @description Objective name */
+      name: string;
+      /** @description Objective description */
+      description?: string | null;
+      /** @description Type of objective determining progress tracking logic */
+      objectiveType: components['schemas']['ObjectiveType'];
+      /** @description Current progress count */
+      currentCount: number;
+      /** @description Required count */
+      requiredCount: number;
+      /** @description Whether complete */
+      isComplete: boolean;
+      /**
+       * Format: float
+       * @description Progress percentage (0-100)
+       */
+      progressPercent: number;
+      /** @description Whether currently hidden */
+      hidden: boolean;
+      /** @description Whether optional */
+      optional: boolean;
+    };
+    /** @description Response with objective progress and milestone completion status */
+    ObjectiveProgressResponse: {
+      /**
+       * Format: uuid
+       * @description Quest instance ID
+       */
+      questInstanceId: string;
+      /** @description Current progress state of the objective */
+      objective: components['schemas']['ObjectiveProgress'];
+      /** @description Whether this progress completed the milestone */
+      milestoneCompleted: boolean;
+    };
+    /**
+     * @description When a hidden objective is revealed in the quest log
+     * @enum {string}
+     */
+    ObjectiveRevealBehavior: 'ALWAYS' | 'ON_PROGRESS' | 'ON_COMPLETE' | 'NEVER';
+    /**
+     * @description Type of objective determining progress tracking logic
+     * @enum {string}
+     */
+    ObjectiveType:
+      | 'KILL'
+      | 'COLLECT'
+      | 'DELIVER'
+      | 'TRAVEL'
+      | 'DISCOVER'
+      | 'TALK'
+      | 'CRAFT'
+      | 'ESCORT'
+      | 'DEFEND'
+      | 'CUSTOM';
     /**
      * @description Action to take when the referenced resource is deleted.
      *     CASCADE: Delete dependent entities when resource is deleted
@@ -17856,34 +18441,43 @@ export interface components {
       /** @description The character's perspective on the encounter */
       perspective: components['schemas']['EncounterPerspectiveModel'];
     };
-    /** @description Position bounds for a phase */
+    /** @description Phase position constraints from Save the Cat beat timing (SDK type) */
     PhasePosition: {
       /**
        * Format: double
-       * @description Start position (0-1)
+       * @description Target position from STC beat timing
        */
-      start: number;
+      stcCenter: number;
       /**
        * Format: double
-       * @description End position (0-1)
+       * @description Earliest advancement position (prevents speed-running)
        */
-      end: number;
+      floor: number;
+      /**
+       * Format: double
+       * @description Forced advancement position (prevents deadlock)
+       */
+      ceiling: number;
+      /**
+       * Format: double
+       * @description Validation tolerance (±)
+       */
+      validationBand: number;
     };
-    /** @description Target state for phase completion */
+    /** @description Target state for phase completion (SDK type) */
     PhaseTargetState: {
-      /** @description Target spectrum values (spectrum name -> value) */
-      narrativeState?: {
-        [key: string]: number;
-      } | null;
-      /** @description Required world state facts */
-      facts?: {
-        [key: string]: string;
-      } | null;
       /**
        * Format: double
-       * @description Target story position (0-1)
+       * @description Minimum primary spectrum value for this phase
        */
-      position?: number | null;
+      minPrimarySpectrum: number;
+      /**
+       * Format: double
+       * @description Maximum primary spectrum value for this phase
+       */
+      maxPrimarySpectrum: number;
+      /** @description Human-readable description of this state range */
+      rangeDescription?: string | null;
     };
     /** @description Request to pin a save version as a checkpoint to prevent cleanup */
     PinVersionRequest: {
@@ -17968,12 +18562,12 @@ export interface components {
     };
     /**
      * @description GOAP planning urgency level affecting search parameters.
-     *     low: More iterations, wider beam (1000/20)
-     *     medium: Balanced (500/15)
-     *     high: Fewer iterations, narrower beam (200/10)
+     *     Low: More iterations, wider beam (1000/20)
+     *     Medium: Balanced (500/15)
+     *     High: Fewer iterations, narrower beam (200/10)
      * @enum {string}
      */
-    PlanningUrgency: 'low' | 'medium' | 'high';
+    PlanningUrgency: 'Low' | 'Medium' | 'High';
     /**
      * @description External platform for achievement sync
      * @enum {string}
@@ -18027,6 +18621,35 @@ export interface components {
      * @enum {string}
      */
     PreferredRange: 'MELEE' | 'CLOSE' | 'MEDIUM' | 'RANGED';
+    /** @description Requirement that must be met before a quest can be accepted */
+    PrerequisiteDefinition: {
+      /** @description Type of prerequisite check */
+      type: components['schemas']['PrerequisiteType'];
+      /** @description Quest code for QUEST_COMPLETED type */
+      questCode?: string | null;
+      /** @description Minimum level for CHARACTER_LEVEL type */
+      minLevel?: number | null;
+      /** @description Faction code for REPUTATION type */
+      factionCode?: string | null;
+      /** @description Minimum reputation for REPUTATION type */
+      minReputation?: number | null;
+      /** @description Item code for ITEM_OWNED type */
+      itemCode?: string | null;
+      /** @description Currency code for CURRENCY_AMOUNT type */
+      currencyCode?: string | null;
+      /** @description Minimum amount for CURRENCY_AMOUNT type */
+      minAmount?: number | null;
+    };
+    /**
+     * @description Type of prerequisite check
+     * @enum {string}
+     */
+    PrerequisiteType:
+      | 'QUEST_COMPLETED'
+      | 'CHARACTER_LEVEL'
+      | 'REPUTATION'
+      | 'ITEM_OWNED'
+      | 'CURRENCY_AMOUNT';
     /**
      * @description Asset processing pipeline status
      * @enum {string}
@@ -18623,6 +19246,164 @@ export interface components {
       /** @description Total matching results */
       totalCount: number;
     };
+    /**
+     * @description Category of quest for organization
+     * @enum {string}
+     */
+    QuestCategory: 'MAIN' | 'SIDE' | 'BOUNTY' | 'DAILY' | 'WEEKLY' | 'EVENT' | 'TUTORIAL';
+    /** @description Complete quest definition including objectives, prerequisites, and rewards */
+    QuestDefinitionResponse: {
+      /**
+       * Format: uuid
+       * @description Unique quest definition ID
+       */
+      definitionId: string;
+      /**
+       * Format: uuid
+       * @description Underlying contract template ID
+       */
+      contractTemplateId: string;
+      /** @description Quest code */
+      code: string;
+      /** @description Quest name */
+      name: string;
+      /** @description Quest description */
+      description?: string | null;
+      /** @description Quest category for organization */
+      category: components['schemas']['QuestCategory'];
+      /** @description Difficulty rating of the quest */
+      difficulty: components['schemas']['QuestDifficulty'];
+      /** @description Minimum level required */
+      levelRequirement?: number | null;
+      /** @description Whether repeatable */
+      repeatable: boolean;
+      /** @description Cooldown for repeatable quests */
+      cooldownSeconds?: number | null;
+      /** @description Time limit */
+      deadlineSeconds?: number | null;
+      /** @description Max party size */
+      maxQuestors: number;
+      /** @description Quest objectives */
+      objectives: components['schemas']['ObjectiveDefinition'][];
+      /** @description Prerequisites */
+      prerequisites?: components['schemas']['PrerequisiteDefinition'][] | null;
+      /** @description Rewards */
+      rewards?: components['schemas']['RewardDefinition'][] | null;
+      /** @description Tags */
+      tags?: string[] | null;
+      /** @description Whether deprecated */
+      deprecated: boolean;
+      /**
+       * Format: date-time
+       * @description Creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: uuid
+       * @description Game service ID
+       */
+      gameServiceId: string;
+    };
+    /**
+     * @description Difficulty rating of the quest
+     * @enum {string}
+     */
+    QuestDifficulty: 'TRIVIAL' | 'EASY' | 'NORMAL' | 'HARD' | 'HEROIC' | 'LEGENDARY';
+    /** @description Active or completed quest instance with progress information */
+    QuestInstanceResponse: {
+      /**
+       * Format: uuid
+       * @description Unique instance ID
+       */
+      questInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Quest definition ID
+       */
+      definitionId: string;
+      /**
+       * Format: uuid
+       * @description Underlying contract instance ID
+       */
+      contractInstanceId: string;
+      /** @description Quest code */
+      code: string;
+      /** @description Quest name */
+      name: string;
+      /** @description Current status of the quest */
+      status: components['schemas']['QuestStatus'];
+      /** @description Characters on the quest */
+      questorCharacterIds: string[];
+      /**
+       * Format: uuid
+       * @description Quest giver NPC
+       */
+      questGiverCharacterId?: string | null;
+      /** @description Objective progress */
+      objectives: components['schemas']['ObjectiveProgress'][];
+      /**
+       * Format: date-time
+       * @description When quest was accepted
+       */
+      acceptedAt: string;
+      /**
+       * Format: date-time
+       * @description Quest deadline (null if none)
+       */
+      deadline?: string | null;
+      /**
+       * Format: date-time
+       * @description When completed
+       */
+      completedAt?: string | null;
+    };
+    /** @description Single entry in the quest log with progress summary */
+    QuestLogEntry: {
+      /**
+       * Format: uuid
+       * @description Quest instance ID
+       */
+      questInstanceId: string;
+      /** @description Quest code */
+      code: string;
+      /** @description Quest name */
+      name: string;
+      /** @description Quest category for organization */
+      category: components['schemas']['QuestCategory'];
+      /** @description Current status of the quest */
+      status: components['schemas']['QuestStatus'];
+      /**
+       * Format: float
+       * @description Overall progress percentage
+       */
+      overallProgress: number;
+      /** @description Visible objectives (hidden ones excluded until revealed) */
+      visibleObjectives: components['schemas']['ObjectiveProgress'][];
+      /**
+       * Format: date-time
+       * @description Deadline if any
+       */
+      deadline?: string | null;
+      /**
+       * Format: date-time
+       * @description When accepted
+       */
+      acceptedAt: string;
+    };
+    /** @description Player-facing quest log with active quests and completion counts */
+    QuestLogResponse: {
+      /** @description Active quests with progress */
+      activeQuests: components['schemas']['QuestLogEntry'][];
+      /** @description Total completed quests */
+      completedCount: number;
+      /** @description Total failed quests */
+      failedCount: number;
+    };
+    /**
+     * @description Current status of a quest instance
+     * @enum {string}
+     */
+    QuestStatus: 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'ABANDONED' | 'EXPIRED';
     /** @description Full configuration details of a matchmaking queue */
     QueueResponse: {
       /** @description Unique identifier for the queue */
@@ -19463,6 +20244,23 @@ export interface components {
       /** @description Breach description */
       description?: string | null;
     };
+    /** @description Request to report progress on a quest objective */
+    ReportProgressRequest: {
+      /**
+       * Format: uuid
+       * @description Quest instance
+       */
+      questInstanceId: string;
+      /** @description Objective code */
+      objectiveCode: string;
+      /** @description Amount to increment progress */
+      incrementBy: number;
+      /**
+       * Format: uuid
+       * @description Entity that contributed to progress (for deduplication)
+       */
+      trackedEntityId?: string | null;
+    };
     /** @description Detailed repository binding configuration and status */
     RepositoryBindingInfo: {
       /**
@@ -19822,6 +20620,24 @@ export interface components {
       restoredAt: string;
       /** @description Version number the bundle was restored from */
       restoredFromVersion: number;
+    };
+    /** @description Reward granted when a quest is completed */
+    RewardDefinition: {
+      /**
+       * @description Type of reward
+       * @enum {string}
+       */
+      type: 'CURRENCY' | 'ITEM' | 'EXPERIENCE' | 'REPUTATION';
+      /** @description Currency code for CURRENCY rewards */
+      currencyCode?: string | null;
+      /** @description Amount for CURRENCY/EXPERIENCE rewards */
+      amount?: number | null;
+      /** @description Item code for ITEM rewards */
+      itemCode?: string | null;
+      /** @description Quantity for ITEM rewards */
+      quantity?: number | null;
+      /** @description Faction code for REPUTATION rewards */
+      factionCode?: string | null;
     };
     /** @description Search engine optimization and social media sharing metadata */
     SEOMetadata: {
@@ -20739,16 +21555,16 @@ export interface components {
      * @enum {string}
      */
     SpectrumType:
-      | 'life_death'
-      | 'honor_dishonor'
-      | 'justice_injustice'
-      | 'freedom_subjugation'
-      | 'love_hate'
-      | 'respect_shame'
-      | 'power_impotence'
-      | 'success_failure'
-      | 'altruism_selfishness'
-      | 'wisdom_ignorance';
+      | 'LifeDeath'
+      | 'HonorDishonor'
+      | 'JusticeInjustice'
+      | 'FreedomSubjugation'
+      | 'LoveHate'
+      | 'RespectShame'
+      | 'PowerImpotence'
+      | 'SuccessFailure'
+      | 'AltruismSelfishness'
+      | 'WisdomIgnorance';
     /** @description Allocation of assets to a party in a split resolution */
     SplitAllocation: {
       /**
@@ -20879,20 +21695,9 @@ export interface components {
      *     legacy: Creating or continuing a lasting impact
      *     mystery: Uncovering hidden truths
      *     peace: Resolving conflicts and finding harmony
-     *     redemption: Atoning for past mistakes
-     *     conquest: Achieving dominion or victory
-     *     survival: Overcoming threats to existence
      * @enum {string}
      */
-    StorylineGoal:
-      | 'revenge'
-      | 'resurrection'
-      | 'legacy'
-      | 'mystery'
-      | 'peace'
-      | 'redemption'
-      | 'conquest'
-      | 'survival';
+    StorylineGoal: 'revenge' | 'resurrection' | 'legacy' | 'mystery' | 'peace';
     /** @description A relationship link in the storyline */
     StorylineLink: {
       /** @description Source entity role */
@@ -20902,33 +21707,33 @@ export interface components {
       /** @description Type of relationship (e.g., "opposes", "allies_with", "seeks") */
       linkType: string;
     };
-    /** @description An action in the storyline plan */
+    /** @description A planned action in the storyline (SDK type) */
     StorylinePlanAction: {
       /** @description Action identifier from action registry */
       actionId: string;
-      /** @description Action category (e.g., "conflict", "relationship", "mystery") */
-      category: string;
-      /** @description Human-readable action description */
-      description: string;
-      /** @description Whether this is an obligatory scene */
-      isCoreEvent?: boolean;
-      /** @description Character/entity roles involved */
-      participants?: string[] | null;
+      /** @description Sequence index within the plan */
+      sequenceIndex: number;
       /** @description World state effects of this action */
-      effects?: components['schemas']['ActionEffect'][] | null;
+      effects: components['schemas']['ActionEffect'][];
+      /** @description Narrative effect on the emotional arc */
+      narrativeEffect: components['schemas']['NarrativeEffect'];
+      /** @description Whether this is an obligatory scene */
+      isCoreEvent: boolean;
+      /** @description If chained, the ID of the action it was chained from */
+      chainedFrom?: string | null;
     };
-    /** @description A phase in the storyline plan */
+    /** @description A phase in the storyline plan (SDK type) */
     StorylinePlanPhase: {
       /** @description 1-based phase number */
       phaseNumber: number;
-      /** @description Phase name (e.g., "discovery", "confrontation", "resolution") */
+      /** @description Phase name */
       name: string;
       /** @description Actions in this phase */
       actions: components['schemas']['StorylinePlanAction'][];
-      /** @description Target emotional/world state for phase completion */
-      targetState?: components['schemas']['PhaseTargetState'];
-      /** @description Position bounds for this phase (0-1 story progress) */
-      positionBounds?: components['schemas']['PhasePosition'];
+      /** @description Target state for phase completion */
+      targetState: components['schemas']['PhaseTargetState'];
+      /** @description Position bounds for this phase */
+      positionBounds: components['schemas']['PhasePosition'];
     };
     /** @description Identified risk in the plan */
     StorylineRisk: {
@@ -21897,6 +22702,24 @@ export interface components {
       metadata?: {
         [key: string]: unknown;
       } | null;
+    };
+    /** @description Request to update quest definition metadata */
+    UpdateQuestDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Definition to update
+       */
+      definitionId: string;
+      /** @description New name */
+      name?: string | null;
+      /** @description New description */
+      description?: string | null;
+      /** @description New quest category */
+      category?: components['schemas']['QuestCategory'] | null;
+      /** @description New difficulty rating */
+      difficulty?: components['schemas']['QuestDifficulty'] | null;
+      /** @description New tags */
+      tags?: string[] | null;
     };
     /** @description Request to update repository binding configuration */
     UpdateRepositoryBindingRequest: {
@@ -29990,6 +30813,409 @@ export interface operations {
       };
       /** @description Invalid request */
       400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  createQuestDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateQuestDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest definition created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestDefinitionResponse'];
+        };
+      };
+      /** @description Invalid request (validation error) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Quest definition with this code already exists */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getQuestDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetQuestDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest definition found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestDefinitionResponse'];
+        };
+      };
+      /** @description Quest definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listQuestDefinitions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListQuestDefinitionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest definitions retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListQuestDefinitionsResponse'];
+        };
+      };
+    };
+  };
+  updateQuestDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateQuestDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest definition updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestDefinitionResponse'];
+        };
+      };
+      /** @description Quest definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  deprecateQuestDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateQuestDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest definition deprecated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestDefinitionResponse'];
+        };
+      };
+      /** @description Quest definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  acceptQuest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcceptQuestRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest accepted successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestInstanceResponse'];
+        };
+      };
+      /** @description Prerequisites not met or already at max quests */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Quest definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Quest already active or on cooldown */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  abandonQuest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AbandonQuestRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest abandoned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestInstanceResponse'];
+        };
+      };
+      /** @description Quest not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Quest not in abandonable state */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getQuest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetQuestRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest instance found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestInstanceResponse'];
+        };
+      };
+      /** @description Quest not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listQuests: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListQuestsRequest'];
+      };
+    };
+    responses: {
+      /** @description Quests retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListQuestsResponse'];
+        };
+      };
+    };
+  };
+  listAvailableQuests: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListAvailableQuestsRequest'];
+      };
+    };
+    responses: {
+      /** @description Available quests retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListAvailableQuestsResponse'];
+        };
+      };
+    };
+  };
+  getQuestLog: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetQuestLogRequest'];
+      };
+    };
+    responses: {
+      /** @description Quest log retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestLogResponse'];
+        };
+      };
+    };
+  };
+  reportObjectiveProgress: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReportProgressRequest'];
+      };
+    };
+    responses: {
+      /** @description Progress recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectiveProgressResponse'];
+        };
+      };
+      /** @description Quest or objective not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getObjectiveProgress: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetObjectiveProgressRequest'];
+      };
+    };
+    responses: {
+      /** @description Objective progress retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectiveProgressResponse'];
+        };
+      };
+      /** @description Quest or objective not found */
+      404: {
         headers: {
           [name: string]: unknown;
         };

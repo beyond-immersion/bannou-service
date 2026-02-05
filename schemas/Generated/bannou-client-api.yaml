@@ -6560,6 +6560,329 @@ paths:
                 $ref: '#/components/schemas/VoiceLeadResponse'
         '400':
           description: Invalid request
+  /quest/definition/create:
+    post:
+      operationId: createQuestDefinition
+      tags:
+      - Definitions
+      summary: Create a new quest definition
+      description: Creates a quest definition wrapping a contract template with 
+        quest metadata.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '400':
+          description: Invalid request (validation error)
+        '409':
+          description: Quest definition with this code already exists
+  /quest/definition/get:
+    post:
+      operationId: getQuestDefinition
+      tags:
+      - Definitions
+      summary: Get quest definition by ID or code
+      description: Retrieves a quest definition by its unique identifier or 
+        code.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '404':
+          description: Quest definition not found
+  /quest/definition/list:
+    post:
+      operationId: listQuestDefinitions
+      tags:
+      - Definitions
+      summary: List quest definitions with filtering
+      description: Lists quest definitions with optional filtering by category, 
+        difficulty, tags.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListQuestDefinitionsRequest'
+      responses:
+        '200':
+          description: Quest definitions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListQuestDefinitionsResponse'
+  /quest/definition/update:
+    post:
+      operationId: updateQuestDefinition
+      tags:
+      - Definitions
+      summary: Update quest definition metadata
+      description: Updates quest metadata (not contract template - that's 
+        immutable).
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '404':
+          description: Quest definition not found
+  /quest/definition/deprecate:
+    post:
+      operationId: deprecateQuestDefinition
+      tags:
+      - Definitions
+      summary: Mark quest definition as deprecated
+      description: Marks a quest definition as deprecated. No new instances can 
+        be created.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateQuestDefinitionRequest'
+      responses:
+        '200':
+          description: Quest definition deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinitionResponse'
+        '404':
+          description: Quest definition not found
+  /quest/accept:
+    post:
+      operationId: acceptQuest
+      tags:
+      - Instances
+      summary: Accept a quest
+      description: Creates a contract instance and auto-consents for the 
+        questor. Returns the active quest.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptQuestRequest'
+      responses:
+        '200':
+          description: Quest accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstanceResponse'
+        '400':
+          description: Prerequisites not met or already at max quests
+        '404':
+          description: Quest definition not found
+        '409':
+          description: Quest already active or on cooldown
+  /quest/abandon:
+    post:
+      operationId: abandonQuest
+      tags:
+      - Instances
+      summary: Abandon an active quest
+      description: Terminates the underlying contract and marks the quest as 
+        abandoned.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbandonQuestRequest'
+      responses:
+        '200':
+          description: Quest abandoned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstanceResponse'
+        '404':
+          description: Quest not found
+        '409':
+          description: Quest not in abandonable state
+  /quest/get:
+    post:
+      operationId: getQuest
+      tags:
+      - Instances
+      summary: Get quest instance details
+      description: Retrieves detailed quest instance information including 
+        objectives.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetQuestRequest'
+      responses:
+        '200':
+          description: Quest instance found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstanceResponse'
+        '404':
+          description: Quest not found
+  /quest/list:
+    post:
+      operationId: listQuests
+      tags:
+      - Instances
+      summary: List character's quests
+      description: Lists quests for a character filtered by status.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListQuestsRequest'
+      responses:
+        '200':
+          description: Quests retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListQuestsResponse'
+  /quest/list-available:
+    post:
+      operationId: listAvailableQuests
+      tags:
+      - Instances
+      summary: List quests available to accept
+      description: Lists quests a character can accept (prerequisites met, not 
+        on cooldown, not active).
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListAvailableQuestsRequest'
+      responses:
+        '200':
+          description: Available quests retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAvailableQuestsResponse'
+  /quest/log:
+    post:
+      operationId: getQuestLog
+      tags:
+      - Instances
+      summary: Get player-facing quest log
+      description: Returns UI-optimized quest log with progress summaries.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetQuestLogRequest'
+      responses:
+        '200':
+          description: Quest log retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestLogResponse'
+  /quest/objective/progress:
+    post:
+      operationId: reportObjectiveProgress
+      tags:
+      - Objectives
+      summary: Report progress on an objective
+      description: Manually reports progress on a quest objective. Used by game 
+        systems.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportProgressRequest'
+      responses:
+        '200':
+          description: Progress recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveProgressResponse'
+        '404':
+          description: Quest or objective not found
+  /quest/objective/get:
+    post:
+      operationId: getObjectiveProgress
+      tags:
+      - Objectives
+      summary: Get objective progress details
+      description: Returns detailed progress information for a specific 
+        objective.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetObjectiveProgressRequest'
+      responses:
+        '200':
+          description: Objective progress retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveProgressResponse'
+        '404':
+          description: Quest or objective not found
   /realm/get:
     post:
       summary: Get realm by ID
@@ -8965,6 +9288,22 @@ paths:
           description: Theme updated
 components:
   schemas:
+    AbandonQuestRequest:
+      type: object
+      description: Request to abandon an active quest
+      additionalProperties: false
+      required:
+      - questInstanceId
+      - questorCharacterId
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance to abandon
+        questorCharacterId:
+          type: string
+          format: uuid
+          description: Character abandoning
     AcceptMatchRequest:
       type: object
       description: Request to accept a formed match
@@ -9014,6 +9353,37 @@ components:
           format: uuid
           nullable: true
           description: Game session ID (set when all players accept)
+    AcceptQuestRequest:
+      type: object
+      description: Request to accept a quest and create an active instance
+      additionalProperties: false
+      required:
+      - questorCharacterId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Quest definition ID (provide either this or code)
+        code:
+          type: string
+          nullable: true
+          description: Quest code (provide either this or definitionId)
+        questorCharacterId:
+          type: string
+          format: uuid
+          description: Character accepting the quest
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: NPC offering the quest
+        termOverrides:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: Template variable overrides
     AccountProfile:
       description: User account information displayed on the website profile 
         page
@@ -9254,28 +9624,23 @@ components:
       - hidden
       - secret
     ActionEffect:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect
       type: object
       additionalProperties: false
-      description: Effect of an action on world state
+      description: Effect of an action on world state (SDK type)
       required:
       - key
       - value
       properties:
         key:
           type: string
-          description: State key affected
+          description: State key to modify
         value:
-          type: string
-          description: New value (as string, caller interprets type)
+          description: New value to set (any type)
         cardinality:
-          type: string
-          enum:
-          - set
-          - add
-          - remove
-          - increment
-          - decrement
-          description: How to apply the effect
+          $ref: '#/components/schemas/EffectCardinality'
+          description: How the effect is applied
     ActorCapabilities:
       type: object
       description: |
@@ -9724,22 +10089,23 @@ components:
             type: string
           description: ICE candidates for NAT traversal (can be trickled later)
     ArcType:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType
       type: string
       enum:
-      - rags_to_riches
-      - tragedy
-      - man_in_hole
-      - icarus
-      - cinderella
-      - oedipus
+      - RagsToRiches
+      - Tragedy
+      - ManInHole
+      - Icarus
+      - Cinderella
+      - Oedipus
       description: |
         Emotional arc shapes from Reagan et al. research.
-        rags_to_riches: Rise (1)
-        tragedy: Fall (2)
-        man_in_hole: Fall then rise (3)
-        icarus: Rise then fall (4)
-        cinderella: Rise, fall, rise (5)
-        oedipus: Fall, rise, fall (6)
+        RagsToRiches: Rise (1)
+        Tragedy: Fall (2)
+        ManInHole: Fall then rise (3)
+        Icarus: Rise then fall (4)
+        Cinderella: Rise, fall, rise (5)
+        Oedipus: Fall, rise, fall (6)
     ArchiveBundleEntry:
       type: object
       additionalProperties: false
@@ -15278,6 +15644,84 @@ components:
           items:
             $ref: '#/components/schemas/AssetConflict'
           description: Present if creation failed due to asset conflicts
+    CreateQuestDefinitionRequest:
+      type: object
+      description: Request to create a new quest definition with objectives and 
+        rewards
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - objectives
+      properties:
+        code:
+          type: string
+          description: Unique quest code (uppercase, underscores)
+        name:
+          type: string
+          description: Display name of the quest
+        description:
+          type: string
+          nullable: true
+          description: Quest description for players
+        category:
+          description: Quest category for organization
+          $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: Difficulty rating of the quest
+          $ref: '#/components/schemas/QuestDifficulty'
+        levelRequirement:
+          type: integer
+          nullable: true
+          description: Minimum character level required
+        repeatable:
+          type: boolean
+          default: false
+          description: Whether quest can be repeated
+        cooldownSeconds:
+          type: integer
+          nullable: true
+          description: Cooldown in seconds for repeatable quests
+        deadlineSeconds:
+          type: integer
+          nullable: true
+          description: Time limit in seconds (null for no deadline)
+        maxQuestors:
+          type: integer
+          default: 1
+          description: Maximum party members (1 for solo)
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveDefinition'
+          description: List of quest objectives (ordered)
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PrerequisiteDefinition'
+          description: Requirements to accept the quest
+        rewards:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RewardDefinition'
+          description: Rewards granted on completion
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags for filtering and organization
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character who offers this quest (null for any)
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this quest belongs to
     CreateSceneRequest:
       type: object
       description: Request to create a new scene
@@ -16178,6 +16622,17 @@ components:
           items:
             $ref: '#/components/schemas/PartyToken'
           description: Release tokens (issued when fully funded)
+    DeprecateQuestDefinitionRequest:
+      type: object
+      description: Request to mark a quest definition as deprecated
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition to deprecate
     DestroyItemInstanceRequest:
       type: object
       description: Request to destroy an item instance
@@ -16568,6 +17023,17 @@ components:
           type: string
           format: date-time
           description: When weekly counter resets
+    EffectCardinality:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality
+      type: string
+      enum:
+      - Exclusive
+      - Additive
+      description: |
+        Cardinality for effect application.
+        Exclusive: Replaces existing value at key
+        Additive: Adds to collection at key
     EmotionalImpact:
       type: string
       description: How the encounter emotionally affected the character
@@ -20014,6 +20480,21 @@ components:
         milestoneCode:
           type: string
           description: Milestone code
+    GetObjectiveProgressRequest:
+      type: object
+      description: Request to get detailed progress for a specific objective
+      additionalProperties: false
+      required:
+      - questInstanceId
+      - objectiveCode
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance
+        objectiveCode:
+          type: string
+          description: Objective code
     GetOrCreateContainerRequest:
       type: object
       description: Request to get or create a container
@@ -20184,6 +20665,42 @@ components:
           $ref: '#/components/schemas/ComposeResponse'
           nullable: true
           description: The plan (null if not found)
+    GetQuestDefinitionRequest:
+      type: object
+      description: Request to retrieve a quest definition by ID or code
+      additionalProperties: false
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Definition ID (provide either this or code)
+        code:
+          type: string
+          nullable: true
+          description: Quest code (provide either this or definitionId)
+    GetQuestLogRequest:
+      type: object
+      description: Request to get a player-facing quest log summary
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to get log for
+    GetQuestRequest:
+      type: object
+      description: Request to get details of a quest instance
+      additionalProperties: false
+      required:
+      - questInstanceId
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
     GetQueueRequest:
       type: object
       description: Request to get details of a specific queue
@@ -22150,6 +22667,39 @@ components:
         total:
           type: integer
           description: Total number of archives
+    ListAvailableQuestsRequest:
+      type: object
+      description: Request to list quests available for a character to accept
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to check availability for
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by quest giver
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+    ListAvailableQuestsResponse:
+      type: object
+      description: List of quest definitions available for acceptance
+      additionalProperties: false
+      required:
+      - available
+      properties:
+        available:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestDefinitionResponse'
+          description: Available quest definitions
     ListBundleVersionsRequest:
       type: object
       additionalProperties: false
@@ -22878,6 +23428,102 @@ components:
         totalCount:
           type: integer
           description: Total matching plans
+    ListQuestDefinitionsRequest:
+      type: object
+      description: Request to list quest definitions with optional filtering
+      additionalProperties: false
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+        category:
+          description: Filter by quest category
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: Filter by difficulty rating
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/QuestDifficulty'
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Filter by tags (any match)
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated definitions
+        limit:
+          type: integer
+          default: 50
+          description: Max results
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+    ListQuestDefinitionsResponse:
+      type: object
+      description: Paginated list of quest definitions
+      additionalProperties: false
+      required:
+      - definitions
+      - total
+      properties:
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestDefinitionResponse'
+          description: List of definitions
+        total:
+          type: integer
+          description: Total count for pagination
+    ListQuestsRequest:
+      type: object
+      description: Request to list quests for a character with optional status 
+        filtering
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to list quests for
+        statuses:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/QuestStatus'
+          description: Filter by statuses (null for all)
+        limit:
+          type: integer
+          default: 50
+          description: Max results
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+    ListQuestsResponse:
+      type: object
+      description: Paginated list of quest instances
+      additionalProperties: false
+      required:
+      - quests
+      - total
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestInstanceResponse'
+          description: Quest instances
+        total:
+          type: integer
+          description: Total count
     ListQueuesRequest:
       type: object
       description: Request to list available matchmaking queues
@@ -24717,6 +25363,27 @@ components:
           description: Pre-signed URLs for each part of the multipart upload
           items:
             $ref: '#/components/schemas/PartUploadInfo'
+    NarrativeEffect:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect
+      type: object
+      additionalProperties: false
+      description: Narrative effect on the emotional arc (SDK type)
+      properties:
+        primarySpectrumDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Delta to apply to the primary spectrum
+        secondarySpectrumDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Delta to apply to the secondary spectrum
+        positionAdvance:
+          type: string
+          nullable: true
+          description: Position advance type (micro, standard, macro)
     NarrativeOptions:
       description: Options for narrative-driven composition using the 
         Storyteller engine
@@ -24931,6 +25598,146 @@ components:
           $ref: '#/components/schemas/DeviceInfo'
           nullable: true
           description: Information about the client device (optional)
+    ObjectiveDefinition:
+      type: object
+      description: Definition of a single quest objective with tracking 
+        parameters
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - objectiveType
+      - requiredCount
+      properties:
+        code:
+          type: string
+          description: Unique objective code within quest
+        name:
+          type: string
+          description: Display name of the objective
+        description:
+          type: string
+          nullable: true
+          description: Objective description
+        objectiveType:
+          description: Type of objective determining progress tracking logic
+          $ref: '#/components/schemas/ObjectiveType'
+        requiredCount:
+          type: integer
+          description: Count needed to complete
+        targetEntityType:
+          type: string
+          nullable: true
+          description: Entity type for kill/collect objectives
+        targetEntitySubtype:
+          type: string
+          nullable: true
+          description: Subtype filter (e.g., species:wolf)
+        targetLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location for travel/deliver objectives
+        hidden:
+          type: boolean
+          default: false
+          description: Whether objective is hidden initially
+        revealBehavior:
+          description: When a hidden objective is revealed in the quest log
+          $ref: '#/components/schemas/ObjectiveRevealBehavior'
+        optional:
+          type: boolean
+          default: false
+          description: Whether objective is optional for completion
+    ObjectiveProgress:
+      type: object
+      description: Current progress state of a quest objective
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - objectiveType
+      - currentCount
+      - requiredCount
+      - isComplete
+      - progressPercent
+      - hidden
+      - optional
+      properties:
+        code:
+          type: string
+          description: Objective code
+        name:
+          type: string
+          description: Objective name
+        description:
+          type: string
+          nullable: true
+          description: Objective description
+        objectiveType:
+          description: Type of objective determining progress tracking logic
+          $ref: '#/components/schemas/ObjectiveType'
+        currentCount:
+          type: integer
+          description: Current progress count
+        requiredCount:
+          type: integer
+          description: Required count
+        isComplete:
+          type: boolean
+          description: Whether complete
+        progressPercent:
+          type: number
+          format: float
+          description: Progress percentage (0-100)
+        hidden:
+          type: boolean
+          description: Whether currently hidden
+        optional:
+          type: boolean
+          description: Whether optional
+    ObjectiveProgressResponse:
+      type: object
+      description: Response with objective progress and milestone completion 
+        status
+      additionalProperties: false
+      required:
+      - questInstanceId
+      - objective
+      - milestoneCompleted
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        objective:
+          description: Current progress state of the objective
+          $ref: '#/components/schemas/ObjectiveProgress'
+        milestoneCompleted:
+          type: boolean
+          description: Whether this progress completed the milestone
+    ObjectiveRevealBehavior:
+      type: string
+      enum:
+      - ALWAYS
+      - ON_PROGRESS
+      - ON_COMPLETE
+      - NEVER
+      description: When a hidden objective is revealed in the quest log
+    ObjectiveType:
+      type: string
+      enum:
+      - KILL
+      - COLLECT
+      - DELIVER
+      - TRAVEL
+      - DISCOVER
+      - TALK
+      - CRAFT
+      - ESCORT
+      - DEFEND
+      - CUSTOM
+      description: Type of objective determining progress tracking logic
     OnDeleteAction:
       type: string
       enum:
@@ -25435,50 +26242,56 @@ components:
           - $ref: '#/components/schemas/EncounterPerspectiveModel'
           description: The character's perspective on the encounter
     PhasePosition:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition
       type: object
       additionalProperties: false
-      description: Position bounds for a phase
+      description: Phase position constraints from Save the Cat beat timing (SDK
+        type)
       required:
-      - start
-      - end
+      - stcCenter
+      - floor
+      - ceiling
+      - validationBand
       properties:
-        start:
+        stcCenter:
           type: number
           format: double
-          minimum: 0
-          maximum: 1
-          description: Start position (0-1)
-        end:
+          description: Target position from STC beat timing
+        floor:
           type: number
           format: double
-          minimum: 0
-          maximum: 1
-          description: End position (0-1)
+          description: Earliest advancement position (prevents speed-running)
+        ceiling:
+          type: number
+          format: double
+          description: Forced advancement position (prevents deadlock)
+        validationBand:
+          type: number
+          format: double
+          description: Validation tolerance (±)
     PhaseTargetState:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState
       type: object
       additionalProperties: false
-      description: Target state for phase completion
+      description: Target state for phase completion (SDK type)
+      required:
+      - minPrimarySpectrum
+      - maxPrimarySpectrum
       properties:
-        narrativeState:
-          type: object
-          additionalProperties:
-            type: number
-            format: double
-          nullable: true
-          description: Target spectrum values (spectrum name -> value)
-        facts:
-          type: object
-          additionalProperties:
-            type: string
-          nullable: true
-          description: Required world state facts
-        position:
+        minPrimarySpectrum:
           type: number
           format: double
-          minimum: 0
-          maximum: 1
+          description: Minimum primary spectrum value for this phase
+        maxPrimarySpectrum:
+          type: number
+          format: double
+          description: Maximum primary spectrum value for this phase
+        rangeDescription:
+          type: string
           nullable: true
-          description: Target story position (0-1)
+          description: Human-readable description of this state range
     PinVersionRequest:
       type: object
       description: Request to pin a save version as a checkpoint to prevent 
@@ -25620,16 +26433,18 @@ components:
           format: float
           description: Cost of this action
     PlanningUrgency:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency
       type: string
       enum:
-      - low
-      - medium
-      - high
+      - Low
+      - Medium
+      - High
       description: |
         GOAP planning urgency level affecting search parameters.
-        low: More iterations, wider beam (1000/20)
-        medium: Balanced (500/15)
-        high: Fewer iterations, narrower beam (200/10)
+        Low: More iterations, wider beam (1000/20)
+        Medium: Balanced (500/15)
+        High: Fewer iterations, narrower beam (200/10)
     Platform:
       type: string
       description: External platform for achievement sync
@@ -25710,6 +26525,53 @@ components:
       - CLOSE
       - MEDIUM
       - RANGED
+    PrerequisiteDefinition:
+      type: object
+      description: Requirement that must be met before a quest can be accepted
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          description: Type of prerequisite check
+          $ref: '#/components/schemas/PrerequisiteType'
+        questCode:
+          type: string
+          nullable: true
+          description: Quest code for QUEST_COMPLETED type
+        minLevel:
+          type: integer
+          nullable: true
+          description: Minimum level for CHARACTER_LEVEL type
+        factionCode:
+          type: string
+          nullable: true
+          description: Faction code for REPUTATION type
+        minReputation:
+          type: integer
+          nullable: true
+          description: Minimum reputation for REPUTATION type
+        itemCode:
+          type: string
+          nullable: true
+          description: Item code for ITEM_OWNED type
+        currencyCode:
+          type: string
+          nullable: true
+          description: Currency code for CURRENCY_AMOUNT type
+        minAmount:
+          type: integer
+          nullable: true
+          description: Minimum amount for CURRENCY_AMOUNT type
+    PrerequisiteType:
+      type: string
+      enum:
+      - QUEST_COMPLETED
+      - CHARACTER_LEVEL
+      - REPUTATION
+      - ITEM_OWNED
+      - CURRENCY_AMOUNT
+      description: Type of prerequisite check
     ProcessingStatus:
       type: string
       enum:
@@ -26624,6 +27486,266 @@ components:
         totalCount:
           type: integer
           description: Total matching results
+    QuestCategory:
+      type: string
+      enum:
+      - MAIN
+      - SIDE
+      - BOUNTY
+      - DAILY
+      - WEEKLY
+      - EVENT
+      - TUTORIAL
+      description: Category of quest for organization
+    QuestDefinitionResponse:
+      type: object
+      description: Complete quest definition including objectives, 
+        prerequisites, and rewards
+      additionalProperties: false
+      required:
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - objectives
+      - deprecated
+      - createdAt
+      - gameServiceId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Unique quest definition ID
+        contractTemplateId:
+          type: string
+          format: uuid
+          description: Underlying contract template ID
+        code:
+          type: string
+          description: Quest code
+        name:
+          type: string
+          description: Quest name
+        description:
+          type: string
+          nullable: true
+          description: Quest description
+        category:
+          description: Quest category for organization
+          $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: Difficulty rating of the quest
+          $ref: '#/components/schemas/QuestDifficulty'
+        levelRequirement:
+          type: integer
+          nullable: true
+          description: Minimum level required
+        repeatable:
+          type: boolean
+          description: Whether repeatable
+        cooldownSeconds:
+          type: integer
+          nullable: true
+          description: Cooldown for repeatable quests
+        deadlineSeconds:
+          type: integer
+          nullable: true
+          description: Time limit
+        maxQuestors:
+          type: integer
+          description: Max party size
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveDefinition'
+          description: Quest objectives
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PrerequisiteDefinition'
+          description: Prerequisites
+        rewards:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RewardDefinition'
+          description: Rewards
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags
+        deprecated:
+          type: boolean
+          description: Whether deprecated
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service ID
+    QuestDifficulty:
+      type: string
+      enum:
+      - TRIVIAL
+      - EASY
+      - NORMAL
+      - HARD
+      - HEROIC
+      - LEGENDARY
+      description: Difficulty rating of the quest
+    QuestInstanceResponse:
+      type: object
+      description: Active or completed quest instance with progress information
+      additionalProperties: false
+      required:
+      - questInstanceId
+      - definitionId
+      - contractInstanceId
+      - code
+      - name
+      - status
+      - questorCharacterIds
+      - objectives
+      - acceptedAt
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Unique instance ID
+        definitionId:
+          type: string
+          format: uuid
+          description: Quest definition ID
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Underlying contract instance ID
+        code:
+          type: string
+          description: Quest code
+        name:
+          type: string
+          description: Quest name
+        status:
+          description: Current status of the quest
+          $ref: '#/components/schemas/QuestStatus'
+        questorCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Characters on the quest
+        questGiverCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Quest giver NPC
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveProgress'
+          description: Objective progress
+        acceptedAt:
+          type: string
+          format: date-time
+          description: When quest was accepted
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Quest deadline (null if none)
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When completed
+    QuestLogEntry:
+      type: object
+      description: Single entry in the quest log with progress summary
+      additionalProperties: false
+      required:
+      - questInstanceId
+      - code
+      - name
+      - category
+      - status
+      - overallProgress
+      - visibleObjectives
+      - acceptedAt
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        code:
+          type: string
+          description: Quest code
+        name:
+          type: string
+          description: Quest name
+        category:
+          description: Quest category for organization
+          $ref: '#/components/schemas/QuestCategory'
+        status:
+          description: Current status of the quest
+          $ref: '#/components/schemas/QuestStatus'
+        overallProgress:
+          type: number
+          format: float
+          description: Overall progress percentage
+        visibleObjectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveProgress'
+          description: Visible objectives (hidden ones excluded until revealed)
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline if any
+        acceptedAt:
+          type: string
+          format: date-time
+          description: When accepted
+    QuestLogResponse:
+      type: object
+      description: Player-facing quest log with active quests and completion 
+        counts
+      additionalProperties: false
+      required:
+      - activeQuests
+      - completedCount
+      - failedCount
+      properties:
+        activeQuests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestLogEntry'
+          description: Active quests with progress
+        completedCount:
+          type: integer
+          description: Total completed quests
+        failedCount:
+          type: integer
+          description: Total failed quests
+    QuestStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - COMPLETED
+      - FAILED
+      - ABANDONED
+      - EXPIRED
+      description: Current status of a quest instance
     QueueResponse:
       type: object
       description: Full configuration details of a matchmaking queue
@@ -27926,6 +29048,30 @@ components:
           maxLength: 2000
           nullable: true
           description: Breach description
+    ReportProgressRequest:
+      type: object
+      description: Request to report progress on a quest objective
+      additionalProperties: false
+      required:
+      - questInstanceId
+      - objectiveCode
+      - incrementBy
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: Quest instance
+        objectiveCode:
+          type: string
+          description: Objective code
+        incrementBy:
+          type: integer
+          description: Amount to increment progress
+        trackedEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity that contributed to progress (for deduplication)
     RepositoryBindingInfo:
       description: Detailed repository binding configuration and status
       type: object
@@ -28474,6 +29620,41 @@ components:
         restoredFromVersion:
           type: integer
           description: Version number the bundle was restored from
+    RewardDefinition:
+      type: object
+      description: Reward granted when a quest is completed
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - CURRENCY
+          - ITEM
+          - EXPERIENCE
+          - REPUTATION
+          description: Type of reward
+        currencyCode:
+          type: string
+          nullable: true
+          description: Currency code for CURRENCY rewards
+        amount:
+          type: integer
+          nullable: true
+          description: Amount for CURRENCY/EXPERIENCE rewards
+        itemCode:
+          type: string
+          nullable: true
+          description: Item code for ITEM rewards
+        quantity:
+          type: integer
+          nullable: true
+          description: Quantity for ITEM rewards
+        factionCode:
+          type: string
+          nullable: true
+          description: Faction code for REPUTATION rewards
     SEOMetadata:
       description: Search engine optimization and social media sharing metadata
       type: object
@@ -29806,18 +30987,19 @@ components:
           format: date-time
           description: Timestamp when the species was last updated
     SpectrumType:
+      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType
       type: string
       enum:
-      - life_death
-      - honor_dishonor
-      - justice_injustice
-      - freedom_subjugation
-      - love_hate
-      - respect_shame
-      - power_impotence
-      - success_failure
-      - altruism_selfishness
-      - wisdom_ignorance
+      - LifeDeath
+      - HonorDishonor
+      - JusticeInjustice
+      - FreedomSubjugation
+      - LoveHate
+      - RespectShame
+      - PowerImpotence
+      - SuccessFailure
+      - AltruismSelfishness
+      - WisdomIgnorance
       description: |
         The 10 Story Grid Life Value spectrums.
         These are bipolar axes for emotional progression.
@@ -30016,9 +31198,6 @@ components:
       - legacy
       - mystery
       - peace
-      - redemption
-      - conquest
-      - survival
       description: |
         High-level story goal that drives arc selection.
         revenge: Character seeks vengeance for past wrongs
@@ -30026,9 +31205,6 @@ components:
         legacy: Creating or continuing a lasting impact
         mystery: Uncovering hidden truths
         peace: Resolving conflicts and finding harmony
-        redemption: Atoning for past mistakes
-        conquest: Achieving dominion or victory
-        survival: Overcoming threats to existence
     StorylineLink:
       type: object
       additionalProperties: false
@@ -30049,47 +31225,51 @@ components:
           description: Type of relationship (e.g., "opposes", "allies_with", 
             "seeks")
     StorylinePlanAction:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction
       type: object
       additionalProperties: false
-      description: An action in the storyline plan
+      description: A planned action in the storyline (SDK type)
       required:
       - actionId
-      - category
-      - description
+      - sequenceIndex
+      - effects
+      - narrativeEffect
+      - isCoreEvent
       properties:
         actionId:
           type: string
           description: Action identifier from action registry
-        category:
-          type: string
-          description: Action category (e.g., "conflict", "relationship", 
-            "mystery")
-        description:
-          type: string
-          description: Human-readable action description
-        isCoreEvent:
-          type: boolean
-          description: Whether this is an obligatory scene
-        participants:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: Character/entity roles involved
+        sequenceIndex:
+          type: integer
+          description: Sequence index within the plan
         effects:
           type: array
           items:
             $ref: '#/components/schemas/ActionEffect'
-          nullable: true
           description: World state effects of this action
+        narrativeEffect:
+          $ref: '#/components/schemas/NarrativeEffect'
+          description: Narrative effect on the emotional arc
+        isCoreEvent:
+          type: boolean
+          description: Whether this is an obligatory scene
+        chainedFrom:
+          type: string
+          nullable: true
+          description: If chained, the ID of the action it was chained from
     StorylinePlanPhase:
+      x-sdk-type: 
+        BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase
       type: object
       additionalProperties: false
-      description: A phase in the storyline plan
+      description: A phase in the storyline plan (SDK type)
       required:
       - phaseNumber
       - name
       - actions
+      - targetState
+      - positionBounds
       properties:
         phaseNumber:
           type: integer
@@ -30097,8 +31277,7 @@ components:
           description: 1-based phase number
         name:
           type: string
-          description: Phase name (e.g., "discovery", "confrontation", 
-            "resolution")
+          description: Phase name
         actions:
           type: array
           items:
@@ -30106,12 +31285,10 @@ components:
           description: Actions in this phase
         targetState:
           $ref: '#/components/schemas/PhaseTargetState'
-          nullable: true
-          description: Target emotional/world state for phase completion
+          description: Target state for phase completion
         positionBounds:
           $ref: '#/components/schemas/PhasePosition'
-          nullable: true
-          description: Position bounds for this phase (0-1 story progress)
+          description: Position bounds for this phase
     StorylineRisk:
       type: object
       additionalProperties: false
@@ -31631,6 +32808,41 @@ components:
           additionalProperties: true
           nullable: true
           description: Updated custom metadata for the account
+    UpdateQuestDefinitionRequest:
+      type: object
+      description: Request to update quest definition metadata
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition to update
+        name:
+          type: string
+          nullable: true
+          description: New name
+        description:
+          type: string
+          nullable: true
+          description: New description
+        category:
+          description: New quest category
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/QuestCategory'
+        difficulty:
+          description: New difficulty rating
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/QuestDifficulty'
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: New tags
     UpdateRepositoryBindingRequest:
       description: Request to update repository binding configuration
       type: object
@@ -32770,6 +33982,9 @@ tags:
   description: Spatial data management service for game worlds.
 - name: Bannou Matchmaking
   description: Matchmaking service for competitive and casual game matching.
+- name: Bannou Quest
+  description: Quest system providing objective-based gameplay progression as a 
+    thin orchestration
 - name: Bannou Realm
   description: Realm management service for game worlds.
 - name: Bannou Realm History

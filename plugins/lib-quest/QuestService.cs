@@ -338,9 +338,9 @@ public partial class QuestService : IQuestService
         {
             var results = await DefinitionStore.QueryAsync(
                 d => (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
-                     (body.Category == null || d.Category == body.Category) &&
-                     (body.Difficulty == null || d.Difficulty == body.Difficulty) &&
-                     (body.IncludeDeprecated == true || !d.Deprecated),
+                    (body.Category == null || d.Category == body.Category) &&
+                    (body.Difficulty == null || d.Difficulty == body.Difficulty) &&
+                    (body.IncludeDeprecated == true || !d.Deprecated),
                 cancellationToken: cancellationToken);
 
             // Filter by tags if specified
@@ -1030,8 +1030,8 @@ public partial class QuestService : IQuestService
             // Get all non-deprecated definitions
             var definitions = await DefinitionStore.QueryAsync(
                 d => !d.Deprecated &&
-                     (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
-                     (body.QuestGiverCharacterId == null || d.QuestGiverCharacterId == body.QuestGiverCharacterId),
+                    (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
+                    (body.QuestGiverCharacterId == null || d.QuestGiverCharacterId == body.QuestGiverCharacterId),
                 cancellationToken: cancellationToken);
 
             // Get character's quest state

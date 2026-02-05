@@ -40,6 +40,7 @@ Des... |
 | [Music](#music) | 1.0.0 | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
+| [Quest](#quest) | 1.0.0 | 16 | Quest system providing objective-based gameplay progression ... |
 | [Realm](#realm) | 1.0.0 | 11 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 12 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
@@ -303,6 +304,16 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 ---
 
+## Quest {#quest}
+
+**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md)
+
+Quest system providing objective-based gameplay progression as a thin orchestration
+layer over lib-contract. Quests are contracts with game-flavored terminology:
+objectives are milestones, rewards ...
+
+---
+
 ## Realm {#realm}
 
 **Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
@@ -457,8 +468,8 @@ Public-facing website service for browser-based access to news, account profile 
 
 ## Summary
 
-- **Total services**: 44
-- **Total endpoints**: 578
+- **Total services**: 45
+- **Total endpoints**: 594
 
 ---
 
