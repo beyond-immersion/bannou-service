@@ -24,7 +24,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.CharacterPersonality;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -47,14 +46,14 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published when a character's personality is first created
+/// Published when a character accepts a quest
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityCreatedEvent
+public partial class QuestAcceptedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -62,7 +61,7 @@ public partial class PersonalityCreatedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -70,131 +69,54 @@ public partial class PersonalityCreatedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose personality was created
+    /// Quest instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid QuestInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Version number of the personality data
+    /// Quest definition ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's personality traits are updated
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityUpdatedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid DefinitionId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// Quest code
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.Text.Json.Serialization.JsonPropertyName("questCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public string QuestCode { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose personality was updated
+    /// Characters who accepted
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the personality data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's personality evolves due to experience
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityEvolvedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose personality evolved
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of experience that caused the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ExperienceType ExperienceType { get; set; } = default!;
-
-    /// <summary>
-    /// Intensity of the experience (0.0-1.0)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("intensity")]
-    public float Intensity { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the personality data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-    /// <summary>
-    /// List of trait names that were affected by the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedTraits")]
+    [System.Text.Json.Serialization.JsonPropertyName("questorCharacterIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AffectedTraits { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<System.Guid> QuestorCharacterIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Game service ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid GameServiceId { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's personality is deleted
+/// Published when objective progress changes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityDeletedEvent
+public partial class QuestObjectiveProgressedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -202,7 +124,7 @@ public partial class PersonalityDeletedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -210,24 +132,56 @@ public partial class PersonalityDeletedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose personality was deleted
+    /// Quest instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid QuestInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Quest code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questCode")]
+    public string QuestCode { get; set; } = default!;
+
+    /// <summary>
+    /// Objective code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("objectiveCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ObjectiveCode { get; set; } = default!;
+
+    /// <summary>
+    /// Current progress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentCount")]
+    public int CurrentCount { get; set; } = default!;
+
+    /// <summary>
+    /// Required for completion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiredCount")]
+    public int RequiredCount { get; set; } = default!;
+
+    /// <summary>
+    /// Whether objective is now complete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isComplete")]
+    public bool IsComplete { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's combat preferences are first created
+/// Published when quest is completed successfully
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesCreatedEvent
+public partial class QuestCompletedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -235,7 +189,7 @@ public partial class CombatPreferencesCreatedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -243,30 +197,52 @@ public partial class CombatPreferencesCreatedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose combat preferences were created
+    /// Quest instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid QuestInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Version number of the combat preferences data
+    /// Quest definition ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// Quest code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string QuestCode { get; set; } = default!;
+
+    /// <summary>
+    /// Characters who completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questorCharacterIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> QuestorCharacterIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Game service ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid GameServiceId { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's combat preferences are updated
+/// Published when quest fails
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesUpdatedEvent
+public partial class QuestFailedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -274,7 +250,7 @@ public partial class CombatPreferencesUpdatedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -282,30 +258,46 @@ public partial class CombatPreferencesUpdatedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose combat preferences were updated
+    /// Quest instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid QuestInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// New version number of the combat preferences data
+    /// Quest code
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("questCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string QuestCode { get; set; } = default!;
+
+    /// <summary>
+    /// Characters who failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questorCharacterIds")]
+    public System.Collections.Generic.ICollection<System.Guid> QuestorCharacterIds { get; set; } = default!;
+
+    /// <summary>
+    /// Failure reason
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's combat preferences evolve due to combat experience
+/// Published when quest is voluntarily abandoned
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesEvolvedEvent
+public partial class QuestAbandonedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -313,7 +305,7 @@ public partial class CombatPreferencesEvolvedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -321,66 +313,28 @@ public partial class CombatPreferencesEvolvedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose combat preferences evolved
+    /// Quest instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid QuestInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Type of combat experience that caused the evolution
+    /// Quest code
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
+    [System.Text.Json.Serialization.JsonPropertyName("questCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CombatExperienceType ExperienceType { get; set; } = default!;
+    public string QuestCode { get; set; } = default!;
 
     /// <summary>
-    /// Intensity of the combat experience (0.0-1.0)
+    /// Character who abandoned
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("intensity")]
-    public float Intensity { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the combat preferences data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's combat preferences are deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesDeletedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("abandoningCharacterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose combat preferences were deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid AbandoningCharacterId { get; set; } = default!;
 
 }
 

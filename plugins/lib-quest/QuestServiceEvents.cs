@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Quest;
@@ -21,15 +22,15 @@ public partial class QuestService
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         eventConsumer.RegisterHandler<IQuestService, ContractMilestoneCompletedEvent>(
-            ContractTopics.ContractMilestoneCompleted,
+            "contract.milestone.completed",
             async (svc, evt) => await ((QuestService)svc).HandleContractMilestoneCompletedAsync(evt));
 
         eventConsumer.RegisterHandler<IQuestService, ContractFulfilledEvent>(
-            ContractTopics.ContractFulfilled,
+            "contract.fulfilled",
             async (svc, evt) => await ((QuestService)svc).HandleContractFulfilledAsync(evt));
 
         eventConsumer.RegisterHandler<IQuestService, ContractTerminatedEvent>(
-            ContractTopics.ContractTerminated,
+            "contract.terminated",
             async (svc, evt) => await ((QuestService)svc).HandleContractTerminatedAsync(evt));
     }
 
@@ -76,8 +77,8 @@ public partial class QuestService
                 await ProgressStore.SaveAsync(
                     progressKey,
                     progress,
-                    ttlSeconds: _configuration.ProgressCacheTtlSeconds,
-                    cancellationToken: CancellationToken.None);
+                    new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
+                    CancellationToken.None);
 
                 _logger.LogInformation(
                     "Objective {ObjectiveCode} marked complete via contract milestone event for quest {QuestInstanceId}",

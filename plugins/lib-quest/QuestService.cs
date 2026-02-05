@@ -207,13 +207,13 @@ public partial class QuestService : IQuestService
                 Code = normalizedCode,
                 Name = body.Name,
                 Description = body.Description,
-                Category = body.Category ?? QuestCategory.SIDE,
-                Difficulty = body.Difficulty ?? QuestDifficulty.NORMAL,
+                Category = body.Category,
+                Difficulty = body.Difficulty,
                 LevelRequirement = body.LevelRequirement,
-                Repeatable = body.Repeatable ?? false,
+                Repeatable = body.Repeatable,
                 CooldownSeconds = body.CooldownSeconds,
                 DeadlineSeconds = body.DeadlineSeconds,
-                MaxQuestors = body.MaxQuestors ?? 1,
+                MaxQuestors = body.MaxQuestors,
                 Objectives = MapObjectiveDefinitions(body.Objectives),
                 Prerequisites = MapPrerequisiteDefinitions(body.Prerequisites),
                 Rewards = MapRewardDefinitions(body.Rewards),
@@ -285,8 +285,8 @@ public partial class QuestService : IQuestService
                         await DefinitionCache.SaveAsync(
                             cacheKey,
                             definition,
-                            ttlSeconds: _configuration.DefinitionCacheTtlSeconds,
-                            cancellationToken: cancellationToken);
+                            new StateOptions { Ttl = _configuration.DefinitionCacheTtlSeconds },
+                            cancellationToken);
                     }
                 }
             }
@@ -572,11 +572,13 @@ public partial class QuestService : IQuestService
             }
 
             // Validate character exists
-            var (charStatus, charResponse) = await _characterClient.GetCharacterAsync(
-                new GetCharacterRequest { CharacterId = body.QuestorCharacterId },
-                cancellationToken);
-
-            if (charStatus != StatusCodes.OK || charResponse == null)
+            try
+            {
+                await _characterClient.GetCharacterAsync(
+                    new GetCharacterRequest { CharacterId = body.QuestorCharacterId },
+                    cancellationToken);
+            }
+            catch (ApiException)
             {
                 _logger.LogWarning("Character not found: {CharacterId}", body.QuestorCharacterId);
                 return (StatusCodes.BadRequest, null);
@@ -759,14 +761,14 @@ public partial class QuestService : IQuestService
                         RequiredCount = objective.RequiredCount,
                         IsComplete = false,
                         Hidden = objective.Hidden,
-                        RevealBehavior = objective.RevealBehavior ?? ObjectiveRevealBehavior.ALWAYS,
+                        RevealBehavior = objective.RevealBehavior,
                         Optional = objective.Optional
                     };
                     await ProgressStore.SaveAsync(
                         progressKey,
                         progress,
-                        ttlSeconds: _configuration.ProgressCacheTtlSeconds,
-                        cancellationToken: cancellationToken);
+                        new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
+                        cancellationToken);
                 }
             }
 
@@ -1133,21 +1135,40 @@ public partial class QuestService : IQuestService
                     if (instance == null) continue;
 
                     var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
-                    var objectives = await GetObjectiveProgressListAsync(questId, definition, cancellationToken);
 
-                    // Calculate overall progress
-                    var requiredObjectives = objectives.Where(o => !o.Optional).ToList();
+                    // Load internal progress models for visibility filtering
+                    var internalProgressList = new List<ObjectiveProgressModel>();
+                    if (definition?.Objectives != null)
+                    {
+                        foreach (var objDef in definition.Objectives)
+                        {
+                            var progressKey = BuildProgressKey(questId, objDef.Code);
+                            var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+                            if (progress != null)
+                            {
+                                internalProgressList.Add(progress);
+                            }
+                        }
+                    }
+
+                    // Calculate overall progress from required objectives
+                    var requiredObjectives = internalProgressList.Where(p => !p.Optional).ToList();
                     var overallProgress = requiredObjectives.Count > 0
-                        ? requiredObjectives.Average(o => o.ProgressPercent)
+                        ? requiredObjectives.Average(p => p.RequiredCount > 0
+                            ? (float)p.CurrentCount / p.RequiredCount * 100
+                            : 100f)
                         : 100.0f;
 
-                    // Filter visible objectives
-                    var visibleObjectives = objectives.Where(o =>
-                        !o.Hidden ||
-                        o.RevealBehavior == ObjectiveRevealBehavior.ALWAYS ||
-                        (o.RevealBehavior == ObjectiveRevealBehavior.ON_PROGRESS && o.CurrentCount > 0) ||
-                        (o.RevealBehavior == ObjectiveRevealBehavior.ON_COMPLETE && o.IsComplete)
+                    // Filter visible objectives using internal model's RevealBehavior
+                    var visibleProgressModels = internalProgressList.Where(p =>
+                        !p.Hidden ||
+                        p.RevealBehavior == ObjectiveRevealBehavior.ALWAYS ||
+                        (p.RevealBehavior == ObjectiveRevealBehavior.ON_PROGRESS && p.CurrentCount > 0) ||
+                        (p.RevealBehavior == ObjectiveRevealBehavior.ON_COMPLETE && p.IsComplete)
                     ).ToList();
+
+                    // Map filtered internal models to response type
+                    var visibleObjectives = visibleProgressModels.Select(MapToObjectiveProgress).ToList();
 
                     activeQuests.Add(new QuestLogEntry
                     {
@@ -1260,8 +1281,8 @@ public partial class QuestService : IQuestService
                     progressKey,
                     progress,
                     etag ?? string.Empty,
-                    ttlSeconds: _configuration.ProgressCacheTtlSeconds,
-                    cancellationToken: cancellationToken);
+                    new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
+                    cancellationToken);
 
                 if (saveResult == null)
                 {
@@ -1378,8 +1399,8 @@ public partial class QuestService : IQuestService
             await ProgressStore.SaveAsync(
                 progressKey,
                 progress,
-                ttlSeconds: _configuration.ProgressCacheTtlSeconds,
-                cancellationToken: cancellationToken);
+                new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
+                cancellationToken);
 
             // Notify Contract service
             var milestoneRequest = new CompleteMilestoneRequest
@@ -1584,8 +1605,8 @@ public partial class QuestService : IQuestService
             await DefinitionCache.SaveAsync(
                 cacheKey,
                 definition,
-                ttlSeconds: _configuration.DefinitionCacheTtlSeconds,
-                cancellationToken: cancellationToken);
+                new StateOptions { Ttl = _configuration.DefinitionCacheTtlSeconds },
+                cancellationToken);
         }
 
         return definition;
@@ -1659,8 +1680,8 @@ public partial class QuestService : IQuestService
                     await CooldownStore.SaveAsync(
                         cooldownKey,
                         cooldown,
-                        ttlSeconds: definition.CooldownSeconds.Value,
-                        cancellationToken: cancellationToken);
+                        new StateOptions { Ttl = definition.CooldownSeconds.Value },
+                        cancellationToken);
                 }
             }
 
@@ -1694,7 +1715,7 @@ public partial class QuestService : IQuestService
             Code = obj.Code,
             Name = obj.Name,
             Description = obj.Description,
-            SequenceOrder = index
+            Sequence = index
         }).ToList();
 
         // Contract template code must be lowercase per contract schema validation
@@ -1706,14 +1727,14 @@ public partial class QuestService : IQuestService
             Name = $"Quest: {body.Name}",
             Description = body.Description,
             MinParties = 1,
-            MaxParties = (body.MaxQuestors ?? 1) + 1, // questors + optional quest_giver
+            MaxParties = body.MaxQuestors + 1, // questors + optional quest_giver
             PartyRoles = new List<PartyRoleDefinition>
             {
-                new() { Role = "questor", MinCount = 1, MaxCount = body.MaxQuestors ?? 1 },
+                new() { Role = "questor", MinCount = 1, MaxCount = body.MaxQuestors },
                 new() { Role = "quest_giver", MinCount = 0, MaxCount = 1 }
             },
             Milestones = milestones,
-            DefaultEnforcementMode = EnforcementMode.Event_only
+            DefaultEnforcementMode = EnforcementMode.EventOnly
         };
     }
 
@@ -1731,9 +1752,9 @@ public partial class QuestService : IQuestService
             TargetEntityType = o.TargetEntityType,
             TargetEntitySubtype = o.TargetEntitySubtype,
             TargetLocationId = o.TargetLocationId,
-            Hidden = o.Hidden ?? false,
-            RevealBehavior = o.RevealBehavior ?? ObjectiveRevealBehavior.ALWAYS,
-            Optional = o.Optional ?? false
+            Hidden = o.Hidden,
+            RevealBehavior = o.RevealBehavior,
+            Optional = o.Optional
         }).ToList();
     }
 
