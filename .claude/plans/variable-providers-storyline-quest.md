@@ -77,12 +77,14 @@ if (CharacterId.HasValue)
 else
 {
     // Register empty providers for non-character actors
-    scope.RegisterProvider(new PersonalityProvider(null));
+    scope.RegisterProvider(new PersonalityProvider(null));  // NOTE: Legacy pattern - see below
     // ... etc
 }
 ```
 
 **Key insight:** Providers are instantiated per-execution-scope with pre-loaded data. The cache handles async loading; the provider is synchronous.
+
+> **⚠️ TENET Deviation in Existing Code**: The existing PersonalityProvider uses nullable constructor parameter (`PersonalityProvider(null)`). Our new Storyline/Quest providers will NOT follow this pattern - instead, we'll use empty response objects. This avoids nullable parameters and `null!` in tests (T12 compliance). See Registration section below.
 
 ### 5. Data Requirements from Planning Documents
 
@@ -227,17 +229,19 @@ Add to `ActorServiceConfiguration` schema (`schemas/actor-configuration.yaml`):
 StorylineCacheTtlMinutes:
   type: integer
   default: 5
-  description: TTL for cached storyline participation data
-  env: STORYLINE_CACHE_TTL
+  description: TTL in minutes for cached storyline participation data
+  x-env-name: ACTOR_STORYLINE_CACHE_TTL_MINUTES
 
 QuestCacheTtlMinutes:
   type: integer
   default: 5
-  description: TTL for cached quest data
-  env: QUEST_CACHE_TTL
+  description: TTL in minutes for cached quest data
+  x-env-name: ACTOR_QUEST_CACHE_TTL_MINUTES
 ```
 
 **Rationale:** 5-minute TTL matches personality/backstory pattern. Storyline and quest state changes via explicit actions, not high-frequency mutations.
+
+**Env var naming**: Per SCHEMA-RULES, env vars follow `{SERVICE}_{PROPERTY}` pattern. Property name includes `Minutes` suffix so the unit is clear.
 
 ### Cache Invalidation
 
@@ -257,10 +261,15 @@ QuestCacheTtlMinutes:
 **Implementation:** Add event subscriptions in `ActorServiceEvents.cs`:
 
 ```csharp
+/// <summary>
+/// Invalidates storyline cache when a character joins a storyline.
+/// </summary>
 [EventSubscription("storyline.character.joined")]
-public async Task HandleStorylineJoined(StorylineCharacterJoinedEvent evt, CancellationToken ct)
+public async Task HandleStorylineJoinedAsync(StorylineCharacterJoinedEvent evt, CancellationToken ct)
 {
     _storylineCache.Invalidate(evt.CharacterId);
+    _logger.LogDebug("Invalidated storyline cache for character {CharacterId}", evt.CharacterId);
+    await Task.CompletedTask;  // Per IMPLEMENTATION TENETS: async methods must have await
 }
 ```
 
@@ -300,20 +309,26 @@ In `/home/lysander/repos/bannou/plugins/lib-actor/Runtime/ActorRunner.cs`, add t
 ```csharp
 // After existing personality/backstory/encounters registration...
 
-// Load storyline participation data
-var storylines = await _storylineCache.GetParticipationOrLoadAsync(CharacterId.Value, ct);
-scope.RegisterProvider(new StorylineProvider(storylines));
+if (CharacterId.HasValue)
+{
+    // Load storyline participation data for character-based actors
+    var storylines = await _storylineCache.GetParticipationOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new StorylineProvider(storylines));
 
-// Load quest data
-var quests = await _questCache.GetActiveQuestsOrLoadAsync(CharacterId.Value, ct);
-scope.RegisterProvider(new QuestProvider(quests));
+    // Load quest data for character-based actors
+    var quests = await _questCache.GetActiveQuestsOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new QuestProvider(quests));
+}
+else
+{
+    // Non-character actors (dungeons, watchers) get empty providers
+    // Per QUALITY TENETS (T12): Use empty response objects, not null
+    scope.RegisterProvider(StorylineProvider.Empty);
+    scope.RegisterProvider(QuestProvider.Empty);
+}
 ```
 
-For non-character actors:
-```csharp
-scope.RegisterProvider(new StorylineProvider(null));
-scope.RegisterProvider(new QuestProvider(null));
-```
+**Note on Empty pattern**: Non-character actors don't have storylines/quests themselves (they orchestrate FOR characters). Instead of nullable constructor parameters (which would require `null!` in tests), we use a static `Empty` property that returns a provider with empty collections. This is compliant with T12 (no `null!` bypass) and T26 (no sentinel values - empty list is semantically correct, not a sentinel).
 
 ### DI Registration
 
@@ -824,28 +839,50 @@ Before submitting, verify:
 ### StorylineProvider Skeleton
 
 ```csharp
+/// <summary>
+/// Provides ABML variable access to a character's storyline participation data.
+/// </summary>
+/// <remarks>
+/// <para>Variables available:</para>
+/// <list type="bullet">
+///   <item><description><c>${storyline.is_participant}</c> - bool: Is character in any active storyline?</description></item>
+///   <item><description><c>${storyline.active_count}</c> - int: Number of active storylines</description></item>
+///   <item><description><c>${storyline.primary.*}</c> - Highest priority storyline details</description></item>
+///   <item><description><c>${storyline.most_recent.*}</c> - Most recently joined storyline details</description></item>
+/// </list>
+/// </remarks>
 public sealed class StorylineProvider : IVariableProvider
 {
-    private readonly List<StorylineParticipation> _storylines;
-    private readonly StorylineParticipation? _primary;     // Highest priority
-    private readonly StorylineParticipation? _mostRecent;  // Most recently joined
+    /// <summary>
+    /// Empty provider for non-character actors. Per QUALITY TENETS (T12): use empty response, not null.
+    /// </summary>
+    public static StorylineProvider Empty { get; } = new(new StorylineListResponse { Storylines = new List<StorylineParticipation>() });
 
+    private readonly List<StorylineParticipation> _storylines;
+    private readonly StorylineParticipation? _primary;     // Highest priority (nullable per T26 - no sentinels)
+    private readonly StorylineParticipation? _mostRecent;  // Most recently joined (nullable per T26)
+
+    /// <inheritdoc />
     public string Name => "storyline";
 
+    /// <summary>
+    /// Creates a new StorylineProvider with the given participation data.
+    /// </summary>
+    /// <param name="response">The storyline participation response. Use <see cref="Empty"/> for non-character actors.</param>
     public StorylineProvider(StorylineListResponse response)
     {
+        // Per FOUNDATION TENETS: no null-forgiving, response is non-nullable
         _storylines = response.Storylines;
         _primary = _storylines.OrderByDescending(s => s.Priority).FirstOrDefault();
         _mostRecent = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
     }
 
+    /// <inheritdoc />
     public object? GetValue(ReadOnlySpan<string> path)
     {
         if (path.Length == 0) return GetRootValue();
 
-        var first = path[0];
-
-        return first.ToLowerInvariant() switch
+        return path[0].ToLowerInvariant() switch
         {
             "is_participant" => _storylines.Count > 0,
             "active_count" => _storylines.Count,
@@ -856,7 +893,54 @@ public sealed class StorylineProvider : IVariableProvider
         };
     }
 
-    private object? GetStorylineProperty(StorylineParticipation? storyline, ReadOnlySpan<string> path)
+    /// <inheritdoc />
+    public object? GetRootValue()
+    {
+        return new Dictionary<string, object?>
+        {
+            ["is_participant"] = _storylines.Count > 0,
+            ["active_count"] = _storylines.Count,
+            ["active_storylines"] = _storylines.Select(s => s.StorylineId.ToString()).ToList(),
+            ["primary"] = GetStorylineRoot(_primary),
+            ["most_recent"] = GetStorylineRoot(_mostRecent)
+        };
+    }
+
+    /// <inheritdoc />
+    public bool CanResolve(ReadOnlySpan<string> path)
+    {
+        if (path.Length == 0) return true;
+
+        return path[0].ToLowerInvariant() switch
+        {
+            "is_participant" or "active_count" or "active_storylines" => true,
+            "primary" or "most_recent" => path.Length == 1 || CanResolveStorylineProperty(path.Slice(1)),
+            _ => false
+        };
+    }
+
+    private static bool CanResolveStorylineProperty(ReadOnlySpan<string> path)
+    {
+        if (path.Length == 0) return true;
+        return path[0].ToLowerInvariant() is "id" or "template_code" or "phase" or "role" or "priority" or "joined_at";
+    }
+
+    private static Dictionary<string, object?>? GetStorylineRoot(StorylineParticipation? storyline)
+    {
+        if (storyline == null) return null;
+
+        return new Dictionary<string, object?>
+        {
+            ["id"] = storyline.StorylineId.ToString(),
+            ["template_code"] = storyline.TemplateCode,
+            ["phase"] = storyline.CurrentPhase.ToString(),  // Enum to string for ABML
+            ["role"] = storyline.Role,
+            ["priority"] = storyline.Priority,
+            ["joined_at"] = storyline.JoinedAt.ToString("o")
+        };
+    }
+
+    private static object? GetStorylineProperty(StorylineParticipation? storyline, ReadOnlySpan<string> path)
     {
         if (storyline == null || path.Length == 0) return null;
 
@@ -864,41 +948,62 @@ public sealed class StorylineProvider : IVariableProvider
         {
             "id" => storyline.StorylineId.ToString(),
             "template_code" => storyline.TemplateCode,
-            "phase" => storyline.CurrentPhase,
+            "phase" => storyline.CurrentPhase.ToString(),  // Enum to string for ABML consumption
             "role" => storyline.Role,
             "priority" => storyline.Priority,
             "joined_at" => storyline.JoinedAt.ToString("o"),
             _ => null
         };
     }
-
-    // ... GetRootValue, GetStorylineRoot, CanResolve implementations
 }
 ```
 
 ### QuestProvider Skeleton
 
 ```csharp
+/// <summary>
+/// Provides ABML variable access to a character's active quest data.
+/// </summary>
+/// <remarks>
+/// <para>Variables available:</para>
+/// <list type="bullet">
+///   <item><description><c>${quest.active_count}</c> - int: Number of active quests</description></item>
+///   <item><description><c>${quest.has_active}</c> - bool: Has any active quest?</description></item>
+///   <item><description><c>${quest.codes}</c> - List: Active quest codes</description></item>
+///   <item><description><c>${quest.by_code.CODE.*}</c> - Quest details by code</description></item>
+/// </list>
+/// </remarks>
 public sealed class QuestProvider : IVariableProvider
 {
+    /// <summary>
+    /// Empty provider for non-character actors. Per QUALITY TENETS (T12): use empty response, not null.
+    /// </summary>
+    public static QuestProvider Empty { get; } = new(new QuestListResponse { Quests = new List<QuestSummary>() });
+
     private readonly List<QuestSummary> _quests;
+    // Dictionary is readonly after construction - no need for ConcurrentDictionary (T9 applies to mutable state)
     private readonly Dictionary<string, QuestSummary> _byCode;
 
+    /// <inheritdoc />
     public string Name => "quest";
 
+    /// <summary>
+    /// Creates a new QuestProvider with the given quest data.
+    /// </summary>
+    /// <param name="response">The quest list response. Use <see cref="Empty"/> for non-character actors.</param>
     public QuestProvider(QuestListResponse response)
     {
+        // Per FOUNDATION TENETS: no null-forgiving, response is non-nullable
         _quests = response.Quests;
         _byCode = _quests.ToDictionary(q => q.QuestCode, q => q, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <inheritdoc />
     public object? GetValue(ReadOnlySpan<string> path)
     {
         if (path.Length == 0) return GetRootValue();
 
-        var first = path[0];
-
-        return first.ToLowerInvariant() switch
+        return path[0].ToLowerInvariant() switch
         {
             "active_count" => _quests.Count,
             "has_active" => _quests.Count > 0,
@@ -906,6 +1011,31 @@ public sealed class QuestProvider : IVariableProvider
             "active_quests" => _quests.Select(QuestToDict).ToList(),
             "by_code" => path.Length > 1 ? GetQuestByCode(path.Slice(1)) : null,
             _ => null
+        };
+    }
+
+    /// <inheritdoc />
+    public object? GetRootValue()
+    {
+        return new Dictionary<string, object?>
+        {
+            ["active_count"] = _quests.Count,
+            ["has_active"] = _quests.Count > 0,
+            ["codes"] = _quests.Select(q => q.QuestCode).ToList(),
+            ["active_quests"] = _quests.Select(QuestToDict).ToList()
+        };
+    }
+
+    /// <inheritdoc />
+    public bool CanResolve(ReadOnlySpan<string> path)
+    {
+        if (path.Length == 0) return true;
+
+        return path[0].ToLowerInvariant() switch
+        {
+            "active_count" or "has_active" or "codes" or "active_quests" => true,
+            "by_code" => path.Length > 1,  // Requires quest code as next segment
+            _ => false
         };
     }
 
@@ -920,15 +1050,40 @@ public sealed class QuestProvider : IVariableProvider
 
         return path[1].ToLowerInvariant() switch
         {
-            "status" => quest.Status.ToString(),
+            "status" => quest.Status.ToString(),  // Enum to string for ABML
             "progress" => quest.ProgressPercent,
-            "deadline" => quest.Deadline?.ToString("o"),
+            "deadline" => quest.Deadline?.ToString("o"),  // Nullable per T26 - deadline may not exist
             "current_objective" => ObjectiveToDict(quest.CurrentObjective),
             _ => null
         };
     }
 
-    // ... helper methods
+    private static Dictionary<string, object?> QuestToDict(QuestSummary quest)
+    {
+        return new Dictionary<string, object?>
+        {
+            ["code"] = quest.QuestCode,
+            ["status"] = quest.Status.ToString(),
+            ["progress"] = quest.ProgressPercent,
+            ["deadline"] = quest.Deadline?.ToString("o"),  // Nullable - may not have deadline
+            ["current_objective"] = ObjectiveToDict(quest.CurrentObjective)
+        };
+    }
+
+    private static Dictionary<string, object?>? ObjectiveToDict(QuestObjective? objective)
+    {
+        if (objective == null) return null;  // Nullable per T26
+
+        return new Dictionary<string, object?>
+        {
+            ["id"] = objective.ObjectiveId.ToString(),
+            ["description"] = objective.Description,
+            ["current_count"] = objective.CurrentCount,
+            ["required_count"] = objective.RequiredCount,
+            ["is_complete"] = objective.IsComplete,
+            ["progress_percent"] = objective.ProgressPercent
+        };
+    }
 }
 ```
 
