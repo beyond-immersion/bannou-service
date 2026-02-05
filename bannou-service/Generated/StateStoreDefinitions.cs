@@ -275,6 +275,12 @@ public static class StateStoreDefinitions
     /// <summary>Test store with RedisSearch enabled</summary>
     public const string TestSearch = "test-search-statestore";
 
+    // Storyline Service
+    /// <summary>Plan index by realm for list queries</summary>
+    public const string StorylinePlanIndex = "storyline-plan-index";
+    /// <summary>Cached composed storyline plans (ephemeral, TTL from config)</summary>
+    public const string StorylinePlans = "storyline-plans";
+
     // Subscription Service
     /// <summary>User subscriptions to game services</summary>
     public const string Subscription = "subscription-statestore";
@@ -382,6 +388,8 @@ public static class StateStoreDefinitions
             [SaveLoadVersions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_versions" },
             [Scene] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "scene_statestore" },
             [Species] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "species_statestore" },
+            [StorylinePlanIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:idx" },
+            [StorylinePlans] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:plan" },
             [Subscription] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "subscription_statestore" },
             [TestSearch] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test-search", EnableSearch = true },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
@@ -485,6 +493,8 @@ public static class StateStoreDefinitions
             [SaveLoadVersions] = new StoreMetadata("SaveLoad", "Save version history", "mysql"),
             [Scene] = new StoreMetadata("Scene", "Hierarchical scene composition storage", "mysql"),
             [Species] = new StoreMetadata("Species", "Species definitions", "mysql"),
+            [StorylinePlanIndex] = new StoreMetadata("Storyline", "Plan index by realm for list queries", "redis"),
+            [StorylinePlans] = new StoreMetadata("Storyline", "Cached composed storyline plans (ephemeral, TTL from config)", "redis"),
             [Subscription] = new StoreMetadata("Subscription", "User subscriptions to game services", "mysql"),
             [TestSearch] = new StoreMetadata("State", "Test store with RedisSearch enabled", "redis"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),

@@ -1,0 +1,104 @@
+openapi: 3.0.0
+info:
+  title: Storyline Service Events
+  version: 1.0.0
+  description: |
+    Events published by the Storyline service.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+# NOTE: No x-event-subscriptions in MVP - we don't consume events yet.
+# Future phases may subscribe to resource.compressed for discovery.
+
+x-events:
+  # Published when a storyline plan is successfully generated
+  storyline.composed:
+    schema: StorylineComposedEvent
+    description: |
+      Published when a storyline plan is generated.
+      Consumers can use this to trigger downstream processing like
+      monitoring storyline activity or indexing for search.
+
+components:
+  schemas:
+    StorylineComposedEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when a storyline plan is generated
+      required:
+      - planId
+      - goal
+      - arcType
+      - confidence
+      - composedAt
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: Unique identifier for the composed plan
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm where storyline is anchored (if any)
+        goal:
+          type: string
+          description: Storyline goal type (revenge, resurrection, etc.)
+        arcType:
+          type: string
+          description: Emotional arc type used
+        primarySpectrum:
+          type: string
+          nullable: true
+          description: Primary Life Value spectrum
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Plan viability score
+        genre:
+          type: string
+          nullable: true
+          description: Inferred or specified genre
+        archiveIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Archive IDs used as seeds
+        snapshotIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Snapshot IDs used as seeds
+        phaseCount:
+          type: integer
+          nullable: true
+          description: Number of phases in the plan
+        entityCount:
+          type: integer
+          nullable: true
+          description: Number of entities required by the plan
+        generationTimeMs:
+          type: integer
+          nullable: true
+          description: Time taken to generate in milliseconds
+        cached:
+          type: boolean
+          description: Whether this was returned from cache
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed used (if deterministic)
+        composedAt:
+          type: string
+          format: date-time
+          description: When the plan was composed

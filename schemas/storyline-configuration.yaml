@@ -1,0 +1,84 @@
+openapi: 3.0.0
+info:
+  title: Storyline Service Configuration
+  version: 1.0.0
+  description: |
+    Configuration for the Storyline service.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+x-service-configuration:
+  required:
+  - PlanCacheTtlSeconds
+  properties:
+    PlanCacheTtlSeconds:
+      type: integer
+      default: 3600
+      minimum: 60
+      maximum: 86400
+      description: |
+        TTL in seconds for cached composed plans.
+        Default: 3600 (1 hour)
+      env: STORYLINE_PLAN_CACHE_TTL_SECONDS
+
+    MaxPlanningIterations:
+      type: integer
+      default: 500
+      minimum: 100
+      maximum: 5000
+      description: |
+        Maximum A* iterations for GOAP planning.
+        Higher values allow more complex plans but take longer.
+      env: STORYLINE_MAX_PLANNING_ITERATIONS
+
+    DefaultMaxEntities:
+      type: integer
+      default: 10
+      minimum: 1
+      maximum: 50
+      description: |
+        Default maximum entities per storyline plan.
+        Can be overridden per-request.
+      env: STORYLINE_DEFAULT_MAX_ENTITIES
+
+    DefaultPlanningUrgency:
+      type: string
+      enum:
+      - low
+      - medium
+      - high
+      default: medium
+      description: |
+        Default urgency tier for GOAP planning.
+        low = more iterations (1000/20)
+        medium = balanced (500/15)
+        high = fewer iterations (200/10)
+      env: STORYLINE_DEFAULT_PLANNING_URGENCY
+
+    PlanCacheEnabled:
+      type: boolean
+      default: true
+      description: |
+        Whether to cache deterministic plans (those with explicit seed).
+        Disable for testing or when cache overhead is undesirable.
+      env: STORYLINE_PLAN_CACHE_ENABLED
+
+    DefaultGenre:
+      type: string
+      default: drama
+      description: |
+        Default genre when not specified and cannot be inferred.
+      env: STORYLINE_DEFAULT_GENRE
+
+    MaxSeedSources:
+      type: integer
+      default: 10
+      minimum: 1
+      maximum: 20
+      description: |
+        Maximum number of seed sources per compose request.
+      env: STORYLINE_MAX_SEED_SOURCES

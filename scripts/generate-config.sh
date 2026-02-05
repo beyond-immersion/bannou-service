@@ -56,6 +56,18 @@ def to_pascal_case(name):
     else:
         return name[0].upper() + name[1:] if name else name
 
+def escape_xml_description(desc):
+    '''Escape a description for use in XML doc comments.
+    Handles multi-line descriptions by converting newlines to proper XML comment continuation.'''
+    if not desc:
+        return desc
+    # Replace newlines with XML comment line continuation
+    lines = desc.strip().split('\\n')
+    if len(lines) == 1:
+        return lines[0]
+    # For multi-line descriptions, join with proper XML comment formatting
+    return '\\n    /// '.join(line.strip() for line in lines if line.strip())
+
 def to_property_name(name):
     # Convert environment variable style to property name
     # e.g., 'MAX_CONNECTIONS' -> 'MaxConnections', 'JwtSecret' -> 'JwtSecret'
@@ -258,10 +270,11 @@ namespace BeyondImmersion.BannouService.{service_pascal};
     # Generate enum types if any
     for enum_type in enum_types:
         # Suppress CS1591 for enum members (they don't need individual docs)
+        escaped_desc = escape_xml_description(enum_type['description'])
         print(f'''
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 /// <summary>
-/// {enum_type['description']}
+/// {escaped_desc}
 /// </summary>
 public enum {enum_type['name']}
 {{''')
@@ -345,8 +358,9 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
         if prop_multiple_of is not None:
             multiple_of_attr = '    [ConfigMultipleOf(' + str(prop_multiple_of) + ')]\\n'
 
+        escaped_prop_desc = escape_xml_description(prop['description'])
         print(f'''    /// <summary>
-    /// {prop['description']}
+    /// {escaped_prop_desc}
     /// Environment variable: {prop['env_var']}
     /// </summary>
 {required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}

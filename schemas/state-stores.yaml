@@ -633,3 +633,19 @@ x-state-stores:
     prefix: "resource:snapshot"
     service: Resource
     purpose: Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)
+
+  # ============================================================================
+  # Storyline Stores
+  # ============================================================================
+
+  storyline-plans:
+    backend: redis
+    prefix: "storyline:plan"
+    service: Storyline
+    purpose: Cached composed storyline plans (ephemeral, TTL from config)
+
+  storyline-plan-index:
+    backend: redis
+    prefix: "storyline:idx"
+    service: Storyline
+    purpose: Plan index by realm for list queries

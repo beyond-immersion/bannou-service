@@ -277,7 +277,7 @@ try:
     /// Implementation of {method_name} operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public async Task<(StatusCodes, {return_type})> {method_name}Async({params_str})
+    public async Task<(StatusCodes, {return_type}?)> {method_name}Async({params_str})
     {{
         _logger.LogInformation(\"Executing {method_name} operation\");
 
@@ -315,7 +315,7 @@ try:
             //
             // For calling other services (lib-mesh):
             // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
+            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest {{ AccountId = id }}, cancellationToken);
             // if (status != StatusCodes.OK) return (status, default);
             //
             // For client event delivery (if request from WebSocket):

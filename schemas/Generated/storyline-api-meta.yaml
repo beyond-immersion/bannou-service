@@ -1,0 +1,1067 @@
+openapi: 3.0.0
+info:
+  title: Storyline Composer API
+  version: 1.0.0
+  description: |
+    Seeded narrative generation from compressed archives using the storyline SDKs.
+
+    The Storyline service wraps `storyline-theory` and `storyline-storyteller` SDKs
+    to provide HTTP endpoints for generating storyline plans from archive data.
+    Plans describe narrative arcs with phases, actions, and entity requirements -
+    callers (gods/regional watchers) decide whether to instantiate them.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: GameFeatures
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+paths:
+  /storyline/compose:
+    post:
+      summary: Compose a storyline plan from archive seeds
+      description: |
+        Generates a storyline plan using data from compressed archives and/or
+        live snapshots. The plan describes phases, actions, and entity requirements
+        but does NOT create any entities - callers decide whether to instantiate.
+
+        **Workflow**:
+        1. Fetch archive/snapshot data via IResourceClient
+        2. Extract world state from archive bundle
+        3. Select template based on goal and constraints
+        4. Run GOAP planner to generate action sequences
+        5. Cache plan and publish storyline.composed event
+      operationId: Compose
+      tags:
+      - Composition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComposeRequest'
+      responses:
+        '200':
+          description: Storyline plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeResponse'
+        '400':
+          description: Invalid request (no valid archives, incompatible goal/genre)
+        '404':
+          description: Archive or snapshot not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ComposeRequest\"\
+        ,\n    \"$defs\": {\n        \"ComposeRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to compose a storyline plan\",\n            \"required\": [\n   \
+        \             \"seedSources\",\n                \"goal\"\n            ],\n            \"properties\": {\n        \
+        \        \"seedSources\": {\n                    \"type\": \"array\",\n                    \"items\": {\n        \
+        \                \"$ref\": \"#/$defs/SeedSource\"\n                    },\n                    \"minItems\": 1,\n\
+        \                    \"maxItems\": 10,\n                    \"description\": \"Archive or snapshot sources to seed
+        the storyline.\\nAt least one source is required. Mix of archives and snapshots allowed.\\n\"\n                },\n\
+        \                \"goal\": {\n                    \"$ref\": \"#/$defs/StorylineGoal\",\n                    \"description\"\
+        : \"The high-level goal driving arc selection\"\n                },\n                \"constraints\": {\n        \
+        \            \"$ref\": \"#/$defs/ComposeConstraints\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Optional constraints on composition\"\n                },\n                \"genre\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Genre filter (e.g., \\\"crime\\\", \\\"action\\\", \\\"romance\\\").\\nIf omitted, inferred from archive data.\\\
+        n\"\n                },\n                \"arcType\": {\n                    \"$ref\": \"#/$defs/ArcType\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Specific arc type to use. If omitted,
+        selected based on goal.\\n\"\n                },\n                \"urgency\": {\n                    \"$ref\": \"\
+        #/$defs/PlanningUrgency\",\n                    \"nullable\": true,\n                    \"description\": \"Planning
+        urgency level. Defaults to configuration value.\\n\"\n                },\n                \"seed\": {\n          \
+        \          \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Random seed for deterministic output (enables caching)\"\n                }\n            }\n        },\n        \"\
+        SeedSource\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"A source of seed data (archive or snapshot)\",\n            \"properties\": {\n                \"archiveId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"ID of a compressed archive (dead entity)\"\n                },\n \
+        \               \"snapshotId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"ID of a live snapshot (living entity)\"\
+        \n                },\n                \"role\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Optional actant role hint (e.g., \\\"protagonist\\\"\
+        , \\\"antagonist\\\", \\\"helper\\\").\\nUsed for Greimas actant assignment if provided.\\n\"\n                }\n\
+        \            }\n        },\n        \"StorylineGoal\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"revenge\",\n                \"resurrection\",\n                \"legacy\",\n              \
+        \  \"mystery\",\n                \"peace\",\n                \"redemption\",\n                \"conquest\",\n    \
+        \            \"survival\"\n            ],\n            \"description\": \"High-level story goal that drives arc selection.\\
+        nrevenge: Character seeks vengeance for past wrongs\\nresurrection: Restoring something/someone lost\\nlegacy: Creating
+        or continuing a lasting impact\\nmystery: Uncovering hidden truths\\npeace: Resolving conflicts and finding harmony\\
+        nredemption: Atoning for past mistakes\\nconquest: Achieving dominion or victory\\nsurvival: Overcoming threats to
+        existence\\n\"\n        },\n        \"ComposeConstraints\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Constraints on storyline composition\",\n            \"properties\": {\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm to anchor the storyline in\"\
+        \n                },\n                \"locationId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Optional
+        starting location\"\n                },\n                \"maxEntities\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"maximum\": 50,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Maximum entities the plan can require (default from config)\"\n          \
+        \      },\n                \"maxPhases\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"maximum\": 10,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum phases in the plan (default unlimited)\"\n                }\n            }\n        },\n        \"ArcType\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"rags_to_riches\",\n           \
+        \     \"tragedy\",\n                \"man_in_hole\",\n                \"icarus\",\n                \"cinderella\"\
+        ,\n                \"oedipus\"\n            ],\n            \"description\": \"Emotional arc shapes from Reagan et
+        al. research.\\nrags_to_riches: Rise (1)\\ntragedy: Fall (2)\\nman_in_hole: Fall then rise (3)\\nicarus: Rise then
+        fall (4)\\ncinderella: Rise, fall, rise (5)\\noedipus: Fall, rise, fall (6)\\n\"\n        },\n        \"PlanningUrgency\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"low\",\n                \"medium\"\
+        ,\n                \"high\"\n            ],\n            \"description\": \"GOAP planning urgency level affecting
+        search parameters.\\nlow: More iterations, wider beam (1000/20)\\nmedium: Balanced (500/15)\\nhigh: Fewer iterations,
+        narrower beam (200/10)\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ComposeResponse\"\
+        ,\n    \"$defs\": {\n        \"ComposeResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Composed storyline plan\",\n            \"required\": [\n               \
+        \ \"planId\",\n                \"confidence\",\n                \"goal\",\n                \"arcType\",\n        \
+        \        \"primarySpectrum\",\n                \"phases\",\n                \"generationTimeMs\",\n              \
+        \  \"cached\"\n            ],\n            \"properties\": {\n                \"planId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique plan
+        identifier\"\n                },\n                \"confidence\": {\n                    \"type\": \"number\",\n \
+        \                   \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"description\": \"Plan viability score (0-1)\"\n                },\n                \"\
+        goal\": {\n                    \"$ref\": \"#/$defs/StorylineGoal\",\n                    \"description\": \"The goal
+        that was used\"\n                },\n                \"genre\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Inferred or specified genre\"\n    \
+        \            },\n                \"arcType\": {\n                    \"$ref\": \"#/$defs/ArcType\",\n            \
+        \        \"description\": \"Emotional arc type used\"\n                },\n                \"primarySpectrum\": {\n\
+        \                    \"$ref\": \"#/$defs/SpectrumType\",\n                    \"description\": \"Primary Life Value
+        spectrum\"\n                },\n                \"themes\": {\n                    \"type\": \"array\",\n        \
+        \            \"items\": {\n                        \"type\": \"string\"\n                    },\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Inferred thematic elements\"\n                },\n\
+        \                \"phases\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/StorylinePlanPhase\"\n                    },\n                    \"description\"\
+        : \"Planned phases with actions\"\n                },\n                \"entitiesToSpawn\": {\n                  \
+        \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityRequirement\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Entities
+        required for this storyline (descriptions only).\\nCallers decide whether to spawn them.\\n\"\n                },\n\
+        \                \"links\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/StorylineLink\"\n                    },\n                    \"nullable\":
+        true,\n                    \"description\": \"Links between entities in the plan\"\n                },\n         \
+        \       \"risks\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
+        \         \"$ref\": \"#/$defs/StorylineRisk\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Identified risks or weak points in the plan\"\n                },\n       \
+        \         \"generationTimeMs\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Time taken to generate in milliseconds\"\n                },\n                \"cached\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"description\": \"Whether this was returned from cache\"\n     \
+        \           }\n            }\n        },\n        \"StorylineGoal\": {\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"revenge\",\n                \"resurrection\",\n                \"legacy\",\n\
+        \                \"mystery\",\n                \"peace\",\n                \"redemption\",\n                \"conquest\"\
+        ,\n                \"survival\"\n            ],\n            \"description\": \"High-level story goal that drives
+        arc selection.\\nrevenge: Character seeks vengeance for past wrongs\\nresurrection: Restoring something/someone lost\\
+        nlegacy: Creating or continuing a lasting impact\\nmystery: Uncovering hidden truths\\npeace: Resolving conflicts
+        and finding harmony\\nredemption: Atoning for past mistakes\\nconquest: Achieving dominion or victory\\nsurvival:
+        Overcoming threats to existence\\n\"\n        },\n        \"ArcType\": {\n            \"type\": \"string\",\n    \
+        \        \"enum\": [\n                \"rags_to_riches\",\n                \"tragedy\",\n                \"man_in_hole\"\
+        ,\n                \"icarus\",\n                \"cinderella\",\n                \"oedipus\"\n            ],\n   \
+        \         \"description\": \"Emotional arc shapes from Reagan et al. research.\\nrags_to_riches: Rise (1)\\ntragedy:
+        Fall (2)\\nman_in_hole: Fall then rise (3)\\nicarus: Rise then fall (4)\\ncinderella: Rise, fall, rise (5)\\noedipus:
+        Fall, rise, fall (6)\\n\"\n        },\n        \"SpectrumType\": {\n            \"type\": \"string\",\n          \
+        \  \"enum\": [\n                \"life_death\",\n                \"honor_dishonor\",\n                \"justice_injustice\"\
+        ,\n                \"freedom_subjugation\",\n                \"love_hate\",\n                \"respect_shame\",\n\
+        \                \"power_impotence\",\n                \"success_failure\",\n                \"altruism_selfishness\"\
+        ,\n                \"wisdom_ignorance\"\n            ],\n            \"description\": \"The 10 Story Grid Life Value
+        spectrums.\\nThese are bipolar axes for emotional progression.\\n\"\n        },\n        \"StorylinePlanPhase\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        A phase in the storyline plan\",\n            \"required\": [\n                \"phaseNumber\",\n                \"\
+        name\",\n                \"actions\"\n            ],\n            \"properties\": {\n                \"phaseNumber\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"1-based phase number\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Phase name (e.g., \\\"discovery\\\", \\\"confrontation\\\", \\\"resolution\\\
+        \")\"\n                },\n                \"actions\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanAction\"\n                    },\n\
+        \                    \"description\": \"Actions in this phase\"\n                },\n                \"targetState\"\
+        : {\n                    \"$ref\": \"#/$defs/PhaseTargetState\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Target emotional/world state for phase completion\"\n                },\n      \
+        \          \"positionBounds\": {\n                    \"$ref\": \"#/$defs/PhasePosition\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Position bounds for this phase (0-1 story progress)\"\n\
+        \                }\n            }\n        },\n        \"StorylinePlanAction\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"An action in the storyline plan\"\
+        ,\n            \"required\": [\n                \"actionId\",\n                \"category\",\n                \"description\"\
+        \n            ],\n            \"properties\": {\n                \"actionId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Action identifier from action registry\"\n                },\n \
+        \               \"category\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Action category (e.g., \\\"conflict\\\", \\\"relationship\\\", \\\"mystery\\\")\"\n                },\n          \
+        \      \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        action description\"\n                },\n                \"isCoreEvent\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this is an obligatory scene\"\n                },\n            \
+        \    \"participants\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Character/entity roles involved\"\n                },\n                \"effects\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ActionEffect\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"World state effects of this action\"\n                }\n            }\n        },\n        \"ActionEffect\":
+        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Effect of an action on world state\",\n            \"required\": [\n                \"key\",\n                \"value\"\
+        \n            ],\n            \"properties\": {\n                \"key\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"State key affected\"\n                },\n                \"value\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"New value (as string, caller interprets
+        type)\"\n                },\n                \"cardinality\": {\n                    \"type\": \"string\",\n     \
+        \               \"enum\": [\n                        \"set\",\n                        \"add\",\n                \
+        \        \"remove\",\n                        \"increment\",\n                        \"decrement\"\n            \
+        \        ],\n                    \"description\": \"How to apply the effect\"\n                }\n            }\n\
+        \        },\n        \"PhaseTargetState\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Target state for phase completion\",\n            \"properties\": {\n   \
+        \             \"narrativeState\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"number\",\n                        \"format\": \"double\"\n             \
+        \       },\n                    \"nullable\": true,\n                    \"description\": \"Target spectrum values
+        (spectrum name -> value)\"\n                },\n                \"facts\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n               \
+        \     },\n                    \"nullable\": true,\n                    \"description\": \"Required world state facts\"\
+        \n                },\n                \"position\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Target story position (0-1)\"\n         \
+        \       }\n            }\n        },\n        \"PhasePosition\": {\n            \"type\": \"object\",\n          \
+        \  \"additionalProperties\": false,\n            \"description\": \"Position bounds for a phase\",\n            \"\
+        required\": [\n                \"start\",\n                \"end\"\n            ],\n            \"properties\": {\n\
+        \                \"start\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\":
+        \"Start position (0-1)\"\n                },\n                \"end\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"description\": \"End position (0-1)\"\n                }\n            }\n        },\n\
+        \        \"EntityRequirement\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"An entity required for the storyline\",\n            \"required\": [\n           \
+        \     \"role\",\n                \"entityType\",\n                \"description\"\n            ],\n            \"\
+        properties\": {\n                \"role\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Role in the story (e.g., \\\"witness\\\", \\\"informant\\\", \\\"target\\\")\"\n                },\n         \
+        \       \"entityType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type
+        of entity needed (e.g., \\\"character\\\", \\\"location\\\", \\\"item\\\")\"\n                },\n               \
+        \ \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of what's needed\"\n                },\n                \"constraints\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n               \
+        \     },\n                    \"nullable\": true,\n                    \"description\": \"Constraints on entity selection/creation\"\
+        \n                },\n                \"sourceArchiveId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\":
+        \"If derived from an archive, that archive's ID\"\n                }\n            }\n        },\n        \"StorylineLink\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"A relationship link in the storyline\",\n            \"required\": [\n                \"sourceRole\",\n      \
+        \          \"targetRole\",\n                \"linkType\"\n            ],\n            \"properties\": {\n        \
+        \        \"sourceRole\": {\n                    \"type\": \"string\",\n                    \"description\": \"Source
+        entity role\"\n                },\n                \"targetRole\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Target entity role\"\n                },\n                \"linkType\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Type of relationship (e.g., \\\"\
+        opposes\\\", \\\"allies_with\\\", \\\"seeks\\\")\"\n                }\n            }\n        },\n        \"StorylineRisk\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Identified risk in the plan\",\n            \"required\": [\n                \"riskType\",\n                \"\
+        description\",\n                \"severity\"\n            ],\n            \"properties\": {\n                \"riskType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Risk category (e.g., \\\"missing_entity\\\
+        \", \\\"low_tension\\\", \\\"weak_climax\\\")\"\n                },\n                \"description\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Risk description\"\n                },\n\
+        \                \"severity\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n   \
+        \                     \"low\",\n                        \"medium\",\n                        \"high\"\n          \
+        \          ],\n                    \"description\": \"Risk severity\"\n                },\n                \"mitigation\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Suggested mitigation\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Compose a storyline plan from archive seeds\",\n    \"description\": \"\
+        Generates a storyline plan using data from compressed archives and/or\\nlive snapshots. The plan describes phases,
+        actions, and entity requirements\\nbut does NOT create any entities - callers decide whether to instantiate.\\n\\\
+        n**Workflow**:\\n1. Fetch archive/snapshot data via IResourceClient\\n2. Extract world state from archive bundle\\
+        n3. Select template based on goal and constraints\\n4. Run GOAP planner to generate action sequences\\n5. Cache plan
+        and publish storyline.composed event\\n\",\n    \"tags\": [\n        \"Composition\"\n    ],\n    \"deprecated\":
+        false,\n    \"operationId\": \"Compose\"\n}"
+  /storyline/plan/get:
+    post:
+      summary: Retrieve a cached storyline plan
+      description: |
+        Retrieves a previously generated storyline plan by its ID.
+        Returns 404 if the plan has expired from cache or doesn't exist.
+      operationId: GetPlan
+      tags:
+      - Plans
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPlanRequest'
+      responses:
+        '200':
+          description: Plan retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPlanResponse'
+        '404':
+          description: Plan not found or expired
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetPlanRequest\"\
+        ,\n    \"$defs\": {\n        \"GetPlanRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to retrieve a cached plan\",\n            \"required\": [\n     \
+        \           \"planId\"\n            ],\n            \"properties\": {\n                \"planId\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the plan to retrieve\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetPlanResponse\"\
+        ,\n    \"$defs\": {\n        \"GetPlanResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Retrieved plan\",\n            \"required\": [\n                \"found\"\
+        \n            ],\n            \"properties\": {\n                \"found\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the plan was found\"\n                },\n                \"plan\"\
+        : {\n                    \"$ref\": \"#/$defs/ComposeResponse\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"The plan (null if not found)\"\n                }\n            }\n        },\n  \
+        \      \"ComposeResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
+        \           \"description\": \"Composed storyline plan\",\n            \"required\": [\n                \"planId\"\
+        ,\n                \"confidence\",\n                \"goal\",\n                \"arcType\",\n                \"primarySpectrum\"\
+        ,\n                \"phases\",\n                \"generationTimeMs\",\n                \"cached\"\n            ],\n\
+        \            \"properties\": {\n                \"planId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Unique plan identifier\"\n           \
+        \     },\n                \"confidence\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
+        : \"Plan viability score (0-1)\"\n                },\n                \"goal\": {\n                    \"$ref\": \"\
+        #/$defs/StorylineGoal\",\n                    \"description\": \"The goal that was used\"\n                },\n  \
+        \              \"genre\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Inferred or specified genre\"\n                },\n                \"arcType\"\
+        : {\n                    \"$ref\": \"#/$defs/ArcType\",\n                    \"description\": \"Emotional arc type
+        used\"\n                },\n                \"primarySpectrum\": {\n                    \"$ref\": \"#/$defs/SpectrumType\"\
+        ,\n                    \"description\": \"Primary Life Value spectrum\"\n                },\n                \"themes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Inferred thematic elements\"\n                },\n                \"phases\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanPhase\"\n\
+        \                    },\n                    \"description\": \"Planned phases with actions\"\n                },\n\
+        \                \"entitiesToSpawn\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/EntityRequirement\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Entities required for this storyline (descriptions only).\\
+        nCallers decide whether to spawn them.\\n\"\n                },\n                \"links\": {\n                  \
+        \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylineLink\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Links between
+        entities in the plan\"\n                },\n                \"risks\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylineRisk\"\n               \
+        \     },\n                    \"nullable\": true,\n                    \"description\": \"Identified risks or weak
+        points in the plan\"\n                },\n                \"generationTimeMs\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Time taken to generate in milliseconds\"\n                },\n\
+        \                \"cached\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
+        Whether this was returned from cache\"\n                }\n            }\n        },\n        \"StorylineGoal\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"revenge\",\n                \"resurrection\"\
+        ,\n                \"legacy\",\n                \"mystery\",\n                \"peace\",\n                \"redemption\"\
+        ,\n                \"conquest\",\n                \"survival\"\n            ],\n            \"description\": \"High-level
+        story goal that drives arc selection.\\nrevenge: Character seeks vengeance for past wrongs\\nresurrection: Restoring
+        something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery: Uncovering hidden truths\\npeace:
+        Resolving conflicts and finding harmony\\nredemption: Atoning for past mistakes\\nconquest: Achieving dominion or
+        victory\\nsurvival: Overcoming threats to existence\\n\"\n        },\n        \"ArcType\": {\n            \"type\"\
+        : \"string\",\n            \"enum\": [\n                \"rags_to_riches\",\n                \"tragedy\",\n      \
+        \          \"man_in_hole\",\n                \"icarus\",\n                \"cinderella\",\n                \"oedipus\"\
+        \n            ],\n            \"description\": \"Emotional arc shapes from Reagan et al. research.\\nrags_to_riches:
+        Rise (1)\\ntragedy: Fall (2)\\nman_in_hole: Fall then rise (3)\\nicarus: Rise then fall (4)\\ncinderella: Rise, fall,
+        rise (5)\\noedipus: Fall, rise, fall (6)\\n\"\n        },\n        \"SpectrumType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"life_death\",\n                \"honor_dishonor\",\n               \
+        \ \"justice_injustice\",\n                \"freedom_subjugation\",\n                \"love_hate\",\n             \
+        \   \"respect_shame\",\n                \"power_impotence\",\n                \"success_failure\",\n             \
+        \   \"altruism_selfishness\",\n                \"wisdom_ignorance\"\n            ],\n            \"description\":
+        \"The 10 Story Grid Life Value spectrums.\\nThese are bipolar axes for emotional progression.\\n\"\n        },\n \
+        \       \"StorylinePlanPhase\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A phase in the storyline plan\",\n            \"required\": [\n                \"\
+        phaseNumber\",\n                \"name\",\n                \"actions\"\n            ],\n            \"properties\"\
+        : {\n                \"phaseNumber\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"1-based phase number\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Phase name (e.g., \\\"discovery\\\
+        \", \\\"confrontation\\\", \\\"resolution\\\")\"\n                },\n                \"actions\": {\n           \
+        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanAction\"\
+        \n                    },\n                    \"description\": \"Actions in this phase\"\n                },\n   \
+        \             \"targetState\": {\n                    \"$ref\": \"#/$defs/PhaseTargetState\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Target emotional/world state for phase completion\"\
+        \n                },\n                \"positionBounds\": {\n                    \"$ref\": \"#/$defs/PhasePosition\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Position bounds for this phase
+        (0-1 story progress)\"\n                }\n            }\n        },\n        \"StorylinePlanAction\": {\n       \
+        \     \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"An action
+        in the storyline plan\",\n            \"required\": [\n                \"actionId\",\n                \"category\"\
+        ,\n                \"description\"\n            ],\n            \"properties\": {\n                \"actionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Action identifier from action registry\"\
+        \n                },\n                \"category\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Action category (e.g., \\\"conflict\\\", \\\"relationship\\\", \\\"mystery\\\")\"\n     \
+        \           },\n                \"description\": {\n                    \"type\": \"string\",\n                  \
+        \  \"description\": \"Human-readable action description\"\n                },\n                \"isCoreEvent\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an obligatory
+        scene\"\n                },\n                \"participants\": {\n                    \"type\": \"array\",\n     \
+        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Character/entity roles involved\"\n          \
+        \      },\n                \"effects\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/ActionEffect\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"World state effects of this action\"\n                }\n        \
+        \    }\n        },\n        \"ActionEffect\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Effect of an action on world state\",\n            \"required\": [\n    \
+        \            \"key\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"\
+        key\": {\n                    \"type\": \"string\",\n                    \"description\": \"State key affected\"\n\
+        \                },\n                \"value\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"New value (as string, caller interprets type)\"\n                },\n                \"cardinality\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"set\",\n\
+        \                        \"add\",\n                        \"remove\",\n                        \"increment\",\n \
+        \                       \"decrement\"\n                    ],\n                    \"description\": \"How to apply
+        the effect\"\n                }\n            }\n        },\n        \"PhaseTargetState\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Target state for phase
+        completion\",\n            \"properties\": {\n                \"narrativeState\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n  \
+        \                      \"format\": \"double\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Target spectrum values (spectrum name -> value)\"\n                },\n   \
+        \             \"facts\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required world state facts\"\n                },\n                \"position\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Target story position (0-1)\"\n                }\n            }\n        },\n        \"PhasePosition\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Position bounds for a phase\",\n            \"required\": [\n                \"start\",\n                \"end\"\
+        \n            ],\n            \"properties\": {\n                \"start\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"description\": \"Start position (0-1)\"\n                },\n                \"end\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"End position (0-1)\"\n\
+        \                }\n            }\n        },\n        \"EntityRequirement\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"An entity required for the storyline\"\
+        ,\n            \"required\": [\n                \"role\",\n                \"entityType\",\n                \"description\"\
+        \n            ],\n            \"properties\": {\n                \"role\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Role in the story (e.g., \\\"witness\\\", \\\"informant\\\", \\\"target\\\
+        \")\"\n                },\n                \"entityType\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Type of entity needed (e.g., \\\"character\\\", \\\"location\\\", \\\"item\\\")\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Description of what's needed\"\n                },\n                \"constraints\": {\n\
+        \                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                    \
+        \    \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"Constraints on entity selection/creation\"\n                },\n                \"sourceArchiveId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"If derived from an archive, that archive's ID\"\n      \
+        \          }\n            }\n        },\n        \"StorylineLink\": {\n            \"type\": \"object\",\n       \
+        \     \"additionalProperties\": false,\n            \"description\": \"A relationship link in the storyline\",\n \
+        \           \"required\": [\n                \"sourceRole\",\n                \"targetRole\",\n                \"\
+        linkType\"\n            ],\n            \"properties\": {\n                \"sourceRole\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Source entity role\"\n                },\n       \
+        \         \"targetRole\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target
+        entity role\"\n                },\n                \"linkType\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Type of relationship (e.g., \\\"opposes\\\", \\\"allies_with\\\", \\\"seeks\\\
+        \")\"\n                }\n            }\n        },\n        \"StorylineRisk\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Identified risk in the plan\",\n \
+        \           \"required\": [\n                \"riskType\",\n                \"description\",\n                \"severity\"\
+        \n            ],\n            \"properties\": {\n                \"riskType\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Risk category (e.g., \\\"missing_entity\\\", \\\"low_tension\\\"\
+        , \\\"weak_climax\\\")\"\n                },\n                \"description\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Risk description\"\n                },\n                \"severity\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"low\",\n\
+        \                        \"medium\",\n                        \"high\"\n                    ],\n                 \
+        \   \"description\": \"Risk severity\"\n                },\n                \"mitigation\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Suggested
+        mitigation\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Retrieve a cached storyline plan\",\n    \"description\": \"Retrieves a
+        previously generated storyline plan by its ID.\\nReturns 404 if the plan has expired from cache or doesn't exist.\\\
+        n\",\n    \"tags\": [\n        \"Plans\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GetPlan\"\n}"
+  /storyline/plan/list:
+    post:
+      summary: List cached storyline plans
+      description: |
+        Lists storyline plans in the cache, optionally filtered by realm.
+        Plans are ordered by creation time (newest first).
+      operationId: ListPlans
+      tags:
+      - Plans
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListPlansRequest'
+      responses:
+        '200':
+          description: Plans listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPlansResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListPlansRequest\"\
+        ,\n    \"$defs\": {\n        \"ListPlansRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list cached plans\",\n            \"properties\": {\n        \
+        \        \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Filter by realm (optional)\"\n    \
+        \            },\n                \"limit\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n                    \"\
+        description\": \"Maximum plans to return\"\n                },\n                \"offset\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"default\": 0,\n            \
+        \        \"description\": \"Pagination offset\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListPlansResponse\"\
+        ,\n    \"$defs\": {\n        \"ListPlansResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"List of plans\",\n            \"required\": [\n                \"plans\"\
+        ,\n                \"totalCount\"\n            ],\n            \"properties\": {\n                \"plans\": {\n \
+        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PlanSummary\"\
+        \n                    },\n                    \"description\": \"Plan summaries\"\n                },\n          \
+        \      \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Total
+        matching plans\"\n                }\n            }\n        },\n        \"PlanSummary\": {\n            \"type\":
+        \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Summary of a cached plan\"\
+        ,\n            \"required\": [\n                \"planId\",\n                \"goal\",\n                \"arcType\"\
+        ,\n                \"confidence\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"planId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Plan identifier\"\n                },\n                \"goal\": {\n   \
+        \                 \"$ref\": \"#/$defs/StorylineGoal\",\n                    \"description\": \"Story goal\"\n    \
+        \            },\n                \"arcType\": {\n                    \"$ref\": \"#/$defs/ArcType\",\n            \
+        \        \"description\": \"Arc type\"\n                },\n                \"confidence\": {\n                  \
+        \  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Viability
+        score\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Anchored realm (if any)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When plan was created\"\
+        \n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        When plan expires from cache\"\n                }\n            }\n        },\n        \"StorylineGoal\": {\n     \
+        \       \"type\": \"string\",\n            \"enum\": [\n                \"revenge\",\n                \"resurrection\"\
+        ,\n                \"legacy\",\n                \"mystery\",\n                \"peace\",\n                \"redemption\"\
+        ,\n                \"conquest\",\n                \"survival\"\n            ],\n            \"description\": \"High-level
+        story goal that drives arc selection.\\nrevenge: Character seeks vengeance for past wrongs\\nresurrection: Restoring
+        something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery: Uncovering hidden truths\\npeace:
+        Resolving conflicts and finding harmony\\nredemption: Atoning for past mistakes\\nconquest: Achieving dominion or
+        victory\\nsurvival: Overcoming threats to existence\\n\"\n        },\n        \"ArcType\": {\n            \"type\"\
+        : \"string\",\n            \"enum\": [\n                \"rags_to_riches\",\n                \"tragedy\",\n      \
+        \          \"man_in_hole\",\n                \"icarus\",\n                \"cinderella\",\n                \"oedipus\"\
+        \n            ],\n            \"description\": \"Emotional arc shapes from Reagan et al. research.\\nrags_to_riches:
+        Rise (1)\\ntragedy: Fall (2)\\nman_in_hole: Fall then rise (3)\\nicarus: Rise then fall (4)\\ncinderella: Rise, fall,
+        rise (5)\\noedipus: Fall, rise, fall (6)\\n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List cached storyline plans\",\n    \"description\": \"Lists storyline
+        plans in the cache, optionally filtered by realm.\\nPlans are ordered by creation time (newest first).\\n\",\n   \
+        \ \"tags\": [\n        \"Plans\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ListPlans\"\n}"
+components:
+  schemas:
+    StorylineGoal:
+      type: string
+      enum:
+      - revenge
+      - resurrection
+      - legacy
+      - mystery
+      - peace
+      - redemption
+      - conquest
+      - survival
+      description: |
+        High-level story goal that drives arc selection.
+        revenge: Character seeks vengeance for past wrongs
+        resurrection: Restoring something/someone lost
+        legacy: Creating or continuing a lasting impact
+        mystery: Uncovering hidden truths
+        peace: Resolving conflicts and finding harmony
+        redemption: Atoning for past mistakes
+        conquest: Achieving dominion or victory
+        survival: Overcoming threats to existence
+    ArcType:
+      type: string
+      enum:
+      - rags_to_riches
+      - tragedy
+      - man_in_hole
+      - icarus
+      - cinderella
+      - oedipus
+      description: |
+        Emotional arc shapes from Reagan et al. research.
+        rags_to_riches: Rise (1)
+        tragedy: Fall (2)
+        man_in_hole: Fall then rise (3)
+        icarus: Rise then fall (4)
+        cinderella: Rise, fall, rise (5)
+        oedipus: Fall, rise, fall (6)
+    SpectrumType:
+      type: string
+      enum:
+      - life_death
+      - honor_dishonor
+      - justice_injustice
+      - freedom_subjugation
+      - love_hate
+      - respect_shame
+      - power_impotence
+      - success_failure
+      - altruism_selfishness
+      - wisdom_ignorance
+      description: |
+        The 10 Story Grid Life Value spectrums.
+        These are bipolar axes for emotional progression.
+    PlanningUrgency:
+      type: string
+      enum:
+      - low
+      - medium
+      - high
+      description: |
+        GOAP planning urgency level affecting search parameters.
+        low: More iterations, wider beam (1000/20)
+        medium: Balanced (500/15)
+        high: Fewer iterations, narrower beam (200/10)
+    ComposeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compose a storyline plan
+      required:
+      - seedSources
+      - goal
+      properties:
+        seedSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedSource'
+          minItems: 1
+          maxItems: 10
+          description: |
+            Archive or snapshot sources to seed the storyline.
+            At least one source is required. Mix of archives and snapshots allowed.
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: The high-level goal driving arc selection
+        constraints:
+          $ref: '#/components/schemas/ComposeConstraints'
+          nullable: true
+          description: Optional constraints on composition
+        genre:
+          type: string
+          nullable: true
+          description: |
+            Genre filter (e.g., "crime", "action", "romance").
+            If omitted, inferred from archive data.
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          nullable: true
+          description: |
+            Specific arc type to use. If omitted, selected based on goal.
+        urgency:
+          $ref: '#/components/schemas/PlanningUrgency'
+          nullable: true
+          description: |
+            Planning urgency level. Defaults to configuration value.
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed for deterministic output (enables caching)
+    SeedSource:
+      type: object
+      additionalProperties: false
+      description: A source of seed data (archive or snapshot)
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a compressed archive (dead entity)
+        snapshotId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a live snapshot (living entity)
+        role:
+          type: string
+          nullable: true
+          description: |
+            Optional actant role hint (e.g., "protagonist", "antagonist", "helper").
+            Used for Greimas actant assignment if provided.
+    ComposeConstraints:
+      type: object
+      additionalProperties: false
+      description: Constraints on storyline composition
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm to anchor the storyline in
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional starting location
+        maxEntities:
+          type: integer
+          minimum: 1
+          maximum: 50
+          nullable: true
+          description: Maximum entities the plan can require (default from config)
+        maxPhases:
+          type: integer
+          minimum: 1
+          maximum: 10
+          nullable: true
+          description: Maximum phases in the plan (default unlimited)
+    GetPlanRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a cached plan
+      required:
+      - planId
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: ID of the plan to retrieve
+    ListPlansRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list cached plans
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm (optional)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Maximum plans to return
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+    ComposeResponse:
+      type: object
+      additionalProperties: false
+      description: Composed storyline plan
+      required:
+      - planId
+      - confidence
+      - goal
+      - arcType
+      - primarySpectrum
+      - phases
+      - generationTimeMs
+      - cached
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: Unique plan identifier
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Plan viability score (0-1)
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: The goal that was used
+        genre:
+          type: string
+          nullable: true
+          description: Inferred or specified genre
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          description: Emotional arc type used
+        primarySpectrum:
+          $ref: '#/components/schemas/SpectrumType'
+          description: Primary Life Value spectrum
+        themes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Inferred thematic elements
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylinePlanPhase'
+          description: Planned phases with actions
+        entitiesToSpawn:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityRequirement'
+          nullable: true
+          description: |
+            Entities required for this storyline (descriptions only).
+            Callers decide whether to spawn them.
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineLink'
+          nullable: true
+          description: Links between entities in the plan
+        risks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylineRisk'
+          nullable: true
+          description: Identified risks or weak points in the plan
+        generationTimeMs:
+          type: integer
+          description: Time taken to generate in milliseconds
+        cached:
+          type: boolean
+          description: Whether this was returned from cache
+    GetPlanResponse:
+      type: object
+      additionalProperties: false
+      description: Retrieved plan
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether the plan was found
+        plan:
+          $ref: '#/components/schemas/ComposeResponse'
+          nullable: true
+          description: The plan (null if not found)
+    ListPlansResponse:
+      type: object
+      additionalProperties: false
+      description: List of plans
+      required:
+      - plans
+      - totalCount
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanSummary'
+          description: Plan summaries
+        totalCount:
+          type: integer
+          description: Total matching plans
+    StorylinePlanPhase:
+      type: object
+      additionalProperties: false
+      description: A phase in the storyline plan
+      required:
+      - phaseNumber
+      - name
+      - actions
+      properties:
+        phaseNumber:
+          type: integer
+          minimum: 1
+          description: 1-based phase number
+        name:
+          type: string
+          description: Phase name (e.g., "discovery", "confrontation", "resolution")
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorylinePlanAction'
+          description: Actions in this phase
+        targetState:
+          $ref: '#/components/schemas/PhaseTargetState'
+          nullable: true
+          description: Target emotional/world state for phase completion
+        positionBounds:
+          $ref: '#/components/schemas/PhasePosition'
+          nullable: true
+          description: Position bounds for this phase (0-1 story progress)
+    StorylinePlanAction:
+      type: object
+      additionalProperties: false
+      description: An action in the storyline plan
+      required:
+      - actionId
+      - category
+      - description
+      properties:
+        actionId:
+          type: string
+          description: Action identifier from action registry
+        category:
+          type: string
+          description: Action category (e.g., "conflict", "relationship", "mystery")
+        description:
+          type: string
+          description: Human-readable action description
+        isCoreEvent:
+          type: boolean
+          description: Whether this is an obligatory scene
+        participants:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Character/entity roles involved
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionEffect'
+          nullable: true
+          description: World state effects of this action
+    ActionEffect:
+      type: object
+      additionalProperties: false
+      description: Effect of an action on world state
+      required:
+      - key
+      - value
+      properties:
+        key:
+          type: string
+          description: State key affected
+        value:
+          type: string
+          description: New value (as string, caller interprets type)
+        cardinality:
+          type: string
+          enum:
+          - set
+          - add
+          - remove
+          - increment
+          - decrement
+          description: How to apply the effect
+    PhaseTargetState:
+      type: object
+      additionalProperties: false
+      description: Target state for phase completion
+      properties:
+        narrativeState:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+          nullable: true
+          description: Target spectrum values (spectrum name -> value)
+        facts:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Required world state facts
+        position:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Target story position (0-1)
+    PhasePosition:
+      type: object
+      additionalProperties: false
+      description: Position bounds for a phase
+      required:
+      - start
+      - end
+      properties:
+        start:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Start position (0-1)
+        end:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: End position (0-1)
+    EntityRequirement:
+      type: object
+      additionalProperties: false
+      description: An entity required for the storyline
+      required:
+      - role
+      - entityType
+      - description
+      properties:
+        role:
+          type: string
+          description: Role in the story (e.g., "witness", "informant", "target")
+        entityType:
+          type: string
+          description: Type of entity needed (e.g., "character", "location", "item")
+        description:
+          type: string
+          description: Description of what's needed
+        constraints:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Constraints on entity selection/creation
+        sourceArchiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: If derived from an archive, that archive's ID
+    StorylineLink:
+      type: object
+      additionalProperties: false
+      description: A relationship link in the storyline
+      required:
+      - sourceRole
+      - targetRole
+      - linkType
+      properties:
+        sourceRole:
+          type: string
+          description: Source entity role
+        targetRole:
+          type: string
+          description: Target entity role
+        linkType:
+          type: string
+          description: Type of relationship (e.g., "opposes", "allies_with", "seeks")
+    StorylineRisk:
+      type: object
+      additionalProperties: false
+      description: Identified risk in the plan
+      required:
+      - riskType
+      - description
+      - severity
+      properties:
+        riskType:
+          type: string
+          description: Risk category (e.g., "missing_entity", "low_tension", "weak_climax")
+        description:
+          type: string
+          description: Risk description
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          description: Risk severity
+        mitigation:
+          type: string
+          nullable: true
+          description: Suggested mitigation
+    PlanSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a cached plan
+      required:
+      - planId
+      - goal
+      - arcType
+      - confidence
+      - createdAt
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: Plan identifier
+        goal:
+          $ref: '#/components/schemas/StorylineGoal'
+          description: Story goal
+        arcType:
+          $ref: '#/components/schemas/ArcType'
+          description: Arc type
+        confidence:
+          type: number
+          format: double
+          description: Viability score
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Anchored realm (if any)
+        createdAt:
+          type: string
+          format: date-time
+          description: When plan was created
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When plan expires from cache
+tags:
+- name: Composition
+  description: Storyline plan composition
+- name: Plans
+  description: Plan management and retrieval
