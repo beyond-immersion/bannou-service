@@ -871,6 +871,17 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
+        // Setup: definition lookup for response mapping (GetDefinitionModelAsync checks cache then store)
+        var definition = CreateTestDefinitionModel(instance.DefinitionId);
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        // Setup: progress store for objectives
+        _mockProgressStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ObjectiveProgressModel?)null);
+
         var request = new AbandonQuestRequest
         {
             QuestInstanceId = instanceId,
@@ -959,9 +970,9 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
 
-        // Setup: definition for mapping - service uses GetAsync for direct key lookup
+        // Setup: definition lookup (GetDefinitionModelAsync checks cache then store)
         var definition = CreateTestDefinitionModel(instance.DefinitionId);
-        _mockDefinitionStore
+        _mockDefinitionCache
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(definition);
 
@@ -1157,7 +1168,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     }
 
     [Fact]
-    public async Task ReportObjectiveProgressAsync_QuestNotActive_ReturnsConflict()
+    public async Task ReportObjectiveProgressAsync_QuestNotActive_ReturnsBadRequest()
     {
         // Arrange
         var service = CreateService();
@@ -1181,8 +1192,8 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         // Act
         var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
 
-        // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
+        // Assert - BadRequest for client error (reporting progress on non-active quest)
+        Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }
 
