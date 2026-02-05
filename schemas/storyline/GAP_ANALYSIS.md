@@ -1,10 +1,50 @@
 # Storyline SDK Gap Analysis
 
-> **Status**: Analysis Complete, Phase 1-3 Complete, Phase 4 Planning Complete, SDK_FOUNDATIONS Audit Complete
+> **Status**: Analysis Complete, Phase 1-3 Complete, Phase 4 Planning Complete, SDK_FOUNDATIONS Audit Complete, **Phase 1 Implementation Complete**
 > **Date**: 2026-02-04 (updated)
 > **Purpose**: Identify missing components between research YAML files and complete SDK implementation
 
 ## Recent Progress
+
+### Phase 1 SDK Implementation (COMPLETE - 2026-02-04)
+
+**Unit Test Results**: 22 tests passing (12 KernelExtractor + 10 ArchiveExtractor)
+
+**Implementation vs SDK_FOUNDATIONS Audit**:
+
+| Component | SDK_FOUNDATIONS Requirement | Implementation Status | Test Coverage |
+|-----------|---------------------------|----------------------|---------------|
+| **KernelExtractor** | | | |
+| Death kernel | Significance = 1.0, only dead characters | ✅ Implemented | ✅ 2 tests |
+| HistoricalEvent kernel | Significance > 0.7 threshold | ✅ Implemented | ✅ 2 tests |
+| Trauma kernel | From backstory TRAUMA elements | ✅ Implemented | ✅ 1 test |
+| UnfinishedBusiness kernel | From backstory GOAL elements | ✅ Implemented | ✅ 1 test |
+| Conflict kernel | sentiment < -0.5 AND memory > 0.7 | ✅ Implemented | ✅ 1 test |
+| DeepBond kernel | sentiment > 0.6 AND encounters ≥ 5 | ✅ Implemented | ✅ 2 tests |
+| Nested archive processing | Recursive extraction | ✅ Implemented | ✅ 1 test |
+| Significance sorting | Descending order | ✅ Implemented | ✅ 1 test |
+| KernelScorer integration | AdjustSignificance call | ✅ Implemented (stub) | Integrated |
+| **ArchiveExtractor** | | | |
+| Character facts | status, realm, species, name, dates | ✅ Implemented | ✅ 1 test |
+| History participations | event facts with significance | ✅ Implemented | ✅ 1 test |
+| Backstory elements | key/value/strength with related entities | ✅ Implemented | ✅ 1 test |
+| Encounter relationships | aggregate sentiment per character | ✅ Implemented | ✅ 1 test |
+| Significant encounters | memory > 0.5 filter | ✅ Implemented | ✅ 2 tests |
+| Personality traits | all bipolar trait axes | ✅ Implemented | ✅ 1 test |
+| Combat preferences | style, range, role, thresholds | ✅ Implemented | ✅ 1 test |
+| Multiple archive combination | single WorldState output | ✅ Implemented | ✅ 1 test |
+
+**Implementation Notes**:
+1. SDK_FOUNDATIONS uses `EmotionalImpact > 0.7` (float) for conflict; implementation uses `MemoryStrength > 0.7` because Generated types have `EmotionalImpact` as enum
+2. KernelType enum has 8 types (added `SignificantAsset`, `BrokenPromise`); SDK_FOUNDATIONS documents 6 - extra types reserved for future extraction logic
+3. All IKernelData implementations created: DeathKernelData, HistoricalEventKernelData, TraumaKernelData, UnfinishedBusinessKernelData, ConflictKernelData, DeepBondKernelData
+4. NarrativeKernel enhanced with full model: KernelId, SourceResourceId, SourceResourceType, InvolvedCharacterIds, SuggestedActants, CompatibleArcs, GenreAffinities
+
+**Files Created/Modified**:
+- `sdks/storyline-storyteller.tests/` - New test project
+- `sdks/storyline-theory/Archives/KernelExtractor.cs` - Full extraction logic
+- `sdks/storyline-theory/Archives/ArchiveExtractor.cs` - Full extraction logic
+- `sdks/storyline-theory/Kernels/` - KernelType, NarrativeKernel, IKernelData, KernelScorer
 
 ### SDK_FOUNDATIONS Audit (COMPLETE)
 - **Audited**: `SDK_REWRITE_PLAN.md` against `SDK_FOUNDATIONS.md`
@@ -923,8 +963,34 @@ After the research sprint, we reach a decision point:
   - **DONE**: SDK-implementable arc functions in `emotional-arcs.yaml` (control_points, sampled_trajectory)
   - **DONE**: Documentation in `STORY_TEMPLATES.md` and `STORY_TEMPLATE_ANALYSIS.md`
   - See Open Questions 3.1-3.6 below for decision rationale
-- [ ] Phase 4: Archive Extraction → `schemas/storyline/archive-extraction.yaml`
+- [x] **Phase 4: Archive Extraction** → Implemented in SDK (not YAML schema)
+  - **DECISION**: Archive extraction is runtime integration, not schema definition (see Phase 4 Scope Clarification below)
+  - **DONE**: `KernelExtractor.cs` - Full extraction logic using Generated archive types
+  - **DONE**: `ArchiveExtractor.cs` - Full WorldState fact extraction
+  - **DONE**: All 6 kernel types implemented (Death, HistoricalEvent, Trauma, UnfinishedBusiness, Conflict, DeepBond)
+  - **DONE**: Extraction thresholds per SDK_FOUNDATIONS (Death=1.0, HistoricalEvent>0.7, Conflict<-0.5, DeepBond>0.6 with 5+ encounters)
+  - **DONE**: Unit tests (22 passing) - `storyline-storyteller.tests/Archives/`
 - [ ] Phase 5: Compatibility Matrix (validation, largely addressed by subgenre mapping)
+
+### SDK Implementation Status
+
+| SDK | Project | Status | Tests |
+|-----|---------|--------|-------|
+| storyline-theory | `sdks/storyline-theory/` | ✅ Complete | N/A (no test project) |
+| storyline-storyteller | `sdks/storyline-storyteller/` | ✅ Complete | ✅ 22 passing |
+
+**storyline-theory Components**:
+- `Archives/`: ArchiveBundle, ArchiveExtractor, KernelExtractor
+- `Kernels/`: KernelType, NarrativeKernel, IKernelData (6 implementations), KernelScorer
+- `Spectrums/`: SpectrumType, SpectrumDefinition, SpectrumPole, NarrativeState, GenreSpectrumMapping, NarrativeStateLoader
+- `Arcs/`: ArcType, ArcDirection, ArcControlPoint, EmotionalArc, EmotionalArcLoader
+- `Actants/`: ActantRole
+- `Planning/`: WorldState
+- `YamlLoader.cs`: Generic YAML loading
+
+**storyline-storyteller Components**:
+- `Actions/`: ActionCategory, ActionPreconditionOperator, ActionPrecondition, EffectCardinality, ActionEffect
+- References storyline-theory for all foundational types
 
 ---
 
