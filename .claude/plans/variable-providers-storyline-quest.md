@@ -420,6 +420,357 @@ _mostRecent = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
 
 ---
 
+## TENET Compliance Guide
+
+> **Reference**: Use category names in code comments, never specific tenet numbers (per TENETS.md Tenet 0).
+
+### FOUNDATION TENETS
+
+#### Infrastructure Libs Pattern (T4)
+
+**Cache implementations MUST use infrastructure abstractions:**
+
+```csharp
+// CORRECT: Use IServiceScopeFactory for scoped client access from singleton cache
+public class StorylineCache : IStorylineCache
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public async Task<StorylineListResponse> GetOrLoadAsync(Guid characterId, CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var client = scope.ServiceProvider.GetRequiredService<IStorylineClient>();
+        return await client.ListByCharacterAsync(new ListByCharacterRequest { CharacterId = characterId }, ct);
+    }
+}
+
+// FORBIDDEN: Direct HTTP calls
+await httpClient.GetAsync($"http://storyline/api/list-by-character?characterId={id}");  // NO!
+```
+
+**Hard dependencies for L4→L4 within same feature set:**
+- `IStorylineClient` and `IQuestClient` are constructor-injected in the cache
+- No graceful degradation - these ship together
+- DI container fails at startup if clients aren't registered
+
+#### Event-Driven Architecture (T5)
+
+**Cache invalidation events MUST be typed, not anonymous:**
+
+```csharp
+// CORRECT: Typed event models from generated schema
+[EventSubscription("storyline.character.joined")]
+public async Task HandleStorylineJoined(StorylineCharacterJoinedEvent evt, CancellationToken ct)
+{
+    _storylineCache.Invalidate(evt.CharacterId);
+    await Task.CompletedTask;
+}
+
+// FORBIDDEN: Anonymous event handling
+await _messageBus.PublishAsync("cache.invalidate", new { type = "storyline", id = characterId });  // NO!
+```
+
+**Event schema requirement:** Storyline and Quest plugins MUST define the invalidation events in their respective `-events.yaml` schemas.
+
+#### Service Implementation Pattern (T6)
+
+**Event handlers in partial class file:**
+
+```
+plugins/lib-actor/
+├── ActorService.cs           # Main service (partial class)
+├── ActorServiceEvents.cs     # Event handlers (partial class) - add cache invalidation here
+└── Caching/
+    ├── IStorylineCache.cs
+    └── StorylineCache.cs
+```
+
+**DI Registration lifetime rules:**
+- `ActorService` is Scoped
+- `StorylineCache` and `QuestCache` are Singleton (shared across all ActorRunner instances)
+- This is valid: Scoped service can consume Singleton dependency
+
+### IMPLEMENTATION TENETS
+
+#### Event Consumer Fan-Out (T3)
+
+**Cache invalidation subscriptions use IEventConsumer:**
+
+```csharp
+// In ActorServiceEvents.cs
+protected void RegisterEventConsumers(IEventConsumer eventConsumer)
+{
+    // Existing registrations...
+
+    // Add storyline cache invalidation
+    eventConsumer.RegisterHandler<IActorService, StorylineCharacterJoinedEvent>(
+        "storyline.character.joined",
+        async (svc, evt) => await ((ActorService)svc).HandleStorylineJoinedAsync(evt));
+
+    eventConsumer.RegisterHandler<IActorService, QuestAcceptedEvent>(
+        "quest.accepted",
+        async (svc, evt) => await ((ActorService)svc).HandleQuestAcceptedAsync(evt));
+}
+```
+
+#### Error Handling (T7)
+
+**Cache loading distinguishes ApiException from infrastructure errors:**
+
+```csharp
+public async Task<StorylineListResponse> GetOrLoadAsync(Guid characterId, CancellationToken ct)
+{
+    try
+    {
+        var (status, response) = await _client.ListByCharacterAsync(request, ct);
+        if (status == StatusCodes.NotFound)
+        {
+            // Character has no storylines - valid state
+            return new StorylineListResponse { Storylines = new() };
+        }
+        return response ?? throw new InvalidOperationException("Null response with OK status");
+    }
+    catch (ApiException ex)
+    {
+        // Expected API error - propagate with context
+        _logger.LogWarning(ex, "Storyline API returned {Status} for character {CharacterId}",
+            ex.StatusCode, characterId);
+        throw;
+    }
+    catch (Exception ex)
+    {
+        // Unexpected infrastructure error - log and rethrow
+        _logger.LogError(ex, "Failed to load storyline data for character {CharacterId}", characterId);
+        throw;
+    }
+}
+```
+
+**Error events:** Only emit `TryPublishErrorAsync` for unexpected infrastructure failures, NOT for 404s (character has no storylines).
+
+#### Multi-Instance Safety (T9)
+
+**Caches MUST use ConcurrentDictionary:**
+
+```csharp
+// CORRECT: Thread-safe cache
+private readonly ConcurrentDictionary<Guid, CachedStorylineData> _cache = new();
+
+// FORBIDDEN: Plain dictionary
+private readonly Dictionary<Guid, CachedStorylineData> _cache = new();  // NO!
+```
+
+**Cache invalidation is safe across instances:** Event-driven invalidation means all instances receive the invalidation event via RabbitMQ fanout.
+
+#### Configuration-First Development (T21)
+
+**TTL configuration MUST be in schema, not hardcoded:**
+
+```yaml
+# schemas/actor-configuration.yaml
+StorylineCacheTtlMinutes:
+  type: integer
+  default: 5
+  description: TTL for cached storyline participation data. Per IMPLEMENTATION TENETS, all tunables must be configurable.
+  env: ACTOR_STORYLINE_CACHE_TTL
+
+QuestCacheTtlMinutes:
+  type: integer
+  default: 5
+  description: TTL for cached quest data
+  env: ACTOR_QUEST_CACHE_TTL
+```
+
+```csharp
+// CORRECT: Use configuration
+var ttl = TimeSpan.FromMinutes(_configuration.StorylineCacheTtlMinutes);
+
+// FORBIDDEN: Hardcoded tunable
+var ttl = TimeSpan.FromMinutes(5);  // NO - define in config schema
+```
+
+**No secondary fallbacks for defaulted properties:**
+```csharp
+// FORBIDDEN: Schema has default=5, so this is redundant and dangerous
+var ttl = _configuration.StorylineCacheTtlMinutes ?? 5;  // NO!
+
+// CORRECT: Schema default compiles into property initializer
+var ttl = _configuration.StorylineCacheTtlMinutes;  // Uses schema default if not overridden
+```
+
+#### Async Method Pattern (T23)
+
+**All Task-returning methods MUST be async with await:**
+
+```csharp
+// CORRECT: async with await
+public async Task HandleStorylineJoinedAsync(StorylineCharacterJoinedEvent evt)
+{
+    _storylineCache.Invalidate(evt.CharacterId);
+    await Task.CompletedTask;  // Sync work in async interface
+}
+
+// FORBIDDEN: Non-async Task return
+public Task HandleStorylineJoinedAsync(StorylineCharacterJoinedEvent evt)
+{
+    _storylineCache.Invalidate(evt.CharacterId);
+    return Task.CompletedTask;  // NO - use async keyword
+}
+```
+
+#### Type Safety (T25)
+
+**Provider models use proper types, not strings:**
+
+```csharp
+// CORRECT: Strong types
+public Guid StorylineId { get; set; }
+public StorylinePhase CurrentPhase { get; set; }  // Enum
+public int Priority { get; set; }
+public DateTimeOffset JoinedAt { get; set; }
+
+// FORBIDDEN: String representations
+public string StorylineId { get; set; }  // NO - use Guid
+public string CurrentPhase { get; set; }  // NO - use enum
+public string JoinedAt { get; set; }  // NO - use DateTimeOffset
+```
+
+**Provider output may use strings for ABML consumption** - the `GetValue()` return type is `object?` and ABML conditions work with string comparisons. But the underlying model fields must be properly typed.
+
+#### No Sentinel Values (T26)
+
+**Nullable fields for optional data:**
+
+```csharp
+// CORRECT: Nullable when value can be absent
+public StorylineParticipation? _primary;  // null if no storylines
+public StorylineParticipation? _mostRecent;  // null if no storylines
+public DateTimeOffset? Deadline { get; set; }  // null if no deadline
+
+// FORBIDDEN: Sentinel values
+public Guid PrimaryStorylineId { get; set; }  // Using Guid.Empty for "none" - NO!
+public int Priority { get; set; } = -1;  // Using -1 for "no priority" - NO!
+```
+
+### QUALITY TENETS
+
+#### Logging Standards (T10)
+
+**Structured logging with message templates:**
+
+```csharp
+// CORRECT: Message templates with named placeholders
+_logger.LogDebug("Loading storyline data for character {CharacterId}", characterId);
+_logger.LogDebug("Cache hit for character {CharacterId}, expires at {ExpiresAt}", characterId, cached.ExpiresAt);
+_logger.LogInformation("Invalidating storyline cache for {Count} characters", characterIds.Count);
+
+// FORBIDDEN: String interpolation
+_logger.LogDebug($"Loading storyline data for character {characterId}");  // NO!
+
+// FORBIDDEN: Tag prefixes
+_logger.LogDebug("[CACHE] Loading storyline data");  // NO!
+```
+
+#### Test Integrity (T12)
+
+**Unit tests for provider path resolution:**
+
+```csharp
+[Fact]
+public void GetValue_PrimaryPhase_ReturnsCurrentPhase()
+{
+    // Arrange
+    var response = new StorylineListResponse
+    {
+        Storylines = new List<StorylineParticipation>
+        {
+            new() { Priority = 10, CurrentPhase = StorylinePhase.Rising }
+        }
+    };
+    var provider = new StorylineProvider(response);
+
+    // Act
+    var result = provider.GetValue(new[] { "primary", "phase" }.AsSpan());
+
+    // Assert
+    Assert.Equal("Rising", result);  // Or enum string representation
+}
+
+[Fact]
+public void GetValue_EmptyStorylines_ReturnsZeroActiveCount()
+{
+    var provider = new StorylineProvider(new StorylineListResponse { Storylines = new() });
+    var result = provider.GetValue(new[] { "active_count" }.AsSpan());
+    Assert.Equal(0, result);
+}
+```
+
+**Do NOT use `null!` to bypass NRT:**
+```csharp
+// FORBIDDEN: Testing impossible scenario
+var provider = new StorylineProvider(null!);  // NO - constructor requires non-null
+```
+
+#### XML Documentation (T19)
+
+**All public APIs must be documented:**
+
+```csharp
+/// <summary>
+/// Provides ABML variable access to a character's storyline participation data.
+/// </summary>
+/// <remarks>
+/// Variables available:
+/// - ${storyline.is_participant} - bool
+/// - ${storyline.active_count} - int
+/// - ${storyline.primary.*} - highest priority storyline
+/// - ${storyline.most_recent.*} - most recently joined storyline
+/// </remarks>
+public sealed class StorylineProvider : IVariableProvider
+{
+    /// <summary>
+    /// Creates a new StorylineProvider with the given participation data.
+    /// </summary>
+    /// <param name="response">The storyline participation response from the Storyline service.</param>
+    public StorylineProvider(StorylineListResponse response)
+    {
+        // ...
+    }
+}
+```
+
+#### Warning Suppression (T22)
+
+**No pragma suppressions - fix warnings instead:**
+
+```csharp
+// FORBIDDEN: Suppressing nullability warning
+#pragma warning disable CS8602
+var phase = storyline.CurrentPhase.ToString();  // NO!
+#pragma warning restore CS8602
+
+// CORRECT: Proper null handling
+var phase = storyline?.CurrentPhase.ToString() ?? string.Empty;
+// Or better - make CurrentPhase non-nullable in the model if it's always present
+```
+
+### Code Review Checklist
+
+Before submitting, verify:
+
+- [ ] Cache uses `ConcurrentDictionary`, not `Dictionary`
+- [ ] TTL values come from configuration, not hardcoded
+- [ ] Event handlers use `IEventConsumer.RegisterHandler`
+- [ ] All async methods have `await` (not `return Task.CompletedTask`)
+- [ ] Models use `Guid`, `DateTimeOffset`, enums - not strings
+- [ ] Nullable fields for optional values - no sentinel values
+- [ ] Structured logging with message templates
+- [ ] XML documentation on all public types and members
+- [ ] No `#pragma warning disable` statements
+- [ ] Unit tests don't use `null!` to bypass NRT
+
+---
+
 ## Implementation Steps
 
 ### Phase 1: Infrastructure (Prerequisites)
@@ -585,10 +936,20 @@ public sealed class QuestProvider : IVariableProvider
 
 ## References
 
+### Implementation References
 - [IVariableProvider Interface](/home/lysander/repos/bannou/bannou-service/Abml/Expressions/IVariableProvider.cs)
 - [PersonalityProvider Reference](/home/lysander/repos/bannou/plugins/lib-actor/Runtime/PersonalityProvider.cs)
 - [PersonalityCache Reference](/home/lysander/repos/bannou/plugins/lib-actor/Caching/PersonalityCache.cs)
 - [ActorRunner Registration](/home/lysander/repos/bannou/plugins/lib-actor/Runtime/ActorRunner.cs)
+
+### Architecture References
 - [Quest Plugin Architecture](/home/lysander/repos/bannou/docs/planning/QUEST_PLUGIN_ARCHITECTURE.md)
 - [Regional Watchers Behavior](/home/lysander/repos/bannou/docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md)
 - [Actor Data Access Patterns](/home/lysander/repos/bannou/docs/planning/ACTOR_DATA_ACCESS_PATTERNS.md)
+
+### TENET Documentation
+- [TENETS.md](/home/lysander/repos/bannou/docs/reference/TENETS.md) - Master tenet index
+- [FOUNDATION.md](/home/lysander/repos/bannou/docs/reference/tenets/FOUNDATION.md) - T4, T5, T6
+- [IMPLEMENTATION.md](/home/lysander/repos/bannou/docs/reference/tenets/IMPLEMENTATION.md) - T3, T7, T9, T21, T23, T25, T26
+- [QUALITY.md](/home/lysander/repos/bannou/docs/reference/tenets/QUALITY.md) - T10, T12, T19, T22
+- [SERVICE_HIERARCHY.md](/home/lysander/repos/bannou/docs/reference/SERVICE_HIERARCHY.md) - Dependency handling patterns
