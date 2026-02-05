@@ -178,14 +178,24 @@ public partial class QuestService : IQuestService
 
             // Build contract template via IContractClient
             var templateRequest = BuildContractTemplateRequest(body, definitionId, normalizedCode);
-            var (templateStatus, templateResponse) = await _contractClient.CreateTemplateAsync(
-                templateRequest,
-                cancellationToken);
-
-            if (templateStatus != StatusCodes.OK || templateResponse == null)
+            ContractTemplateResponse templateResponse;
+            try
             {
-                _logger.LogWarning("Failed to create contract template for quest {Code}: {Status}",
-                    normalizedCode, templateStatus);
+                templateResponse = await _contractClient.CreateContractTemplateAsync(
+                    templateRequest,
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                // Template with same code already exists - this is expected for repeated quest creation
+                _logger.LogWarning("Contract template with code quest_{Code} already exists", normalizedCode.ToLowerInvariant());
+                return (StatusCodes.Conflict, null);
+            }
+
+            if (templateResponse == null)
+            {
+                _logger.LogWarning("Failed to create contract template for quest {Code}: null response",
+                    normalizedCode);
                 return (StatusCodes.ServiceUnavailable, null);
             }
 
@@ -632,40 +642,81 @@ public partial class QuestService : IQuestService
             var now = DateTimeOffset.UtcNow;
             var questInstanceId = Guid.NewGuid();
 
-            // Create contract instance
-            var contractRequest = new CreateInstanceRequest
+            // Build contract parties - questor plus optional quest giver
+            var parties = new List<ContractPartyInput>
             {
-                TemplateId = definition.ContractTemplateId,
-                TermOverrides = body.TermOverrides
+                new()
+                {
+                    EntityId = body.QuestorCharacterId,
+                    EntityType = EntityType.Character,
+                    Role = "questor"
+                }
             };
 
-            var (contractStatus, contractResponse) = await _contractClient.CreateInstanceAsync(
-                contractRequest,
-                cancellationToken);
-
-            if (contractStatus != StatusCodes.OK || contractResponse == null)
+            // Add quest giver as a party (can be a specific NPC or system placeholder)
+            var questGiverId = body.QuestGiverCharacterId ?? definition.QuestGiverCharacterId ?? Guid.Empty;
+            if (questGiverId != Guid.Empty)
             {
-                _logger.LogWarning("Failed to create contract instance for quest {Code}: {Status}",
-                    definition.Code, contractStatus);
+                parties.Add(new ContractPartyInput
+                {
+                    EntityId = questGiverId,
+                    EntityType = EntityType.Character,
+                    Role = "quest_giver"
+                });
+            }
+            else
+            {
+                // Use a system placeholder for quests without specific quest givers
+                parties.Add(new ContractPartyInput
+                {
+                    EntityId = definition.GameServiceId, // Use game service as system party
+                    EntityType = EntityType.System,
+                    Role = "quest_giver"
+                });
+            }
+
+            // Create contract instance
+            var contractRequest = new CreateContractInstanceRequest
+            {
+                TemplateId = definition.ContractTemplateId,
+                Parties = parties
+            };
+
+            ContractInstanceResponse contractResponse;
+            try
+            {
+                contractResponse = await _contractClient.CreateContractInstanceAsync(
+                    contractRequest,
+                    cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to create contract instance for quest {Code}", definition.Code);
+                return (StatusCodes.ServiceUnavailable, null);
+            }
+
+            if (contractResponse == null)
+            {
+                _logger.LogWarning("Failed to create contract instance for quest {Code}: null response",
+                    definition.Code);
                 return (StatusCodes.ServiceUnavailable, null);
             }
 
             // Auto-consent for questor
-            var consentRequest = new RecordConsentRequest
+            var consentRequest = new ConsentToContractRequest
             {
                 ContractId = contractResponse.ContractId,
-                PartyId = body.QuestorCharacterId,
-                PartyRole = "questor"
+                PartyEntityId = body.QuestorCharacterId,
+                PartyEntityType = EntityType.Character
             };
 
-            var (consentStatus, _) = await _contractClient.RecordConsentAsync(
-                consentRequest,
-                cancellationToken);
-
-            if (consentStatus != StatusCodes.OK)
+            try
             {
-                _logger.LogWarning("Failed to record consent for quest {Code}: {Status}",
-                    definition.Code, consentStatus);
+                await _contractClient.ConsentToContractAsync(consentRequest, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to record consent for quest {Code}", definition.Code);
                 // Contract was created but consent failed - may need cleanup
                 return (StatusCodes.ServiceUnavailable, null);
             }
@@ -817,12 +868,23 @@ public partial class QuestService : IQuestService
                 }
 
                 // Terminate underlying contract
-                var terminateRequest = new TerminateContractRequest
+                var terminateRequest = new TerminateContractInstanceRequest
                 {
                     ContractId = instance.ContractInstanceId,
+                    RequestingEntityId = body.QuestorCharacterId,
+                    RequestingEntityType = EntityType.Character,
                     Reason = "Quest abandoned by player"
                 };
-                await _contractClient.TerminateContractAsync(terminateRequest, cancellationToken);
+                try
+                {
+                    await _contractClient.TerminateContractInstanceAsync(terminateRequest, cancellationToken);
+                }
+                catch (ApiException ex)
+                {
+                    // Log but don't fail - contract termination is best effort
+                    _logger.LogWarning(ex, "Failed to terminate contract for abandoned quest {QuestInstanceId}",
+                        body.QuestInstanceId);
+                }
 
                 // Update character index
                 var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
@@ -1232,7 +1294,16 @@ public partial class QuestService : IQuestService
                         ContractId = instance.ContractInstanceId,
                         MilestoneCode = body.ObjectiveCode
                     };
-                    await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+                    try
+                    {
+                        await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
+                            body.ObjectiveCode, instance.ContractInstanceId);
+                        // Continue - milestone completion is eventually consistent via events
+                    }
                 }
 
                 _logger.LogDebug("Objective progress updated: {QuestInstanceId}/{ObjectiveCode} = {Current}/{Required}",
@@ -1316,7 +1387,16 @@ public partial class QuestService : IQuestService
                 ContractId = instance.ContractInstanceId,
                 MilestoneCode = body.ObjectiveCode
             };
-            await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+            try
+            {
+                await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
+                    body.ObjectiveCode, instance.ContractInstanceId);
+                // Continue - milestone completion is eventually consistent via events
+            }
 
             _logger.LogInformation("Objective force completed: {QuestInstanceId}/{ObjectiveCode}",
                 body.QuestInstanceId, body.ObjectiveCode);
@@ -1603,33 +1683,37 @@ public partial class QuestService : IQuestService
         }
     }
 
-    private CreateTemplateRequest BuildContractTemplateRequest(
+    private CreateContractTemplateRequest BuildContractTemplateRequest(
         CreateQuestDefinitionRequest body,
         Guid definitionId,
         string normalizedCode)
     {
-        // Build milestones from objectives
+        // Build milestones from objectives - contract milestones map to quest objectives
         var milestones = body.Objectives.Select((obj, index) => new MilestoneDefinition
         {
             Code = obj.Code,
             Name = obj.Name,
             Description = obj.Description,
-            SequenceOrder = index,
-            Optional = obj.Optional ?? false
+            SequenceOrder = index
         }).ToList();
 
-        return new CreateTemplateRequest
+        // Contract template code must be lowercase per contract schema validation
+        var templateCode = $"quest_{normalizedCode.ToLowerInvariant()}";
+
+        return new CreateContractTemplateRequest
         {
-            Code = $"QUEST_{normalizedCode}",
+            Code = templateCode,
             Name = $"Quest: {body.Name}",
             Description = body.Description,
+            MinParties = 1,
+            MaxParties = (body.MaxQuestors ?? 1) + 1, // questors + optional quest_giver
             PartyRoles = new List<PartyRoleDefinition>
             {
                 new() { Role = "questor", MinCount = 1, MaxCount = body.MaxQuestors ?? 1 },
-                new() { Role = "quest_giver", MinCount = 0, MaxCount = 1, Optional = true }
+                new() { Role = "quest_giver", MinCount = 0, MaxCount = 1 }
             },
             Milestones = milestones,
-            EnforcementMode = ContractEnforcementMode.Event_only
+            DefaultEnforcementMode = EnforcementMode.Event_only
         };
     }
 

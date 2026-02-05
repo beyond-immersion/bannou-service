@@ -1270,10 +1270,7 @@ The `lib-storyline` plugin exists with foundational SDK integration. The followi
 
 ### Next Steps
 
-1. **Audit existing lib-storyline** against this guide to identify gaps
-2. **Implement scenario APIs** as passive query endpoints
-3. **Implement quest plugin** as thin wrapper over lib-contract
-4. **Create watcher base templates** for regional watcher behaviors
-5. **Test with simple watcher** (Monster God pattern) before complex (Tragedy God)
+1. **Implement scenario APIs** as passive query endpoints
+2. **Create watcher base templates** for regional watcher behaviors
 
 Run `/audit-plugin storyline` to begin gap analysis against these requirements.
