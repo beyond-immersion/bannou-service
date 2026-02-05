@@ -893,7 +893,7 @@ components:
         Inherits base archive properties from ResourceArchiveBase.
         The characterId field equals resourceId for convenience.
       allOf:
-        - $ref: 'common-api.yaml#/components/schemas/ResourceArchiveBase'
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
         - characterId

@@ -1132,7 +1132,7 @@ components:
         Note: This is distinct from CharacterArchive which contains text summaries
         for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
       allOf:
-        - $ref: 'common-api.yaml#/components/schemas/ResourceArchiveBase'
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
         - characterId

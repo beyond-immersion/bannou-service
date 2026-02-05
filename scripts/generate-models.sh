@@ -41,12 +41,36 @@ mkdir -p "$OUTPUT_DIR"
 require_nswag
 ensure_dotnet_root
 
+# Run resolver to handle cross-file allOf refs (creates resolved schema if needed)
+SCRIPT_DIR="$(dirname "$0")"
+echo -e "${YELLOW}🔄 Checking for cross-file allOf refs...${NC}"
+python3 "$SCRIPT_DIR/resolve-api-refs.py" "$SERVICE_NAME" 2>&1 | while read line; do echo "  $line"; done
+
+# Check if a resolved version exists (for schemas with cross-file allOf refs)
+RESOLVED_SCHEMA="../schemas/Generated/${SERVICE_NAME}-api-resolved.yaml"
+if [ -f "$RESOLVED_SCHEMA" ]; then
+    echo -e "${BLUE}ℹ️  Using resolved schema (cross-file allOf refs inlined)${NC}"
+    SCHEMA_TO_PROCESS="$RESOLVED_SCHEMA"
+else
+    SCHEMA_TO_PROCESS="$SCHEMA_FILE"
+fi
+
 # Base NSwag configuration
 EXCLUDED_TYPES="ApiException,ApiException\<TResult\>"
 ADDITIONAL_NAMESPACES="BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
 
+# If using resolved schema, extract and exclude inlined types
+if [ "$SCHEMA_TO_PROCESS" = "$RESOLVED_SCHEMA" ]; then
+    INLINED_TYPES=$(extract_inlined_types "$RESOLVED_SCHEMA")
+    if [ -n "$INLINED_TYPES" ]; then
+        echo -e "${BLUE}ℹ️  Excluding inlined types: $INLINED_TYPES${NC}"
+        EXCLUDED_TYPES="$EXCLUDED_TYPES,$INLINED_TYPES"
+    fi
+fi
+
 # Extract $refs to common-api.yaml types (shared types like EntityType)
 # These are generated once in CommonApiModels.cs, so we exclude them
+# Use the ORIGINAL schema file for ref extraction (not resolved)
 COMMON_API_REFS=$(extract_common_api_refs "$SCHEMA_FILE")
 if [ -n "$COMMON_API_REFS" ]; then
     echo -e "${BLUE}ℹ️  Found common-api.yaml refs - excluding shared types${NC}"
@@ -56,7 +80,6 @@ fi
 
 # Extract SDK type mappings from schema (x-sdk-type extensions)
 # This allows schemas to reference types from external SDKs without generating duplicates
-SCRIPT_DIR="$(dirname "$0")"
 SDK_TYPES_OUTPUT=$(python3 "$SCRIPT_DIR/extract-sdk-types.py" "$SCHEMA_FILE" --format=shell 2>/dev/null || echo "")
 
 if [ -n "$SDK_TYPES_OUTPUT" ]; then
@@ -80,7 +103,7 @@ fi
 echo -e "${YELLOW}🔄 Running NSwag model generation...${NC}"
 
 "$NSWAG_EXE" openapi2csclient \
-    "/input:$SCHEMA_FILE" \
+    "/input:$SCHEMA_TO_PROCESS" \
     "/output:$OUTPUT_FILE" \
     "/namespace:BeyondImmersion.BannouService.$SERVICE_PASCAL" \
     "/generateClientClasses:false" \

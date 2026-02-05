@@ -39,13 +39,13 @@ info:
   # The personality service stores BOTH personality traits AND combat preferences for characters.
   # A single cleanup endpoint handles deletion of both data types for a given character.
   x-references:
-    - target: character
-      sourceType: character-personality
-      field: characterId
-      onDelete: cascade
-      cleanup:
-        endpoint: /character-personality/cleanup-by-character
-        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  - target: character
+    sourceType: character-personality
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /character-personality/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -946,12 +946,12 @@ components:
         Inherits base archive properties from ResourceArchiveBase.
         The characterId field equals resourceId for convenience.
       allOf:
-        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      - $ref: '#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
-        - characterId
-        - hasPersonality
-        - hasCombatPreferences
+      - characterId
+      - hasPersonality
+      - hasCombatPreferences
       properties:
         characterId:
           type: string
@@ -1015,3 +1015,41 @@ components:
           type: string
           nullable: true
           description: Error details if restoration failed
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+x-inlined-types:
+- ResourceArchiveBase

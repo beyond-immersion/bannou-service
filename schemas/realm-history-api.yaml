@@ -313,6 +313,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/RealmHistorySummaryResponse'
 
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /realm-history/get-compress-data:
+    post:
+      summary: Get realm history data for compression
+      operationId: getCompressData
+      tags:
+        - Compression
+      description: |
+        Returns complete realm history data (lore elements, event participations)
+        for archive storage. Called during realm archival process by the
+        Resource service compression system.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmHistoryArchive'
+        '404':
+          description: No history data for realm
+
+  /realm-history/restore-from-archive:
+    post:
+      summary: Restore realm history from archive
+      operationId: restoreFromArchive
+      tags:
+        - Compression
+      description: |
+        Restores realm history data from a compressed archive.
+        Used when expanding archived realm data. Called by Resource
+        service during decompression.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Data restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
 components:
   schemas:
     # Enums
@@ -805,3 +863,103 @@ components:
           description: |
             Major historical events as text summaries.
             e.g., ["Defended against the Northern Invasion", "Treaty of Stormgate established peace"]
+
+    # ==========================================================================
+    # Compression Models (Resource Service Integration)
+    # ==========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get realm history data for compression
+      additionalProperties: false
+      required:
+        - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to get compress data for
+
+    RealmHistoryArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Compressed realm lore and history for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The realmId field equals resourceId for convenience.
+      allOf:
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+        - realmId
+        - hasLore
+        - hasParticipations
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this data belongs to (equals resourceId)
+        hasLore:
+          type: boolean
+          description: Whether lore elements exist
+        loreElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoreResponse'
+          description: Lore elements (empty if hasLore=false)
+        hasParticipations:
+          type: boolean
+          description: Whether event participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmHistoricalParticipation'
+          description: Event participations (empty if hasParticipations=false)
+        summaries:
+          $ref: '#/components/schemas/RealmHistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore realm history data from archive
+      additionalProperties: false
+      required:
+        - realmId
+        - data
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped RealmHistoryArchive JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+        - realmId
+        - loreRestored
+        - participationsRestored
+        - success
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm data was restored for
+        loreRestored:
+          type: integer
+          description: Number of lore elements restored
+        participationsRestored:
+          type: integer
+          description: Number of participation records restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed
