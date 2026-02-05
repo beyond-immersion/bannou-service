@@ -39,6 +39,11 @@ public sealed class KernelExtractor
     private const float ConflictSentimentThreshold = -0.5f;
 
     /// <summary>
+    /// Minimum impact intensity for conflict kernels.
+    /// </summary>
+    private const float ConflictImpactThreshold = 0.7f;
+
+    /// <summary>
     /// Minimum positive sentiment for deep bond kernels.
     /// </summary>
     private const float DeepBondSentimentThreshold = 0.6f;
@@ -283,10 +288,10 @@ public sealed class KernelExtractor
             }
 
             var sentiment = perspective.SentimentShift ?? 0;
-            var memoryStrength = perspective.MemoryStrength;
+            var impactIntensity = perspective.ImpactIntensity;
 
-            // Conflict: negative sentiment and strong memory
-            if (sentiment < ConflictSentimentThreshold && memoryStrength > 0.7f)
+            // Conflict: negative sentiment and high impact intensity
+            if (sentiment < ConflictSentimentThreshold && impactIntensity > ConflictImpactThreshold)
             {
                 var otherIds = enc.Encounter.ParticipantIds
                     .Where(p => p != sourceId)

@@ -35,7 +35,7 @@
 | Multiple archive combination | single WorldState output | ✅ Implemented | ✅ 1 test |
 
 **Implementation Notes**:
-1. SDK_FOUNDATIONS uses `EmotionalImpact > 0.7` (float) for conflict; implementation uses `MemoryStrength > 0.7` because Generated types have `EmotionalImpact` as enum
+1. SDK_FOUNDATIONS uses `EmotionalImpact > 0.7` (float) for conflict; schema updated to add `ImpactIntensity` field (0.0-1.0 float) since `EmotionalImpact` is an enum. Implementation now uses `ImpactIntensity > 0.7` per SDK_FOUNDATIONS intent.
 2. KernelType enum has 8 types (added `SignificantAsset`, `BrokenPromise`); SDK_FOUNDATIONS documents 6 - extra types reserved for future extraction logic
 3. All IKernelData implementations created: DeathKernelData, HistoricalEventKernelData, TraumaKernelData, UnfinishedBusinessKernelData, ConflictKernelData, DeepBondKernelData
 4. NarrativeKernel enhanced with full model: KernelId, SourceResourceId, SourceResourceType, InvolvedCharacterIds, SuggestedActants, CompatibleArcs, GenreAffinities

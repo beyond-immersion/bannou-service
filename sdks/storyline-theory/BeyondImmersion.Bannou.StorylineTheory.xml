@@ -172,6 +172,11 @@
             Minimum negative sentiment for conflict kernels.
             </summary>
         </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ConflictImpactThreshold">
+            <summary>
+            Minimum impact intensity for conflict kernels.
+            </summary>
+        </member>
         <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.DeepBondSentimentThreshold">
             <summary>
             Minimum positive sentiment for deep bond kernels.
@@ -637,6 +642,11 @@
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.EmotionalImpact">
             <summary>
             Primary emotional response to the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.ImpactIntensity">
+            <summary>
+            Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (&gt;0.7 indicates high-impact encounter).
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterPerspectiveModel.SentimentShift">

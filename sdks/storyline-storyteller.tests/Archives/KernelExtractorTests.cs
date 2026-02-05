@@ -289,7 +289,7 @@ public class KernelExtractorTests
     }
 
     /// <summary>
-    /// Negative encounter with high memory strength produces Conflict kernel.
+    /// Negative encounter with high impact intensity produces Conflict kernel.
     /// </summary>
     [Fact]
     public void ExtractKernels_NegativeEncounter_ProducesConflictKernel()
@@ -331,7 +331,8 @@ public class KernelExtractorTests
                             CharacterId = characterId,
                             EmotionalImpact = EmotionalImpact.ANGER,
                             SentimentShift = -0.8f, // Below -0.5 threshold
-                            MemoryStrength = 0.9f, // Above 0.7 threshold
+                            ImpactIntensity = 0.9f, // Above 0.7 threshold
+                            MemoryStrength = 0.5f,
                             CreatedAt = DateTimeOffset.UtcNow
                         }
                     ]

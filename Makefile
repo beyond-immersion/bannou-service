@@ -380,6 +380,7 @@ validate-compose-services:
 generate:
 	@echo "🔧 Generating everything: projects, service files, client SDKs, documentation"
 	scripts/generate-all-services.sh
+	scripts/generate-storyline-archives.sh
 	scripts/generate-client-sdk.sh
 	@$(MAKE) generate-sdk-ts
 	@$(MAKE) generate-unreal-sdk
