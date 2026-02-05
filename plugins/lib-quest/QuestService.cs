@@ -1,5 +1,8 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -13,8 +16,26 @@ using System.Runtime.CompilerServices;
 namespace BeyondImmersion.BannouService.Quest;
 
 /// <summary>
+/// Topic constants for quest events.
+/// </summary>
+public static class QuestTopics
+{
+    /// <summary>Quest accepted event topic.</summary>
+    public const string QuestAccepted = "quest.accepted";
+    /// <summary>Objective progress updated event topic.</summary>
+    public const string QuestObjectiveProgressed = "quest.objective.progressed";
+    /// <summary>Quest completed event topic.</summary>
+    public const string QuestCompleted = "quest.completed";
+    /// <summary>Quest failed event topic.</summary>
+    public const string QuestFailed = "quest.failed";
+    /// <summary>Quest abandoned event topic.</summary>
+    public const string QuestAbandoned = "quest.abandoned";
+}
+
+/// <summary>
 /// Implementation of the Quest service.
-/// This class contains the business logic for all Quest operations.
+/// Quest is a thin orchestration layer over lib-contract providing game-flavored
+/// quest semantics: objectives are milestones, rewards are prebound API executions.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -22,23 +43,10 @@ namespace BeyondImmersion.BannouService.Quest;
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
-/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
+/// <b>SERVICE HIERARCHY (L4 Game Features):</b>
 /// <list type="bullet">
-///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
-///   <item><b>Configuration:</b> ALL config properties in QuestServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
-///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
-///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
-///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
-/// </list>
-/// </para>
-/// <para>
-/// <b>RELATED FILES:</b>
-/// <list type="bullet">
-///   <item>Request/Response models: bannou-service/Generated/Models/QuestModels.cs</item>
-///   <item>Event models: bannou-service/Generated/Events/QuestEventsModels.cs</item>
-///   <item>Lifecycle events: bannou-service/Generated/Events/QuestLifecycleEvents.cs</item>
-///   <item>Configuration: Generated/QuestServiceConfiguration.cs</item>
-///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
+///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>Soft dependencies (runtime resolution): IAnalyticsClient, IAchievementClient (L4)</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -49,73 +57,181 @@ public partial class QuestService : IQuestService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<QuestService> _logger;
     private readonly QuestServiceConfiguration _configuration;
+    private readonly IContractClient _contractClient;
+    private readonly ICharacterClient _characterClient;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly IServiceProvider _serviceProvider;
 
-    private const string STATE_STORE = "quest-statestore";
+    #region State Store Accessors
 
+    // Lazy-initialized state stores per IMPLEMENTATION TENETS
+    private IQueryableStateStore<QuestDefinitionModel>? _definitionStore;
+    private IQueryableStateStore<QuestDefinitionModel> DefinitionStore =>
+        _definitionStore ??= _stateStoreFactory.GetQueryableStore<QuestDefinitionModel>(StateStoreDefinitions.QuestDefinition);
+
+    private IQueryableStateStore<QuestInstanceModel>? _instanceStore;
+    private IQueryableStateStore<QuestInstanceModel> InstanceStore =>
+        _instanceStore ??= _stateStoreFactory.GetQueryableStore<QuestInstanceModel>(StateStoreDefinitions.QuestInstance);
+
+    private IStateStore<QuestDefinitionModel>? _definitionCache;
+    private IStateStore<QuestDefinitionModel> DefinitionCache =>
+        _definitionCache ??= _stateStoreFactory.GetStore<QuestDefinitionModel>(StateStoreDefinitions.QuestDefinitionCache);
+
+    private IStateStore<ObjectiveProgressModel>? _progressStore;
+    private IStateStore<ObjectiveProgressModel> ProgressStore =>
+        _progressStore ??= _stateStoreFactory.GetStore<ObjectiveProgressModel>(StateStoreDefinitions.QuestObjectiveProgress);
+
+    private ICacheableStateStore<CharacterQuestIndex>? _characterIndex;
+    private ICacheableStateStore<CharacterQuestIndex> CharacterIndex =>
+        _characterIndex ??= _stateStoreFactory.GetCacheableStore<CharacterQuestIndex>(StateStoreDefinitions.QuestCharacterIndex);
+
+    private IStateStore<CooldownEntry>? _cooldownStore;
+    private IStateStore<CooldownEntry> CooldownStore =>
+        _cooldownStore ??= _stateStoreFactory.GetStore<CooldownEntry>(StateStoreDefinitions.QuestCooldown);
+
+    private IStateStore<IdempotencyRecord>? _idempotencyStore;
+    private IStateStore<IdempotencyRecord> IdempotencyStore =>
+        _idempotencyStore ??= _stateStoreFactory.GetStore<IdempotencyRecord>(StateStoreDefinitions.QuestIdempotency);
+
+    #endregion
+
+    #region Key Building
+
+    private static string BuildDefinitionKey(Guid definitionId) => $"def:{definitionId}";
+    private static string BuildDefinitionCodeKey(string code) => $"def:code:{code.ToUpperInvariant()}";
+    private static string BuildInstanceKey(Guid instanceId) => $"inst:{instanceId}";
+    private static string BuildProgressKey(Guid instanceId, string objectiveCode) => $"prog:{instanceId}:{objectiveCode}";
+    private static string BuildCharacterIndexKey(Guid characterId) => $"char:{characterId}";
+    private static string BuildCooldownKey(Guid characterId, string questCode) => $"cd:{characterId}:{questCode}";
+    private static string BuildIdempotencyKey(string idempotencyKey) => $"idem:{idempotencyKey}";
+    private static string BuildLockKey(string resource) => $"quest:lock:{resource}";
+
+    #endregion
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="QuestService"/> class.
+    /// </summary>
+    /// <param name="messageBus">Message bus for event publishing.</param>
+    /// <param name="stateStoreFactory">State store factory for persistence.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Service configuration.</param>
+    /// <param name="contractClient">Contract client for template/instance management (L1 hard dependency).</param>
+    /// <param name="characterClient">Character client for validation (L2 hard dependency).</param>
+    /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
+    /// <param name="eventConsumer">Event consumer for subscription registration.</param>
+    /// <param name="serviceProvider">Service provider for L4 soft dependencies.</param>
     public QuestService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<QuestService> logger,
-        QuestServiceConfiguration configuration)
+        QuestServiceConfiguration configuration,
+        IContractClient contractClient,
+        ICharacterClient characterClient,
+        IDistributedLockProvider lockProvider,
+        IEventConsumer eventConsumer,
+        IServiceProvider serviceProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _contractClient = contractClient;
+        _characterClient = characterClient;
+        _lockProvider = lockProvider;
+        _serviceProvider = serviceProvider;
+
+        // Register event handlers via partial class (QuestServiceEvents.cs)
+        RegisterEventConsumers(eventConsumer);
     }
 
-    /// <summary>
-    /// Implementation of CreateQuestDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestDefinitionResponse?)> CreateQuestDefinitionAsync(CreateQuestDefinitionRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing CreateQuestDefinition operation");
+    #region Definition Endpoints
 
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestDefinitionResponse?)> CreateQuestDefinitionAsync(
+        CreateQuestDefinitionRequest body,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateQuestDefinition not yet implemented");
+            _logger.LogDebug("Creating quest definition with code {Code}", body.Code);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Validate code format (uppercase, underscores)
+            var normalizedCode = body.Code.ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(normalizedCode))
+            {
+                _logger.LogWarning("Quest code cannot be empty");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Check for duplicate code
+            var existingByCode = await DefinitionStore.QueryAsync(
+                d => d.Code == normalizedCode,
+                cancellationToken: cancellationToken);
+            if (existingByCode.Count > 0)
+            {
+                _logger.LogWarning("Quest definition with code {Code} already exists", normalizedCode);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var definitionId = Guid.NewGuid();
+            var now = DateTimeOffset.UtcNow;
+
+            // Build contract template via IContractClient
+            var templateRequest = BuildContractTemplateRequest(body, definitionId, normalizedCode);
+            var (templateStatus, templateResponse) = await _contractClient.CreateTemplateAsync(
+                templateRequest,
+                cancellationToken);
+
+            if (templateStatus != StatusCodes.OK || templateResponse == null)
+            {
+                _logger.LogWarning("Failed to create contract template for quest {Code}: {Status}",
+                    normalizedCode, templateStatus);
+                return (StatusCodes.ServiceUnavailable, null);
+            }
+
+            // Build quest definition model
+            var definition = new QuestDefinitionModel
+            {
+                DefinitionId = definitionId,
+                ContractTemplateId = templateResponse.TemplateId,
+                Code = normalizedCode,
+                Name = body.Name,
+                Description = body.Description,
+                Category = body.Category ?? QuestCategory.SIDE,
+                Difficulty = body.Difficulty ?? QuestDifficulty.NORMAL,
+                LevelRequirement = body.LevelRequirement,
+                Repeatable = body.Repeatable ?? false,
+                CooldownSeconds = body.CooldownSeconds,
+                DeadlineSeconds = body.DeadlineSeconds,
+                MaxQuestors = body.MaxQuestors ?? 1,
+                Objectives = MapObjectiveDefinitions(body.Objectives),
+                Prerequisites = MapPrerequisiteDefinitions(body.Prerequisites),
+                Rewards = MapRewardDefinitions(body.Rewards),
+                Tags = body.Tags,
+                QuestGiverCharacterId = body.QuestGiverCharacterId,
+                GameServiceId = body.GameServiceId,
+                Deprecated = false,
+                CreatedAt = now
+            };
+
+            // Save to state store
+            var definitionKey = BuildDefinitionKey(definitionId);
+            await DefinitionStore.SaveAsync(definitionKey, definition, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Quest definition created: {DefinitionId} with code {Code}",
+                definitionId, normalizedCode);
+
+            var response = MapToDefinitionResponse(definition);
+            return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error creating quest definition: {Code}", body.Code);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing CreateQuestDefinition operation");
+            _logger.LogError(ex, "Error creating quest definition: {Code}", body.Code);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "CreateQuestDefinition",
@@ -126,62 +242,69 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of GetQuestDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestDefinitionResponse?)> GetQuestDefinitionAsync(GetQuestDefinitionRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestDefinitionResponse?)> GetQuestDefinitionAsync(
+        GetQuestDefinitionRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetQuestDefinition operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetQuestDefinition not yet implemented");
+            QuestDefinitionModel? definition = null;
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Try cache first if getting by ID
+            if (body.DefinitionId.HasValue)
+            {
+                var cacheKey = BuildDefinitionKey(body.DefinitionId.Value);
+                definition = await DefinitionCache.GetAsync(cacheKey, cancellationToken);
+
+                if (definition == null)
+                {
+                    // Cache miss - query from MySQL
+                    var results = await DefinitionStore.QueryAsync(
+                        d => d.DefinitionId == body.DefinitionId.Value,
+                        cancellationToken: cancellationToken);
+                    definition = results.FirstOrDefault();
+
+                    // Populate cache if found
+                    if (definition != null)
+                    {
+                        await DefinitionCache.SaveAsync(
+                            cacheKey,
+                            definition,
+                            ttlSeconds: _configuration.DefinitionCacheTtlSeconds,
+                            cancellationToken: cancellationToken);
+                    }
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(body.Code))
+            {
+                var normalizedCode = body.Code.ToUpperInvariant();
+                var results = await DefinitionStore.QueryAsync(
+                    d => d.Code == normalizedCode,
+                    cancellationToken: cancellationToken);
+                definition = results.FirstOrDefault();
+            }
+            else
+            {
+                _logger.LogWarning("GetQuestDefinition requires either definitionId or code");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var response = MapToDefinitionResponse(definition);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetQuestDefinition operation");
+            _logger.LogError(ex, "Error getting quest definition");
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "GetQuestDefinition",
@@ -192,62 +315,49 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of ListQuestDefinitions operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListQuestDefinitionsResponse?)> ListQuestDefinitionsAsync(ListQuestDefinitionsRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListQuestDefinitionsResponse?)> ListQuestDefinitionsAsync(
+        ListQuestDefinitionsRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ListQuestDefinitions operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListQuestDefinitions not yet implemented");
+            var results = await DefinitionStore.QueryAsync(
+                d => (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
+                     (body.Category == null || d.Category == body.Category) &&
+                     (body.Difficulty == null || d.Difficulty == body.Difficulty) &&
+                     (body.IncludeDeprecated == true || !d.Deprecated),
+                cancellationToken: cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Filter by tags if specified
+            if (body.Tags != null && body.Tags.Count > 0)
+            {
+                results = results.Where(d =>
+                    d.Tags != null && d.Tags.Any(t => body.Tags.Contains(t))).ToList();
+            }
+
+            var total = results.Count;
+
+            // Apply pagination
+            var offset = body.Offset ?? 0;
+            var limit = body.Limit ?? 50;
+            var paged = results.Skip(offset).Take(limit).ToList();
+
+            var response = new ListQuestDefinitionsResponse
+            {
+                Definitions = paged.Select(MapToDefinitionResponse).ToList(),
+                Total = total
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ListQuestDefinitions operation");
+            _logger.LogError(ex, "Error listing quest definitions");
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "ListQuestDefinitions",
@@ -258,62 +368,69 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of UpdateQuestDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestDefinitionResponse?)> UpdateQuestDefinitionAsync(UpdateQuestDefinitionRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestDefinitionResponse?)> UpdateQuestDefinitionAsync(
+        UpdateQuestDefinitionRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing UpdateQuestDefinition operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateQuestDefinition not yet implemented");
+            var definitionKey = BuildDefinitionKey(body.DefinitionId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                var (definition, etag) = await DefinitionStore.GetWithETagAsync(
+                    definitionKey,
+                    cancellationToken);
+
+                if (definition == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+
+                // Update mutable fields only
+                if (!string.IsNullOrWhiteSpace(body.Name))
+                    definition.Name = body.Name;
+                if (body.Description != null)
+                    definition.Description = body.Description;
+                if (body.Category.HasValue)
+                    definition.Category = body.Category.Value;
+                if (body.Difficulty.HasValue)
+                    definition.Difficulty = body.Difficulty.Value;
+                if (body.Tags != null)
+                    definition.Tags = body.Tags.ToList();
+
+                var saveResult = await DefinitionStore.TrySaveAsync(
+                    definitionKey,
+                    definition,
+                    etag ?? string.Empty,
+                    cancellationToken: cancellationToken);
+
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification updating quest definition {DefinitionId}, retrying (attempt {Attempt})",
+                        body.DefinitionId, attempt + 1);
+                    continue;
+                }
+
+                // Invalidate cache
+                await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
+
+                _logger.LogInformation("Quest definition updated: {DefinitionId}", body.DefinitionId);
+                return (StatusCodes.OK, MapToDefinitionResponse(definition));
+            }
+
+            _logger.LogWarning("Failed to update quest definition {DefinitionId} after {MaxRetries} attempts",
+                body.DefinitionId, _configuration.MaxConcurrencyRetries);
+            return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing UpdateQuestDefinition operation");
+            _logger.LogError(ex, "Error updating quest definition: {DefinitionId}", body.DefinitionId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "UpdateQuestDefinition",
@@ -324,62 +441,65 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of DeprecateQuestDefinition operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestDefinitionResponse?)> DeprecateQuestDefinitionAsync(DeprecateQuestDefinitionRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestDefinitionResponse?)> DeprecateQuestDefinitionAsync(
+        DeprecateQuestDefinitionRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing DeprecateQuestDefinition operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeprecateQuestDefinition not yet implemented");
+            var definitionKey = BuildDefinitionKey(body.DefinitionId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                var (definition, etag) = await DefinitionStore.GetWithETagAsync(
+                    definitionKey,
+                    cancellationToken);
+
+                if (definition == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+
+                if (definition.Deprecated)
+                {
+                    // Already deprecated - idempotent success
+                    return (StatusCodes.OK, MapToDefinitionResponse(definition));
+                }
+
+                definition.Deprecated = true;
+
+                var saveResult = await DefinitionStore.TrySaveAsync(
+                    definitionKey,
+                    definition,
+                    etag ?? string.Empty,
+                    cancellationToken: cancellationToken);
+
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification deprecating quest definition {DefinitionId}, retrying (attempt {Attempt})",
+                        body.DefinitionId, attempt + 1);
+                    continue;
+                }
+
+                // Invalidate cache
+                await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
+
+                _logger.LogInformation("Quest definition deprecated: {DefinitionId}", body.DefinitionId);
+                return (StatusCodes.OK, MapToDefinitionResponse(definition));
+            }
+
+            _logger.LogWarning("Failed to deprecate quest definition {DefinitionId} after {MaxRetries} attempts",
+                body.DefinitionId, _configuration.MaxConcurrencyRetries);
+            return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing DeprecateQuestDefinition operation");
+            _logger.LogError(ex, "Error deprecating quest definition: {DefinitionId}", body.DefinitionId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "DeprecateQuestDefinition",
@@ -390,62 +510,254 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of AcceptQuest operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestInstanceResponse?)> AcceptQuestAsync(AcceptQuestRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing AcceptQuest operation");
+    #endregion
 
+    #region Instance Endpoints
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestInstanceResponse?)> AcceptQuestAsync(
+        AcceptQuestRequest body,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AcceptQuest not yet implemented");
+            _logger.LogDebug("Accepting quest for character {CharacterId}", body.QuestorCharacterId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Get quest definition
+            QuestDefinitionModel? definition = null;
+            if (body.DefinitionId.HasValue)
+            {
+                var (status, response) = await GetQuestDefinitionAsync(
+                    new GetQuestDefinitionRequest { DefinitionId = body.DefinitionId },
+                    cancellationToken);
+                if (status == StatusCodes.OK && response != null)
+                {
+                    definition = await GetDefinitionModelAsync(body.DefinitionId.Value, cancellationToken);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(body.Code))
+            {
+                var normalizedCode = body.Code.ToUpperInvariant();
+                var results = await DefinitionStore.QueryAsync(
+                    d => d.Code == normalizedCode,
+                    cancellationToken: cancellationToken);
+                definition = results.FirstOrDefault();
+            }
+
+            if (definition == null)
+            {
+                _logger.LogWarning("Quest definition not found");
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check deprecated
+            if (definition.Deprecated)
+            {
+                _logger.LogWarning("Cannot accept deprecated quest {Code}", definition.Code);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate character exists
+            var (charStatus, charResponse) = await _characterClient.GetCharacterAsync(
+                new GetCharacterRequest { CharacterId = body.QuestorCharacterId },
+                cancellationToken);
+
+            if (charStatus != StatusCodes.OK || charResponse == null)
+            {
+                _logger.LogWarning("Character not found: {CharacterId}", body.QuestorCharacterId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Acquire distributed lock for character's quest operations
+            var lockKey = BuildLockKey($"char:{body.QuestorCharacterId}");
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.QuestIdempotency,
+                lockKey,
+                Guid.NewGuid().ToString(),
+                _configuration.LockExpirySeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId}", body.QuestorCharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check max active quests
+            var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
+            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+            var activeCount = characterIndex?.ActiveQuestIds?.Count ?? 0;
+
+            if (activeCount >= _configuration.MaxActiveQuestsPerCharacter)
+            {
+                _logger.LogWarning("Character {CharacterId} already has maximum active quests ({Max})",
+                    body.QuestorCharacterId, _configuration.MaxActiveQuestsPerCharacter);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Check cooldown for repeatable quests
+            if (definition.Repeatable && definition.CooldownSeconds.HasValue)
+            {
+                var cooldownKey = BuildCooldownKey(body.QuestorCharacterId, definition.Code);
+                var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
+                if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
+                {
+                    _logger.LogWarning("Quest {Code} is on cooldown for character {CharacterId} until {ExpiresAt}",
+                        definition.Code, body.QuestorCharacterId, cooldown.ExpiresAt);
+                    return (StatusCodes.Conflict, null);
+                }
+            }
+
+            // Check if already has active instance of this quest
+            if (characterIndex?.ActiveQuestIds != null)
+            {
+                foreach (var activeQuestId in characterIndex.ActiveQuestIds)
+                {
+                    var activeInstance = await InstanceStore.QueryAsync(
+                        i => i.QuestInstanceId == activeQuestId && i.DefinitionId == definition.DefinitionId,
+                        cancellationToken: cancellationToken);
+                    if (activeInstance.Any())
+                    {
+                        _logger.LogWarning("Character {CharacterId} already has active instance of quest {Code}",
+                            body.QuestorCharacterId, definition.Code);
+                        return (StatusCodes.Conflict, null);
+                    }
+                }
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var questInstanceId = Guid.NewGuid();
+
+            // Create contract instance
+            var contractRequest = new CreateInstanceRequest
+            {
+                TemplateId = definition.ContractTemplateId,
+                TermOverrides = body.TermOverrides
+            };
+
+            var (contractStatus, contractResponse) = await _contractClient.CreateInstanceAsync(
+                contractRequest,
+                cancellationToken);
+
+            if (contractStatus != StatusCodes.OK || contractResponse == null)
+            {
+                _logger.LogWarning("Failed to create contract instance for quest {Code}: {Status}",
+                    definition.Code, contractStatus);
+                return (StatusCodes.ServiceUnavailable, null);
+            }
+
+            // Auto-consent for questor
+            var consentRequest = new RecordConsentRequest
+            {
+                ContractId = contractResponse.ContractId,
+                PartyId = body.QuestorCharacterId,
+                PartyRole = "questor"
+            };
+
+            var (consentStatus, _) = await _contractClient.RecordConsentAsync(
+                consentRequest,
+                cancellationToken);
+
+            if (consentStatus != StatusCodes.OK)
+            {
+                _logger.LogWarning("Failed to record consent for quest {Code}: {Status}",
+                    definition.Code, consentStatus);
+                // Contract was created but consent failed - may need cleanup
+                return (StatusCodes.ServiceUnavailable, null);
+            }
+
+            // Create quest instance
+            var questInstance = new QuestInstanceModel
+            {
+                QuestInstanceId = questInstanceId,
+                DefinitionId = definition.DefinitionId,
+                ContractInstanceId = contractResponse.ContractId,
+                Code = definition.Code,
+                Name = definition.Name,
+                Status = QuestStatus.ACTIVE,
+                QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
+                QuestGiverCharacterId = body.QuestGiverCharacterId,
+                AcceptedAt = now,
+                Deadline = definition.DeadlineSeconds.HasValue
+                    ? now.AddSeconds(definition.DeadlineSeconds.Value)
+                    : null,
+                GameServiceId = definition.GameServiceId
+            };
+
+            var instanceKey = BuildInstanceKey(questInstanceId);
+            await InstanceStore.SaveAsync(instanceKey, questInstance, cancellationToken: cancellationToken);
+
+            // Initialize objective progress
+            if (definition.Objectives != null)
+            {
+                foreach (var objective in definition.Objectives)
+                {
+                    var progressKey = BuildProgressKey(questInstanceId, objective.Code);
+                    var progress = new ObjectiveProgressModel
+                    {
+                        QuestInstanceId = questInstanceId,
+                        ObjectiveCode = objective.Code,
+                        Name = objective.Name,
+                        Description = objective.Description,
+                        ObjectiveType = objective.ObjectiveType,
+                        CurrentCount = 0,
+                        RequiredCount = objective.RequiredCount,
+                        IsComplete = false,
+                        Hidden = objective.Hidden,
+                        RevealBehavior = objective.RevealBehavior ?? ObjectiveRevealBehavior.ALWAYS,
+                        Optional = objective.Optional
+                    };
+                    await ProgressStore.SaveAsync(
+                        progressKey,
+                        progress,
+                        ttlSeconds: _configuration.ProgressCacheTtlSeconds,
+                        cancellationToken: cancellationToken);
+                }
+            }
+
+            // Update character index
+            characterIndex ??= new CharacterQuestIndex
+            {
+                CharacterId = body.QuestorCharacterId,
+                ActiveQuestIds = new List<Guid>(),
+                CompletedQuestCodes = new List<string>()
+            };
+            characterIndex.ActiveQuestIds ??= new List<Guid>();
+            characterIndex.ActiveQuestIds.Add(questInstanceId);
+
+            await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
+
+            // Publish quest accepted event
+            var acceptedEvent = new QuestAcceptedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                QuestInstanceId = questInstanceId,
+                DefinitionId = definition.DefinitionId,
+                QuestCode = definition.Code,
+                QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
+                GameServiceId = definition.GameServiceId
+            };
+            await _messageBus.TryPublishAsync(QuestTopics.QuestAccepted, acceptedEvent, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Quest accepted: {QuestInstanceId} ({Code}) by character {CharacterId}",
+                questInstanceId, definition.Code, body.QuestorCharacterId);
+
+            var response = await MapToInstanceResponseAsync(questInstance, definition, cancellationToken);
+            return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error accepting quest");
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing AcceptQuest operation");
+            _logger.LogError(ex, "Error accepting quest");
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "AcceptQuest",
@@ -456,62 +768,97 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of AbandonQuest operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestInstanceResponse?)> AbandonQuestAsync(AbandonQuestRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestInstanceResponse?)> AbandonQuestAsync(
+        AbandonQuestRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing AbandonQuest operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AbandonQuest not yet implemented");
+            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                var (instance, etag) = await InstanceStore.GetWithETagAsync(instanceKey, cancellationToken);
+
+                if (instance == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+
+                if (instance.Status != QuestStatus.ACTIVE)
+                {
+                    _logger.LogWarning("Cannot abandon quest {QuestInstanceId} in status {Status}",
+                        body.QuestInstanceId, instance.Status);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                if (!instance.QuestorCharacterIds.Contains(body.QuestorCharacterId))
+                {
+                    _logger.LogWarning("Character {CharacterId} is not a questor on quest {QuestInstanceId}",
+                        body.QuestorCharacterId, body.QuestInstanceId);
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                var now = DateTimeOffset.UtcNow;
+                instance.Status = QuestStatus.ABANDONED;
+                instance.CompletedAt = now;
+
+                var saveResult = await InstanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification abandoning quest {QuestInstanceId}, retrying (attempt {Attempt})",
+                        body.QuestInstanceId, attempt + 1);
+                    continue;
+                }
+
+                // Terminate underlying contract
+                var terminateRequest = new TerminateContractRequest
+                {
+                    ContractId = instance.ContractInstanceId,
+                    Reason = "Quest abandoned by player"
+                };
+                await _contractClient.TerminateContractAsync(terminateRequest, cancellationToken);
+
+                // Update character index
+                var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
+                var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+                if (characterIndex?.ActiveQuestIds != null)
+                {
+                    characterIndex.ActiveQuestIds.Remove(body.QuestInstanceId);
+                    await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
+                }
+
+                // Publish abandoned event
+                var abandonedEvent = new QuestAbandonedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    QuestInstanceId = body.QuestInstanceId,
+                    QuestCode = instance.Code,
+                    AbandoningCharacterId = body.QuestorCharacterId
+                };
+                await _messageBus.TryPublishAsync(QuestTopics.QuestAbandoned, abandonedEvent, cancellationToken: cancellationToken);
+
+                _logger.LogInformation("Quest abandoned: {QuestInstanceId} by character {CharacterId}",
+                    body.QuestInstanceId, body.QuestorCharacterId);
+
+                var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+                var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
+                return (StatusCodes.OK, response);
+            }
+
+            _logger.LogWarning("Failed to abandon quest {QuestInstanceId} after {MaxRetries} attempts",
+                body.QuestInstanceId, _configuration.MaxConcurrencyRetries);
+            return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing AbandonQuest operation");
+            _logger.LogError(ex, "Error abandoning quest: {QuestInstanceId}", body.QuestInstanceId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "AbandonQuest",
@@ -522,62 +869,32 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of GetQuest operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestInstanceResponse?)> GetQuestAsync(GetQuestRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestInstanceResponse?)> GetQuestAsync(
+        GetQuestRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetQuest operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetQuest not yet implemented");
+            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            if (instance == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+            var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetQuest operation");
+            _logger.LogError(ex, "Error getting quest: {QuestInstanceId}", body.QuestInstanceId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "GetQuest",
@@ -588,62 +905,53 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of ListQuests operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListQuestsResponse?)> ListQuestsAsync(ListQuestsRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListQuestsResponse?)> ListQuestsAsync(
+        ListQuestsRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ListQuests operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListQuests not yet implemented");
+            var results = await InstanceStore.QueryAsync(
+                i => i.QuestorCharacterIds.Contains(body.CharacterId),
+                cancellationToken: cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Filter by statuses if specified
+            if (body.Statuses != null && body.Statuses.Count > 0)
+            {
+                results = results.Where(i => body.Statuses.Contains(i.Status)).ToList();
+            }
+
+            var total = results.Count;
+
+            // Apply pagination
+            var offset = body.Offset ?? 0;
+            var limit = body.Limit ?? 50;
+            var paged = results.Skip(offset).Take(limit).ToList();
+
+            var responseQuests = new List<QuestInstanceResponse>();
+            foreach (var instance in paged)
+            {
+                var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+                var instanceResponse = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
+                responseQuests.Add(instanceResponse);
+            }
+
+            var response = new ListQuestsResponse
+            {
+                Quests = responseQuests,
+                Total = total
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ListQuests operation");
+            _logger.LogError(ex, "Error listing quests for character: {CharacterId}", body.CharacterId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "ListQuests",
@@ -654,62 +962,78 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of ListAvailableQuests operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListAvailableQuestsResponse?)> ListAvailableQuestsAsync(ListAvailableQuestsRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListAvailableQuestsResponse?)> ListAvailableQuestsAsync(
+        ListAvailableQuestsRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ListAvailableQuests operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListAvailableQuests not yet implemented");
+            // Get all non-deprecated definitions
+            var definitions = await DefinitionStore.QueryAsync(
+                d => !d.Deprecated &&
+                     (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
+                     (body.QuestGiverCharacterId == null || d.QuestGiverCharacterId == body.QuestGiverCharacterId),
+                cancellationToken: cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Get character's quest state
+            var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
+            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+            var activeQuestIds = characterIndex?.ActiveQuestIds ?? new List<Guid>();
+            var completedCodes = characterIndex?.CompletedQuestCodes ?? new List<string>();
+
+            // Get active quest definition IDs
+            var activeDefinitionIds = new HashSet<Guid>();
+            foreach (var activeQuestId in activeQuestIds)
+            {
+                var instanceKey = BuildInstanceKey(activeQuestId);
+                var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+                if (instance != null)
+                {
+                    activeDefinitionIds.Add(instance.DefinitionId);
+                }
+            }
+
+            var available = new List<QuestDefinitionResponse>();
+            foreach (var definition in definitions)
+            {
+                // Skip if already active
+                if (activeDefinitionIds.Contains(definition.DefinitionId))
+                    continue;
+
+                // Skip if non-repeatable and already completed
+                if (!definition.Repeatable && completedCodes.Contains(definition.Code))
+                    continue;
+
+                // Check cooldown for repeatable quests
+                if (definition.Repeatable && definition.CooldownSeconds.HasValue)
+                {
+                    var cooldownKey = BuildCooldownKey(body.CharacterId, definition.Code);
+                    var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
+                    if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
+                        continue;
+                }
+
+                // TODO: Check prerequisites (level requirements, completed quests, etc.)
+                // This would require additional service calls to validate
+
+                available.Add(MapToDefinitionResponse(definition));
+            }
+
+            var response = new ListAvailableQuestsResponse
+            {
+                Available = available
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ListAvailableQuests operation");
+            _logger.LogError(ex, "Error listing available quests for character: {CharacterId}", body.CharacterId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "ListAvailableQuests",
@@ -720,62 +1044,82 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of GetQuestLog operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, QuestLogResponse?)> GetQuestLogAsync(GetQuestLogRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, QuestLogResponse?)> GetQuestLogAsync(
+        GetQuestLogRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetQuestLog operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetQuestLog not yet implemented");
+            var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
+            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            var activeQuests = new List<QuestLogEntry>();
+            var completedCount = characterIndex?.CompletedQuestCodes?.Count ?? 0;
+            var failedCount = 0;
+
+            if (characterIndex?.ActiveQuestIds != null)
+            {
+                foreach (var questId in characterIndex.ActiveQuestIds)
+                {
+                    var instanceKey = BuildInstanceKey(questId);
+                    var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+                    if (instance == null) continue;
+
+                    var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+                    var objectives = await GetObjectiveProgressListAsync(questId, definition, cancellationToken);
+
+                    // Calculate overall progress
+                    var requiredObjectives = objectives.Where(o => !o.Optional).ToList();
+                    var overallProgress = requiredObjectives.Count > 0
+                        ? requiredObjectives.Average(o => o.ProgressPercent)
+                        : 100.0f;
+
+                    // Filter visible objectives
+                    var visibleObjectives = objectives.Where(o =>
+                        !o.Hidden ||
+                        o.RevealBehavior == ObjectiveRevealBehavior.ALWAYS ||
+                        (o.RevealBehavior == ObjectiveRevealBehavior.ON_PROGRESS && o.CurrentCount > 0) ||
+                        (o.RevealBehavior == ObjectiveRevealBehavior.ON_COMPLETE && o.IsComplete)
+                    ).ToList();
+
+                    activeQuests.Add(new QuestLogEntry
+                    {
+                        QuestInstanceId = instance.QuestInstanceId,
+                        Code = instance.Code,
+                        Name = instance.Name,
+                        Category = definition?.Category ?? QuestCategory.SIDE,
+                        Status = instance.Status,
+                        OverallProgress = overallProgress,
+                        VisibleObjectives = visibleObjectives,
+                        Deadline = instance.Deadline,
+                        AcceptedAt = instance.AcceptedAt
+                    });
+                }
+            }
+
+            // Count failed quests
+            var allInstances = await InstanceStore.QueryAsync(
+                i => i.QuestorCharacterIds.Contains(body.CharacterId) && i.Status == QuestStatus.FAILED,
+                cancellationToken: cancellationToken);
+            failedCount = allInstances.Count;
+
+            var response = new QuestLogResponse
+            {
+                ActiveQuests = activeQuests,
+                CompletedCount = completedCount,
+                FailedCount = failedCount
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetQuestLog operation");
+            _logger.LogError(ex, "Error getting quest log for character: {CharacterId}", body.CharacterId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "GetQuestLog",
@@ -786,62 +1130,130 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of ReportObjectiveProgress operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ObjectiveProgressResponse?)> ReportObjectiveProgressAsync(ReportProgressRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ReportObjectiveProgress operation");
+    #endregion
 
+    #region Objective Endpoints
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ObjectiveProgressResponse?)> ReportObjectiveProgressAsync(
+        ReportProgressRequest body,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ReportObjectiveProgress not yet implemented");
+            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            if (instance == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (instance.Status != QuestStatus.ACTIVE)
+            {
+                _logger.LogWarning("Cannot report progress on quest {QuestInstanceId} in status {Status}",
+                    body.QuestInstanceId, instance.Status);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
+
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
+
+                if (progress == null)
+                {
+                    _logger.LogWarning("Objective {ObjectiveCode} not found on quest {QuestInstanceId}",
+                        body.ObjectiveCode, body.QuestInstanceId);
+                    return (StatusCodes.NotFound, null);
+                }
+
+                if (progress.IsComplete)
+                {
+                    // Already complete - return current state
+                    return (StatusCodes.OK, new ObjectiveProgressResponse
+                    {
+                        QuestInstanceId = body.QuestInstanceId,
+                        Objective = MapToObjectiveProgress(progress),
+                        MilestoneCompleted = false
+                    });
+                }
+
+                // TODO: Check for duplicate entity tracking if TrackedEntityId is provided
+
+                var previousCount = progress.CurrentCount;
+                progress.CurrentCount = Math.Min(
+                    progress.CurrentCount + body.IncrementBy,
+                    progress.RequiredCount);
+
+                var wasComplete = progress.IsComplete;
+                progress.IsComplete = progress.CurrentCount >= progress.RequiredCount;
+
+                var saveResult = await ProgressStore.TrySaveAsync(
+                    progressKey,
+                    progress,
+                    etag ?? string.Empty,
+                    ttlSeconds: _configuration.ProgressCacheTtlSeconds,
+                    cancellationToken: cancellationToken);
+
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification reporting progress on {ObjectiveCode}, retrying (attempt {Attempt})",
+                        body.ObjectiveCode, attempt + 1);
+                    continue;
+                }
+
+                var milestoneCompleted = !wasComplete && progress.IsComplete;
+
+                // Publish progress event
+                var progressEvent = new QuestObjectiveProgressedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    QuestInstanceId = body.QuestInstanceId,
+                    QuestCode = instance.Code,
+                    ObjectiveCode = body.ObjectiveCode,
+                    CurrentCount = progress.CurrentCount,
+                    RequiredCount = progress.RequiredCount,
+                    IsComplete = progress.IsComplete
+                };
+                await _messageBus.TryPublishAsync(QuestTopics.QuestObjectiveProgressed, progressEvent, cancellationToken: cancellationToken);
+
+                // If milestone completed, notify Contract service
+                if (milestoneCompleted)
+                {
+                    var milestoneRequest = new CompleteMilestoneRequest
+                    {
+                        ContractId = instance.ContractInstanceId,
+                        MilestoneCode = body.ObjectiveCode
+                    };
+                    await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+                }
+
+                _logger.LogDebug("Objective progress updated: {QuestInstanceId}/{ObjectiveCode} = {Current}/{Required}",
+                    body.QuestInstanceId, body.ObjectiveCode, progress.CurrentCount, progress.RequiredCount);
+
+                return (StatusCodes.OK, new ObjectiveProgressResponse
+                {
+                    QuestInstanceId = body.QuestInstanceId,
+                    Objective = MapToObjectiveProgress(progress),
+                    MilestoneCompleted = milestoneCompleted
+                });
+            }
+
+            _logger.LogWarning("Failed to update objective progress after {MaxRetries} attempts",
+                _configuration.MaxConcurrencyRetries);
+            return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ReportObjectiveProgress operation");
+            _logger.LogError(ex, "Error reporting objective progress: {QuestInstanceId}/{ObjectiveCode}",
+                body.QuestInstanceId, body.ObjectiveCode);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "ReportObjectiveProgress",
@@ -852,62 +1264,74 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of ForceCompleteObjective operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ObjectiveProgressResponse?)> ForceCompleteObjectiveAsync(ForceCompleteObjectiveRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ObjectiveProgressResponse?)> ForceCompleteObjectiveAsync(
+        ForceCompleteObjectiveRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ForceCompleteObjective operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ForceCompleteObjective not yet implemented");
+            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            if (instance == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
+            var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
+
+            if (progress == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (progress.IsComplete)
+            {
+                return (StatusCodes.OK, new ObjectiveProgressResponse
+                {
+                    QuestInstanceId = body.QuestInstanceId,
+                    Objective = MapToObjectiveProgress(progress),
+                    MilestoneCompleted = false
+                });
+            }
+
+            progress.CurrentCount = progress.RequiredCount;
+            progress.IsComplete = true;
+
+            await ProgressStore.SaveAsync(
+                progressKey,
+                progress,
+                ttlSeconds: _configuration.ProgressCacheTtlSeconds,
+                cancellationToken: cancellationToken);
+
+            // Notify Contract service
+            var milestoneRequest = new CompleteMilestoneRequest
+            {
+                ContractId = instance.ContractInstanceId,
+                MilestoneCode = body.ObjectiveCode
+            };
+            await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+
+            _logger.LogInformation("Objective force completed: {QuestInstanceId}/{ObjectiveCode}",
+                body.QuestInstanceId, body.ObjectiveCode);
+
+            return (StatusCodes.OK, new ObjectiveProgressResponse
+            {
+                QuestInstanceId = body.QuestInstanceId,
+                Objective = MapToObjectiveProgress(progress),
+                MilestoneCompleted = true
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ForceCompleteObjective operation");
+            _logger.LogError(ex, "Error force completing objective: {QuestInstanceId}/{ObjectiveCode}",
+                body.QuestInstanceId, body.ObjectiveCode);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "ForceCompleteObjective",
@@ -918,62 +1342,44 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of GetObjectiveProgress operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ObjectiveProgressResponse?)> GetObjectiveProgressAsync(GetObjectiveProgressRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ObjectiveProgressResponse?)> GetObjectiveProgressAsync(
+        GetObjectiveProgressRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetObjectiveProgress operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetObjectiveProgress not yet implemented");
+            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            if (instance == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
+            var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+
+            if (progress == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            return (StatusCodes.OK, new ObjectiveProgressResponse
+            {
+                QuestInstanceId = body.QuestInstanceId,
+                Objective = MapToObjectiveProgress(progress),
+                MilestoneCompleted = false
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetObjectiveProgress operation");
+            _logger.LogError(ex, "Error getting objective progress: {QuestInstanceId}/{ObjectiveCode}",
+                body.QuestInstanceId, body.ObjectiveCode);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "GetObjectiveProgress",
@@ -984,62 +1390,45 @@ public partial class QuestService : IQuestService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of HandleMilestoneCompleted operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> HandleMilestoneCompletedAsync(MilestoneCompletedCallback body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing HandleMilestoneCompleted operation");
+    #endregion
 
+    #region Internal Callbacks
+
+    /// <inheritdoc/>
+    public async Task<StatusCodes> HandleMilestoneCompletedAsync(
+        MilestoneCompletedCallback body,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method HandleMilestoneCompleted not yet implemented");
+            // Find quest instance by contract ID
+            var instances = await InstanceStore.QueryAsync(
+                i => i.ContractInstanceId == body.ContractInstanceId,
+                cancellationToken: cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            var instance = instances.FirstOrDefault();
+            if (instance == null)
+            {
+                _logger.LogDebug("No quest instance found for contract {ContractInstanceId}", body.ContractInstanceId);
+                return StatusCodes.OK; // Not an error - contract may not be quest-related
+            }
+
+            _logger.LogDebug("Milestone {MilestoneCode} completed for quest {QuestInstanceId}",
+                body.MilestoneCode, instance.QuestInstanceId);
+
+            // The objective should already be marked complete via ReportObjectiveProgress
+            // This callback is for any additional post-milestone processing
+
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing HandleMilestoneCompleted operation");
+            _logger.LogError(ex, "Error handling milestone completed callback for contract {ContractInstanceId}",
+                body.ContractInstanceId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "HandleMilestoneCompleted",
@@ -1054,58 +1443,33 @@ public partial class QuestService : IQuestService
         }
     }
 
-    /// <summary>
-    /// Implementation of HandleQuestCompleted operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> HandleQuestCompletedAsync(QuestCompletedCallback body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<StatusCodes> HandleQuestCompletedAsync(
+        QuestCompletedCallback body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing HandleQuestCompleted operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method HandleQuestCompleted not yet implemented");
+            // Find quest instance by contract ID
+            var instances = await InstanceStore.QueryAsync(
+                i => i.ContractInstanceId == body.ContractInstanceId,
+                cancellationToken: cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            var instance = instances.FirstOrDefault();
+            if (instance == null)
+            {
+                _logger.LogDebug("No quest instance found for contract {ContractInstanceId}", body.ContractInstanceId);
+                return StatusCodes.OK;
+            }
+
+            await CompleteQuestAsync(instance, cancellationToken);
+
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing HandleQuestCompleted operation");
+            _logger.LogError(ex, "Error handling quest completed callback for contract {ContractInstanceId}",
+                body.ContractInstanceId);
             await _messageBus.TryPublishErrorAsync(
                 "quest",
                 "HandleQuestCompleted",
@@ -1120,4 +1484,308 @@ public partial class QuestService : IQuestService
         }
     }
 
+    #endregion
+
+    #region Helper Methods
+
+    private async Task<QuestDefinitionModel?> GetDefinitionModelAsync(Guid definitionId, CancellationToken cancellationToken)
+    {
+        var cacheKey = BuildDefinitionKey(definitionId);
+        var definition = await DefinitionCache.GetAsync(cacheKey, cancellationToken);
+        if (definition != null) return definition;
+
+        var results = await DefinitionStore.QueryAsync(
+            d => d.DefinitionId == definitionId,
+            cancellationToken: cancellationToken);
+        definition = results.FirstOrDefault();
+
+        if (definition != null)
+        {
+            await DefinitionCache.SaveAsync(
+                cacheKey,
+                definition,
+                ttlSeconds: _configuration.DefinitionCacheTtlSeconds,
+                cancellationToken: cancellationToken);
+        }
+
+        return definition;
+    }
+
+    private async Task<List<ObjectiveProgress>> GetObjectiveProgressListAsync(
+        Guid questInstanceId,
+        QuestDefinitionModel? definition,
+        CancellationToken cancellationToken)
+    {
+        var objectives = new List<ObjectiveProgress>();
+
+        if (definition?.Objectives == null) return objectives;
+
+        foreach (var objDef in definition.Objectives)
+        {
+            var progressKey = BuildProgressKey(questInstanceId, objDef.Code);
+            var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+            if (progress != null)
+            {
+                objectives.Add(MapToObjectiveProgress(progress));
+            }
+        }
+
+        return objectives;
+    }
+
+    private async Task CompleteQuestAsync(QuestInstanceModel instance, CancellationToken cancellationToken)
+    {
+        var instanceKey = BuildInstanceKey(instance.QuestInstanceId);
+
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+        {
+            var (current, etag) = await InstanceStore.GetWithETagAsync(instanceKey, cancellationToken);
+            if (current == null || current.Status != QuestStatus.ACTIVE) return;
+
+            var now = DateTimeOffset.UtcNow;
+            current.Status = QuestStatus.COMPLETED;
+            current.CompletedAt = now;
+
+            var saveResult = await InstanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
+            if (saveResult == null) continue;
+
+            // Update character indexes
+            foreach (var characterId in current.QuestorCharacterIds)
+            {
+                var characterIndexKey = BuildCharacterIndexKey(characterId);
+                var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+                if (characterIndex != null)
+                {
+                    characterIndex.ActiveQuestIds?.Remove(instance.QuestInstanceId);
+                    characterIndex.CompletedQuestCodes ??= new List<string>();
+                    if (!characterIndex.CompletedQuestCodes.Contains(current.Code))
+                    {
+                        characterIndex.CompletedQuestCodes.Add(current.Code);
+                    }
+                    await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
+                }
+
+                // Set cooldown if repeatable
+                var definition = await GetDefinitionModelAsync(current.DefinitionId, cancellationToken);
+                if (definition?.Repeatable == true && definition.CooldownSeconds.HasValue)
+                {
+                    var cooldownKey = BuildCooldownKey(characterId, current.Code);
+                    var cooldown = new CooldownEntry
+                    {
+                        CharacterId = characterId,
+                        QuestCode = current.Code,
+                        ExpiresAt = now.AddSeconds(definition.CooldownSeconds.Value)
+                    };
+                    await CooldownStore.SaveAsync(
+                        cooldownKey,
+                        cooldown,
+                        ttlSeconds: definition.CooldownSeconds.Value,
+                        cancellationToken: cancellationToken);
+                }
+            }
+
+            // Publish completed event
+            var completedEvent = new QuestCompletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                QuestInstanceId = instance.QuestInstanceId,
+                DefinitionId = current.DefinitionId,
+                QuestCode = current.Code,
+                QuestorCharacterIds = current.QuestorCharacterIds,
+                GameServiceId = current.GameServiceId
+            };
+            await _messageBus.TryPublishAsync(QuestTopics.QuestCompleted, completedEvent, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Quest completed: {QuestInstanceId} ({Code})",
+                instance.QuestInstanceId, current.Code);
+            return;
+        }
+    }
+
+    private CreateTemplateRequest BuildContractTemplateRequest(
+        CreateQuestDefinitionRequest body,
+        Guid definitionId,
+        string normalizedCode)
+    {
+        // Build milestones from objectives
+        var milestones = body.Objectives.Select((obj, index) => new MilestoneDefinition
+        {
+            Code = obj.Code,
+            Name = obj.Name,
+            Description = obj.Description,
+            SequenceOrder = index,
+            Optional = obj.Optional ?? false
+        }).ToList();
+
+        return new CreateTemplateRequest
+        {
+            Code = $"QUEST_{normalizedCode}",
+            Name = $"Quest: {body.Name}",
+            Description = body.Description,
+            PartyRoles = new List<PartyRoleDefinition>
+            {
+                new() { Role = "questor", MinCount = 1, MaxCount = body.MaxQuestors ?? 1 },
+                new() { Role = "quest_giver", MinCount = 0, MaxCount = 1, Optional = true }
+            },
+            Milestones = milestones,
+            EnforcementMode = ContractEnforcementMode.Event_only
+        };
+    }
+
+    private static List<ObjectiveDefinitionModel> MapObjectiveDefinitions(ICollection<ObjectiveDefinition>? objectives)
+    {
+        if (objectives == null) return new List<ObjectiveDefinitionModel>();
+
+        return objectives.Select(o => new ObjectiveDefinitionModel
+        {
+            Code = o.Code,
+            Name = o.Name,
+            Description = o.Description,
+            ObjectiveType = o.ObjectiveType,
+            RequiredCount = o.RequiredCount,
+            TargetEntityType = o.TargetEntityType,
+            TargetEntitySubtype = o.TargetEntitySubtype,
+            TargetLocationId = o.TargetLocationId,
+            Hidden = o.Hidden ?? false,
+            RevealBehavior = o.RevealBehavior ?? ObjectiveRevealBehavior.ALWAYS,
+            Optional = o.Optional ?? false
+        }).ToList();
+    }
+
+    private static List<PrerequisiteDefinitionModel>? MapPrerequisiteDefinitions(ICollection<PrerequisiteDefinition>? prerequisites)
+    {
+        if (prerequisites == null) return null;
+
+        return prerequisites.Select(p => new PrerequisiteDefinitionModel
+        {
+            Type = p.Type,
+            QuestCode = p.QuestCode,
+            MinLevel = p.MinLevel,
+            FactionCode = p.FactionCode,
+            MinReputation = p.MinReputation,
+            ItemCode = p.ItemCode,
+            CurrencyCode = p.CurrencyCode,
+            MinAmount = p.MinAmount
+        }).ToList();
+    }
+
+    private static List<RewardDefinitionModel>? MapRewardDefinitions(ICollection<RewardDefinition>? rewards)
+    {
+        if (rewards == null) return null;
+
+        return rewards.Select(r => new RewardDefinitionModel
+        {
+            Type = r.Type,
+            CurrencyCode = r.CurrencyCode,
+            Amount = r.Amount,
+            ItemCode = r.ItemCode,
+            Quantity = r.Quantity,
+            FactionCode = r.FactionCode
+        }).ToList();
+    }
+
+    private static QuestDefinitionResponse MapToDefinitionResponse(QuestDefinitionModel definition)
+    {
+        return new QuestDefinitionResponse
+        {
+            DefinitionId = definition.DefinitionId,
+            ContractTemplateId = definition.ContractTemplateId,
+            Code = definition.Code,
+            Name = definition.Name,
+            Description = definition.Description,
+            Category = definition.Category,
+            Difficulty = definition.Difficulty,
+            LevelRequirement = definition.LevelRequirement,
+            Repeatable = definition.Repeatable,
+            CooldownSeconds = definition.CooldownSeconds,
+            DeadlineSeconds = definition.DeadlineSeconds,
+            MaxQuestors = definition.MaxQuestors,
+            Objectives = definition.Objectives?.Select(o => new ObjectiveDefinition
+            {
+                Code = o.Code,
+                Name = o.Name,
+                Description = o.Description,
+                ObjectiveType = o.ObjectiveType,
+                RequiredCount = o.RequiredCount,
+                TargetEntityType = o.TargetEntityType,
+                TargetEntitySubtype = o.TargetEntitySubtype,
+                TargetLocationId = o.TargetLocationId,
+                Hidden = o.Hidden,
+                RevealBehavior = o.RevealBehavior,
+                Optional = o.Optional
+            }).ToList() ?? new List<ObjectiveDefinition>(),
+            Prerequisites = definition.Prerequisites?.Select(p => new PrerequisiteDefinition
+            {
+                Type = p.Type,
+                QuestCode = p.QuestCode,
+                MinLevel = p.MinLevel,
+                FactionCode = p.FactionCode,
+                MinReputation = p.MinReputation,
+                ItemCode = p.ItemCode,
+                CurrencyCode = p.CurrencyCode,
+                MinAmount = p.MinAmount
+            }).ToList(),
+            Rewards = definition.Rewards?.Select(r => new RewardDefinition
+            {
+                Type = r.Type,
+                CurrencyCode = r.CurrencyCode,
+                Amount = r.Amount,
+                ItemCode = r.ItemCode,
+                Quantity = r.Quantity,
+                FactionCode = r.FactionCode
+            }).ToList(),
+            Tags = definition.Tags,
+            Deprecated = definition.Deprecated,
+            CreatedAt = definition.CreatedAt,
+            GameServiceId = definition.GameServiceId
+        };
+    }
+
+    private async Task<QuestInstanceResponse> MapToInstanceResponseAsync(
+        QuestInstanceModel instance,
+        QuestDefinitionModel? definition,
+        CancellationToken cancellationToken)
+    {
+        var objectives = await GetObjectiveProgressListAsync(instance.QuestInstanceId, definition, cancellationToken);
+
+        return new QuestInstanceResponse
+        {
+            QuestInstanceId = instance.QuestInstanceId,
+            DefinitionId = instance.DefinitionId,
+            ContractInstanceId = instance.ContractInstanceId,
+            Code = instance.Code,
+            Name = instance.Name,
+            Status = instance.Status,
+            QuestorCharacterIds = instance.QuestorCharacterIds,
+            QuestGiverCharacterId = instance.QuestGiverCharacterId,
+            Objectives = objectives,
+            AcceptedAt = instance.AcceptedAt,
+            Deadline = instance.Deadline,
+            CompletedAt = instance.CompletedAt
+        };
+    }
+
+    private static ObjectiveProgress MapToObjectiveProgress(ObjectiveProgressModel progress)
+    {
+        var progressPercent = progress.RequiredCount > 0
+            ? (float)progress.CurrentCount / progress.RequiredCount * 100
+            : 100f;
+
+        return new ObjectiveProgress
+        {
+            Code = progress.ObjectiveCode,
+            Name = progress.Name,
+            Description = progress.Description,
+            ObjectiveType = progress.ObjectiveType,
+            CurrentCount = progress.CurrentCount,
+            RequiredCount = progress.RequiredCount,
+            IsComplete = progress.IsComplete,
+            ProgressPercent = progressPercent,
+            Hidden = progress.Hidden,
+            Optional = progress.Optional
+        };
+    }
+
+    #endregion
 }

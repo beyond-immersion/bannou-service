@@ -3,6 +3,7 @@
 > **Status**: Ready for Implementation
 > **Created**: 2026-02-05
 > **Resolved**: 2026-02-05
+> **TENET Review**: 2026-02-05 (all examples verified compliant)
 > **Related**: Quest Plugin, Storyline Plugin, Actor Service
 > **Service Hierarchy**: L4 (Game Features) providers accessing L4 services
 
@@ -275,28 +276,66 @@ public async Task HandleStorylineJoinedAsync(StorylineCharacterJoinedEvent evt, 
 
 ### Error Handling
 
-Since Storyline/Quest clients are hard dependencies (constructor-injected), service unavailability is a deployment configuration error, not a runtime state to handle gracefully.
+Since Storyline/Quest clients are hard dependencies (constructor-injected), service unavailability is a deployment configuration error, not a runtime state to handle gracefully. Per SERVICE_HIERARCHY, L4→L4 dependencies within the same feature set are hard dependencies.
 
-**API-level errors (expected):**
+**Complete error handling pattern:**
 ```csharp
-catch (ApiException ex) when (ex.StatusCode == 404)
+public async Task<StorylineListResponse> GetOrLoadAsync(Guid characterId, CancellationToken ct)
 {
-    // Character has no storylines - valid state, return empty list
-    return new StorylineListResponse { Storylines = new() };
+    // Check cache first
+    if (_cache.TryGetValue(characterId, out var cached) && cached.ExpiresAt > DateTimeOffset.UtcNow)
+    {
+        _logger.LogDebug("Cache hit for character {CharacterId}", characterId);
+        return cached.Data;
+    }
+
+    try
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var client = scope.ServiceProvider.GetRequiredService<IStorylineClient>();
+
+        var request = new ListByCharacterRequest { CharacterId = characterId, Status = new[] { "active" } };
+        var (status, response) = await client.ListByCharacterAsync(request, ct);
+
+        // Handle expected "no data" case - NOT an error
+        if (status == StatusCodes.NotFound)
+        {
+            _logger.LogDebug("No storylines found for character {CharacterId}", characterId);
+            return new StorylineListResponse { Storylines = new List<StorylineParticipation>() };
+        }
+
+        // Null response with OK status is a programming error
+        var data = response ?? throw new InvalidOperationException(
+            $"Null response with {status} status for character {characterId}");
+
+        // Cache the result
+        var ttl = TimeSpan.FromMinutes(_configuration.StorylineCacheTtlMinutes);
+        _cache[characterId] = new CachedStorylineData(data, DateTimeOffset.UtcNow.Add(ttl));
+
+        return data;
+    }
+    catch (ApiException ex)
+    {
+        // API error - log with context and rethrow
+        _logger.LogWarning(ex, "Storyline API returned {StatusCode} for character {CharacterId}",
+            ex.StatusCode, characterId);
+        throw;
+    }
+    catch (Exception ex)
+    {
+        // Infrastructure error - log at Error level, this should not happen
+        _logger.LogError(ex, "Failed to load storyline data for character {CharacterId}", characterId);
+        throw;  // Don't hide failures - let caller handle
+    }
 }
 ```
 
-**Infrastructure errors (unexpected):**
-```csharp
-catch (Exception ex)
-{
-    // Service should be available - this is a real error
-    _logger.LogError(ex, "Failed to load storyline data for character {CharacterId}", characterId);
-    throw;  // Let it bubble up - don't hide infrastructure failures
-}
-```
-
-**Stale-if-error:** For transient network issues, cache implementations MAY return stale data if available, but should log at Error level since the service should be reachable.
+**Key points:**
+- 404 returns empty list, not throws (character may have no storylines - valid state)
+- ApiException logged at Warning (expected API behavior)
+- Other exceptions logged at Error (unexpected infrastructure failure)
+- No graceful degradation - if Storyline service is down, Actor service should fail
+- No `TryPublishErrorAsync` for 404s - only for unexpected failures
 
 ---
 
@@ -332,14 +371,25 @@ else
 
 ### DI Registration
 
-In `ActorService.cs` or `ActorServiceRegistration.cs`:
+In `ActorService.cs` constructor or service registration:
 
 ```csharp
+// Caches are Singleton - shared across all ActorRunner instances for memory efficiency
+// Constructor injection receives: IServiceScopeFactory, ActorServiceConfiguration, ILogger<T>
 services.AddSingleton<IStorylineCache, StorylineCache>();
 services.AddSingleton<IQuestCache, QuestCache>();
 ```
 
-**Singleton lifetime:** Caches are shared across all ActorRunner instances for memory efficiency.
+**Why Singleton for caches:**
+- Memory efficiency - one cache instance shared by all actors
+- Thread-safe via `ConcurrentDictionary` (T9)
+- Uses `IServiceScopeFactory` to create scoped service clients when needed (T4)
+- Receives configuration via constructor injection (T21)
+
+**DI Lifetime compatibility:**
+- `ActorService` is Scoped
+- `StorylineCache`/`QuestCache` are Singleton
+- This is valid: Scoped services CAN inject Singleton dependencies
 
 ---
 
@@ -420,18 +470,30 @@ condition: "${candidate_snapshot.storyline_participation.active_count} == 0"
 
 **Implementation:**
 ```csharp
-// Primary = highest priority (may not be honored by everything, but informational)
-_primary = _storylines.OrderByDescending(s => s.Priority).FirstOrDefault();
+// In StorylineProvider constructor - fields are nullable per T26 (no sentinels)
+private readonly StorylineParticipation? _primary;
+private readonly StorylineParticipation? _mostRecent;
 
-// Most recent = most recently joined (separate concept)
-_mostRecent = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
+public StorylineProvider(StorylineListResponse response)
+{
+    _storylines = response.Storylines;  // Non-nullable list (may be empty)
+
+    // Primary = highest priority (may not be honored by everything, but informational)
+    // FirstOrDefault returns null if list is empty - correct behavior, not a sentinel
+    _primary = _storylines.OrderByDescending(s => s.Priority).FirstOrDefault();
+
+    // Most recent = most recently joined (separate concept)
+    _mostRecent = _storylines.OrderByDescending(s => s.JoinedAt).FirstOrDefault();
+}
 ```
 
 **Provider variables:**
-- `${storyline.primary.*}` - highest priority storyline
-- `${storyline.most_recent.*}` - most recently joined storyline
+- `${storyline.primary.*}` - highest priority storyline (null if no storylines)
+- `${storyline.most_recent.*}` - most recently joined storyline (null if no storylines)
 
-**Schema requirement:** Storyline participation must include a `priority` field (int, higher = more important).
+**Schema requirement:** `StorylineParticipation` must include:
+- `priority` field (int, non-nullable, higher = more important)
+- `joinedAt` field (DateTimeOffset, non-nullable)
 
 ---
 
@@ -582,35 +644,43 @@ private readonly Dictionary<Guid, CachedStorylineData> _cache = new();  // NO!
 **TTL configuration MUST be in schema, not hardcoded:**
 
 ```yaml
-# schemas/actor-configuration.yaml
+# schemas/actor-configuration.yaml - matches Cache Strategy section above
 StorylineCacheTtlMinutes:
   type: integer
   default: 5
-  description: TTL for cached storyline participation data. Per IMPLEMENTATION TENETS, all tunables must be configurable.
-  env: ACTOR_STORYLINE_CACHE_TTL
+  description: TTL in minutes for cached storyline participation data
+  x-env-name: ACTOR_STORYLINE_CACHE_TTL_MINUTES
 
 QuestCacheTtlMinutes:
   type: integer
   default: 5
-  description: TTL for cached quest data
-  env: ACTOR_QUEST_CACHE_TTL
+  description: TTL in minutes for cached quest data
+  x-env-name: ACTOR_QUEST_CACHE_TTL_MINUTES
 ```
 
 ```csharp
-// CORRECT: Use configuration
-var ttl = TimeSpan.FromMinutes(_configuration.StorylineCacheTtlMinutes);
+// CORRECT: Use configuration from injected config class
+public class StorylineCache : IStorylineCache
+{
+    private readonly TimeSpan _ttl;
 
-// FORBIDDEN: Hardcoded tunable
+    public StorylineCache(ActorServiceConfiguration configuration, ...)
+    {
+        _ttl = TimeSpan.FromMinutes(configuration.StorylineCacheTtlMinutes);
+    }
+}
+
+// FORBIDDEN: Hardcoded tunable anywhere in service code
 var ttl = TimeSpan.FromMinutes(5);  // NO - define in config schema
 ```
 
 **No secondary fallbacks for defaulted properties:**
 ```csharp
-// FORBIDDEN: Schema has default=5, so this is redundant and dangerous
-var ttl = _configuration.StorylineCacheTtlMinutes ?? 5;  // NO!
+// FORBIDDEN: Schema has default=5, so null-coalesce is redundant and dangerous
+var ttl = _configuration.StorylineCacheTtlMinutes ?? 5;  // NO! (also StorylineCacheTtlMinutes is int, not int?)
 
-// CORRECT: Schema default compiles into property initializer
-var ttl = _configuration.StorylineCacheTtlMinutes;  // Uses schema default if not overridden
+// CORRECT: Schema default compiles into property initializer - value is always present
+var ttl = _configuration.StorylineCacheTtlMinutes;  // Uses schema default if env var not set
 ```
 
 #### Async Method Pattern (T23)
@@ -694,12 +764,20 @@ _logger.LogDebug("[CACHE] Loading storyline data");  // NO!
 [Fact]
 public void GetValue_PrimaryPhase_ReturnsCurrentPhase()
 {
-    // Arrange
+    // Arrange - use real test data, not null!
     var response = new StorylineListResponse
     {
         Storylines = new List<StorylineParticipation>
         {
-            new() { Priority = 10, CurrentPhase = StorylinePhase.Rising }
+            new()
+            {
+                StorylineId = Guid.NewGuid(),  // Proper Guid, not Guid.Empty (T26)
+                Priority = 10,
+                CurrentPhase = StorylinePhase.Rising,  // Enum, not string (T25)
+                JoinedAt = DateTimeOffset.UtcNow,  // DateTimeOffset, not string (T25)
+                TemplateCode = "FALL_FROM_GRACE",
+                Role = "protagonist"
+            }
         }
     };
     var provider = new StorylineProvider(response);
@@ -708,22 +786,34 @@ public void GetValue_PrimaryPhase_ReturnsCurrentPhase()
     var result = provider.GetValue(new[] { "primary", "phase" }.AsSpan());
 
     // Assert
-    Assert.Equal("Rising", result);  // Or enum string representation
+    Assert.Equal("Rising", result);  // Enum.ToString() for ABML consumption
 }
 
 [Fact]
 public void GetValue_EmptyStorylines_ReturnsZeroActiveCount()
 {
-    var provider = new StorylineProvider(new StorylineListResponse { Storylines = new() });
-    var result = provider.GetValue(new[] { "active_count" }.AsSpan());
+    // Use Empty pattern, not null - tests valid scenario of "no storylines"
+    var result = StorylineProvider.Empty.GetValue(new[] { "active_count" }.AsSpan());
     Assert.Equal(0, result);
+}
+
+[Fact]
+public void GetValue_EmptyStorylines_PrimaryReturnsNull()
+{
+    // Empty provider should return null for primary (no storylines = no primary)
+    var result = StorylineProvider.Empty.GetValue(new[] { "primary" }.AsSpan());
+    Assert.Null(result);  // Null is correct here - it means "no primary storyline exists"
 }
 ```
 
-**Do NOT use `null!` to bypass NRT:**
+**Test with Empty pattern, not null!:**
 ```csharp
-// FORBIDDEN: Testing impossible scenario
-var provider = new StorylineProvider(null!);  // NO - constructor requires non-null
+// CORRECT: Use static Empty property for "no data" scenarios
+var provider = StorylineProvider.Empty;
+Assert.Equal(0, provider.GetValue(new[] { "active_count" }.AsSpan()));
+
+// FORBIDDEN: Bypassing NRT with null!
+var provider = new StorylineProvider(null!);  // NO - tests impossible scenario
 ```
 
 #### XML Documentation (T19)
@@ -773,16 +863,35 @@ var phase = storyline?.CurrentPhase.ToString() ?? string.Empty;
 
 Before submitting, verify:
 
-- [ ] Cache uses `ConcurrentDictionary`, not `Dictionary`
-- [ ] TTL values come from configuration, not hardcoded
-- [ ] Event handlers use `IEventConsumer.RegisterHandler`
+**Infrastructure (T4):**
+- [ ] Cache uses `ConcurrentDictionary` for mutable state
+- [ ] Cache uses `IServiceScopeFactory` for scoped client access from Singleton
+- [ ] No direct HTTP calls - uses generated `IStorylineClient`/`IQuestClient`
+
+**Events (T5, T3):**
+- [ ] Event handlers use `IEventConsumer.RegisterHandler` for fan-out
+- [ ] Events are typed models from schema, not anonymous objects
+
+**Configuration (T21):**
+- [ ] TTL values come from `ActorServiceConfiguration`, not hardcoded
+- [ ] Config schema uses `x-env-name:` with proper naming (`ACTOR_*_MINUTES`)
+
+**Async (T23):**
 - [ ] All async methods have `await` (not `return Task.CompletedTask`)
+- [ ] Event handlers end with `await Task.CompletedTask` if sync work only
+
+**Type Safety (T25, T26):**
 - [ ] Models use `Guid`, `DateTimeOffset`, enums - not strings
-- [ ] Nullable fields for optional values - no sentinel values
-- [ ] Structured logging with message templates
-- [ ] XML documentation on all public types and members
+- [ ] Nullable fields for optional values (e.g., `Deadline?`)
+- [ ] No sentinel values (`Guid.Empty`, `-1`, empty string for "none")
+- [ ] Provider uses static `Empty` property, not nullable constructor
+
+**Quality (T10, T12, T19, T22):**
+- [ ] Structured logging with message templates, not interpolation
+- [ ] XML documentation on all public types, methods, and parameters
 - [ ] No `#pragma warning disable` statements
-- [ ] Unit tests don't use `null!` to bypass NRT
+- [ ] Unit tests use `Empty` pattern, not `null!` to bypass NRT
+- [ ] Tests use real data with proper types (Guid.NewGuid(), not Guid.Empty)
 
 ---
 
@@ -792,45 +901,65 @@ Before submitting, verify:
 
 - [ ] Verify lib-storyline plugin exists with `/storyline/list-by-character` API
 - [ ] Verify lib-quest plugin exists with `/quest/list` API
-- [ ] Add cache TTL config to `actor-configuration.yaml`
+- [ ] Verify `StorylineParticipation` model has `Priority` field (int, not nullable)
+- [ ] Add cache TTL config to `actor-configuration.yaml` (with `x-env-name:` per schema rules)
 - [ ] Regenerate configuration: `cd scripts && ./generate-config.sh actor`
+- [ ] Verify generated config class has non-nullable `StorylineCacheTtlMinutes` property
 
 ### Phase 2: Storyline Provider
 
-- [ ] Create `IStorylineCache.cs` interface
-- [ ] Create `StorylineCache.cs` implementation
-- [ ] Create `StorylineProvider.cs` implementation (with `primary` and `most_recent`)
-- [ ] Register cache in DI (Singleton)
-- [ ] Register provider in ActorRunner
-- [ ] Add event subscriptions for cache invalidation
-- [ ] Write unit tests for provider path resolution
-- [ ] Test empty list handling (character has no storylines)
+- [ ] Create `IStorylineCache.cs` interface with XML docs (T19)
+- [ ] Create `StorylineCache.cs`:
+  - [ ] `ConcurrentDictionary` for cache storage (T9)
+  - [ ] `IServiceScopeFactory` for scoped client access (T4)
+  - [ ] TTL from configuration, not hardcoded (T21)
+  - [ ] Structured logging with message templates (T10)
+- [ ] Create `StorylineProvider.cs`:
+  - [ ] Static `Empty` property for non-character actors (T12)
+  - [ ] Non-nullable constructor parameter (T26)
+  - [ ] `_primary` and `_mostRecent` as nullable fields (T26)
+  - [ ] Enum values use `.ToString()` for ABML output
+  - [ ] Full XML documentation (T19)
+- [ ] Register cache in DI as Singleton
+- [ ] Register provider in ActorRunner with `Empty` for non-character actors
+- [ ] Add event subscriptions in `ActorServiceEvents.cs` (T3, T5):
+  - [ ] Use `IEventConsumer.RegisterHandler`
+  - [ ] `async` methods with `await Task.CompletedTask` (T23)
+- [ ] Write unit tests:
+  - [ ] Use real test data with proper types (T25)
+  - [ ] Use `StorylineProvider.Empty`, not `null!` (T12)
+  - [ ] Test path resolution for all variable paths
 
 ### Phase 3: Quest Provider
 
-- [ ] Create `IQuestCache.cs` interface
-- [ ] Create `QuestCache.cs` implementation
-- [ ] Create `QuestProvider.cs` implementation
-- [ ] Register cache in DI (Singleton)
-- [ ] Register provider in ActorRunner
-- [ ] Add event subscriptions for cache invalidation
-- [ ] Write unit tests for provider path resolution
-- [ ] Test empty list handling (character has no quests)
+- [ ] Create `IQuestCache.cs` interface with XML docs (T19)
+- [ ] Create `QuestCache.cs` (same patterns as StorylineCache)
+- [ ] Create `QuestProvider.cs`:
+  - [ ] Static `Empty` property
+  - [ ] `_byCode` as regular Dictionary (readonly after construction, T9 n/a)
+  - [ ] `Deadline` as nullable `DateTimeOffset?` (T26)
+  - [ ] `Status` enum uses `.ToString()` for ABML
+- [ ] Register cache in DI as Singleton
+- [ ] Register provider in ActorRunner with `Empty` for non-character actors
+- [ ] Add event subscriptions (same patterns as storyline)
+- [ ] Write unit tests (same patterns as storyline)
 
 ### Phase 4: Integration Testing
 
 - [ ] Test ABML access to `${storyline.*}` variables
 - [ ] Test ABML access to `${quest.*}` variables
-- [ ] Test `${storyline.primary}` vs `${storyline.most_recent}` ordering
-- [ ] Test cache invalidation flow
-- [ ] Update ABML documentation with new variable providers
+- [ ] Test `${storyline.primary}` vs `${storyline.most_recent}` ordering correctness
+- [ ] Test cache invalidation flow via event publication
+- [ ] Verify non-character actors get Empty providers without errors
 
 ### Phase 5: Documentation
 
-- [ ] Update `docs/guides/ABML.md` with new providers
+- [ ] Update `docs/guides/ABML.md` with new providers and variable paths
 - [ ] Update `docs/guides/ACTOR_SYSTEM.md` with variable provider list
-- [ ] Update `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` with Resource plugin snapshot pattern (NOT service_call)
-- [ ] Document distinction: providers = self data, Resource snapshots = query others
+- [ ] Update `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md`:
+  - [ ] Add Resource plugin snapshot pattern for querying other characters
+  - [ ] Remove any `service_call` references
+  - [ ] Document: providers = self data, Resource snapshots = query others
 
 ---
 
