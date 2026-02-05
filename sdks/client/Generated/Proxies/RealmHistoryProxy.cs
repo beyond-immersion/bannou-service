@@ -201,4 +201,40 @@ public sealed class RealmHistoryProxy
         return _client.InvokeAsync<SummarizeRealmHistoryRequest, RealmHistorySummaryResponse>(
             "/realm-history/summarize", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Get realm history data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RealmHistoryArchive on success.</returns>
+    public Task<ApiResponse<RealmHistoryArchive>> GetCompressDataAsync(
+        GetCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetCompressDataRequest, RealmHistoryArchive>(
+            "/realm-history/get-compress-data", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Restore realm history from archive
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RestoreFromArchiveResponse on success.</returns>
+    public Task<ApiResponse<RestoreFromArchiveResponse>> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+            "/realm-history/restore-from-archive", request, channel, timeout, cancellationToken);
+    }
 }

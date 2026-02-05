@@ -3958,23 +3958,28 @@ public partial class CharacterEncounterController
     private static readonly string _GetCompressData_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/EncounterCompressData",
+    "$ref": "#/$defs/CharacterEncounterArchive",
     "$defs": {
-        "EncounterCompressData": {
+        "CharacterEncounterArchive": {
             "type": "object",
-            "description": "Complete encounter data for archive storage",
+            "x-archive-type": true,
+            "description": "Complete encounter data for archive storage and storyline SDK consumption.\ nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "additionalProperties": false,
             "required": [
                 "characterId",
                 "hasEncounters",
-                "encounterCount",
-                "compressedAt"
+                "encounterCount"
             ],
             "properties": {
                 "characterId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this data belongs to"
+                    "description": "Character this data belongs to (equals resourceId)"
                 },
                 "hasEncounters": {
                     "type": "boolean",
@@ -3997,13 +4002,8 @@ public partial class CharacterEncounterController
                         "type": "number",
                         "format": "float"
                     },
-                    "description": "Map of target characterId to aggregate sentiment.\nPreserves sentiment relationships for historical reference.\n",
+                    "description": "Map of target characterId to aggregate sentiment.\ nPreserves sentiment relationships for historical reference.\n",
                     "nullable": true
-                },
-                "compressedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When this data was compressed"
                 }
             }
         },
@@ -4292,7 +4292,7 @@ public partial class CharacterEncounterController
                 },
                 "data": {
                     "type": "string",
-                    "description": "Base64-encoded gzipped EncounterCompressData JSON"
+                    "description": "Base64-encoded gzipped CharacterEncounterArchive JSON"
                 }
             }
         }

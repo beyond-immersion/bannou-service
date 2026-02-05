@@ -916,6 +916,199 @@ paths:
         archive by resource type and ID.\\nReturns the latest version unless a specific archiveId is provided.\\n\",\n   \
         \ \"tags\": [\n        \"Compression Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getArchive\"\
         \n}"
+  /resource/snapshot/execute:
+    post:
+      operationId: executeSnapshot
+      tags:
+      - Snapshot Management
+      summary: Create ephemeral snapshot of a living resource
+      description: |
+        Creates a non-destructive snapshot of a resource using the same compression
+        callbacks, but stores the result in Redis with a configurable TTL instead
+        of permanent MySQL storage.
+
+        **Use Case**: The Storyline Composer needs compressed data from living
+        entities (not just dead/archived ones) to seed emergent narratives.
+        This endpoint provides that capability without affecting the source data.
+
+        **Key Differences from compress/execute**:
+        1. Stores in Redis (ephemeral) not MySQL (permanent)
+        2. Never deletes source data
+        3. Publishes `resource.snapshot.created` event (not `resource.compressed`)
+        4. Snapshot expires after TTL (default 1 hour, max 24 hours)
+
+        **Intended Consumers**:
+        - Actor behaviors (via ABML service_call)
+        - Regional Watchers for storyline composition
+        - Analytics for living entity state capture
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot result with snapshot ID and data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteSnapshotResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteSnapshotRequest\"\
+        ,\n    \"$defs\": {\n        \"ExecuteSnapshotRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to create an ephemeral snapshot of a living resource\",\n       \
+        \     \"required\": [\n                \"resourceType\",\n                \"resourceId\"\n            ],\n       \
+        \     \"properties\": {\n                \"resourceType\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Type of resource to snapshot (opaque identifier).\\nMust match compression callback
+        registrations.\\n\"\n                },\n                \"resourceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the resource to snapshot\"\
+        \n                },\n                \"snapshotType\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Optional label for the snapshot purpose (e.g., \\\"storyline_seed\\\", \\\"analytics\\\
+        \").\\nStored in metadata for filtering/debugging.\\n\"\n                },\n                \"ttlSeconds\": {\n \
+        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Time-to-live in seconds for the snapshot.\\nIf not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).\\
+        nValue is clamped to configured min/max range.\\nSnapshot is automatically deleted by Redis after TTL expires.\\n\"\
+        \n                },\n                \"compressionPolicy\": {\n                    \"$ref\": \"#/$defs/CompressionPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Policy for callback execution.\\
+        nIf not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).\\n\"\n                },\n \
+        \               \"dryRun\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"If true, return what would be captured without storing\"\n               \
+        \ }\n            }\n        },\n        \"CompressionPolicy\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n            \"description\"\
+        : \"Policy for compression callback execution.\\nBEST_EFFORT: Create archive even if some callbacks fail (partial
+        archive)\\nALL_REQUIRED: Abort compression if any callback fails\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteSnapshotResponse\"\
+        ,\n    \"$defs\": {\n        \"ExecuteSnapshotResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Result of snapshot execution\",\n            \"required\": [\n          \
+        \      \"resourceType\",\n                \"resourceId\",\n                \"success\",\n                \"dryRun\"\
+        ,\n                \"snapshotDurationMs\"\n            ],\n            \"properties\": {\n                \"resourceType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of resource snapshotted\"\
+        \n                },\n                \"resourceId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"description\": \"ID of the resource snapshotted\"\n         \
+        \       },\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"True if snapshot completed successfully\"\n                },\n                \"dryRun\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"description\": \"True if this was a dry run\"\n              \
+        \  },\n                \"snapshotId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Unique ID for this snapshot
+        (null on failure or dry run)\"\n                },\n                \"expiresAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When this snapshot will expire (null on failure or dry run)\"\n                },\n\
+        \                \"abortReason\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Why snapshot was aborted\"\n                },\n                \"callbackResults\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/CompressCallbackResult\"\n                    },\n                    \"description\": \"Results of each
+        compression callback\"\n                },\n                \"snapshotDurationMs\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Total snapshot execution time in milliseconds\"\n         \
+        \       }\n            }\n        },\n        \"CompressCallbackResult\": {\n            \"type\": \"object\",\n \
+        \           \"additionalProperties\": false,\n            \"description\": \"Result of a single compression callback\"\
+        ,\n            \"required\": [\n                \"sourceType\",\n                \"serviceName\",\n              \
+        \  \"endpoint\",\n                \"success\",\n                \"durationMs\"\n            ],\n            \"properties\"\
+        : {\n                \"sourceType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Source type that provided data\"\n                },\n                \"serviceName\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Service that was called\"\n                },\n  \
+        \              \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Endpoint that was called\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether callback succeeded\"\n                },\n                \"statusCode\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"HTTP status code from callback\"\n                },\n                \"errorMessage\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error message
+        if callback failed\"\n                },\n                \"dataSize\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Size of compressed data in bytes\"\
+        \n                },\n                \"durationMs\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Callback execution time in milliseconds\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create ephemeral snapshot of a living resource\",\n    \"description\"\
+        : \"Creates a non-destructive snapshot of a resource using the same compression\\ncallbacks, but stores the result
+        in Redis with a configurable TTL instead\\nof permanent MySQL storage.\\n\\n**Use Case**: The Storyline Composer needs
+        compressed data from living\\nentities (not just dead/archived ones) to seed emergent narratives.\\nThis endpoint
+        provides that capability without affecting the source data.\\n\\n**Key Differences from compress/execute**:\\n1. Stores
+        in Redis (ephemeral) not MySQL (permanent)\\n2. Never deletes source data\\n3. Publishes `resource.snapshot.created`
+        event (not `resource.compressed`)\\n4. Snapshot expires after TTL (default 1 hour, max 24 hours)\\n\\n**Intended Consumers**:\\
+        n- Actor behaviors (via ABML service_call)\\n- Regional Watchers for storyline composition\\n- Analytics for living
+        entity state capture\\n\",\n    \"tags\": [\n        \"Snapshot Management\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"executeSnapshot\"\n}"
+  /resource/snapshot/get:
+    post:
+      operationId: getSnapshot
+      tags:
+      - Snapshot Management
+      summary: Retrieve an ephemeral snapshot
+      description: |
+        Retrieves a previously created snapshot by its ID.
+        Returns 404 if the snapshot has expired or doesn't exist.
+
+        Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
+        is automatically deleted by Redis.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSnapshotResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSnapshotRequest\"\
+        ,\n    \"$defs\": {\n        \"GetSnapshotRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to retrieve a snapshot\",\n            \"required\": [\n        \
+        \        \"snapshotId\"\n            ],\n            \"properties\": {\n                \"snapshotId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the snapshot to retrieve\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSnapshotResponse\"\
+        ,\n    \"$defs\": {\n        \"GetSnapshotResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response containing snapshot data\",\n            \"required\": [\n     \
+        \           \"snapshotId\",\n                \"found\"\n            ],\n            \"properties\": {\n          \
+        \      \"snapshotId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"ID of the snapshot\"\n                },\n                \"found\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"True if snapshot exists (hasn't
+        expired)\"\n                },\n                \"snapshot\": {\n                    \"$ref\": \"#/$defs/ResourceSnapshot\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"The snapshot data (null if not
+        found/expired)\"\n                }\n            }\n        },\n        \"ResourceSnapshot\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Ephemeral snapshot of
+        a living resource\",\n            \"required\": [\n                \"snapshotId\",\n                \"resourceType\"\
+        ,\n                \"resourceId\",\n                \"snapshotType\",\n                \"entries\",\n            \
+        \    \"createdAt\",\n                \"expiresAt\"\n            ],\n            \"properties\": {\n              \
+        \  \"snapshotId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Unique identifier for this snapshot\"\n                },\n                \"resourceType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of resource snapshotted\"\
+        \n                },\n                \"resourceId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"description\": \"ID of the resource snapshotted\"\n         \
+        \       },\n                \"snapshotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Label for snapshot purpose (e.g., \\\"storyline_seed\\\")\"\n                },\n               \
+        \ \"entries\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
+        \     \"$ref\": \"#/$defs/ArchiveBundleEntry\"\n                    },\n                    \"description\": \"Data
+        entries from each compression callback (same format as archives)\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this snapshot was created\"\n                },\n                \"expiresAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this snapshot will expire\"\n                }\n            }\n        },\n        \"ArchiveBundleEntry\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Single entry in the archive bundle\",\n            \"required\": [\n                \"sourceType\",\n        \
+        \        \"serviceName\",\n                \"data\",\n                \"compressedAt\"\n            ],\n         \
+        \   \"properties\": {\n                \"sourceType\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"Type of data (e.g., \\\"character-personality\\\")\"\n                },\n           \
+        \     \"serviceName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Service
+        that provided the data\"\n                },\n                \"data\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Base64-encoded gzipped JSON from the service callback\"\n              \
+        \  },\n                \"compressedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When this entry was compressed\"\n                },\n  \
+        \              \"dataChecksum\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"SHA256 hash for integrity verification\"\n                },\n           \
+        \     \"originalSizeBytes\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Size before compression\"\n                }\n            }\n        }\n \
+        \   }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Retrieve an ephemeral snapshot\",\n    \"description\": \"Retrieves a previously
+        created snapshot by its ID.\\nReturns 404 if the snapshot has expired or doesn't exist.\\n\\nSnapshots are stored
+        with TTL - if the TTL has elapsed, the snapshot\\nis automatically deleted by Redis.\\n\",\n    \"tags\": [\n    \
+        \    \"Snapshot Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSnapshot\"\n}"
 components:
   schemas:
     OnDeleteAction:
@@ -1867,3 +2060,159 @@ components:
           type: integer
           nullable: true
           description: Size before compression
+    ExecuteSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create an ephemeral snapshot of a living resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: |
+            Type of resource to snapshot (opaque identifier).
+            Must match compression callback registrations.
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to snapshot
+        snapshotType:
+          type: string
+          description: |
+            Optional label for the snapshot purpose (e.g., "storyline_seed", "analytics").
+            Stored in metadata for filtering/debugging.
+        ttlSeconds:
+          type: integer
+          nullable: true
+          description: |
+            Time-to-live in seconds for the snapshot.
+            If not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).
+            Value is clamped to configured min/max range.
+            Snapshot is automatically deleted by Redis after TTL expires.
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          nullable: true
+          description: |
+            Policy for callback execution.
+            If not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be captured without storing
+    ExecuteSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Result of snapshot execution
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - snapshotDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        success:
+          type: boolean
+          description: True if snapshot completed successfully
+        dryRun:
+          type: boolean
+          description: True if this was a dry run
+        snapshotId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique ID for this snapshot (null on failure or dry run)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this snapshot will expire (null on failure or dry run)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why snapshot was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        snapshotDurationMs:
+          type: integer
+          description: Total snapshot execution time in milliseconds
+    GetSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a snapshot
+      required:
+      - snapshotId
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot to retrieve
+    GetSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing snapshot data
+      required:
+      - snapshotId
+      - found
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot
+        found:
+          type: boolean
+          description: True if snapshot exists (hasn't expired)
+        snapshot:
+          $ref: '#/components/schemas/ResourceSnapshot'
+          nullable: true
+          description: The snapshot data (null if not found/expired)
+    ResourceSnapshot:
+      type: object
+      additionalProperties: false
+      description: Ephemeral snapshot of a living resource
+      required:
+      - snapshotId
+      - resourceType
+      - resourceId
+      - snapshotType
+      - entries
+      - createdAt
+      - expiresAt
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: Unique identifier for this snapshot
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        snapshotType:
+          type: string
+          description: Label for snapshot purpose (e.g., "storyline_seed")
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback (same format as archives)
+        createdAt:
+          type: string
+          format: date-time
+          description: When this snapshot was created
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this snapshot will expire

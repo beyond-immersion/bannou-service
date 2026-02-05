@@ -1965,23 +1965,28 @@ public partial class CharacterHistoryController
     private static readonly string _GetCompressData_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/HistoryCompressData",
+    "$ref": "#/$defs/CharacterHistoryArchive",
     "$defs": {
-        "HistoryCompressData": {
+        "CharacterHistoryArchive": {
             "type": "object",
-            "description": "Complete history data for archive storage",
+            "x-archive-type": true,
+            "description": "Complete history data for archive storage and storyline SDK consumption.\ nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "additionalProperties": false,
             "required": [
                 "characterId",
                 "hasParticipations",
-                "hasBackstory",
-                "compressedAt"
+                "hasBackstory"
             ],
             "properties": {
                 "characterId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this data belongs to"
+                    "description": "Character this data belongs to (equals resourceId)"
                 },
                 "hasParticipations": {
                     "type": "boolean",
@@ -2007,11 +2012,6 @@ public partial class CharacterHistoryController
                     "$ref": "#/$defs/HistorySummaryResponse",
                     "nullable": true,
                     "description": "Text summaries for reference"
-                },
-                "compressedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When this data was compressed"
                 }
             }
         },
@@ -2319,7 +2319,7 @@ public partial class CharacterHistoryController
                 },
                 "data": {
                     "type": "string",
-                    "description": "Base64-encoded gzipped HistoryCompressData JSON"
+                    "description": "Base64-encoded gzipped CharacterHistoryArchive JSON"
                 }
             }
         }

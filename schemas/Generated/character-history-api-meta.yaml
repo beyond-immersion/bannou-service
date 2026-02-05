@@ -831,7 +831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HistoryCompressData'
+                $ref: '#/components/schemas/CharacterHistoryArchive'
         '404':
           description: No history data for character
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCompressDataRequest\"\
@@ -841,36 +841,36 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the character to get compress data for\"\n                }\n            }\n        }\n   \
         \ }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HistoryCompressData\"\
-        ,\n    \"$defs\": {\n        \"HistoryCompressData\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Complete history data for archive storage\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"characterId\",\n                \"hasParticipations\",\n                \"hasBackstory\",\n\
-        \                \"compressedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Character this data belongs to\"\n                },\n                \"hasParticipations\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether historical participations
-        exist\"\n                },\n                \"participations\": {\n                    \"type\": \"array\",\n   \
-        \                 \"items\": {\n                        \"$ref\": \"#/$defs/HistoricalParticipation\"\n          \
-        \          },\n                    \"description\": \"Historical event participations (empty if hasParticipations=false)\"\
-        \n                },\n                \"hasBackstory\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether backstory elements exist\"\n                },\n                \"backstory\"\
-        : {\n                    \"$ref\": \"#/$defs/BackstoryResponse\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Backstory data (null if hasBackstory=false)\"\n                },\n           \
-        \     \"summaries\": {\n                    \"$ref\": \"#/$defs/HistorySummaryResponse\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Text summaries for reference\"\n                },\n   \
-        \             \"compressedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When this data was compressed\"\n                }\n            }\n    \
-        \    },\n        \"HistoricalParticipation\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        Record of a character's participation in a historical event\",\n            \"additionalProperties\": false,\n   \
-        \         \"required\": [\n                \"participationId\",\n                \"characterId\",\n              \
-        \  \"eventId\",\n                \"eventName\",\n                \"eventCategory\",\n                \"role\",\n \
-        \               \"eventDate\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n   \
-        \             \"participationId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique ID for this participation record\"\n                },\n  \
-        \              \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the character who participated\"\n                },\n           \
-        \     \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
-        \               \"description\": \"ID of the historical event\"\n                },\n                \"eventName\"\
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterHistoryArchive\"\
+        ,\n    \"$defs\": {\n        \"CharacterHistoryArchive\": {\n            \"type\": \"object\",\n            \"x-archive-type\"\
+        : true,\n            \"description\": \"Complete history data for archive storage and storyline SDK consumption.\\
+        nInherits base archive properties from ResourceArchiveBase.\\nThe characterId field equals resourceId for convenience.\\\
+        n\",\n            \"allOf\": [\n                {\n                    \"type\": \"object\"\n                }\n \
+        \           ],\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\"\
+        ,\n                \"hasParticipations\",\n                \"hasBackstory\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Character this data belongs to (equals resourceId)\"\n       \
+        \         },\n                \"hasParticipations\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether historical participations exist\"\n                },\n                \"participations\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/HistoricalParticipation\"\n                    },\n                    \"description\": \"Historical event
+        participations (empty if hasParticipations=false)\"\n                },\n                \"hasBackstory\": {\n   \
+        \                 \"type\": \"boolean\",\n                    \"description\": \"Whether backstory elements exist\"\
+        \n                },\n                \"backstory\": {\n                    \"$ref\": \"#/$defs/BackstoryResponse\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Backstory data (null if hasBackstory=false)\"\
+        \n                },\n                \"summaries\": {\n                    \"$ref\": \"#/$defs/HistorySummaryResponse\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Text summaries for reference\"\n\
+        \                }\n            }\n        },\n        \"HistoricalParticipation\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Record of a character's participation in a historical event\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"participationId\",\n                \"characterId\",\n  \
+        \              \"eventId\",\n                \"eventName\",\n                \"eventCategory\",\n                \"\
+        role\",\n                \"eventDate\",\n                \"createdAt\"\n            ],\n            \"properties\"\
+        : {\n                \"participationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique ID for this participation record\"\n                },\n\
+        \                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"ID of the character who participated\"\n                },\n     \
+        \           \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"ID of the historical event\"\n                },\n                \"eventName\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Name of the event (for display
         and summarization)\"\n                },\n                \"eventCategory\": {\n                    \"$ref\": \"#/$defs/EventCategory\"\
         ,\n                    \"description\": \"Category of the historical event\"\n                },\n               \
@@ -981,7 +981,7 @@ paths:
         : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"description\": \"ID of the character to restore data for\"\n                },\n\
         \                \"data\": {\n                    \"type\": \"string\",\n                    \"description\": \"Base64-encoded
-        gzipped HistoryCompressData JSON\"\n                }\n            }\n        }\n    }\n}"
+        gzipped CharacterHistoryArchive JSON\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
         ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
@@ -1480,20 +1480,25 @@ components:
           type: string
           format: uuid
           description: ID of the character to get compress data for
-    HistoryCompressData:
+    CharacterHistoryArchive:
       type: object
-      description: Complete history data for archive storage
+      x-archive-type: true
+      description: |
+        Complete history data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
       - characterId
       - hasParticipations
       - hasBackstory
-      - compressedAt
       properties:
         characterId:
           type: string
           format: uuid
-          description: Character this data belongs to
+          description: Character this data belongs to (equals resourceId)
         hasParticipations:
           type: boolean
           description: Whether historical participations exist
@@ -1513,10 +1518,6 @@ components:
           $ref: '#/components/schemas/HistorySummaryResponse'
           nullable: true
           description: Text summaries for reference
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
     RestoreFromArchiveRequest:
       type: object
       description: Request to restore history data from archive
@@ -1531,7 +1532,7 @@ components:
           description: ID of the character to restore data for
         data:
           type: string
-          description: Base64-encoded gzipped HistoryCompressData JSON
+          description: Base64-encoded gzipped CharacterHistoryArchive JSON
     RestoreFromArchiveResponse:
       type: object
       description: Result of restoration from archive

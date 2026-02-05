@@ -200,29 +200,12 @@ public partial class StateController
                     "nullable": true,
                     "description": "TTL in seconds (Redis only)"
                 },
-                "consistency": {
-                    "allOf": [
-                        {
-                            "$ref": "#/$defs/ConsistencyLevel"
-                        }
-                    ],
-                    "default": "strong",
-                    "description": "Consistency level"
-                },
                 "etag": {
                     "type": "string",
                     "nullable": true,
                     "description": "Optimistic concurrency check - save fails if ETag mismatch"
                 }
             }
-        },
-        "ConsistencyLevel": {
-            "type": "string",
-            "description": "Consistency level for state operations",
-            "enum": [
-                "strong",
-                "eventual"
-            ]
         }
     }
 }
@@ -822,29 +805,12 @@ public partial class StateController
                     "nullable": true,
                     "description": "TTL in seconds (Redis only)"
                 },
-                "consistency": {
-                    "allOf": [
-                        {
-                            "$ref": "#/$defs/ConsistencyLevel"
-                        }
-                    ],
-                    "default": "strong",
-                    "description": "Consistency level"
-                },
                 "etag": {
                     "type": "string",
                     "nullable": true,
                     "description": "Optimistic concurrency check - save fails if ETag mismatch"
                 }
             }
-        },
-        "ConsistencyLevel": {
-            "type": "string",
-            "description": "Consistency level for state operations",
-            "enum": [
-                "strong",
-                "eventual"
-            ]
         }
     }
 }

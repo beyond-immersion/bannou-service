@@ -229,14 +229,14 @@ public sealed class CharacterProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing CharacterCompressData on success.</returns>
-    public Task<ApiResponse<CharacterCompressData>> GetCompressDataAsync(
+    /// <returns>ApiResponse containing CharacterBaseArchive on success.</returns>
+    public Task<ApiResponse<CharacterBaseArchive>> GetCompressDataAsync(
         GetCompressDataRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<GetCompressDataRequest, CharacterCompressData>(
+        return _client.InvokeAsync<GetCompressDataRequest, CharacterBaseArchive>(
             "/character/get-compress-data", request, channel, timeout, cancellationToken);
     }
 }

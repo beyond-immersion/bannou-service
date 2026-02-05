@@ -2227,4 +2227,438 @@ public partial class ResourceController
             _GetArchive_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for ExecuteSnapshot
+
+    private static readonly string _ExecuteSnapshot_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteSnapshotRequest",
+    "$defs": {
+        "ExecuteSnapshotRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to create an ephemeral snapshot of a living resource",
+            "required": [
+                "resourceType",
+                "resourceId"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource to snapshot (opaque identifier).\nMust match compression callback registrations.\n"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource to snapshot"
+                },
+                "snapshotType": {
+                    "type": "string",
+                    "description": "Optional label for the snapshot purpose (e.g., \"storyline_seed\", \"analytics\").\nStored in metadata for filtering/debugging.\n"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Time-to-live in seconds for the snapshot.\nIf not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).\ nValue is clamped to configured min/max range.\nSnapshot is automatically deleted by Redis after TTL expires.\n"
+                },
+                "compressionPolicy": {
+                    "$ref": "#/$defs/CompressionPolicy",
+                    "nullable": true,
+                    "description": "Policy for callback execution.\ nIf not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).\n"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, return what would be captured without storing"
+                }
+            }
+        },
+        "CompressionPolicy": {
+            "type": "string",
+            "enum": [
+                "BEST_EFFORT",
+                "ALL_REQUIRED"
+            ],
+            "description": "Policy for compression callback execution.\nBEST_EFFORT: Create archive even if some callbacks fail (partial archive)\nALL_REQUIRED: Abort compression if any callback fails\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteSnapshot_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteSnapshotResponse",
+    "$defs": {
+        "ExecuteSnapshotResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of snapshot execution",
+            "required": [
+                "resourceType",
+                "resourceId",
+                "success",
+                "dryRun",
+                "snapshotDurationMs"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource snapshotted"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource snapshotted"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "True if snapshot completed successfully"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "description": "True if this was a dry run"
+                },
+                "snapshotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Unique ID for this snapshot (null on failure or dry run)"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this snapshot will expire (null on failure or dry run)"
+                },
+                "abortReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why snapshot was aborted"
+                },
+                "callbackResults": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CompressCallbackResult"
+                    },
+                    "description": "Results of each compression callback"
+                },
+                "snapshotDurationMs": {
+                    "type": "integer",
+                    "description": "Total snapshot execution time in milliseconds"
+                }
+            }
+        },
+        "CompressCallbackResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of a single compression callback",
+            "required": [
+                "sourceType",
+                "serviceName",
+                "endpoint",
+                "success",
+                "durationMs"
+            ],
+            "properties": {
+                "sourceType": {
+                    "type": "string",
+                    "description": "Source type that provided data"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Service that was called"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Endpoint that was called"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether callback succeeded"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "HTTP status code from callback"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if callback failed"
+                },
+                "dataSize": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Size of compressed data in bytes"
+                },
+                "durationMs": {
+                    "type": "integer",
+                    "description": "Callback execution time in milliseconds"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteSnapshot_Info = """
+{
+    "summary": "Create ephemeral snapshot of a living resource",
+    "description": "Creates a non-destructive snapshot of a resource using the same compression\ncallbacks, but stores the result in Redis with a configurable TTL instead\nof permanent MySQL storage.\n\n**Use Case**: The Storyline Composer needs compressed data from living\nentities (not just dead/archived ones) to seed emergent narratives.\nThis endpoint provides that capability without affecting the source data.\n\n**Key Differences from compress/execute**:\n1. Stores in Redis (ephemeral) not MySQL (permanent)\n2. Never deletes source data\n3. Publishes `resource.snapshot.created` event (not `resource.compressed`)\n4. Snapshot expires after TTL (default 1 hour, max 24 hours)\n\n**Intended Consumers**:\ n- Actor behaviors (via ABML service_call)\n- Regional Watchers for storyline composition\n- Analytics for living entity state capture\n",
+    "tags": [
+        "Snapshot Management"
+    ],
+    "deprecated": false,
+    "operationId": "executeSnapshot"
+}
+""";
+
+    /// <summary>Returns endpoint information for ExecuteSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/execute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteSnapshot_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/execute",
+            _ExecuteSnapshot_Info));
+
+    /// <summary>Returns request schema for ExecuteSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/execute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteSnapshot_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/execute",
+            "request-schema",
+            _ExecuteSnapshot_RequestSchema));
+
+    /// <summary>Returns response schema for ExecuteSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/execute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteSnapshot_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/execute",
+            "response-schema",
+            _ExecuteSnapshot_ResponseSchema));
+
+    /// <summary>Returns full schema for ExecuteSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/execute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteSnapshot_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/execute",
+            _ExecuteSnapshot_Info,
+            _ExecuteSnapshot_RequestSchema,
+            _ExecuteSnapshot_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetSnapshot
+
+    private static readonly string _GetSnapshot_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetSnapshotRequest",
+    "$defs": {
+        "GetSnapshotRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to retrieve a snapshot",
+            "required": [
+                "snapshotId"
+            ],
+            "properties": {
+                "snapshotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the snapshot to retrieve"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetSnapshot_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetSnapshotResponse",
+    "$defs": {
+        "GetSnapshotResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing snapshot data",
+            "required": [
+                "snapshotId",
+                "found"
+            ],
+            "properties": {
+                "snapshotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the snapshot"
+                },
+                "found": {
+                    "type": "boolean",
+                    "description": "True if snapshot exists (hasn't expired)"
+                },
+                "snapshot": {
+                    "$ref": "#/$defs/ResourceSnapshot",
+                    "nullable": true,
+                    "description": "The snapshot data (null if not found/expired)"
+                }
+            }
+        },
+        "ResourceSnapshot": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Ephemeral snapshot of a living resource",
+            "required": [
+                "snapshotId",
+                "resourceType",
+                "resourceId",
+                "snapshotType",
+                "entries",
+                "createdAt",
+                "expiresAt"
+            ],
+            "properties": {
+                "snapshotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this snapshot"
+                },
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource snapshotted"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource snapshotted"
+                },
+                "snapshotType": {
+                    "type": "string",
+                    "description": "Label for snapshot purpose (e.g., \"storyline_seed\")"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ArchiveBundleEntry"
+                    },
+                    "description": "Data entries from each compression callback (same format as archives)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this snapshot was created"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this snapshot will expire"
+                }
+            }
+        },
+        "ArchiveBundleEntry": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Single entry in the archive bundle",
+            "required": [
+                "sourceType",
+                "serviceName",
+                "data",
+                "compressedAt"
+            ],
+            "properties": {
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of data (e.g., \"character-personality\")"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Service that provided the data"
+                },
+                "data": {
+                    "type": "string",
+                    "description": "Base64-encoded gzipped JSON from the service callback"
+                },
+                "compressedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this entry was compressed"
+                },
+                "dataChecksum": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "SHA256 hash for integrity verification"
+                },
+                "originalSizeBytes": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Size before compression"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetSnapshot_Info = """
+{
+    "summary": "Retrieve an ephemeral snapshot",
+    "description": "Retrieves a previously created snapshot by its ID.\nReturns 404 if the snapshot has expired or doesn't exist.\n\nSnapshots are stored with TTL - if the TTL has elapsed, the snapshot\nis automatically deleted by Redis.\n",
+    "tags": [
+        "Snapshot Management"
+    ],
+    "deprecated": false,
+    "operationId": "getSnapshot"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSnapshot_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/get",
+            _GetSnapshot_Info));
+
+    /// <summary>Returns request schema for GetSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSnapshot_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/get",
+            "request-schema",
+            _GetSnapshot_RequestSchema));
+
+    /// <summary>Returns response schema for GetSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSnapshot_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/get",
+            "response-schema",
+            _GetSnapshot_ResponseSchema));
+
+    /// <summary>Returns full schema for GetSnapshot</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/snapshot/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSnapshot_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/snapshot/get",
+            _GetSnapshot_Info,
+            _GetSnapshot_RequestSchema,
+            _GetSnapshot_ResponseSchema));
+
+    #endregion
 }

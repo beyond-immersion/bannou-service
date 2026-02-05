@@ -688,6 +688,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | `RESOURCE_DEFAULT_CLEANUP_POLICY` | string | `BEST_EFFORT` | Default cleanup policy when not specified per-resource-type |
 | `RESOURCE_DEFAULT_COMPRESSION_POLICY` | string | `ALL_REQUIRED` | Default compression policy when not specified per-request |
 | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | int | `604800` | Default grace period in seconds before cleanup eligible (7 d... |
+| `RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS` | int | `3600` | Default TTL for snapshots when not specified in request (1 h... |
+| `RESOURCE_SNAPSHOT_MAX_TTL_SECONDS` | int | `86400` | Maximum allowed TTL for snapshots (24 hours default, max 7 d... |
+| `RESOURCE_SNAPSHOT_MIN_TTL_SECONDS` | int | `60` | Minimum allowed TTL for snapshots (1 minute default) |
 
 ### Save Load
 
@@ -813,9 +816,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 624
+- **Total properties**: 627
 - **Required (no default)**: 41
-- **Optional (has default)**: 583
+- **Optional (has default)**: 586
 
 ## Environment Variable Naming Convention
 

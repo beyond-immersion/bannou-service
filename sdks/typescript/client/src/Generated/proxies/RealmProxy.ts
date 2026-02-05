@@ -37,10 +37,7 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmResponse']>> {
     return this.client.invokeAsync<Schemas['GetRealmRequest'], Schemas['RealmResponse']>(
-      '/realm/get',
-      request,
-      channel,
-      timeout
+      '/realm/get', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmResponse']>> {
     return this.client.invokeAsync<Schemas['GetRealmByCodeRequest'], Schemas['RealmResponse']>(
-      '/realm/get-by-code',
-      request,
-      channel,
-      timeout
+      '/realm/get-by-code', request, channel, timeout
     );
   }
 
@@ -77,10 +71,7 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmListResponse']>> {
     return this.client.invokeAsync<Schemas['ListRealmsRequest'], Schemas['RealmListResponse']>(
-      '/realm/list',
-      request,
-      channel,
-      timeout
+      '/realm/list', request, channel, timeout
     );
   }
 
@@ -97,10 +88,7 @@ export class RealmProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmExistsResponse']>> {
     return this.client.invokeAsync<Schemas['RealmExistsRequest'], Schemas['RealmExistsResponse']>(
-      '/realm/exists',
-      request,
-      channel,
-      timeout
+      '/realm/exists', request, channel, timeout
     );
   }
 
@@ -116,9 +104,8 @@ export class RealmProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmsExistBatchResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['RealmsExistBatchRequest'],
-      Schemas['RealmsExistBatchResponse']
-    >('/realm/exists-batch', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['RealmsExistBatchRequest'], Schemas['RealmsExistBatchResponse']>(
+      '/realm/exists-batch', request, channel, timeout
+    );
   }
 }

@@ -36,10 +36,9 @@ export class MappingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RequestSnapshotResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['RequestSnapshotRequest'],
-      Schemas['RequestSnapshotResponse']
-    >('/mapping/request-snapshot', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['RequestSnapshotRequest'], Schemas['RequestSnapshotResponse']>(
+      '/mapping/request-snapshot', request, channel, timeout
+    );
   }
 
   /**
@@ -55,10 +54,7 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryPointResponse']>> {
     return this.client.invokeAsync<Schemas['QueryPointRequest'], Schemas['QueryPointResponse']>(
-      '/mapping/query/point',
-      request,
-      channel,
-      timeout
+      '/mapping/query/point', request, channel, timeout
     );
   }
 
@@ -75,10 +71,7 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryBoundsResponse']>> {
     return this.client.invokeAsync<Schemas['QueryBoundsRequest'], Schemas['QueryBoundsResponse']>(
-      '/mapping/query/bounds',
-      request,
-      channel,
-      timeout
+      '/mapping/query/bounds', request, channel, timeout
     );
   }
 
@@ -94,10 +87,9 @@ export class MappingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryObjectsByTypeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['QueryObjectsByTypeRequest'],
-      Schemas['QueryObjectsByTypeResponse']
-    >('/mapping/query/objects-by-type', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['QueryObjectsByTypeRequest'], Schemas['QueryObjectsByTypeResponse']>(
+      '/mapping/query/objects-by-type', request, channel, timeout
+    );
   }
 
   /**
@@ -112,10 +104,9 @@ export class MappingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AffordanceQueryResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AffordanceQueryRequest'],
-      Schemas['AffordanceQueryResponse']
-    >('/mapping/query/affordance', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['AffordanceQueryRequest'], Schemas['AffordanceQueryResponse']>(
+      '/mapping/query/affordance', request, channel, timeout
+    );
   }
 
   /**
@@ -130,10 +121,9 @@ export class MappingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthoringCheckoutResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AuthoringCheckoutRequest'],
-      Schemas['AuthoringCheckoutResponse']
-    >('/mapping/authoring/checkout', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['AuthoringCheckoutRequest'], Schemas['AuthoringCheckoutResponse']>(
+      '/mapping/authoring/checkout', request, channel, timeout
+    );
   }
 
   /**
@@ -148,10 +138,9 @@ export class MappingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthoringCommitResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AuthoringCommitRequest'],
-      Schemas['AuthoringCommitResponse']
-    >('/mapping/authoring/commit', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['AuthoringCommitRequest'], Schemas['AuthoringCommitResponse']>(
+      '/mapping/authoring/commit', request, channel, timeout
+    );
   }
 
   /**
@@ -166,10 +155,9 @@ export class MappingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthoringReleaseResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AuthoringReleaseRequest'],
-      Schemas['AuthoringReleaseResponse']
-    >('/mapping/authoring/release', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['AuthoringReleaseRequest'], Schemas['AuthoringReleaseResponse']>(
+      '/mapping/authoring/release', request, channel, timeout
+    );
   }
 
   /**
@@ -185,10 +173,7 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MapDefinition']>> {
     return this.client.invokeAsync<Schemas['CreateDefinitionRequest'], Schemas['MapDefinition']>(
-      '/mapping/definition/create',
-      request,
-      channel,
-      timeout
+      '/mapping/definition/create', request, channel, timeout
     );
   }
 
@@ -205,10 +190,7 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MapDefinition']>> {
     return this.client.invokeAsync<Schemas['GetDefinitionRequest'], Schemas['MapDefinition']>(
-      '/mapping/definition/get',
-      request,
-      channel,
-      timeout
+      '/mapping/definition/get', request, channel, timeout
     );
   }
 
@@ -224,10 +206,9 @@ export class MappingProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListDefinitionsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListDefinitionsRequest'],
-      Schemas['ListDefinitionsResponse']
-    >('/mapping/definition/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListDefinitionsRequest'], Schemas['ListDefinitionsResponse']>(
+      '/mapping/definition/list', request, channel, timeout
+    );
   }
 
   /**
@@ -243,10 +224,7 @@ export class MappingProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MapDefinition']>> {
     return this.client.invokeAsync<Schemas['UpdateDefinitionRequest'], Schemas['MapDefinition']>(
-      '/mapping/definition/update',
-      request,
-      channel,
-      timeout
+      '/mapping/definition/update', request, channel, timeout
     );
   }
 }

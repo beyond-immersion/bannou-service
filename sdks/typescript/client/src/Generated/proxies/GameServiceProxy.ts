@@ -37,10 +37,7 @@ export class GameServiceProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListServicesResponse']>> {
     return this.client.invokeAsync<Schemas['ListServicesRequest'], Schemas['ListServicesResponse']>(
-      '/game-service/services/list',
-      request,
-      channel,
-      timeout
+      '/game-service/services/list', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class GameServiceProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ServiceInfo']>> {
     return this.client.invokeAsync<Schemas['GetServiceRequest'], Schemas['ServiceInfo']>(
-      '/game-service/services/get',
-      request,
-      channel,
-      timeout
+      '/game-service/services/get', request, channel, timeout
     );
   }
 }

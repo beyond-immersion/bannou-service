@@ -1783,23 +1783,28 @@ public partial class CharacterPersonalityController
     private static readonly string _GetCompressData_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/PersonalityCompressData",
+    "$ref": "#/$defs/CharacterPersonalityArchive",
     "$defs": {
-        "PersonalityCompressData": {
+        "CharacterPersonalityArchive": {
             "type": "object",
-            "description": "Complete personality data for archive storage",
+            "x-archive-type": true,
+            "description": "Complete personality data for archive storage and storyline SDK consumption.\nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "additionalProperties": false,
             "required": [
                 "characterId",
                 "hasPersonality",
-                "hasCombatPreferences",
-                "compressedAt"
+                "hasCombatPreferences"
             ],
             "properties": {
                 "characterId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Character this data belongs to"
+                    "description": "Character this data belongs to (equals resourceId)"
                 },
                 "hasPersonality": {
                     "type": "boolean",
@@ -1818,11 +1823,6 @@ public partial class CharacterPersonalityController
                     "$ref": "#/$defs/CombatPreferencesResponse",
                     "nullable": true,
                     "description": "Combat preferences (null if hasCombatPreferences=false)"
-                },
-                "compressedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When this data was compressed"
                 }
             }
         },
@@ -1996,7 +1996,7 @@ public partial class CharacterPersonalityController
                 },
                 "protectAllies": {
                     "type": "boolean",
-                    "description": "Whether to prioritize ally protection over self-preservation.\ nAffects target selection and positioning decisions.\n"
+                    "description": "Whether to prioritize ally protection over self-preservation.\nAffects target selection and positioning decisions.\n"
                 }
             }
         },
@@ -2113,7 +2113,7 @@ public partial class CharacterPersonalityController
                 },
                 "data": {
                     "type": "string",
-                    "description": "Base64-encoded gzipped PersonalityCompressData JSON"
+                    "description": "Base64-encoded gzipped CharacterPersonalityArchive JSON"
                 }
             }
         }

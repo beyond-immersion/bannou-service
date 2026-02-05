@@ -39,10 +39,10 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 11 | Realm management service for game worlds. |
-| [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 10 | Historical event participation and lore management for realm... |
+| [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
 | [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
-| [Resource Lifecycle API](#resource) | `client.Resource` | 13 | Resource reference tracking and lifecycle management. |
+| [Resource Lifecycle API](#resource) | `client.Resource` | 15 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
@@ -362,7 +362,7 @@ Character management service for game worlds.
 | `CompresscharacterAsync` | `CompressCharacterRequest` | `CharacterArchive` | Compress a dead character to archive format |
 | `GetCharacterarchiveAsync` | `GetCharacterArchiveRequest` | `CharacterArchive` | Get compressed archive data for a character |
 | `CheckcharacterreferencesAsync` | `CheckReferencesRequest` | `CharacterRefCount` | Check reference count for cleanup eligibility |
-| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterCompressData` | Get character base data for compression |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterBaseArchive` | Get character base data for compression |
 
 ### Character Lookup
 
@@ -402,7 +402,7 @@ Character encounter tracking service for memorable interactions between characte
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `GetCompressdataAsync` | `GetCompressDataRequest` | `EncounterCompressData` | Get encounter data for compression |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterEncounterArchive` | Get encounter data for compression |
 | `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore encounter data from archive |
 
 ### Encounter Type Management
@@ -462,7 +462,7 @@ Historical event participation and backstory management for characters.
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `GetCompressdataAsync` | `GetCompressDataRequest` | `HistoryCompressData` | Get history data for compression |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterHistoryArchive` | Get history data for compression |
 | `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore history data from archive |
 
 ### Historical Events
@@ -502,7 +502,7 @@ Machine-readable personality traits for NPC behavior decisions.
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `GetCompressdataAsync` | `GetCompressDataRequest` | `PersonalityCompressData` | Get personality data for compression |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterPersonalityArchive` | Get personality data for compression |
 | `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore personality data from archive |
 
 ### Personality Evolution
@@ -1345,6 +1345,13 @@ Realm management service for game worlds.
 
 Historical event participation and lore management for realms.
 
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `RealmHistoryArchive` | Get realm history data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore realm history from archive |
+
 ### Historical Events
 
 | Method | Request | Response | Summary |
@@ -1456,6 +1463,13 @@ Resource reference tracking and lifecycle management.
 | `UnregisterreferenceAsync` | `UnregisterReferenceRequest` | `UnregisterReferenceResponse` | Remove a reference to a resource |
 | `CheckreferencesAsync` | `CheckReferencesRequest` | `CheckReferencesResponse` | Check reference count and cleanup eligibility |
 | `ListReferencesAsync` | `ListReferencesRequest` | `ListReferencesResponse` | List all references to a resource |
+
+### Snapshot Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ExecutesnapshotAsync` | `ExecuteSnapshotRequest` | `ExecuteSnapshotResponse` | Create ephemeral snapshot of a living resource |
+| `GetSnapshotAsync` | `GetSnapshotRequest` | `GetSnapshotResponse` | Retrieve an ephemeral snapshot |
 
 ---
 
@@ -1751,7 +1765,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 42
-- **Total methods**: 565
+- **Total methods**: 569
 
 ---
 

@@ -37,10 +37,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['LoginRequest'], Schemas['AuthResponse']>(
-      '/auth/login',
-      request,
-      channel,
-      timeout
+      '/auth/login', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RegisterResponse']>> {
     return this.client.invokeAsync<Schemas['RegisterRequest'], Schemas['RegisterResponse']>(
-      '/auth/register',
-      request,
-      channel,
-      timeout
+      '/auth/register', request, channel, timeout
     );
   }
 
@@ -77,10 +71,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['OAuthCallbackRequest'], Schemas['AuthResponse']>(
-      '/auth/oauth/{provider}/callback',
-      request,
-      channel,
-      timeout
+      '/auth/oauth/{provider}/callback', request, channel, timeout
     );
   }
 
@@ -97,10 +88,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['SteamVerifyRequest'], Schemas['AuthResponse']>(
-      '/auth/steam/verify',
-      request,
-      channel,
-      timeout
+      '/auth/steam/verify', request, channel, timeout
     );
   }
 
@@ -117,10 +105,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AuthResponse']>> {
     return this.client.invokeAsync<Schemas['RefreshRequest'], Schemas['AuthResponse']>(
-      '/auth/refresh',
-      request,
-      channel,
-      timeout
+      '/auth/refresh', request, channel, timeout
     );
   }
 
@@ -135,10 +120,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ValidateTokenResponse']>> {
     return this.client.invokeAsync<object, Schemas['ValidateTokenResponse']>(
-      '/auth/validate',
-      {},
-      channel,
-      timeout
+      '/auth/validate', {}, channel, timeout
     );
   }
 
@@ -148,8 +130,13 @@ export class AuthProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async logoutEventAsync(request: Schemas['LogoutRequest'], channel: number = 0): Promise<void> {
-    return this.client.sendEventAsync<Schemas['LogoutRequest']>('/auth/logout', request, channel);
+  async logoutEventAsync(
+    request: Schemas['LogoutRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['LogoutRequest']>(
+      '/auth/logout', request, channel
+    );
   }
 
   /**
@@ -163,10 +150,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SessionsResponse']>> {
     return this.client.invokeAsync<object, Schemas['SessionsResponse']>(
-      '/auth/sessions/list',
-      {},
-      channel,
-      timeout
+      '/auth/sessions/list', {}, channel, timeout
     );
   }
 
@@ -181,9 +165,7 @@ export class AuthProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['TerminateSessionRequest']>(
-      '/auth/sessions/terminate',
-      request,
-      channel
+      '/auth/sessions/terminate', request, channel
     );
   }
 
@@ -198,9 +180,7 @@ export class AuthProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['PasswordResetRequest']>(
-      '/auth/password/reset',
-      request,
-      channel
+      '/auth/password/reset', request, channel
     );
   }
 
@@ -215,9 +195,7 @@ export class AuthProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['PasswordResetConfirmRequest']>(
-      '/auth/password/confirm',
-      request,
-      channel
+      '/auth/password/confirm', request, channel
     );
   }
 
@@ -232,10 +210,7 @@ export class AuthProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ProvidersResponse']>> {
     return this.client.invokeAsync<object, Schemas['ProvidersResponse']>(
-      '/auth/providers',
-      {},
-      channel,
-      timeout
+      '/auth/providers', {}, channel, timeout
     );
   }
 }

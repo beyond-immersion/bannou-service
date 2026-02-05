@@ -371,6 +371,7 @@ This document lists all events defined in Bannou's event schemas.
 | `ResourceGracePeriodStartedEvent` | Custom | `resource-grace-period-started` | Published when a resource's reference count reache... |
 | `ResourceReferenceRegisteredEvent` | Registration | `resource-reference.registered` | Published by higher-layer services when they creat... |
 | `ResourceReferenceUnregisteredEvent` | Registration | `resource-reference-unregistered` | Published by higher-layer services when they delet... |
+| `ResourceSnapshotCreatedEvent` | Lifecycle (Created) | `resource-snapshot.created` | Published when an ephemeral snapshot of a living r... |
 
 ### Save Load
 

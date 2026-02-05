@@ -10,7 +10,7 @@ public static class EmotionalArcLoader
     private static readonly Lazy<EmotionalArcsData> Data = new(() =>
         YamlLoader.Load<EmotionalArcsData>("emotional-arcs.yaml"));
 
-    private static readonly Lazy<IReadOnlyDictionary<ArcType, EmotionalArc>> ArcsByType = new(BuildArcs);
+    private static readonly Lazy<Dictionary<ArcType, EmotionalArc>> ArcsByType = new(BuildArcs);
 
     /// <summary>
     /// Gets all emotional arc definitions.
@@ -25,7 +25,7 @@ public static class EmotionalArcLoader
         return ArcsByType.Value[type];
     }
 
-    private static IReadOnlyDictionary<ArcType, EmotionalArc> BuildArcs()
+    private static Dictionary<ArcType, EmotionalArc> BuildArcs()
     {
         var data = Data.Value;
         var arcs = new Dictionary<ArcType, EmotionalArc>();

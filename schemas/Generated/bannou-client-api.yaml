@@ -1783,7 +1783,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CharacterCompressData'
+                $ref: '#/components/schemas/CharacterBaseArchive'
         '400':
           description: Character is not dead (cannot compress alive characters)
         '404':
@@ -2012,7 +2012,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EncounterCompressData'
+                $ref: '#/components/schemas/CharacterEncounterArchive'
         '404':
           description: No encounter data for character
   /character-history/get-participation:
@@ -2116,7 +2116,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HistoryCompressData'
+                $ref: '#/components/schemas/CharacterHistoryArchive'
         '404':
           description: No history data for character
   /character-personality/get:
@@ -2197,7 +2197,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PersonalityCompressData'
+                $ref: '#/components/schemas/CharacterPersonalityArchive'
         '404':
           description: No personality data for character
   /character-personality/cleanup-by-character:
@@ -7245,6 +7245,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetArchiveResponse'
+  /resource/snapshot/execute:
+    post:
+      operationId: executeSnapshot
+      tags:
+      - Snapshot Management
+      summary: Create ephemeral snapshot of a living resource
+      description: |
+        Creates a non-destructive snapshot of a resource using the same compression
+        callbacks, but stores the result in Redis with a configurable TTL instead
+        of permanent MySQL storage.
+
+        **Use Case**: The Storyline Composer needs compressed data from living
+        entities (not just dead/archived ones) to seed emergent narratives.
+        This endpoint provides that capability without affecting the source data.
+
+        **Key Differences from compress/execute**:
+        1. Stores in Redis (ephemeral) not MySQL (permanent)
+        2. Never deletes source data
+        3. Publishes `resource.snapshot.created` event (not `resource.compressed`)
+        4. Snapshot expires after TTL (default 1 hour, max 24 hours)
+
+        **Intended Consumers**:
+        - Actor behaviors (via ABML service_call)
+        - Regional Watchers for storyline composition
+        - Analytics for living entity state capture
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot result with snapshot ID and data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteSnapshotResponse'
+  /resource/snapshot/get:
+    post:
+      operationId: getSnapshot
+      tags:
+      - Snapshot Management
+      summary: Retrieve an ephemeral snapshot
+      description: |
+        Retrieves a previously created snapshot by its ID.
+        Returns 404 if the snapshot has expired or doesn't exist.
+
+        Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
+        is automatically deleted by Redis.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSnapshotResponse'
   /save-load/slot/create:
     post:
       tags:
@@ -11444,9 +11511,18 @@ components:
           description: |
             Text summary of family relationships.
             Example: "Father of 3, married to Elena, orphaned at young age"
-    CharacterCompressData:
-      description: Core character data for archive storage
+    CharacterBaseArchive:
       type: object
+      x-archive-type: true
+      description: |
+        Core character data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+
+        Note: This is distinct from CharacterArchive which contains text summaries
+        for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
       - characterId
@@ -11456,12 +11532,11 @@ components:
       - birthDate
       - deathDate
       - status
-      - compressedAt
       properties:
         characterId:
           type: string
           format: uuid
-          description: Unique identifier for the character
+          description: Unique identifier for the character (equals resourceId)
         name:
           type: string
           description: Display name of the character
@@ -11490,10 +11565,6 @@ components:
           description: |
             Text summary of family relationships.
             Example: "Father of 3, married to Elena, orphaned at young age"
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
         createdAt:
           type: string
           format: date-time
@@ -11557,6 +11628,85 @@ components:
           additionalProperties: true
           nullable: true
           description: Relevant world state information
+    CharacterEncounterArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete encounter data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasEncounters
+      - encounterCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasEncounters:
+          type: boolean
+          description: Whether encounters exist for this character
+        encounterCount:
+          type: integer
+          description: Number of encounters archived
+        encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterResponse'
+          description: Encounters with perspectives (empty if 
+            hasEncounters=false)
+        aggregateSentiment:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: |
+            Map of target characterId to aggregate sentiment.
+            Preserves sentiment relationships for historical reference.
+          nullable: true
+    CharacterHistoryArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete history data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasParticipations
+      - hasBackstory
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasParticipations:
+          type: boolean
+          description: Whether historical participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalParticipation'
+          description: Historical event participations (empty if 
+            hasParticipations=false)
+        hasBackstory:
+          type: boolean
+          description: Whether backstory elements exist
+        backstory:
+          $ref: '#/components/schemas/BackstoryResponse'
+          nullable: true
+          description: Backstory data (null if hasBackstory=false)
+        summaries:
+          $ref: '#/components/schemas/HistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
     CharacterListResponse:
       description: Paginated list of characters with metadata for navigation
       type: object
@@ -11587,6 +11737,39 @@ components:
         hasPreviousPage:
           type: boolean
           description: Whether there are results before this page
+    CharacterPersonalityArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete personality data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasPersonality
+      - hasCombatPreferences
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasPersonality:
+          type: boolean
+          description: Whether personality traits exist
+        personality:
+          $ref: '#/components/schemas/PersonalityResponse'
+          nullable: true
+          description: Personality traits (null if hasPersonality=false)
+        hasCombatPreferences:
+          type: boolean
+          description: Whether combat preferences exist
+        combatPreferences:
+          $ref: '#/components/schemas/CombatPreferencesResponse'
+          nullable: true
+          description: Combat preferences (null if hasCombatPreferences=false)
     CharacterResponse:
       description: Complete character data returned from character operations
       type: object
@@ -16203,45 +16386,6 @@ components:
         valence:
           type: number
           description: Valence level (0-1)
-    EncounterCompressData:
-      type: object
-      description: Complete encounter data for archive storage
-      additionalProperties: false
-      required:
-      - characterId
-      - hasEncounters
-      - encounterCount
-      - compressedAt
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character this data belongs to
-        hasEncounters:
-          type: boolean
-          description: Whether encounters exist for this character
-        encounterCount:
-          type: integer
-          description: Number of encounters archived
-        encounters:
-          type: array
-          items:
-            $ref: '#/components/schemas/EncounterResponse'
-          description: Encounters with perspectives (empty if 
-            hasEncounters=false)
-        aggregateSentiment:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: |
-            Map of target characterId to aggregate sentiment.
-            Preserves sentiment relationships for historical reference.
-          nullable: true
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
     EncounterListResponse:
       type: object
       description: Paginated list of encounters
@@ -17663,6 +17807,93 @@ components:
           type: number
           format: double
           description: Rate applied
+    ExecuteSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create an ephemeral snapshot of a living resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: |
+            Type of resource to snapshot (opaque identifier).
+            Must match compression callback registrations.
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to snapshot
+        snapshotType:
+          type: string
+          description: |
+            Optional label for the snapshot purpose (e.g., "storyline_seed", "analytics").
+            Stored in metadata for filtering/debugging.
+        ttlSeconds:
+          type: integer
+          nullable: true
+          description: |
+            Time-to-live in seconds for the snapshot.
+            If not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).
+            Value is clamped to configured min/max range.
+            Snapshot is automatically deleted by Redis after TTL expires.
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          nullable: true
+          description: |
+            Policy for callback execution.
+            If not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be captured without storing
+    ExecuteSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Result of snapshot execution
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - snapshotDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        success:
+          type: boolean
+          description: True if snapshot completed successfully
+        dryRun:
+          type: boolean
+          description: True if this was a dry run
+        snapshotId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique ID for this snapshot (null on failure or dry run)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this snapshot will expire (null on failure or dry 
+            run)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why snapshot was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        snapshotDurationMs:
+          type: integer
+          description: Total snapshot execution time in milliseconds
     ExecutionMetadata:
       type: object
       additionalProperties: false
@@ -19970,6 +20201,36 @@ components:
         slotName:
           type: string
           description: Slot name
+    GetSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a snapshot
+      required:
+      - snapshotId
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot to retrieve
+    GetSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing snapshot data
+      required:
+      - snapshotId
+      - found
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot
+        found:
+          type: boolean
+          description: True if snapshot exists (hasn't expired)
+        snapshot:
+          $ref: '#/components/schemas/ResourceSnapshot'
+          nullable: true
+          description: The snapshot data (null if not found/expired)
     GetSpeciesByCodeRequest:
       description: Request to retrieve a species by its unique code identifier
       type: object
@@ -20581,44 +20842,6 @@ components:
           type: string
           format: date-time
           description: When this record was created
-    HistoryCompressData:
-      type: object
-      description: Complete history data for archive storage
-      additionalProperties: false
-      required:
-      - characterId
-      - hasParticipations
-      - hasBackstory
-      - compressedAt
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character this data belongs to
-        hasParticipations:
-          type: boolean
-          description: Whether historical participations exist
-        participations:
-          type: array
-          items:
-            $ref: '#/components/schemas/HistoricalParticipation'
-          description: Historical event participations (empty if 
-            hasParticipations=false)
-        hasBackstory:
-          type: boolean
-          description: Whether backstory elements exist
-        backstory:
-          $ref: '#/components/schemas/BackstoryResponse'
-          nullable: true
-          description: Backstory data (null if hasBackstory=false)
-        summaries:
-          $ref: '#/components/schemas/HistorySummaryResponse'
-          nullable: true
-          description: Text summaries for reference
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
     HistoryRequest:
       type: object
       description: Request for scene version history
@@ -24771,38 +24994,6 @@ components:
       - message
       - service
       - system
-    PersonalityCompressData:
-      type: object
-      description: Complete personality data for archive storage
-      additionalProperties: false
-      required:
-      - characterId
-      - hasPersonality
-      - hasCombatPreferences
-      - compressedAt
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character this data belongs to
-        hasPersonality:
-          type: boolean
-          description: Whether personality traits exist
-        personality:
-          $ref: '#/components/schemas/PersonalityResponse'
-          nullable: true
-          description: Personality traits (null if hasPersonality=false)
-        hasCombatPreferences:
-          type: boolean
-          description: Whether combat preferences exist
-        combatPreferences:
-          $ref: '#/components/schemas/CombatPreferencesResponse'
-          nullable: true
-          description: Combat preferences (null if hasCombatPreferences=false)
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
     PersonalityResponse:
       type: object
       description: Complete personality profile for behavior system consumption
@@ -27649,6 +27840,44 @@ components:
         sourceDataDeleted:
           type: boolean
           description: Whether original source data was deleted after archival
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", 
+            "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by 
+            lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
     ResourceReference:
       type: object
       additionalProperties: false
@@ -27669,6 +27898,47 @@ components:
           type: string
           format: date-time
           description: When this reference was registered
+    ResourceSnapshot:
+      type: object
+      additionalProperties: false
+      description: Ephemeral snapshot of a living resource
+      required:
+      - snapshotId
+      - resourceType
+      - resourceId
+      - snapshotType
+      - entries
+      - createdAt
+      - expiresAt
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: Unique identifier for this snapshot
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        snapshotType:
+          type: string
+          description: Label for snapshot purpose (e.g., "storyline_seed")
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback (same format 
+            as archives)
+        createdAt:
+          type: string
+          format: date-time
+          description: When this snapshot was created
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this snapshot will expire
     ResponseValidation:
       type: object
       description: |

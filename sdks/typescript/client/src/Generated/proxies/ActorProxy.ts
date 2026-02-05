@@ -36,10 +36,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ActorTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateActorTemplateRequest'],
-      Schemas['ActorTemplateResponse']
-    >('/actor/template/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateActorTemplateRequest'], Schemas['ActorTemplateResponse']>(
+      '/actor/template/create', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ActorTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateActorTemplateRequest'],
-      Schemas['ActorTemplateResponse']
-    >('/actor/template/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateActorTemplateRequest'], Schemas['ActorTemplateResponse']>(
+      '/actor/template/update', request, channel, timeout
+    );
   }
 
   /**
@@ -72,10 +70,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeleteActorTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeleteActorTemplateRequest'],
-      Schemas['DeleteActorTemplateResponse']
-    >('/actor/template/delete', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeleteActorTemplateRequest'], Schemas['DeleteActorTemplateResponse']>(
+      '/actor/template/delete', request, channel, timeout
+    );
   }
 
   /**
@@ -91,10 +88,7 @@ export class ActorProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ActorInstanceResponse']>> {
     return this.client.invokeAsync<Schemas['SpawnActorRequest'], Schemas['ActorInstanceResponse']>(
-      '/actor/spawn',
-      request,
-      channel,
-      timeout
+      '/actor/spawn', request, channel, timeout
     );
   }
 
@@ -111,10 +105,7 @@ export class ActorProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StopActorResponse']>> {
     return this.client.invokeAsync<Schemas['StopActorRequest'], Schemas['StopActorResponse']>(
-      '/actor/stop',
-      request,
-      channel,
-      timeout
+      '/actor/stop', request, channel, timeout
     );
   }
 
@@ -130,10 +121,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByCharacterRequest'],
-      Schemas['CleanupByCharacterResponse']
-    >('/actor/cleanup-by-character', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CleanupByCharacterRequest'], Schemas['CleanupByCharacterResponse']>(
+      '/actor/cleanup-by-character', request, channel, timeout
+    );
   }
 
   /**
@@ -148,10 +138,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['InjectPerceptionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['InjectPerceptionRequest'],
-      Schemas['InjectPerceptionResponse']
-    >('/actor/inject-perception', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['InjectPerceptionRequest'], Schemas['InjectPerceptionResponse']>(
+      '/actor/inject-perception', request, channel, timeout
+    );
   }
 
   /**
@@ -165,9 +154,7 @@ export class ActorProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['StartEncounterRequest']>(
-      '/actor/encounter/start',
-      request,
-      channel
+      '/actor/encounter/start', request, channel
     );
   }
 
@@ -183,10 +170,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['UpdateEncounterPhaseResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateEncounterPhaseRequest'],
-      Schemas['UpdateEncounterPhaseResponse']
-    >('/actor/encounter/update-phase', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateEncounterPhaseRequest'], Schemas['UpdateEncounterPhaseResponse']>(
+      '/actor/encounter/update-phase', request, channel, timeout
+    );
   }
 
   /**
@@ -202,10 +188,7 @@ export class ActorProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['EndEncounterResponse']>> {
     return this.client.invokeAsync<Schemas['EndEncounterRequest'], Schemas['EndEncounterResponse']>(
-      '/actor/encounter/end',
-      request,
-      channel,
-      timeout
+      '/actor/encounter/end', request, channel, timeout
     );
   }
 }

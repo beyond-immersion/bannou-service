@@ -2183,11 +2183,17 @@ public partial class CharacterController
     private static readonly string _GetCompressData_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/CharacterCompressData",
+    "$ref": "#/$defs/CharacterBaseArchive",
     "$defs": {
-        "CharacterCompressData": {
-            "description": "Core character data for archive storage",
+        "CharacterBaseArchive": {
             "type": "object",
+            "x-archive-type": true,
+            "description": "Core character data for archive storage and storyline SDK consumption.\nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n\nNote: This is distinct from CharacterArchive which contains text summaries\nfor cleanup. CharacterBaseArchive contains structured data for SDK consumption.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "additionalProperties": false,
             "required": [
                 "characterId",
@@ -2196,14 +2202,13 @@ public partial class CharacterController
                 "speciesId",
                 "birthDate",
                 "deathDate",
-                "status",
-                "compressedAt"
+                "status"
             ],
             "properties": {
                 "characterId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique identifier for the character"
+                    "description": "Unique identifier for the character (equals resourceId)"
                 },
                 "name": {
                     "type": "string",
@@ -2237,11 +2242,6 @@ public partial class CharacterController
                     "type": "string",
                     "nullable": true,
                     "description": "Text summary of family relationships.\nExample: \"Father of 3, married to Elena, orphaned at young age\"\n"
-                },
-                "compressedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When this data was compressed"
                 },
                 "createdAt": {
                     "type": "string",

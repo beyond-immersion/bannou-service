@@ -37,10 +37,7 @@ export class CharacterProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterResponse']>> {
     return this.client.invokeAsync<Schemas['GetCharacterRequest'], Schemas['CharacterResponse']>(
-      '/character/get',
-      request,
-      channel,
-      timeout
+      '/character/get', request, channel, timeout
     );
   }
 
@@ -56,10 +53,9 @@ export class CharacterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListCharactersRequest'],
-      Schemas['CharacterListResponse']
-    >('/character/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListCharactersRequest'], Schemas['CharacterListResponse']>(
+      '/character/list', request, channel, timeout
+    );
   }
 
   /**
@@ -74,10 +70,9 @@ export class CharacterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EnrichedCharacterResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetEnrichedCharacterRequest'],
-      Schemas['EnrichedCharacterResponse']
-    >('/character/get-enriched', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetEnrichedCharacterRequest'], Schemas['EnrichedCharacterResponse']>(
+      '/character/get-enriched', request, channel, timeout
+    );
   }
 
   /**
@@ -92,10 +87,9 @@ export class CharacterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterArchive']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCharacterArchiveRequest'],
-      Schemas['CharacterArchive']
-    >('/character/get-archive', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCharacterArchiveRequest'], Schemas['CharacterArchive']>(
+      '/character/get-archive', request, channel, timeout
+    );
   }
 
   /**
@@ -110,10 +104,9 @@ export class CharacterProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCharactersByRealmRequest'],
-      Schemas['CharacterListResponse']
-    >('/character/by-realm', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCharactersByRealmRequest'], Schemas['CharacterListResponse']>(
+      '/character/by-realm', request, channel, timeout
+    );
   }
 
   /**
@@ -127,10 +120,9 @@ export class CharacterProxy {
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['CharacterCompressData']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCompressDataRequest'],
-      Schemas['CharacterCompressData']
-    >('/character/get-compress-data', request, channel, timeout);
+  ): Promise<ApiResponse<Schemas['CharacterBaseArchive']>> {
+    return this.client.invokeAsync<Schemas['GetCompressDataRequest'], Schemas['CharacterBaseArchive']>(
+      '/character/get-compress-data', request, channel, timeout
+    );
   }
 }

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Common;
@@ -857,7 +858,7 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             // Generate text summaries for the archive
-            var summaries = await GenerateSummariesForArchiveAsync(body.RealmId, participations, loreData, cancellationToken);
+            var summaries = GenerateSummariesForArchive(body.RealmId, participations, loreData);
 
             var response = new RealmHistoryArchive
             {
@@ -871,7 +872,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 HasParticipations = participations.Count > 0,
                 Participations = participations,
                 HasLore = loreData != null,
-                Lore = loreResponse,
+                LoreElements = loreResponse != null ? new List<RealmLoreResponse> { loreResponse } : new List<RealmLoreResponse>(),
                 Summaries = summaries
             };
 
@@ -909,7 +910,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         _logger.LogInformation("Restoring history data from archive for realm {RealmId}", body.RealmId);
 
         var participationsRestored = 0;
-        var loreRestored = false;
+        var loreRestored = 0;
 
         try
         {
@@ -929,7 +930,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 {
                     RealmId = body.RealmId,
                     ParticipationsRestored = 0,
-                    LoreRestored = false,
+                    LoreRestored = 0,
                     Success = false,
                     ErrorMessage = $"Invalid archive data: {ex.Message}"
                 });
@@ -969,9 +970,11 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             // Restore lore
-            if (archiveData.HasLore && archiveData.Lore != null)
+            if (archiveData.HasLore && archiveData.LoreElements.Count > 0)
             {
-                var elementDataList = archiveData.Lore.Elements.Select(MapToRealmLoreElementData).ToList();
+                // Aggregate all elements from all lore responses
+                var allElements = archiveData.LoreElements.SelectMany(lr => lr.Elements).ToList();
+                var elementDataList = allElements.Select(MapToRealmLoreElementData).ToList();
                 await _loreHelper.SetAsync(
                     body.RealmId.ToString(),
                     elementDataList,
@@ -981,7 +984,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 // Re-register realm reference for lore
                 await RegisterRealmReferenceAsync($"lore-{body.RealmId}", body.RealmId, cancellationToken);
 
-                loreRestored = true;
+                loreRestored = elementDataList.Count;
             }
 
             _logger.LogInformation(
@@ -1013,11 +1016,10 @@ public partial class RealmHistoryService : IRealmHistoryService
         }
     }
 
-    private async Task<RealmHistorySummaryResponse> GenerateSummariesForArchiveAsync(
+    private RealmHistorySummaryResponse GenerateSummariesForArchive(
         Guid realmId,
         List<RealmHistoricalParticipation> participations,
-        RealmLoreData? loreData,
-        CancellationToken cancellationToken)
+        RealmLoreData? loreData)
     {
         var keyLorePoints = new List<string>();
         var majorHistoricalEvents = new List<string>();

@@ -4,1640 +4,615 @@
         <name>BeyondImmersion.Bannou.StorylineTheory</name>
     </assembly>
     <members>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Actants.ActantRole">
              <summary>
-             Emotional arc patterns based on Kurt Vonnegut's "Shapes of Stories"
-             and computational story analysis research.
-            
-             Each arc defines a characteristic trajectory of fortune/valence
-             through a story's timeline.
+             Greimas' Actantial Model - character role abstraction for templates.
+             This enables character-agnostic story templates where actions reference
+             roles (e.g., "Helper betrays Subject") rather than specific character IDs.
              </summary>
+             <remarks>
+             The actantial model identifies six fundamental roles that appear across all narratives:
+             - Subject/Object axis: The quest relationship (who desires what)
+             - Sender/Receiver axis: The communication relationship (who initiates, who benefits)
+             - Helper/Opponent axis: The power relationship (who assists, who opposes)
+            
+             Based on A.J. Greimas, "Structural Semantics" (1966).
+             </remarks>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.RagsToRiches">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Actants.ActantRole.Subject">
             <summary>
-            Rags to Riches - steady rise from misfortune to happiness.
-            Examples: Cinderella, Great Expectations, Jane Eyre.
+            The Subject - who desires and acts.
+            Typically the protagonist who undertakes the quest.
+            Examples: Hero, detective, lover, adventurer.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.RichesToRags">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Actants.ActantRole.Object">
             <summary>
-            Riches to Rags - steady decline from happiness to misfortune.
-            Examples: Romeo and Juliet, The Great Gatsby, Oedipus Rex.
+            The Object - what is desired.
+            The goal, person, or state the Subject seeks.
+            Examples: Treasure, beloved, freedom, knowledge.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.ManInHole">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Actants.ActantRole.Sender">
             <summary>
-            Man in a Hole - fall then rise. Most common arc in fiction.
-            Examples: The Hobbit, Finding Nemo, most action movies.
+            The Sender - who initiates the quest.
+            The force or character that sets the Subject on their path.
+            Examples: King, mentor, prophecy, duty, moral imperative.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.Icarus">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Actants.ActantRole.Receiver">
             <summary>
-            Icarus - rise then fall. Classic tragedy pattern.
-            Examples: Macbeth, Breaking Bad, The Wolf of Wall Street.
+            The Receiver - who benefits from quest completion.
+            May be the Subject themselves, or another party.
+            Examples: Kingdom, family, community, the Subject.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.Cinderella">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Actants.ActantRole.Helper">
             <summary>
-            Cinderella - rise, fall, rise. Extended version of Man in Hole.
-            Examples: Cinderella, Pretty Woman, The Pursuit of Happyness.
+            The Helper - who assists the Subject.
+            Provides aid, tools, information, or support.
+            Examples: Sidekick, mentor, magic item, ally.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.Oedipus">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Actants.ActantRole.Opponent">
             <summary>
-            Oedipus - fall, rise, fall. Double tragedy.
-            Examples: Oedipus Rex, Hamlet, many noir films.
+            The Opponent - who opposes the Subject.
+            Creates obstacles, challenges, or direct opposition.
+            Examples: Villain, rival, monster, system, fate.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.All">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle">
             <summary>
-            All defined emotional arcs.
+            Generic archive bundle passed from plugin to SDK.
+            The plugin aggregates entries; SDK interprets them.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.GetByCode(System.String)">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle.AddEntry``1(System.String,``0)">
             <summary>
-            Gets an arc by its code.
+            Adds an entry to the bundle.
+            </summary>
+            <typeparam name="T">The type of data.</typeparam>
+            <param name="key">The entry key.</param>
+            <param name="data">The data to store.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle.TryGetEntry``1(System.String,``0@)">
+            <summary>
+            Attempts to retrieve an entry by key.
+            </summary>
+            <typeparam name="T">The expected type.</typeparam>
+            <param name="key">The entry key.</param>
+            <param name="data">The data if found and of correct type; otherwise null.</param>
+            <returns>True if the entry was found and is of the correct type.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor">
+            <summary>
+            Extracts narrative-relevant data from archives using opaque keys.
+            The SDK doesn't reference plugins directly - it receives a generic bundle
+            and extracts what it knows how to interpret.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.GetByArchetype(BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype)">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor.ExtractWorldState(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType)">
             <summary>
-            Gets arcs matching a specific archetype.
+            Extract WorldState from an archive bundle using opaque string keys.
+            Unknown keys are silently ignored (forward compatibility).
+            </summary>
+            <param name="bundle">The archive bundle containing data entries.</param>
+            <param name="primarySpectrum">The primary spectrum for the story.</param>
+            <returns>The extracted world state.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor">
+            <summary>
+            Identifies essential narrative events (kernels) from archive data.
+            Kernels are story opportunities - events that could seed new storylines.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.FindBestMatch(System.Collections.Generic.IReadOnlyList{System.Double})">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractKernels(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle)">
             <summary>
-            Finds the best-matching arc for a given trajectory.
-            Uses least squares distance to compare trajectories.
+            Extract narrative kernels from an archive bundle.
+            Returns story opportunities ordered by significance.
             </summary>
-            <param name="actualTrajectory">The observed emotional trajectory (0-1 values).</param>
-            <returns>The best-matching arc and its fit score (0-1, higher is better).</returns>
+            <param name="bundle">The archive bundle containing data entries.</param>
+            <returns>List of narrative kernels sorted by significance (descending).</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcs.CalculateTrajectoryDistance(System.Collections.Generic.IReadOnlyList{System.Double},System.Collections.Generic.IReadOnlyList{System.Double})">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType">
             <summary>
-            Calculate RMSE between two trajectories, interpolating if lengths differ.
+            Types of narrative kernels that can seed new storylines.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.Death">
+            <summary>
+            Character death - highest significance kernel.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.HistoricalEvent">
+            <summary>
+            Participation in major world events.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.Trauma">
+            <summary>
+            Past traumatic experiences.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.UnfinishedBusiness">
+            <summary>
+            Unachieved goals or unfinished business.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.Conflict">
+            <summary>
+            Deep negative encounters (grudge potential).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.DeepBond">
+            <summary>
+            Strong positive relationships (legacy potential).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel">
+            <summary>
+            A narrative kernel - an essential event that could seed a new storyline.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Type">
+            <summary>
+            The type of kernel.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Significance">
+            <summary>
+            The significance score (0.0 to 1.0).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Description">
+            <summary>
+            A human-readable description of the kernel.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Data">
+            <summary>
+            Additional data specific to the kernel type.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcControlPoint">
+            <summary>
+            A control point defining a key position in an emotional arc.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcControlPoint.Position">
+            <summary>
+            The position in the story (0.0 = start, 1.0 = end).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcControlPoint.Value">
+            <summary>
+            The emotional/spectrum value at this position.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcControlPoint.Label">
+            <summary>
+            A label for this control point (e.g., "start", "nadir", "apex", "triumph").
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcDirection">
+            <summary>
+            The overall direction of an emotional arc - whether it ends higher or lower than it started.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcDirection.Positive">
+            <summary>
+            The arc ends higher than it starts (positive resolution).
+            Arcs: RagsToRiches, ManInHole, Cinderella.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcDirection.Negative">
+            <summary>
+            The arc ends lower than it starts (negative resolution).
+            Arcs: Tragedy, Icarus, Oedipus.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType">
+            <summary>
+            The 6 emotional arc types from Reagan et al. (2016) computational analysis.
+            These represent the fundamental shapes of emotional trajectories in stories.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType.RagsToRiches">
+            <summary>
+            Rags to Riches - Monotonic rise from negative to positive.
+            Pattern: Steady emotional ascent throughout the narrative.
+            Examples: Rocky, The Pursuit of Happyness.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType.Tragedy">
+            <summary>
+            Tragedy (Riches to Rags) - Monotonic fall from positive to negative.
+            Pattern: Steady emotional decline throughout the narrative.
+            Examples: Hamlet, Flowers for Algernon.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType.ManInHole">
+            <summary>
+            Man in a Hole - Fall-rise (U shape).
+            Pattern: Initial stability, fall into trouble, recovery.
+            The most common arc in popular fiction.
+            Examples: A Christmas Carol, Finding Nemo.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType.Icarus">
+            <summary>
+            Icarus - Rise-fall (inverted U shape).
+            Pattern: Rise to success, then collapse.
+            Examples: The Great Gatsby, Breaking Bad.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType.Cinderella">
+            <summary>
+            Cinderella - Rise-fall-rise (W inverted shape).
+            Pattern: Rise, setback, ultimate triumph.
+            Most satisfying for audiences according to download data.
+            Examples: Pride and Prejudice, Rocky.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType.Oedipus">
+            <summary>
+            Oedipus - Fall-rise-fall (M shape).
+            Pattern: Fall, false hope, final catastrophe.
+            Examples: Oedipus Rex, 1984.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc">
             <summary>
-            Represents an emotional arc pattern.
+            A complete emotional arc definition loaded from emotional-arcs.yaml.
             </summary>
-            <param name="Code">Unique identifier for the arc.</param>
-            <param name="Name">Display name.</param>
-            <param name="Description">Human-readable description.</param>
-            <param name="Trajectory">Normalized trajectory points (0-1), evenly spaced through story.</param>
-            <param name="Archetype">The basic shape category.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.#ctor(System.String,System.String,System.String,System.Collections.Generic.IReadOnlyList{System.Double},BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Type">
             <summary>
-            Represents an emotional arc pattern.
+            The arc type identifier.
             </summary>
-            <param name="Code">Unique identifier for the arc.</param>
-            <param name="Name">Display name.</param>
-            <param name="Description">Human-readable description.</param>
-            <param name="Trajectory">Normalized trajectory points (0-1), evenly spaced through story.</param>
-            <param name="Archetype">The basic shape category.</param>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Code">
-            <summary>Unique identifier for the arc.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Name">
-            <summary>Display name.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Description">
-            <summary>Human-readable description.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Trajectory">
-            <summary>Normalized trajectory points (0-1), evenly spaced through story.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Archetype">
-            <summary>The basic shape category.</summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.GetFortuneAt(System.Double)">
-            <summary>
-            Gets the expected fortune value at a given story position.
-            </summary>
-            <param name="position">Position in the story (0-1).</param>
-            <returns>Expected fortune value (0-1).</returns>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.EndsPositive">
-            <summary>
-            Gets whether this arc ends positively (fortune greater than 0.5).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.EndsNegative">
-            <summary>
-            Gets whether this arc ends negatively (fortune less than 0.5).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Range">
-            <summary>
-            Gets the overall range of the arc (max - min).
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype">
-            <summary>
-            Basic shape categories for emotional arcs.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype.Rise">
-            <summary>Steady rise from low to high.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype.Fall">
-            <summary>Steady fall from high to low.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype.FallRise">
-            <summary>Fall then rise (most common).</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype.RiseFall">
-            <summary>Rise then fall (tragedy).</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype.RiseFallRise">
-            <summary>Rise, fall, then rise again.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcArchetype.FallRiseFall">
-            <summary>Fall, rise, then fall again.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits">
-             <summary>
-             Personality trait axes for character behavior modeling.
-             Based on the Five Factor Model (Big Five) with extensions for
-             narrative-relevant dimensions.
-            
-             All traits are bipolar axes from -1.0 to +1.0.
-             </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Confrontational">
-            <summary>
-            Confrontational vs Pacifist axis.
-            -1.0 = Avoids conflict at all costs.
-            +1.0 = Seeks confrontation.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Trusting">
-            <summary>
-            Trusting vs Suspicious axis.
-            -1.0 = Deeply suspicious of everyone.
-            +1.0 = Trusts easily, perhaps naively.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Reckless">
-            <summary>
-            Reckless vs Cautious axis.
-            -1.0 = Extremely cautious, risk-averse.
-            +1.0 = Reckless, thrill-seeking.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Loyal">
-            <summary>
-            Loyal vs Self-Serving axis.
-            -1.0 = Completely self-interested.
-            +1.0 = Intensely loyal to group/cause.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Curious">
-            <summary>
-            Curious vs Incurious axis.
-            -1.0 = Disinterested in learning.
-            +1.0 = Intensely curious about everything.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Merciful">
-            <summary>
-            Merciful vs Ruthless axis.
-            -1.0 = Completely ruthless.
-            +1.0 = Always shows mercy.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Ambitious">
-            <summary>
-            Ambitious vs Content axis.
-            -1.0 = Content with current status.
-            +1.0 = Intensely driven to advance.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.Stoic">
-            <summary>
-            Stoic vs Expressive axis.
-            -1.0 = Highly expressive emotionally.
-            +1.0 = Stoic, hides emotions.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.All">
-            <summary>
-            All defined personality traits.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.GetByCode(System.String)">
-            <summary>
-            Gets a trait by its code.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTraits.GetLabel(BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait,System.Double)">
-            <summary>
-            Gets the descriptive label for a trait value.
-            </summary>
-            <param name="trait">The trait to describe.</param>
-            <param name="value">The trait value (-1 to +1).</param>
-            <returns>Human-readable description of this trait level.</returns>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait">
-            <summary>
-            Represents a personality trait axis.
-            </summary>
-            <param name="Code">Unique identifier for the trait.</param>
-            <param name="Name">Display name (typically the positive pole).</param>
-            <param name="NegativePole">Label for -1.0 end of axis.</param>
-            <param name="PositivePole">Label for +1.0 end of axis.</param>
-            <param name="Description">What this trait measures.</param>
-            <param name="BehaviorImpact">How this trait affects NPC behavior.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.#ctor(System.String,System.String,System.String,System.String,System.String,System.String)">
-            <summary>
-            Represents a personality trait axis.
-            </summary>
-            <param name="Code">Unique identifier for the trait.</param>
-            <param name="Name">Display name (typically the positive pole).</param>
-            <param name="NegativePole">Label for -1.0 end of axis.</param>
-            <param name="PositivePole">Label for +1.0 end of axis.</param>
-            <param name="Description">What this trait measures.</param>
-            <param name="BehaviorImpact">How this trait affects NPC behavior.</param>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.Code">
-            <summary>Unique identifier for the trait.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.Name">
-            <summary>Display name (typically the positive pole).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.NegativePole">
-            <summary>Label for -1.0 end of axis.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.PositivePole">
-            <summary>Label for +1.0 end of axis.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.Description">
-            <summary>What this trait measures.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.BehaviorImpact">
-            <summary>How this trait affects NPC behavior.</summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.GetLabel(System.Double)">
-            <summary>
-            Gets the label for a specific value on this trait axis.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityTrait.GetPolarity(System.Double)">
-            <summary>
-            Gets which pole a value leans toward.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes">
-            <summary>
-            Common personality archetypes composed of trait combinations.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.Hero">
-            <summary>
-            The Hero - brave, loyal, merciful.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.Villain">
-            <summary>
-            The Villain - ruthless, ambitious, suspicious.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.Mentor">
-            <summary>
-            The Mentor - wise, cautious, loyal.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.Trickster">
-            <summary>
-            The Trickster - curious, reckless, self-serving.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.Guardian">
-            <summary>
-            The Guardian - loyal, cautious, stoic.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.All">
-            <summary>
-            All defined archetypes.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.FindClosest(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Double})">
-            <summary>
-            Finds the closest archetype to a given trait set.
-            </summary>
-            <param name="traits">Trait values keyed by trait code.</param>
-            <returns>Archetype name and similarity score (0-1).</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Characters.PersonalityArchetypes.CalculateSimilarity(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Double},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Double})">
-            <summary>
-            Calculate cosine similarity between trait sets.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase">
-            <summary>
-            Narrative phases based on Propp's morphological analysis.
-            These represent the major structural divisions of a narrative.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase.Preparation">
-            <summary>
-            Initial situation and setup (Propp functions 1-7).
-            Establishes the world, characters, and initial state.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase.Complication">
-            <summary>
-            Problem establishment (Propp functions 8-11).
-            Introduces the villainy or lack that drives the story.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase.Donor">
-            <summary>
-            Helper acquisition (Propp functions 12-15).
-            Hero gains magical agent or assistance.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase.Transference">
-            <summary>
-            Transition to confrontation (Propp function 16).
-            Hero is transported to the location of conflict.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase.Struggle">
-            <summary>
-            Direct conflict (Propp functions 17-19).
-            Combat, victory, and resolution of the initial problem.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase.Return">
-            <summary>
-            Resolution and aftermath (Propp functions 20-31).
-            Hero returns, is recognized, and receives reward.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhaseExtensions">
-            <summary>
-            Extension methods for NarrativePhase.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhaseExtensions.GetSignificance(BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase)">
-            <summary>
-            Gets the significance weight for a narrative phase.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhaseExtensions.Parse(System.String)">
-            <summary>
-            Parses a phase name to the enum value.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhaseExtensions.TryParse(System.String,BeyondImmersion.Bannou.StorylineTheory.Elements.NarrativePhase@)">
-            <summary>
-            Tries to parse a phase name.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions">
-            <summary>
-            Vladimir Propp's 31 narrative functions from Morphology of the Folktale (1928).
-            Functions represent actions that advance the plot, occurring in a fixed sequential order.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.GetPhaseSignificance(System.String)">
-            <summary>
-            Gets the narrative significance of a function based on its phase.
-            Higher significance indicates more essential story beats.
-            </summary>
-            <param name="phase">The narrative phase (preparation, complication, donor, transference, struggle, return).</param>
-            <returns>Significance score (0.0-1.0).</returns>
-            <remarks>
-            Phase weights rationale:
-            - Struggle/Return (0.9): Story climax and resolution - essential beats
-            - Complication (0.8): Problem establishment - mandatory (Villainy or Lack required)
-            - Transference (0.7): Bridge to conflict - transformation point
-            - Donor (0.6): Helper acquisition - enables resolution
-            - Preparation (0.4): Setup functions - often optional in shorter narratives
-            </remarks>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.GetPhaseForFunction(System.String)">
-            <summary>
-            Gets the phase for a function by its code.
-            </summary>
-            <param name="code">The function code (e.g., "absentation", "villainy", "victory").</param>
-            <returns>The phase name, or "unknown" if not found.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.GetFunctionSignificance(System.String)">
-            <summary>
-            Gets the significance for a function by its code.
-            </summary>
-            <param name="code">The function code.</param>
-            <returns>Significance score (0.0-1.0).</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.IsMandatory(System.String)">
-            <summary>
-            Checks if a function is mandatory for a complete narrative.
-            </summary>
-            <param name="code">The function code.</param>
-            <returns>True if the function is required for narrative completeness.</returns>
-            <remarks>
-            Per Propp, a tale must have either Villainy (A) or Lack (a) to initiate the complication.
-            Liquidation (K) or its equivalent resolves the narrative problem.
-            </remarks>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.All">
-            <summary>
-            All 31 Propp functions with their symbols, names, and phases.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.GetByCode(System.String)">
-            <summary>
-            Gets a function by its code.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.GetBySymbol(System.String)">
-            <summary>
-            Gets a function by its symbol.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunctions.GetByPhase(System.String)">
-            <summary>
-            Gets all functions in a specific phase.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction">
-            <summary>
-            Represents a single Propp narrative function.
-            </summary>
-            <param name="Code">Unique lowercase identifier (e.g., "villainy", "departure").</param>
-            <param name="Symbol">Propp's original symbol (e.g., "A", "↑", "β").</param>
-            <param name="Name">Human-readable name.</param>
-            <param name="Phase">Narrative phase (preparation, complication, donor, transference, struggle, return).</param>
-            <param name="Description">Brief description of the function's narrative role.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.#ctor(System.String,System.String,System.String,System.String,System.String)">
-            <summary>
-            Represents a single Propp narrative function.
-            </summary>
-            <param name="Code">Unique lowercase identifier (e.g., "villainy", "departure").</param>
-            <param name="Symbol">Propp's original symbol (e.g., "A", "↑", "β").</param>
-            <param name="Name">Human-readable name.</param>
-            <param name="Phase">Narrative phase (preparation, complication, donor, transference, struggle, return).</param>
-            <param name="Description">Brief description of the function's narrative role.</param>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.Code">
-            <summary>Unique lowercase identifier (e.g., "villainy", "departure").</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.Symbol">
-            <summary>Propp's original symbol (e.g., "A", "↑", "β").</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.Name">
-            <summary>Human-readable name.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.Phase">
-            <summary>Narrative phase (preparation, complication, donor, transference, struggle, return).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.Description">
-            <summary>Brief description of the function's narrative role.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.Significance">
-            <summary>
-            Gets the significance score for this function based on its phase.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Elements.ProppFunction.IsMandatory">
-            <summary>
-            Gets whether this function is mandatory for a complete narrative.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue">
-            <summary>
-            Core values at stake in Story Grid genres.
-            Each genre centers on a specific value spectrum that drives the narrative.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Life">
-            <summary>Life vs Death - Action, Thriller, Horror genres.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Justice">
-            <summary>Justice vs Injustice - Crime, Legal genres.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Love">
-            <summary>Love vs Hate - Romance, Buddy Love genres.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Success">
-            <summary>Success vs Failure - Status, Performance genres.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Worldview">
-            <summary>Sophistication vs Naivete - Worldview (Coming of Age) genre.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Morality">
-            <summary>Altruism vs Selfishness - Morality genre.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Honor">
-            <summary>Honor vs Dishonor - War genre.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Freedom">
-            <summary>Freedom vs Subjugation - Society genre.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue.Truth">
-            <summary>Truth vs Deception - Mystery genre.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum">
-             <summary>
-             Represents a value spectrum with positive, negative, and negation-of-negation states.
-             </summary>
-             <param name="Positive">The positive end of the spectrum (e.g., "Life").</param>
-             <param name="Negative">The negative end (e.g., "Death").</param>
-             <param name="NegationOfNegation">The fate worse than negative (e.g., "Damnation").</param>
-             <remarks>
-             Story Grid's value spectrum includes a "negation of the negation" - a state worse
-             than the simple negative. For example, in Thriller:
-             - Positive: Life
-             - Negative: Death
-             - Negation of Negation: Damnation (a fate worse than death)
-            
-             The negation of negation represents the ultimate stakes and often appears
-             at the "All Is Lost" moment.
-             </remarks>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum.#ctor(System.String,System.String,System.String)">
-             <summary>
-             Represents a value spectrum with positive, negative, and negation-of-negation states.
-             </summary>
-             <param name="Positive">The positive end of the spectrum (e.g., "Life").</param>
-             <param name="Negative">The negative end (e.g., "Death").</param>
-             <param name="NegationOfNegation">The fate worse than negative (e.g., "Damnation").</param>
-             <remarks>
-             Story Grid's value spectrum includes a "negation of the negation" - a state worse
-             than the simple negative. For example, in Thriller:
-             - Positive: Life
-             - Negative: Death
-             - Negation of Negation: Damnation (a fate worse than death)
-            
-             The negation of negation represents the ultimate stakes and often appears
-             at the "All Is Lost" moment.
-             </remarks>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum.Positive">
-            <summary>The positive end of the spectrum (e.g., "Life").</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum.Negative">
-            <summary>The negative end (e.g., "Death").</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum.NegationOfNegation">
-            <summary>The fate worse than negative (e.g., "Damnation").</summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum.NormalizePosition(System.Double)">
-            <summary>
-            Converts a value position (-1 to +1) to a spectrum position.
-            -1.0 = Negation of Negation, 0.0 = Negative, +1.0 = Positive
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum.GetLabel(System.Double)">
-            <summary>
-            Gets the label for a value position on the spectrum.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum.CalculateRangeCovered(System.Double,System.Double)">
-            <summary>
-            Calculates the range covered between two positions.
-            </summary>
-            <param name="minPosition">Lowest point reached.</param>
-            <param name="maxPosition">Highest point reached.</param>
-            <returns>Range as a fraction of the full spectrum (0-1).</returns>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres">
-            <summary>
-            Story Grid genre definitions with obligatory scenes, conventions, and value spectrums.
-            Based on Shawn Coyne's "The Story Grid" (2015).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Action">
-            <summary>
-            Action genre - Life vs Death with external physical conflict.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Thriller">
-            <summary>
-            Thriller genre - Life vs Damnation with psychological/existential stakes.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Horror">
-            <summary>
-            Horror genre - Life vs Fate Worse Than Death with supernatural/monstrous threat.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Crime">
-            <summary>
-            Mystery/Crime genre - Justice vs Injustice with investigation.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Love">
-            <summary>
-            Love/Romance genre - Love vs Hate with relationship focus.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Worldview">
-            <summary>
-            Worldview genre - Sophistication vs Naivete (coming of age).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Morality">
-            <summary>
-            Morality genre - Altruism vs Selfishness.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.Status">
-            <summary>
-            Status genre - Success vs Failure.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.All">
-            <summary>
-            All defined genres.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenres.GetByCode(System.String)">
-            <summary>
-            Gets a genre by its code.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre">
-            <summary>
-            Represents a complete Story Grid genre definition.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre.#ctor(System.String,System.String,BeyondImmersion.Bannou.StorylineTheory.Genre.CoreValue,System.String,BeyondImmersion.Bannou.StorylineTheory.Genre.ValueSpectrum,System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.StorylineTheory.Genre.ObligatoryScene},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.StorylineTheory.Genre.GenreConvention})">
-            <summary>
-            Represents a complete Story Grid genre definition.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre.IsCoreEvent(System.String)">
-            <summary>
-            Checks if a scene code matches the core event for this genre.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre.GetObligatoryScene(System.String)">
-            <summary>
-            Gets an obligatory scene by its code.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre.GetConvention(System.String)">
-            <summary>
-            Gets a convention by its code.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Genre.ObligatoryScene">
-            <summary>
-            Represents a required scene for a genre.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.ObligatoryScene.#ctor(System.String,System.String,System.String)">
-            <summary>
-            Represents a required scene for a genre.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Genre.GenreConvention">
-            <summary>
-            Represents an expected convention for a genre.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Genre.GenreConvention.#ctor(System.String,System.String,System.String)">
-            <summary>
-            Represents an expected convention for a genre.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer">
-             <summary>
-             Scores how well a story satisfies its genre contract.
-             Based on Shawn Coyne's Story Grid methodology (2015).
-            
-             WEIGHT DERIVATION: These weights are design hypotheses based on:
-             - Story Grid's emphasis on obligatory scenes as genre contracts
-             - Convention presence as reader expectation fulfillment
-             - Core event as the defining moment of the genre
-             - Value spectrum range as emotional journey completeness
-             Configurable to allow empirical tuning via A/B testing.
-             </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.Weights">
-            <summary>
-            Hypothesis weights for genre compliance scoring.
-            Subject to empirical calibration.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.Weights.ObligatoryScenes">
-            <summary>
-            Weight for obligatory scene completion.
-            Rationale: Obligatory scenes are the genre's contract with the audience.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.Weights.Conventions">
-            <summary>
-            Weight for convention presence.
-            Rationale: Conventions set reader expectations for the genre.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.Weights.CoreEvent">
-            <summary>
-            Weight for core event presence.
-            Rationale: The core event is the defining moment of the genre.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.Weights.ValueSpectrum">
-            <summary>
-            Weight for value spectrum coverage.
-            Rationale: Emotional range defines the genre's impact.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.Calculate(BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre,System.Collections.Generic.IReadOnlyCollection{System.String},System.Collections.Generic.IReadOnlyCollection{System.String},System.Boolean,System.Double,System.Double)">
-            <summary>
-            Calculate genre compliance score.
-            </summary>
-            <param name="genre">The target genre to evaluate against.</param>
-            <param name="satisfiedObligatorySceneCodes">Codes of obligatory scenes that have been satisfied.</param>
-            <param name="presentConventionCodes">Codes of conventions present in the story.</param>
-            <param name="coreEventSatisfied">Whether the genre's core event has occurred.</param>
-            <param name="minValuePosition">Minimum position reached on the value spectrum (-1 to +1).</param>
-            <param name="maxValuePosition">Maximum position reached on the value spectrum (-1 to +1).</param>
-            <returns>Compliance score (0-1). Higher scores indicate better genre fit.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.CalculateObligatorySceneScore(BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre,System.Collections.Generic.IReadOnlyCollection{System.String})">
-            <summary>
-            Calculate obligatory scene completion with importance weighting.
-            More important scenes contribute more to the score.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.CalculateConventionScore(BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre,System.Collections.Generic.IReadOnlyCollection{System.String})">
-            <summary>
-            Calculate convention presence score.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.CalculateBlended(System.Collections.Generic.IReadOnlyList{System.ValueTuple{BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre,System.Double}},System.Collections.Generic.IReadOnlyCollection{System.String},System.Collections.Generic.IReadOnlyCollection{System.String},System.Collections.Generic.IReadOnlyCollection{System.String},System.Double,System.Double)">
-            <summary>
-            Evaluates compliance for multiple genres (hybrid stories).
-            Returns the weighted average based on genre blend ratios.
-            </summary>
-            <param name="genreBlends">Genre and its weight in the blend (weights should sum to 1).</param>
-            <param name="satisfiedObligatorySceneCodes">All satisfied obligatory scene codes.</param>
-            <param name="presentConventionCodes">All present convention codes.</param>
-            <param name="satisfiedCoreEventCodes">Codes of core events that have been satisfied.</param>
-            <param name="minValuePosition">Minimum value spectrum position.</param>
-            <param name="maxValuePosition">Maximum value spectrum position.</param>
-            <returns>Blended compliance score (0-1).</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceScorer.GetBreakdown(BeyondImmersion.Bannou.StorylineTheory.Genre.StoryGridGenre,System.Collections.Generic.IReadOnlyCollection{System.String},System.Collections.Generic.IReadOnlyCollection{System.String},System.Boolean,System.Double,System.Double)">
-            <summary>
-            Gets a detailed breakdown of genre compliance for analysis.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown">
-            <summary>
-            Detailed breakdown of genre compliance scoring.
-            </summary>
-            <param name="TotalScore">Overall compliance score (0-1).</param>
-            <param name="ObligatorySceneScore">Score from obligatory scene satisfaction (0-1).</param>
-            <param name="ConventionScore">Score from convention presence (0-1).</param>
-            <param name="CoreEventSatisfied">Whether the core event occurred.</param>
-            <param name="ValueSpectrumCoverage">Coverage of the value spectrum (0-1).</param>
-            <param name="MissingObligatoryScenes">Codes of unsatisfied obligatory scenes.</param>
-            <param name="MissingConventions">Codes of missing conventions.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.#ctor(System.Double,System.Double,System.Double,System.Boolean,System.Double,System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IReadOnlyList{System.String})">
-            <summary>
-            Detailed breakdown of genre compliance scoring.
-            </summary>
-            <param name="TotalScore">Overall compliance score (0-1).</param>
-            <param name="ObligatorySceneScore">Score from obligatory scene satisfaction (0-1).</param>
-            <param name="ConventionScore">Score from convention presence (0-1).</param>
-            <param name="CoreEventSatisfied">Whether the core event occurred.</param>
-            <param name="ValueSpectrumCoverage">Coverage of the value spectrum (0-1).</param>
-            <param name="MissingObligatoryScenes">Codes of unsatisfied obligatory scenes.</param>
-            <param name="MissingConventions">Codes of missing conventions.</param>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.TotalScore">
-            <summary>Overall compliance score (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.ObligatorySceneScore">
-            <summary>Score from obligatory scene satisfaction (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.ConventionScore">
-            <summary>Score from convention presence (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.CoreEventSatisfied">
-            <summary>Whether the core event occurred.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.ValueSpectrumCoverage">
-            <summary>Coverage of the value spectrum (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.MissingObligatoryScenes">
-            <summary>Codes of unsatisfied obligatory scenes.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.GenreComplianceBreakdown.MissingConventions">
-            <summary>Codes of missing conventions.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier">
-             <summary>
-             Classifies events as Kernels (essential) or Satellites (elaboration).
-             Based on Roland Barthes' "Introduction to the Structural Analysis of Narratives" (1966).
-            
-             WEIGHT DERIVATION: These weights are design hypotheses based on:
-             - Barthes' conceptual hierarchy (kernels = branching points)
-             - Propp's phase ordering (later phases = higher stakes)
-             - Configurable to allow empirical tuning via A/B testing.
-             </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.Weights">
-            <summary>
-            Hypothesis weights for kernel identification.
-            Subject to empirical calibration.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.Weights.ProppFunction">
-            <summary>
-            Weight for Propp function satisfaction.
-            Rationale: Functions define story grammar.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.Weights.ObligatoryScene">
-            <summary>
-            Weight for obligatory scene satisfaction.
-            Rationale: Genre contracts with audience.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.Weights.ValueChange">
-            <summary>
-            Weight for value change magnitude.
-            Rationale: McKee's definition of dramatic unit.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.Weights.ConsequenceRatio">
-            <summary>
-            Weight for consequence ratio.
-            Rationale: Causal importance in plot structure.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.DefaultThreshold">
-            <summary>
-            Default threshold for kernel classification.
-            Events scoring above this are kernels; below are satellites.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.Calculate(System.String,System.Boolean,System.Double,System.Double)">
-            <summary>
-            Calculate kernel score for an event.
-            </summary>
-            <param name="proppFunctionPhase">The Propp phase if this event satisfies a function, null otherwise.</param>
-            <param name="isObligatoryScene">Whether this event fulfills a genre obligatory scene.</param>
-            <param name="valueChangeMagnitude">Magnitude of value spectrum change (0-1).</param>
-            <param name="consequenceRatio">Fraction of story events that depend on this one (0-1).</param>
-            <returns>Kernel score (0-1). Higher scores indicate more essential events.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.CalculateByFunctionCode(System.String,System.Boolean,System.Double,System.Double)">
-            <summary>
-            Calculate kernel score using a Propp function code directly.
-            </summary>
-            <param name="proppFunctionCode">The Propp function code (e.g., "villainy", "victory"), or null.</param>
-            <param name="isObligatoryScene">Whether this event fulfills a genre obligatory scene.</param>
-            <param name="valueChangeMagnitude">Magnitude of value spectrum change (0-1).</param>
-            <param name="consequenceRatio">Fraction of story events that depend on this one (0-1).</param>
-            <returns>Kernel score (0-1).</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.IsKernel(System.Double,System.Double)">
-            <summary>
-            Determines if an event is a kernel based on its score.
-            </summary>
-            <param name="score">The kernel score.</param>
-            <param name="threshold">Classification threshold (default 0.5).</param>
-            <returns>True if the event is a kernel, false if satellite.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelIdentifier.Classify(System.String,System.Boolean,System.Double,System.Double,System.Double)">
-            <summary>
-            Classifies an event as kernel or satellite.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelClassification">
-            <summary>
-            Result of kernel classification.
-            </summary>
-            <param name="Score">The calculated kernel score (0-1).</param>
-            <param name="IsKernel">Whether the event is classified as a kernel.</param>
-            <param name="Type">The narrative unit type.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelClassification.#ctor(System.Double,System.Boolean,BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeUnitType)">
-            <summary>
-            Result of kernel classification.
-            </summary>
-            <param name="Score">The calculated kernel score (0-1).</param>
-            <param name="IsKernel">Whether the event is classified as a kernel.</param>
-            <param name="Type">The narrative unit type.</param>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelClassification.Score">
-            <summary>The calculated kernel score (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelClassification.IsKernel">
-            <summary>Whether the event is classified as a kernel.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.KernelClassification.Type">
-            <summary>The narrative unit type.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeUnitType">
-            <summary>
-            Types of narrative units based on Barthes' classification.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeUnitType.Kernel">
-            <summary>
-            Essential event that cannot be removed without altering story logic.
-            Represents branching points where choices occur.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeUnitType.Satellite">
-            <summary>
-            Elaboration and texture that can be freely modified or removed.
-            Embellishes kernels without changing the fundamental story.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer">
-             <summary>
-             Scores the narrative potential of a story state for GOAP planning.
-             Higher potential indicates more promising states for action selection.
-            
-             WEIGHT DERIVATION: These weights are design hypotheses based on:
-             - Distance to goal is the primary GOAP heuristic
-             - Available actions represent narrative flexibility
-             - Unrevealed information creates engagement hooks
-             - Urgency signals proximity to resolution
-             Configurable to allow empirical tuning via A/B testing.
-             </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Weights">
-            <summary>
-            Hypothesis weights for narrative potential scoring.
-            Subject to empirical calibration.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Weights.GoalProgress">
-            <summary>
-            Weight for progress toward goal state.
-            Rationale: Primary GOAP heuristic - closer to goal is better.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Weights.ActionAvailability">
-            <summary>
-            Weight for available narrative actions.
-            Rationale: More options = more narrative flexibility.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Weights.TensionStakesAlignment">
-            <summary>
-            Weight for tension-stakes alignment.
-            Rationale: Misaligned tension/stakes feels wrong to audiences.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Weights.MysteryEngagement">
-            <summary>
-            Weight for mystery engagement.
-            Rationale: Unrevealed information hooks engagement.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Weights.UrgencyAppropriateness">
-            <summary>
-            Weight for urgency appropriateness.
-            Rationale: Urgency should match story phase.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Thresholds">
-            <summary>
-            Thresholds for alignment scoring.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Thresholds.TensionStakesMaxDiff">
-            <summary>
-            Maximum reasonable difference between tension and stakes.
-            Beyond this, the story feels incoherent.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Thresholds.MinEngagingMystery">
-            <summary>
-            Minimum mystery needed for engagement (except at resolution).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Thresholds.MaxClearMystery">
-            <summary>
-            Maximum mystery that maintains clarity.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.Calculate(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,System.Int32,System.Int32,System.Double)">
-            <summary>
-            Calculate narrative potential score.
-            </summary>
-            <param name="currentState">The current narrative state.</param>
-            <param name="goalState">The target narrative state.</param>
-            <param name="availableActionCount">Number of valid actions from this state.</param>
-            <param name="totalPossibleActions">Total actions in the action space.</param>
-            <param name="storyProgress">Current progress through the story (0-1).</param>
-            <returns>Potential score (0-1). Higher scores indicate more promising states.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.CalculateGoalProgress(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState)">
-            <summary>
-            Calculate goal progress as inverse normalized distance.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.CalculateTensionStakesAlignment(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState)">
-            <summary>
-            Calculate tension-stakes alignment.
-            High tension with low stakes (or vice versa) feels wrong.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.CalculateMysteryEngagement(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,System.Double)">
-            <summary>
-            Calculate mystery engagement score.
-            Mystery should decrease toward resolution but maintain engagement.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.CalculateUrgencyAppropriateness(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,System.Double)">
-            <summary>
-            Calculate urgency appropriateness for the story phase.
-            Urgency should generally increase toward the climax.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.GoapHeuristic(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState)">
-            <summary>
-            GOAP heuristic function for A* planning.
-            Returns estimated cost to reach goal from current state.
-            </summary>
-            <param name="currentState">Current narrative state.</param>
-            <param name="goalState">Target narrative state.</param>
-            <returns>Estimated cost (lower is closer to goal).</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.EvaluateTransition(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState)">
-            <summary>
-            Evaluates whether a state transition moves toward the goal.
-            Useful for GOAP action evaluation.
-            </summary>
-            <param name="beforeState">State before action.</param>
-            <param name="afterState">State after action.</param>
-            <param name="goalState">Target state.</param>
-            <returns>Positive if moving toward goal, negative if moving away.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.GetBreakdown(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,System.Int32,System.Int32,System.Double)">
-            <summary>
-            Gets a detailed breakdown of narrative potential for analysis.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialScorer.SuggestAdjustments(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,System.Double)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.ShapePattern">
             <summary>
-            Suggests state adjustments to improve narrative potential.
+            The shape pattern (e.g., "fall_rise", "rise_fall_rise").
             </summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.Direction">
             <summary>
-            Detailed breakdown of narrative potential scoring.
+            The overall direction (positive or negative ending).
             </summary>
-            <param name="TotalScore">Overall potential score (0-1).</param>
-            <param name="GoalProgressScore">Score for progress toward goal (0-1).</param>
-            <param name="ActionAvailabilityScore">Score for available actions (0-1).</param>
-            <param name="TensionStakesAlignmentScore">Score for tension-stakes alignment (0-1).</param>
-            <param name="MysteryEngagementScore">Score for mystery engagement (0-1).</param>
-            <param name="UrgencyAppropriatenessScore">Score for urgency appropriateness (0-1).</param>
-            <param name="DistanceToGoal">Raw Euclidean distance to goal state.</param>
-            <param name="NormalizedDistanceToGoal">Normalized distance to goal (0-1).</param>
-            <param name="AvailableActions">Count of available actions.</param>
-            <param name="TotalActions">Total possible actions.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.#ctor(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Int32,System.Int32)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.MathematicalForm">
             <summary>
-            Detailed breakdown of narrative potential scoring.
+            The mathematical form description (for documentation).
             </summary>
-            <param name="TotalScore">Overall potential score (0-1).</param>
-            <param name="GoalProgressScore">Score for progress toward goal (0-1).</param>
-            <param name="ActionAvailabilityScore">Score for available actions (0-1).</param>
-            <param name="TensionStakesAlignmentScore">Score for tension-stakes alignment (0-1).</param>
-            <param name="MysteryEngagementScore">Score for mystery engagement (0-1).</param>
-            <param name="UrgencyAppropriatenessScore">Score for urgency appropriateness (0-1).</param>
-            <param name="DistanceToGoal">Raw Euclidean distance to goal state.</param>
-            <param name="NormalizedDistanceToGoal">Normalized distance to goal (0-1).</param>
-            <param name="AvailableActions">Count of available actions.</param>
-            <param name="TotalActions">Total possible actions.</param>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.TotalScore">
-            <summary>Overall potential score (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.GoalProgressScore">
-            <summary>Score for progress toward goal (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.ActionAvailabilityScore">
-            <summary>Score for available actions (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.TensionStakesAlignmentScore">
-            <summary>Score for tension-stakes alignment (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.MysteryEngagementScore">
-            <summary>Score for mystery engagement (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.UrgencyAppropriatenessScore">
-            <summary>Score for urgency appropriateness (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.DistanceToGoal">
-            <summary>Raw Euclidean distance to goal state.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.NormalizedDistanceToGoal">
-            <summary>Normalized distance to goal (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.AvailableActions">
-            <summary>Count of available actions.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativePotentialBreakdown.TotalActions">
-            <summary>Total possible actions.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeStateAdjustments">
-            <summary>
-            Suggested adjustments to improve narrative potential.
-            </summary>
-            <param name="Suggestions">Human-readable improvement suggestions.</param>
-            <param name="SuggestedTargetState">Recommended state to target.</param>
-            <param name="CurrentPotential">Current potential score.</param>
-            <param name="ProjectedPotential">Projected score if suggestions applied.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeStateAdjustments.#ctor(System.Collections.Generic.IReadOnlyList{System.String},BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,System.Double,System.Double)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.ControlPoints">
             <summary>
-            Suggested adjustments to improve narrative potential.
+            The control points defining key positions in the arc.
             </summary>
-            <param name="Suggestions">Human-readable improvement suggestions.</param>
-            <param name="SuggestedTargetState">Recommended state to target.</param>
-            <param name="CurrentPotential">Current potential score.</param>
-            <param name="ProjectedPotential">Projected score if suggestions applied.</param>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeStateAdjustments.Suggestions">
-            <summary>Human-readable improvement suggestions.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeStateAdjustments.SuggestedTargetState">
-            <summary>Recommended state to target.</summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeStateAdjustments.CurrentPotential">
-            <summary>Current potential score.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.NarrativeStateAdjustments.ProjectedPotential">
-            <summary>Projected score if suggestions applied.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer">
-             <summary>
-             Scores story pacing against beat sheet timing expectations.
-             Based on Blake Snyder's Save the Cat methodology (2005).
-            
-             WEIGHT DERIVATION: These weights are design hypotheses based on:
-             - Critical beats (Catalyst, Midpoint, All Is Lost) are structural pillars
-             - Order violations create narrative confusion
-             - Timing drift accumulates but early beats set expectations
-             Configurable to allow empirical tuning via A/B testing.
-             </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.Weights">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.SampledTrajectory">
             <summary>
-            Hypothesis weights for pacing satisfaction scoring.
-            Subject to empirical calibration.
+            Pre-computed trajectory at 11 sample points (0%, 10%, 20%, ..., 100%).
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.Weights.CriticalBeatTiming">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArc.EvaluateAt(System.Double)">
             <summary>
-            Weight for critical beat timing accuracy.
-            Rationale: Critical beats are the structural pillars of the story.
+            Evaluates the arc at a given position using linear interpolation.
             </summary>
+            <param name="position">The story position (0.0 to 1.0).</param>
+            <returns>The emotional value at that position.</returns>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.Weights.BeatOrder">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcLoader">
             <summary>
-            Weight for beat order correctness.
-            Rationale: Out-of-order beats confuse the narrative flow.
+            Loads emotional arc definitions from emotional-arcs.yaml.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.Weights.OverallTiming">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcLoader.All">
             <summary>
-            Weight for overall timing drift.
-            Rationale: Cumulative timing errors indicate pacing problems.
+            Gets all emotional arc definitions.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.Weights.BeatCoverage">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcLoader.Get(BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType)">
             <summary>
-            Weight for beat coverage (are all beats present?).
-            Rationale: Missing beats create structural gaps.
+            Gets an emotional arc by type.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.DefaultTimingStrategy">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState">
             <summary>
-            Timing strategy for beat percentage targets.
+            Combined state model for GOAP planning, containing narrative state,
+            story facts, and position in the story.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.Calculate(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.Double}},System.String)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState.NarrativeState">
             <summary>
-            Calculate pacing satisfaction score.
+            The current emotional/narrative state on the spectrum.
             </summary>
-            <param name="beatOccurrences">List of (beat code, actual position 0-1) in occurrence order.</param>
-            <param name="timingStrategy">Timing strategy: "bs2" for screenplay, "fiction" for novels.</param>
-            <returns>Pacing satisfaction score (0-1). Higher scores indicate better pacing.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.CalculateCriticalBeatTiming(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.Double}},System.String)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState.Facts">
             <summary>
-            Calculate timing accuracy for critical beats only.
+            Boolean/numeric facts about the story world.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.CalculateBeatOrderScore(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.Double}})">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState.Position">
             <summary>
-            Calculate beat order correctness.
-            Returns 1.0 if beats are in correct order, decreases with inversions.
+            Position in the story (0.0 = start, 1.0 = end).
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.CalculateOverallTimingScore(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.Double}},System.String)">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState.WithFact(System.String,System.Object)">
             <summary>
-            Calculate overall timing drift across all beats.
+            Returns a new WorldState with the specified fact added or updated.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.CalculateBeatCoverageScore(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.Double}})">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState.WithNarrativeState(BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState)">
             <summary>
-            Calculate beat coverage score.
+            Returns a new WorldState with the specified narrative state.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.GetBreakdown(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.Double}},System.String)">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState.WithPosition(System.Double)">
             <summary>
-            Gets a detailed breakdown of pacing for analysis.
+            Returns a new WorldState with the specified position.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingSatisfactionScorer.SuggestNextBeat(System.Double,System.Collections.Generic.IReadOnlyCollection{System.String},System.String)">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Spectrums.GenreSpectrumMapping">
             <summary>
-            Suggests the next beat based on current story position.
+            Maps a genre to its primary and optional secondary spectrum.
             </summary>
-            <param name="currentPosition">Current position in the story (0-1).</param>
-            <param name="satisfiedBeatCodes">Beats that have already occurred.</param>
-            <param name="timingStrategy">Timing strategy for targets.</param>
-            <returns>The recommended next beat, or null if story is complete.</returns>
         </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.GenreSpectrumMapping.Genre">
             <summary>
-            Detailed breakdown of pacing analysis.
+            The genre code (e.g., "action", "crime", "love").
             </summary>
-            <param name="TotalScore">Overall pacing score (0-1).</param>
-            <param name="CriticalBeatScore">Score for critical beat timing (0-1).</param>
-            <param name="OrderScore">Score for beat order correctness (0-1).</param>
-            <param name="TimingScore">Score for overall timing accuracy (0-1).</param>
-            <param name="CoverageScore">Score for beat coverage (0-1).</param>
-            <param name="BeatTimings">Detailed timing analysis per beat.</param>
-            <param name="MissingBeats">Codes of beats not yet satisfied.</param>
-            <param name="OrderInversions">Pairs of beats that are out of order.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.#ctor(System.Double,System.Double,System.Double,System.Double,System.Double,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis},System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.String}})">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.GenreSpectrumMapping.Subgenre">
             <summary>
-            Detailed breakdown of pacing analysis.
+            The optional subgenre.
             </summary>
-            <param name="TotalScore">Overall pacing score (0-1).</param>
-            <param name="CriticalBeatScore">Score for critical beat timing (0-1).</param>
-            <param name="OrderScore">Score for beat order correctness (0-1).</param>
-            <param name="TimingScore">Score for overall timing accuracy (0-1).</param>
-            <param name="CoverageScore">Score for beat coverage (0-1).</param>
-            <param name="BeatTimings">Detailed timing analysis per beat.</param>
-            <param name="MissingBeats">Codes of beats not yet satisfied.</param>
-            <param name="OrderInversions">Pairs of beats that are out of order.</param>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.TotalScore">
-            <summary>Overall pacing score (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.CriticalBeatScore">
-            <summary>Score for critical beat timing (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.OrderScore">
-            <summary>Score for beat order correctness (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.TimingScore">
-            <summary>Score for overall timing accuracy (0-1).</summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.CoverageScore">
-            <summary>Score for beat coverage (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.BeatTimings">
-            <summary>Detailed timing analysis per beat.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.MissingBeats">
-            <summary>Codes of beats not yet satisfied.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.PacingBreakdown.OrderInversions">
-            <summary>Pairs of beats that are out of order.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.GenreSpectrumMapping.PrimarySpectrum">
             <summary>
-            Timing analysis for a single beat occurrence.
+            The primary spectrum for this genre.
             </summary>
-            <param name="BeatCode">The beat's code.</param>
-            <param name="BeatName">The beat's display name.</param>
-            <param name="ActualPosition">Where the beat actually occurred (0-1).</param>
-            <param name="TargetPosition">Where the beat should ideally occur (0-1).</param>
-            <param name="Deviation">Difference from target (can be negative for early, positive for late).</param>
-            <param name="WithinTolerance">Whether the beat is within acceptable timing range.</param>
-            <param name="IsCritical">Whether this is a critical structural beat.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.#ctor(System.String,System.String,System.Double,System.Double,System.Double,System.Boolean,System.Boolean)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.GenreSpectrumMapping.SecondarySpectrum">
             <summary>
-            Timing analysis for a single beat occurrence.
+            The optional secondary spectrum for this genre.
             </summary>
-            <param name="BeatCode">The beat's code.</param>
-            <param name="BeatName">The beat's display name.</param>
-            <param name="ActualPosition">Where the beat actually occurred (0-1).</param>
-            <param name="TargetPosition">Where the beat should ideally occur (0-1).</param>
-            <param name="Deviation">Difference from target (can be negative for early, positive for late).</param>
-            <param name="WithinTolerance">Whether the beat is within acceptable timing range.</param>
-            <param name="IsCritical">Whether this is a critical structural beat.</param>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.BeatCode">
-            <summary>The beat's code.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.BeatName">
-            <summary>The beat's display name.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.ActualPosition">
-            <summary>Where the beat actually occurred (0-1).</summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.TargetPosition">
-            <summary>Where the beat should ideally occur (0-1).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.Deviation">
-            <summary>Difference from target (can be negative for early, positive for late).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.WithinTolerance">
-            <summary>Whether the beat is within acceptable timing range.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Scoring.BeatTimingAnalysis.IsCritical">
-            <summary>Whether this is a critical structural beat.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState">
             <summary>
-            Six-dimensional narrative state space for story beat tracking.
-            Parallel to EmotionalState in music-storyteller SDK.
-            All dimensions normalized 0.0 to 1.0.
+            Runtime state container for tracking spectrum values during story generation.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Tension">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.LifeDeath">
             <summary>
-            Conflict intensity. 0 = resolved/peaceful, 1 = climactic confrontation.
-            Maps to: unresolved conflicts, active threats, confrontation proximity.
+            Life vs Death spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Stakes">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.HonorDishonor">
             <summary>
-            What's at risk. 0 = trivial consequences, 1 = existential/irreversible.
-            Maps to: life/death, love/loss, honor/shame magnitude.
+            Honor vs Dishonor spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Mystery">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.JusticeInjustice">
             <summary>
-            Unanswered questions. 0 = everything clear, 1 = deep enigma.
-            Maps to: hidden information, unrevealed secrets, unclear motivations.
+            Justice vs Injustice spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Urgency">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.FreedomSubjugation">
             <summary>
-            Time pressure. 0 = leisurely/no deadline, 1 = desperate/immediate.
-            Maps to: countdown timers, approaching threats, windows closing.
+            Freedom vs Subjugation spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Intimacy">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.LoveHate">
             <summary>
-            Character emotional closeness. 0 = strangers/enemies, 1 = deeply bonded.
-            Maps to: relationship depth, trust levels, shared history.
+            Love vs Hate spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Hope">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.RespectShame">
             <summary>
-            Expected outcome valence. 0 = despair/doom, 1 = hope/triumph.
-            Maps to: protagonist advantage, resource availability, ally support.
+            Respect vs Shame spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.#ctor">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.PowerImpotence">
             <summary>
-            Creates a new narrative state with default equilibrium values.
+            Power vs Impotence spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.#ctor(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.SuccessFailure">
             <summary>
-            Creates a new narrative state with specified values.
+            Success vs Failure spectrum value. Null if not actively tracked.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.DistanceTo(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.AltruismSelfishness">
             <summary>
-            Calculates the Euclidean distance to another narrative state.
-            Useful for GOAP heuristics and measuring how far current state is from target.
+            Altruism vs Selfishness spectrum value. Null if not actively tracked.
             </summary>
-            <param name="target">The target narrative state.</param>
-            <returns>Distance in the range [0, sqrt(6)] (~2.45 max).</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.NormalizedDistanceTo(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.WisdomIgnorance">
             <summary>
-            Calculates the normalized distance (0-1) to another narrative state.
+            Wisdom vs Ignorance spectrum value. Null if not actively tracked.
             </summary>
-            <param name="target">The target narrative state.</param>
-            <returns>Normalized distance from 0 (identical) to 1 (maximum difference).</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.InterpolateTo(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState,System.Double)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.PrimarySpectrum">
             <summary>
-            Linearly interpolates between this state and a target state.
+            Which spectrum is primary for this story (determined by genre).
             </summary>
-            <param name="target">The target state to interpolate towards.</param>
-            <param name="t">Interpolation factor from 0 (this state) to 1 (target state).</param>
-            <returns>A new interpolated narrative state.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.ApplyDelta(BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState)">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.Item(BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType)">
             <summary>
-            Applies a delta change to all dimensions.
-            Delta values are centered at 0.5 (no change), so 0.7 adds 0.2, 0.3 subtracts 0.2.
+            Gets or sets a spectrum value by type.
             </summary>
-            <param name="delta">The delta state containing changes to apply.</param>
-            <returns>A new state with the delta applied.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Clone">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState.DistanceTo(BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeState)">
             <summary>
-            Creates a deep copy of this narrative state.
+            Calculates the Euclidean distance to a target state.
+            Used as a heuristic for GOAP planning.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Equilibrium">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeStateLoader">
             <summary>
-            Gets the equilibrium preset (convenience shorthand).
+            Loads spectrum definitions and genre mappings from narrative-state.yaml.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeStateLoader.Spectrums">
             <summary>
-            Common narrative state presets.
+            Gets all spectrum definitions.
             </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.Equilibrium">
-            <summary>Stable starting point.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.RisingAction">
-            <summary>Building toward climax.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.Climax">
-            <summary>Maximum tension climax point.</summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.Resolution">
-            <summary>Resolution after climax.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.Tragedy">
-            <summary>Tragic ending.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.MysteryHook">
-            <summary>Mystery opening with high intrigue.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.DarkestHour">
-            <summary>All Is Lost moment (Save the Cat).</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.Presets.HeroAtMercy">
-            <summary>Hero at Mercy of Villain (Story Grid).</summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.State.NarrativeState.ToString">
-            <inheritdoc />
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeStateLoader.GenreMappings">
             <summary>
-            Blake Snyder's Save the Cat beat sheet with timing percentages.
-            Based on "Save the Cat!" (2005) and "Save the Cat! Writes a Novel" (2018).
+            Gets all genre-to-spectrum mappings.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.OpeningImage">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeStateLoader.GetSpectrum(BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType)">
             <summary>
-            Opening Image - Visual snapshot of the hero's "before" world.
+            Gets a spectrum definition by type.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.ThemeStated">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Spectrums.NarrativeStateLoader.GetPrimarySpectrum(System.String)">
             <summary>
-            Theme Stated - The story's deeper truth is articulated.
+            Gets the primary spectrum for a genre.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.SetUp">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumDefinition">
             <summary>
-            Set-Up - World, flaws, and supporting cast established.
+            A complete spectrum definition loaded from narrative-state.yaml.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.Catalyst">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumDefinition.Type">
             <summary>
-            Catalyst - The inciting incident that disrupts the status quo.
+            The spectrum type identifier.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.Debate">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumDefinition.PositiveLabel">
             <summary>
-            Debate - Hero questions whether to take the journey.
+            The positive pole label (e.g., "Life").
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.BreakIntoTwo">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumDefinition.NegativeLabel">
             <summary>
-            Break into Two - Hero commits to the journey.
+            The negative pole label (e.g., "Death").
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.BStory">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumDefinition.Stages">
             <summary>
-            B Story - Secondary story begins (often a love story).
+            The four stages of the spectrum.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.FunAndGames">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumDefinition.MediaExamples">
             <summary>
-            Fun and Games - The "promise of the premise" is delivered.
+            Media examples for this spectrum.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.Midpoint">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumPole">
             <summary>
-            Midpoint - Major shift with false victory or false defeat.
+            A single pole (stage) in a four-stage spectrum.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.BadGuysCloseIn">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumPole.Label">
             <summary>
-            Bad Guys Close In - External pressures and internal doubts mount.
+            The display label for this pole (e.g., "Life", "Death", "Damnation").
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.AllIsLost">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumPole.Value">
             <summary>
-            All Is Lost - The lowest point with a "whiff of death."
+            The numeric value for this pole on the spectrum scale.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.DarkNightOfSoul">
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumPole.Description">
             <summary>
-            Dark Night of the Soul - Hero reflects in despair.
+            A description of what this pole represents in narrative terms.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.BreakIntoThree">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType">
             <summary>
-            Break into Three - Epiphany sparks renewed resolve.
+            The 10 Life Value spectrums from Story Grid's Four Core Framework.
+            Each spectrum represents a fundamental human need and the poles of value
+            that stories explore.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.Finale">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.LifeDeath">
             <summary>
-            Finale - Hero applies what they've learned.
+            Life vs Death - Survival domain (Maslow Level 1).
+            Primary for: Action, Thriller, Horror.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.FinalImage">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.HonorDishonor">
             <summary>
-            Final Image - Visual "after" showing transformation.
+            Honor vs Dishonor - Safety domain (Maslow Level 2).
+            Primary for: War.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.All">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.JusticeInjustice">
             <summary>
-            All Save the Cat beats in order.
+            Justice vs Injustice - Safety domain (Maslow Level 2).
+            Primary for: Crime.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.GetByCode(System.String)">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.FreedomSubjugation">
             <summary>
-            Gets a beat by its code.
+            Freedom vs Subjugation - Safety domain (Maslow Level 2).
+            Primary for: Western.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.GetByAct(System.Int32)">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.LoveHate">
             <summary>
-            Gets all beats for a specific act.
+            Love vs Hate - Connection domain (Maslow Level 3).
+            Primary for: Love/Romance.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.GetTargetPosition(System.String,System.String)">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.RespectShame">
             <summary>
-            Gets the target position for a beat using the specified strategy.
+            Respect vs Shame - Esteem domain (Maslow Level 4).
+            Primary for: Performance.
             </summary>
-            <param name="code">Beat code.</param>
-            <param name="strategy">Timing strategy ("bs2" or "fiction").</param>
-            <returns>Target position as percentage (0-1).</returns>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeats.CriticalBeats">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.PowerImpotence">
             <summary>
-            Critical beats that are most important for story structure.
+            Power vs Impotence - Esteem domain (Maslow Level 4).
+            Primary for: Society.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeat">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.SuccessFailure">
             <summary>
-            Represents a single Save the Cat beat.
+            Success vs Failure - Esteem domain (Maslow Level 4).
+            Primary for: Status.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeat.#ctor(System.String,System.String,System.Int32,System.Double,System.Double,System.Double,System.Double,System.String,System.Int32,System.Boolean,System.Nullable{System.Double})">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.AltruismSelfishness">
             <summary>
-            Represents a single Save the Cat beat.
+            Altruism vs Selfishness - Self-transcendence domain (Maslow Level 5).
+            Primary for: Morality.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeat.GetTargetPosition(System.String)">
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType.WisdomIgnorance">
             <summary>
-            Gets the target position for this beat using the specified strategy.
+            Wisdom vs Ignorance - Self-actualization domain (Maslow Level 5).
+            Primary for: Worldview.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeat.IsPositionAcceptable(System.Double,System.String)">
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.YamlLoader">
             <summary>
-            Checks if a position is within the acceptable range for this beat.
+            Utility for loading YAML data files embedded in the assembly.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Structure.SaveTheCatBeat.IsCritical">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.YamlLoader.Load``1(System.String)">
             <summary>
-            Gets whether this beat is considered critical for story structure.
+            Loads and deserializes a YAML file from embedded resources.
             </summary>
+            <typeparam name="T">The type to deserialize to.</typeparam>
+            <param name="resourceName">The resource file name (e.g., "narrative-state.yaml").</param>
+            <returns>The deserialized object.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown when the resource cannot be found.</exception>
         </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Structure.MidpointType">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.YamlLoader.LoadFromFile``1(System.String)">
             <summary>
-            Midpoint types per Save the Cat methodology.
+            Loads and deserializes a YAML file from a file path.
             </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Structure.MidpointType.FalseVictory">
-            <summary>Hero seems to achieve goal but hasn't truly.</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Structure.MidpointType.FalseDefeat">
-            <summary>Appears all is lost but isn't; often raises stakes.</summary>
+            <typeparam name="T">The type to deserialize to.</typeparam>
+            <param name="filePath">The path to the YAML file.</param>
+            <returns>The deserialized object.</returns>
         </member>
     </members>
 </doc>

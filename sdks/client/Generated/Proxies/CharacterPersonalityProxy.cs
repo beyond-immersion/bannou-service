@@ -191,14 +191,14 @@ public sealed class CharacterPersonalityProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing PersonalityCompressData on success.</returns>
-    public Task<ApiResponse<PersonalityCompressData>> GetCompressDataAsync(
+    /// <returns>ApiResponse containing CharacterPersonalityArchive on success.</returns>
+    public Task<ApiResponse<CharacterPersonalityArchive>> GetCompressDataAsync(
         GetCompressDataRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<GetCompressDataRequest, PersonalityCompressData>(
+        return _client.InvokeAsync<GetCompressDataRequest, CharacterPersonalityArchive>(
             "/character-personality/get-compress-data", request, channel, timeout, cancellationToken);
     }
 

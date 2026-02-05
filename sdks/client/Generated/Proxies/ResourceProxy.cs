@@ -259,4 +259,40 @@ public sealed class ResourceProxy
         return _client.InvokeAsync<GetArchiveRequest, GetArchiveResponse>(
             "/resource/archive/get", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Create ephemeral snapshot of a living resource
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ExecuteSnapshotResponse on success.</returns>
+    public Task<ApiResponse<ExecuteSnapshotResponse>> ExecuteSnapshotAsync(
+        ExecuteSnapshotRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ExecuteSnapshotRequest, ExecuteSnapshotResponse>(
+            "/resource/snapshot/execute", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Retrieve an ephemeral snapshot
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetSnapshotResponse on success.</returns>
+    public Task<ApiResponse<GetSnapshotResponse>> GetSnapshotAsync(
+        GetSnapshotRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetSnapshotRequest, GetSnapshotResponse>(
+            "/resource/snapshot/get", request, channel, timeout, cancellationToken);
+    }
 }

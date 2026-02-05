@@ -888,7 +888,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CharacterCompressData'
+                $ref: '#/components/schemas/CharacterBaseArchive'
         '400':
           description: Character is not dead (cannot compress alive characters)
         '404':
@@ -900,37 +900,38 @@ paths:
         \      \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"ID of the character to get compress data for\"\n                }\n      \
         \      }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterCompressData\"\
-        ,\n    \"$defs\": {\n        \"CharacterCompressData\": {\n            \"description\": \"Core character data for
-        archive storage\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
-        required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\",\n       \
-        \         \"speciesId\",\n                \"birthDate\",\n                \"deathDate\",\n                \"status\"\
-        ,\n                \"compressedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterBaseArchive\"\
+        ,\n    \"$defs\": {\n        \"CharacterBaseArchive\": {\n            \"type\": \"object\",\n            \"x-archive-type\"\
+        : true,\n            \"description\": \"Core character data for archive storage and storyline SDK consumption.\\nInherits
+        base archive properties from ResourceArchiveBase.\\nThe characterId field equals resourceId for convenience.\\n\\\
+        nNote: This is distinct from CharacterArchive which contains text summaries\\nfor cleanup. CharacterBaseArchive contains
+        structured data for SDK consumption.\\n\",\n            \"allOf\": [\n                {\n                    \"type\"\
+        : \"object\"\n                }\n            ],\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\",\n                \"name\",\n                \"realmId\",\n                \"\
+        speciesId\",\n                \"birthDate\",\n                \"deathDate\",\n                \"status\"\n       \
+        \     ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the character
+        (equals resourceId)\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Display name of the character\"\n                },\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier for the character\"\n                },\n                \"name\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Display name of the character\"\n     \
-        \           },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Realm ID (partition key)\"\n                },\n     \
-        \           \"speciesId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Species ID (foreign key to Species service)\"\n                },\n    \
-        \            \"birthDate\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\"\
+        description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Species
+        ID (foreign key to Species service)\"\n                },\n                \"birthDate\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game
+        birth timestamp\"\n                },\n                \"deathDate\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game death timestamp
+        (required for compression)\"\n                },\n                \"status\": {\n                    \"$ref\": \"\
+        #/$defs/CharacterStatus\",\n                    \"description\": \"Current lifecycle status (must be dead for compression)\"\
+        \n                },\n                \"familySummary\": {\n                    \"type\": \"string\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"Text summary of family relationships.\\nExample:
+        \\\"Father of 3, married to Elena, orphaned at young age\\\"\\n\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"In-game death timestamp (required for compression)\"\n                },\n                \"\
-        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
-        lifecycle status (must be dead for compression)\"\n                },\n                \"familySummary\": {\n    \
-        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Text summary of family relationships.\\nExample: \\\"Father of 3, married to Elena, orphaned at young age\\\"\\\
-        n\"\n                },\n                \"compressedAt\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"date-time\",\n                    \"description\": \"When this data was compressed\"\n\
-        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n       \
-        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world
-        last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n          \
-        \  \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n\
-        \                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n        }\n  \
-        \  }\n}"
+        \   \"description\": \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Real-world last update timestamp\"\n                }\n          \
+        \  }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Character lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n\
+        \                \"dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character base data for compression\",\n    \"description\": \"Called
         by Resource service during compression.\\nReturns core character data (name, dates, family summary).\\nReturns BadRequest
         if character is alive - only dead characters can be compressed.\\n\",\n    \"tags\": [\n        \"Character Compression\"\
@@ -1652,9 +1653,18 @@ components:
           type: string
           format: uuid
           description: ID of the character to get compress data for
-    CharacterCompressData:
-      description: Core character data for archive storage
+    CharacterBaseArchive:
       type: object
+      x-archive-type: true
+      description: |
+        Core character data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+
+        Note: This is distinct from CharacterArchive which contains text summaries
+        for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
+      allOf:
+      - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
       additionalProperties: false
       required:
       - characterId
@@ -1664,12 +1674,11 @@ components:
       - birthDate
       - deathDate
       - status
-      - compressedAt
       properties:
         characterId:
           type: string
           format: uuid
-          description: Unique identifier for the character
+          description: Unique identifier for the character (equals resourceId)
         name:
           type: string
           description: Display name of the character
@@ -1698,10 +1707,6 @@ components:
           description: |
             Text summary of family relationships.
             Example: "Father of 3, married to Elena, orphaned at young age"
-        compressedAt:
-          type: string
-          format: date-time
-          description: When this data was compressed
         createdAt:
           type: string
           format: date-time

@@ -209,14 +209,14 @@ public sealed class CharacterHistoryProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing HistoryCompressData on success.</returns>
-    public Task<ApiResponse<HistoryCompressData>> GetCompressDataAsync(
+    /// <returns>ApiResponse containing CharacterHistoryArchive on success.</returns>
+    public Task<ApiResponse<CharacterHistoryArchive>> GetCompressDataAsync(
         GetCompressDataRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<GetCompressDataRequest, HistoryCompressData>(
+        return _client.InvokeAsync<GetCompressDataRequest, CharacterHistoryArchive>(
             "/character-history/get-compress-data", request, channel, timeout, cancellationToken);
     }
 

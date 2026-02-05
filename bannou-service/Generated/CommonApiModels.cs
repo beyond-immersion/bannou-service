@@ -83,6 +83,65 @@ public enum EntityType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Base schema for all resource archives that can be stored in
+/// <br/>the resource service's archive bundles and consumed by the
+/// <br/>storyline SDK's ArchiveExtractor.
+/// <br/>
+/// <br/>Archives implementing this base schema are marked with
+/// <br/>x-archive-type: true and are automatically collected by
+/// <br/>the archive generation script for SDK model generation.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Unique identifier of the archived resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Type identifier (e.g., "character", "character-personality", "realm-history")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// When this archive was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archivedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset ArchivedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Schema version for forward compatibility migration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int SchemaVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Child archives from dependent resources (populated by lib-resource compression)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nestedArchives")]
+    public System.Collections.Generic.ICollection<ResourceArchiveBase> NestedArchives { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
 
 
 #pragma warning restore  108

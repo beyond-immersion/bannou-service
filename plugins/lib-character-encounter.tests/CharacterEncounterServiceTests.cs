@@ -2256,6 +2256,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var archiveData = new CharacterEncounterArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-encounter",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasEncounters = true,
             EncounterCount = 1,
@@ -2283,8 +2289,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                         }
                     }
                 }
-            },
-            CompressedAt = DateTimeOffset.UtcNow
+            }
         };
 
         // Setup encounter to already exist
@@ -2376,11 +2381,16 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var archiveData = new CharacterEncounterArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-encounter",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasEncounters = false,
             EncounterCount = 0,
-            Encounters = new List<EncounterResponse>(),
-            CompressedAt = DateTimeOffset.UtcNow
+            Encounters = new List<EncounterResponse>()
         };
 
         var request = new RestoreFromArchiveRequest
@@ -2413,6 +2423,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var archiveData = new CharacterEncounterArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-encounter",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasEncounters = true,
             EncounterCount = 1,
@@ -2448,8 +2464,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                         }
                     }
                 }
-            },
-            CompressedAt = DateTimeOffset.UtcNow
+            }
         };
 
         _mockEncounterStore
@@ -2489,6 +2504,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var archiveData = new CharacterEncounterArchive
         {
+            // ResourceArchiveBase fields
+            ResourceId = characterId,
+            ResourceType = "character-encounter",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
             CharacterId = characterId,
             HasEncounters = true,
             EncounterCount = 1,
@@ -2506,8 +2527,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                     },
                     Perspectives = new List<EncounterPerspectiveModel>()
                 }
-            },
-            CompressedAt = DateTimeOffset.UtcNow
+            }
         };
 
         // Setup to throw on save

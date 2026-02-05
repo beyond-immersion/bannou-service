@@ -373,14 +373,14 @@ public sealed class CharacterEncounterProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing EncounterCompressData on success.</returns>
-    public Task<ApiResponse<EncounterCompressData>> GetCompressDataAsync(
+    /// <returns>ApiResponse containing CharacterEncounterArchive on success.</returns>
+    public Task<ApiResponse<CharacterEncounterArchive>> GetCompressDataAsync(
         GetCompressDataRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<GetCompressDataRequest, EncounterCompressData>(
+        return _client.InvokeAsync<GetCompressDataRequest, CharacterEncounterArchive>(
             "/character-encounter/get-compress-data", request, channel, timeout, cancellationToken);
     }
 
