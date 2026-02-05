@@ -76,6 +76,8 @@ if [ -n "$COMMON_API_REFS" ]; then
     echo -e "${BLUE}ℹ️  Found common-api.yaml refs - excluding shared types${NC}"
     echo -e "  📦 Common types: $COMMON_API_REFS"
     EXCLUDED_TYPES="$EXCLUDED_TYPES,$COMMON_API_REFS"
+    # Add Common namespace so the excluded types can be resolved
+    ADDITIONAL_NAMESPACES="$ADDITIONAL_NAMESPACES,BeyondImmersion.BannouService.Common"
 fi
 
 # Extract SDK type mappings from schema (x-sdk-type extensions)
