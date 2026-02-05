@@ -84,6 +84,24 @@
             <param name="data">The data if found and of correct type; otherwise null.</param>
             <returns>True if the entry was found and is of the correct type.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle.GetNestedArchives">
+            <summary>
+            Gets all nested archive bundles contained in this bundle.
+            Used for recursive kernel extraction from hierarchical archives.
+            </summary>
+            <returns>Collection of nested archive bundles, or empty if none exist.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle.GetKeys">
+            <summary>
+            Gets all entry keys in this bundle.
+            </summary>
+            <returns>Collection of entry keys.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle.Count">
+            <summary>
+            Gets the number of entries in this bundle.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveExtractor">
             <summary>
             Extracts narrative-relevant data from archives using opaque keys.
@@ -105,6 +123,17 @@
             Identifies essential narrative events (kernels) from archive data.
             Kernels are story opportunities - events that could seed new storylines.
             </summary>
+            <remarks>
+            <para>
+            The KernelExtractor operates on ArchiveBundle data using opaque string keys.
+            It extracts kernels from known archive types (character, character-history,
+            character-encounter, character-personality) and processes nested archives recursively.
+            </para>
+            <para>
+            Kernel extraction logic will be fully implemented when Generated archive types
+            are available from the plugin schema generation pipeline (GH Issue #279).
+            </para>
+            </remarks>
         </member>
         <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractKernels(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle)">
             <summary>
@@ -114,64 +143,25 @@
             <param name="bundle">The archive bundle containing data entries.</param>
             <returns>List of narrative kernels sorted by significance (descending).</returns>
         </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractFromCharacterArchive(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.List{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
             <summary>
-            Types of narrative kernels that can seed new storylines.
+            Extract Death kernels from character archive data.
+            Death is always maximum significance for archived characters.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.Death">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractFromHistoryArchive(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.List{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
             <summary>
-            Character death - highest significance kernel.
+            Extract HistoricalEvent, Trauma, and UnfinishedBusiness kernels from history archive.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.HistoricalEvent">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractFromEncounterArchive(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.List{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
             <summary>
-            Participation in major world events.
+            Extract Conflict and DeepBond kernels from encounter archive.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.Trauma">
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelExtractor.ExtractFromPersonalityArchive(BeyondImmersion.Bannou.StorylineTheory.Archives.ArchiveBundle,System.Collections.Generic.List{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
             <summary>
-            Past traumatic experiences.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.UnfinishedBusiness">
-            <summary>
-            Unachieved goals or unfinished business.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.Conflict">
-            <summary>
-            Deep negative encounters (grudge potential).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Archives.KernelType.DeepBond">
-            <summary>
-            Strong positive relationships (legacy potential).
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel">
-            <summary>
-            A narrative kernel - an essential event that could seed a new storyline.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Type">
-            <summary>
-            The type of kernel.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Significance">
-            <summary>
-            The significance score (0.0 to 1.0).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Description">
-            <summary>
-            A human-readable description of the kernel.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.NarrativeKernel.Data">
-            <summary>
-            Additional data specific to the kernel type.
+            Personality archive doesn't directly produce kernels but can adjust scoring.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcControlPoint">
@@ -316,6 +306,411 @@
         <member name="M:BeyondImmersion.Bannou.StorylineTheory.Arcs.EmotionalArcLoader.Get(BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType)">
             <summary>
             Gets an emotional arc by type.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.IKernelData">
+            <summary>
+            Marker interface for type-specific kernel data.
+            Each kernel type has associated data that provides context for story composition.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeathKernelData">
+            <summary>
+            Data for Death kernels - character death information.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeathKernelData.CauseOfDeath">
+            <summary>
+            The cause of death if known (e.g., "battle wounds", "poison", "old age").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeathKernelData.LocationId">
+            <summary>
+            Location where death occurred if known.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeathKernelData.DeathDate">
+            <summary>
+            When the death occurred.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeathKernelData.KillerId">
+            <summary>
+            Character who caused the death, if applicable.
+            Enables revenge arcs when populated.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.TraumaKernelData">
+            <summary>
+            Data for Trauma kernels - past traumatic experiences.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.TraumaKernelData.TraumaType">
+            <summary>
+            Category of trauma (e.g., "betrayal", "loss", "violence", "abandonment").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.TraumaKernelData.Description">
+            <summary>
+            Description of the traumatic event.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.TraumaKernelData.PerpetratorId">
+            <summary>
+            Character who caused the trauma, if applicable.
+            Enables confrontation or forgiveness arcs.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.ConflictKernelData">
+            <summary>
+            Data for Conflict kernels - high-impact negative encounters.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.ConflictKernelData.EncounterId">
+            <summary>
+            The encounter that created this conflict.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.ConflictKernelData.OtherCharacterIds">
+            <summary>
+            Other characters involved in the conflict.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.ConflictKernelData.SentimentImpact">
+            <summary>
+            How negative the sentiment was (-1.0 to 0).
+            Lower values indicate more severe conflicts.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.ConflictKernelData.ConflictType">
+            <summary>
+            Type of conflict if categorized (e.g., "betrayal", "combat", "theft").
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeepBondKernelData">
+            <summary>
+            Data for DeepBond kernels - strong positive relationships.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeepBondKernelData.BondedCharacterId">
+            <summary>
+            The character with whom the bond exists.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeepBondKernelData.AverageSentiment">
+            <summary>
+            Average sentiment across encounters (0 to 1.0).
+            Higher values indicate stronger positive bonds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeepBondKernelData.EncounterCount">
+            <summary>
+            Number of encounters with this character.
+            More encounters indicate deeper relationships.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.DeepBondKernelData.RelationshipType">
+            <summary>
+            Type of relationship if known (e.g., "mentor", "friend", "family", "lover").
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.UnfinishedBusinessKernelData">
+            <summary>
+            Data for UnfinishedBusiness kernels - incomplete goals.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.UnfinishedBusinessKernelData.Goals">
+            <summary>
+            All unfinished goals for the character.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.UnfinishedBusinessKernelData.PrimaryGoal">
+            <summary>
+            The primary unfinished goal, if one can be identified.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.HistoricalEventKernelData">
+            <summary>
+            Data for HistoricalEvent kernels - major event participation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.HistoricalEventKernelData.EventCode">
+            <summary>
+            Code identifying the historical event.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.HistoricalEventKernelData.Role">
+            <summary>
+            Character's role in the event (e.g., "participant", "witness", "instigator", "victim").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.HistoricalEventKernelData.EventId">
+            <summary>
+            Reference to the event record if available.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.SignificantAssetKernelData">
+            <summary>
+            Data for SignificantAsset kernels - important possessions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.SignificantAssetKernelData.AssetId">
+            <summary>
+            The item or asset identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.SignificantAssetKernelData.AssetType">
+            <summary>
+            Type of asset (e.g., "weapon", "artifact", "document", "inheritance").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.SignificantAssetKernelData.Significance">
+            <summary>
+            Description of why this asset is significant.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.SignificantAssetKernelData.StillPossessed">
+            <summary>
+            Whether the character still possesses this asset.
+            Lost assets create recovery/quest arcs.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.BrokenPromiseKernelData">
+            <summary>
+            Data for BrokenPromise kernels - unfulfilled commitments.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.BrokenPromiseKernelData.PromiseDescription">
+            <summary>
+            Description of the promise or commitment.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.BrokenPromiseKernelData.PromiseeId">
+            <summary>
+            Who the promise was made to.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.BrokenPromiseKernelData.CharacterBrokePromise">
+            <summary>
+            Whether this character broke the promise (true) or was the victim of a broken promise (false).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.BrokenPromiseKernelData.ContractId">
+            <summary>
+            Reference to the contract if this was a formal agreement.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelScorer">
+            <summary>
+            Adjusts kernel significance based on cross-kernel analysis.
+            Implements Lehnert's plot unit connectivity scoring for narrative potential.
+            </summary>
+            <remarks>
+            <para>
+            Kernels don't exist in isolation - their narrative potential depends on
+            connections to other kernels. A Death kernel connected to a Conflict kernel
+            (same characters involved) has higher story potential than an isolated death.
+            </para>
+            <para>
+            Based on Wendy Lehnert's plot unit theory which measures story coherence
+            through the connectivity of affect states.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelScorer.AdjustSignificance(BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
+            <summary>
+            Adjust a kernel's significance based on its context within a kernel set.
+            Call this after initial extraction to refine significance scores.
+            </summary>
+            <param name="kernel">The kernel to adjust.</param>
+            <param name="allKernels">All kernels in the set for cross-reference.</param>
+            <remarks>
+            Adjustment factors include:
+            - Character overlap with other kernels (shared story threads)
+            - Causal potential (e.g., Conflict → Death sequence)
+            - Temporal clustering (events close in time are more connected)
+            - Genre coherence (kernels that fit the same genre boost each other)
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelScorer.ScoreKernelCluster(System.Collections.Generic.IEnumerable{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel})">
+            <summary>
+            Score the narrative potential of a kernel cluster.
+            Higher scores indicate richer story possibilities when kernels are combined.
+            </summary>
+            <param name="kernels">The kernel cluster to evaluate.</param>
+            <returns>
+            Connectivity score from 0.0 to 1.0.
+            Higher values indicate more interconnected kernels with greater narrative potential.
+            </returns>
+            <remarks>
+            Based on Lehnert's plot unit theory: stories with high affect state
+            connectivity feel more coherent and satisfying. This method measures
+            how well a set of kernels could combine into a unified narrative.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelScorer.SelectBestKernels(System.Collections.Generic.IEnumerable{BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel},System.String,System.Nullable{BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType},System.Int32)">
+            <summary>
+            Find the best kernel subset for a given story goal.
+            Selects kernels that maximize narrative potential for the target genre and arc.
+            </summary>
+            <param name="allKernels">All available kernels.</param>
+            <param name="targetGenre">The desired genre (e.g., "action", "love", "horror").</param>
+            <param name="targetArc">The desired emotional arc, or null for any arc.</param>
+            <param name="maxKernels">Maximum number of kernels to select.</param>
+            <returns>Ordered list of kernels best suited for the story goal.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType">
+            <summary>
+            Categories of narrative kernels that can seed stories.
+            Based on Barthes/Chatman kernel theory applied to game archives.
+            </summary>
+            <remarks>
+            Kernels (Cardinal Functions) are branching points where choices occur;
+            they cannot be deleted without altering story logic. Satellites (Catalyzers)
+            are elaboration and texture that can be freely changed or removed.
+            When compressing or adapting stories, kernels MUST be preserved.
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.Death">
+            <summary>
+            Character death - always maximum significance for archived characters.
+            Death is the ultimate irreversible state change.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.HistoricalEvent">
+            <summary>
+            High-significance historical event participation.
+            Wars, disasters, political upheavals that shaped the character.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.Trauma">
+            <summary>
+            Traumatic backstory element.
+            Betrayals, losses, violence that define character motivations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.UnfinishedBusiness">
+            <summary>
+            Unfinished goals creating narrative hooks.
+            Unfulfilled promises, incomplete quests, unrealized ambitions.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.Conflict">
+            <summary>
+            High-impact negative encounter (grudge potential).
+            Deep conflicts that create lasting enmity.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.DeepBond">
+            <summary>
+            Deep positive relationship (legacy/protection potential).
+            Strong bonds that motivate sacrifice or revenge.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.SignificantAsset">
+            <summary>
+            Major possession or artifact with story potential.
+            Items of significance that drive plots.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.StorylineTheory.Kernels.KernelType.BrokenPromise">
+            <summary>
+            Unfulfilled oath, promise, or contract.
+            Broken or incomplete commitments demanding resolution.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel">
+            <summary>
+            An essential narrative event that can seed a storyline.
+            Kernels cannot be removed without breaking narrative causality.
+            </summary>
+            <remarks>
+            <para>
+            From narratology (Barthes/Chatman): Kernels are "cardinal functions" -
+            branching points where choices occur and the story's direction changes.
+            They contrast with "satellites" (catalyzers) which provide texture but
+            can be modified without altering the fundamental story.
+            </para>
+            <para>
+            The KernelExtractor identifies kernels from archived character data.
+            The lib-storyline plugin then uses these kernels to select appropriate
+            story templates and assign actant roles for story composition.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.KernelId">
+            <summary>
+            Unique identifier for this kernel instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.Type">
+            <summary>
+            Category of kernel determining extraction logic and arc compatibility.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.Significance">
+            <summary>
+            Significance score from 0.0 to 1.0.
+            Higher values indicate greater story potential.
+            Death kernels are always 1.0 for archived characters.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.SourceResourceId">
+            <summary>
+            The resource ID from which this kernel was extracted.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.SourceResourceType">
+            <summary>
+            The type of resource from which this kernel was extracted
+            (e.g., "character", "realm").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.InvolvedCharacterIds">
+            <summary>
+            All characters involved in this kernel event.
+            Used for actant assignment during story composition.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.SuggestedActants">
+            <summary>
+            Suggested actant roles for involved characters.
+            Key = CharacterId, Value = suggested ActantRole.
+            Null if no suggestions are available.
+            </summary>
+            <remarks>
+            These are suggestions based on the kernel context. For example,
+            a Conflict kernel might suggest the source character as Subject
+            and the other party as Opponent. The story composer may override
+            these based on the chosen template and narrative goals.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.CompatibleArcs">
+            <summary>
+            Arc templates compatible with this kernel.
+            Based on kernel type → arc affinity mapping from narratology.
+            </summary>
+            <remarks>
+            <para>
+            Affinity mappings are based on:
+            - Death → Tragedy, ManInHole (revenge), Oedipus (tragic cycle)
+            - Trauma → ManInHole (recovery), Cinderella (overcoming)
+            - Conflict → ManInHole, Tragedy
+            - DeepBond → RagsToRiches, Cinderella
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.GenreAffinities">
+            <summary>
+            Genre affinities for this kernel.
+            Higher values (0.0 to 1.0) indicate better fit for that genre.
+            Genre keys follow Story Grid conventions (e.g., "action", "love", "horror").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.StorylineTheory.Kernels.NarrativeKernel.Data">
+            <summary>
+            Type-specific kernel data containing extraction details.
+            Cast to the appropriate IKernelData implementation based on Type.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.StorylineTheory.Planning.WorldState">

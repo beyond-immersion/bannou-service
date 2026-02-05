@@ -38,4 +38,28 @@ public sealed class ArchiveBundle
         data = null;
         return false;
     }
+
+    /// <summary>
+    /// Gets all nested archive bundles contained in this bundle.
+    /// Used for recursive kernel extraction from hierarchical archives.
+    /// </summary>
+    /// <returns>Collection of nested archive bundles, or empty if none exist.</returns>
+    public IEnumerable<ArchiveBundle> GetNestedArchives()
+    {
+        return _entries.Values.OfType<ArchiveBundle>();
+    }
+
+    /// <summary>
+    /// Gets all entry keys in this bundle.
+    /// </summary>
+    /// <returns>Collection of entry keys.</returns>
+    public IEnumerable<string> GetKeys()
+    {
+        return _entries.Keys;
+    }
+
+    /// <summary>
+    /// Gets the number of entries in this bundle.
+    /// </summary>
+    public int Count => _entries.Count;
 }

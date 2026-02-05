@@ -50,6 +50,8 @@ echo -e "${YELLOW}Generating CommonApi models...${NC}"
 if [ $? -eq 0 ]; then
     # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
     postprocess_enum_suppressions "$TARGET_DIR/CommonApiModels.cs"
+    # Post-process: Add XML docs to AdditionalProperties
+    postprocess_additional_properties_docs "$TARGET_DIR/CommonApiModels.cs"
     echo -e "${GREEN}Common API models generated successfully${NC}"
     echo -e "   Output: $TARGET_DIR/CommonApiModels.cs"
     echo -e "   Namespace: BeyondImmersion.BannouService"

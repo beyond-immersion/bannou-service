@@ -59,14 +59,10 @@ fi
 EXCLUDED_TYPES="ApiException,ApiException\<TResult\>"
 ADDITIONAL_NAMESPACES="BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
 
-# If using resolved schema, extract and exclude inlined types
-if [ "$SCHEMA_TO_PROCESS" = "$RESOLVED_SCHEMA" ]; then
-    INLINED_TYPES=$(extract_inlined_types "$RESOLVED_SCHEMA")
-    if [ -n "$INLINED_TYPES" ]; then
-        echo -e "${BLUE}ℹ️  Excluding inlined types: $INLINED_TYPES${NC}"
-        EXCLUDED_TYPES="$EXCLUDED_TYPES,$INLINED_TYPES"
-    fi
-fi
+# NOTE: Do NOT exclude inlined types from resolved schemas
+# The x-inlined-types field tracks types inlined from other service schemas
+# (e.g., VoiceTier from voice-api.yaml) - these need to be GENERATED, not excluded.
+# Only types from common-api.yaml should be excluded (handled below).
 
 # Extract $refs to common-api.yaml types (shared types like EntityType)
 # These are generated once in CommonApiModels.cs, so we exclude them
